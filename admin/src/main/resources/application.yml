@@ -1,0 +1,10 @@
+server:
+  port: 7081
+  servlet:
+    context-path: /admin
+
+spring:
+  dubbo:
+    application:
+      name: admin
+      registry: zookeeper://127.0.0.1:2181

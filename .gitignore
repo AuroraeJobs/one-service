@@ -1,0 +1,6 @@
+# Project exclude paths
+/common/target/
+/manager/manager-interface/target/
+/manager/manager-model/target/
+/manager/manager-repository/target/
+/sso/sso-interface/target/

@@ -1,0 +1,15 @@
+server:
+  port: 9081
+  servlet:
+    context-path: /alice
+
+spring:
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: test
+  dubbo:
+    application:
+      name: alice
+      registry: zookeeper://127.0.0.1:2181
