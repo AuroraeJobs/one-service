@@ -1,0 +1,19 @@
+server:
+  port: 8083
+spring:
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: test
+  redis:
+    host: localhost
+    port: 6379
+  dubbo:
+    application:
+      name: core-service
+      registry: zookeeper://127.0.0.1:2181
+    protocol:
+      name: dubbo
+      port: 20883
+

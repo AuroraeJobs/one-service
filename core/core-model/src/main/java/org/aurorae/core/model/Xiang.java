@@ -1,0 +1,57 @@
+package org.aurorae.core.model;
+
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+/**
+ * @author aurorae
+ * 编码实现：象，英文名称为Xiang
+ * 两仪生四象：
+ * {"四象": ["少阳","老阳","少阴","老阴"]}
+ *
+ * 四象的应用：四时，四季，四面（四面衍生八方）
+ *
+ * 最下面前缀：少：表示少年的少，呈隐性
+ * 中间的前缀：老：表示老年的老，呈显性
+ * 最上面即为：象的名字，呈显性
+ * <p>
+ * 少阳：7 = 2+2+3
+ * —— 少阳：3（显性）
+ * -- 老阴：2（显性）
+ * -- 少阴：2（隐性）
+ * <p>
+ * 老阳：9 = 3+3+3
+ * —— 老阳：3（显性）
+ * —— 老阳：3（显性）
+ * —— 少阳：3（隐性）
+ * <p>
+ * 少阴：8 = 3+3+2
+ * -- 少阴：2（显性）
+ * —— 老阳：3（显性）
+ * —— 少阳：3（隐性）
+ * <p>
+ * 老阴：6 = 2+2+2
+ * -- 老阴：2（显性）
+ * -- 老阴：2（显性）
+ * -- 少阴：2（隐性）
+ */
+@EqualsAndHashCode(callSuper = true)
+@Data
+@Document("Xiang")
+public class Xiang extends TaiJi {
+
+    /**
+     * 天位：处天位，行天道
+     * 早晚，冷暖
+     * 开天：清者自清，为天
+     */
+    private Yi up;
+
+    /**
+     * 地位：行地道
+     * 男女，老少
+     * 辟地：浊者为地
+     */
+    private Yi low;
+}

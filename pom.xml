@@ -13,6 +13,10 @@
         <module>admin</module>
         <module>alice</module>
         <module>sso</module>
+        <module>blink</module>
+        <module>core</module>
+        <module>flink</module>
+        <module>cwl</module>
     </modules>
     <packaging>pom</packaging>
 

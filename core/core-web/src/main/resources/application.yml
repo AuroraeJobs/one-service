@@ -1,0 +1,10 @@
+server:
+  port: 7083
+  servlet:
+    context-path: /core
+
+spring:
+  dubbo:
+    application:
+      name: core-web
+      registry: zookeeper://127.0.0.1:2181
