@@ -6,6 +6,9 @@ import org.aurorae.cwl.response.CwlResult;
 import java.util.List;
 
 public interface CwlService {
+
+    String echarts(String year);
+
     /**
      * 查询结果
      *
@@ -13,6 +16,30 @@ public interface CwlService {
      * @return list
      */
     List<Cwl> findByYear(String year);
+
+    List<Cwl> findAllAsc();
+
+    Cwl findById(Long code);
+
+    List<Cwl> findAllDesc();
+
+    Cwl findDesc();
+
+    Cwl findAsc();
+
+    List<Cwl> saveAll(List<Cwl> list);
+
+    Cwl save(Cwl item);
+
+    Cwl getNewIssue();
+
+    List<Cwl> getNewIssues(int issueCount);
+
+    List<Cwl> getIssues(String start, String end);
+
+    List<Cwl> getIssuesByYear(int year);
+
+    List<Cwl> getIssuesByDay(String start, String end);
 
     /**
      * 获取结果

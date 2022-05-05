@@ -25,6 +25,21 @@ public class CwlController {
         return service.findByYear(year);
     }
 
+    @GetMapping("/find/echarts/{year}")
+    private String echarts(@PathVariable String year) {
+        return service.echarts(year);
+    }
+
+    @GetMapping("/find/desc")
+    private Cwl findDesc() {
+        return service.findDesc();
+    }
+
+    @GetMapping("/find/asc")
+    private Cwl findAsc() {
+        return service.findAsc();
+    }
+
     @GetMapping("/get/{issueCount}")
     private List<CwlResult> getResultByCount(@PathVariable int issueCount) {
         return service.getByCount(issueCount);

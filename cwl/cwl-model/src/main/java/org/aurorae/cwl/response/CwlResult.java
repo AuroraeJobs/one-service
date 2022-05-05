@@ -1,7 +1,6 @@
 package org.aurorae.cwl.response;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.aurorae.cwl.model.Cwl;
@@ -10,7 +9,6 @@ import java.io.Serializable;
 import java.util.List;
 
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class CwlResult implements Serializable {
@@ -51,8 +49,15 @@ public class CwlResult implements Serializable {
 
     private List<CwlPrizeGrade> prizegrades;
 
-    public static Cwl convertTo(CwlResult cwlResult) {
-        return new Cwl(cwlResult.getCode(), cwlResult.getDate(), cwlResult.getWeek())
-                .setRedAndBlue(cwlResult.getRed(), cwlResult.getBlue());
+    public Cwl convertTo() {
+        String[] split = red.split(",");
+        return new Cwl(code, date,
+                Integer.parseInt(split[0]),
+                Integer.parseInt(split[1]),
+                Integer.parseInt(split[2]),
+                Integer.parseInt(split[3]),
+                Integer.parseInt(split[4]),
+                Integer.parseInt(split[5]),
+                Integer.parseInt(blue));
     }
 }

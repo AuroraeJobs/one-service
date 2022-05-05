@@ -15,6 +15,8 @@
         <module>cwl-model</module>
         <module>cwl-interface</module>
         <module>cwl-repository</module>
+        <module>cwl-service</module>
+        <module>cwl-web</module>
     </modules>
 
     <properties>
