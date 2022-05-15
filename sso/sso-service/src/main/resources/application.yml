@@ -1,23 +1,31 @@
 server:
-  port: 8082
+  port: 8300
 spring:
-  datasource:
-    url: jdbc:postgresql://vpn115:5432/psiot
-    username: postgres
-    password: postgres
-    driver-class-name: org.postgresql.Driver
-  data:
-    mongodb:
-      host: localhost
-      port: 27017
-      database: test
+  application:
+    name: @project.artifactId@
+  profiles:
+    active:
+      - register
+      - monitor
+      - server
+      - mysql
+      - redis
+      - feign
+  main:
+    allow-bean-definition-overriding: true
+  mvc:
+    throw-exception-if-no-handler-found: true
+  web:
+    resources:
+      add-mappings: false
   redis:
-    host: localhost
-    port: 6379
-  dubbo:
-    application:
-      name: sso-service
-      registry: zookeeper://127.0.0.1:2181
-    protocol:
-      name: dubbo
-      port: 20882
+    database: 1
+  cache:
+    redis:
+      time-to-live: ${CACHE_REDIS_TIME_TO_LIVE:12H}
+
+logging:
+  level:
+    org.aurorae: DEBUG
+  file:
+    name: tmp/logs/center/auth/${spring.application.name}.log

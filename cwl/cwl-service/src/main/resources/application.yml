@@ -1,12 +1,16 @@
 server:
-  port: 8085
+  port: 8084
 spring:
-  data:
-    mongodb:
-      host: localhost
-      port: 27017
-      database: test
+  profiles:
+    include:
+      - mongo
+      - redis
+      - mysql
   dubbo:
     application:
       name: cwl-service
       registry: zookeeper://127.0.0.1:2181
+      qos-port: 22224
+    protocol:
+      name: dubbo
+      port: 20884

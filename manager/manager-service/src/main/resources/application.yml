@@ -1,12 +1,34 @@
 server:
-  port: 8081
+  port: 8400
 spring:
-  data:
-    mongodb:
-      host: localhost
-      port: 27017
-      database: test
-  dubbo:
-    application:
-      name: manager-service
-      registry: zookeeper://127.0.0.1:2181
+  application:
+    name: @project.artifactId@
+  profiles:
+    active:
+      - register
+      - monitor
+      - server
+      - rabbitmq
+      - mysql
+      - mongo
+      - redis
+      - feign
+  main:
+    allow-bean-definition-overriding: true
+  mvc:
+    throw-exception-if-no-handler-found: true
+  web:
+    resources:
+      add-mappings: false
+  redis:
+    database: 2
+  cache:
+    redis:
+      time-to-live: ${CACHE_REDIS_TIME_TO_LIVE:12H}
+
+logging:
+  level:
+    com.dc3: DEBUG
+    #com.dc3.center.manager.service.rabbit: INFO
+  file:
+    name: tmp/logs/center/manager/${spring.application.name}.log

@@ -4,11 +4,6 @@ server:
     context-path: /alice
 
 spring:
-  data:
-    mongodb:
-      host: localhost
-      port: 27017
-      database: test
   dubbo:
     application:
       name: alice

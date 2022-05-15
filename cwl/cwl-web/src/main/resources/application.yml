@@ -1,5 +1,5 @@
 server:
-  port: 7086
+  port: 7084
   servlet:
     context-path: /cwl
 
