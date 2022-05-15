@@ -1,0 +1,7 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  org.aurorae.config.RestTemplateConfig,\
+  org.aurorae.config.MybatisPlusConfig,\
+  org.aurorae.config.RedisTemplateConfig,\
+  org.aurorae.config.RedisCacheConfig,\
+  org.aurorae.config.ThreadPoolConfig,\
+  org.aurorae.util.RedisUtil

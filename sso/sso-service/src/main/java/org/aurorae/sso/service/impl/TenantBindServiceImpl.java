@@ -1,0 +1,133 @@
+package org.aurorae.sso.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import lombok.extern.slf4j.Slf4j;
+import org.aurorae.common.constant.Common;
+import org.aurorae.common.exception.NotFoundException;
+import org.aurorae.common.exception.ServiceException;
+import org.aurorae.common.util.Pages;
+import org.aurorae.sso.cover.TenantBindCover;
+import org.aurorae.sso.mapper.TenantBindMapper;
+import org.aurorae.sso.model.TenantBind;
+import org.aurorae.sso.service.TenantBindService;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.Optional;
+
+/**
+ * TenantBindService Impl
+ *
+ * @author aurorae
+ */
+@Slf4j
+@Service
+public class TenantBindServiceImpl implements TenantBindService {
+    @Resource
+    private TenantBindMapper tenantBindMapper;
+
+    @Override
+    @Caching(
+            put = {
+                    @CachePut(value = Common.Cache.TENANT_BIND + Common.Cache.ID, key = "#tenantBind.id", condition = "#result!=null"),
+                    @CachePut(value = Common.Cache.TENANT_BIND + Common.Cache.TENANT_ID + Common.Cache.USER_ID, key = "#tenantBind.tenantId+'.'+#tenantBind.userId+'.'+#tenantBind.type", condition = "#result!=null")
+            },
+            evict = {
+                    @CacheEvict(value = Common.Cache.TENANT_BIND + Common.Cache.DIC, allEntries = true, condition = "#result!=null"),
+                    @CacheEvict(value = Common.Cache.TENANT_BIND + Common.Cache.LIST, allEntries = true, condition = "#result!=null")
+            }
+    )
+    public TenantBind add(TenantBind tenantBind) {
+        if (tenantBindMapper.insert(tenantBind) > 0) {
+            return tenantBindMapper.selectById(tenantBind.getId());
+        }
+        throw new ServiceException("The tenant bind add failed");
+    }
+
+    @Override
+    @Caching(
+            evict = {
+                    @CacheEvict(value = Common.Cache.TENANT_BIND + Common.Cache.ID, key = "#id", condition = "#result==true"),
+                    @CacheEvict(value = Common.Cache.TENANT_BIND + Common.Cache.TENANT_ID + Common.Cache.USER_ID, allEntries = true, condition = "#result==true"),
+                    @CacheEvict(value = Common.Cache.TENANT_BIND + Common.Cache.DIC, allEntries = true, condition = "#result==true"),
+                    @CacheEvict(value = Common.Cache.TENANT_BIND + Common.Cache.LIST, allEntries = true, condition = "#result==true")
+            }
+    )
+    public boolean delete(Long id) {
+        selectById(id);
+        return tenantBindMapper.deleteById(id) > 0;
+    }
+
+    @Override
+    @Caching(
+            put = {
+                    @CachePut(value = Common.Cache.TENANT_BIND + Common.Cache.ID, key = "#tenantBind.id", condition = "#result!=null"),
+                    @CachePut(value = Common.Cache.TENANT_BIND + Common.Cache.TENANT_ID + Common.Cache.USER_ID, key = "#tenantBind.tenantId+'.'+#tenantBind.userId+'.'+#tenantBind.type", condition = "#result!=null")
+            },
+            evict = {
+                    @CacheEvict(value = Common.Cache.TENANT_BIND + Common.Cache.DIC, allEntries = true, condition = "#result!=null"),
+                    @CacheEvict(value = Common.Cache.TENANT_BIND + Common.Cache.LIST, allEntries = true, condition = "#result!=null")
+            }
+    )
+    public TenantBind update(TenantBind tenantBind) {
+        selectById(tenantBind.getId());
+        tenantBind.setUpdateTime(null);
+        if (tenantBindMapper.updateById(tenantBind) > 0) {
+            return tenantBindMapper.selectById(tenantBind.getId());
+        }
+        throw new ServiceException("The tenant bind update failed");
+    }
+
+    @Override
+    @Cacheable(value = Common.Cache.TENANT_BIND + Common.Cache.ID, key = "#id", unless = "#result==null")
+    public TenantBind selectById(Long id) {
+        TenantBind tenantBind = tenantBindMapper.selectById(id);
+        if (null == tenantBind) {
+            throw new NotFoundException("The tenant bind does not exist");
+        }
+        return tenantBind;
+    }
+
+    @Override
+    @Cacheable(value = Common.Cache.TENANT_BIND + Common.Cache.TENANT_ID + Common.Cache.USER_ID, key = "#tenantId+'.'+#userId", unless = "#result==null")
+    public TenantBind selectByTenantIdAndUserId(Long tenantId, Long userId) {
+        LambdaQueryWrapper<TenantBind> queryWrapper = Wrappers.<TenantBind>query().lambda();
+        queryWrapper.eq(TenantBind::getTenantId, tenantId);
+        queryWrapper.eq(TenantBind::getUserId, userId);
+        TenantBind tenantBind = tenantBindMapper.selectOne(queryWrapper);
+        if (null == tenantBind) {
+            throw new NotFoundException("The tenant bind does not exist");
+        }
+        return tenantBind;
+    }
+
+    @Override
+    @Cacheable(value = Common.Cache.TENANT_BIND + Common.Cache.LIST, keyGenerator = "commonKeyGenerator", unless = "#result==null")
+    public Page<TenantBind> list(TenantBindCover tenantBindDto) {
+        if (!Optional.ofNullable(tenantBindDto.getPage()).isPresent()) {
+            tenantBindDto.setPage(new Pages());
+        }
+        return tenantBindMapper.selectPage(tenantBindDto.getPage().convert(), fuzzyQuery(tenantBindDto));
+    }
+
+    @Override
+    public LambdaQueryWrapper<TenantBind> fuzzyQuery(TenantBindCover tenantBindDto) {
+        LambdaQueryWrapper<TenantBind> queryWrapper = Wrappers.<TenantBind>query().lambda();
+        if (null != tenantBindDto) {
+            if (null != tenantBindDto.getTenantId()) {
+                queryWrapper.eq(TenantBind::getTenantId, tenantBindDto.getTenantId());
+            }
+            if (null != tenantBindDto.getUserId()) {
+                queryWrapper.eq(TenantBind::getUserId, tenantBindDto.getUserId());
+            }
+        }
+        return queryWrapper;
+    }
+
+}
