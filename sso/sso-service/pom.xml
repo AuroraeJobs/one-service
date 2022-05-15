@@ -50,6 +50,10 @@
         </dependency>
         <dependency>
             <groupId>org.aurorae</groupId>
+            <artifactId>sso-model</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.aurorae</groupId>
             <artifactId>sso-interface</artifactId>
         </dependency>
         <dependency>
