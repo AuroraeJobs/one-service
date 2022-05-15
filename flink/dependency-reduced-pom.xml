@@ -3,9 +3,8 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.aurorae</groupId>
   <artifactId>flink</artifactId>
-  <name>Flink Quickstart Job</name>
+  <name>flink</name>
   <version>1.0-SNAPSHOT</version>
-  <url>http://www.myorganization.org</url>
   <build>
     <pluginManagement>
       <plugins>
