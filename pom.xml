@@ -7,6 +7,19 @@
     <groupId>org.aurorae</groupId>
     <artifactId>aurorae-group</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <name>${project.artifactId}</name>
+    <inceptionYear>2020 - now</inceptionYear>
+
+    <url>https://aurorae.org</url>
+    <developers>
+        <developer>
+            <name>aurorae</name>
+            <url>https://aurorae.com</url>
+            <email>aurorae_jobs@hotmail.com</email>
+        </developer>
+    </developers>
+    <description>Aurorae for Spring Boot</description>
+
     <modules>
         <module>common</module>
         <module>manager</module>
@@ -17,16 +30,66 @@
         <module>core</module>
         <module>flink</module>
         <module>cwl</module>
+        <module>mq</module>
+        <module>profiles</module>
+        <module>config</module>
+        <module>register</module>
     </modules>
     <packaging>pom</packaging>
 
     <properties>
-        <spring.boot.version>2.5.0</spring.boot.version>
+        <spring.boot.version>2.6.7</spring.boot.version>
+        <spring-cloud.version>2021.0.2</spring-cloud.version>
+        <spring-platform.version>Cairo-SR8</spring-platform.version>
+        <spring-boot-admin.version>2.6.7</spring-boot-admin.version>
         <dubbo.starter.version>2.0.0</dubbo.starter.version>
         <zkclient.version>0.10</zkclient.version>
+        <mybatis.plus.version>3.5.1</mybatis.plus.version>
+        <jwt.version>0.9.1</jwt.version>
+        <guava.version>31.0.1-jre</guava.version>
+        <hutool.version>5.7.16</hutool.version>
+        <fastjson.version>1.2.76</fastjson.version>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
+        <maven.compiler.plugin>3.8.1</maven.compiler.plugin>
+        <maven.jar.plugin>3.2.0</maven.jar.plugin>
+        <maven.resource.plugin>3.1.0</maven.resource.plugin>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <scope>compile</scope>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- guava -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
+        </dependency>
+
+        <!-- debug & test-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.junit.vintage</groupId>
+                    <artifactId>junit-vintage-engine</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+    </dependencies>
 
     <dependencyManagement>
         <dependencies>
@@ -38,64 +101,57 @@
                 <scope>import</scope>
             </dependency>
             <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter</artifactId>
-                <version>${spring.boot.version}</version>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
             <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-data-mongodb</artifactId>
-                <version>${spring.boot.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-web</artifactId>
-                <version>${spring.boot.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-tomcat</artifactId>
-                <version>${spring.boot.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-test</artifactId>
-                <version>${spring.boot.version}</version>
+                <groupId>io.spring.platform</groupId>
+                <artifactId>platform-bom</artifactId>
+                <version>${spring-platform.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
 
+            <!-- Spring Admin -->
             <dependency>
-                <groupId>com.alibaba.spring.boot</groupId>
-                <artifactId>dubbo-spring-boot-starter</artifactId>
-                <version>${dubbo.starter.version}</version>
+                <groupId>de.codecentric</groupId>
+                <artifactId>spring-boot-admin-starter-server</artifactId>
+                <version>${spring-boot-admin.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.101tec</groupId>
-                <artifactId>zkclient</artifactId>
-                <version>${zkclient.version}</version>
-                <!--排除这个slf4j-log4j12-->
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.slf4j</groupId>
-                        <artifactId>slf4j-log4j12</artifactId>
-                    </exclusion>
-                </exclusions>
+                <groupId>de.codecentric</groupId>
+                <artifactId>spring-boot-admin-starter-client</artifactId>
+                <version>${spring-boot-admin.version}</version>
             </dependency>
 
+            <!-- Mybatis Plus -->
             <dependency>
-                <groupId>org.projectlombok</groupId>
-                <artifactId>lombok</artifactId>
-                <version>1.18.20</version>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+                <version>${mybatis.plus.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.netflix.hystrix</groupId>
-                <artifactId>hystrix-core</artifactId>
-                <version>1.5.12</version>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-extension</artifactId>
+                <version>${mybatis.plus.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-annotation</artifactId>
+                <version>${mybatis.plus.version}</version>
+            </dependency>
+
+            <!-- Apache -->
+            <!-- http -->
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpclient</artifactId>
                 <version>4.5.13</version>
             </dependency>
+            <!-- poi -->
             <dependency>
                 <groupId>org.apache.poi</groupId>
                 <artifactId>poi</artifactId>
@@ -111,6 +167,102 @@
                 <artifactId>poi-ooxml-schemas</artifactId>
                 <version>3.13</version>
             </dependency>
+
+            <!-- Jwt -->
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt</artifactId>
+                <version>${jwt.version}</version>
+            </dependency>
+
+            <!-- FastJson -->
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>fastjson</artifactId>
+                <version>${fastjson.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-all</artifactId>
+                <version>${hutool.version}</version>
+            </dependency>
+
+            <!-- Aurore -->
+            <!-- base -->
+            <dependency>
+                <groupId>org.aurorae</groupId>
+                <artifactId>common</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.aurorae</groupId>
+                <artifactId>config</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.aurorae</groupId>
+                <artifactId>profiles</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.aurorae</groupId>
+                <artifactId>admin</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <!-- sso -->
+            <dependency>
+                <groupId>org.aurorae</groupId>
+                <artifactId>sso-model</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.aurorae</groupId>
+                <artifactId>sso-interface</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.aurorae</groupId>
+                <artifactId>sso-client</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <!-- manager -->
+            <dependency>
+                <groupId>org.aurorae</groupId>
+                <artifactId>manager-interface</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.aurorae</groupId>
+                <artifactId>manager-repository</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <build>
+        <finalName>${project.name}</finalName>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring.boot.version}</version>
+            </plugin>
+        </plugins>
+    </build>
 </project>
