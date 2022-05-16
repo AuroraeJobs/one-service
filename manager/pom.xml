@@ -16,6 +16,7 @@
         <module>manager-model</module>
         <module>manager-repository</module>
         <module>manager-service</module>
+        <module>manager-client</module>
     </modules>
 
     <properties>

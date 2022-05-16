@@ -11,8 +11,6 @@
 
     <artifactId>manager-model</artifactId>
     <packaging>jar</packaging>
-    <dependencies>
-    </dependencies>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>

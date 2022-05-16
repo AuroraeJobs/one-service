@@ -2,9 +2,3 @@ server:
   port: 9081
   servlet:
     context-path: /alice
-
-spring:
-  dubbo:
-    application:
-      name: alice
-      registry: zookeeper://127.0.0.1:2181

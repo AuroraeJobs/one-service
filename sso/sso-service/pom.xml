@@ -19,6 +19,7 @@
         <dependency>
             <groupId>org.aurorae</groupId>
             <artifactId>service</artifactId>
+            <type>pom</type>
         </dependency>
         <dependency>
             <groupId>org.aurorae</groupId>
