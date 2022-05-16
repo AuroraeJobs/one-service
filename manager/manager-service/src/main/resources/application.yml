@@ -28,7 +28,7 @@ spring:
 
 logging:
   level:
-    com.dc3: DEBUG
-    #com.dc3.center.manager.service.rabbit: INFO
+    org.aurorae: DEBUG
+    #org.aurorae.manager.service.rabbit: INFO
   file:
     name: tmp/logs/center/manager/${spring.application.name}.log

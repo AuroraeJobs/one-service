@@ -34,6 +34,7 @@
         <module>profiles</module>
         <module>config</module>
         <module>register</module>
+        <module>service</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -211,6 +212,12 @@
             <dependency>
                 <groupId>org.aurorae</groupId>
                 <artifactId>admin</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.aurorae</groupId>
+                <artifactId>service</artifactId>
                 <version>${project.version}</version>
                 <scope>compile</scope>
             </dependency>
