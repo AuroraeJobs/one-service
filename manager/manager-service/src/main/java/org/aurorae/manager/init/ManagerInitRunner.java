@@ -26,10 +26,10 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @EnableFeignClients(basePackages = {
-        "org.aurorae.manager.*",
+        "org.aurorae.sso.*",
 })
 @ComponentScan(basePackages = {
-        "org.aurorae.manager",
+        "org.aurorae.sso",
 })
 public class ManagerInitRunner implements ApplicationRunner {
 

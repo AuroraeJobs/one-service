@@ -1,6 +1,5 @@
 package org.aurorae.kafka.service.impl;
 
-import com.alibaba.dubbo.config.annotation.Service;
 import org.aurorae.mq.service.KafkaService;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
@@ -8,7 +7,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.Optional;
 
-@Service
 @Component
 public class KafkaServiceImpl implements KafkaService {
 

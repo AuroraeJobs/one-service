@@ -15,7 +15,7 @@ import java.util.List;
  * @author aurorae
  */
 @Slf4j
-@Component
+@Component("Auth_DictionaryClientHystrix")
 public class DictionaryClientHystrix implements FallbackFactory<DictionaryClient> {
 
     @Override

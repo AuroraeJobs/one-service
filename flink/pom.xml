@@ -29,7 +29,7 @@ under the License.
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<flink.version>1.13.0</flink.version>
+		<flink.version>1.14.4</flink.version>
 		<java.version>1.8</java.version>
 		<scala.binary.version>2.12</scala.binary.version>
 		<maven.compiler.source>${java.version}</maven.compiler.source>
@@ -104,8 +104,8 @@ under the License.
 		</dependency>
 		<dependency>
 			<groupId>org.apache.flink</groupId>
-			<artifactId>flink-table-planner-blink_${scala.binary.version}</artifactId>
-			<version>${flink.version}</version>
+			<artifactId>flink-table-planner-blink_2.12</artifactId>
+			<version>1.13.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.flink</groupId>
@@ -134,7 +134,7 @@ under the License.
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-log4j12</artifactId>
-			<version>1.7.7</version>
+			<version>1.7.36</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>

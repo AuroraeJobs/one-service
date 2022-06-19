@@ -1,6 +1,5 @@
 package org.aurorae.cwl.service.impl;
 
-import com.alibaba.dubbo.config.annotation.Service;
 import org.aurorae.common.excel.ExcelRow;
 import org.aurorae.common.excel.ExcelSheet;
 import org.aurorae.common.excel.ExcelWorkBook;
@@ -23,7 +22,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Service
 @Component
 public class CwlProServiceImpl implements CwlProService {
 

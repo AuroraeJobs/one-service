@@ -16,11 +16,16 @@
         <java.version>1.8</java.version>
     </properties>
     <dependencies>
+        <!-- Aurorae -->
         <dependency>
             <groupId>org.aurorae</groupId>
-            <artifactId>cwl-interface</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <scope>compile</scope>
+            <artifactId>cwl-model</artifactId>
+        </dependency>
+
+        <!-- Open Feign -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
         </dependency>
     </dependencies>
 

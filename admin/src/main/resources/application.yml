@@ -1,14 +1,4 @@
-server:
-  port: 8200
-
 spring:
-  application:
-    name: @project.artifactId@
-  profiles:
-    active:
-      - register
-      - monitor
-      - server
   boot:
     admin:
       context-path: ${MONITOR_CONTEXT_PATH:/}
@@ -19,9 +9,3 @@ spring:
   devtools:
     livereload:
       port: 35730
-
-logging:
-  level:
-    org.aurorae: DEBUG
-  file:
-    name: tmp/logs/center/monitor/${spring.application.name}.log

@@ -15,6 +15,10 @@
         <java.version>1.8</java.version>
     </properties>
     <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
         <!-- kafka -->
         <dependency>
             <groupId>org.springframework.kafka</groupId>
@@ -36,8 +40,6 @@
         <dependency>
             <groupId>org.aurorae</groupId>
             <artifactId>mq-interface</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <scope>compile</scope>
         </dependency>
     </dependencies>
 
@@ -50,5 +52,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>

@@ -1,4 +1,5 @@
 server:
+  port: ${SERVER_PORT}
   undertow:
     threads:
       io: 2
@@ -11,10 +12,16 @@ server:
     keep-alive-time: 5
 
 spring:
+  application:
+    name: ${SERVER_NAME}
   transaction:
     rollback-on-commit-failure: true
 
 logging:
+  level:
+    org.aurorae: DEBUG
+  file:
+    name: tmp/logs/${spring.application.name}/starter.log
   logback:
     rollingpolicy:
       max-history: 30

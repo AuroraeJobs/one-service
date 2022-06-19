@@ -1,7 +1,6 @@
 package org.aurorae.cwl.service.impl;
 
-import com.alibaba.dubbo.config.annotation.Service;
-import org.aurorae.cwl.client.CwlClient;
+import org.aurorae.cwl.client.CwlCli;
 import org.aurorae.cwl.client.CwlUrl;
 import org.aurorae.cwl.model.Cwl;
 import org.aurorae.cwl.request.CwlRequest;
@@ -17,7 +16,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Service
 @Component
 public class CwlServiceImpl implements CwlService {
 
@@ -108,6 +106,7 @@ public class CwlServiceImpl implements CwlService {
 
     @Override
     public List<CwlResult> getByCount(int issueCount) {
+        System.out.println(1/0);
         return request(new CwlRequest(issueCount)).getResult();
     }
 
@@ -146,6 +145,6 @@ public class CwlServiceImpl implements CwlService {
     }
 
     private CwlResponse request(CwlRequest request) {
-        return CwlClient.get(CwlUrl.findDrawNotice(), request, CwlResponse.class);
+        return CwlCli.get(CwlUrl.findDrawNotice(), request, CwlResponse.class);
     }
 }

@@ -1,0 +1,47 @@
+package org.aurorae.cwl.client;
+
+import org.aurorae.cwl.hystrix.CwlHystrix;
+import org.aurorae.cwl.model.Cwl;
+import org.aurorae.cwl.response.CwlResult;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+
+import java.util.List;
+
+@FeignClient(path = "cwl", name = "cwl", fallbackFactory = CwlHystrix.class)
+public interface CwlClient {
+
+    @GetMapping("/find/year/{year}")
+    List<Cwl> findByYear(@PathVariable String year);
+
+    @GetMapping("/find/echarts/{year}")
+    String echarts(@PathVariable String year);
+
+    @GetMapping("/find/desc")
+    Cwl findDesc();
+
+    @GetMapping("/find/asc")
+    Cwl findAsc();
+
+    @GetMapping("/get/{issueCount}")
+    List<CwlResult> getResultByCount(@PathVariable int issueCount);
+
+    @GetMapping("/get/issue/{start}/{end}")
+    List<CwlResult> getByIssue(@PathVariable String start, @PathVariable String end);
+
+    @GetMapping("/get/day/{start}/{end}")
+    List<CwlResult> getByDay(@PathVariable String start, @PathVariable String end);
+
+    @GetMapping("/save/{issueCount}")
+    int saveByCount(@PathVariable int issueCount);
+
+    @GetMapping("/save/issue/{start}/{end}")
+    int saveByIssue(@PathVariable String start, @PathVariable String end);
+
+    @GetMapping("/save/day/{start}/{end}")
+    int saveByDay(@PathVariable String start, @PathVariable String end);
+
+    @GetMapping("/save/year/{year}")
+    int saveByYear(@PathVariable String year);
+}

@@ -28,12 +28,12 @@ import java.util.List;
  * @author pnoker
  */
 @Slf4j
-@Component
+@Component("Manager_DictionaryClientHystrix")
 public class DictionaryClientHystrix implements FallbackFactory<DictionaryClient> {
 
     @Override
     public DictionaryClient create(Throwable throwable) {
-        String message = throwable.getMessage() == null ? "No available server for client: DC3-MANAGER" : throwable.getMessage();
+        String message = throwable.getMessage() == null ? "No available server for client: MANAGER" : throwable.getMessage();
         log.error("Hystrix:{}", message);
 
         return new DictionaryClient() {

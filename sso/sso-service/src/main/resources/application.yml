@@ -1,16 +1,4 @@
-server:
-  port: 8300
 spring:
-  application:
-    name: @project.artifactId@
-  profiles:
-    active:
-      - register
-      - monitor
-      - server
-      - mysql
-      - redis
-      - feign
   main:
     allow-bean-definition-overriding: true
   mvc:
@@ -23,9 +11,3 @@ spring:
   cache:
     redis:
       time-to-live: ${CACHE_REDIS_TIME_TO_LIVE:12H}
-
-logging:
-  level:
-    org.aurorae: DEBUG
-  file:
-    name: tmp/logs/center/auth/${spring.application.name}.log

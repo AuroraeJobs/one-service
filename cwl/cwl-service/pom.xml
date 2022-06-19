@@ -15,27 +15,41 @@
         <java.version>1.8</java.version>
     </properties>
     <dependencies>
+        <!-- Undertow Web 容器 -->
         <dependency>
-            <groupId>org.aurorae</groupId>
-            <artifactId>cwl-interface</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <scope>compile</scope>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-tomcat</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
-            <groupId>org.aurorae</groupId>
-            <artifactId>cwl-repository</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.aurorae</groupId>
-            <artifactId>core-interface</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <scope>compile</scope>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-undertow</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
+        </dependency>
+        <!-- Aurorae -->
+        <dependency>
+            <groupId>org.aurorae</groupId>
+            <artifactId>profiles</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.aurorae</groupId>
+            <artifactId>cwl-interface</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.aurorae</groupId>
+            <artifactId>cwl-repository</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.aurorae</groupId>
+            <artifactId>cwl-web</artifactId>
         </dependency>
     </dependencies>
 

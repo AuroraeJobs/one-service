@@ -1,6 +1,5 @@
 package org.aurorae.cwl.service.impl;
 
-import com.alibaba.dubbo.config.annotation.Service;
 import org.aurorae.common.model.BaseObject;
 import org.aurorae.cwl.model.*;
 import org.aurorae.cwl.service.CwlGuaService;
@@ -14,7 +13,6 @@ import javax.annotation.Resource;
 import java.util.Calendar;
 import java.util.Optional;
 
-@Service
 @Component
 public class CwlUpdateServiceImpl implements CwlUpdateService {
 

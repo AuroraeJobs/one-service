@@ -1,13 +1,11 @@
 package org.aurorae.cwl.service.impl;
 
-import com.alibaba.dubbo.config.annotation.Service;
 import org.aurorae.cwl.model.CwlGua;
 import org.aurorae.cwl.service.*;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 
-@Service
 @Component
 public class CwlGuaServiceImpl implements CwlGuaService {
 

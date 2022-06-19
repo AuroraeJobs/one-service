@@ -1,6 +1,5 @@
 package org.aurorae.cwl.service.impl;
 
-import com.alibaba.dubbo.config.annotation.Service;
 import org.aurorae.cwl.model.CwlRed4;
 import org.aurorae.cwl.repository.CwlRed4Repository;
 import org.aurorae.cwl.service.CwlRed4Service;
@@ -9,7 +8,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.List;
 
-@Service
 @Component
 public class CwlRed4ServiceImpl implements CwlRed4Service {
 

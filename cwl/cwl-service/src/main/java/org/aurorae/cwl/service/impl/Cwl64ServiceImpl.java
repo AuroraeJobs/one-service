@@ -1,6 +1,5 @@
 package org.aurorae.cwl.service.impl;
 
-import com.alibaba.dubbo.config.annotation.Service;
 import org.aurorae.cwl.model.Cwl64;
 import org.aurorae.cwl.repository.Cwl64Repository;
 import org.aurorae.cwl.service.Cwl64Service;
@@ -11,7 +10,6 @@ import javax.annotation.Resource;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Service
 @Component
 public class Cwl64ServiceImpl implements Cwl64Service {
 

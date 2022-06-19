@@ -1,21 +1,3 @@
-server:
-  port: 8100
-
-spring:
-  application:
-    name: @project.artifactId@
-  profiles:
-    active:
-      - register
-      - monitor
-      - server
-
-logging:
-  level:
-    org.aurorae: DEBUG
-  file:
-    name: tmp/logs/center/register/${spring.application.name}.log
-
 eureka:
   dashboard:
     path: ${EUREKA_DASHBOARD_PATH:/}

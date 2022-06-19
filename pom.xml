@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.aurorae</groupId>
-    <artifactId>aurorae-group</artifactId>
+    <artifactId>parent</artifactId>
     <version>1.0-SNAPSHOT</version>
     <name>${project.artifactId}</name>
     <inceptionYear>2020 - now</inceptionYear>
@@ -43,8 +43,6 @@
         <spring-cloud.version>2021.0.2</spring-cloud.version>
         <spring-platform.version>Cairo-SR8</spring-platform.version>
         <spring-boot-admin.version>2.6.7</spring-boot-admin.version>
-        <dubbo.starter.version>2.0.0</dubbo.starter.version>
-        <zkclient.version>0.10</zkclient.version>
         <mybatis.plus.version>3.5.1</mybatis.plus.version>
         <jwt.version>0.9.1</jwt.version>
         <guava.version>31.0.1-jre</guava.version>
@@ -222,6 +220,19 @@
                 <type>pom</type>
                 <scope>compile</scope>
             </dependency>
+            <!-- core -->
+            <dependency>
+                <groupId>org.aurorae</groupId>
+                <artifactId>core-model</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.aurorae</groupId>
+                <artifactId>core-interface</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
             <!-- sso -->
             <dependency>
                 <groupId>org.aurorae</groupId>
@@ -263,6 +274,37 @@
             <dependency>
                 <groupId>org.aurorae</groupId>
                 <artifactId>manager-client</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <!-- cwl -->
+            <dependency>
+                <groupId>org.aurorae</groupId>
+                <artifactId>cwl-model</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.aurorae</groupId>
+                <artifactId>cwl-repository</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.aurorae</groupId>
+                <artifactId>cwl-interface</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.aurorae</groupId>
+                <artifactId>cwl-web</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.aurorae</groupId>
+                <artifactId>mq-interface</artifactId>
                 <version>${project.version}</version>
                 <scope>compile</scope>
             </dependency>

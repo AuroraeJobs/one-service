@@ -1,7 +1,5 @@
 package org.aurorae.cwl.service.impl;
 
-import com.alibaba.dubbo.config.annotation.Service;
-import org.aurorae.cwl.model.Cwl;
 import org.aurorae.cwl.model.CwlValue;
 import org.aurorae.cwl.repository.CwlValueRepository;
 import org.aurorae.cwl.service.CwlService;
@@ -14,7 +12,6 @@ import javax.annotation.Resource;
 import java.util.Iterator;
 import java.util.List;
 
-@Service
 @Component
 public class CwlValueServiceImpl implements CwlValueService {
 

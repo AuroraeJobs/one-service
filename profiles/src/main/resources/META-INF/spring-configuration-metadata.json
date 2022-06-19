@@ -1,0 +1,89 @@
+{
+    "properties": [
+        {
+            "name": "server.thread.prefix",
+            "type": "java.lang.String",
+            "description": "Description for server.thread.prefix."
+        },
+        {
+            "name": "server.thread.core-pool-size",
+            "type": "java.lang.String",
+            "description": "Description for server.thread.core-pool-size."
+        },
+        {
+            "name": "server.thread.maximum-pool-size",
+            "type": "java.lang.String",
+            "description": "Description for server.thread.maximum-pool-size."
+        },
+        {
+            "name": "server.thread.keep-alive-time",
+            "type": "java.lang.String",
+            "description": "Description for server.thread.keep-alive-time."
+        },
+        {
+            "name": "db.database",
+            "type": "java.lang.String",
+            "description": "database type."
+        },
+
+        {
+            "name": "notice.smtp.server",
+            "type": "java.lang.String",
+            "description": "Description for notice.smtp.server."
+        },
+        {
+            "name": "notice.smtp.port",
+            "type": "java.lang.String",
+            "description": "Description for notice.smtp.port."
+        },
+        {
+            "name": "notice.smtp.need_login",
+            "type": "java.lang.String",
+            "description": "Description for notice.smtp.need_login."
+        },
+        {
+            "name": "notice.smtp.username",
+            "type": "java.lang.String",
+            "description": "Description for notice.smtp.username."
+        },
+        {
+            "name": "notice.smtp.password",
+            "type": "java.lang.String",
+            "description": "Description for notice.smtp.password."
+        },
+        {
+            "name": "notice.smtp.debug_mode",
+            "type": "java.lang.String",
+            "description": "Description for notice.smtp.debug_mode."
+        },
+        {
+            "name": "notice.smtp.image",
+            "type": "java.lang.String",
+            "description": "Description for notice.smtp.image."
+        },
+        {
+            "name": "notice.mail.mine_type",
+            "type": "java.lang.String",
+            "description": "Description for notice.mail.mine_type."
+        },
+        {
+            "name": "notice.mail.charset",
+            "type": "java.lang.String",
+            "description": "Description for notice.mail.charset."
+        },
+        {
+            "name": "notice.mail.from",
+            "type": "java.lang.String",
+            "description": "Description for notice.mail.from."
+        },
+        {
+            "name": "notice.admin_mail",
+            "type": "java.lang.String",
+            "description": "Description for notice.admin_mail."
+        },
+        {
+            "name": "notice.sms.dbName",
+            "type": "java.lang.String",
+            "description": "Description for notice.sms.dbName."
+        }
+    ] }

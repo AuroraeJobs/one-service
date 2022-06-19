@@ -1,18 +1,1 @@
-server:
-  port: 8082
-spring:
-  application:
-    name: @project.artifactId@
-  profiles:
-    active:
-      - mongo
-      - redis
-      - mysql
-  dubbo:
-    application:
-      name: kafka-service
-      registry: zookeeper://127.0.0.1:2181
-      qos-port: 22222
-    protocol:
-      name: dubbo
-      port: 20882
+
