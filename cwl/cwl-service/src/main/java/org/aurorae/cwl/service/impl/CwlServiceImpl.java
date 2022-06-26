@@ -106,7 +106,6 @@ public class CwlServiceImpl implements CwlService {
 
     @Override
     public List<CwlResult> getByCount(int issueCount) {
-        System.out.println(1/0);
         return request(new CwlRequest(issueCount)).getResult();
     }
 
