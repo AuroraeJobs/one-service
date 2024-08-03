@@ -1,6 +1,6 @@
 package org.aurorae.core.service;
 
-import org.aurorae.core.model.Xiang;
+import org.aurorae.core.model.X2;
 
 import java.util.List;
 
@@ -13,7 +13,7 @@ public interface XiangService {
      *
      * @return list
      */
-    List<Xiang> findAll();
+    List<X2> findAll();
 
     /**
      * save
@@ -21,5 +21,5 @@ public interface XiangService {
      * @param items 四象
      * @return 四象
      */
-    List<Xiang> save(List<Xiang> items);
+    List<X2> save(List<X2> items);
 }

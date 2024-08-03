@@ -20,6 +20,8 @@ class ProducerTest {
 
     @Test
     void sendTopic() {
-        producer.sendTopic("hello");
+        AlertEvent event = new AlertEvent();
+        event.setDomains("/0/5415451345313/4321142432132/");
+        producer.sendTopic(event);
     }
 }

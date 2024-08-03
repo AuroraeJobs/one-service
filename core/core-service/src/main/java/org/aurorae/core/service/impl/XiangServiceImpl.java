@@ -2,8 +2,8 @@ package org.aurorae.core.service.impl;
 
 import com.alibaba.dubbo.config.annotation.Service;
 import lombok.extern.slf4j.Slf4j;
-import org.aurorae.core.model.Xiang;
-import org.aurorae.core.model.Yi;
+import org.aurorae.core.model.X2;
+import org.aurorae.core.model.X1;
 import org.aurorae.core.repository.XiangRepository;
 import org.aurorae.core.service.XiangService;
 import org.aurorae.core.service.YiService;
@@ -28,16 +28,16 @@ public class XiangServiceImpl implements XiangService {
     private YiService yiService;
 
     @Override
-    public List<Xiang> findAll() {
+    public List<X2> findAll() {
         return repository.findAll();
     }
 
     @Override
-    public List<Xiang> save(List<Xiang> items) {
-        List<Yi> yis = yiService.findAll();
+    public List<X2> save(List<X2> items) {
+        List<X1> yis = yiService.findAll();
         return repository.saveAll(items.stream().peek(item -> {
-            item.setUp(yis.stream().filter(yi -> yi.getCode().equals(String.valueOf(item.getCode().charAt(0)))).findAny().orElse(null));
-            item.setLow(yis.stream().filter(yi -> yi.getCode().equals(String.valueOf(item.getCode().charAt(1)))).findAny().orElse(null));
+            item.setX1_0(yis.stream().filter(yi -> yi.getCode().equals(String.valueOf(item.getCode().charAt(0)))).findAny().orElse(null));
+            item.setX1_1(yis.stream().filter(yi -> yi.getCode().equals(String.valueOf(item.getCode().charAt(1)))).findAny().orElse(null));
         }).collect(Collectors.toList()));
     }
 }

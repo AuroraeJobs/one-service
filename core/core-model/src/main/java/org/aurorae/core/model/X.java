@@ -19,5 +19,5 @@ import java.io.Serializable;
  * 道生一，一生二，二生三，三生万物
  * 道生万物，道是虚无的
  */
-public class Dao implements Serializable {
+public class X implements Serializable {
 }

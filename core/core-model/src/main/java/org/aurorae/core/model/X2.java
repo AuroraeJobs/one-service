@@ -39,19 +39,23 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Document("Xiang")
-public class Xiang extends TaiJi {
+public class X2 extends XX {
 
     /**
      * 天位：处天位，行天道
      * 早晚，冷暖
      * 开天：清者自清，为天
      */
-    private Yi up;
+    private X1 x1_0;
 
     /**
      * 地位：行地道
      * 男女，老少
      * 辟地：浊者为地
      */
-    private Yi low;
+    private X1 x1_1;
+
+    public X2() {
+        super.setBit(2L);
+    }
 }

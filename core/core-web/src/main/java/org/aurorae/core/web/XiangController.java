@@ -2,10 +2,8 @@ package org.aurorae.core.web;
 
 import com.alibaba.dubbo.config.annotation.Reference;
 import lombok.extern.slf4j.Slf4j;
-import org.aurorae.core.model.Xiang;
-import org.aurorae.core.model.Yi;
+import org.aurorae.core.model.X2;
 import org.aurorae.core.service.XiangService;
-import org.aurorae.core.service.YiService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,12 +20,12 @@ public class XiangController {
     private XiangService service;
 
     @GetMapping
-    private List<Xiang> get() {
+    private List<X2> get() {
         return service.findAll();
     }
 
     @PostMapping
-    private List<Xiang> save(@RequestBody List<Xiang> items) {
+    private List<X2> save(@RequestBody List<X2> items) {
         return service.save(items);
     }
 }

@@ -33,11 +33,15 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Document("Yi")
-public class Yi extends TaiJi {
+public class X1 extends XX {
 
     /**
      * 阳 ——
      * 阴 --
      */
-    private TaiJi taiJi;
+    private XX xx;
+
+    public X1() {
+        super.setBit(1L);
+    }
 }

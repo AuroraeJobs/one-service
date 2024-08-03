@@ -1,8 +1,10 @@
 package org.aurorae.flink.util;
 
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
-import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
-import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer;
+import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
+import org.apache.flink.connector.kafka.sink.KafkaSink;
+import org.apache.flink.connector.kafka.source.KafkaSource;
+import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 
 import java.util.Properties;
 
@@ -22,11 +24,31 @@ public class KafkaUtil {
         return properties;
     }
 
-    public static FlinkKafkaConsumer<String> addSource() {
-        return new FlinkKafkaConsumer<>(CLICKS_TOPIC, new SimpleStringSchema(), getProperties());
+    public static KafkaSource<String> addSource(String topic) {
+        return KafkaSource.<String>builder()
+                .setBootstrapServers(BOOTSTRAP_SERVERS)
+                .setTopics(topic)
+                .setStartingOffsets(OffsetsInitializer.earliest())
+                .setValueOnlyDeserializer(new SimpleStringSchema())
+                .build();
     }
 
-    public static FlinkKafkaProducer<String> addSink() {
-        return new FlinkKafkaProducer<>(BOOTSTRAP_SERVERS, OUTPUT_TOPIC, new SimpleStringSchema());
+    public static <T> KafkaSource<T> addSource(String topic, Class<T> tClass) {
+        return KafkaSource.<T>builder()
+                .setBootstrapServers(BOOTSTRAP_SERVERS)
+                .setTopics(topic)
+                .setStartingOffsets(OffsetsInitializer.earliest())
+                .setValueOnlyDeserializer(new KafkaDeserializer<>(tClass))
+                .build();
+    }
+
+    public static <T> KafkaSink<T> addSink(String topic) {
+        return KafkaSink.<T>builder()
+                .setBootstrapServers(BOOTSTRAP_SERVERS)
+                .setRecordSerializer(KafkaRecordSerializationSchema.builder()
+                        .setTopic(topic)
+                        .setValueSerializationSchema(new KafkaSerializer<T>())
+                        .build())
+                .build();
     }
 }

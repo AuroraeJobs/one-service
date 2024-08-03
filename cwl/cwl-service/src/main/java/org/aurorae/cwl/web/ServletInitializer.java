@@ -1,5 +1,6 @@
 package org.aurorae.cwl.web;
 
+import org.aurorae.cwl.CwlServiceApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 
@@ -7,7 +8,7 @@ public class ServletInitializer extends SpringBootServletInitializer {
 
     @Override
     protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
-        return application.sources(CwlWebApplication.class);
+        return application.sources(CwlServiceApplication.class);
     }
 
 }

@@ -2,7 +2,7 @@ package org.aurorae.core.web;
 
 import com.alibaba.dubbo.config.annotation.Reference;
 import lombok.extern.slf4j.Slf4j;
-import org.aurorae.core.model.Gua64;
+import org.aurorae.core.model.X6;
 import org.aurorae.core.service.Gua64Service;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,17 +21,17 @@ public class Gua64Controller {
     private Gua64Service service;
 
     @GetMapping
-    private List<Gua64> get() {
+    private List<X6> get() {
         return service.findAll();
     }
 
     @PostMapping
-    private List<Gua64> save(@RequestBody List<Gua64> items) {
+    private List<X6> save(@RequestBody List<X6> items) {
         return service.save(items);
     }
 
     @PostMapping("save")
-    private List<Gua64> save(@RequestBody Gua64 item) {
+    private List<X6> save(@RequestBody X6 item) {
         return service.save(Collections.singletonList(item));
     }
 }

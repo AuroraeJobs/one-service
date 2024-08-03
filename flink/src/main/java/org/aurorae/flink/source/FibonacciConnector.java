@@ -10,8 +10,7 @@ public class FibonacciConnector {
         env.setParallelism(1);
         env.getConfig().setAutoWatermarkInterval(100);
         env.addSource(new Fibonacci())
-                .map(String::valueOf)
-                .addSink(KafkaUtil.addSink());
+                .sinkTo(KafkaUtil.addSink("test"));
         env.execute();
     }
 }

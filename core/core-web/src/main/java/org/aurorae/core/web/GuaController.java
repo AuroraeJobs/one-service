@@ -2,7 +2,7 @@ package org.aurorae.core.web;
 
 import com.alibaba.dubbo.config.annotation.Reference;
 import lombok.extern.slf4j.Slf4j;
-import org.aurorae.core.model.Gua;
+import org.aurorae.core.model.X3;
 import org.aurorae.core.service.GuaService;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,12 +20,12 @@ public class GuaController {
     private GuaService service;
 
     @GetMapping
-    private List<Gua> get() {
+    private List<X3> get() {
         return service.findAll();
     }
 
     @PostMapping
-    private List<Gua> save(@RequestBody List<Gua> items) {
+    private List<X3> save(@RequestBody List<X3> items) {
         return service.save(items);
     }
 }

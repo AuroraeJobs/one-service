@@ -32,7 +32,7 @@ public class ActiveMQConfig {
 
     @Bean
     public Topic topic() {
-        return new ActiveMQTopic("topic");
+        return new ActiveMQTopic("AlertEventMend");
     }
 
     @Bean

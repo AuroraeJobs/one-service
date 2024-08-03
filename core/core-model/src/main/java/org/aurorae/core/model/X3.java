@@ -21,9 +21,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Document("Gua")
-public class Gua extends TaiJi {
+public class X3 extends XX {
 
-    private Yi tian;
+    private X1 x1_0;
 
     /**
      * 人位：人道，为人之道
@@ -49,7 +49,11 @@ public class Gua extends TaiJi {
      * 人活着的意义大概如此
      * 平衡点，阴阳的互动
      */
-    private Yi ren;
+    private X1 x1_1;
 
-    private Yi di;
+    private X1 x1_2;
+
+    public X3() {
+        super.setBit(3L);
+    }
 }

@@ -21,37 +21,41 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Document("Gua64")
-public class Gua64 extends TaiJi {
+public class X6 extends XX {
 
     /**
      * 错综复杂
      */
-    private Long cuoId;
-    private Long zongId;
-    private Long fuId;
-    private Long zaId;
+    private Long cuo;
+    private Long zun;
+    private Long fu;
+    private Long za;
 
     /**
      * 六爻：每一爻均是太极生两仪中的一仪（或阴或阳）
      * 从下至上，初*、*二、*三、*四、*五，上*
      */
-    private Yi high;
-    private Yi five;
-    private Yi four;
-    private Yi three;
-    private Yi two;
-    private Yi start;
+    private X1 x1_0;
+    private X1 x1_1;
+    private X1 x1_2;
+    private X1 x1_3;
+    private X1 x1_4;
+    private X1 x1_5;
 
     /**
      * 分三段表示，每段是四象中的一象（每一象分up，low两个位）
      */
-    private Xiang tian;
-    private Xiang ren;
-    private Xiang di;
+    private X2 x2_0;
+    private X2 x2_1;
+    private X2 x2_2;
 
     /**
      * 分两段表示，每段是八卦中的一卦（每一卦分tian、di、ren三个位）
      */
-    private Gua up;
-    private Gua low;
+    private X3 x3_0;
+    private X3 x3_1;
+
+    public X6() {
+        super.setBit(6L);
+    }
 }

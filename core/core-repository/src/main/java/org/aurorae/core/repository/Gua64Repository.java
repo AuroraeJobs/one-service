@@ -1,10 +1,10 @@
 package org.aurorae.core.repository;
 
-import org.aurorae.core.model.Gua64;
+import org.aurorae.core.model.X6;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 /**
  * @author aurorae
  */
-public interface Gua64Repository extends MongoRepository<Gua64, Long> {
+public interface Gua64Repository extends MongoRepository<X6, Long> {
 }

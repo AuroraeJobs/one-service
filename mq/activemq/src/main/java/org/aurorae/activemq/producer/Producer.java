@@ -29,4 +29,9 @@ public class Producer {
         this.jmsMessagingTemplate.convertAndSend(this.topic, msg);
     }
 
+    public void sendTopic(Object msg) {
+        System.out.println("发送Topic消息内容 :"+msg);
+        this.jmsMessagingTemplate.convertAndSend(this.topic, msg);
+    }
+
 }

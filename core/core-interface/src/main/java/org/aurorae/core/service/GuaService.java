@@ -1,6 +1,6 @@
 package org.aurorae.core.service;
 
-import org.aurorae.core.model.Gua;
+import org.aurorae.core.model.X3;
 
 import java.util.List;
 
@@ -13,7 +13,7 @@ public interface GuaService {
      *
      * @return list
      */
-    List<Gua> findAll();
+    List<X3> findAll();
 
     /**
      * save
@@ -21,5 +21,5 @@ public interface GuaService {
      * @param items 八卦
      * @return 八卦
      */
-    List<Gua> save(List<Gua> items);
+    List<X3> save(List<X3> items);
 }

@@ -1,6 +1,6 @@
 package org.aurorae.core.service;
 
-import org.aurorae.core.model.Yi;
+import org.aurorae.core.model.X1;
 
 import java.util.List;
 
@@ -13,7 +13,7 @@ public interface YiService {
      *
      * @return list
      */
-    List<Yi> findAll();
+    List<X1> findAll();
 
     /**
      * save
@@ -21,5 +21,5 @@ public interface YiService {
      * @param items 两仪
      * @return 两仪
      */
-    List<Yi> save(List<Yi> items);
+    List<X1> save(List<X1> items);
 }

@@ -5,7 +5,10 @@ import lombok.EqualsAndHashCode;
 import org.aurorae.common.util.IdGenerator;
 import org.springframework.data.annotation.Id;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author aurorae
@@ -19,7 +22,7 @@ import java.util.Map;
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class TaiJi extends Dao {
+public class XX extends X {
 
     @Id
     private Long id;
@@ -81,6 +84,21 @@ public class TaiJi extends Dao {
     }
 
     public void setCode() {
-        this.code = String.format("%0" + bit + "d", (Long.parseLong(Long.toBinaryString(id))));
+        this.code = toBinaryString(id);
+    }
+
+    public long count() {
+        return (long) Math.pow(2, bit);
+    }
+
+    public String toBinaryString(Long id) {
+        return String.format("%0" + bit + "d", Long.parseLong(Long.toBinaryString(id)));
+    }
+
+    public List<String> allId() {
+        return Stream.iterate(0L, i -> i + 1)
+                .limit(this.count())
+                .map(this::toBinaryString)
+                .collect(Collectors.toList());
     }
 }
