@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.aurorae</groupId>
+        <artifactId>aurorae-manager</artifactId>
+        <version>1.0</version>
+    </parent>
+    <artifactId>aurorae-manager-service</artifactId>
+    <properties>
+        <java.version>1.8</java.version>
+    </properties>
+    <dependencies>
+        <!-- Aurorae -->
+        <dependency>
+            <groupId>com.aurorae</groupId>
+            <artifactId>aurorae-web</artifactId>
+            <type>pom</type>
+        </dependency>
+        <dependency>
+            <groupId>com.aurorae</groupId>
+            <artifactId>aurorae-manager-model</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.aurorae</groupId>
+            <artifactId>aurorae-manager-interface</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.aurorae</groupId>
+            <artifactId>aurorae-manager-repository</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.aurorae</groupId>
+            <artifactId>aurorae-manager-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.aurorae</groupId>
+            <artifactId>aurorae-sso-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.aurorae</groupId>
+            <artifactId>aurorae-config</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.amqp</groupId>
+            <artifactId>spring-amqp</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.amqp</groupId>
+            <artifactId>spring-rabbit</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring.boot.version}</version>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

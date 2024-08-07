@@ -4,9 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.aurorae</groupId>
-    <artifactId>parent</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <groupId>com.aurorae</groupId>
+    <artifactId>aurorae-service</artifactId>
+    <version>1.0</version>
     <name>${project.artifactId}</name>
     <inceptionYear>2020 - now</inceptionYear>
 
@@ -21,21 +21,21 @@
     <description>Aurorae for Spring Boot</description>
 
     <modules>
-        <module>common</module>
-        <module>manager</module>
-        <module>admin</module>
-        <module>alice</module>
-        <module>sso</module>
-        <module>blink</module>
-        <module>core</module>
-        <module>flink</module>
-        <module>cwl</module>
-        <module>mq</module>
-        <module>profiles</module>
-        <module>config</module>
-        <module>register</module>
-        <module>service</module>
-        <module>db</module>
+        <module>aurorae-admin</module>
+        <module>aurorae-alice</module>
+        <module>aurorae-blink</module>
+        <module>aurorae-common</module>
+        <module>aurorae-config</module>
+        <module>aurorae-core</module>
+        <module>aurorae-cwl</module>
+        <module>aurorae-database</module>
+        <module>aurorae-flink</module>
+        <module>aurorae-manager</module>
+        <module>aurorae-mq</module>
+        <module>aurorae-profiles</module>
+        <module>aurorae-register</module>
+        <module>aurorae-sso</module>
+        <module>aurorae-web</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -191,123 +191,144 @@
             <!-- Aurore -->
             <!-- base -->
             <dependency>
-                <groupId>org.aurorae</groupId>
-                <artifactId>common</artifactId>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-blink</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
             </dependency>
             <dependency>
-                <groupId>org.aurorae</groupId>
-                <artifactId>config</artifactId>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-blink-interface</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
             </dependency>
             <dependency>
-                <groupId>org.aurorae</groupId>
-                <artifactId>profiles</artifactId>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-blink-service</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
             </dependency>
             <dependency>
-                <groupId>org.aurorae</groupId>
-                <artifactId>admin</artifactId>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-common</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
             </dependency>
             <dependency>
-                <groupId>org.aurorae</groupId>
-                <artifactId>service</artifactId>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-config</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-profiles</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-admin</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-web</artifactId>
                 <version>${project.version}</version>
                 <type>pom</type>
-                <scope>compile</scope>
             </dependency>
             <!-- core -->
             <dependency>
-                <groupId>org.aurorae</groupId>
-                <artifactId>core-model</artifactId>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-core-model</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
             </dependency>
             <dependency>
-                <groupId>org.aurorae</groupId>
-                <artifactId>core-interface</artifactId>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-core-interface</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-core-repository</artifactId>
+                <version>${project.version}</version>
             </dependency>
             <!-- sso -->
             <dependency>
-                <groupId>org.aurorae</groupId>
-                <artifactId>sso-model</artifactId>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-sso</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
             </dependency>
             <dependency>
-                <groupId>org.aurorae</groupId>
-                <artifactId>sso-interface</artifactId>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-sso-client</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
             </dependency>
             <dependency>
-                <groupId>org.aurorae</groupId>
-                <artifactId>sso-client</artifactId>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-sso-interface</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-sso-model</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-sso-service</artifactId>
+                <version>${project.version}</version>
             </dependency>
             <!-- manager -->
             <dependency>
-                <groupId>org.aurorae</groupId>
-                <artifactId>manager-model</artifactId>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-manager-model</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
             </dependency>
             <dependency>
-                <groupId>org.aurorae</groupId>
-                <artifactId>manager-interface</artifactId>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-manager-interface</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
             </dependency>
             <dependency>
-                <groupId>org.aurorae</groupId>
-                <artifactId>manager-repository</artifactId>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-manager-repository</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
             </dependency>
             <dependency>
-                <groupId>org.aurorae</groupId>
-                <artifactId>manager-client</artifactId>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-manager-client</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
             </dependency>
             <!-- cwl -->
             <dependency>
-                <groupId>org.aurorae</groupId>
-                <artifactId>cwl-model</artifactId>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-cwl</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
             </dependency>
             <dependency>
-                <groupId>org.aurorae</groupId>
-                <artifactId>cwl-repository</artifactId>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-cwl-model</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
             </dependency>
             <dependency>
-                <groupId>org.aurorae</groupId>
-                <artifactId>cwl-interface</artifactId>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-cwl-repository</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
             </dependency>
             <dependency>
-                <groupId>org.aurorae</groupId>
-                <artifactId>cwl-web</artifactId>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-cwl-interface</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
             </dependency>
             <dependency>
-                <groupId>org.aurorae</groupId>
-                <artifactId>mq-interface</artifactId>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-cwl-web</artifactId>
                 <version>${project.version}</version>
-                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-mq-interface</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-database</artifactId>
+                <version>${project.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
