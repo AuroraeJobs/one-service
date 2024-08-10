@@ -1,8 +1,10 @@
 package org.aurorae.cwl.web;
 
 import lombok.extern.slf4j.Slf4j;
+import org.aurorae.cwl.client.CwlCli;
 import org.aurorae.cwl.client.CwlClient;
 import org.aurorae.cwl.model.Cwl;
+import org.aurorae.cwl.request.CwlRequest;
 import org.aurorae.cwl.response.CwlResult;
 import org.aurorae.cwl.service.CwlService;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -41,17 +43,17 @@ public class CwlController implements CwlClient {
 
     @Override
     public List<CwlResult> getResultByCount(int issueCount) {
-        return service.getByCount(issueCount);
+        return CwlCli.result(issueCount, CwlRequest::byCount);
     }
 
     @Override
     public List<CwlResult> getByIssue(String start, String end) {
-        return service.getByIssue(start, end);
+        return CwlCli.result(start, end, CwlRequest::byIssue);
     }
 
     @Override
     public List<CwlResult> getByDay(String start, String end) {
-        return service.getByDay(start, end);
+        return CwlCli.result(start, end, CwlRequest::byDay);
     }
 
     @Override

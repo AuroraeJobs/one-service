@@ -2,12 +2,22 @@ package org.aurorae.cwl.client;
 
 import okhttp3.*;
 import org.aurorae.common.util.JsonUtil;
+import org.aurorae.cwl.model.Cwl;
+import org.aurorae.cwl.request.CwlRequest;
+import org.aurorae.cwl.response.CwlResponse;
+import org.aurorae.cwl.response.CwlResult;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CwlCli {
 
@@ -28,6 +38,41 @@ public class CwlCli {
                 .addHeader("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36")
                 .addHeader("Cookie", "HMF_CI=" + COOKIE)
                 .build();
+    }
+
+    public static <Param> List<Cwl> resultCwl(Param param, Function<Param, CwlRequest> request) {
+        return resultCwl(() -> request.apply(param));
+    }
+
+    public static <P0, P1> List<Cwl> resultCwl(P0 p0, P1 p1, BiFunction<P0, P1, CwlRequest> request) {
+        return resultCwl(() -> request.apply(p0, p1));
+    }
+
+    public static List<Cwl> resultCwl(Supplier<CwlRequest> request) {
+        return Optional.ofNullable(result(request))
+                .map(items -> mapper(items, CwlResult::convertTo))
+                .orElse(null);
+    }
+
+    public static <Param> List<CwlResult> result(Param param, Function<Param, CwlRequest> request) {
+        return result(() -> request.apply(param));
+    }
+
+    public static <P0, P1> List<CwlResult> result(P0 p0, P1 p1, BiFunction<P0, P1, CwlRequest> request) {
+        return result(() -> request.apply(p0, p1));
+    }
+
+    public static List<CwlResult> result(Supplier<CwlRequest> request) {
+        return result(request.get());
+    }
+
+    public static List<CwlResult> result(CwlRequest request) {
+        CwlResponse response = get(request);
+        return response.success() ? response.getResult() : null;
+    }
+
+    public static CwlResponse get(CwlRequest request) {
+        return get(CwlUrl.findDrawNotice(), request, CwlResponse.class);
     }
 
     public static <T> T get(String url, Object request, Class<T> tClass) {
@@ -73,5 +118,27 @@ public class CwlCli {
             throw new RuntimeException(e);
         }
         return null;
+    }
+
+    public static <T> String joining(List<T> ts,
+                                     Function<T, String> mapper,
+                                     CharSequence delimiter,
+                                     CharSequence prefix,
+                                     CharSequence suffix) {
+        if (ts == null) {
+            return null;
+        }
+        try (Stream<T> stream = ts.stream()) {
+            return stream.map(mapper).collect(Collectors.joining(delimiter, prefix, suffix));
+        }
+    }
+
+    public static <T, R> List<R> mapper(List<T> ts, Function<T, R> mapper) {
+        if (ts == null) {
+            return null;
+        }
+        try (Stream<T> stream = ts.stream()) {
+            return stream.map(mapper).collect(Collectors.toList());
+        }
     }
 }

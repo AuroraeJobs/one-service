@@ -1,11 +1,9 @@
 package org.aurorae.cwl.service.impl;
 
 import org.aurorae.cwl.client.CwlCli;
-import org.aurorae.cwl.client.CwlUrl;
 import org.aurorae.cwl.model.Cwl;
-import org.aurorae.cwl.request.CwlRequest;
-import org.aurorae.cwl.response.CwlResponse;
 import org.aurorae.cwl.repository.CwlRepository;
+import org.aurorae.cwl.request.CwlRequest;
 import org.aurorae.cwl.response.CwlResult;
 import org.aurorae.cwl.service.CwlService;
 import org.springframework.stereotype.Component;
@@ -14,7 +12,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Component
 public class CwlServiceImpl implements CwlService {
@@ -25,9 +23,9 @@ public class CwlServiceImpl implements CwlService {
     @Override
     public String echarts(String year) {
         List<Cwl> all = findByYear(year);
-        System.out.println(all.stream().map(Cwl::getRed0).collect(Collectors.toList()));
-        System.out.println(all.stream().map(Cwl::getBlue).collect(Collectors.toList()));
-        return all.stream().map(Cwl::getDate).collect(Collectors.joining("', '", "'", "'"));
+        System.out.println(CwlCli.mapper(all, Cwl::getRed0));
+        System.out.println(CwlCli.mapper(all, Cwl::getBlue));
+        return CwlCli.joining(all, Cwl::getDate, "', '", "'", "'");
     }
 
     @Override
@@ -83,12 +81,12 @@ public class CwlServiceImpl implements CwlService {
 
     @Override
     public List<Cwl> getNewIssues(int issueCount) {
-        return getByCount(issueCount).stream().map(CwlResult::convertTo).collect(Collectors.toList());
+        return CwlCli.resultCwl(issueCount, CwlRequest::byCount);
     }
 
     @Override
     public List<Cwl> getIssues(String start, String end) {
-        return getByIssue(start, end).stream().map(CwlResult::convertTo).collect(Collectors.toList());
+        return CwlCli.resultCwl(start, end, CwlRequest::byIssue);
     }
 
     @Override
@@ -101,49 +99,43 @@ public class CwlServiceImpl implements CwlService {
 
     @Override
     public List<Cwl> getIssuesByDay(String start, String end) {
-        return getByDay(start, end).stream().map(CwlResult::convertTo).collect(Collectors.toList());
+        return CwlCli.resultCwl(start, end, CwlRequest::byDay);
     }
 
     @Override
     public List<CwlResult> getByCount(int issueCount) {
-        return request(new CwlRequest(issueCount)).getResult();
+        return CwlCli.result(issueCount, CwlRequest::byCount);
     }
 
     @Override
     public List<CwlResult> getByIssue(String start, String end) {
-        return request(new CwlRequest().setIssue(start, end)).getResult();
+        return CwlCli.result(start, end, CwlRequest::byIssue);
     }
 
     @Override
     public List<CwlResult> getByDay(String start, String end) {
-        return request(new CwlRequest().setDay(start, end)).getResult();
+        return CwlCli.result(start, end, CwlRequest::byDay);
     }
 
     @Override
     public int saveByCount(int issueCount) {
-        return saveByRequest(new CwlRequest(issueCount));
+        return saveByRequest(CwlRequest.byCount(issueCount));
     }
 
     @Override
     public int saveByIssue(String start, String end) {
-        return saveByRequest(new CwlRequest().setIssue(start, end));
+        return saveByRequest(CwlRequest.byIssue(start, end));
     }
 
     @Override
     public int saveByDay(String start, String end) {
-        return saveByRequest(new CwlRequest().setDay(start, end));
+        return saveByRequest(CwlRequest.byDay(start, end));
     }
 
     private int saveByRequest(CwlRequest request) {
-        CwlResponse response = request(request);
-        if (response.success()) {
-            saveAll(response.getResult().stream().map(CwlResult::convertTo).collect(Collectors.toList()));
-            return response.getResult().size();
-        }
-        return 0;
-    }
-
-    private CwlResponse request(CwlRequest request) {
-        return CwlCli.get(CwlUrl.findDrawNotice(), request, CwlResponse.class);
+        return Optional.ofNullable(CwlCli.resultCwl(() -> request))
+                .map(this::saveAll)
+                .map(List::size)
+                .orElse(0);
     }
 }

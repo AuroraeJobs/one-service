@@ -49,4 +49,16 @@ public class CwlRequest {
         this.dayEnd = dayEnd;
         return this;
     }
+
+    public static CwlRequest byCount(int issueCount) {
+        return new CwlRequest(issueCount);
+    }
+
+    public static CwlRequest byIssue(String issueStart, String issueEnd) {
+        return new CwlRequest().setIssue(issueStart, issueEnd);
+    }
+
+    public static CwlRequest byDay(String issueStart, String issueEnd) {
+        return new CwlRequest().setDay(issueStart, issueEnd);
+    }
 }

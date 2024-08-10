@@ -13,9 +13,18 @@ import java.io.Serializable;
 @AllArgsConstructor
 public class CwlPrizeGrade implements Serializable {
 
+    /**
+     * 几等奖
+     */
     private String type;
 
+    /**
+     * 中奖注数
+     */
     private String typenum;
 
+    /**
+     * 中奖金额
+     */
     private String typemoney;
 }
