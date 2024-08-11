@@ -2,6 +2,7 @@ package org.aurorae.cwl.client;
 
 import okhttp3.*;
 import org.aurorae.common.util.JsonUtil;
+import org.aurorae.common.util.StreamUtil;
 import org.aurorae.cwl.model.Cwl;
 import org.aurorae.cwl.request.CwlRequest;
 import org.aurorae.cwl.response.CwlResponse;
@@ -16,8 +17,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class CwlCli {
 
@@ -40,17 +39,17 @@ public class CwlCli {
                 .build();
     }
 
-    public static <Param> List<Cwl> resultCwl(Param param, Function<Param, CwlRequest> request) {
-        return resultCwl(() -> request.apply(param));
+    public static <Param> List<Cwl> request(Param param, Function<Param, CwlRequest> request) {
+        return request(() -> request.apply(param));
     }
 
-    public static <P0, P1> List<Cwl> resultCwl(P0 p0, P1 p1, BiFunction<P0, P1, CwlRequest> request) {
-        return resultCwl(() -> request.apply(p0, p1));
+    public static <P0, P1> List<Cwl> request(P0 p0, P1 p1, BiFunction<P0, P1, CwlRequest> request) {
+        return request(() -> request.apply(p0, p1));
     }
 
-    public static List<Cwl> resultCwl(Supplier<CwlRequest> request) {
+    public static List<Cwl> request(Supplier<CwlRequest> request) {
         return Optional.ofNullable(result(request))
-                .map(items -> mapper(items, CwlResult::convertTo))
+                .map(items -> StreamUtil.mapper(items, CwlResult::convertTo))
                 .orElse(null);
     }
 
@@ -118,27 +117,5 @@ public class CwlCli {
             throw new RuntimeException(e);
         }
         return null;
-    }
-
-    public static <T> String joining(List<T> ts,
-                                     Function<T, String> mapper,
-                                     CharSequence delimiter,
-                                     CharSequence prefix,
-                                     CharSequence suffix) {
-        if (ts == null) {
-            return null;
-        }
-        try (Stream<T> stream = ts.stream()) {
-            return stream.map(mapper).collect(Collectors.joining(delimiter, prefix, suffix));
-        }
-    }
-
-    public static <T, R> List<R> mapper(List<T> ts, Function<T, R> mapper) {
-        if (ts == null) {
-            return null;
-        }
-        try (Stream<T> stream = ts.stream()) {
-            return stream.map(mapper).collect(Collectors.toList());
-        }
     }
 }

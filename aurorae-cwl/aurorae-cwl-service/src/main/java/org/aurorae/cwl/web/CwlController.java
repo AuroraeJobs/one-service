@@ -1,11 +1,8 @@
 package org.aurorae.cwl.web;
 
 import lombok.extern.slf4j.Slf4j;
-import org.aurorae.cwl.client.CwlCli;
 import org.aurorae.cwl.client.CwlClient;
 import org.aurorae.cwl.model.Cwl;
-import org.aurorae.cwl.request.CwlRequest;
-import org.aurorae.cwl.response.CwlResult;
 import org.aurorae.cwl.service.CwlService;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -42,22 +39,17 @@ public class CwlController implements CwlClient {
     }
 
     @Override
-    public List<CwlResult> getResultByCount(int issueCount) {
-        return CwlCli.result(issueCount, CwlRequest::byCount);
+    public List<Cwl> getByCount(long issueCount) {
+        return service.getByCount(issueCount);
     }
 
     @Override
-    public List<CwlResult> getByIssue(String start, String end) {
-        return CwlCli.result(start, end, CwlRequest::byIssue);
+    public List<Cwl> getByIssue(String start, String end) {
+        return service.getByIssue(start, end);
     }
 
     @Override
-    public List<CwlResult> getByDay(String start, String end) {
-        return CwlCli.result(start, end, CwlRequest::byDay);
-    }
-
-    @Override
-    public int saveByCount(int issueCount) {
+    public int saveByCount(long issueCount) {
         return service.saveByCount(issueCount);
     }
 
@@ -67,12 +59,7 @@ public class CwlController implements CwlClient {
     }
 
     @Override
-    public int saveByDay(String start, String end) {
-        return service.saveByDay(start, end);
-    }
-
-    @Override
-    public int saveByYear(String year) {
-        return service.saveByIssue(year + "101", year + "200") + service.saveByIssue(year + "001", year + "100");
+    public int saveByYear(int year) {
+        return service.saveByYear(year);
     }
 }

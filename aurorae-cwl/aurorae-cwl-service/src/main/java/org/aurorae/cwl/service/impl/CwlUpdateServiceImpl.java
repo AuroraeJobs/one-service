@@ -1,6 +1,6 @@
 package org.aurorae.cwl.service.impl;
 
-import org.aurorae.common.model.BaseObject;
+import lombok.extern.slf4j.Slf4j;
 import org.aurorae.cwl.model.*;
 import org.aurorae.cwl.service.CwlGuaService;
 import org.aurorae.cwl.service.CwlService;
@@ -11,8 +11,9 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.Calendar;
-import java.util.Optional;
+import java.util.List;
 
+@Slf4j
 @Component
 public class CwlUpdateServiceImpl implements CwlUpdateService {
 
@@ -27,26 +28,34 @@ public class CwlUpdateServiceImpl implements CwlUpdateService {
 
     @Override
     public void update() {
-        long newId = cwlService.getNewIssue().getId();
+        Cwl nowIssue = cwlService.findDesc();
         // 如果当前没有数据，进行初始化
-        long nowId = Optional.ofNullable(cwlService.findDesc()).map(BaseObject::getId).orElseGet(this::init);
-        System.out.printf("new: %s, now: %s%n", newId, nowId);
-        int i = (int) (newId - nowId);
-        if (i > 0) {
+        if (nowIssue == null) {
+            init();
+            return;
+        }
+        long nowId = nowIssue.getId();
+        Cwl newIssue = cwlService.oneLast();
+        long newId = newIssue.getId();
+        long count = newId - nowId;
+        log.info("\n> new: {}, now: {}, count: {}", newId, nowId, count);
+        if (count > 0) {
             // 有数据的情况，进行增量更新
-            update(new CwlUpdater(cwlService.getNewIssues(i), guaService.findById(nowId), nowId));
+            List<Cwl> cwlList = cwlService.getByCount(count);
+            CwlGua gua = guaService.findById(nowId);
+            update(new CwlUpdater(cwlList, gua, nowId));
         }
     }
 
-    private long init() {
+    private void init() {
         System.out.println("----init----");
         CwlUpdater updater = new CwlUpdater();
         int year = Calendar.getInstance().get(Calendar.YEAR);
         // 初始化10年的数据（过去9年+当年）
         for (int i = year - 9; i <= year; i++) {
-            updater = update(updater.setCwlList(cwlService.getIssuesByYear(i)));
+            List<Cwl> cwlList = cwlService.allYear(i);
+            updater = update(updater.setCwlList(cwlList));
         }
-        return updater.getLastId();
     }
 
     private CwlUpdater update(CwlUpdater updater) {

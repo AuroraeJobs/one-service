@@ -3,7 +3,6 @@ package org.aurorae.cwl.request;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
 @Builder
@@ -12,7 +11,7 @@ public class CwlRequest {
 
     private String name;
 
-    private int issueCount;
+    private long issueCount;
 
     private String issueStart;
     private String issueEnd;
@@ -28,12 +27,12 @@ public class CwlRequest {
         this.name = name;
     }
 
-    public CwlRequest(int issueCount) {
+    public CwlRequest(long issueCount) {
         this.name = "ssq";
         this.issueCount = issueCount;
     }
 
-    public CwlRequest(String name, int issueCount) {
+    public CwlRequest(String name, long issueCount) {
         this.name = name;
         this.issueCount = issueCount;
     }
@@ -50,15 +49,19 @@ public class CwlRequest {
         return this;
     }
 
-    public static CwlRequest byCount(int issueCount) {
+    public static CwlRequest by(long issueCount) {
         return new CwlRequest(issueCount);
+    }
+
+    public static CwlRequest by(String start, String end) {
+        return start.length() == 7 ? byIssue(start, end) : byDay(start, end);
     }
 
     public static CwlRequest byIssue(String issueStart, String issueEnd) {
         return new CwlRequest().setIssue(issueStart, issueEnd);
     }
 
-    public static CwlRequest byDay(String issueStart, String issueEnd) {
-        return new CwlRequest().setDay(issueStart, issueEnd);
+    public static CwlRequest byDay(String dayStart, String dayEnd) {
+        return new CwlRequest().setDay(dayStart, dayEnd);
     }
 }

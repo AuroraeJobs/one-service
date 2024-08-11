@@ -3,7 +3,6 @@ package org.aurorae.cwl.hystrix;
 import lombok.extern.slf4j.Slf4j;
 import org.aurorae.cwl.client.CwlClient;
 import org.aurorae.cwl.model.Cwl;
-import org.aurorae.cwl.response.CwlResult;
 import org.springframework.cloud.openfeign.FallbackFactory;
 import org.springframework.stereotype.Component;
 
@@ -16,7 +15,7 @@ public class CwlHystrix implements FallbackFactory<CwlClient> {
 
     @Override
     public CwlClient create(Throwable cause) {
-        log.error("Hystrix:{}" + cause.getMessage());
+        log.error("Hystrix:{}", cause.getMessage());
         return new CwlClient() {
             @Override
             public List<Cwl> findByYear(String year) {
@@ -39,22 +38,17 @@ public class CwlHystrix implements FallbackFactory<CwlClient> {
             }
 
             @Override
-            public List<CwlResult> getResultByCount(int issueCount) {
+            public List<Cwl> getByCount(long issueCount) {
                 return Collections.emptyList();
             }
 
             @Override
-            public List<CwlResult> getByIssue(String start, String end) {
+            public List<Cwl> getByIssue(String start, String end) {
                 return Collections.emptyList();
             }
 
             @Override
-            public List<CwlResult> getByDay(String start, String end) {
-                return Collections.emptyList();
-            }
-
-            @Override
-            public int saveByCount(int issueCount) {
+            public int saveByCount(long issueCount) {
                 return 0;
             }
 
@@ -64,12 +58,7 @@ public class CwlHystrix implements FallbackFactory<CwlClient> {
             }
 
             @Override
-            public int saveByDay(String start, String end) {
-                return 0;
-            }
-
-            @Override
-            public int saveByYear(String year) {
+            public int saveByYear(int year) {
                 return 0;
             }
         };

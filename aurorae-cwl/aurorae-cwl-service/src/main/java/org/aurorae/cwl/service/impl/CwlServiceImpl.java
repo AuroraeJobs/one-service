@@ -1,15 +1,14 @@
 package org.aurorae.cwl.service.impl;
 
+import org.aurorae.common.util.StreamUtil;
 import org.aurorae.cwl.client.CwlCli;
 import org.aurorae.cwl.model.Cwl;
 import org.aurorae.cwl.repository.CwlRepository;
 import org.aurorae.cwl.request.CwlRequest;
-import org.aurorae.cwl.response.CwlResult;
 import org.aurorae.cwl.service.CwlService;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -23,9 +22,9 @@ public class CwlServiceImpl implements CwlService {
     @Override
     public String echarts(String year) {
         List<Cwl> all = findByYear(year);
-        System.out.println(CwlCli.mapper(all, Cwl::getRed0));
-        System.out.println(CwlCli.mapper(all, Cwl::getBlue));
-        return CwlCli.joining(all, Cwl::getDate, "', '", "'", "'");
+        System.out.println(StreamUtil.mapper(all, Cwl::getRed0));
+        System.out.println(StreamUtil.mapper(all, Cwl::getBlue));
+        return StreamUtil.joining(all, Cwl::getDate, "', '", "'", "'");
     }
 
     @Override
@@ -74,68 +73,47 @@ public class CwlServiceImpl implements CwlService {
         return repository.save(item);
     }
 
-    @Override
-    public Cwl getNewIssue() {
-        return getNewIssues(1).get(0);
+    private int saveByRequest(List<Cwl> items) {
+        return Optional.ofNullable(items)
+                .map(this::saveAll)
+                .map(List::size)
+                .orElse(0);
     }
 
     @Override
-    public List<Cwl> getNewIssues(int issueCount) {
-        return CwlCli.resultCwl(issueCount, CwlRequest::byCount);
-    }
-
-    @Override
-    public List<Cwl> getIssues(String start, String end) {
-        return CwlCli.resultCwl(start, end, CwlRequest::byIssue);
-    }
-
-    @Override
-    public List<Cwl> getIssuesByYear(int year) {
-        return new ArrayList<Cwl>() {{
-            addAll(getIssues(year + "001", year + "100"));
-            addAll(getIssues(year + "101", year + "200"));
-        }};
-    }
-
-    @Override
-    public List<Cwl> getIssuesByDay(String start, String end) {
-        return CwlCli.resultCwl(start, end, CwlRequest::byDay);
-    }
-
-    @Override
-    public List<CwlResult> getByCount(int issueCount) {
-        return CwlCli.result(issueCount, CwlRequest::byCount);
-    }
-
-    @Override
-    public List<CwlResult> getByIssue(String start, String end) {
-        return CwlCli.result(start, end, CwlRequest::byIssue);
-    }
-
-    @Override
-    public List<CwlResult> getByDay(String start, String end) {
-        return CwlCli.result(start, end, CwlRequest::byDay);
-    }
-
-    @Override
-    public int saveByCount(int issueCount) {
-        return saveByRequest(CwlRequest.byCount(issueCount));
+    public int saveByCount(long issueCount) {
+        return saveByRequest(getByCount(issueCount));
     }
 
     @Override
     public int saveByIssue(String start, String end) {
-        return saveByRequest(CwlRequest.byIssue(start, end));
+        return saveByRequest(getByIssue(start, end));
     }
 
     @Override
-    public int saveByDay(String start, String end) {
-        return saveByRequest(CwlRequest.byDay(start, end));
+    public int saveByYear(int year) {
+        return saveByRequest(allYear(year));
     }
 
-    private int saveByRequest(CwlRequest request) {
-        return Optional.ofNullable(CwlCli.resultCwl(() -> request))
-                .map(this::saveAll)
-                .map(List::size)
-                .orElse(0);
+    @Override
+    public Cwl oneLast() {
+        return getByCount(1).get(0);
+    }
+
+    @Override
+    public List<Cwl> allYear(int year) {
+        List<Cwl> issues = getByIssue(year + "001", year + "100");
+        issues.addAll(getByIssue(year + "101", year + "200"));
+        return issues;
+    }
+
+    @Override
+    public List<Cwl> getByCount(long issueCount) {
+        return CwlCli.request(issueCount, CwlRequest::by);
+    }
+
+    @Override
+    public List<Cwl> getByIssue(String start, String end) {
+        return CwlCli.request(start, end, CwlRequest::by);
     }
 }
