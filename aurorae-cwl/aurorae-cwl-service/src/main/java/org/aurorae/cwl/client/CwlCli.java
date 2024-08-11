@@ -49,7 +49,7 @@ public class CwlCli {
 
     public static List<Cwl> request(Supplier<CwlRequest> request) {
         return Optional.ofNullable(result(request))
-                .map(items -> StreamUtil.mapper(items, CwlResult::convertTo))
+                .map(items -> StreamUtil.toList(items, CwlResult::convertTo))
                 .orElse(null);
     }
 

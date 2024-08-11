@@ -1,6 +1,9 @@
 package org.aurorae.common.util;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -20,12 +23,45 @@ public class StreamUtil {
         }
     }
 
-    public static <T, R> List<R> mapper(List<T> ts, Function<T, R> mapper) {
+    public static <T, R> List<R> toList(List<T> ts,
+                                        Function<T, R> mapper) {
         if (ts == null) {
             return null;
         }
         try (Stream<T> stream = ts.stream()) {
             return stream.map(mapper).collect(Collectors.toList());
+        }
+    }
+
+    public static <T, K, V> Map<K, V> toMap(Collection<T> ts,
+                                            Function<T, K> keyMapper,
+                                            Function<T, V> valueMapper) {
+        if (ts == null) {
+            return null;
+        }
+        try (Stream<T> stream = ts.stream()) {
+            return stream.collect(Collectors.toMap(keyMapper, valueMapper, (v1, v2) -> v1));
+        }
+    }
+
+    public static <T, K, V> Map<K, V> toMap(T[] ts,
+                                            Function<T, K> keyMapper,
+                                            Function<T, V> valueMapper) {
+        if (ts == null) {
+            return null;
+        }
+        try (Stream<T> stream = Arrays.stream(ts)) {
+            return stream.collect(Collectors.toMap(keyMapper, valueMapper, (v1, v2) -> v1));
+        }
+    }
+
+    public static <T, K> Map<K, Long> groupingByCounting(List<T> ts,
+                                                         Function<T, K> keyMapper) {
+        if (ts == null) {
+            return null;
+        }
+        try (Stream<T> stream = ts.stream()) {
+            return stream.collect(Collectors.groupingBy(keyMapper, Collectors.counting()));
         }
     }
 }

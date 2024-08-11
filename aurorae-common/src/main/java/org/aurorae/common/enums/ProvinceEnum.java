@@ -2,10 +2,9 @@ package org.aurorae.common.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aurorae.common.util.StreamUtil;
 
-import java.util.Arrays;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Getter
 @AllArgsConstructor
@@ -38,59 +37,48 @@ public enum ProvinceEnum {
      * 7、西北地区：陕西省|61，甘肃省|62，青海省|63，宁夏回族自治区|64，新疆维吾尔自治区|65；
      * 8、特别地区：台湾地区(886)|83，香港特别行政区（852)|81，澳门特别行政区（853)|82。
      * 台京津冀晋蒙辽吉黑沪苏浙皖闽赣鲁豫鄂湘粤桂琼渝川黔滇藏陕甘青宁新港澳
+     * 京津冀、黑吉辽、江浙沪、鲁豫、云贵川渝、湘鄂、陕甘宁、港澳台
      */
-    // 京津冀
-    BJ(0, "北京", "京"),
-    TJ(1, "天津", "津"),
-    HEB(2, "河北", "冀"),
-    SX(3, "山西", "晋"),
-    NMG(4, "内蒙古", "蒙"),
-    // 黑吉辽
-    LN(5, "辽宁", "辽"),
-    JL(6, "吉林", "吉"),
-    HLJ(7, "黑龙江", "黑"),
-    // 江浙沪
-    SH(8, "上海", "沪"),
-    JS(9, "江苏", "苏"),
-    ZJ(10, "浙江", "浙"),
-    AH(11, "安徽", "皖"),
-    FJ(12, "福建", "闽"),
-    JX(13, "江西", "赣"),
-    // 鲁豫
-    SD(14, "山东", "鲁"),
-    HEN(15, "河南", "豫"),
-    // 湘鄂
-    HUB(16, "湖北", "鄂"),
-    HUN(17, "湖南", "湘"),
-    GD(18, "广东", "粤"),
-    GX(19, "广西", "桂"),
-    HN(20, "海南", "琼"),
-    // 川渝
-    CQ(21, "重庆", "渝"),
-    SC(22, "四川", "川"),
-    // 云贵
-    GZ(23, "贵州", "黔"),
-    YN(24, "云南", "滇"),
-    XZ(25, "西藏", "藏"),
-    // 陕甘宁
-    SHX(26, "陕西", "陕"),
-    GS(27, "甘肃", "甘"),
-    QH(28, "青海", "青"),
-    NX(29, "宁夏", "宁"),
-    XJ(30, "新疆", "新"),
-    // 港澳台
-    XG(31, "香港", "港"),
-    AM(32, "澳门", "澳"),
-    TW(33, "台湾", "台");
+    TW(0, "台湾", "台"),
+    BJ(1, "北京", "京"),
+    TJ(2, "天津", "津"),
+    HEB(3, "河北", "冀"),
+    SX(4, "山西", "晋"),
+    NMG(5, "内蒙古", "蒙"),
+    LN(6, "辽宁", "辽"),
+    JL(7, "吉林", "吉"),
+    HLJ(8, "黑龙江", "黑"),
+    SH(9, "上海", "沪"),
+    JS(10, "江苏", "苏"),
+    ZJ(11, "浙江", "浙"),
+    AH(12, "安徽", "皖"),
+    FJ(13, "福建", "闽"),
+    JX(14, "江西", "赣"),
+    SD(15, "山东", "鲁"),
+    HEN(16, "河南", "豫"),
+    HUB(17, "湖北", "鄂"),
+    HUN(18, "湖南", "湘"),
+    GD(19, "广东", "粤"),
+    GX(20, "广西", "桂"),
+    HN(21, "海南", "琼"),
+    CQ(22, "重庆", "渝"),
+    SC(23, "四川", "川"),
+    GZ(24, "贵州", "黔"),
+    YN(25, "云南", "滇"),
+    XZ(26, "西藏", "藏"),
+    SHX(27, "陕西", "陕"),
+    GS(28, "甘肃", "甘"),
+    QH(29, "青海", "青"),
+    NX(30, "宁夏", "宁"),
+    XJ(31, "新疆", "新"),
+    XG(32, "香港", "港"),
+    AM(33, "澳门", "澳");
 
-    private final int id;
+    private final long id;
     private final String name;
     private final String label;
 
-    public static Map<Integer, String> labelMap() {
-        return Arrays.stream(values()).collect(Collectors.toMap(
-                ProvinceEnum::getId,
-                ProvinceEnum::getLabel
-        ));
+    public static Map<Long, String> toMap() {
+        return StreamUtil.toMap(values(), ProvinceEnum::getId, ProvinceEnum::getLabel);
     }
 }

@@ -22,8 +22,8 @@ public class CwlServiceImpl implements CwlService {
     @Override
     public String echarts(String year) {
         List<Cwl> all = findByYear(year);
-        System.out.println(StreamUtil.mapper(all, Cwl::getRed0));
-        System.out.println(StreamUtil.mapper(all, Cwl::getBlue));
+        System.out.println(StreamUtil.toList(all, Cwl::getRed0));
+        System.out.println(StreamUtil.toList(all, Cwl::getBlue));
         return StreamUtil.joining(all, Cwl::getDate, "', '", "'", "'");
     }
 

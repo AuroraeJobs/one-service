@@ -22,7 +22,6 @@
 
     <modules>
         <module>aurorae-admin</module>
-        <module>aurorae-gateway</module>
         <module>aurorae-blink</module>
         <module>aurorae-common</module>
         <module>aurorae-config</module>
@@ -30,6 +29,7 @@
         <module>aurorae-cwl</module>
         <module>aurorae-database</module>
         <module>aurorae-flink</module>
+        <module>aurorae-gateway</module>
         <module>aurorae-manager</module>
         <module>aurorae-mq</module>
         <module>aurorae-profiles</module>
