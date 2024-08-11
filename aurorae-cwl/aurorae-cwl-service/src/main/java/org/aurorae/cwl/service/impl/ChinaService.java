@@ -21,12 +21,12 @@ public class ChinaService implements IChinaService {
     private CwlService cwlService;
 
     @Override
-    public Collection<Province> blue(String year) {
+    public Collection<Province> color(String color, String year) {
         List<Cwl> cwlList = cwlService.findByYear(year);
-        List<Integer> list = StreamUtil.toList(cwlList, Cwl::getBlue);
-        Map<Integer, Long> integerLongMap = StreamUtil.groupingByCounting(list, Function.identity());
+        List<Integer> list = "blue".equals(color) ? StreamUtil.toList(cwlList, Cwl::getBlue) : StreamUtil.flatList(cwlList, Cwl::getRed);
+        Map<Integer, Long> counting = StreamUtil.groupingByCounting(list, Function.identity());
         China one = China.one();
-        one.count(integerLongMap);
+        one.count(counting);
         return one.getProvinceMap().values();
     }
 }

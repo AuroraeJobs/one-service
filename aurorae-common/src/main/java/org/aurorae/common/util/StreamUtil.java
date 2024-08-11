@@ -1,9 +1,6 @@
 package org.aurorae.common.util;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -30,6 +27,16 @@ public class StreamUtil {
         }
         try (Stream<T> stream = ts.stream()) {
             return stream.map(mapper).collect(Collectors.toList());
+        }
+    }
+
+    public static <T, R> List<R> flatList(List<T> ts,
+                                        Function<T, List<R>> mapper) {
+        if (ts == null) {
+            return null;
+        }
+        try (Stream<T> stream = ts.stream()) {
+            return stream.map(mapper).filter(Objects::nonNull).flatMap(Collection::stream).collect(Collectors.toList());
         }
     }
 

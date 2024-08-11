@@ -18,8 +18,8 @@ public class ChinaController {
     @Resource
     private IChinaService chinaService;
 
-    @GetMapping("/blue/year/{year}")
-    public Map<String, Long> blue(@PathVariable String year) {
-        return StreamUtil.toMap(chinaService.blue(year), Province::getName, Province::getCount);
+    @GetMapping("/{color}/year/{year}")
+    public Map<String, Long> color(@PathVariable String color, @PathVariable String year) {
+        return StreamUtil.toMap(chinaService.color(color, year), Province::getName, Province::getCount);
     }
 }

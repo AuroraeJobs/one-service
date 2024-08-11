@@ -6,5 +6,5 @@ import java.util.Collection;
 
 public interface IChinaService {
 
-    Collection<Province> blue(String year);
+    Collection<Province> color(String color, String year);
 }
