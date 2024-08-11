@@ -22,7 +22,7 @@
 
     <modules>
         <module>aurorae-admin</module>
-        <module>aurorae-alice</module>
+        <module>aurorae-gateway</module>
         <module>aurorae-blink</module>
         <module>aurorae-common</module>
         <module>aurorae-config</module>
