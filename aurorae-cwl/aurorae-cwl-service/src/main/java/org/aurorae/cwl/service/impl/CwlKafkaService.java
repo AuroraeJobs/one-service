@@ -9,7 +9,7 @@ import javax.annotation.Resource;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Component
+//@Component
 public class CwlKafkaService implements CommandLineRunner {
 
     @Resource

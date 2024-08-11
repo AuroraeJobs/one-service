@@ -19,11 +19,11 @@
     </properties>
 
     <dependencies>
-        <!-- Spring Cloud Eureka -->
+        <!-- Spring Cloud Eureka
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
-        </dependency>
+        </dependency>-->
 
         <!-- Spring Admin -->
         <dependency>
