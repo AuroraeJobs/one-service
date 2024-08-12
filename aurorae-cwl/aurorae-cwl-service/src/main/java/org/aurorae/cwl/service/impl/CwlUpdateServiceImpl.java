@@ -1,6 +1,8 @@
 package org.aurorae.cwl.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import org.aurorae.common.model.BaseObject;
+import org.aurorae.common.util.StreamUtil;
 import org.aurorae.cwl.model.*;
 import org.aurorae.cwl.service.CwlGuaService;
 import org.aurorae.cwl.service.CwlService;
@@ -41,7 +43,8 @@ public class CwlUpdateServiceImpl implements CwlUpdateService {
         log.info("\n> new: {}, now: {}, count: {}", newId, nowId, count);
         if (count > 0) {
             // 有数据的情况，进行增量更新
-            List<Cwl> cwlList = cwlService.getByCount(count);
+            List<Cwl> cwlList = cwlService.getByIssue(String.valueOf(nowId + 1), String.valueOf(newId));
+            log.info("\n> {}", StreamUtil.toList(cwlList, BaseObject::getId));
             CwlGua gua = guaService.findById(nowId);
             update(new CwlUpdater(cwlList, gua, nowId));
         }

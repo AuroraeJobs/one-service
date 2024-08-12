@@ -102,8 +102,8 @@ public class CwlServiceImpl implements CwlService {
 
     @Override
     public List<Cwl> allYear(int year) {
-        List<Cwl> issues = getByIssue(year + "001", year + "100");
-        issues.addAll(getByIssue(year + "101", year + "200"));
+        List<Cwl> issues = getByIssue(year + "0101", year + "0630");
+        issues.addAll(getByIssue(year + "0701", year + "1231"));
         return issues;
     }
 
