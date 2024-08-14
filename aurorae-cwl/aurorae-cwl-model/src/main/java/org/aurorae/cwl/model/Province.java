@@ -1,7 +1,7 @@
 package org.aurorae.cwl.model;
 
 import lombok.*;
-import org.aurorae.common.enums.ProvinceEnum;
+import org.aurorae.common.enums.IProvince;
 
 import java.util.function.Function;
 
@@ -10,25 +10,28 @@ import java.util.function.Function;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Province {
+public class Province implements IProvince {
 
-    private long id;
+    private int id;
 
     private String name;
 
+    private String label;
+
     private long count;
 
-    public Province(long id, String name) {
+    public Province(int id, String name, String label) {
         this.id = id;
         this.name = name;
+        this.label = label;
     }
 
-    public static Province one(long id, String name) {
-        return new Province(id, name);
+    public static Province one(int id, String name, String label) {
+        return new Province(id, name, label);
     }
 
-    public static Function<ProvinceEnum, Province> enumOf() {
-        return anEnum -> Province.one(anEnum.getId(), anEnum.getLabel());
+    public static <P extends IProvince> Function<P, Province> enumOf() {
+        return item -> Province.one(item.getId(), item.getName(), item.getLabel());
     }
 
     public void increase() {

@@ -8,7 +8,7 @@ import java.util.Map;
 
 @Getter
 @AllArgsConstructor
-public enum ProvinceEnum {
+public enum InlandProvince implements IProvince {
 
     /**
      * 11       北京市          43       湖南省
@@ -39,7 +39,6 @@ public enum ProvinceEnum {
      * 台京津冀晋蒙辽吉黑沪苏浙皖闽赣鲁豫鄂湘粤桂琼渝川黔滇藏陕甘青宁新港澳
      * 京津冀、黑吉辽、江浙沪、鲁豫、云贵川渝、湘鄂、陕甘宁、港澳台
      */
-    TW(0, "台湾", "台"),
     BJ(1, "北京", "京"),
     TJ(2, "天津", "津"),
     HEB(3, "河北", "冀"),
@@ -74,11 +73,11 @@ public enum ProvinceEnum {
     XG(32, "香港", "港"),
     AM(33, "澳门", "澳");
 
-    private final long id;
+    private final int id;
     private final String name;
     private final String label;
 
-    public static Map<Long, String> toMap() {
-        return StreamUtil.toMap(values(), ProvinceEnum::getId, ProvinceEnum::getLabel);
+    public static Map<Integer, String> toMap() {
+        return StreamUtil.toMap(values(), InlandProvince::getId, InlandProvince::getLabel);
     }
 }
