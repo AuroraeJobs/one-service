@@ -4,9 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import org.aurorae.common.enums.IProvince;
-import org.aurorae.common.enums.IslandProvince;
 import org.aurorae.common.enums.InlandProvince;
+import org.aurorae.common.enums.IslandProvince;
 import org.aurorae.common.util.StreamUtil;
 
 import java.util.List;
@@ -31,8 +30,8 @@ public class China {
     private Map<Integer, Province> island;
 
     public China() {
-        this.inland = StreamUtil.toMap(InlandProvince.values(), IProvince::getId, Province.enumOf());
-        this.island = StreamUtil.toMap(IslandProvince.values(), IProvince::getId, Province.enumOf());
+        this.inland = Province.toMap(InlandProvince.values());
+        this.island = Province.toMap(IslandProvince.values());
     }
 
     public static China one() {

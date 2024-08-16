@@ -76,8 +76,4 @@ public enum InlandProvince implements IProvince {
     private final int id;
     private final String name;
     private final String label;
-
-    public static Map<Integer, String> toMap() {
-        return StreamUtil.toMap(values(), InlandProvince::getId, InlandProvince::getLabel);
-    }
 }

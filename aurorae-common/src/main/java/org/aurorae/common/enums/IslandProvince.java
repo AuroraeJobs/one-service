@@ -8,24 +8,28 @@ import lombok.Getter;
 public enum IslandProvince implements IProvince {
 
     /**
-     * 刀、枪、剑、戟、斧、钺、钩、叉、镗、槊、棍、棒、鞭、锏、锤、抓、拐子、流星。
+     * 二十四 节气
+     * 立春，春分
+     * 立夏，夏至
+     * 立秋，秋分
+     * 立冬，冬至
      */
-    D(1, "夏朝", "刀"),
-    Q(2, "商朝", "枪"),
-    N(3, "周朝", "剑"),
-    I(4, "春秋", "戟"),
-    F(5, "战国", "斧"),
-    Y(6, "秦朝", "钺"),
-    G(7, "汉朝", "钩"),
-    C(8, "三国", "叉"),
-    T(9, "晋朝", "镗"),
-    S(10, "南北", "槊"),
-    U(11, "隋朝", "棍"),
-    B(12, "唐朝", "棒"),
-    A(13, "宋朝", "鞭"),
-    J(14, "元朝", "锏"),
-    H(15, "明朝", "锤"),
-    Z(16, "清朝", "抓");
+    YS(1, "Rain Water", "雨水"),
+    JC(2, "Awakening of Insects", "惊蛰"),
+    QM(3, "Clear and Bright", "清明"),
+    GY(4, "Grain Rain", "谷雨"),
+    XM(5, "Grain Full", "小满"),
+    MZ(6, "Grain in Ear", "芒种"),
+    XS(7, "Minor Heat", "小暑"),
+    DS(8, "Major Heat", "大暑"),
+    CS(9, "Limit of Heat", "处暑"),
+    BL(10, "White Dew", "白露"),
+    HL(11, "Cold Dew", "寒露"),
+    SJ(12, "Frost's Descent", "霜降"),
+    XX(13, "Minor Snow", "小雪"),
+    DX(14, "Major Snow", "大雪"),
+    XH(15, "Minor Cold", "小寒"),
+    DH(16, "Major Cold", "大寒");
 
     private final int id;
     private final String name;
