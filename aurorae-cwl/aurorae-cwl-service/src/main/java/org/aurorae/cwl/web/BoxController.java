@@ -1,7 +1,7 @@
 package org.aurorae.cwl.web;
 
-import org.aurorae.cwl.model.China;
-import org.aurorae.cwl.service.IChinaService;
+import org.aurorae.cwl.model.Box;
+import org.aurorae.cwl.service.IBoxService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -10,14 +10,14 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 
 @RestController
-@RequestMapping("china")
-public class ChinaController {
+@RequestMapping("box")
+public class BoxController {
 
     @Resource
-    private IChinaService chinaService;
+    private IBoxService boxService;
 
     @GetMapping("{year}")
-    public China year(@PathVariable String year) {
-        return chinaService.year(year);
+    public Box year(@PathVariable String year) {
+        return boxService.year(year);
     }
 }

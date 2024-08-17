@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum Weapons implements IProvince {
+public enum Weapons {
 
     /**
      * 刀、枪、剑、戟、斧、钺、钩、叉、镗、槊、棍、棒、鞭、锏、锤、抓、拐子、流星。

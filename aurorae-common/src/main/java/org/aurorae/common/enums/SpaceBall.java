@@ -2,13 +2,10 @@ package org.aurorae.common.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.aurorae.common.util.StreamUtil;
-
-import java.util.Map;
 
 @Getter
 @AllArgsConstructor
-public enum InlandProvince implements IProvince {
+public enum SpaceBall implements IBall {
 
     /**
      * 11       北京市          43       湖南省

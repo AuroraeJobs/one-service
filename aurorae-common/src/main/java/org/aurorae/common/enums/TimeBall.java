@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum IslandProvince implements IProvince {
+public enum TimeBall implements IBall {
 
     /**
      * 二十四 节气

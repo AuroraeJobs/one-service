@@ -1,6 +1,6 @@
 package org.aurorae.common.enums;
 
-public interface IProvince {
+public interface IBall {
 
     int getId();
 
