@@ -4,9 +4,8 @@ import lombok.*;
 import org.aurorae.common.enums.IBall;
 import org.aurorae.common.util.StreamUtil;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -23,11 +22,9 @@ public class Ball implements IBall {
 
     private String label;
 
-    // 出现几次的所在期数
-    private Map<Integer, Integer> counts = new HashMap<>();
+    private int count;
 
-    // 每期出现次数的比率
-    private Map<Integer, Double> rates = new HashMap<>();
+    private List<BallRate> rates = new ArrayList<>();
 
     public Ball(int id, String name, String label) {
         this.id = id;
@@ -47,11 +44,11 @@ public class Ball implements IBall {
         return StreamUtil.toMap(balls, IBall::getId, Ball.ballOf());
     }
 
-    public void increase(int i) {
-        this.counts.put(this.counts.size() + 1, i);
+    public void increase() {
+        this.count++;
     }
 
-    public void rate(int i) {
-        this.rates.put(i, BigDecimal.valueOf(this.counts.size()).divide(BigDecimal.valueOf(i * 6L), 6, RoundingMode.HALF_UP).doubleValue());
+    public void rate(int i, long ratio) {
+        this.rates.add(BallRate.one(i, this.count, ratio));
     }
 }

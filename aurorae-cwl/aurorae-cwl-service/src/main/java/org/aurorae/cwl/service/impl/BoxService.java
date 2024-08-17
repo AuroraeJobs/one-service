@@ -24,14 +24,14 @@ public class BoxService implements IBoxService {
             Cwl cwl = cwlList.get(i);
             int is = i + 1;
             for (Integer id : cwl.getRed()) {
-                box.space(id).increase(is);
+                box.space(id).increase();
             }
-            box.time(cwl.getBlue()).increase(is);
+            box.time(cwl.getBlue()).increase();
             for (Ball ball : box.getSpace().values()) {
-                ball.rate(is);
+                ball.rate(is, 6);
             }
             for (Ball ball : box.getTime().values()) {
-                ball.rate(is);
+                ball.rate(is, 1);
             }
         }
         return box;
