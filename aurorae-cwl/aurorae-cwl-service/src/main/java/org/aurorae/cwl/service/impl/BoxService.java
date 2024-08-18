@@ -25,14 +25,15 @@ public class BoxService implements IBoxService {
                 int space = Integer.parseInt(js);
                 box.space(space).increase();
             }
+            int i1 = i + 1;
             for (Ball ball : box.getSpace().values()) {
-                ball.rate(i, spaceLength);
+                ball.rate(i1, spaceLength);
             }
             if (spaceLength * length < issueLength) {
                 int time = Integer.parseInt(substring(is, spaceLength, length));
                 box.time(time).increase();
                 for (Ball ball : box.getTime().values()) {
-                    ball.rate(i, 1);
+                    ball.rate(i1, 1);
                 }
             }
         }
