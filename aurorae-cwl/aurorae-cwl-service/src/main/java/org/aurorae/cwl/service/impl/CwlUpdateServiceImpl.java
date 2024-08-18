@@ -1,24 +1,27 @@
 package org.aurorae.cwl.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
-import org.aurorae.common.model.BaseObject;
 import org.aurorae.common.util.StreamUtil;
 import org.aurorae.cwl.client.CwlWriter;
-import org.aurorae.cwl.model.*;
-import org.aurorae.cwl.service.CwlGuaService;
-import org.aurorae.cwl.service.CwlService;
-import org.aurorae.cwl.service.CwlUpdateService;
-import org.aurorae.cwl.service.CwlValueService;
+import org.aurorae.cwl.model.Cwl;
+import org.aurorae.cwl.model.CwlGua;
+import org.aurorae.cwl.response.CwlResult;
+import org.aurorae.cwl.service.*;
 import org.aurorae.cwl.vo.CwlUpdater;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 @Slf4j
 @Component
 public class CwlUpdateServiceImpl implements CwlUpdateService {
+
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
     @Resource
     private CwlService cwlService;
@@ -29,24 +32,41 @@ public class CwlUpdateServiceImpl implements CwlUpdateService {
     @Resource
     private CwlGuaService guaService;
 
+    @Resource
+    private ICwlResultService resultService;
+
     @Override
     public void update() {
-        Cwl nowIssue = cwlService.findDesc();
+        CwlResult nowIssue = resultService.findDesc();
         // 如果当前没有数据，进行初始化
         if (nowIssue == null) {
             init();
             return;
         }
-        long nowId = nowIssue.getId();
-        Cwl newIssue = cwlService.oneLast();
-        long newId = newIssue.getId();
-        long count = newId - nowId;
-        log.info("\n> new: {}, now: {}, count: {}", newId, nowId, count);
-        if (count > 0) {
+        String now = nowIssue.getDate().substring(0, 10);
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        Date endTime = calendar.getTime();
+        String end = dateFormat.format(endTime);
+        try {
+            calendar.setTime(dateFormat.parse(now));
+            // 如果是周四+3天，如果是周二或者周日+2天
+            calendar.add(Calendar.DAY_OF_MONTH, calendar.get(Calendar.WEEK_OF_MONTH) == 3 ? 3 : 2);
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+        Date startTime = calendar.getTime();
+        String start = dateFormat.format(startTime);
+        log.info("\n> now: {}, start: {}, end: {}, before: {}", now, startTime, endTime, endTime.after(startTime));
+        if (endTime.after(startTime)) {
             // 有数据的情况，进行增量更新
-            List<Cwl> cwlList = cwlService.getByIssue(String.valueOf(nowId + 1), String.valueOf(newId));
-            log.info("\n> {}", StreamUtil.toList(cwlList, BaseObject::getId));
+            List<CwlResult> cwlList = resultService.getByIssue(start, end);
+            log.info("\n> {}", StreamUtil.toList(cwlList, CwlResult::getCode));
             CwlWriter.write(cwlList);
+            long nowId = Long.parseLong(nowIssue.getCode());
             CwlGua gua = guaService.findById(nowId);
             update(new CwlUpdater(cwlList, gua, nowId));
         }
@@ -55,10 +75,9 @@ public class CwlUpdateServiceImpl implements CwlUpdateService {
     private void init() {
         System.out.println("----init----");
         CwlUpdater updater = new CwlUpdater();
-        int year = Calendar.getInstance().get(Calendar.YEAR);
         // 初始化10年的数据（过去9年+当年）
-        for (int i = year - 9; i <= year; i++) {
-            List<Cwl> cwlList = cwlService.allYear(i);
+        for (int year = 2013; year <= Calendar.getInstance().get(Calendar.YEAR); year++) {
+            List<CwlResult> cwlList = resultService.allYear(year);
             updater = update(updater.setCwlList(cwlList));
         }
     }
@@ -72,6 +91,7 @@ public class CwlUpdateServiceImpl implements CwlUpdateService {
         }
         valueService.saveAll(updater.getCwlValues());
         cwlService.saveAll(updater.getNewList());
+        resultService.saveAll(updater.getResultList());
         return updater;
     }
 }

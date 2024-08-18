@@ -4,7 +4,6 @@ import org.aurorae.common.util.StreamUtil;
 import org.aurorae.cwl.client.CwlCli;
 import org.aurorae.cwl.model.Cwl;
 import org.aurorae.cwl.repository.CwlRepository;
-import org.aurorae.cwl.request.CwlRequest;
 import org.aurorae.cwl.service.CwlService;
 import org.springframework.stereotype.Component;
 
@@ -102,18 +101,18 @@ public class CwlServiceImpl implements CwlService {
 
     @Override
     public List<Cwl> allYear(int year) {
-        List<Cwl> issues = getByIssue(year + "0101", year + "0630");
-        issues.addAll(getByIssue(year + "0701", year + "1231"));
+        List<Cwl> issues = getByIssue(year + "-01-01", year + "-06-30");
+        issues.addAll(getByIssue(year + "-07-01", year + "-12-31"));
         return issues;
     }
 
     @Override
     public List<Cwl> getByCount(long issueCount) {
-        return CwlCli.request(issueCount, CwlRequest::by);
+        return CwlCli.request(issueCount);
     }
 
     @Override
     public List<Cwl> getByIssue(String start, String end) {
-        return CwlCli.request(start, end, CwlRequest::by);
+        return CwlCli.request(start, end);
     }
 }

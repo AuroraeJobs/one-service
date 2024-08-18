@@ -1,6 +1,8 @@
 package org.aurorae.cwl.client;
 
-import okhttp3.*;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.aurorae.common.util.JsonUtil;
 import org.aurorae.common.util.StreamUtil;
 import org.aurorae.cwl.model.Cwl;
@@ -14,8 +16,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class CwlCli {
@@ -39,12 +39,12 @@ public class CwlCli {
                 .build();
     }
 
-    public static <Param> List<Cwl> request(Param param, Function<Param, CwlRequest> request) {
-        return request(() -> request.apply(param));
+    public static List<Cwl> request(long issueCount) {
+        return request(() -> CwlRequest.by(issueCount));
     }
 
-    public static <P0, P1> List<Cwl> request(P0 p0, P1 p1, BiFunction<P0, P1, CwlRequest> request) {
-        return request(() -> request.apply(p0, p1));
+    public static List<Cwl> request(String start, String end) {
+        return request(() -> CwlRequest.by(start, end));
     }
 
     public static List<Cwl> request(Supplier<CwlRequest> request) {
@@ -53,12 +53,12 @@ public class CwlCli {
                 .orElse(null);
     }
 
-    public static <Param> List<CwlResult> result(Param param, Function<Param, CwlRequest> request) {
-        return result(() -> request.apply(param));
+    public static List<CwlResult> result(long issueCount) {
+        return result(() -> CwlRequest.by(issueCount));
     }
 
-    public static <P0, P1> List<CwlResult> result(P0 p0, P1 p1, BiFunction<P0, P1, CwlRequest> request) {
-        return result(() -> request.apply(p0, p1));
+    public static List<CwlResult> result(String start, String end) {
+        return result(() -> CwlRequest.by(start, end));
     }
 
     public static List<CwlResult> result(Supplier<CwlRequest> request) {

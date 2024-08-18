@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.aurorae.cwl.model.Cwl;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.io.Serializable;
 import java.util.List;
@@ -11,10 +13,12 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Document("Cwl_Result")
 public class CwlResult implements Serializable {
 
     private String name;
 
+    @Id
     private String code;
 
     private String detailsLink;
@@ -59,5 +63,9 @@ public class CwlResult implements Serializable {
                 Integer.parseInt(split[4]),
                 Integer.parseInt(split[5]),
                 Integer.parseInt(blue));
+    }
+
+    public String getAll() {
+        return String.join("", red.split(",")) + blue;
     }
 }
