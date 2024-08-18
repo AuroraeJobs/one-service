@@ -62,7 +62,7 @@ public class CwlUpdateServiceImpl implements CwlUpdateService {
         }
         Date startTime = calendar.getTime();
         String start = dateFormat.format(startTime);
-        log.info("\n> now: {}, start: {}, end: {}, before: {}", now, startTime, endTime, endTime.after(startTime));
+        log.info("\n> now: {}, start: {}, end: {}", now, start, end);
         if (endTime.after(startTime)) {
             // 有数据的情况，进行增量更新
             List<CwlResult> cwlList = CwlCli.result(start, end);
@@ -85,14 +85,14 @@ public class CwlUpdateServiceImpl implements CwlUpdateService {
     }
 
     private CwlUpdater update(CwlUpdater updater) {
-        for (Cwl cwl : updater.getNewList()) {
+        for (Cwl cwl : updater.getCwlList()) {
             cwl.setLastById(updater.getLastId());
             guaService.save(updater.updateGuaByCwl(cwl));
             updater.setValuePr(cwl.getId());
             updater.setLastId(cwl.getId());
         }
-        valueService.saveAll(updater.getCwlValues());
-        cwlService.saveAll(updater.getNewList());
+        valueService.saveAll(updater.getValueList());
+        cwlService.saveAll(updater.getCwlList());
         resultService.saveAll(updater.getResultList());
         return updater;
     }
