@@ -4,10 +4,10 @@ import lombok.*;
 import org.aurorae.common.enums.IBall;
 import org.aurorae.common.util.StreamUtil;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Getter
 @Setter
@@ -50,5 +50,15 @@ public class Ball implements IBall {
 
     public void rate(int i, long ratio) {
         this.rates.add(BallRate.one(i, this.count, ratio));
+    }
+
+    public static String sortByCount(Collection<Ball> balls) {
+        return sort(balls, Ball::getCount, Ball::getLabel);
+    }
+
+    public static String sort(Collection<Ball> balls, Function<Ball, Integer> sort, Function<Ball, String> mapper) {
+        try (Stream<Ball> stream = balls.stream()) {
+            return stream.sorted(Comparator.comparing(sort)).map(mapper).collect(Collectors.joining());
+        }
     }
 }

@@ -67,7 +67,7 @@ public class CwlUpdateServiceImpl implements CwlUpdateService {
             // 有数据的情况，进行增量更新
             List<CwlResult> cwlList = CwlCli.result(start, end);
             log.info("\n> {}", StreamUtil.toList(cwlList, CwlResult::getCode));
-            CwlFile.write(cwlList);
+            CwlFile.write(cwlList, "all.txt");
             long nowId = Long.parseLong(nowIssue.getCode());
             CwlGua gua = guaService.findById(nowId);
             update(new CwlUpdater(cwlList, gua, nowId));
