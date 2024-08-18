@@ -6,9 +6,9 @@ import org.aurorae.cwl.response.CwlResult;
 
 import java.util.List;
 
-public class CwlWriter {
+public class CwlFile {
 
-    public static final String FILE_PATH = "/Users/aurorae/Project/Snoopy/aurorae-service/aurorae-cwl/aurorae-cwl-service/src/main/resources/cwl.txt";
+    public static final String FILE_PATH = "/Users/aurorae/Project/Snoopy/aurorae-service/aurorae-cwl/aurorae-cwl-service/src/main/resources/all.txt";
 
     public static void write(List<CwlResult> cwlList) {
         append(StreamUtil.toList(cwlList, CwlResult::getAll));

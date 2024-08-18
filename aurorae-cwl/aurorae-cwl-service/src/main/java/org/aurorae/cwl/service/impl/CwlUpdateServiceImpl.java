@@ -4,7 +4,7 @@ import cn.hutool.core.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.aurorae.common.util.StreamUtil;
 import org.aurorae.cwl.client.CwlCli;
-import org.aurorae.cwl.client.CwlWriter;
+import org.aurorae.cwl.client.CwlFile;
 import org.aurorae.cwl.model.Cwl;
 import org.aurorae.cwl.model.CwlGua;
 import org.aurorae.cwl.response.CwlResult;
@@ -67,7 +67,7 @@ public class CwlUpdateServiceImpl implements CwlUpdateService {
             // 有数据的情况，进行增量更新
             List<CwlResult> cwlList = CwlCli.result(start, end);
             log.info("\n> {}", StreamUtil.toList(cwlList, CwlResult::getCode));
-            CwlWriter.write(cwlList);
+            CwlFile.write(cwlList);
             long nowId = Long.parseLong(nowIssue.getCode());
             CwlGua gua = guaService.findById(nowId);
             update(new CwlUpdater(cwlList, gua, nowId));
