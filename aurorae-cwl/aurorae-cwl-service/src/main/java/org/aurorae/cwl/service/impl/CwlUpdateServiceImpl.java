@@ -1,7 +1,9 @@
 package org.aurorae.cwl.service.impl;
 
+import cn.hutool.core.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.aurorae.common.util.StreamUtil;
+import org.aurorae.cwl.client.CwlCli;
 import org.aurorae.cwl.client.CwlWriter;
 import org.aurorae.cwl.model.Cwl;
 import org.aurorae.cwl.model.CwlGua;
@@ -63,7 +65,7 @@ public class CwlUpdateServiceImpl implements CwlUpdateService {
         log.info("\n> now: {}, start: {}, end: {}, before: {}", now, startTime, endTime, endTime.after(startTime));
         if (endTime.after(startTime)) {
             // 有数据的情况，进行增量更新
-            List<CwlResult> cwlList = resultService.getByIssue(start, end);
+            List<CwlResult> cwlList = CwlCli.result(start, end);
             log.info("\n> {}", StreamUtil.toList(cwlList, CwlResult::getCode));
             CwlWriter.write(cwlList);
             long nowId = Long.parseLong(nowIssue.getCode());
@@ -75,9 +77,9 @@ public class CwlUpdateServiceImpl implements CwlUpdateService {
     private void init() {
         System.out.println("----init----");
         CwlUpdater updater = new CwlUpdater();
-        // 初始化10年的数据（过去9年+当年）
-        for (int year = 2013; year <= Calendar.getInstance().get(Calendar.YEAR); year++) {
-            List<CwlResult> cwlList = resultService.allYear(year);
+        // 初始化, 从2013年开始
+        for (int year = 2013; year <= DateUtil.thisYear(); year++) {
+            List<CwlResult> cwlList = CwlCli.oneYear(year);
             updater = update(updater.setCwlList(cwlList));
         }
     }

@@ -53,6 +53,16 @@ public class CwlCli {
                 .orElse(null);
     }
 
+    public static CwlResult oneLast() {
+        return result(1).get(0);
+    }
+
+    public static List<CwlResult> oneYear(int year) {
+        List<CwlResult> result = result(year + "-01-01", year + "-06-30");
+        result.addAll(result(year + "-07-01", year + "-12-31"));
+        return result;
+    }
+
     public static List<CwlResult> result(long issueCount) {
         return result(() -> CwlRequest.by(issueCount));
     }

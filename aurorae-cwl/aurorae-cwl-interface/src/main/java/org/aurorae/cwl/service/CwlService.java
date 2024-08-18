@@ -23,18 +23,4 @@ public interface CwlService {
     List<Cwl> saveAll(List<Cwl> list);
 
     Cwl save(Cwl item);
-
-    int saveByCount(long issueCount);
-
-    int saveByIssue(String start, String end);
-
-    int saveByYear(int year);
-
-    Cwl oneLast();
-
-    List<Cwl> allYear(int year);
-
-    List<Cwl> getByCount(long issueCount);
-
-    List<Cwl> getByIssue(String start, String end);
 }

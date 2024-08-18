@@ -1,7 +1,6 @@
 package org.aurorae.cwl.service.impl;
 
 import org.aurorae.common.util.StreamUtil;
-import org.aurorae.cwl.client.CwlCli;
 import org.aurorae.cwl.model.Cwl;
 import org.aurorae.cwl.repository.CwlRepository;
 import org.aurorae.cwl.service.CwlService;
@@ -10,7 +9,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 @Component
 public class CwlServiceImpl implements CwlService {
@@ -70,49 +68,5 @@ public class CwlServiceImpl implements CwlService {
     @Override
     public Cwl save(Cwl item) {
         return repository.save(item);
-    }
-
-    private int saveByRequest(List<Cwl> items) {
-        return Optional.ofNullable(items)
-                .map(this::saveAll)
-                .map(List::size)
-                .orElse(0);
-    }
-
-    @Override
-    public int saveByCount(long issueCount) {
-        return saveByRequest(getByCount(issueCount));
-    }
-
-    @Override
-    public int saveByIssue(String start, String end) {
-        return saveByRequest(getByIssue(start, end));
-    }
-
-    @Override
-    public int saveByYear(int year) {
-        return saveByRequest(allYear(year));
-    }
-
-    @Override
-    public Cwl oneLast() {
-        return getByCount(1).get(0);
-    }
-
-    @Override
-    public List<Cwl> allYear(int year) {
-        List<Cwl> issues = getByIssue(year + "-01-01", year + "-06-30");
-        issues.addAll(getByIssue(year + "-07-01", year + "-12-31"));
-        return issues;
-    }
-
-    @Override
-    public List<Cwl> getByCount(long issueCount) {
-        return CwlCli.request(issueCount);
-    }
-
-    @Override
-    public List<Cwl> getByIssue(String start, String end) {
-        return CwlCli.request(start, end);
     }
 }

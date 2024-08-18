@@ -28,13 +28,4 @@ public interface CwlClient {
 
     @GetMapping("/get/{start}/{end}")
     List<Cwl> getByIssue(@PathVariable String start, @PathVariable String end);
-
-    @GetMapping("/save/{issueCount}")
-    int saveByCount(@PathVariable long issueCount);
-
-    @GetMapping("/save/issue/{start}/{end}")
-    int saveByIssue(@PathVariable String start, @PathVariable String end);
-
-    @GetMapping("/save/year/{year}")
-    int saveByYear(@PathVariable int year);
 }

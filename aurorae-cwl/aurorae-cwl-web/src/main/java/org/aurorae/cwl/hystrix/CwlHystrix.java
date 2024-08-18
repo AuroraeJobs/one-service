@@ -46,21 +46,6 @@ public class CwlHystrix implements FallbackFactory<CwlClient> {
             public List<Cwl> getByIssue(String start, String end) {
                 return Collections.emptyList();
             }
-
-            @Override
-            public int saveByCount(long issueCount) {
-                return 0;
-            }
-
-            @Override
-            public int saveByIssue(String start, String end) {
-                return 0;
-            }
-
-            @Override
-            public int saveByYear(int year) {
-                return 0;
-            }
         };
     }
 }

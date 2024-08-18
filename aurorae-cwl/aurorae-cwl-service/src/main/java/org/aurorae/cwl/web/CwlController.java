@@ -1,6 +1,7 @@
 package org.aurorae.cwl.web;
 
 import lombok.extern.slf4j.Slf4j;
+import org.aurorae.cwl.client.CwlCli;
 import org.aurorae.cwl.client.CwlClient;
 import org.aurorae.cwl.model.Cwl;
 import org.aurorae.cwl.service.CwlService;
@@ -40,26 +41,11 @@ public class CwlController implements CwlClient {
 
     @Override
     public List<Cwl> getByCount(long issueCount) {
-        return service.getByCount(issueCount);
+        return CwlCli.request(issueCount);
     }
 
     @Override
     public List<Cwl> getByIssue(String start, String end) {
-        return service.getByIssue(start, end);
-    }
-
-    @Override
-    public int saveByCount(long issueCount) {
-        return service.saveByCount(issueCount);
-    }
-
-    @Override
-    public int saveByIssue(String start, String end) {
-        return service.saveByIssue(start, end);
-    }
-
-    @Override
-    public int saveByYear(int year) {
-        return service.saveByYear(year);
+        return CwlCli.request(start, end);
     }
 }
