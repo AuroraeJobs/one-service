@@ -1,5 +1,6 @@
 package org.aurorae.cwl.web;
 
+import org.aurorae.cwl.client.CwlBox;
 import org.aurorae.cwl.model.Ball;
 import org.aurorae.cwl.model.Box;
 import org.aurorae.cwl.service.IBoxService;
@@ -19,12 +20,12 @@ public class BoxController {
 
     @GetMapping()
     public Box box() {
-        return boxService.box();
+        return CwlBox.box();
     }
 
     @GetMapping("{space}/{id}")
     public Ball box(@PathVariable String space, @PathVariable int id) {
-        Box box = boxService.box();
+        Box box = CwlBox.box();
         return "space".equals(space) ? box.space(id) : box.time(id);
     }
 }
