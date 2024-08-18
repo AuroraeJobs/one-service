@@ -4,10 +4,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.aurorae.common.util.StreamUtil;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -38,5 +41,9 @@ public class Cwl extends CwlObject {
 
     public List<Integer> getRed() {
         return Arrays.asList(red0, red1, red2, red3, red4, red5);
+    }
+
+    public String getAll() {
+        return StreamUtil.joining(Arrays.asList(red0, red1, red2, red3, red4, red5, blue), i -> String.format("%02d", i));
     }
 }

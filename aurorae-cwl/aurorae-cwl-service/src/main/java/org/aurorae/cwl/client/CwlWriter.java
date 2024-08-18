@@ -1,0 +1,24 @@
+package org.aurorae.cwl.client;
+
+import cn.hutool.core.io.FileUtil;
+import org.aurorae.common.util.StreamUtil;
+import org.aurorae.cwl.model.Cwl;
+
+import java.util.List;
+
+public class CwlWriter {
+
+    public static final String FILE_PATH = "/Users/aurorae/Project/Snoopy/aurorae-service/aurorae-cwl/aurorae-cwl-service/src/main/resources/cwl.txt";
+
+    public static void write(List<Cwl> cwlList) {
+        append(StreamUtil.toList(cwlList, Cwl::getAll));
+    }
+
+    public static void append(List<String> strings) {
+        strings.forEach(s -> FileUtil.appendUtf8String(s, FILE_PATH));
+    }
+
+    public static String read() {
+        return FileUtil.readUtf8String(FILE_PATH);
+    }
+}

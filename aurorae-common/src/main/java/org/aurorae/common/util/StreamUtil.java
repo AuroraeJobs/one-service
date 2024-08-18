@@ -8,6 +8,16 @@ import java.util.stream.Stream;
 public class StreamUtil {
 
     public static <T> String joining(List<T> ts,
+                                     Function<T, String> mapper) {
+        if (ts == null) {
+            return null;
+        }
+        try (Stream<T> stream = ts.stream()) {
+            return stream.map(mapper).collect(Collectors.joining());
+        }
+    }
+
+    public static <T> String joining(List<T> ts,
                                      Function<T, String> mapper,
                                      CharSequence delimiter,
                                      CharSequence prefix,
@@ -31,7 +41,7 @@ public class StreamUtil {
     }
 
     public static <T, R> List<R> flatList(List<T> ts,
-                                        Function<T, List<R>> mapper) {
+                                          Function<T, List<R>> mapper) {
         if (ts == null) {
             return null;
         }
