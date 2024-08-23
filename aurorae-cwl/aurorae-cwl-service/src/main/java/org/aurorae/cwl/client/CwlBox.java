@@ -14,6 +14,7 @@ public class CwlBox {
     public static Box box(String file, int issueLength, int spaceLength, int length) {
         Box box = Box.one();
         int issue = file.length() / issueLength;
+        box.setIssue(issue);
         System.out.println("issue: " + issue);
         //List<String> spaceOrder = new ArrayList<>();
         for (int i = 0; i < issue; i++) {

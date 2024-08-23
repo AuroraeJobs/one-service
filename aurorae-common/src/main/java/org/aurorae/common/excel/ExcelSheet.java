@@ -1,15 +1,21 @@
 package org.aurorae.common.excel;
 
+import lombok.Getter;
+import lombok.Setter;
+import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.util.CellRangeAddress;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
  * @author aurorae
  */
+@Getter
+@Setter
 public class ExcelSheet {
 
     private Sheet sheet;
@@ -93,6 +99,10 @@ public class ExcelSheet {
         return new ExcelRow(sheet.getRow(i));
     }
 
+    public Row row(int i) {
+        return Optional.ofNullable(this.sheet.getRow(i)).orElseGet(() -> this.sheet.createRow(i));
+    }
+
     public ExcelSheet initData(List<Map<Integer, Integer>> data) {
         for (int i = 0; i < data.size(); i++) {
             createRow(i).initData(data.get(i));
@@ -122,74 +132,6 @@ public class ExcelSheet {
      */
     public ExcelRow createRow(int i) {
         return new ExcelRow(sheet.createRow(i));
-    }
-
-    public Sheet getSheet() {
-        return sheet;
-    }
-
-    public void setSheet(Sheet sheet) {
-        this.sheet = sheet;
-    }
-
-    public List<String> getTitles() {
-        return titles;
-    }
-
-    public void setTitles(List<String> titles) {
-        this.titles = titles;
-    }
-
-    public int getTitleSize() {
-        return titleSize;
-    }
-
-    public void setTitleSize(int titleSize) {
-        this.titleSize = titleSize;
-    }
-
-    public List<Map<String, Object>> getData() {
-        return data;
-    }
-
-    public void setData(List<Map<String, Object>> data) {
-        this.data = data;
-    }
-
-    public int getDataSize() {
-        return dataSize;
-    }
-
-    public void setDataSize(int dataSize) {
-        this.dataSize = dataSize;
-    }
-
-    public int getPageSize() {
-        return pageSize;
-    }
-
-    public void setPageSize(int pageSize) {
-        this.pageSize = pageSize;
-    }
-
-    public int getPageTotal() {
-        return pageTotal;
-    }
-
-    public void setPageTotal(int pageTotal) {
-        this.pageTotal = pageTotal;
-    }
-
-    public int getDefaultColumnWidth() {
-        return defaultColumnWidth;
-    }
-
-    public void setDefaultColumnWidth(int defaultColumnWidth) {
-        this.defaultColumnWidth = defaultColumnWidth;
-    }
-
-    public float getDefaultRowHeightInPoints() {
-        return defaultRowHeightInPoints;
     }
 
     public void setDefaultRowHeightInPoints(float defaultRowHeightInPoints) {

@@ -15,7 +15,7 @@ public class ExcelCell {
         cell.setCellValue(cellValue);
     }
 
-    public ExcelCell(Cell cell, long cellValue) {
+    public ExcelCell(Cell cell, double cellValue) {
         this.cell = cell;
         cell.setCellValue(cellValue);
     }

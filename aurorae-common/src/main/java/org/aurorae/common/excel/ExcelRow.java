@@ -29,11 +29,7 @@ public class ExcelRow {
         return this;
     }
 
-    public ExcelCell createCell(int column, int cellValue) {
-        return new ExcelCell(row.createCell(column), cellValue);
-    }
-
-    public ExcelCell createCell(int column, long cellValue) {
+    public ExcelCell createCell(int column, double cellValue) {
         return new ExcelCell(row.createCell(column), cellValue);
     }
 

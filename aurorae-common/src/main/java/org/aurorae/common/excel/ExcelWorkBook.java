@@ -2,13 +2,12 @@ package org.aurorae.common.excel;
 
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Font;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.aurorae.common.util.FileUtil;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 
@@ -17,10 +16,10 @@ import java.util.Map;
  */
 public class ExcelWorkBook {
 
-    private final SXSSFWorkbook workbook;
+    private final XSSFWorkbook workbook;
 
     public ExcelWorkBook() {
-        workbook = new SXSSFWorkbook();
+        workbook = new XSSFWorkbook();
     }
 
     public ExcelSheet createSheet() {
@@ -97,7 +96,7 @@ public class ExcelWorkBook {
     }
 
     public ExcelWorkBook write(File file) throws IOException {
-        workbook.write(new FileOutputStream(file));
+        workbook.write(Files.newOutputStream(file.toPath()));
         return this;
     }
 }

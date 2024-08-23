@@ -2,6 +2,8 @@ package org.aurorae.cwl.service;
 
 public interface CwlProService {
 
+    void box();
+
     void red0();
 
     void limit();

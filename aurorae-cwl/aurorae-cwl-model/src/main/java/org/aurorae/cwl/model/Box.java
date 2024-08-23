@@ -16,6 +16,11 @@ import java.util.Map;
 public class Box {
 
     /**
+     * 期数
+     */
+    private int issue;
+
+    /**
      * 空间，对应红色球1～33，用大陆的33个行政区命名
      */
     private Map<Integer, Ball> space;
