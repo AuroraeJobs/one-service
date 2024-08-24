@@ -35,6 +35,7 @@
         <module>aurorae-profiles</module>
         <module>aurorae-register</module>
         <module>aurorae-sso</module>
+        <module>aurorae-test</module>
         <module>aurorae-web</module>
     </modules>
     <packaging>pom</packaging>
