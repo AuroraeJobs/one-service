@@ -23,6 +23,11 @@ public class BoxController {
         return CwlBox.box();
     }
 
+    @GetMapping("order")
+    public void order() {
+        CwlBox.order();
+    }
+
     @GetMapping("{space}/{id}")
     public Ball box(@PathVariable String space, @PathVariable int id) {
         Box box = CwlBox.box();

@@ -2,6 +2,7 @@ package org.aurorae.cwl.client;
 
 import org.aurorae.cwl.model.Ball;
 import org.aurorae.cwl.model.Box;
+import org.aurorae.cwl.model.BoxOrder;
 
 public class CwlBox {
 
@@ -39,6 +40,30 @@ public class CwlBox {
         }
         //CwlFile.appendLines(spaceOrder, "SpaceCountOrder.txt");
         return box;
+    }
+
+    public static void order() {
+        order(FILE, 14, 6, 2);
+    }
+
+    public static void order(String file, int issueLength, int spaceLength, int length) {
+        BoxOrder box = BoxOrder.one();
+        int issue = file.length() / issueLength;
+        for (int i = 0; i < issue; i++) {
+            String is = substring(file, i, issueLength);
+            for (int j = 0; j < spaceLength; j++) {
+                String js = substring(is, j, length);
+                int space = Integer.parseInt(js);
+                BoxOrder.move(box.getSpace(), space);
+            }
+            if (spaceLength * length < issueLength) {
+                int time = Integer.parseInt(substring(is, spaceLength, length));
+                BoxOrder.move(box.getTime(), time);
+            }
+            System.out.println(box.getTime());
+        }
+        System.out.println(box.getSpace());
+        System.out.println(box.getTime());
     }
 
     public static String substring(String s, int i, int length) {

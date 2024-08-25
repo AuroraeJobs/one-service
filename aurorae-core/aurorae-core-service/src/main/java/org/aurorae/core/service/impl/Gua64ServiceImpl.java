@@ -89,7 +89,7 @@ public class Gua64ServiceImpl implements Gua64Service {
                 System.out.println();
             }
             // 创建文件
-            // new File("/Users/aurorae/Protect/易经/" + i + "-" +sortByYi.indexOf(sortById.get(i)) + sortById.get(i) + "卦.json").createNewFile();
+            // new File("/Users/aurorae/Project/Y/易经/" + i + "-" +sortByYi.indexOf(sortById.get(i)) + sortById.get(i) + "卦.json").createNewFile();
             // System.out.printf("{\"id\":%s, \"code\":\"%s\", \"label\":\"%s\"},%n", i, String.format("%06d", Integer.parseInt(Integer.toBinaryString(i))), gua64.get(i));
         }
     }
