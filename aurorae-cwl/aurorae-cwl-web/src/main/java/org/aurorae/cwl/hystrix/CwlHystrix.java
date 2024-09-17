@@ -29,12 +29,12 @@ public class CwlHystrix implements FallbackFactory<CwlClient> {
             }
 
             @Override
-            public Cwl findDesc() {
+            public CwlResult findDesc() {
                 return null;
             }
 
             @Override
-            public Cwl findAsc() {
+            public CwlResult findAsc() {
                 return null;
             }
 

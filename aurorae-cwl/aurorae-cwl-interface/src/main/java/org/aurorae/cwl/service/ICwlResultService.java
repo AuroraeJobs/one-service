@@ -6,6 +6,8 @@ import java.util.List;
 
 public interface ICwlResultService {
 
+    CwlResult findAsc();
+
     CwlResult findDesc();
 
     CwlResult save(CwlResult item);

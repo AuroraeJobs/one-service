@@ -15,6 +15,11 @@ public class CwlResultService implements ICwlResultService {
     private CwlResultRepository repository;
 
     @Override
+    public CwlResult findAsc() {
+        return repository.findTopByOrderByCodeAsc();
+    }
+
+    @Override
     public CwlResult findDesc() {
         return repository.findTopByOrderByCodeDesc();
     }

@@ -19,10 +19,10 @@ public interface CwlClient {
     String echarts(@PathVariable String year);
 
     @GetMapping("/find/desc")
-    Cwl findDesc();
+    CwlResult findDesc();
 
     @GetMapping("/find/asc")
-    Cwl findAsc();
+    CwlResult findAsc();
 
     @GetMapping("/get/{issueCount}")
     List<CwlResult> getByCount(@PathVariable long issueCount);

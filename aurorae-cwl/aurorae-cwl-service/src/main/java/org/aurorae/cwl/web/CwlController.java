@@ -6,6 +6,7 @@ import org.aurorae.cwl.client.CwlClient;
 import org.aurorae.cwl.model.Cwl;
 import org.aurorae.cwl.response.CwlResult;
 import org.aurorae.cwl.service.CwlService;
+import org.aurorae.cwl.service.ICwlResultService;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,6 +21,9 @@ public class CwlController implements CwlClient {
     @Resource
     private CwlService service;
 
+    @Resource
+    private ICwlResultService resultService;
+
     @Override
     public List<Cwl> findByYear(String year) {
         return service.findByYear(year);
@@ -31,13 +35,13 @@ public class CwlController implements CwlClient {
     }
 
     @Override
-    public Cwl findDesc() {
-        return service.findDesc();
+    public CwlResult findDesc() {
+        return resultService.findDesc();
     }
 
     @Override
-    public Cwl findAsc() {
-        return service.findAsc();
+    public CwlResult findAsc() {
+        return resultService.findAsc();
     }
 
     @Override
