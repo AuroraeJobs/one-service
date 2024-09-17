@@ -3,6 +3,7 @@ package org.aurorae.cwl.hystrix;
 import lombok.extern.slf4j.Slf4j;
 import org.aurorae.cwl.client.CwlClient;
 import org.aurorae.cwl.model.Cwl;
+import org.aurorae.cwl.response.CwlResult;
 import org.springframework.cloud.openfeign.FallbackFactory;
 import org.springframework.stereotype.Component;
 
@@ -38,12 +39,12 @@ public class CwlHystrix implements FallbackFactory<CwlClient> {
             }
 
             @Override
-            public List<Cwl> getByCount(long issueCount) {
+            public List<CwlResult> getByCount(long issueCount) {
                 return Collections.emptyList();
             }
 
             @Override
-            public List<Cwl> getByIssue(String start, String end) {
+            public List<CwlResult> getByIssue(String start, String end) {
                 return Collections.emptyList();
             }
         };

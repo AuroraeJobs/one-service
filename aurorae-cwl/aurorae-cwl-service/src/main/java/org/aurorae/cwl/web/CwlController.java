@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.aurorae.cwl.client.CwlCli;
 import org.aurorae.cwl.client.CwlClient;
 import org.aurorae.cwl.model.Cwl;
+import org.aurorae.cwl.response.CwlResult;
 import org.aurorae.cwl.service.CwlService;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,12 +41,12 @@ public class CwlController implements CwlClient {
     }
 
     @Override
-    public List<Cwl> getByCount(long issueCount) {
-        return CwlCli.request(issueCount);
+    public List<CwlResult> getByCount(long issueCount) {
+        return CwlCli.result(issueCount);
     }
 
     @Override
-    public List<Cwl> getByIssue(String start, String end) {
-        return CwlCli.request(start, end);
+    public List<CwlResult> getByIssue(String start, String end) {
+        return CwlCli.result(start, end);
     }
 }

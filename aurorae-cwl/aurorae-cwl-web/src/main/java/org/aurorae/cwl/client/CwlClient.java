@@ -2,6 +2,7 @@ package org.aurorae.cwl.client;
 
 import org.aurorae.cwl.hystrix.CwlHystrix;
 import org.aurorae.cwl.model.Cwl;
+import org.aurorae.cwl.response.CwlResult;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,8 +25,8 @@ public interface CwlClient {
     Cwl findAsc();
 
     @GetMapping("/get/{issueCount}")
-    List<Cwl> getByCount(@PathVariable long issueCount);
+    List<CwlResult> getByCount(@PathVariable long issueCount);
 
     @GetMapping("/get/{start}/{end}")
-    List<Cwl> getByIssue(@PathVariable String start, @PathVariable String end);
+    List<CwlResult> getByIssue(@PathVariable String start, @PathVariable String end);
 }

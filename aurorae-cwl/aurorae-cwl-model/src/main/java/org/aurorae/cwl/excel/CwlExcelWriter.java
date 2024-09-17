@@ -10,7 +10,7 @@ import java.util.Map;
 @Slf4j
 public class CwlExcelWriter {
 
-    public static final String FILE_PATH = "/Users/aurorae/Project/Y/体彩/%s.xlsx";
+    public static final String FILE_PATH = "/Users/aurorae/Project/Space/Share/体彩/%s.xlsx";
 
     public static String getFilePath() {
         return String.format(FILE_PATH, System.currentTimeMillis());

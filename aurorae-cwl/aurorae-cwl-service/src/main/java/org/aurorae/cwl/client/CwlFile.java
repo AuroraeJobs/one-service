@@ -8,7 +8,7 @@ import java.util.List;
 
 public class CwlFile {
 
-    public static final String FILE_PATH = "/Users/aurorae/Project/X/aurorae-service/aurorae-cwl/aurorae-cwl-service/src/main/resources/";
+    public static final String FILE_PATH = "/Users/aurorae/Project/Space/Share/aurorae-service/aurorae-cwl/aurorae-cwl-service/src/main/resources/";
 
     public static void write(List<CwlResult> cwlList, String fileName) {
         append(StreamUtil.toList(cwlList, CwlResult::getAll), fileName);

@@ -14,6 +14,6 @@ public class CwlUpdateRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        //updateService.update();
+        updateService.update();
     }
 }
