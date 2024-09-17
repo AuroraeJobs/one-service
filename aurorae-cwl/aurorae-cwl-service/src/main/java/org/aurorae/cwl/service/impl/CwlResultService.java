@@ -25,6 +25,11 @@ public class CwlResultService implements ICwlResultService {
     }
 
     @Override
+    public CwlResult findById(String id) {
+        return repository.findById(id).orElse(null);
+    }
+
+    @Override
     public CwlResult save(CwlResult item) {
         return repository.save(item);
     }

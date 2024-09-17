@@ -45,6 +45,11 @@ public class CwlController implements CwlClient {
     }
 
     @Override
+    public CwlResult findById(String id) {
+        return resultService.findById(id);
+    }
+
+    @Override
     public List<CwlResult> getByCount(long issueCount) {
         return CwlCli.result(issueCount);
     }

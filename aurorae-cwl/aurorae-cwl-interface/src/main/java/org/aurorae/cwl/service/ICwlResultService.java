@@ -10,6 +10,8 @@ public interface ICwlResultService {
 
     CwlResult findDesc();
 
+    CwlResult findById(String id);
+
     CwlResult save(CwlResult item);
 
     List<CwlResult> saveAll(List<CwlResult> item);

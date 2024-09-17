@@ -39,6 +39,11 @@ public class CwlHystrix implements FallbackFactory<CwlClient> {
             }
 
             @Override
+            public CwlResult findById(String id) {
+                return null;
+            }
+
+            @Override
             public List<CwlResult> getByCount(long issueCount) {
                 return Collections.emptyList();
             }

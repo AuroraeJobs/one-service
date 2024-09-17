@@ -106,9 +106,9 @@ public class CwlCli {
                     return get(response.header("Location"), response.header("Set-Cookie"));
                 }
                 if (response.isSuccessful()) {
-                    return Optional.ofNullable(response.body()).map(s -> {
+                    return Optional.ofNullable(response.body()).map(body -> {
                         try {
-                            return s.string();
+                            return body.string();
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }

@@ -24,6 +24,9 @@ public interface CwlClient {
     @GetMapping("/find/asc")
     CwlResult findAsc();
 
+    @GetMapping("/find/{id}")
+    CwlResult findById(@PathVariable String id);
+
     @GetMapping("/get/{issueCount}")
     List<CwlResult> getByCount(@PathVariable long issueCount);
 
