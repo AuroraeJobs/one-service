@@ -56,13 +56,13 @@ public class CwlUpdateServiceImpl implements CwlUpdateService {
         try {
             calendar.setTime(dateFormat.parse(now));
             // 如果是周四+3天，如果是周二或者周日+2天
-            calendar.add(Calendar.DAY_OF_MONTH, calendar.get(Calendar.WEEK_OF_MONTH) == 3 ? 3 : 2);
+            calendar.add(Calendar.DAY_OF_MONTH, calendar.get(Calendar.WEEK_OF_MONTH) == Calendar.THURSDAY ? 3 : 2);
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
         Date startTime = calendar.getTime();
         String start = dateFormat.format(startTime);
-        log.info("\n> now: {}, start: {}, end: {}", now, start, end);
+        log.info("\n> current: {}, next: {}, today: {}", now, start, end);
         if (endTime.after(startTime)) {
             // 有数据的情况，进行增量更新
             List<CwlResult> cwlList = CwlCli.result(start, end);
