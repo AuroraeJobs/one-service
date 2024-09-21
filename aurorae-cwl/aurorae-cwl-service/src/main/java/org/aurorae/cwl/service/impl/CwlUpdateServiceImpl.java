@@ -46,7 +46,7 @@ public class CwlUpdateServiceImpl implements CwlUpdateService {
             init();
             return;
         }
-        String now = nowIssue.getDate().substring(0, 10);
+        // 获取当前时间作为查询条件的结束时间
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.HOUR_OF_DAY, 0);
         calendar.set(Calendar.MINUTE, 0);
@@ -54,6 +54,9 @@ public class CwlUpdateServiceImpl implements CwlUpdateService {
         calendar.set(Calendar.MILLISECOND, 0);
         Date endTime = calendar.getTime();
         String end = dateFormat.format(endTime);
+
+        // 获取当前一期的下一期作为查询条件的开始时间
+        String now = nowIssue.dateInfo();
         try {
             calendar.setTime(dateFormat.parse(now));
         } catch (ParseException e) {
@@ -62,6 +65,8 @@ public class CwlUpdateServiceImpl implements CwlUpdateService {
         CwlDateUtil.nextIssue(calendar);
         Date startTime = calendar.getTime();
         String start = dateFormat.format(startTime);
+
+        // 只有当结束时间已经过了开始时间才请求更新
         log.info("\n> current: {}, next: {}, today: {}", now, start, end);
         if (endTime.after(startTime)) {
             // 有数据的情况，进行增量更新

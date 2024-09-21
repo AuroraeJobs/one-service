@@ -68,4 +68,8 @@ public class CwlResult implements Serializable {
     public String getAll() {
         return String.join("", red.split(",")) + blue;
     }
+
+    public String dateInfo() {
+        return date.substring(0, 10);
+    }
 }
