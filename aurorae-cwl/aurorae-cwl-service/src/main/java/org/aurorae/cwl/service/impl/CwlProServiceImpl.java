@@ -6,12 +6,14 @@ import org.aurorae.common.excel.ExcelWorkBook;
 import org.aurorae.common.model.BaseObject;
 import org.aurorae.common.util.MapUtil;
 import org.aurorae.cwl.circle.CwlCircle;
-import org.aurorae.cwl.client.CwlBox;
 import org.aurorae.cwl.enums.CwlRange;
 import org.aurorae.cwl.excel.CwlExcelWorkBook;
-import org.aurorae.cwl.model.*;
-import org.aurorae.cwl.service.*;
 import org.aurorae.cwl.excel.CwlExcelWriter;
+import org.aurorae.cwl.model.Cwl;
+import org.aurorae.cwl.model.CwlGua;
+import org.aurorae.cwl.model.CwlRed;
+import org.aurorae.cwl.model.CwlYao;
+import org.aurorae.cwl.service.*;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -34,18 +36,6 @@ public class CwlProServiceImpl implements CwlProService {
 
     @Resource
     private CwlRed0Service red0Service;
-
-    @Override
-    public void box() {
-        CwlExcelWorkBook workBook = new CwlExcelWorkBook();
-        ExcelSheet sheet = workBook.createSheet();
-        CwlBox.box()
-                .getSpace().forEach((col, ball) -> {
-                    sheet.row(0).createCell(col).setCellValue(ball.getLabel());
-                    ball.getRates().forEach(rate -> sheet.row(rate.getId()).createCell(col).setCellValue(rate.getCount()));
-                });
-        CwlExcelWriter.write(workBook);
-    }
 
     @Override
     public void red0() {

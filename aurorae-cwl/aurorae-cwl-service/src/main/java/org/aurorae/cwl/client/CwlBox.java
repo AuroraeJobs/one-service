@@ -1,5 +1,8 @@
 package org.aurorae.cwl.client;
 
+import org.aurorae.common.excel.ExcelSheet;
+import org.aurorae.cwl.excel.CwlExcelWorkBook;
+import org.aurorae.cwl.excel.CwlExcelWriter;
 import org.aurorae.cwl.model.Ball;
 import org.aurorae.cwl.model.Box;
 import org.aurorae.cwl.model.BoxOrder;
@@ -7,6 +10,17 @@ import org.aurorae.cwl.model.BoxOrder;
 public class CwlBox {
 
     public static final String FILE = CwlFile.read("all.txt");
+
+    public static void excel() {
+        CwlExcelWorkBook workBook = new CwlExcelWorkBook();
+        ExcelSheet sheet = workBook.createSheet();
+        CwlBox.box()
+                .getSpace().forEach((col, ball) -> {
+                    sheet.row(0).createCell(col).setCellValue(ball.getLabel());
+                    ball.getRates().forEach(rate -> sheet.row(rate.getId()).createCell(col).setCellValue(rate.getCount()));
+                });
+        CwlExcelWriter.write(workBook);
+    }
 
     public static Box box() {
         return box(FILE, 14, 6, 2);
