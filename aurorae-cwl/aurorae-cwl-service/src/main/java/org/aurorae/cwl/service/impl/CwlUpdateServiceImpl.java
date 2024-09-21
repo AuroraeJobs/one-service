@@ -9,6 +9,7 @@ import org.aurorae.cwl.model.Cwl;
 import org.aurorae.cwl.model.CwlGua;
 import org.aurorae.cwl.response.CwlResult;
 import org.aurorae.cwl.service.*;
+import org.aurorae.cwl.util.CwlDateUtil;
 import org.aurorae.cwl.vo.CwlUpdater;
 import org.springframework.stereotype.Component;
 
@@ -55,11 +56,10 @@ public class CwlUpdateServiceImpl implements CwlUpdateService {
         String end = dateFormat.format(endTime);
         try {
             calendar.setTime(dateFormat.parse(now));
-            // 如果是周四+3天，如果是周二或者周日+2天
-            calendar.add(Calendar.DAY_OF_MONTH, calendar.get(Calendar.WEEK_OF_MONTH) == Calendar.THURSDAY ? 3 : 2);
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
+        CwlDateUtil.nextIssue(calendar);
         Date startTime = calendar.getTime();
         String start = dateFormat.format(startTime);
         log.info("\n> current: {}, next: {}, today: {}", now, start, end);

@@ -7,6 +7,11 @@ import java.util.Calendar;
 
 public class CwlDateUtil {
 
+    public static void nextIssue(Calendar calendar) {
+        // 如果是周四+3天，如果是周二或者周日+2天
+        calendar.add(Calendar.DAY_OF_MONTH, calendar.get(Calendar.DAY_OF_WEEK) == Calendar.THURSDAY ? 3 : 2);
+    }
+
     public static int nextIssueDay(String week) {
         // 如果是周四，距离下一期周日是隔三天
         // 不然则是周二或周六，距离下一期是隔两天
@@ -38,7 +43,7 @@ public class CwlDateUtil {
         int sum = 1;
         Calendar cal = getFirstIssueDateOfYear(year);
         while (cal.get(Calendar.YEAR) == year) {
-            cal.add(Calendar.DAY_OF_MONTH, (cal.get(Calendar.DAY_OF_WEEK) == Calendar.THURSDAY ? 3 : 2));
+            nextIssue(cal);
             sum++;
         }
         return sum;
