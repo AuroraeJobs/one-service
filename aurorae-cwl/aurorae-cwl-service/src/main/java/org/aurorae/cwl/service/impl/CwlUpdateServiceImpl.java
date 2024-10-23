@@ -73,6 +73,7 @@ public class CwlUpdateServiceImpl implements CwlUpdateService {
             List<CwlResult> cwlList = CwlCli.result(start, end);
             log.info("\n> {}", StreamUtil.toList(cwlList, CwlResult::getCode));
             CwlFile.write(cwlList, "all.txt");
+            CwlFile.appendLines(StreamUtil.toList(cwlList, CwlResult::getAll), "cwl.txt");
             long nowId = Long.parseLong(nowIssue.getCode());
             CwlGua gua = guaService.findById(nowId);
             update(new CwlUpdater(cwlList, gua, nowId));
