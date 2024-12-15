@@ -10,6 +10,15 @@ public class CwlFile {
 
     public static final String FILE_PATH = "/Users/aurorae/Project/Space/aurorae-service/aurorae-cwl/aurorae-cwl-service/src/main/resources/";
 
+    public static String read() {
+        return read("all.txt");
+    }
+
+    public static void write(List<CwlResult> cwlList) {
+        write(cwlList, "all.txt");
+        appendLines(StreamUtil.toList(cwlList, CwlResult::getAll), "cwl.txt");
+    }
+
     public static void write(List<CwlResult> cwlList, String fileName) {
         append(StreamUtil.toList(cwlList, CwlResult::getAll), fileName);
     }

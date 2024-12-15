@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 @AllArgsConstructor
 public class Ball implements IBall {
 
-    private int id;
+    private String id;
 
     private String name;
 
@@ -26,13 +26,13 @@ public class Ball implements IBall {
 
     private List<BallRate> rates = new ArrayList<>();
 
-    public Ball(int id, String name, String label) {
+    public Ball(String id, String name, String label) {
         this.id = id;
         this.name = name;
         this.label = label;
     }
 
-    public static Ball one(int id, String name, String label) {
+    public static Ball one(String id, String name, String label) {
         return new Ball(id, name, label);
     }
 
@@ -40,7 +40,7 @@ public class Ball implements IBall {
         return ball -> Ball.one(ball.getId(), ball.getName(), ball.getLabel());
     }
 
-    public static Map<Integer, Ball> toMap(IBall[] balls) {
+    public static Map<String, Ball> toMap(IBall[] balls) {
         return StreamUtil.toMap(balls, IBall::getId, Ball.ballOf());
     }
 

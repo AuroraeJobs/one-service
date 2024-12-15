@@ -9,15 +9,16 @@ import org.aurorae.cwl.model.BoxOrder;
 
 public class CwlBox {
 
-    public static final String FILE = CwlFile.read("all.txt");
+    public static final String FILE = CwlFile.read();
 
     public static void excel() {
         CwlExcelWorkBook workBook = new CwlExcelWorkBook();
         ExcelSheet sheet = workBook.createSheet();
         CwlBox.box()
                 .getSpace().forEach((col, ball) -> {
-                    sheet.row(0).createCell(col).setCellValue(ball.getLabel());
-                    ball.getRates().forEach(rate -> sheet.row(rate.getId()).createCell(col).setCellValue(rate.getCount()));
+                    int c = Integer.parseInt(col);
+                    sheet.row(0).createCell(c).setCellValue(ball.getLabel());
+                    ball.getRates().forEach(rate -> sheet.row(rate.getId()).createCell(c).setCellValue(rate.getCount()));
                 });
         CwlExcelWriter.write(workBook);
     }
@@ -35,8 +36,7 @@ public class CwlBox {
         for (int i = 0; i < issue; i++) {
             String is = substring(file, i, issueLength);
             for (int j = 0; j < spaceLength; j++) {
-                String js = substring(is, j, length);
-                int space = Integer.parseInt(js);
+                String space = substring(is, j, length);
                 box.space(space).increase();
             }
             int i1 = i + 1;
@@ -45,7 +45,7 @@ public class CwlBox {
             }
             //spaceOrder.add(Ball.sortByCount(box.getSpace().values()));
             if (spaceLength * length < issueLength) {
-                int time = Integer.parseInt(substring(is, spaceLength, length));
+                String time = substring(is, spaceLength, length);
                 box.time(time).increase();
                 for (Ball ball : box.getTime().values()) {
                     ball.rate(i1, 1);

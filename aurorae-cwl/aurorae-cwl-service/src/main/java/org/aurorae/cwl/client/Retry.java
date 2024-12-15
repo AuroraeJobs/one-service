@@ -12,7 +12,7 @@ public class Retry implements Interceptor {
     public Response intercept(Chain chain) throws IOException {
         Request request = chain.request();
         Response proceed = chain.proceed(request);
-        System.out.println(proceed.code() + ": " + proceed.message());
+        // System.out.println(proceed.code() + ": " + proceed.message());
         return proceed;
     }
 }

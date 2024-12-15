@@ -2,7 +2,7 @@ package org.aurorae.common.enums;
 
 public interface IBall {
 
-    int getId();
+    String getId();
 
     String getName();
 

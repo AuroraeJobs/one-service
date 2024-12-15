@@ -29,7 +29,7 @@ public class BoxController {
     }
 
     @GetMapping("{space}/{id}")
-    public Ball box(@PathVariable String space, @PathVariable int id) {
+    public Ball box(@PathVariable String space, @PathVariable String id) {
         Box box = CwlBox.box();
         return "space".equals(space) ? box.space(id) : box.time(id);
     }
