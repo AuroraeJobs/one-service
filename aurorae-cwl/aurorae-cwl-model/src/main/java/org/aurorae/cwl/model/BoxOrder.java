@@ -10,16 +10,15 @@ import java.util.List;
 @Setter
 public class BoxOrder {
 
-    private final List<Integer> space = new ArrayList<>();
-
-    private final List<Integer> time = new ArrayList<>();
-
-    public static void move(List<Integer> list, Integer element) {
-        list.remove(element);
-        list.add(0, element);
-    }
+    private final List<String> balls = new ArrayList<>();
 
     public static BoxOrder one() {
         return new BoxOrder();
+    }
+
+    public void move(String element) {
+        // 把最新出现的移到最前面
+        this.balls.remove(element);
+        this.balls.add(0, element);
     }
 }

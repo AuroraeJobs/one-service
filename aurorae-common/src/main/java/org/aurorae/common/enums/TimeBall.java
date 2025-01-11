@@ -14,22 +14,22 @@ public enum TimeBall implements IBall {
      * 立秋，秋分
      * 立冬，冬至
      */
-    YS("01", "Rain Water", "雨水"),
-    JC("02", "Awakening of Insects", "惊蛰"),
-    QM("03", "Clear and Bright", "清明"),
-    GY("04", "Grain Rain", "谷雨"),
-    XM("05", "Grain Full", "小满"),
-    MZ("06", "Grain in Ear", "芒种"),
-    XS("07", "Minor Heat", "小暑"),
-    DS("08", "Major Heat", "大暑"),
-    CS("09", "Limit of Heat", "处暑"),
-    BL("10", "White Dew", "白露"),
-    HL("11", "Cold Dew", "寒露"),
-    SJ("12", "Frost's Descent", "霜降"),
-    XX("13", "Minor Snow", "小雪"),
-    DX("14", "Major Snow", "大雪"),
-    XH("15", "Minor Cold", "小寒"),
-    DH("16", "Major Cold", "大寒");
+    YS("01", "雨水", "刀"),
+    JC("02", "惊蛰", "枪"),
+    QM("03", "清明", "剑"),
+    GY("04", "谷雨", "戟"),
+    XM("05", "小满", "斧"),
+    MZ("06", "芒种", "钺"),
+    XS("07", "小暑", "钩"),
+    DS("08", "大暑", "叉"),
+    CS("09", "处暑", "镗"),
+    BL("10", "白露", "槊"),
+    HL("11", "寒露", "棍"),
+    SJ("12", "霜降", "棒"),
+    XX("13", "小雪", "鞭"),
+    DX("14", "大雪", "锏"),
+    XH("15", "小寒", "锤"),
+    DH("16", "大寒", "抓");
 
     private final String id;
     private final String name;

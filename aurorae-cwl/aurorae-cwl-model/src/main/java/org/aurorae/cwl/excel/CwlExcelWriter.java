@@ -12,21 +12,21 @@ public class CwlExcelWriter {
 
     public static final String FILE_PATH = "/Users/aurorae/Project/Space/Shared/体彩/%s.xlsx";
 
-    public static String getFilePath() {
-        return String.format(FILE_PATH, System.currentTimeMillis());
+    public static String getFilePath(String filename) {
+        return String.format(FILE_PATH, filename);
     }
 
-    public static void write(ExcelWorkBook workBook) {
+    public static void write(ExcelWorkBook workBook, String filename) {
         try {
-            workBook.write(getFilePath());
+            workBook.write(getFilePath(filename));
         } catch (IOException e) {
             log.error(e.getMessage(), e);
         }
     }
 
-    public static void write(List<Map<Integer, Integer>> data) {
+    public static void write(List<Map<Integer, Integer>> data, String filename) {
         try {
-            ExcelWorkBook.writeSheet(data, getFilePath());
+            ExcelWorkBook.writeSheet(data, getFilePath(filename));
         } catch (IOException e) {
             log.error(e.getMessage(), e);
         }

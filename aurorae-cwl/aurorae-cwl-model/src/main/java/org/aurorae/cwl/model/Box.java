@@ -1,13 +1,14 @@
 package org.aurorae.cwl.model;
 
+import java.util.Map;
+
+import org.aurorae.common.enums.IBall;
+import org.aurorae.common.excel.ExcelRow;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import org.aurorae.common.enums.SpaceBall;
-import org.aurorae.common.enums.TimeBall;
-
-import java.util.Map;
 
 @Getter
 @Setter
@@ -15,35 +16,36 @@ import java.util.Map;
 @AllArgsConstructor
 public class Box {
 
-    /**
-     * 期数
-     */
-    private int issue;
+    private final Map<String, Ball> balls;
 
-    /**
-     * 空间，对应红色球1～33，用大陆的33个行政区命名
-     */
-    private Map<String, Ball> space;
+    private final BoxBook           book;
 
-    /**
-     * 时间，对应蓝色球1～16，取二十四-节气的其中16个命名
-     */
-    private Map<String, Ball> time;
-
-    public Box() {
-        this.space = Ball.toMap(SpaceBall.values());
-        this.time = Ball.toMap(TimeBall.values());
+    public Box(IBall[] balls){
+        this.balls = Ball.toMap(balls);
+        this.book = BoxBook.one(this.balls.values());
     }
 
-    public static Box one() {
-        return new Box();
+    public static Box one(IBall[] balls) {
+        return new Box(balls);
     }
 
-    public Ball space(String id) {
-        return this.space.get(id);
+    public void issue(int issue, int total, String... records) {
+        ExcelRow row = this.book.getSheet().createRow(issue);
+        row.createCell(0, issue);
+        for (String record : records) {
+            Ball ball = this.balls.get(record);
+            ball.increase();
+            // 只写中奖号码
+            //row.createCell(ball.getColumn(), ball.getCount());
+        }
+        for (Ball ball : balls.values()) {
+            ball.rate(total);
+            // 全部号码都写
+            //row.createCell(ball.getColumn(), ball.getRate());
+        }
     }
 
-    public Ball time(String id) {
-        return this.time.get(id);
+    public void writeTo(String filename) {
+        this.book.write(filename);
     }
 }

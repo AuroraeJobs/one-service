@@ -3,7 +3,10 @@ package org.aurorae.cwl.model;
 import lombok.*;
 import org.aurorae.common.enums.IBall;
 import org.aurorae.common.util.StreamUtil;
+import org.aurorae.cwl.excel.IColumn;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -14,7 +17,7 @@ import java.util.stream.Stream;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Ball implements IBall {
+public class Ball implements IBall, IColumn {
 
     private String id;
 
@@ -24,7 +27,7 @@ public class Ball implements IBall {
 
     private int count;
 
-    private List<BallRate> rates = new ArrayList<>();
+    private double rate;
 
     public Ball(String id, String name, String label) {
         this.id = id;
@@ -48,17 +51,25 @@ public class Ball implements IBall {
         this.count++;
     }
 
-    public void rate(int i, long ratio) {
-        this.rates.add(BallRate.one(i, this.count, ratio));
+    public void rate(int total) {
+        // 出现次数占总次数的比率
+        this.rate = BigDecimal.valueOf(this.count).divide(BigDecimal.valueOf(total), 6, RoundingMode.HALF_UP).doubleValue();
     }
 
     public static String sortByCount(Collection<Ball> balls) {
-        return sort(balls, Ball::getCount, Ball::getLabel);
+        // 按出现总数进行排序
+        try (Stream<Ball> stream = balls.stream()) {
+            return stream.sorted(Comparator.comparing(Ball::getCount)).map(Ball::getLabel).collect(Collectors.joining());
+        }
     }
 
-    public static String sort(Collection<Ball> balls, Function<Ball, Integer> sort, Function<Ball, String> mapper) {
-        try (Stream<Ball> stream = balls.stream()) {
-            return stream.sorted(Comparator.comparing(sort)).map(mapper).collect(Collectors.joining());
-        }
+    @Override
+    public int getColumn() {
+        return Integer.parseInt(this.id);
+    }
+
+    @Override
+    public String getTitle() {
+        return this.label;
     }
 }

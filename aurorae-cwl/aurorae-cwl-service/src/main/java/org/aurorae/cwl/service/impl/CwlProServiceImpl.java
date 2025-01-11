@@ -87,7 +87,7 @@ public class CwlProServiceImpl implements CwlProService {
             row.createCell(0, cwl.getId());
             row.createCell(1, set(cwl, issue, set, map));
         }
-        CwlExcelWriter.write(workBook);
+        CwlExcelWriter.write(workBook, "lucky");
     }
 
     private int set(Cwl root, int issue, Set<Integer> set, Map<Long, Cwl> map) {
@@ -143,7 +143,7 @@ public class CwlProServiceImpl implements CwlProService {
         }
 
         // CwlExcelWriter.write(workBook);
-        CwlExcelWriter.write(collect.stream().map(MapUtil::mapList).flatMap(Collection::stream).collect(Collectors.toList()));
+        CwlExcelWriter.write(collect.stream().map(MapUtil::mapList).flatMap(Collection::stream).collect(Collectors.toList()), System.currentTimeMillis() + "");
     }
 
     private Map<Integer, List<Map<Integer, Integer>>> covert(List<Map<Integer, Integer>> maps) {

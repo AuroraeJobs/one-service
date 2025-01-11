@@ -4,7 +4,7 @@ import cn.hutool.core.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.aurorae.common.util.StreamUtil;
 import org.aurorae.cwl.client.CwlCli;
-import org.aurorae.cwl.client.CwlFile;
+import org.aurorae.cwl.file.CwlFile;
 import org.aurorae.cwl.model.Cwl;
 import org.aurorae.cwl.model.CwlGua;
 import org.aurorae.cwl.response.CwlResult;
