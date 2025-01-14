@@ -1,30 +1,25 @@
 package org.aurorae.cwl.service.impl;
 
-import cn.hutool.core.date.DateUtil;
-import lombok.extern.slf4j.Slf4j;
-import org.aurorae.common.util.StreamUtil;
+import java.util.List;
+import java.util.Optional;
+
+import javax.annotation.Resource;
+
 import org.aurorae.cwl.client.CwlCli;
-import org.aurorae.cwl.file.CwlFile;
 import org.aurorae.cwl.model.Cwl;
 import org.aurorae.cwl.model.CwlGua;
 import org.aurorae.cwl.response.CwlResult;
 import org.aurorae.cwl.service.*;
-import org.aurorae.cwl.util.CwlDateUtil;
+import org.aurorae.cwl.util.CwlCalendar;
 import org.aurorae.cwl.vo.CwlUpdater;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import cn.hutool.core.date.DateUtil;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
 public class CwlUpdateServiceImpl implements CwlUpdateService {
-
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
     @Resource
     private CwlService cwlService;
@@ -41,52 +36,28 @@ public class CwlUpdateServiceImpl implements CwlUpdateService {
     @Override
     public void update() {
         CwlResult nowIssue = resultService.findDesc();
-        // 如果当前没有数据，进行初始化
         if (nowIssue == null) {
             init();
-            return;
-        }
-        // 获取当前时间作为查询条件的结束时间
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-        Date endTime = calendar.getTime();
-        String end = dateFormat.format(endTime);
-
-        // 获取当前一期的下一期作为查询条件的开始时间
-        String now = nowIssue.dateInfo();
-        try {
-            calendar.setTime(dateFormat.parse(now));
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
-        CwlDateUtil.nextIssue(calendar);
-        Date startTime = calendar.getTime();
-        String start = dateFormat.format(startTime);
-
-        // 只有当结束时间已经过了开始时间才请求更新
-        log.info("\n> current: {}, next: {}, today: {}", now, start, end);
-        if (endTime.after(startTime)) {
-            // 有数据的情况，进行增量更新
-            List<CwlResult> cwlList = CwlCli.result(start, end);
-            log.info("\n> {}", StreamUtil.toList(cwlList, CwlResult::getAll));
-            CwlFile.write(cwlList);
-            long nowId = Long.parseLong(nowIssue.getCode());
-            CwlGua gua = guaService.findById(nowId);
-            update(new CwlUpdater(cwlList, gua, nowId));
+        } else {
+            update(nowIssue);
         }
     }
 
     private void init() {
-        System.out.println("----init----");
+        // 如果当前没有数据，从2013年初始化
         CwlUpdater updater = new CwlUpdater();
-        // 初始化, 从2013年开始
         for (int year = 2013; year <= DateUtil.thisYear(); year++) {
             List<CwlResult> cwlList = CwlCli.oneYear(year);
             updater = update(updater.setCwlList(cwlList));
         }
+    }
+
+    private void update(CwlResult nowIssue) {
+        Optional.ofNullable(CwlCalendar.fetch(nowIssue.dateInfo())).ifPresent(results -> {
+            long nowId = Long.parseLong(nowIssue.getCode());
+            CwlGua gua = guaService.findById(nowId);
+            update(new CwlUpdater(results, gua, nowId));
+        });
     }
 
     private CwlUpdater update(CwlUpdater updater) {

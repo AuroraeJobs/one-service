@@ -1,4 +1,4 @@
-package org.aurorae.cwl.client;
+package org.aurorae.cwl;
 
 import java.io.BufferedReader;
 
