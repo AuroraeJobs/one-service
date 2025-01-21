@@ -1,40 +1,26 @@
 package org.aurorae.cwl.service.impl;
 
-import org.aurorae.cwl.model.CwlGua;
-import org.aurorae.cwl.service.*;
+import org.aurorae.cwl.model.*;
+import org.aurorae.cwl.service.CwlGuaService;
+import org.aurorae.cwl.service.CwlService;
+import org.aurorae.cwl.service.CwlYaoService;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
+import lombok.AllArgsConstructor;
 
 @Component
+@AllArgsConstructor
 public class CwlGuaServiceImpl implements CwlGuaService {
 
-    @Resource
-    private CwlRedService redService;
-
-    @Resource
-    private CwlRed0Service red0Service;
-
-    @Resource
-    private CwlRed1Service red1Service;
-
-    @Resource
-    private CwlRed2Service red2Service;
-
-    @Resource
-    private CwlRed3Service red3Service;
-
-    @Resource
-    private CwlRed4Service red4Service;
-
-    @Resource
-    private CwlRed5Service red5Service;
-
-    @Resource
-    private CwlBlueService blueService;
-
-    @Resource
-    private CwlService cwlService;
+    private final CwlYaoService<CwlRed> redService;
+    private final CwlYaoService<CwlRed0> red0Service;
+    private final CwlYaoService<CwlRed1> red1Service;
+    private final CwlYaoService<CwlRed2> red2Service;
+    private final CwlYaoService<CwlRed3> red3Service;
+    private final CwlYaoService<CwlRed4> red4Service;
+    private final CwlYaoService<CwlRed5> red5Service;
+    private final CwlYaoService<CwlBlue> blueService;
+    private final CwlService cwlService;
 
     @Override
     public CwlGua save(CwlGua item) {

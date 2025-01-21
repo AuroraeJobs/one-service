@@ -1,31 +1,14 @@
 package org.aurorae.cwl.service.impl;
 
 import org.aurorae.cwl.model.CwlRed4;
-import org.aurorae.cwl.repository.CwlRed4Repository;
+import org.aurorae.cwl.repository.CwlYaoRepository;
 import org.aurorae.cwl.service.CwlRed4Service;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
-import java.util.List;
-
 @Component
-public class CwlRed4ServiceImpl implements CwlRed4Service {
+public class CwlRed4ServiceImpl extends CwlYaoServiceImpl<CwlRed4> implements CwlRed4Service {
 
-    @Resource
-    private CwlRed4Repository repository;
-
-    @Override
-    public CwlRed4 findById(Long id) {
-        return repository.findById(id).orElse(null);
-    }
-
-    @Override
-    public CwlRed4 save(CwlRed4 item) {
-        return repository.save(item);
-    }
-
-    @Override
-    public List<CwlRed4> findAll() {
-        return repository.findAll();
+    public CwlRed4ServiceImpl(CwlYaoRepository<CwlRed4> repository){
+        super(repository);
     }
 }
