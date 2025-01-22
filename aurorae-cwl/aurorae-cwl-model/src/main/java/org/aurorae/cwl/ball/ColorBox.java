@@ -6,6 +6,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.aurorae.cwl.response.Record;
 
+import java.util.Comparator;
+import java.util.List;
+import java.util.function.Consumer;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -16,33 +20,40 @@ public class ColorBox {
 
     private BlueBall blue;
 
+    private String last;
+
     public ColorBox init() {
         this.red = new RedBall().init();
         this.blue = new BlueBall().init();
         return this;
     }
 
-    public ColorBox result(Record result, String last) {
-        setBase(result.getCode(), result.getDate(), last);
-        increase(result.getRed().split(","), result.getBlue());
-        record(result.red(), result.blue());
+    public void save(List<Record> records, Consumer<ColorBox> save) {
+        records.sort(Comparator.comparing(Record::getCode));
+        for (Record record : records) {
+            save.accept(record(record));
+            this.last = record.getCode();
+        }
+    }
+
+    public ColorBox record(Record record) {
+        red(record);
+        blue(record);
         return this;
     }
 
-    private void record(String red, String blue) {
-        this.red.setRecord(red);
-        this.blue.setRecord(blue);
-    }
-
-    public void setBase(String code, String date, String last) {
-        this.red.setBase(code, date, last);
-        this.blue.setBase(code, date, last);
-    }
-
-    public void increase(String[] red, String blue) {
+    public void red(Record record) {
+        this.red.setBase(record.getCode(), record.getDate(), this.last);
+        this.red.setRecord(record.red());
+        String[] reds = record.getRed().split(",");
         for (int i = 0; i < 6; i++) {
-            this.red.increase(i, red[i]);
+            this.red.increase(i, reds[i]);
         }
-        this.blue.increase(blue);
+    }
+
+    private void blue(Record record) {
+        this.blue.setBase(record.getCode(), record.getDate(), this.last);
+        this.blue.setRecord(record.blue());
+        this.blue.increase(record.blue());
     }
 }

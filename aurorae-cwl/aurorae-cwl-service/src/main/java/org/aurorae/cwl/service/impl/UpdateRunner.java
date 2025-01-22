@@ -12,7 +12,6 @@ import org.aurorae.cwl.util.RecordCalendar;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,52 +26,39 @@ public class UpdateRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        Record nowIssue = recordService.findDesc();
-        if (nowIssue == null) {
-            init();
-        } else {
+        Record record = recordService.findDesc();
+        if (record != null) {
+            update(record);
             //update();
-            update(nowIssue);
+        } else {
+            init();
         }
     }
 
-    private void init() {
-        // 从2013年初始化数据
-        ColorBox box = new ColorBox().init();
-        String last = null;
-        for (int year = 2013; year <= DateUtil.thisYear(); year++) {
-            List<Record> records = RecordClient.oneYear(year);
-            records.sort(Comparator.comparing(Record::getCode));
-            for (Record record : records) {
-                boxService.save(box.result(record, last));
-                last = record.getCode();
-            }
-            recordService.saveAll(records);
-        }
+    private void update(Record record) {
+        // 从线上获取记录进行计算
+        Optional.ofNullable(RecordCalendar.fetch(record.date()))
+                .ifPresent(records -> {
+                    recordService.saveAll(records);
+                    ColorBox box = boxService.findById(record.getCode());
+                    box.save(records, boxService::save);
+                });
     }
 
     private void update() {
-        // 从数据库里查询记录进行计算
+        // 从数据库里获取记录进行计算
         ColorBox box = new ColorBox().init();
-        String last = null;
         List<Record> records = recordService.findAll();
-        for (Record record : records) {
-            boxService.save(box.result(record, last));
-            last = record.getCode();
-        }
+        box.save(records, boxService::save);
     }
 
-    private void update(Record nowIssue) {
-        // 从线上获取记录进行计算
-        Optional.ofNullable(RecordCalendar.fetch(nowIssue.date()))
-                .ifPresent(records -> {
-                    ColorBox box = boxService.findById(nowIssue.getCode());
-                    String last = nowIssue.getCode();
-                    for (Record record : records) {
-                        boxService.save(box.result(record, last));
-                        last = record.getCode();
-                    }
-                    recordService.saveAll(records);
-                });
+    private void init() {
+        // 从2013年获取记录进行计算
+        ColorBox box = new ColorBox().init();
+        for (int year = 2013; year <= DateUtil.thisYear(); year++) {
+            List<Record> records = RecordClient.oneYear(year);
+            recordService.saveAll(records);
+            box.save(records, boxService::save);
+        }
     }
 }
