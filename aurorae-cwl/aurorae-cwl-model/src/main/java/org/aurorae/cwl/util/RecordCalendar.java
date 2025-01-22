@@ -1,0 +1,98 @@
+package org.aurorae.cwl.util;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+import org.aurorae.common.util.StreamUtil;
+import org.aurorae.cwl.client.RecordClient;
+import org.aurorae.cwl.enums.RecordWeek;
+import org.aurorae.cwl.file.RecordFile;
+import org.aurorae.cwl.response.Record;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+@Slf4j
+@Getter
+@Setter
+public class RecordCalendar {
+
+    private static final SimpleDateFormat FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+
+    public static List<Record> fetch(String now) {
+        // 看日历是否有最新数据
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+
+        // 获取当前时间作为查询条件的结束时间
+        Date endTime = calendar.getTime();
+        String end = FORMAT.format(endTime);
+
+        try {
+            // 获取当前一期的下一期作为查询条件的开始时间
+            calendar.setTime(FORMAT.parse(now));
+            nextIssue(calendar);
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+        Date startTime = calendar.getTime();
+        String start = FORMAT.format(startTime);
+
+        log.info("\n> current: {}, next: {}, today: {}", now, start, end);
+
+        // 只有当结束时间已经过了开始时间才请求更新
+        if (endTime.after(startTime)) {
+            List<Record> results = RecordClient.result(start, end);
+            log.info("\n> {}", StreamUtil.toList(results, Record::record));
+            RecordFile.write(results);
+            return results;
+        }
+        return null;
+    }
+
+    public static void nextIssue(Calendar calendar) {
+        // 如果是周四+3天，如果是周二或者周日+2天
+        calendar.add(Calendar.DAY_OF_MONTH, calendar.get(Calendar.DAY_OF_WEEK) == Calendar.THURSDAY ? 3 : 2);
+    }
+
+    public static int nextIssueDay(String week) {
+        return RecordWeek.THU.getName().equals(week) ? 3 : 2;
+    }
+
+    public static Calendar getFirstIssueDateOfYear(int year) {
+        // 从当年1月1号开始，查找第一个周日或周二或周四的日期
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.YEAR, year);
+        cal.set(Calendar.MONTH, Calendar.JANUARY);
+        cal.set(Calendar.DAY_OF_MONTH, 1);
+        int week = cal.get(Calendar.DAY_OF_WEEK);
+        while (week != Calendar.SUNDAY && week != Calendar.TUESDAY && week != Calendar.THURSDAY) {
+            cal.add(Calendar.DAY_OF_MONTH, 1);
+            week = cal.get(Calendar.DAY_OF_WEEK);
+        }
+        return cal;
+    }
+
+    public static String firstIssueDateOfYear(int year) {
+        Calendar cal = getFirstIssueDateOfYear(year);
+        return String.format("%s(%s)",
+                new SimpleDateFormat("yyyy-MM-dd").format(cal.getTime()),
+                RecordWeek.getNameByValue(cal.get(Calendar.DAY_OF_WEEK) - 1));
+    }
+
+    public static int sumIssueOfYear(int year) {
+        int sum = 1;
+        Calendar cal = getFirstIssueDateOfYear(year);
+        while (cal.get(Calendar.YEAR) == year) {
+            nextIssue(cal);
+            sum++;
+        }
+        return sum;
+    }
+}

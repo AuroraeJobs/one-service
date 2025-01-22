@@ -1,0 +1,15 @@
+package org.aurorae.cwl.service.impl;
+
+import lombok.AllArgsConstructor;
+import org.springframework.kafka.core.KafkaTemplate;
+
+//@Component
+@AllArgsConstructor
+public class KafkaSender {
+
+    private final KafkaTemplate<String, String> kafkaTemplate;
+
+    public void send(String topic, String data) {
+        kafkaTemplate.send(topic, data);
+    }
+}
