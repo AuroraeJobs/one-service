@@ -12,8 +12,8 @@ import java.util.List;
 public class RecordFile {
 
     public static final String FILE_PATH = "/Users/aurorae/Project/Space/aurorae-service/aurorae-cwl/aurorae-cwl-service/src/main/resources/";
-    public static final String RECORD_ALL = "all.txt";
-    public static final String RECORD_FILE = "records.txt";
+    public static final String RECORD = "record.txt";
+    public static final String RECORDS = "records.txt";
 
     public static final int LENGTH = 2;
 
@@ -28,17 +28,17 @@ public class RecordFile {
     }
 
     public static String readAll() {
-        return read(RECORD_ALL);
+        return read(RECORD);
     }
 
     @SneakyThrows
     public static BufferedReader reader() {
-        return new BufferedReader(new FileReader(FILE_PATH + RECORD_FILE));
+        return new BufferedReader(new FileReader(FILE_PATH + RECORDS));
     }
 
     public static void write(List<Record> cwlList) {
-        write(cwlList, RECORD_ALL);
-        appendLines(StreamUtil.toList(cwlList, Record::record), RECORD_FILE);
+        write(cwlList, RECORD);
+        appendLines(StreamUtil.toList(cwlList, Record::record), RECORDS);
     }
 
     public static void write(List<Record> cwlList, String fileName) {
