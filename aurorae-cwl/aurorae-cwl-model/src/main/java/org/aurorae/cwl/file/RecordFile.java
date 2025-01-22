@@ -14,6 +14,8 @@ public class RecordFile {
     public static final String FILE_PATH = "/Users/aurorae/Project/Space/aurorae-service/aurorae-cwl/aurorae-cwl-service/src/main/resources/";
     public static final String RECORD = "record.txt";
     public static final String RECORDS = "records.txt";
+    public static final String BALL_RED = "ball_red.txt";
+    public static final String BALL_BLUE = "ball_blue.txt";
 
     public static final int LENGTH = 2;
 
@@ -37,20 +39,18 @@ public class RecordFile {
     }
 
     public static void write(List<Record> cwlList) {
-        write(cwlList, RECORD);
+        append(StreamUtil.toList(cwlList, Record::record), RECORD);
         appendLines(StreamUtil.toList(cwlList, Record::record), RECORDS);
-    }
-
-    public static void write(List<Record> cwlList, String fileName) {
-        append(StreamUtil.toList(cwlList, Record::record), fileName);
-    }
-
-    public static void append(List<String> strings, String fileName) {
-        strings.forEach(s -> FileUtil.appendUtf8String(s, FILE_PATH + fileName));
+        appendLines(StreamUtil.toList(cwlList, Record::getRed), BALL_RED);
+        appendLines(StreamUtil.toList(cwlList, Record::getBlue), BALL_BLUE);
     }
 
     public static String read(String fileName) {
         return FileUtil.readUtf8String(FILE_PATH + fileName);
+    }
+
+    public static void append(List<String> strings, String fileName) {
+        strings.forEach(s -> FileUtil.appendUtf8String(s, FILE_PATH + fileName));
     }
 
     public static void appendLines(List<String> strings, String fileName) {
