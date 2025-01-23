@@ -29,8 +29,8 @@ public class RecordFile {
         return records;
     }
 
-    public static String readAll() {
-        return read(RECORD);
+    public static String read() {
+        return FileUtil.readUtf8String(FILE_PATH + RECORD);
     }
 
     @SneakyThrows
@@ -39,21 +39,17 @@ public class RecordFile {
     }
 
     public static void write(List<Record> cwlList) {
-        append(StreamUtil.toList(cwlList, Record::record), RECORD);
-        appendLines(StreamUtil.toList(cwlList, Record::record), RECORDS);
-        appendLines(StreamUtil.toList(cwlList, Record::getRed), BALL_RED);
-        appendLines(StreamUtil.toList(cwlList, Record::getBlue), BALL_BLUE);
+        append(StreamUtil.joining(cwlList, Record::record), RECORD);
+        append(StreamUtil.toList(cwlList, Record::record), RECORDS);
+        append(StreamUtil.toList(cwlList, Record::getRed), BALL_RED);
+        append(StreamUtil.toList(cwlList, Record::getBlue), BALL_BLUE);
     }
 
-    public static String read(String fileName) {
-        return FileUtil.readUtf8String(FILE_PATH + fileName);
+    public static void append(String string, String fileName) {
+        FileUtil.appendUtf8String(string, FILE_PATH + fileName);
     }
 
     public static void append(List<String> strings, String fileName) {
-        strings.forEach(s -> FileUtil.appendUtf8String(s, FILE_PATH + fileName));
-    }
-
-    public static void appendLines(List<String> strings, String fileName) {
         FileUtil.appendUtf8Lines(strings, FILE_PATH + fileName);
     }
 }

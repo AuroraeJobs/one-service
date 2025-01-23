@@ -20,12 +20,12 @@ public class RecordService implements IRecordService {
     }
 
     @Override
-    public Record findAsc() {
+    public Record findFirst() {
         return repository.findTopByOrderByCodeAsc();
     }
 
     @Override
-    public Record findDesc() {
+    public Record findLast() {
         return repository.findTopByOrderByCodeDesc();
     }
 

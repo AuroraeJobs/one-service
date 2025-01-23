@@ -18,7 +18,7 @@ import java.util.Optional;
 @Slf4j
 @Component
 @AllArgsConstructor
-public class UpdateRunner implements CommandLineRunner {
+public class RecordUpdater implements CommandLineRunner {
 
     private final IRecordService recordService;
 
@@ -26,7 +26,7 @@ public class UpdateRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        Record record = recordService.findDesc();
+        Record record = recordService.findLast();
         if (record != null) {
             update(record);
             //update();
@@ -56,7 +56,7 @@ public class UpdateRunner implements CommandLineRunner {
         // 从2013年获取记录进行计算
         ColorBox box = new ColorBox().init();
         for (int year = 2013; year <= DateUtil.thisYear(); year++) {
-            List<Record> records = RecordClient.oneYear(year);
+            List<Record> records = RecordClient.year(year);
             recordService.saveAll(records);
             box.save(records, boxService::save);
         }

@@ -7,7 +7,7 @@ import java.util.stream.Stream;
 
 public class StreamUtil {
 
-    public static <T> String joining(List<T> ts,
+    public static <T> String joining(Collection<T> ts,
                                      Function<T, String> mapper) {
         if (ts == null) {
             return null;
@@ -17,7 +17,7 @@ public class StreamUtil {
         }
     }
 
-    public static <T> String joining(List<T> ts,
+    public static <T> String joining(Collection<T> ts,
                                      Function<T, String> mapper,
                                      CharSequence delimiter,
                                      CharSequence prefix,
@@ -30,7 +30,7 @@ public class StreamUtil {
         }
     }
 
-    public static <T, R> List<R> toList(List<T> ts,
+    public static <T, R> List<R> toList(Collection<T> ts,
                                         Function<T, R> mapper) {
         if (ts == null) {
             return null;
@@ -40,7 +40,7 @@ public class StreamUtil {
         }
     }
 
-    public static <T, R> List<R> flatList(List<T> ts,
+    public static <T, R> List<R> flatList(Collection<T> ts,
                                           Function<T, List<R>> mapper) {
         if (ts == null) {
             return null;
@@ -72,7 +72,7 @@ public class StreamUtil {
         }
     }
 
-    public static <T, K> Map<K, Long> groupingByCounting(List<T> ts,
+    public static <T, K> Map<K, Long> groupingByCounting(Collection<T> ts,
                                                          Function<T, K> keyMapper) {
         if (ts == null) {
             return null;

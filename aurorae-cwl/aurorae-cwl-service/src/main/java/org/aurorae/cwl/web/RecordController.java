@@ -19,12 +19,12 @@ public class RecordController {
 
     @GetMapping("last")
     public Record last() {
-        return service.findDesc();
+        return service.findLast();
     }
 
     @GetMapping("first")
     public Record first() {
-        return service.findAsc();
+        return service.findFirst();
     }
 
     @GetMapping("findById")
@@ -34,11 +34,11 @@ public class RecordController {
 
     @GetMapping("count")
     public List<Record> getByCount(@RequestParam long issueCount) {
-        return RecordClient.result(issueCount);
+        return RecordClient.record(issueCount);
     }
 
     @GetMapping("issue")
     public List<Record> getByIssue(@RequestParam String start, @RequestParam String end) {
-        return RecordClient.result(start, end);
+        return RecordClient.record(start, end);
     }
 }

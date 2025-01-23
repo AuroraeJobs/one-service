@@ -5,7 +5,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 
 //@Component
 @AllArgsConstructor
-public class KafkaSender {
+public class RecordSender {
 
     private final KafkaTemplate<String, String> kafkaTemplate;
 

@@ -48,7 +48,7 @@ public class RecordCalendar {
 
         // 只有当结束时间已经过了开始时间才请求更新
         if (endTime.after(startTime)) {
-            List<Record> results = RecordClient.result(start, end);
+            List<Record> results = RecordClient.record(start, end);
             log.info("\n> {}", StreamUtil.toList(results, Record::record));
             RecordFile.write(results);
             return results;

@@ -8,9 +8,9 @@ public interface IRecordService {
 
     void saveAll(List<Record> item);
 
-    Record findAsc();
+    Record findFirst();
 
-    Record findDesc();
+    Record findLast();
 
     Record findById(String id);
 
