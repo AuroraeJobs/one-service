@@ -28,7 +28,7 @@ public class RecordUpdater implements CommandLineRunner {
     public void run(String... args) {
         Record record = recordService.findLast();
         if (record != null) {
-            update(record);
+            update(record.date(), record.getCode());
             //update();
         } else {
             init();
@@ -39,14 +39,14 @@ public class RecordUpdater implements CommandLineRunner {
         box.save(records, boxService::save);
     }
 
-    private void update(Record record) {
+    private void update(String date, String code) {
         // 从线上获取记录进行计算
-        Optional.ofNullable(RecordCalendar.fetch(record.date()))
-                .ifPresent(records -> {
-                    recordService.saveAll(records);
-                    ColorBox box = boxService.findById(record.getCode());
-                    save(box, records);
-                });
+        Optional.ofNullable(RecordCalendar.fetch(date))
+                .ifPresent(records -> Optional.ofNullable(boxService.findById(code))
+                        .ifPresent(box -> {
+                            recordService.saveAll(records);
+                            save(box, records);
+                        }));
     }
 
     private void update() {

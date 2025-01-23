@@ -60,13 +60,13 @@ public class ColorBox {
         this.blue.increase(record.blue());
     }
 
-    private void check() {
-        log.info("\n> {}: [{}] = [{}] = [{} * 6 = {}]",
+    public void check() {
+        log.info("\n> {}: [{}] = [{}] = [{} / 6 = {}]",
                 this.last,
                 this.red.yCount(),
                 this.red.zCount(),
-                this.blue.yCount(),
-                this.blue.yCount() * 6
+                this.blue.yCount() * 6,
+                this.blue.yCount()
         );
     }
 }
