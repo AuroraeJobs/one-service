@@ -35,13 +35,17 @@ public class RecordUpdater implements CommandLineRunner {
         }
     }
 
+    private void save(ColorBox box, List<Record> records) {
+        box.save(records, boxService::save);
+    }
+
     private void update(Record record) {
         // 从线上获取记录进行计算
         Optional.ofNullable(RecordCalendar.fetch(record.date()))
                 .ifPresent(records -> {
                     recordService.saveAll(records);
                     ColorBox box = boxService.findById(record.getCode());
-                    box.save(records, boxService::save);
+                    save(box, records);
                 });
     }
 
@@ -49,7 +53,7 @@ public class RecordUpdater implements CommandLineRunner {
         // 从数据库里获取记录进行计算
         ColorBox box = new ColorBox().init();
         List<Record> records = recordService.findAll();
-        box.save(records, boxService::save);
+        save(box, records);
     }
 
     private void init() {
@@ -58,7 +62,7 @@ public class RecordUpdater implements CommandLineRunner {
         for (int year = 2013; year <= DateUtil.thisYear(); year++) {
             List<Record> records = RecordClient.year(year);
             recordService.saveAll(records);
-            box.save(records, boxService::save);
+            save(box, records);
         }
     }
 }
