@@ -2,6 +2,7 @@ package org.aurorae.cwl.ball;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.aurorae.common.util.StreamUtil;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.HashMap;
@@ -29,5 +30,9 @@ public class RedBall extends ColorBall {
             map.computeIfPresent(key, (k, v) -> v + 1);
             return map;
         });
+    }
+
+    public int zCount() {
+        return StreamUtil.reduce(StreamUtil.flatList(this.z.values(), Map::values));
     }
 }

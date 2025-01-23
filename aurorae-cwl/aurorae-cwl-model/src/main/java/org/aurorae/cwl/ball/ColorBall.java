@@ -2,6 +2,7 @@ package org.aurorae.cwl.ball;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.aurorae.common.util.StreamUtil;
 import org.aurorae.cwl.model.RecordObject;
 
 import java.util.HashMap;
@@ -30,5 +31,9 @@ public class ColorBall extends RecordObject {
 
     public void increase(String key) {
         this.y.computeIfPresent(key, (k, v) -> v + 1);
+    }
+
+    public int yCount() {
+        return StreamUtil.reduce(this.y.values());
     }
 }

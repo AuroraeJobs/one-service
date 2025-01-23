@@ -1,6 +1,7 @@
 package org.aurorae.common.util;
 
 import java.util.*;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -41,7 +42,7 @@ public class StreamUtil {
     }
 
     public static <T, R> List<R> flatList(Collection<T> ts,
-                                          Function<T, List<R>> mapper) {
+                                          Function<T, Collection<R>> mapper) {
         if (ts == null) {
             return null;
         }
@@ -79,6 +80,19 @@ public class StreamUtil {
         }
         try (Stream<T> stream = ts.stream()) {
             return stream.collect(Collectors.groupingBy(keyMapper, Collectors.counting()));
+        }
+    }
+
+    public static Integer reduce(Collection<Integer> ts) {
+        return reduce(ts, Integer::sum, 0);
+    }
+
+    public static <T> T reduce(Collection<T> ts, BinaryOperator<T> reduce, T t) {
+        if (ts == null) {
+            return null;
+        }
+        try (Stream<T> stream = ts.stream()) {
+            return stream.reduce(reduce).orElse(t);
         }
     }
 }

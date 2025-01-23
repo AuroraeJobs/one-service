@@ -4,12 +4,14 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.aurorae.cwl.response.Record;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
 
+@Slf4j
 @Getter
 @Setter
 @NoArgsConstructor
@@ -33,6 +35,7 @@ public class ColorBox {
         for (Record record : records) {
             save.accept(record(record));
             this.last = record.getCode();
+            check();
         }
     }
 
@@ -55,5 +58,15 @@ public class ColorBox {
         this.blue.setBase(record.getCode(), record.getDate(), this.last);
         this.blue.setRecord(record.blue());
         this.blue.increase(record.blue());
+    }
+
+    private void check() {
+        log.info("\n> {}: [{}] = [{}] = [{} * 6 = {}]",
+                this.last,
+                this.red.yCount(),
+                this.red.zCount(),
+                this.blue.yCount(),
+                this.blue.yCount() * 6
+        );
     }
 }
