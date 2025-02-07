@@ -44,14 +44,14 @@ public class RecordCalendar {
         Date startTime = calendar.getTime();
         String start = FORMAT.format(startTime);
 
-        log.info("\n> current: {}, next: {}, today: {}", now, start, end);
+        log.info("\n> [{}] - [{}] - [{}]", now, start, end);
 
         // 只有当结束时间已经过了开始时间才请求更新
         if (endTime.after(startTime)) {
-            List<Record> results = RecordClient.record(start, end);
-            log.info("\n> {}", StreamUtil.toList(results, Record::record));
-            RecordFile.write(results);
-            return results;
+            List<Record> records = RecordClient.record(start, end);
+            log.info("\n> {}", StreamUtil.toList(records, Record::record));
+            RecordFile.write(records);
+            return records;
         }
         return null;
     }
@@ -67,30 +67,30 @@ public class RecordCalendar {
 
     public static Calendar getFirstIssueDateOfYear(int year) {
         // 从当年1月1号开始，查找第一个周日或周二或周四的日期
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.YEAR, year);
-        cal.set(Calendar.MONTH, Calendar.JANUARY);
-        cal.set(Calendar.DAY_OF_MONTH, 1);
-        int week = cal.get(Calendar.DAY_OF_WEEK);
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.YEAR, year);
+        calendar.set(Calendar.MONTH, Calendar.JANUARY);
+        calendar.set(Calendar.DAY_OF_MONTH, 1);
+        int week = calendar.get(Calendar.DAY_OF_WEEK);
         while (week != Calendar.SUNDAY && week != Calendar.TUESDAY && week != Calendar.THURSDAY) {
-            cal.add(Calendar.DAY_OF_MONTH, 1);
-            week = cal.get(Calendar.DAY_OF_WEEK);
+            calendar.add(Calendar.DAY_OF_MONTH, 1);
+            week = calendar.get(Calendar.DAY_OF_WEEK);
         }
-        return cal;
+        return calendar;
     }
 
     public static String firstIssueDateOfYear(int year) {
-        Calendar cal = getFirstIssueDateOfYear(year);
+        Calendar calendar = getFirstIssueDateOfYear(year);
         return String.format("%s(%s)",
-                new SimpleDateFormat("yyyy-MM-dd").format(cal.getTime()),
-                RecordWeek.getNameByValue(cal.get(Calendar.DAY_OF_WEEK) - 1));
+                new SimpleDateFormat("yyyy-MM-dd").format(calendar.getTime()),
+                RecordWeek.getNameByValue(calendar.get(Calendar.DAY_OF_WEEK) - 1));
     }
 
     public static int sumIssueOfYear(int year) {
         int sum = 1;
-        Calendar cal = getFirstIssueDateOfYear(year);
-        while (cal.get(Calendar.YEAR) == year) {
-            nextIssue(cal);
+        Calendar calendar = getFirstIssueDateOfYear(year);
+        while (calendar.get(Calendar.YEAR) == year) {
+            nextIssue(calendar);
             sum++;
         }
         return sum;
