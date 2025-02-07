@@ -1,0 +1,55 @@
+package org.aurorae.record.file;
+
+import cn.hutool.core.io.FileUtil;
+import lombok.SneakyThrows;
+import org.aurorae.common.util.StreamUtil;
+import org.aurorae.record.response.Record;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.List;
+
+public class RecordFile {
+
+    public static final String FILE_PATH = "/Users/aurorae/Project/Space/aurorae-service/aurorae-record/aurorae-record-service/src/main/resources/";
+    public static final String RECORD = "record.txt";
+    public static final String RECORDS = "records.txt";
+    public static final String BALL_RED = "ball_red.txt";
+    public static final String BALL_BLUE = "ball_blue.txt";
+
+    public static final int LENGTH = 2;
+
+    public static String[] substring(String record, int hits) {
+        String[] records = new String[hits];
+        int beginIndex;
+        for (int i = 0; i < hits; i++) {
+            beginIndex = i * LENGTH;
+            records[i] = record.substring(beginIndex, beginIndex + LENGTH);
+        }
+        return records;
+    }
+
+    public static String read() {
+        return FileUtil.readUtf8String(FILE_PATH + RECORD);
+    }
+
+    @SneakyThrows
+    public static BufferedReader reader() {
+        return new BufferedReader(new FileReader(FILE_PATH + RECORDS));
+    }
+
+    public static void write(List<Record> records) {
+        append(StreamUtil.joining(records, Record::record), RECORD);
+        append(StreamUtil.toList(records, Record::record), RECORDS);
+        append(StreamUtil.toList(records, Record::getRed), BALL_RED);
+        append(StreamUtil.toList(records, Record::getBlue), BALL_BLUE);
+    }
+
+    public static void append(String string, String fileName) {
+        FileUtil.appendUtf8String(string, FILE_PATH + fileName);
+    }
+
+    public static void append(List<String> strings, String fileName) {
+        FileUtil.appendUtf8Lines(strings, FILE_PATH + fileName);
+    }
+}
