@@ -5,10 +5,11 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aurorae.record.ball.ColorBox;
 import org.aurorae.record.client.RecordClient;
+import org.aurorae.record.file.RecordFile;
 import org.aurorae.record.response.Record;
 import org.aurorae.record.service.IBoxService;
 import org.aurorae.record.service.IRecordService;
-import org.aurorae.record.util.RecordCalendar;
+import org.aurorae.record.client.RecordCalendar;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -35,25 +36,18 @@ public class RecordUpdater implements CommandLineRunner {
         }
     }
 
-    private void save(ColorBox box, List<Record> records) {
-        box.save(records, boxService::save);
-    }
-
     private void update(String date, String code) {
         // 从线上获取记录进行计算
         Optional.ofNullable(RecordCalendar.fetch(date))
                 .ifPresent(records -> Optional.ofNullable(boxService.findById(code))
-                        .ifPresent(box -> {
-                            recordService.saveAll(records);
-                            save(box, records);
-                        }));
+                        .ifPresent(box -> save(box, records)));
     }
 
     private void update() {
         // 从数据库里获取记录进行计算
         ColorBox box = new ColorBox().init();
         List<Record> records = recordService.findAll();
-        save(box, records);
+        box.save(records, boxService::save);
     }
 
     private void init() {
@@ -61,8 +55,13 @@ public class RecordUpdater implements CommandLineRunner {
         ColorBox box = new ColorBox().init();
         for (int year = 2013; year <= DateUtil.thisYear(); year++) {
             List<Record> records = RecordClient.year(year);
-            recordService.saveAll(records);
             save(box, records);
         }
+    }
+
+    private void save(ColorBox box, List<Record> records) {
+        RecordFile.write(records);
+        recordService.saveAll(records);
+        box.save(records, boxService::save);
     }
 }

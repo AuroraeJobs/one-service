@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.aurorae.record.util.RecordCalendar;
+import org.aurorae.record.client.RecordCalendar;
 import org.springframework.data.annotation.Id;
 
 @Getter

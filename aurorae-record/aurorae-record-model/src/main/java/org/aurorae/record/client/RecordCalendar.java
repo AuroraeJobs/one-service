@@ -1,12 +1,10 @@
-package org.aurorae.record.util;
+package org.aurorae.record.client;
 
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.aurorae.common.util.StreamUtil;
-import org.aurorae.record.client.RecordClient;
 import org.aurorae.record.enums.RecordWeek;
-import org.aurorae.record.file.RecordFile;
 import org.aurorae.record.response.Record;
 
 import java.text.ParseException;
@@ -44,13 +42,12 @@ public class RecordCalendar {
         Date startTime = calendar.getTime();
         String start = FORMAT.format(startTime);
 
-        log.info("\n> [{}] - [{}] - [{}]", now, start, end);
+        log.info("\n> {{}} - {{}} - {{}}", now, start, end);
 
         // 只有当结束时间已经过了开始时间才请求更新
         if (endTime.after(startTime)) {
             List<Record> records = RecordClient.record(start, end);
             log.info("\n> {}", StreamUtil.toList(records, Record::record));
-            RecordFile.write(records);
             return records;
         }
         return null;

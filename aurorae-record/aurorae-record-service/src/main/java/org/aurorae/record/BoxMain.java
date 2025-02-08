@@ -1,6 +1,7 @@
 package org.aurorae.record;
 
 import lombok.SneakyThrows;
+import org.aurorae.common.enums.IBall;
 import org.aurorae.common.enums.SpaceBall;
 import org.aurorae.common.enums.TimeBall;
 import org.aurorae.record.file.RecordFile;
@@ -14,28 +15,22 @@ public class BoxMain {
         box();
     }
 
-    @SneakyThrows
     public static void box() {
-        long start = System.currentTimeMillis();
-        // 空间，对应红色球1～33，每期抽中6个
-        box(Box.one(SpaceBall.values()), 0, 6).writeTo("space");
-        // 时间，对应蓝色球1～16，每期抽中1个
-        box(Box.one(TimeBall.values()), 12, 1).writeTo("time");
-        System.out.println("> Finish! [" + (System.currentTimeMillis() - start) + "]ms");
+        // 红色球1～33，每期抽中6个
+        box(SpaceBall.values(), RecordFile.BALL_RED, "space");
+        // 蓝色球1～16，每期抽中1个
+        box(TimeBall.values(), RecordFile.BALL_BLUE, "time");
     }
 
     @SneakyThrows
-    public static Box box(Box box, int begin, int hits) {
-        try (BufferedReader reader = RecordFile.reader()) {
-            int issue = 1;
+    public static void box(IBall[] balls, String readFrom, String writeTo) {
+        Box box = Box.one(balls);
+        try (BufferedReader reader = RecordFile.reader(readFrom)) {
             String line;
             while ((line = reader.readLine()) != null) {
-                String record = line.substring(begin);
-                String[] records = RecordFile.substring(record, hits);
-                box.issue(issue, issue * hits, records);
-                issue++;
+                box.issue(line);
             }
         }
-        return box;
+        box.writeTo(writeTo);
     }
 }

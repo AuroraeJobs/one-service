@@ -17,14 +17,16 @@ public class RecordFile {
     public static final String BALL_RED = "ball_red.txt";
     public static final String BALL_BLUE = "ball_blue.txt";
 
-    public static final int LENGTH = 2;
-
-    public static String[] substring(String record, int hits) {
-        String[] records = new String[hits];
-        int beginIndex;
-        for (int i = 0; i < hits; i++) {
-            beginIndex = i * LENGTH;
-            records[i] = record.substring(beginIndex, beginIndex + LENGTH);
+    public static String[] split(String record) {
+        // 把字符串按每两位进行分割
+        int bit = 2;
+        // 分割之后的数组长度
+        int lit = record.length() / bit;
+        String[] records = new String[lit];
+        int idx;
+        for (int i = 0; i < lit; i++) {
+            idx = i * bit;
+            records[i] = record.substring(idx, idx + bit);
         }
         return records;
     }
@@ -34,8 +36,8 @@ public class RecordFile {
     }
 
     @SneakyThrows
-    public static BufferedReader reader() {
-        return new BufferedReader(new FileReader(FILE_PATH + RECORDS));
+    public static BufferedReader reader(String fileName) {
+        return new BufferedReader(new FileReader(FILE_PATH + fileName));
     }
 
     public static void write(List<Record> records) {
