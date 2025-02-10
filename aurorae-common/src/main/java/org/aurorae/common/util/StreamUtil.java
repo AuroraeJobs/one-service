@@ -2,6 +2,7 @@ package org.aurorae.common.util;
 
 import java.util.*;
 import java.util.function.BinaryOperator;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -94,5 +95,16 @@ public class StreamUtil {
         try (Stream<T> stream = ts.stream()) {
             return stream.reduce(reduce).orElse(t);
         }
+    }
+
+    public static <T, R> List<R> mapEach(T[] records, Function<T, R> map, Consumer<R> peek) {
+        try (Stream<T> stream = Arrays.stream(records)) {
+            return stream.map(map).peek(peek).collect(Collectors.toList());
+        }
+    }
+
+    public static <T> Collection<T> forEach(Collection<T> ts, Consumer<T> forEach) {
+        ts.forEach(forEach);
+        return ts;
     }
 }

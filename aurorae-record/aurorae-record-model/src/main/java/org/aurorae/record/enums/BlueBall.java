@@ -1,11 +1,12 @@
-package org.aurorae.common.enums;
+package org.aurorae.record.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aurorae.record.ball.IBall;
 
 @Getter
 @AllArgsConstructor
-public enum TimeBall implements IBall {
+public enum BlueBall implements IBall {
 
     /**
      * 二十四 节气

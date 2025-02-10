@@ -1,7 +1,6 @@
-package org.aurorae.record.model;
+package org.aurorae.record.ball;
 
 import lombok.*;
-import org.aurorae.common.enums.IBall;
 import org.aurorae.common.util.StreamUtil;
 import org.aurorae.record.excel.IColumn;
 
@@ -19,6 +18,8 @@ import java.util.stream.Stream;
 @AllArgsConstructor
 public class Ball implements IBall, IColumn {
 
+    private int column;
+
     private String id;
 
     private String name;
@@ -30,6 +31,7 @@ public class Ball implements IBall, IColumn {
     private double rate;
 
     public Ball(String id, String name, String label) {
+        this.column = Integer.parseInt(id);
         this.id = id;
         this.name = name;
         this.label = label;
@@ -47,7 +49,7 @@ public class Ball implements IBall, IColumn {
         return StreamUtil.toMap(balls, IBall::getId, Ball.ballOf());
     }
 
-    public void increase() {
+    public void count() {
         this.count++;
     }
 
@@ -61,11 +63,6 @@ public class Ball implements IBall, IColumn {
         try (Stream<Ball> stream = balls.stream()) {
             return stream.sorted(Comparator.comparing(Ball::getCount)).map(Ball::getLabel).collect(Collectors.joining());
         }
-    }
-
-    @Override
-    public int getColumn() {
-        return Integer.parseInt(this.id);
     }
 
     @Override

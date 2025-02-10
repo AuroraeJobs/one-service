@@ -1,4 +1,4 @@
-package org.aurorae.record.model;
+package org.aurorae.record.ball;
 
 import lombok.Getter;
 import lombok.Setter;

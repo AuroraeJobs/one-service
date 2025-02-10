@@ -1,11 +1,12 @@
-package org.aurorae.common.enums;
+package org.aurorae.record.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.aurorae.record.ball.IBall;
 
 @Getter
 @AllArgsConstructor
-public enum SpaceBall implements IBall {
+public enum RedBall implements IBall {
 
     /**
      * 11       北京市          43       湖南省

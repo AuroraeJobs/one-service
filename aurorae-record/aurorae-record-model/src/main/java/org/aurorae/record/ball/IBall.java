@@ -1,4 +1,4 @@
-package org.aurorae.common.enums;
+package org.aurorae.record.ball;
 
 public interface IBall {
 

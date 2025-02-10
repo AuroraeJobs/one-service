@@ -1,4 +1,4 @@
-package org.aurorae.record.config;
+package org.aurorae.record.kafka;
 
 import lombok.AllArgsConstructor;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;

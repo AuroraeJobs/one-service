@@ -1,4 +1,4 @@
-package org.aurorae.record.service.impl;
+package org.aurorae.record.kafka;
 
 import lombok.AllArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;

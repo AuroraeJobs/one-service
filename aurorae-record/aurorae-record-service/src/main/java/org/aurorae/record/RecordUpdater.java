@@ -1,4 +1,4 @@
-package org.aurorae.record.service.impl;
+package org.aurorae.record;
 
 import cn.hutool.core.date.DateUtil;
 import lombok.AllArgsConstructor;

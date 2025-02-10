@@ -1,4 +1,4 @@
-package org.aurorae.record.circle;
+package org.aurorae.record.model;
 
 import lombok.*;
 import org.aurorae.record.model.RecordObject;
