@@ -45,14 +45,14 @@ public class RecordUpdater implements CommandLineRunner {
 
     private void update() {
         // 从数据库里获取记录进行计算
-        ColorBox box = new ColorBox().init();
+        ColorBox box = ColorBox.one();
         List<Record> records = recordService.findAll();
         box.save(records, boxService::save);
     }
 
     private void init() {
         // 从2013年获取记录进行计算
-        ColorBox box = new ColorBox().init();
+        ColorBox box = ColorBox.one();
         for (int year = 2013; year <= DateUtil.thisYear(); year++) {
             List<Record> records = RecordClient.year(year);
             save(box, records);

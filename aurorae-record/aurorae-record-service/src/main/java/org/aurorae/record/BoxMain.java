@@ -17,14 +17,14 @@ public class BoxMain {
 
     public static void box() {
         // 红色球1～33，每期抽中6个
-        box(RedBall.values(), RecordFile.BALL_RED, "red");
+        box(RedBall.values(), 6, RecordFile.BALL_RED, "red");
         // 蓝色球1～16，每期抽中1个
-        box(BlueBall.values(), RecordFile.BALL_BLUE, "blue");
+        box(BlueBall.values(), 1, RecordFile.BALL_BLUE, "blue");
     }
 
     @SneakyThrows
-    public static void box(IBall[] balls, String readFrom, String writeTo) {
-        Box box = Box.one(balls);
+    public static void box(IBall[] balls, int bit, String readFrom, String writeTo) {
+        Box box = Box.one(balls, bit);
         try (BufferedReader reader = RecordFile.reader(readFrom)) {
             String line;
             while ((line = reader.readLine()) != null) {

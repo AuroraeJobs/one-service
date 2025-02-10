@@ -22,7 +22,9 @@ public class ColorBox {
 
     private BlueBall blue;
 
-    private String last;
+    public static ColorBox one() {
+        return new ColorBox().init();
+    }
 
     public ColorBox init() {
         this.red = new RedBall().init();
@@ -32,41 +34,12 @@ public class ColorBox {
 
     public void save(List<Record> records, Consumer<ColorBox> save) {
         records.sort(Comparator.comparing(Record::getCode));
-        for (Record record : records) {
-            save.accept(record(record));
-            this.last = record.getCode();
-            check();
-        }
+        records.forEach(record -> save.accept(record(record)));
     }
 
     public ColorBox record(Record record) {
-        red(record);
-        blue(record);
+        this.red.record(record);
+        this.blue.record(record);
         return this;
-    }
-
-    public void red(Record record) {
-        this.red.setBase(record.getCode(), record.getDate(), this.last);
-        this.red.setRecord(record.red());
-        String[] reds = record.getRed().split(",");
-        for (int i = 0; i < 6; i++) {
-            this.red.increase(i, reds[i]);
-        }
-    }
-
-    private void blue(Record record) {
-        this.blue.setBase(record.getCode(), record.getDate(), this.last);
-        this.blue.setRecord(record.blue());
-        this.blue.increase(record.blue());
-    }
-
-    public void check() {
-        log.info("\n> {}: [{}] = [{}] = [{} / 6 = {}]",
-                this.last,
-                this.red.yCount(),
-                this.red.zCount(),
-                this.blue.yCount() * 6,
-                this.blue.yCount()
-        );
     }
 }

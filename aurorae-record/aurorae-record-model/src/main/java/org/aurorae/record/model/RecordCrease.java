@@ -50,7 +50,7 @@ public class RecordCrease extends RecordObject {
     }
 
     private void reset(RecordCreaseV v) {
-        v.reset(lastV.getCode(), lastV.getDate(), lastV.getLast());
+        v.reset();
     }
 
     public void compareSum(RecordValue next, RecordValue last) {

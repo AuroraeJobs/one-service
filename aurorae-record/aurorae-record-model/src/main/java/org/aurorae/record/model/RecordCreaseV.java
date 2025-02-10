@@ -1,7 +1,9 @@
 package org.aurorae.record.model;
 
-import lombok.*;
-import org.aurorae.record.model.RecordObject;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter
@@ -27,13 +29,10 @@ public class RecordCreaseV extends RecordObject {
 
     /**
      * 复位
-     *
-     * @param code code
      */
-    public void reset(String code, String date, String last) {
+    public void reset() {
         if (v > maxV) {
             maxV = v;
-            setBase(code, date, last);
         }
         v = 0;
     }

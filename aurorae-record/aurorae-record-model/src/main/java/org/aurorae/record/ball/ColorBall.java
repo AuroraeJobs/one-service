@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.aurorae.common.util.StreamUtil;
 import org.aurorae.record.model.RecordObject;
+import org.aurorae.record.response.Record;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,8 +30,12 @@ public class ColorBall extends RecordObject {
         return map;
     }
 
+    public void record(Record record) {
+        setBase(record.getCode(), record.getDate(), this.getCode());
+    }
+
     public void increase(String key) {
-        this.y.computeIfPresent(key, (k, v) -> v + 1);
+        this.y.merge(key, 1, Integer::sum);
     }
 
     public int yCount() {

@@ -26,8 +26,7 @@ public class BoxService implements IBoxService {
     public ColorBox findById(String code) {
         return new ColorBox(
                 red.findById(code).orElse(null),
-                blue.findById(code).orElse(null),
-                code
+                blue.findById(code).orElse(null)
         );
     }
 }
