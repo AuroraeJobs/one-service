@@ -3,13 +3,14 @@ package org.aurorae.record;
 import cn.hutool.core.date.DateUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.aurorae.common.util.StreamUtil;
 import org.aurorae.record.ball.ColorBox;
+import org.aurorae.record.client.RecordCalendar;
 import org.aurorae.record.client.RecordClient;
 import org.aurorae.record.file.RecordFile;
 import org.aurorae.record.response.Record;
 import org.aurorae.record.service.IBoxService;
 import org.aurorae.record.service.IRecordService;
-import org.aurorae.record.client.RecordCalendar;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -53,10 +54,8 @@ public class RecordUpdater implements CommandLineRunner {
     private void init() {
         // 从2013年获取记录进行计算
         ColorBox box = ColorBox.one();
-        for (int year = 2013; year <= DateUtil.thisYear(); year++) {
-            List<Record> records = RecordClient.year(year);
-            save(box, records);
-        }
+        List<Record> records = StreamUtil.iterate(2013, DateUtil.thisYear(), RecordClient::year);
+        save(box, records);
     }
 
     private void save(ColorBox box, List<Record> records) {

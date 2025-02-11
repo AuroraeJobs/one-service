@@ -32,6 +32,7 @@ public class Box implements IBox {
         return new Box(balls);
     }
 
+    @Override
     public void record(String record) {
         this.issue();
         // 中奖球的累计次数
@@ -57,6 +58,7 @@ public class Box implements IBox {
         this.book.rateRow(this.issue, this.ball.values());
     }
 
+    @Override
     public void writeTo(String filename) {
         this.book.write(filename);
     }

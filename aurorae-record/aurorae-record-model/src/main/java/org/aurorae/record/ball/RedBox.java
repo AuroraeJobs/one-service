@@ -27,6 +27,7 @@ public class RedBox implements IBox {
         }
     }
 
+    @Override
     public void record(String line) {
         String[] records = line.split(",");
         this.box.issue();
@@ -38,6 +39,7 @@ public class RedBox implements IBox {
         this.box.rateRow();
     }
 
+    @Override
     public void writeTo(String filename) {
         this.box.writeTo(filename);
         this.map.forEach((i, box) -> box.writeTo(filename + i));

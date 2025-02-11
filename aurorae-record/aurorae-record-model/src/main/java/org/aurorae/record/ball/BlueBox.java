@@ -18,10 +18,12 @@ public class BlueBox implements IBox {
         this.box = Box.one(balls);
     }
 
+    @Override
     public void record(String line) {
         this.box.record(line);
     }
 
+    @Override
     public void writeTo(String filename) {
         this.box.writeTo(filename);
     }

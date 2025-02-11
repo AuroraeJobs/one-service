@@ -107,4 +107,15 @@ public class StreamUtil {
         ts.forEach(forEach);
         return ts;
     }
+
+    public static <T> List<T> iterate(int start, int end, Function<Integer, List<T>> map) {
+        try (Stream<Integer> stream = Stream.iterate(start, i -> i + 1)) {
+            return stream
+                    .limit(end - start + 1)
+                    .map(map)
+                    .flatMap(Collection::stream)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        }
+    }
 }

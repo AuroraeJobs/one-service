@@ -31,8 +31,8 @@ public class RecordFile {
         return records;
     }
 
-    public static String read() {
-        return FileUtil.readUtf8String(FILE_PATH + RECORD);
+    public static String read(String fileName) {
+        return FileUtil.readUtf8String(FILE_PATH + fileName);
     }
 
     @SneakyThrows
