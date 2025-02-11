@@ -7,18 +7,17 @@ import lombok.Setter;
 import org.aurorae.common.excel.ExcelRow;
 import org.aurorae.common.util.StreamUtil;
 
-import java.util.Collection;
 import java.util.Map;
 
 @Getter
 @Setter
 @Builder
 @AllArgsConstructor
-public class Box {
+public class Box implements IBox {
 
-    private int issue = 0;
+    private int issue;
 
-    private ExcelRow row;
+    private ExcelRow countRow;
 
     private final BoxBook book;
 
@@ -33,18 +32,7 @@ public class Box {
         return new Box(balls);
     }
 
-    public Ball count(String record) {
-        Ball ball = this.ball.get(record);
-        ball.count();
-        return ball;
-    }
-
-    public Collection<Ball> rate() {
-        Integer count = StreamUtil.reduce(StreamUtil.toList(this.ball.values(), Ball::getCount));
-        return StreamUtil.forEach(this.ball.values(), ball -> ball.rate(count));
-    }
-
-    public void issue(String record) {
+    public void record(String record) {
         this.issue();
         // 中奖球的累计次数
         this.countRow(record);
@@ -54,15 +42,19 @@ public class Box {
 
     public void issue() {
         this.issue++;
-        this.row = this.book.countRow(issue);
+        this.countRow = this.book.countRow(issue);
     }
 
     public void countRow(String record) {
-        this.book.countRow(this.row, this.count(record));
+        Ball ball = this.ball.get(record);
+        ball.count();
+        this.book.countRow(this.countRow, ball);
     }
 
     public void rateRow() {
-        this.book.rateRow(this.issue, rate());
+        Integer count = StreamUtil.reduce(StreamUtil.toList(this.ball.values(), Ball::getCount));
+        this.ball.values().forEach(ball -> ball.rate(count));
+        this.book.rateRow(this.issue, this.ball.values());
     }
 
     public void writeTo(String filename) {
