@@ -1,5 +1,6 @@
 package org.aurorae.record.client;
 
+import cn.hutool.core.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -43,6 +44,10 @@ public class RecordClient {
 
     public static Record last() {
         return record(1).get(0);
+    }
+
+    public static List<Record> year() {
+        return StreamUtil.iterate(2013, DateUtil.thisYear(), RecordClient::year);
     }
 
     public static List<Record> year(int year) {
