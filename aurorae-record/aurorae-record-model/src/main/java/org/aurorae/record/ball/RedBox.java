@@ -30,13 +30,10 @@ public class RedBox implements IBox {
     @Override
     public void record(String line) {
         String[] records = line.split(",");
-        this.box.issue();
-        for (int i = 0; i < records.length; i++) {
-            String record = records[i];
-            this.box.countRow(record);
-            this.map.get(i).record(record);
+        this.box.record(records);
+        for (int i = 0; i < this.map.size(); i++) {
+            this.map.get(i).record(records[i]);
         }
-        this.box.rateRow();
     }
 
     @Override
