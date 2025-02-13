@@ -7,10 +7,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @author aurorae
  */
 @SpringBootApplication
-public class CoreServiceApplication {
+public class CoreApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(CoreServiceApplication.class, args);
+        SpringApplication.run(CoreApplication.class, args);
     }
 
 }
