@@ -1,25 +1,25 @@
 package org.aurorae.core.service;
 
-import org.aurorae.core.model.X3;
+import org.aurorae.core.model.XX;
 
 import java.util.List;
 
 /**
  * @author aurorae
  */
-public interface GuaService {
+public interface IXService {
     /**
      * findAll
      *
      * @return list
      */
-    List<X3> findAll();
+    List<XX> findAll();
 
     /**
      * save
      *
-     * @param items 八卦
-     * @return 八卦
+     * @param items 两仪
+     * @return 两仪
      */
-    List<X3> save(List<X3> items);
+    List<XX> save(List<XX> items);
 }

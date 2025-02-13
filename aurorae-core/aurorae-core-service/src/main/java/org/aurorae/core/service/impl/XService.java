@@ -1,9 +1,9 @@
 package org.aurorae.core.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
-import org.aurorae.core.model.X1;
-import org.aurorae.core.repository.YiRepository;
-import org.aurorae.core.service.YiService;
+import org.aurorae.core.model.XX;
+import org.aurorae.core.repository.XRepository;
+import org.aurorae.core.service.IXService;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -14,18 +14,18 @@ import java.util.List;
  */
 @Component
 @Slf4j
-public class YiServiceImpl implements YiService {
+public class XService implements IXService {
 
     @Resource
-    private YiRepository repository;
+    private XRepository repository;
 
     @Override
-    public List<X1> findAll() {
+    public List<XX> findAll() {
         return repository.findAll();
     }
 
     @Override
-    public List<X1> save(List<X1> items) {
+    public List<XX> save(List<XX> items) {
         return repository.saveAll(items);
     }
 }

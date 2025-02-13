@@ -1,8 +1,7 @@
 package org.aurorae.core.model;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.springframework.data.mongodb.core.mapping.Document;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author aurorae
@@ -18,12 +17,11 @@ import org.springframework.data.mongodb.core.mapping.Document;
  * 一阴一阳之谓道，乾坤易之门
  * 自然本不分天地，
  */
-@EqualsAndHashCode(callSuper = true)
-@Data
-@Document("Gua")
+@Getter
+@Setter
 public class X3 extends XX {
 
-    private X1 x1_0;
+    private X1 x0;
 
     /**
      * 人位：人道，为人之道
@@ -49,11 +47,11 @@ public class X3 extends XX {
      * 人活着的意义大概如此
      * 平衡点，阴阳的互动
      */
-    private X1 x1_1;
+    private X1 x1;
 
-    private X1 x1_2;
+    private X1 x2;
 
     public X3() {
-        super.setBit(3L);
+        super.setBit(3);
     }
 }

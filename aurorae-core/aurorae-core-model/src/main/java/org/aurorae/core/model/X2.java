@@ -1,8 +1,7 @@
 package org.aurorae.core.model;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.springframework.data.mongodb.core.mapping.Document;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author aurorae
@@ -36,9 +35,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
  * -- 老阴：2（显性）
  * -- 少阴：2（隐性）
  */
-@EqualsAndHashCode(callSuper = true)
-@Data
-@Document("Xiang")
+@Getter
+@Setter
 public class X2 extends XX {
 
     /**
@@ -46,16 +44,16 @@ public class X2 extends XX {
      * 早晚，冷暖
      * 开天：清者自清，为天
      */
-    private X1 x1_0;
+    private X1 x0;
 
     /**
      * 地位：行地道
      * 男女，老少
      * 辟地：浊者为地
      */
-    private X1 x1_1;
+    private X1 x1;
 
     public X2() {
-        super.setBit(2L);
+        super.setBit(2);
     }
 }

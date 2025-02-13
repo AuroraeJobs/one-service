@@ -54,7 +54,7 @@ public class Box {
     }
 
     public void record(String... record) {
-        this.book.issueRow(this.issue++, countBall(record), rateBall());
+        this.book.issueRow(++this.issue, countBall(record), rateBall());
     }
 
     public void writeTo(String filename) {

@@ -1,10 +1,10 @@
 package org.aurorae.core.repository;
 
-import org.aurorae.core.model.X2;
+import org.aurorae.core.model.XX;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 /**
  * @author aurorae
  */
-public interface XiangRepository extends MongoRepository<X2, Long> {
+public interface XRepository extends MongoRepository<XX, String> {
 }

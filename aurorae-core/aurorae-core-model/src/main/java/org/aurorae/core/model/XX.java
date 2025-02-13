@@ -1,14 +1,12 @@
 package org.aurorae.core.model;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.aurorae.common.util.IdGenerator;
+import lombok.Getter;
+import lombok.Setter;
+import org.aurorae.common.util.StreamUtil;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author aurorae
@@ -20,22 +18,21 @@ import java.util.stream.Stream;
  * 大体上是，大概如此
  * 一句话可以总结为：一阴一阳之谓道
  */
-@EqualsAndHashCode(callSuper = true)
-@Data
+@Getter
+@Setter
+@Document("X")
 public class XX extends X {
-
-    @Id
-    private Long id;
 
     /**
      * 决定编码 'code' 二进制编码的位数
      */
-    private Long bit;
+    private int bit;
 
     /**
      * 编码：二进制
      * 为什么是二进制？阴阳
      */
+    @Id
     private String code;
 
     /**
@@ -46,59 +43,22 @@ public class XX extends X {
     private String name;
 
     /**
-     * 昵称
-     */
-    private String nickname;
-
-    /**
-     * 别名，又名
-     */
-    private String alias;
-
-    /**
-     * 显示符号
-     * 外在表现出来的，象
-     */
-    private String label;
-
-    /**
-     * 描述
-     */
-    private String desc;
-
-    /**
      * 显示值，表现出来的值，
      * 阳值，当然亦可表达为阴值，
      * 就像阴阳一样，是一个相对来说的值，
      * 是或非，true或false，0或1
      */
-    private Object value;
+    private int value;
 
-    /**
-     * 键值对
-     */
-    private Map<Object, Object> values;
-
-    public void newId() {
-        id = IdGenerator.nextId(this.getClass().getSimpleName());
+    public int count() {
+        return (int) Math.pow(2, bit);
     }
 
-    public void setCode() {
-        this.code = toBinaryString(id);
-    }
-
-    public long count() {
-        return (long) Math.pow(2, bit);
-    }
-
-    public String toBinaryString(Long id) {
-        return String.format("%0" + bit + "d", Long.parseLong(Long.toBinaryString(id)));
+    public String toBinaryString(Integer id) {
+        return String.format("%0" + bit + "d", Integer.parseInt(Integer.toBinaryString(id)));
     }
 
     public List<String> allId() {
-        return Stream.iterate(0L, i -> i + 1)
-                .limit(this.count())
-                .map(this::toBinaryString)
-                .collect(Collectors.toList());
+        return StreamUtil.iterateMap(0, this.count(), this::toBinaryString);
     }
 }

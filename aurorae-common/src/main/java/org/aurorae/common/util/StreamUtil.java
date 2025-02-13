@@ -123,6 +123,15 @@ public class StreamUtil {
         }
     }
 
+    public static <T> List<T> iterateMap(int start, int limit, Function<Integer, T> map) {
+        try (Stream<Integer> stream = Stream.iterate(start, i -> i + 1)) {
+            return stream
+                    .limit(limit)
+                    .map(map)
+                    .collect(Collectors.toList());
+        }
+    }
+
     public static <T, U extends Comparable<? super U>> Collection<T> sort(Collection<T> ts, Function<T, U> sort) {
         try (Stream<T> stream = ts.stream()) {
             return stream.sorted(Comparator.comparing(sort)).collect(Collectors.toList());

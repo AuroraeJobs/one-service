@@ -1,8 +1,7 @@
 package org.aurorae.core.model;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.springframework.data.mongodb.core.mapping.Document;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author aurorae
@@ -30,9 +29,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
  * 阴极成阳，阳极生阴
  * {"两仪": ["阳","阴"]}
  */
-@EqualsAndHashCode(callSuper = true)
-@Data
-@Document("Yi")
+@Getter
+@Setter
 public class X1 extends XX {
 
     /**
@@ -42,6 +40,6 @@ public class X1 extends XX {
     private XX xx;
 
     public X1() {
-        super.setBit(1L);
+        super.setBit(1);
     }
 }
