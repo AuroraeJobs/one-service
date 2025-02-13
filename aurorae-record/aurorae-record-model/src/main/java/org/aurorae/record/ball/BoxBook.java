@@ -50,6 +50,11 @@ public class BoxBook {
         return row;
     }
 
+    public void issueRow(int issue, Collection<Ball> countBall, Collection<Ball> rateBall) {
+        countRow(issue, countBall);
+        rateRow(issue, rateBall);
+    }
+
     public void countRow(int issue, Collection<Ball> balls) {
         ExcelRow row = createRow(issue, this.countSheet);
         balls.forEach(ball -> row.createCell(ball.getColumn(), ball.getCount()));

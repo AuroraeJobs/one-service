@@ -84,6 +84,10 @@ public class StreamUtil {
         }
     }
 
+    public static <T> Integer reduce(Collection<T> ts, Function<T, Integer> mapper) {
+        return reduce(toList(ts, mapper));
+    }
+
     public static Integer reduce(Collection<Integer> ts) {
         return reduce(ts, Integer::sum, 0);
     }
@@ -116,6 +120,12 @@ public class StreamUtil {
                     .flatMap(Collection::stream)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
+        }
+    }
+
+    public static <T, U extends Comparable<? super U>> Collection<T> sort(Collection<T> ts, Function<T, U> sort) {
+        try (Stream<T> stream = ts.stream()) {
+            return stream.sorted(Comparator.comparing(sort)).collect(Collectors.toList());
         }
     }
 }

@@ -69,4 +69,8 @@ public class Ball implements IBall, IColumn {
     public String getTitle() {
         return this.label;
     }
+
+    public String print() {
+        return this.label + " | " + this.count + " | " + this.rate;
+    }
 }
