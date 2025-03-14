@@ -42,19 +42,22 @@ public class Box {
         return StreamUtil.sort(this.allBall(), Ball::getCount);
     }
 
-    public Collection<Ball> countBall(String... record) {
+    public Collection<Ball> hitBall(String... record) {
         // 更新中奖球的累计次数
         return StreamUtil.mapEach(record, this::oneBall, Ball::count);
     }
 
-    public Collection<Ball> rateBall() {
+    public Collection<Ball> eachBall() {
         // 计算每个球的次数占比
         int count = StreamUtil.reduce(this.allBall(), Ball::getCount);
         return StreamUtil.forEach(this.allBall(), ball -> ball.rate(count));
     }
 
     public void record(String... record) {
-        this.book.issueRow(++this.issue, countBall(record), rateBall());
+        this.issue++;
+        Collection<Ball> hit = hitBall(record);
+        Collection<Ball> all = eachBall();
+        this.book.issueRow(this.issue, hit, all);
     }
 
     public void writeTo(String filename) {
