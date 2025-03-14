@@ -12,11 +12,6 @@
     <artifactId>aurorae-web</artifactId>
     <packaging>pom</packaging>
 
-    <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
-    </properties>
-
     <dependencies>
         <!-- Undertow Web 容器 -->
         <dependency>
@@ -46,10 +41,6 @@
         <dependency>
             <groupId>com.aurorae</groupId>
             <artifactId>aurorae-profiles</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.aurorae</groupId>
-            <artifactId>aurorae-config</artifactId>
         </dependency>
     </dependencies>
 

@@ -8,9 +8,6 @@
         <version>1.0</version>
     </parent>
     <artifactId>aurorae-manager-service</artifactId>
-    <properties>
-        <java.version>1.8</java.version>
-    </properties>
     <dependencies>
         <!-- Aurorae -->
         <dependency>

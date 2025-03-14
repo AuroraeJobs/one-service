@@ -8,15 +8,11 @@
         <version>1.0</version>
     </parent>
     <artifactId>aurorae-sso-service</artifactId>
-    <properties>
-        <java.version>1.8</java.version>
-    </properties>
     <dependencies>
         <!-- Aurorae -->
         <dependency>
             <groupId>com.aurorae</groupId>
-            <artifactId>aurorae-web</artifactId>
-            <type>pom</type>
+            <artifactId>aurorae-config</artifactId>
         </dependency>
         <dependency>
             <groupId>com.aurorae</groupId>

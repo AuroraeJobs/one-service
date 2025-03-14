@@ -22,7 +22,7 @@
 
     <modules>
         <module>aurorae-admin</module>
-        <module>aurorae-blink</module>
+        <module>aurorae-tsdb</module>
         <module>aurorae-common</module>
         <module>aurorae-config</module>
         <module>aurorae-core</module>
@@ -193,17 +193,17 @@
             <!-- base -->
             <dependency>
                 <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-blink</artifactId>
+                <artifactId>aurorae-tsdb</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-blink-interface</artifactId>
+                <artifactId>aurorae-tsdb-interface</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-blink-service</artifactId>
+                <artifactId>aurorae-tsdb-service</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
