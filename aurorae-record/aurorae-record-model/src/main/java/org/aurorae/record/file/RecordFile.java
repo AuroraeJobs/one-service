@@ -11,7 +11,7 @@ import java.util.List;
 
 public class RecordFile {
 
-    public static final String FILE_PATH = "/Users/aurorae/Project/Space/aurorae-service/aurorae-record/aurorae-record-service/src/main/resources/";
+    public static final String FILE_PATH = "/Users/aurorae/Program/Hello/aurorae-service/aurorae-record/aurorae-record-service/src/main/resources/";
     public static final String RECORD = "record.txt";
     public static final String RECORDS = "records.txt";
     public static final String BALL_RED = "ball_red.txt";

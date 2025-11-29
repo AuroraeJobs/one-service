@@ -10,7 +10,7 @@ import java.util.Map;
 @Slf4j
 public class RecordExcel {
 
-    public static final String FILE_PATH = "/Users/aurorae/Project/Space/Shared/体彩/%s.xlsx";
+    public static final String FILE_PATH = "/Users/aurorae/Documents/中奖啦/%s.xlsx";
 
     public static String getFilePath(String filename) {
         return String.format(FILE_PATH, filename);
