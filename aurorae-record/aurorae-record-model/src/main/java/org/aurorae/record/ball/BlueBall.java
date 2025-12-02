@@ -25,6 +25,6 @@ public class BlueBall extends ColorBall {
     }
 
     public void check() {
-        log.info("> {}: [{} / 6 = {}]", this.getCode(), this.yCount() * 6, this.yCount());
+        log.info("> ✅{}: [{} / 6 = {}]", this.getCode(), this.yCount() * 6, this.yCount());
     }
 }

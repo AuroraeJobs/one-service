@@ -44,6 +44,6 @@ public class RedBall extends ColorBall {
     }
 
     public void check() {
-        log.info("> {}: [{}] = [{}]", this.getCode(), this.yCount(), this.zCount());
+        log.info("> ✅{}: [{}] = [{}]", this.getCode(), this.yCount(), this.zCount());
     }
 }

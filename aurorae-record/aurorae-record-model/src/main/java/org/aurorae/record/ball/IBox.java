@@ -7,13 +7,13 @@ import java.io.BufferedReader;
 
 public interface IBox {
 
-    static void box(IBox box, String readFrom, String writeTo) {
-        box.box(readFrom, writeTo);
+    static void box(IBox box, String writeTo) {
+        box.box(writeTo);
     }
 
     @SneakyThrows
-    default void box(String readFrom, String writeTo) {
-        try (BufferedReader reader = RecordFile.reader(readFrom)) {
+    default void box(String writeTo) {
+        try (BufferedReader reader = RecordFile.reader(getReadFrom())) {
             String line;
             while ((line = reader.readLine()) != null) {
                 record(line);
@@ -21,6 +21,8 @@ public interface IBox {
         }
         writeTo(writeTo);
     }
+
+    String getReadFrom();
 
     void record(String line);
 

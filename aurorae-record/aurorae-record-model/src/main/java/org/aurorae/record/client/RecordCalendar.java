@@ -49,7 +49,7 @@ public class RecordCalendar {
             log.info("> ✅开始日期: {}", start);
             log.info("> ✅结束日期: {}", end);
             List<Record> records = RecordClient.record(start, end);
-            log.info("> ✅{}", StreamUtil.toList(records, Record::record));
+            log.info("> ✅更新数据: {}", StreamUtil.toList(records, Record::record));
             return records;
         }
         return null;

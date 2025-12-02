@@ -1,5 +1,6 @@
 package org.aurorae.record.service;
 
+import org.aurorae.record.request.RecordRequest;
 import org.aurorae.record.response.Record;
 
 import java.util.List;
@@ -15,4 +16,6 @@ public interface IRecordService {
     Record findById(String id);
 
     List<Record> findAll();
+
+    List<Record> find(RecordRequest request);
 }

@@ -76,14 +76,6 @@
             border-radius: 8px;
             border: 1px solid #ddd;
             margin-bottom: 20px;
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80%;
-            max-width: 1200px;
-            z-index: 900;
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.15);
         }
         
         /* 查询控制栏 */
@@ -92,8 +84,9 @@
             gap: 15px;
             align-items: center;
             flex-wrap: wrap;
-            justify-content: center;
         }
+        
+
         
         /* 查询输入区域 */
         .query-inputs {
@@ -102,7 +95,6 @@
             align-items: center;
             flex: 1;
             flex-wrap: wrap;
-            justify-content: center;
         }
         
         /* 查询输入组 */
@@ -254,30 +246,34 @@
     <script src="navbar.js"></script>
 </head>
 <body>
-    <!-- 查询区域 -->
-    <div class="query-section">
-        <div class="query-controls">
-            <!-- 查询输入区域 -->
-            <div class="query-inputs">
-                <!-- 根据期号范围查询 -->
-                <div class="query-input-group">
-                    <input type="text" id="startInput" class="query-input" placeholder="开始期号" onkeypress="handleKeyPress(event, queryByIssue)">
-                </div>
-                <div class="query-input-group">
-                    <input type="text" id="endInput" class="query-input" placeholder="结束期号" onkeypress="handleKeyPress(event, queryByIssue)">
-                </div>
-                <!-- 根据期数查询 -->
-                <div class="query-input-group">
-                    <input type="number" id="countInput" class="query-input" placeholder="期数查询" min="1" onkeypress="handleKeyPress(event, queryByCount)" onwheel="handleWheel(event, this)">
+    <div class="container">
+        <h1>记录查询</h1>
+        
+        <!-- 查询区域 -->
+        <div class="query-section">
+            <div class="query-controls">
+                <!-- 查询输入区域 -->
+                <div class="query-inputs">
+                    <!-- 根据期数查询 -->
+                    <div class="query-input-group">
+                        <input type="number" id="countInput" class="query-input" placeholder="期数查询" min="1" onkeypress="handleKeyPress(event, queryByCount)">
+                    </div>
+                    
+                    <!-- 根据期号范围查询 -->
+                    <div class="query-input-group">
+                        <input type="text" id="startInput" class="query-input" placeholder="开始期号" onkeypress="handleKeyPress(event, queryByIssue)">
+                    </div>
+                    <div class="query-input-group">
+                        <input type="text" id="endInput" class="query-input" placeholder="结束期号" onkeypress="handleKeyPress(event, queryByIssue)">
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    
-    <div class="container">
+        
         <!-- 结果区域 -->
         <div class="result-section">
-            <div id="resultContent" class="loading"></div>
+            <div class="result-title">查询结果</div>
+            <div id="resultContent" class="loading">请选择查询选项</div>
         </div>
     </div>
 
@@ -308,42 +304,22 @@
             }
         }
         
-        // 处理滚轮事件，实现数字加减
-        function handleWheel(event, inputElement) {
-            event.preventDefault();
-            
-            // 获取当前值
-            let currentValue = parseInt(inputElement.value) || 1;
-            
-            // 根据滚轮方向调整值
-            if (event.deltaY < 0) {
-                // 向上滚动，增加数值
-                currentValue++;
-            } else {
-                // 向下滚动，减少数值
-                currentValue = Math.max(1, currentValue - 1); // 确保不小于最小值
-            }
-            
-            // 更新输入框值
-            inputElement.value = currentValue;
-        }
-        
         // 显示加载状态
         function showLoading() {
             const resultContent = document.getElementById('resultContent');
-            resultContent.innerHTML = '<div class="loading"></div>';
+            resultContent.innerHTML = '<div class="loading">加载中...</div>';
         }
         
         // 显示错误信息
         function showError(message) {
             const resultContent = document.getElementById('resultContent');
-            resultContent.innerHTML = `<div class="error"></div>`;
+            resultContent.innerHTML = `<div class="error">${message}</div>`;
         }
         
         // 显示记录（统一使用卡片式布局）
         function showRecords(records) {
             if (!records || records.length === 0) {
-                showError('');
+                showError('未找到记录');
                 return;
             }
             

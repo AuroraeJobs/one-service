@@ -1,0 +1,2030 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据统计</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 70px 20px;
+            margin: 0;
+            overflow-x: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        /* 导航栏样式 */
+        .navbar {
+            background-color: #333;
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        .navbar-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar-brand {
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+        .navbar-links {
+            display: flex;
+            gap: 20px;
+        }
+        .navbar-links a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+        }
+        .navbar-links a:hover {
+            background-color: #555;
+        }
+        /* 容器样式 */
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+            box-sizing: border-box;
+            position: relative;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        
+        /* 主统计区域布局 */
+        .main-stats-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            width: 100%;
+            max-width: 100%;
+            justify-items: center;
+        }
+        
+        /* 红色球统计区域 */
+        .red-stats {
+            background-color: #fff2f0;
+            border: 1px solid #ffccc7;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        /* 蓝色球统计区域 */
+        .blue-stats {
+            background-color: #f0f5ff;
+            border: 1px solid #adc6ff;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        /* 区域标题样式 */
+        .section-title {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        /* 红色球区域标题样式 */
+        .red-section-title {
+            color: #ff4d4f;
+        }
+        
+        /* 蓝色球区域标题样式 */
+        .blue-section-title {
+            color: #1890ff;
+        }
+        
+        /* 书架容器样式 */
+        .bookshelf-container {
+            display: none;
+            text-align: center;
+        }
+        
+        .bookshelf-container.active {
+            display: block;
+            text-align: center;
+        }
+        
+        /* 详情页容器样式 */
+        .detail-container {
+            display: none;
+            position: relative;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: visible;
+        }
+        
+        .detail-container.active {
+            display: block;
+        }
+        
+        /* 详情内容样式 */
+        .detail-content {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: visible;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        /* 返回书架按钮样式 */
+        .home-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px;
+            background-color: transparent;
+            color: #1890ff;
+            border: none;
+            border-radius: 0;
+            cursor: pointer;
+            font-size: 24px;
+            font-weight: bold;
+            z-index: 1000;
+            width: auto;
+            height: auto;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        
+        .home-button:hover {
+            color: #40a9ff;
+            transform: scale(1.1);
+        }
+        
+        /* 红色球和蓝色球统计区域样式 */
+        .red-stats,
+        .blue-stats {
+            position: relative;
+            min-height: auto;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: visible;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        /* 书架样式 */
+        .bookshelf {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, auto));
+            gap: 20px;
+            margin-bottom: 30px;
+            width: 100%;
+            max-width: 1200px;
+            justify-self: center;
+            justify-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+        }
+        
+        /* 统计模块样式（扑克牌样式） */
+        .stats-module {
+            background-color: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            margin-bottom: 0;
+            position: relative;
+            top: auto;
+            left: auto;
+            /* 固定扑克牌大小 */
+            width: 150px;
+            height: 220px;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+            background-image: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        }
+        
+        .stats-module:hover {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+            transform: translateY(-8px) scale(1.05);
+        }
+        
+        /* 拖拽排序样式 */
+        .stats-module.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+        
+        .stats-module.drag-over {
+            box-shadow: 0 0 0 3px #1890ff inset;
+            background-color: rgba(24, 144, 255, 0.1);
+        }
+        
+        /* 扑克牌标题样式 */
+        .book-title {
+            font-size: 60px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 0;
+            font-family: 'Arial Black', sans-serif;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 红色球扑克牌样式 */
+        .red-stats .book-title {
+            color: #ff4d4f;
+        }
+        
+        .red-stats .stats-module {
+            border-color: #ffccc7;
+            background-image: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%);
+        }
+        
+        /* 蓝色球扑克牌样式 */
+        .blue-stats .book-title {
+            color: #1890ff;
+        }
+        
+        .blue-stats .stats-module {
+            border-color: #adc6ff;
+            background-image: linear-gradient(135deg, #ffffff 0%, #f0f5ff 100%);
+        }
+        
+        /* 所有统计卡片统一样式 */
+        .stats-module[data-detail="redEvenOddDetail"] .book-title,
+        .stats-module[data-detail="blueEvenOddDetail"] .book-title,
+        .stats-module[data-detail="redTableDetail"] .book-title,
+        .stats-module[data-detail="blueTableDetail"] .book-title,
+        .stats-module[data-detail="redCountDetail"] .book-title,
+        .stats-module[data-detail="blueCountDetail"] .book-title,
+        .stats-module[data-detail="redCustomGroupDetail"] .book-title,
+        .stats-module[data-detail="blueCustomGroupDetail"] .book-title {
+            font-size: 32px;
+            font-family: 'Georgia', serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        /* 红色球卡片统一样式 */
+        .stats-module[data-detail="redEvenOddDetail"],
+        .stats-module[data-detail="redTableDetail"],
+        .stats-module[data-detail="redCountDetail"],
+        .stats-module[data-detail="redCustomGroupDetail"] {
+            background-image: linear-gradient(135deg, #fff2f0 0%, #fff1f0 100%);
+            border-color: #ff4d4f;
+            box-shadow: 0 4px 12px rgba(255, 77, 79, 0.2);
+        }
+        
+        /* 蓝色球卡片统一样式 */
+        .stats-module[data-detail="blueEvenOddDetail"],
+        .stats-module[data-detail="blueTableDetail"],
+        .stats-module[data-detail="blueCountDetail"],
+        .stats-module[data-detail="blueCustomGroupDetail"] {
+            background-image: linear-gradient(135deg, #f0f5ff 0%, #e6f7ff 100%);
+            border-color: #1890ff;
+            box-shadow: 0 4px 12px rgba(24, 144, 255, 0.2);
+        }
+        
+        /* 所有统计模块中间文字竖放 */
+        .stats-module[data-detail="redEvenOddDetail"] .book-title,
+        .stats-module[data-detail="blueEvenOddDetail"] .book-title,
+        .stats-module[data-detail="redTableDetail"] .book-title,
+        .stats-module[data-detail="blueTableDetail"] .book-title,
+        .stats-module[data-detail="redCountDetail"] .book-title,
+        .stats-module[data-detail="blueCountDetail"] .book-title,
+        .stats-module[data-detail="redCustomGroupDetail"] .book-title,
+        .stats-module[data-detail="blueCustomGroupDetail"] .book-title {
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            letter-spacing: 10px;
+        }
+        
+        /* 左侧号码部分 */
+        .card-left {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-right: 10px;
+        }
+
+        /* 右侧统计数据部分 */
+        .card-right {
+            flex: 2;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            padding-left: 10px;
+        }
+
+        /* 号码圆形背景 */
+        .ball-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 16px;
+            color: white;
+        }
+
+        /* 红色球圆形背景 */
+        .red-stats .ball-circle {
+            background-color: #ff4d4f;
+        }
+
+        /* 蓝色球圆形背景 */
+        .blue-stats .ball-circle {
+            background-color: #1890ff;
+        }
+
+        /* 扑克牌角标样式 */
+        .card-corner {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            z-index: 10;
+        }
+        
+        /* 左上角角标 */
+        .card-corner.top-left {
+            top: 10px;
+            left: 10px;
+        }
+        
+        /* 右下角角标 */
+        .card-corner.bottom-right {
+            bottom: 10px;
+            right: 10px;
+            transform: rotate(180deg);
+        }
+        
+        /* 角标数字样式 */
+        .card-number {
+            font-size: 18px;
+            margin-bottom: -2px;
+            font-family: 'Arial Black', sans-serif;
+        }
+        
+        /* 角标花色样式 */
+        .card-suit {
+            font-size: 24px;
+        }
+        
+        /* 红色球角标样式 */
+        .red-stats .card-number,
+        .red-stats .card-suit {
+            color: #ff4d4f;
+        }
+        
+        /* 蓝色球角标样式 */
+        .blue-stats .card-number,
+        .blue-stats .card-suit {
+            color: #1890ff;
+        }
+        
+        /* 奇偶统计角标样式 */
+        .stats-module[data-detail="redEvenOddDetail"] .card-number,
+        .stats-module[data-detail="blueEvenOddDetail"] .card-number {
+            font-size: 14px;
+            font-family: 'Georgia', serif;
+            text-transform: uppercase;
+            margin-bottom: -3px;
+        }
+        
+        .stats-module[data-detail="redEvenOddDetail"] .card-suit {
+            font-size: 20px;
+            color: #ff4d4f;
+        }
+        
+        .stats-module[data-detail="blueEvenOddDetail"] .card-suit {
+            font-size: 20px;
+            color: #1890ff;
+        }
+        
+
+        
+
+        
+        .stats-module h2 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        /* 模块平均次数样式 */
+        .module-avg {
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        /* 奇偶统计样式 */
+        .even-odd-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        /* 分组统计样式 */
+        .group-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+        }
+        
+        /* 单个统计项样式 */
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 分组项样式 - 扑克牌长宽比 */
+        .group-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px 10px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            aspect-ratio: 2 / 3; /* 扑克牌长宽比 */
+            max-width: 120px;
+            justify-content: flex-start;
+        }
+        
+        /* 分组项拖拽样式 */
+        .group-item.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+        
+        .group-item.drag-over {
+            box-shadow: 0 0 0 3px #1890ff inset;
+            background-color: rgba(24, 144, 255, 0.1);
+        }
+        
+        /* 调整统计数值和差值的布局 */
+        .group-item .stat-value {
+            margin: auto 0;
+            text-align: center;
+        }
+        
+        .group-item .difference {
+            margin-top: auto;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        
+        /* 红色球统计项样式 */
+        .red-even, .red-odd, .red-difference, .red-group {
+            background-color: #fff2f0;
+            border: 1px solid #ffccc7;
+        }
+        
+        /* 蓝色球统计项样式 */
+        .blue-even, .blue-odd, .blue-difference, .blue-group {
+            background-color: #f0f5ff;
+            border: 1px solid #adc6ff;
+        }
+        
+        /* 统计标题样式 */
+        .stat-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        /* 分组标题样式 */
+        .group-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            background-color: #ff4d4f;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 50px;
+            min-width: 80px;
+            text-align: center;
+        }
+        
+        /* 红色球标题样式 */
+        .red-title {
+            color: #ff4d4f;
+        }
+        
+        /* 蓝色球标题样式 */
+        .blue-title {
+            color: #1890ff;
+        }
+        
+        /* 分组标题红色样式 */
+        .group-title.red-title {
+            background-color: #ff4d4f;
+            color: white;
+        }
+        
+        /* 分组标题蓝色样式 */
+        .group-title.blue-title {
+            background-color: #1890ff;
+            color: white;
+        }
+        
+        /* 统计数值样式 */
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        /* 红色球数值样式 */
+        .red-value {
+            color: #ff4d4f;
+        }
+        
+        /* 蓝色球数值样式 */
+        .blue-value {
+            color: #1890ff;
+        }
+        
+        /* 差值样式 */
+        .difference {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        /* 正差值样式 */
+        .difference-positive {
+            color: #52c41a;
+        }
+        
+        /* 负差值样式 */
+        .difference-negative {
+            color: #ff4d4f;
+        }
+        
+        /* 平均次数样式 */
+        .avg-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #52c41a;
+        }
+        
+        /* 加载状态样式 */
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+        }
+        
+        /* 错误状态样式 */
+        .error {
+            text-align: center;
+            color: #d9534f;
+            padding: 40px;
+        }
+        
+        /* 无数据状态样式 */
+        .no-data {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+        }
+        
+        /* 切换按钮样式 */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 30px;
+            height: 16px;
+        }
+        
+        /* 隐藏原生复选框 */
+        .toggle-input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        /* 切换开关的背景 */
+        .toggle-label {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ff4d4f;
+            transition: .4s;
+            border-radius: 8px;
+        }
+        
+        /* 切换开关的滑块 */
+        .toggle-slider {
+            position: absolute;
+            content: "";
+            height: 12px;
+            width: 12px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* 当复选框被选中时的背景色 */
+        .toggle-input:checked + .toggle-label {
+            background-color: #1890ff;
+        }
+        
+        /* 当复选框被选中时的滑块位置 */
+        .toggle-input:checked + .toggle-label .toggle-slider {
+            transform: translateX(14px);
+        }
+        
+        /* 固定切换按钮容器样式 */
+        .fixed-toggle-container {
+            position: fixed;
+            bottom: 30px;
+            right: 20px;
+            z-index: 1000;
+            background-color: white;
+            padding: 12px;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        /* 固定切换按钮容器悬浮效果 */
+        .fixed-toggle-container:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* 固定切换按钮容器点击效果 */
+        .fixed-toggle-container:active {
+            transform: scale(0.95);
+        }
+        
+        /* 表格容器样式 */
+        .table-container {
+            width: calc(18 * 50px + 60px); /* 18列数据列 + 1列序号列 */
+            max-width: none;
+            min-width: calc(18 * 50px + 60px);
+            max-height: calc(100vh - 180px);
+            overflow-x: auto;
+            overflow-y: auto;
+            margin: 0 auto 20px;
+            position: relative;
+            padding: 0;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+        
+        /* 表格样式 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin: 0;
+            padding: 0;
+            border: none;
+            outline: none;
+        }
+        
+        /* 表格容器内边距为0，确保表格紧贴容器 */
+        .table-container {
+            padding: 0;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px 8px;
+            text-align: center;
+            min-width: 50px;
+            font-size: 14px;
+        }
+        
+        /* 表头行固定 */
+        th {
+            background-color: #fafafa;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            white-space: nowrap;
+        }
+        
+        /* 固定第一列（序号列） */
+        th:first-child,
+        td:first-child {
+            position: sticky;
+            left: 0;
+            background-color: #fafafa;
+            z-index: 5;
+            font-weight: bold;
+            min-width: 60px;
+            width: 60px;
+        }
+        
+        /* 确保第一行第一列的层级最高 */
+        th:first-child {
+            z-index: 20;
+        }
+        
+        /* 确保第一行的其他列在垂直滚动时固定 */
+        th:not(:first-child) {
+            z-index: 10;
+        }
+        
+        /* 确保数据行的第一列在水平滚动时固定 */
+        td:first-child {
+            z-index: 5;
+        }
+        
+        /* 偶数行第一列的背景色 */
+        tr:nth-child(even) td:first-child {
+            background-color: #f9f9f9;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        /* 红色球单元格样式 */
+        .red-cell {
+            background-color: #fff2f0;
+            color: #ff4d4f;
+            font-weight: bold;
+        }
+        /* 蓝色球单元格样式 */
+        .blue-cell {
+            background-color: #f0f5ff;
+            color: #1890ff;
+            font-weight: bold;
+        }
+    </style>
+    <script src="navbar.js"></script>
+    <script src="slider-component.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script>
+        // 动态加载滑块组件HTML
+        fetch('slider-component.html')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('sliderContainer').innerHTML = html;
+                // 滑块组件HTML加载完成后，初始化滑块
+                initSliderComponent();
+            })
+            .catch(error => {
+                console.error('Failed to load slider component:', error);
+            });
+    </script>
+</head>
+<body>
+    <div class="container">
+            <!-- 滑块组件容器 -->
+            <div id="sliderContainer"></div>
+            
+            <!-- 固定在右下角的切换按钮 -->
+            <div class="fixed-toggle-container">
+                <div class="toggle-switch">
+                    <input type="checkbox" id="ballTypeToggle" class="toggle-input">
+                    <label for="ballTypeToggle" class="toggle-label">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="main-stats-container">
+            <!-- 红色球统计区域 -->
+            <div class="red-stats">
+                <!-- 红色球返回书架按钮 -->
+                <button class="home-button" id="redHomeButton" style="display: none;">☰</button>
+                
+                <!-- 红色球书架容器 -->
+                <div class="bookshelf-container active" id="redBookshelfContainer">
+
+                    <div class="bookshelf">
+                        <!-- 红色球奇偶统计模块 -->
+                        <div class="stats-module" draggable="true" data-detail="redEvenOddDetail">
+                            <div class="card-corner top-left">
+                                <div class="card-number">奇偶</div>
+                            </div>
+                            <div class="book-title">奇偶</div>
+                            <div class="card-corner bottom-right">
+                                <div class="card-number">奇偶</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 红色球表格统计模块 -->
+                        <div class="stats-module" draggable="true" data-detail="redTableDetail">
+                            <div class="card-corner top-left">
+                                <div class="card-number">表格</div>
+                            </div>
+                            <div class="book-title">表格</div>
+                            <div class="card-corner bottom-right">
+                                <div class="card-number">表格</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 红色球次数统计模块 -->
+                        <div class="stats-module" draggable="true" data-detail="redCountDetail">
+                            <div class="card-corner top-left">
+                                <div class="card-number">次数</div>
+                            </div>
+                            <div class="book-title">次数</div>
+                            <div class="card-corner bottom-right">
+                                <div class="card-number">次数</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 红色球自定义分组统计模块 -->
+                        <div class="stats-module" draggable="true" data-detail="redCustomGroupDetail">
+                            <div class="card-corner top-left">
+                                <div class="card-number">分组</div>
+                            </div>
+                            <div class="book-title">分组</div>
+                            <div class="card-corner bottom-right">
+                                <div class="card-number">分组</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 红色球详情页容器 -->
+                <div class="detail-container" id="redDetailContainer">
+                    <!-- 红色球奇偶统计详情 -->
+                    <div id="redEvenOddDetail" class="detail-content">
+                        <div id="redEvenOddContent" class="loading">加载中...</div>
+                    </div>
+                    
+                    <!-- 红色球自定义分组统计详情 -->
+                    <div id="redCustomGroupDetail" class="detail-content" style="display: none;">
+                        <div style="margin-top: 20px; margin-bottom: 20px; text-align: center;">
+                            <span id="redCustomGroupSizeValue" style="font-size: 18px; font-weight: bold; margin-right: 10px;">1</span>
+                            <input type="range" id="redCustomGroupSize" min="1" max="33" value="1" style="width: 200px;">
+                        </div>
+                        <div id="redCustomGroupContent" class="loading">请调整滑块选择每组号码数</div>
+                    </div>
+                    
+                    <!-- 红色球表格统计详情 -->
+                    <div id="redTableDetail" class="detail-content" style="display: none;">
+                        <div class="table-container">
+                            <div id="redTableContent" class="loading">加载中...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 红色球次数统计详情 -->
+                    <div id="redCountDetail" class="detail-content" style="display: none;">
+                        <div id="redCountContent" class="loading">加载中...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 蓝色球统计区域 -->
+            <div class="blue-stats" style="display: none;">
+                <!-- 蓝色球返回书架按钮 -->
+                <button class="home-button" id="blueHomeButton" style="display: none;">☰</button>
+                
+                <!-- 蓝色球书架容器 -->
+                <div class="bookshelf-container active" id="blueBookshelfContainer">
+
+                    <div class="bookshelf">
+                        <!-- 蓝色球奇偶统计模块 -->
+                        <div class="stats-module" draggable="true" data-detail="blueEvenOddDetail">
+                            <div class="card-corner top-left">
+                                <div class="card-number">奇偶</div>
+                            </div>
+                            <div class="book-title">奇偶</div>
+                            <div class="card-corner bottom-right">
+                                <div class="card-number">奇偶</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 蓝色球表格统计模块 -->
+                        <div class="stats-module" draggable="true" data-detail="blueTableDetail">
+                            <div class="card-corner top-left">
+                                <div class="card-number">表格</div>
+                            </div>
+                            <div class="book-title">表格</div>
+                            <div class="card-corner bottom-right">
+                                <div class="card-number">表格</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 蓝色球次数统计模块 -->
+                        <div class="stats-module" draggable="true" data-detail="blueCountDetail">
+                            <div class="card-corner top-left">
+                                <div class="card-number">次数</div>
+                            </div>
+                            <div class="book-title">次数</div>
+                            <div class="card-corner bottom-right">
+                                <div class="card-number">次数</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 蓝色球自定义分组统计模块 -->
+                        <div class="stats-module" draggable="true" data-detail="blueCustomGroupDetail">
+                            <div class="card-corner top-left">
+                                <div class="card-number">分组</div>
+                            </div>
+                            <div class="book-title">分组</div>
+                            <div class="card-corner bottom-right">
+                                <div class="card-number">分组</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 蓝色球详情页容器 -->
+                <div class="detail-container" id="blueDetailContainer">
+                    <!-- 蓝色球奇偶统计详情 -->
+                    <div id="blueEvenOddDetail" class="detail-content">
+                        <div id="blueEvenOddContent" class="loading">加载中...</div>
+                    </div>
+                    
+                    <!-- 蓝色球自定义分组统计详情 -->
+                    <div id="blueCustomGroupDetail" class="detail-content" style="display: none;">
+                        <div style="margin-top: 20px; margin-bottom: 20px; text-align: center;">
+                            <span id="blueCustomGroupSizeValue" style="font-size: 18px; font-weight: bold; margin-right: 10px;">1</span>
+                            <input type="range" id="blueCustomGroupSize" min="1" max="16" value="1" style="width: 200px;">
+                        </div>
+                        <div id="blueCustomGroupContent" class="loading">请调整滑块选择每组号码数</div>
+                    </div>
+                    
+                    <!-- 蓝色球表格统计详情 -->
+                    <div id="blueTableDetail" class="detail-content" style="display: none;">
+                        <div class="table-container">
+                            <div id="blueTableContent" class="loading">加载中...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 蓝色球次数统计详情 -->
+                    <div id="blueCountDetail" class="detail-content" style="display: none;">
+                        <div id="blueCountContent" class="loading">加载中...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量存储所有数据行
+        let allLines = [];
+        
+        // 当前显示的球类型：'red' 或 'blue'
+        let currentBallType = 'red';
+        
+        // 滑块组件实例
+        let sliderComponent = null;
+        
+        // 根据行号范围计算统计数据
+        function calculateStats(startRow, endRow) {
+            // 获取指定范围内的数据行
+            const rangeLines = allLines.slice(startRow - 1, endRow);
+            
+            // 初始化奇偶统计对象
+            let redEvenCount = 0;
+            let redOddCount = 0;
+            let blueEvenCount = 0;
+            let blueOddCount = 0;
+            
+            // 初始化自定义分组统计对象（默认值，实际值由用户输入决定）
+            const redCustomGroups = {};
+            const blueCustomGroups = {};
+            
+            // 统计每组出现的次数
+            let totalRedBalls = 0;
+            let totalBlueBalls = 0;
+            
+            rangeLines.forEach(line => {
+                if (line.length === 14) {
+                    // 统计红色球（前12位，每两位一个号码）
+                    for (let i = 0; i < 12; i += 2) {
+                        const redBall = line.substring(i, i + 2);
+                        const redBallNum = parseInt(redBall);
+                        totalRedBalls++;
+                        
+                        // 奇偶统计
+                        if (redBallNum % 2 === 0) {
+                            redEvenCount++;
+                        } else {
+                            redOddCount++;
+                        }
+                    }
+                    
+                    // 统计蓝色球（最后两位）
+                    const blueBall = line.substring(12, 14);
+                    const blueBallNum = parseInt(blueBall);
+                    totalBlueBalls++;
+                    
+                    // 奇偶统计
+                    if (blueBallNum % 2 === 0) {
+                        blueEvenCount++;
+                    } else {
+                        blueOddCount++;
+                    }
+                }
+            });
+            
+            // 计算奇偶平均值（偶数和奇数的平均出现次数）
+            const redEvenOddTotal = redEvenCount + redOddCount;
+            const blueEvenOddTotal = blueEvenCount + blueOddCount;
+            
+            const avgRedEvenOdd = redEvenOddTotal > 0 ? (redEvenOddTotal / 2).toFixed(2) : 0;
+            const avgBlueEvenOdd = blueEvenOddTotal > 0 ? (blueEvenOddTotal / 2).toFixed(2) : 0;
+            
+            // 计算偶数和奇数与平均值的差值
+            const redEvenDiff = (redEvenCount - (redEvenOddTotal / 2)).toFixed(2);
+            const redOddDiff = (redOddCount - (redEvenOddTotal / 2)).toFixed(2);
+            const blueEvenDiff = (blueEvenCount - (blueEvenOddTotal / 2)).toFixed(2);
+            const blueOddDiff = (blueOddCount - (blueEvenOddTotal / 2)).toFixed(2);
+            
+            // 生成统计HTML
+            generateEvenOddHTML('red', redEvenCount, redOddCount, avgRedEvenOdd, redEvenDiff, redOddDiff);
+            generateEvenOddHTML('blue', blueEvenCount, blueOddCount, avgBlueEvenOdd, blueEvenDiff, blueOddDiff);
+            
+            // 联动更新自定义分组统计结果
+            const redCustomGroupSize = document.getElementById('redCustomGroupSize');
+            const blueCustomGroupSize = document.getElementById('blueCustomGroupSize');
+            
+            if (redCustomGroupSize) {
+                calculateCustomStats('red', parseInt(redCustomGroupSize.value));
+            }
+            
+            if (blueCustomGroupSize) {
+                calculateCustomStats('blue', parseInt(blueCustomGroupSize.value));
+            }
+            
+            // 更新表格统计
+            generateTable('red', startRow, endRow);
+            generateTable('blue', startRow, endRow);
+            
+            // 更新次数统计
+            calculateCountStats('red', startRow, endRow);
+            calculateCountStats('blue', startRow, endRow);
+        }
+        
+        // 生成奇偶统计HTML
+        function generateEvenOddHTML(color, evenCount, oddCount, avgCount, evenDiff, oddDiff) {
+            const containerId = `${color}EvenOddContent`;
+            const container = document.getElementById(containerId);
+            const chartId = `${containerId}Chart`;
+            
+            // 创建固定顺序的奇偶统计数组（奇数在前，偶数在后）
+            const fixedStats = [
+                ['奇数', oddCount],
+                ['偶数', evenCount]
+            ];
+            
+            // 创建差值对象
+            const differences = {
+                '奇数': oddDiff,
+                '偶数': evenDiff
+            };
+            
+            // 创建图表数据对象（固定顺序）
+            const chartData = {
+                '奇数': oddCount,
+                '偶数': evenCount
+            };
+            
+            let html = `<div class="module-avg ${color}-title">平均出现次数: <span class="avg-value">${avgCount}</span></div>`;
+            // 添加图表容器
+            html += `<div id="${chartId}" style="width: 100%; height: 300px; margin-bottom: 20px;"></div>`;
+            html += '<div class="group-stats" draggable="true">';
+            
+            // 遍历固定顺序的统计项
+            fixedStats.forEach(([name, count]) => {
+                const difference = differences[name];
+                const differenceClass = parseFloat(difference) >= 0 ? 'difference-positive' : 'difference-negative';
+                html += `<div class="group-item ${color}-group" draggable="true">`;
+                html += `<div class="group-title ${color}-title">${name}</div>`;
+                html += `<div class="stat-value ${color}-value">${count}</div>`;
+                html += `<div class="difference ${differenceClass}">${difference >= 0 ? '+' : ''}${difference}</div>`;
+                html += '</div>';
+            });
+            
+            html += '</div>';
+            
+            container.innerHTML = html;
+            
+            // 绘制图表，使用固定顺序的数据
+            drawGroupChart(chartId, chartData, avgCount, color);
+            
+            // 初始化奇偶统计结果卡片的拖动功能
+            initGroupStatsDragAndDrop(containerId);
+        }
+        
+
+        
+
+        
+        // 绘制分组统计图表
+        function drawGroupChart(chartId, groups, avgCount, color) {
+            const chartContainer = document.getElementById(chartId);
+            // 恢复基本宽度设置，确保图表能正常显示
+            chartContainer.style.width = '100%';
+            chartContainer.style.height = '300px';
+            
+            // 检查容器是否有正确的尺寸
+            if (chartContainer.offsetWidth === 0 || chartContainer.offsetHeight === 0) {
+                // 如果容器尺寸为0，延迟初始化图表
+                setTimeout(() => {
+                    drawGroupChart(chartId, groups, avgCount, color);
+                }, 100);
+                return;
+            }
+            
+            const chart = echarts.init(chartContainer);
+            
+            // 直接使用传入数据的顺序，不进行排序
+            const groupEntries = Object.entries(groups);
+            
+            // 准备数据
+            const groupNames = groupEntries.map(([group]) => group);
+            const groupCounts = groupEntries.map(([, count]) => count);
+            
+            // 设置图表配置
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: groupNames,
+                    axisLabel: {
+                        interval: 0,
+                        rotate: 45
+                    }
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: [
+                    {
+                        name: '出现次数',
+                        type: 'bar',
+                        data: groupCounts,
+                        itemStyle: {
+                            color: color === 'red' ? '#ff4d4f' : '#1890ff'
+                        }
+                    },
+                    {
+                        name: '平均值',
+                        type: 'line',
+                        data: new Array(groupNames.length).fill(parseFloat(avgCount)),
+                        itemStyle: {
+                            color: '#52c41a'
+                        },
+                        lineStyle: {
+                            type: 'dashed'
+                        }
+                    }
+                ]
+            };
+            
+            // 渲染图表
+            chart.setOption(option);
+            
+            // 添加窗口大小变化监听器，确保图表自适应
+            window.addEventListener('resize', function() {
+                chart.resize();
+            });
+        }
+        
+        // 生成表格
+        function generateTable(color, startRow, endRow) {
+            // 获取表格内容容器
+            const tableContent = document.getElementById(`${color}TableContent`);
+            
+            if (allLines.length === 0) {
+                tableContent.innerHTML = '<div class="loading">没有找到双色球数据</div>';
+                return;
+            }
+            
+            // 获取要显示的数据行（从startRow到endRow，注意数组索引从0开始）
+            const displayLines = allLines.slice(startRow - 1, endRow);
+            
+            // 生成表头
+            let html = '<table>';
+            html += '<thead><tr>';
+            html += '<th>序号</th>';
+            
+            // 根据球类型生成表头
+            const maxNum = color === 'red' ? 33 : 16;
+            for (let i = 1; i <= maxNum; i++) {
+                html += `<th>${i}</th>`;
+            }
+            html += '</tr></thead>';
+            
+            // 生成表格内容
+            html += '<tbody>';
+            
+            // 统计每个号码的累积出现次数
+            const countMap = {};
+            for (let i = 1; i <= maxNum; i++) {
+                countMap[i] = 0;
+            }
+            
+            // 遍历数据行
+            displayLines.forEach((line, index) => {
+                if (line.length === 14) {
+                    html += `<tr>`;
+                    html += `<td>${startRow + index}</td>`;
+                    
+                    // 提取当前行的号码
+                    const currentNumbers = new Set();
+                    
+                    if (color === 'red') {
+                        // 红色球：前12位，每两位一个号码
+                        for (let i = 0; i < 12; i += 2) {
+                            const num = parseInt(line.substring(i, i + 2));
+                            currentNumbers.add(num);
+                            countMap[num]++;
+                        }
+                    } else {
+                        // 蓝色球：最后两位
+                        const num = parseInt(line.substring(12, 14));
+                        currentNumbers.add(num);
+                        countMap[num]++;
+                    }
+                    
+                    // 生成单元格
+                    for (let i = 1; i <= maxNum; i++) {
+                        if (currentNumbers.has(i)) {
+                            // 标记为红色或蓝色
+                            const cellClass = color === 'red' ? 'red-cell' : 'blue-cell';
+                            html += `<td class="${cellClass}">${countMap[i]}</td>`;
+                        } else {
+                            html += `<td>${countMap[i]}</td>`;
+                        }
+                    }
+                    
+                    html += `</tr>`;
+                }
+            });
+            
+            html += '</tbody></table>';
+            
+            tableContent.innerHTML = html;
+        }
+        
+        // 计算次数统计
+        function calculateCountStats(color, start, end) {
+            // 获取指定范围内的数据行
+            const rangeLines = allLines.slice(start - 1, end);
+            
+            // 初始化次数统计对象
+            const countMap = {};
+            const maxNum = color === 'red' ? 33 : 16;
+            
+            // 初始化统计对象
+            for (let i = 1; i <= maxNum; i++) {
+                countMap[i] = 0;
+            }
+            
+            // 统计每个号码出现的次数
+            let totalCount = 0;
+            rangeLines.forEach(line => {
+                if (line.length === 14) {
+                    if (color === 'red') {
+                        // 统计红色球（前12位，每两位一个号码）
+                        for (let i = 0; i < 12; i += 2) {
+                            const redBall = line.substring(i, i + 2);
+                            const redBallNum = parseInt(redBall);
+                            countMap[redBallNum]++;
+                            totalCount++;
+                        }
+                    } else {
+                        // 统计蓝色球（最后两位）
+                        const blueBall = line.substring(12, 14);
+                        const blueBallNum = parseInt(blueBall);
+                        countMap[blueBallNum]++;
+                        totalCount++;
+                    }
+                }
+            });
+            
+            // 计算平均出现次数
+            const avgCount = maxNum > 0 ? (totalCount / maxNum).toFixed(2) : 0;
+            
+            // 将统计结果转换为数组并按出现次数降序排序
+            const sortedCounts = Object.entries(countMap)
+                .map(([number, count]) => ({ number: parseInt(number), count }))
+                .sort((a, b) => b.count - a.count);
+            
+            // 生成次数统计HTML
+            generateCountHTML(color, sortedCounts, avgCount);
+        }
+        
+        // 生成次数统计HTML
+        function generateCountHTML(color, sortedCounts, avgCount) {
+            const containerId = `${color}CountContent`;
+            const container = document.getElementById(containerId);
+            const chartId = `${containerId}Chart`;
+            
+            // 创建次数统计对象
+            const countStats = {};
+            sortedCounts.forEach(item => {
+                countStats[item.number] = item.count;
+            });
+            
+            // 计算每个号码与平均值的差值
+            const differences = {};
+            sortedCounts.forEach(item => {
+                differences[item.number] = (item.count - (avgCount * 1)).toFixed(2);
+            });
+            
+            let html = `<div class="module-avg ${color}-title">平均出现次数: <span class="avg-value">${avgCount}</span></div>`;
+            // 添加图表容器
+            html += `<div id="${chartId}" style="width: 100%; height: 300px; margin-bottom: 20px;"></div>`;
+            html += '<div class="group-stats" draggable="true">';
+            
+            // 遍历排序后的统计项
+            sortedCounts.forEach((item) => {
+                const difference = differences[item.number];
+                const differenceClass = parseFloat(difference) >= 0 ? 'difference-positive' : 'difference-negative';
+                html += `<div class="group-item ${color}-group" draggable="true">`;
+                html += `<div class="group-title ${color}-title">${item.number}</div>`;
+                html += `<div class="stat-value ${color}-value">${item.count}</div>`;
+                html += `<div class="difference ${differenceClass}">${difference >= 0 ? '+' : ''}${difference}</div>`;
+                html += '</div>';
+            });
+            
+            html += '</div>';
+            
+            container.innerHTML = html;
+            
+            // 绘制图表
+            drawGroupChart(chartId, countStats, avgCount, color);
+            
+            // 初始化次数统计结果卡片的拖动功能
+            initGroupStatsDragAndDrop(containerId);
+        }
+        
+        // 生成分组统计HTML
+        function generateGroupHTML(color, groupType, groups, avgCount, differences) {
+            let containerId;
+            if (groupType === 'original') {
+                containerId = `${color}OriginalGroupContent`;
+            } else if (groupType === 'two') {
+                containerId = `${color}TwoGroupContent`;
+            } else if (groupType === 'three') {
+                containerId = `${color}ThreeGroupContent`;
+            } else if (groupType === 'four') {
+                containerId = `${color}FourGroupContent`;
+            } else if (groupType === 'five') {
+                containerId = `${color}FiveGroupContent`;
+            } else if (groupType === 'six') {
+                containerId = `${color}SixGroupContent`;
+            } else if (groupType === 'seven') {
+                containerId = `${color}SevenGroupContent`;
+            } else if (groupType === 'eight') {
+                containerId = `${color}EightGroupContent`;
+            } else if (groupType === 'nine') {
+                containerId = `${color}NineGroupContent`;
+            } else if (groupType === 'ten') {
+                containerId = `${color}TenGroupContent`;
+            } else if (groupType === 'custom') {
+                containerId = `${color}CustomGroupContent`;
+            }
+            const container = document.getElementById(containerId);
+            const chartId = `${containerId}Chart`;
+            
+            let html = `<div class="module-avg ${color}-title">平均出现次数: <span class="avg-value">${avgCount}</span></div>`;
+            // 添加图表容器
+            html += `<div id="${chartId}" style="width: 100%; height: 300px; margin-bottom: 20px;"></div>`;
+            html += '<div class="group-stats" draggable="true">';
+            
+            // 将分组数据转换为数组并按次数从大到小排序
+            const sortedGroups = Object.entries(groups)
+                .sort(([, countA], [, countB]) => countB - countA);
+            
+            // 遍历排序后的分组
+            sortedGroups.forEach(([group, count]) => {
+                const difference = differences[group];
+                const differenceClass = parseFloat(difference) >= 0 ? 'difference-positive' : 'difference-negative';
+                html += `<div class="group-item ${color}-group" draggable="true">`;
+                html += `<div class="group-title ${color}-title">${group}</div>`;
+                html += `<div class="stat-value ${color}-value">${count}</div>`;
+                html += `<div class="difference ${differenceClass}">${difference >= 0 ? '+' : ''}${difference}</div>`;
+                html += '</div>';
+            });
+            
+            html += '</div>';
+            
+            container.innerHTML = html;
+            
+            // 创建排序后的图表数据对象
+            const sortedChartData = {};
+            sortedGroups.forEach(([group, count]) => {
+                sortedChartData[group] = count;
+            });
+            
+            // 绘制图表，使用排序后的数据
+            drawGroupChart(chartId, sortedChartData, avgCount, color);
+            
+            // 初始化分组统计结果卡片的拖动功能
+            initGroupStatsDragAndDrop(containerId);
+        }
+        
+        // 初始化分组统计结果卡片的拖动功能
+        function initGroupStatsDragAndDrop(containerId) {
+            const container = document.getElementById(containerId);
+            const groupStatsContainer = container.querySelector('.group-stats');
+            const groupItems = groupStatsContainer.querySelectorAll('.group-item');
+            const chartId = `${containerId}Chart`;
+            
+            let draggedItem = null;
+            
+            groupItems.forEach(item => {
+                // 拖拽开始事件
+                item.addEventListener('dragstart', function(e) {
+                    draggedItem = this;
+                    this.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                
+                // 拖拽结束事件
+                item.addEventListener('dragend', function() {
+                    this.classList.remove('dragging');
+                    draggedItem = null;
+                    
+                    // 拖拽结束后，更新图表顺序
+                    updateChartOrder(containerId, chartId);
+                });
+                
+                // 拖拽元素进入事件
+                item.addEventListener('dragenter', function(e) {
+                    e.preventDefault();
+                    if (this !== draggedItem) {
+                        this.classList.add('drag-over');
+                    }
+                });
+                
+                // 拖拽元素离开事件
+                item.addEventListener('dragleave', function() {
+                    this.classList.remove('drag-over');
+                });
+                
+                // 拖拽元素悬停事件
+                item.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                });
+                
+                // 拖拽元素放置事件
+                item.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    this.classList.remove('drag-over');
+                    
+                    if (this !== draggedItem) {
+                        // 获取所有分组项
+                        const allItems = Array.from(groupStatsContainer.querySelectorAll('.group-item'));
+                        const draggedIndex = allItems.indexOf(draggedItem);
+                        const dropIndex = allItems.indexOf(this);
+                        
+                        // 根据索引位置插入元素
+                        if (draggedIndex < dropIndex) {
+                            groupStatsContainer.insertBefore(draggedItem, this.nextSibling);
+                        } else {
+                            groupStatsContainer.insertBefore(draggedItem, this);
+                        }
+                        
+                        // 拖拽放置后，更新图表顺序
+                        updateChartOrder(containerId, chartId);
+                    }
+                });
+            });
+        }
+        
+        // 更新图表顺序
+        function updateChartOrder(containerId, chartId) {
+            const container = document.getElementById(containerId);
+            const groupStatsContainer = container.querySelector('.group-stats');
+            const groupItems = groupStatsContainer.querySelectorAll('.group-item');
+            
+            // 获取当前分组项的顺序（保持拖拽后的顺序）
+            const orderedGroups = {};
+            groupItems.forEach(item => {
+                const groupName = item.querySelector('.group-title').textContent;
+                const count = parseInt(item.querySelector('.stat-value').textContent);
+                orderedGroups[groupName] = count;
+            });
+            
+            // 重新绘制图表，使用拖拽后的顺序
+            const color = containerId.includes('red') ? 'red' : 'blue';
+            const avgValueElement = container.querySelector('.avg-value');
+            const avgCount = avgValueElement ? parseFloat(avgValueElement.textContent) : 0;
+            
+            drawGroupChart(chartId, orderedGroups, avgCount, color);
+        }
+        
+        // 自定义分组统计函数
+        function calculateCustomStats(color, groupSize) {
+            // 获取当前滑块范围
+            let start, end;
+            if (sliderComponent) {
+                const currentValues = sliderComponent.getCurrentValues();
+                start = currentValues.start;
+                end = currentValues.end;
+            } else {
+                start = 1;
+                end = allLines.length;
+            }
+            
+            // 获取指定范围内的数据行
+            const rangeLines = allLines.slice(start - 1, end);
+            
+            // 初始化自定义分组统计对象
+            const customGroups = {};
+            const maxNum = color === 'red' ? 33 : 16;
+            
+            for (let i = 1; i <= maxNum; i += groupSize) {
+                const end = Math.min(i + groupSize - 1, maxNum);
+                // 当groupSize为1时，直接使用号码作为分组名称，而不是范围
+                if (groupSize === 1) {
+                    customGroups[i] = 0;
+                } else {
+                    customGroups[`${i}-${end}`] = 0;
+                }
+            }
+            
+            // 统计每组出现的次数
+            let totalBalls = 0;
+            
+            rangeLines.forEach(line => {
+                if (line.length === 14) {
+                    if (color === 'red') {
+                        // 统计红色球（前12位，每两位一个号码）
+                        for (let i = 0; i < 12; i += 2) {
+                            const redBall = line.substring(i, i + 2);
+                            const redBallNum = parseInt(redBall);
+                            totalBalls++;
+                            
+                            // 统计自定义分组
+                            if (groupSize === 1) {
+                                // 当groupSize为1时，直接使用号码作为分组键
+                                customGroups[redBallNum]++;
+                            } else {
+                                for (let j = 1; j <= 33; j += groupSize) {
+                                    const end = Math.min(j + groupSize - 1, 33);
+                                    if (redBallNum >= j && redBallNum <= end) {
+                                        customGroups[`${j}-${end}`]++;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        // 统计蓝色球（最后两位）
+                        const blueBall = line.substring(12, 14);
+                        const blueBallNum = parseInt(blueBall);
+                        totalBalls++;
+                        
+                        // 统计自定义分组
+                        if (groupSize === 1) {
+                            // 当groupSize为1时，直接使用号码作为分组键
+                            customGroups[blueBallNum]++;
+                        } else {
+                            for (let j = 1; j <= 16; j += groupSize) {
+                                const end = Math.min(j + groupSize - 1, 16);
+                                if (blueBallNum >= j && blueBallNum <= end) {
+                                    customGroups[`${j}-${end}`]++;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 计算自定义分组平均次数
+            const groupCount = Object.keys(customGroups).length;
+            const avgCount = totalBalls > 0 ? (totalBalls / groupCount).toFixed(2) : 0;
+            
+            // 计算自定义分组每个分组与平均值的差值
+            const differences = {};
+            Object.entries(customGroups).forEach(([group, count]) => {
+                differences[group] = (count - (totalBalls / groupCount)).toFixed(2);
+            });
+            
+            // 生成自定义分组HTML
+            generateGroupHTML(color, 'custom', customGroups, avgCount, differences);
+        }
+        
+        // 初始化切换按钮事件
+        function initSwitchButtons() {
+            const ballTypeToggle = document.getElementById('ballTypeToggle');
+            
+            ballTypeToggle.addEventListener('change', function() {
+                currentBallType = this.checked ? 'blue' : 'red';
+                
+                // 切换滑块主题颜色
+                if (sliderComponent) {
+                    sliderComponent.setTheme(currentBallType);
+                }
+                
+                // 切换显示的统计区域
+                toggleStatsDisplay();
+            });
+        }
+        
+        // 切换显示的统计区域
+        function toggleStatsDisplay() {
+            const redStats = document.querySelector('.red-stats');
+            const blueStats = document.querySelector('.blue-stats');
+            
+            if (currentBallType === 'red') {
+                redStats.style.display = 'block';
+                blueStats.style.display = 'none';
+            } else {
+                redStats.style.display = 'none';
+                blueStats.style.display = 'block';
+            }
+        }
+        
+        // 初始化自定义分组事件监听器
+        function initCustomGroupListeners() {
+            // 红色球自定义分组滑块事件
+            const redCustomGroupSize = document.getElementById('redCustomGroupSize');
+            const redCustomGroupSizeValue = document.getElementById('redCustomGroupSizeValue');
+            
+            if (redCustomGroupSize && redCustomGroupSizeValue) {
+                // 滑块变化事件
+                redCustomGroupSize.addEventListener('input', function() {
+                    const groupSize = parseInt(this.value);
+                    redCustomGroupSizeValue.textContent = groupSize;
+                    calculateCustomStats('red', groupSize);
+                });
+                
+                // 初始计算
+                calculateCustomStats('red', parseInt(redCustomGroupSize.value));
+            }
+            
+            // 蓝色球自定义分组滑块事件
+            const blueCustomGroupSize = document.getElementById('blueCustomGroupSize');
+            const blueCustomGroupSizeValue = document.getElementById('blueCustomGroupSizeValue');
+            
+            if (blueCustomGroupSize && blueCustomGroupSizeValue) {
+                // 滑块变化事件
+                blueCustomGroupSize.addEventListener('input', function() {
+                    const groupSize = parseInt(this.value);
+                    blueCustomGroupSizeValue.textContent = groupSize;
+                    calculateCustomStats('blue', groupSize);
+                });
+                
+                // 初始计算
+                calculateCustomStats('blue', parseInt(blueCustomGroupSize.value));
+            }
+        }
+        
+        // 初始化滑块组件
+        function initSliderComponent() {
+            // 等待DOM加载完成
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    createSliderComponent();
+                });
+            } else {
+                createSliderComponent();
+            }
+        }
+        
+        // 创建滑块组件
+        function createSliderComponent() {
+            // 等待滑块组件HTML加载完成
+            setTimeout(() => {
+                sliderComponent = new SliderComponent({
+                    maxValue: allLines.length,
+                    defaultStart: 1,
+                    defaultEnd: allLines.length,
+                    onChange: function(start, end) {
+                        calculateStats(start, end);
+                    }
+                });
+                
+                // 设置初始滑块主题颜色
+                sliderComponent.setTheme(currentBallType);
+            }, 100);
+        }
+        
+        // 使用 Fetch API 调用后端接口获取 records.txt 内容
+        fetch('/record/records')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.text();
+            })
+            .then(data => {
+                // 将内容按行分割并过滤空行
+                allLines = data.split('\n').filter(line => line.trim() !== '');
+                
+                if (allLines.length === 0) {
+                    // 更新所有容器为无数据状态
+                    const containers = [
+                        'redEvenOddContent',
+                        'blueEvenOddContent',
+                        'redTenGroupContent',
+                        'redNineGroupContent',
+                        'redEightGroupContent',
+                        'redSevenGroupContent',
+                        'redSixGroupContent',
+                        'redFiveGroupContent',
+                        'redFourGroupContent',
+                        'redThreeGroupContent',
+                        'redTwoGroupContent',
+                        'redOriginalGroupContent',
+                        'blueOriginalGroupContent',
+                        'blueEightGroupContent',
+                        'blueThreeGroupContent',
+                        'blueTwoGroupContent',
+                        'redTableContent',
+                        'blueTableContent'
+                    ];
+                    containers.forEach(containerId => {
+                        const container = document.getElementById(containerId);
+                        container.innerHTML = '<div class="no-data">没有找到双色球数据</div>';
+                    });
+                    // 初始化书架功能
+                    initBookshelf();
+                    return;
+                }
+                
+                // 初始化滑块组件
+                initSliderComponent();
+                
+                // 等待滑块组件创建完成，然后设置初始值并计算统计结果
+                setTimeout(() => {
+                    if (sliderComponent) {
+                        sliderComponent.setMaxValue(allLines.length);
+                        sliderComponent.setDefaultValues(1, allLines.length);
+                        // 设置初始滑块主题颜色
+                        sliderComponent.setTheme(currentBallType);
+                    } else {
+                        // 如果滑块组件创建失败，直接计算统计结果
+                        calculateStats(1, allLines.length);
+                    }
+                    
+                    // 初始化切换按钮事件
+                    initSwitchButtons();
+                    
+                    // 初始化显示切换
+                    toggleStatsDisplay();
+                    
+                    // 初始化自定义分组事件监听器
+                    initCustomGroupListeners();
+                    
+                    // 初始化书架功能
+                    initBookshelf();
+                }, 200);
+            })
+            .catch(error => {
+                // 更新所有容器为错误状态
+                const containers = [
+                    'redEvenOddContent',
+                    'blueEvenOddContent',
+                    'redTenGroupContent',
+                    'redNineGroupContent',
+                    'redEightGroupContent',
+                    'redSevenGroupContent',
+                    'redSixGroupContent',
+                    'redFiveGroupContent',
+                    'redFourGroupContent',
+                    'redThreeGroupContent',
+                    'redTwoGroupContent',
+                    'redOriginalGroupContent',
+                    'blueOriginalGroupContent',
+                    'blueEightGroupContent',
+                    'blueThreeGroupContent',
+                    'blueTwoGroupContent',
+                    'redTableContent',
+                    'blueTableContent'
+                ];
+                containers.forEach(containerId => {
+                    const container = document.getElementById(containerId);
+                    container.innerHTML = `<div class="error">加载失败: ${error.message}</div>`;
+                });
+                // 初始化书架功能
+                initBookshelf();
+            });
+        
+        // 书架功能初始化
+        function initBookshelf() {
+            // 红色球相关元素
+            const redBookshelfContainer = document.getElementById('redBookshelfContainer');
+            const redDetailContainer = document.getElementById('redDetailContainer');
+            const redHomeButton = document.getElementById('redHomeButton');
+            const redStatsModules = document.querySelectorAll('.red-stats .stats-module');
+            const redDetailContents = document.querySelectorAll('.red-stats .detail-content');
+            
+            // 蓝色球相关元素
+            const blueBookshelfContainer = document.getElementById('blueBookshelfContainer');
+            const blueDetailContainer = document.getElementById('blueDetailContainer');
+            const blueHomeButton = document.getElementById('blueHomeButton');
+            const blueStatsModules = document.querySelectorAll('.blue-stats .stats-module');
+            const blueDetailContents = document.querySelectorAll('.blue-stats .detail-content');
+            
+            // 红色球点击书本事件处理
+            redStatsModules.forEach(module => {
+                module.addEventListener('click', function() {
+                    const detailId = this.getAttribute('data-detail');
+                    
+                    // 隐藏所有红色球详情内容
+                    redDetailContents.forEach(content => {
+                        content.style.display = 'none';
+                    });
+                    
+                    // 显示对应红色球详情内容
+                    const targetDetail = document.getElementById(detailId);
+                    if (targetDetail) {
+                        targetDetail.style.display = 'block';
+                    }
+                    
+                    // 切换红色球容器显示状态
+                    redBookshelfContainer.classList.remove('active');
+                    redDetailContainer.classList.add('active');
+                    
+                    // 显示红色球返回按钮
+                    redHomeButton.style.display = 'block';
+                });
+            });
+            
+            // 红色球返回书架按钮事件处理
+            redHomeButton.addEventListener('click', function() {
+                // 切换红色球容器显示状态
+                redDetailContainer.classList.remove('active');
+                redBookshelfContainer.classList.add('active');
+                
+                // 隐藏红色球返回按钮
+                redHomeButton.style.display = 'none';
+            });
+            
+            // 蓝色球点击书本事件处理
+            blueStatsModules.forEach(module => {
+                module.addEventListener('click', function() {
+                    const detailId = this.getAttribute('data-detail');
+                    
+                    // 隐藏所有蓝色球详情内容
+                    blueDetailContents.forEach(content => {
+                        content.style.display = 'none';
+                    });
+                    
+                    // 显示对应蓝色球详情内容
+                    const targetDetail = document.getElementById(detailId);
+                    if (targetDetail) {
+                        targetDetail.style.display = 'block';
+                    }
+                    
+                    // 切换蓝色球容器显示状态
+                    blueBookshelfContainer.classList.remove('active');
+                    blueDetailContainer.classList.add('active');
+                    
+                    // 显示蓝色球返回按钮
+                    blueHomeButton.style.display = 'block';
+                });
+            });
+            
+            // 蓝色球返回书架按钮事件处理
+            blueHomeButton.addEventListener('click', function() {
+                // 切换蓝色球容器显示状态
+                blueDetailContainer.classList.remove('active');
+                blueBookshelfContainer.classList.add('active');
+                
+                // 隐藏蓝色球返回按钮
+                blueHomeButton.style.display = 'none';
+            });
+            
+            // 实现拖拽排序功能
+            function initDragAndDrop(bookshelfContainer) {
+                const bookshelf = bookshelfContainer.querySelector('.bookshelf');
+                const modules = bookshelf.querySelectorAll('.stats-module');
+                
+                let draggedItem = null;
+                
+                modules.forEach(module => {
+                    // 拖拽开始事件
+                    module.addEventListener('dragstart', function(e) {
+                        draggedItem = this;
+                        this.classList.add('dragging');
+                        e.dataTransfer.effectAllowed = 'move';
+                    });
+                    
+                    // 拖拽结束事件
+                    module.addEventListener('dragend', function() {
+                        this.classList.remove('dragging');
+                        draggedItem = null;
+                    });
+                    
+                    // 拖拽元素进入事件
+                    module.addEventListener('dragenter', function(e) {
+                        e.preventDefault();
+                        if (this !== draggedItem) {
+                            this.classList.add('drag-over');
+                        }
+                    });
+                    
+                    // 拖拽元素离开事件
+                    module.addEventListener('dragleave', function() {
+                        this.classList.remove('drag-over');
+                    });
+                    
+                    // 拖拽元素悬停事件
+                    module.addEventListener('dragover', function(e) {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                    });
+                    
+                    // 拖拽元素放置事件
+                    module.addEventListener('drop', function(e) {
+                        e.preventDefault();
+                        this.classList.remove('drag-over');
+                        
+                        if (this !== draggedItem) {
+                            // 获取所有模块
+                            const allModules = Array.from(bookshelf.querySelectorAll('.stats-module'));
+                            const draggedIndex = allModules.indexOf(draggedItem);
+                            const dropIndex = allModules.indexOf(this);
+                            
+                            // 根据索引位置插入元素
+                            if (draggedIndex < dropIndex) {
+                                bookshelf.insertBefore(draggedItem, this.nextSibling);
+                            } else {
+                                bookshelf.insertBefore(draggedItem, this);
+                            }
+                        }
+                    });
+                });
+            }
+            
+            // 初始化红色球和蓝色球的拖拽排序功能
+            initDragAndDrop(redBookshelfContainer);
+            initDragAndDrop(blueBookshelfContainer);
+            
+            // 初始化自定义分组事件监听器
+            initCustomGroupListeners();
+        }
+    </script>
+</body>
+</html>

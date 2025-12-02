@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>号码分组统计</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 70px 20px;
+        }
+        /* 导航栏样式 */
+        .navbar {
+            background-color: #333;
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        .navbar-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar-brand {
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+        .navbar-links {
+            display: flex;
+            gap: 20px;
+        }
+        .navbar-links a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+        }
+        .navbar-links a:hover {
+            background-color: #555;
+        }
+        /* 容器样式 */
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        /* 查询区域样式 */
+        .query-section {
+            background-color: #fafafa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        
+        /* 查询控制栏 */
+        .query-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        /* 滑块容器样式 */
+        .slider-container {
+            width: 100%;
+            padding: 10px 0;
+        }
+        
+        /* 滑块行样式 */
+        .slider-row {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+        }
+        
+        /* 单个滑块样式 */
+        .single-slider {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            position: relative;
+        }
+        
+        /* 滑块值显示样式 */
+        .slider-value {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #1890ff;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 10px;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            pointer-events: none;
+        }
+        
+        /* 滑块样式 */
+        .slider {
+            width: 100%;
+            height: 6px;
+            background-color: #e8e8e8;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            border-radius: 3px;
+        }
+        
+        /* 滑块轨道样式 - WebKit浏览器 */
+        .slider::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            background-color: #e8e8e8;
+            border-radius: 3px;
+        }
+        
+        /* 滑块轨道样式 - Firefox浏览器 */
+        .slider::-moz-range-track {
+            width: 100%;
+            height: 6px;
+            background-color: #e8e8e8;
+            border-radius: 3px;
+        }
+        
+        /* 滑块拇指样式 - WebKit浏览器 */
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background-color: #1890ff;
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+            margin-top: -7px; /* 调整拇指位置，使其居中 */
+        }
+        
+        /* 滑块拇指悬停样式 - WebKit浏览器 */
+        .slider::-webkit-slider-thumb:hover {
+            background-color: #40a9ff;
+            transform: scale(1.2);
+        }
+        
+        /* 滑块拇指样式 - Firefox浏览器 */
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background-color: #1890ff;
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+        }
+        
+        /* 滑块拇指悬停样式 - Firefox浏览器 */
+        .slider::-moz-range-thumb:hover {
+            background-color: #40a9ff;
+            transform: scale(1.2);
+        }
+        
+        /* 滑块拇指焦点样式 */
+        .slider:focus::-webkit-slider-thumb {
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(24, 144, 255, 0.2);
+        }
+        
+        .slider:focus::-moz-range-thumb {
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(24, 144, 255, 0.2);
+        }
+        
+        /* 统计结果布局 */
+        .stats-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        /* 单个统计模块样式 */
+        .stats-module {
+            background-color: #fafafa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .stats-module h2 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        /* 模块平均次数样式 */
+        .module-avg {
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        /* 分组统计样式 */
+        .group-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        /* 单个分组统计项样式 */
+        .group-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 红色球分组样式 */
+        .red-group {
+            background-color: #fff2f0;
+            border: 1px solid #ffccc7;
+        }
+        
+        /* 蓝色球分组样式 */
+        .blue-group {
+            background-color: #f0f5ff;
+            border: 1px solid #adc6ff;
+        }
+        
+        /* 分组标题样式 */
+        .group-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        /* 红色球标题样式 */
+        .red-title {
+            color: #ff4d4f;
+        }
+        
+        /* 蓝色球标题样式 */
+        .blue-title {
+            color: #1890ff;
+        }
+        
+        /* 统计数值样式 */
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        /* 红色球数值样式 */
+        .red-value {
+            color: #ff4d4f;
+        }
+        
+        /* 蓝色球数值样式 */
+        .blue-value {
+            color: #1890ff;
+        }
+        
+        /* 差值样式 */
+        .difference {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        /* 正差值样式 */
+        .difference-positive {
+            color: #52c41a;
+        }
+        
+        /* 负差值样式 */
+        .difference-negative {
+            color: #ff4d4f;
+        }
+        
+        /* 平均次数样式 */
+        .avg-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #52c41a;
+        }
+        
+        /* 加载状态样式 */
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+        }
+        
+        /* 错误状态样式 */
+        .error {
+            text-align: center;
+            color: #d9534f;
+            padding: 40px;
+        }
+        
+        /* 无数据状态样式 */
+        .no-data {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+        }
+    </style>
+    <script src="navbar.js"></script>
+        <script src="slider-component.js"></script>
+        <script>
+            // 动态加载滑块组件HTML
+            fetch('slider-component.html')
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('sliderContainer').innerHTML = html;
+                    // 滑块组件HTML加载完成后，初始化滑块
+                    initSliderComponent();
+                })
+                .catch(error => {
+                    console.error('Failed to load slider component:', error);
+                });
+        </script>
+</head>
+<body>
+    <div class="container">
+        <h1>号码分组统计</h1>
+        
+        <!-- 滑块组件容器 -->
+        <div id="sliderContainer"></div>
+        
+
+        
+        <div id="statsContent" class="loading">加载中...</div>
+    </div>
+
+    <script>
+        // 全局变量存储所有数据行
+        let allLines = [];
+        let sliderComponent = null;
+        
+        // 初始化滑块组件
+        function initSliderComponent() {
+            // 等待DOM加载完成
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    createSliderComponent();
+                });
+            } else {
+                createSliderComponent();
+            }
+        }
+        
+        // 创建滑块组件
+        function createSliderComponent() {
+            // 等待滑块组件HTML加载完成
+            setTimeout(() => {
+                const maxValue = allLines.length || 1000;
+                const defaultEnd = maxValue;
+                const defaultStart = Math.max(1, defaultEnd - 7);
+                
+                sliderComponent = new SliderComponent({
+                    maxValue: maxValue,
+                    defaultStart: defaultStart,
+                    defaultEnd: defaultEnd,
+                    onChange: function(start, end) {
+                        // 根据选择的范围重新计算统计数据
+                        calculateStats(start, end);
+                    }
+                });
+            }, 100);
+        }
+        
+        // 根据行号范围计算统计数据
+        function calculateStats(startRow, endRow) {
+            // 获取指定范围内的数据行
+            const rangeLines = allLines.slice(startRow - 1, endRow);
+            
+            // 初始化原有分组统计对象
+            const redGroups = {
+                '1-11': 0,
+                '12-22': 0,
+                '23-33': 0
+            };
+            
+            const blueGroups = {
+                '1-4': 0,
+                '5-8': 0,
+                '9-12': 0,
+                '13-16': 0
+            };
+            
+            // 初始化每2个号码一组的统计对象
+            const redTwoGroups = {};
+            for (let i = 1; i <= 33; i += 2) {
+                const end = Math.min(i + 1, 33);
+                redTwoGroups[`${i}-${end}`] = 0;
+            }
+            
+            const blueTwoGroups = {};
+            for (let i = 1; i <= 16; i += 2) {
+                const end = Math.min(i + 1, 16);
+                blueTwoGroups[`${i}-${end}`] = 0;
+            }
+            
+            // 统计每组出现的次数
+            let totalRedBalls = 0;
+            let totalBlueBalls = 0;
+            
+            rangeLines.forEach(line => {
+                if (line.length === 14) {
+                    // 统计红色球（前12位，每两位一个号码）
+                    for (let i = 0; i < 12; i += 2) {
+                        const redBall = line.substring(i, i + 2);
+                        const redBallNum = parseInt(redBall);
+                        totalRedBalls++;
+                        
+                        // 原有红色球分组：1-11, 12-22, 23-33
+                        if (redBallNum >= 1 && redBallNum <= 11) {
+                            redGroups['1-11']++;
+                        } else if (redBallNum >= 12 && redBallNum <= 22) {
+                            redGroups['12-22']++;
+                        } else if (redBallNum >= 23 && redBallNum <= 33) {
+                            redGroups['23-33']++;
+                        }
+                        
+                        // 每2个号码一组的红色球分组
+                        for (let j = 1; j <= 33; j += 2) {
+                            const end = Math.min(j + 1, 33);
+                            if (redBallNum >= j && redBallNum <= end) {
+                                redTwoGroups[`${j}-${end}`]++;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // 统计蓝色球（最后两位）
+                    const blueBall = line.substring(12, 14);
+                    const blueBallNum = parseInt(blueBall);
+                    totalBlueBalls++;
+                    
+                    // 原有蓝色球分组：1-4, 5-8, 9-12, 13-16
+                    if (blueBallNum >= 1 && blueBallNum <= 4) {
+                        blueGroups['1-4']++;
+                    } else if (blueBallNum >= 5 && blueBallNum <= 8) {
+                        blueGroups['5-8']++;
+                    } else if (blueBallNum >= 9 && blueBallNum <= 12) {
+                        blueGroups['9-12']++;
+                    } else if (blueBallNum >= 13 && blueBallNum <= 16) {
+                        blueGroups['13-16']++;
+                    }
+                    
+                    // 每2个号码一组的蓝色球分组
+                    for (let j = 1; j <= 16; j += 2) {
+                        const end = Math.min(j + 1, 16);
+                        if (blueBallNum >= j && blueBallNum <= end) {
+                            blueTwoGroups[`${j}-${end}`]++;
+                            break;
+                        }
+                    }
+                }
+            });
+            
+            // 计算原有分组的平均次数
+            const redGroupCount = Object.keys(redGroups).length;
+            const blueGroupCount = Object.keys(blueGroups).length;
+            
+            const avgRedCount = totalRedBalls > 0 ? (totalRedBalls / redGroupCount) : 0;
+            const avgBlueCount = totalBlueBalls > 0 ? (totalBlueBalls / blueGroupCount) : 0;
+            
+            // 计算每2个号码一组的平均次数
+            const redTwoGroupCount = Object.keys(redTwoGroups).length;
+            const blueTwoGroupCount = Object.keys(blueTwoGroups).length;
+            
+            const avgRedTwoCount = totalRedBalls > 0 ? (totalRedBalls / redTwoGroupCount) : 0;
+            const avgBlueTwoCount = totalBlueBalls > 0 ? (totalBlueBalls / blueTwoGroupCount) : 0;
+            
+            // 计算原有分组每个分组与平均值的差值
+            const redGroupDifferences = {};
+            Object.entries(redGroups).forEach(([group, count]) => {
+                redGroupDifferences[group] = (count - avgRedCount).toFixed(2);
+            });
+            
+            const blueGroupDifferences = {};
+            Object.entries(blueGroups).forEach(([group, count]) => {
+                blueGroupDifferences[group] = (count - avgBlueCount).toFixed(2);
+            });
+            
+            // 计算每2个号码一组每个分组与平均值的差值
+            const redTwoGroupDifferences = {};
+            Object.entries(redTwoGroups).forEach(([group, count]) => {
+                redTwoGroupDifferences[group] = (count - avgRedTwoCount).toFixed(2);
+            });
+            
+            const blueTwoGroupDifferences = {};
+            Object.entries(blueTwoGroups).forEach(([group, count]) => {
+                blueTwoGroupDifferences[group] = (count - avgBlueTwoCount).toFixed(2);
+            });
+            
+            // 生成统计HTML
+            generateStatsHTML(redGroups, blueGroups, avgRedCount.toFixed(2), avgBlueCount.toFixed(2), redGroupDifferences, blueGroupDifferences, redTwoGroups, blueTwoGroups, avgRedTwoCount.toFixed(2), avgBlueTwoCount.toFixed(2), redTwoGroupDifferences, blueTwoGroupDifferences);
+        }
+        
+        // 生成统计HTML
+        function generateStatsHTML(redGroups, blueGroups, avgRedCount, avgBlueCount, redGroupDifferences, blueGroupDifferences, redTwoGroups, blueTwoGroups, avgRedTwoCount, avgBlueTwoCount, redTwoGroupDifferences, blueTwoGroupDifferences) {
+            const statsContainer = document.getElementById('statsContent');
+            
+            let html = '<div class="stats-container">';
+            
+            // 红色球原有分组统计模块
+            html += '<div class="stats-module">';
+            html += '<h2>红色球原有分组统计</h2>';
+            html += `<div class="module-avg red-title">平均出现次数: <span class="avg-value">${avgRedCount}</span></div>`;
+            html += '<div class="group-stats">';
+            
+            // 遍历红色球原有分组
+            Object.entries(redGroups).forEach(([group, count]) => {
+                const difference = redGroupDifferences[group];
+                const differenceClass = parseFloat(difference) >= 0 ? 'difference-positive' : 'difference-negative';
+                html += '<div class="group-item red-group">';
+                html += `<div class="group-title red-title">${group}</div>`;
+                html += `<div class="stat-value red-value">${count}</div>`;
+                html += `<div class="difference ${differenceClass}">${difference >= 0 ? '+' : ''}${difference}</div>`;
+                html += '</div>';
+            });
+            
+            html += '</div>';
+            html += '</div>';
+            
+            // 红色球每2个号码一组统计模块
+            html += '<div class="stats-module">';
+            html += '<h2>红色球每2个号码一组统计</h2>';
+            html += `<div class="module-avg red-title">平均出现次数: <span class="avg-value">${avgRedTwoCount}</span></div>`;
+            html += '<div class="group-stats">';
+            
+            // 遍历红色球每2个号码一组
+            Object.entries(redTwoGroups).forEach(([group, count]) => {
+                const difference = redTwoGroupDifferences[group];
+                const differenceClass = parseFloat(difference) >= 0 ? 'difference-positive' : 'difference-negative';
+                html += '<div class="group-item red-group">';
+                html += `<div class="group-title red-title">${group}</div>`;
+                html += `<div class="stat-value red-value">${count}</div>`;
+                html += `<div class="difference ${differenceClass}">${difference >= 0 ? '+' : ''}${difference}</div>`;
+                html += '</div>';
+            });
+            
+            html += '</div>';
+            html += '</div>';
+            
+            // 蓝色球原有分组统计模块
+            html += '<div class="stats-module">';
+            html += '<h2>蓝色球原有分组统计</h2>';
+            html += `<div class="module-avg blue-title">平均出现次数: <span class="avg-value">${avgBlueCount}</span></div>`;
+            html += '<div class="group-stats">';
+            
+            // 遍历蓝色球原有分组
+            Object.entries(blueGroups).forEach(([group, count]) => {
+                const difference = blueGroupDifferences[group];
+                const differenceClass = parseFloat(difference) >= 0 ? 'difference-positive' : 'difference-negative';
+                html += '<div class="group-item blue-group">';
+                html += `<div class="group-title blue-title">${group}</div>`;
+                html += `<div class="stat-value blue-value">${count}</div>`;
+                html += `<div class="difference ${differenceClass}">${difference >= 0 ? '+' : ''}${difference}</div>`;
+                html += '</div>';
+            });
+            
+            html += '</div>';
+            html += '</div>';
+            
+            // 蓝色球每2个号码一组统计模块
+            html += '<div class="stats-module">';
+            html += '<h2>蓝色球每2个号码一组统计</h2>';
+            html += `<div class="module-avg blue-title">平均出现次数: <span class="avg-value">${avgBlueTwoCount}</span></div>`;
+            html += '<div class="group-stats">';
+            
+            // 遍历蓝色球每2个号码一组
+            Object.entries(blueTwoGroups).forEach(([group, count]) => {
+                const difference = blueTwoGroupDifferences[group];
+                const differenceClass = parseFloat(difference) >= 0 ? 'difference-positive' : 'difference-negative';
+                html += '<div class="group-item blue-group">';
+                html += `<div class="group-title blue-title">${group}</div>`;
+                html += `<div class="stat-value blue-value">${count}</div>`;
+                html += `<div class="difference ${differenceClass}">${difference >= 0 ? '+' : ''}${difference}</div>`;
+                html += '</div>';
+            });
+            
+            html += '</div>';
+            html += '</div>';
+            
+            html += '</div>';
+            
+            statsContainer.innerHTML = html;
+        }
+        
+        // 使用 Fetch API 调用后端接口获取 records.txt 内容
+        fetch('/record/records')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.text();
+            })
+            .then(data => {
+                // 将内容按行分割并过滤空行
+                allLines = data.split('\n').filter(line => line.trim() !== '');
+                
+                if (allLines.length === 0) {
+                    const statsContainer = document.getElementById('statsContent');
+                    statsContainer.innerHTML = '<div class="no-data">没有找到双色球数据</div>';
+                    return;
+                }
+                
+                // 如果滑块组件已经初始化，更新其最大值和默认值
+                if (sliderComponent) {
+                    const maxValue = allLines.length;
+                    const defaultEnd = maxValue;
+                    const defaultStart = Math.max(1, defaultEnd - 7);
+                    
+                    sliderComponent.setMaxValue(maxValue);
+                    sliderComponent.setDefaultValues(defaultStart, defaultEnd);
+                } else {
+                    // 如果滑块组件还未初始化，直接生成统计结果
+                    calculateStats(1, allLines.length);
+                }
+            })
+            .catch(error => {
+                const statsContainer = document.getElementById('statsContent');
+                statsContainer.innerHTML = `<div class="error">加载失败: ${error.message}</div>`;
+            });
+    </script>
+</body>
+</html>

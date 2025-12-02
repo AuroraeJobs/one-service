@@ -1,4 +1,4 @@
 server:
-  port: 7084
+  port: ${ServerPort:8888}
   servlet:
-    context-path: /record
+    context-path: /

@@ -3,6 +3,7 @@ package org.aurorae.record.ball;
 import lombok.Getter;
 import lombok.Setter;
 import org.aurorae.record.enums.RedBall;
+import org.aurorae.record.file.RecordFile;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -10,6 +11,8 @@ import java.util.Map;
 @Getter
 @Setter
 public class RedBox implements IBox {
+
+    private String readFrom = RecordFile.BALL_RED;
 
     private Box box;
 

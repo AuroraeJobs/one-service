@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据统计</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 70px 20px;
+        }
+        /* 导航栏样式 */
+        .navbar {
+            background-color: #333;
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        .navbar-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar-brand {
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+        .navbar-links {
+            display: flex;
+            gap: 20px;
+        }
+        .navbar-links a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+        }
+        .navbar-links a:hover {
+            background-color: #555;
+        }
+        /* 容器样式 */
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0 0 0;
+        }
+        .stats-table th,
+        .stats-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .stats-table th {
+            background-color: #f0f8ff;
+            font-weight: bold;
+            color: #666;
+            white-space: nowrap;
+        }
+        .stats-table th:first-child {
+            width: 60px;
+        }
+        .stats-table th:nth-child(2) {
+            width: 80px;
+        }
+        .stats-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        .ball-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .ball {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .red-ball {
+            background-color: #ff4d4f;
+            color: white;
+        }
+        .blue-ball {
+            background-color: #1890ff;
+            color: white;
+        }
+        .count-cell {
+            font-weight: bold;
+            color: #333;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+            background-color: #fafafa;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .error {
+            text-align: center;
+            color: #d9534f;
+            padding: 20px;
+            background-color: #fafafa;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .no-data {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+            background-color: #fafafa;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        /* 切换按钮样式 */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 30px;
+            height: 16px;
+        }
+        
+        /* 隐藏原生复选框 */
+        .toggle-input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        /* 切换开关的背景 */
+        .toggle-label {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ff4d4f;
+            transition: .4s;
+            border-radius: 8px;
+        }
+        
+        /* 切换开关的滑块 */
+        .toggle-slider {
+            position: absolute;
+            content: "";
+            height: 12px;
+            width: 12px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* 当复选框被选中时的背景色 */
+        .toggle-input:checked + .toggle-label {
+            background-color: #1890ff;
+        }
+        
+        /* 当复选框被选中时的滑块位置 */
+        .toggle-input:checked + .toggle-label .toggle-slider {
+            transform: translateX(14px);
+        }
+        
+        /* 固定切换按钮容器样式 */
+        .fixed-toggle-container {
+            position: fixed;
+            bottom: 30px;
+            right: 20px;
+            z-index: 1000;
+            background-color: white;
+            padding: 12px;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        /* 固定切换按钮容器悬浮效果 */
+        .fixed-toggle-container:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* 固定切换按钮容器点击效果 */
+        .fixed-toggle-container:active {
+            transform: scale(0.95);
+        }
+
+        /* 统计模块样式（左右两栏布局） */
+        .stats-module {
+            background-color: white;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            margin-bottom: 0;
+            position: relative;
+            top: auto;
+            left: auto;
+            width: 100%;
+            transition: all 0.3s ease;
+            z-index: 1;
+            min-height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+            background-image: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        }
+
+        /* 红色球扑克牌样式 */
+        .red-stats .stats-module {
+            border-color: #ffccc7;
+            background-image: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%);
+        }
+        
+        /* 蓝色球扑克牌样式 */
+        .blue-stats .stats-module {
+            border-color: #adc6ff;
+            background-image: linear-gradient(135deg, #ffffff 0%, #f0f5ff 100%);
+        }
+
+        /* 左侧号码部分 */
+        .card-left {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-right: 10px;
+        }
+
+        /* 右侧统计数据部分 */
+        .card-right {
+            flex: 2;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            padding-left: 10px;
+        }
+
+        /* 号码圆形背景 */
+        .ball-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 16px;
+            color: white;
+        }
+
+        /* 红色球圆形背景 */
+        .red-stats .ball-circle {
+            background-color: #ff4d4f;
+        }
+
+        /* 蓝色球圆形背景 */
+        .blue-stats .ball-circle {
+            background-color: #1890ff;
+        }
+
+        /* 扑克牌标题样式 */
+        .book-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 0;
+            font-family: 'Arial', sans-serif;
+            text-shadow: none;
+        }
+        
+        /* 红色球扑克牌标题样式 */
+        .red-stats .book-title {
+            color: #ff4d4f;
+        }
+        
+        /* 蓝色球扑克牌标题样式 */
+        .blue-stats .book-title {
+            color: #1890ff;
+        }
+
+        .stats-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .stats-info {
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+    <script src="navbar.js"></script>
+    <script src="slider-component.js"></script>
+    <script>
+        // 动态加载滑块组件HTML
+        fetch('slider-component.html')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('sliderContainer').innerHTML = html;
+                // 滑块组件HTML加载完成后，初始化滑块
+                initSliderComponent();
+            })
+            .catch(error => {
+                console.error('Failed to load slider component:', error);
+            });
+    </script>
+</head>
+<body>
+        <div class="container">
+            <!-- 滑块组件容器 -->
+            <div id="sliderContainer"></div>
+            
+            <!-- 固定在右下角的切换按钮 -->
+            <div class="fixed-toggle-container">
+                <div class="toggle-switch">
+                    <input type="checkbox" id="ballTypeToggle" class="toggle-input">
+                    <label for="ballTypeToggle" class="toggle-label">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div id="statsContent" class="loading">加载中...</div>
+        </div>
+
+    <script>
+        // 全局变量存储所有数据行
+        let allLines = [];
+        
+        // 当前显示的球类型：'red' 或 'blue'
+        let currentBallType = 'red';
+        
+        // 滑块组件实例
+        let sliderComponent = null;
+        
+        // 初始化滑块组件
+        function initSliderComponent() {
+            // 等待DOM加载完成
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    createSliderComponent();
+                });
+            } else {
+                createSliderComponent();
+            }
+        }
+        
+        // 初始化切换按钮事件
+        function initSwitchButtons() {
+            const ballTypeToggle = document.getElementById('ballTypeToggle');
+            
+            ballTypeToggle.addEventListener('change', function() {
+                currentBallType = this.checked ? 'blue' : 'red';
+                
+                // 切换滑块主题颜色
+                if (sliderComponent) {
+                    sliderComponent.setTheme(currentBallType);
+                }
+                
+                // 重新计算统计结果
+                if (sliderComponent) {
+                    const currentValues = sliderComponent.getCurrentValues();
+                    calculateStats(currentValues.start, currentValues.end);
+                }
+            });
+        }
+        
+        // 创建滑块组件
+        function createSliderComponent() {
+            // 等待滑块组件HTML加载完成
+            setTimeout(() => {
+                sliderComponent = new SliderComponent({
+                    maxValue: allLines.length,
+                    defaultStart: 1,
+                    defaultEnd: allLines.length,
+                    onChange: function(start, end) {
+                        calculateStats(start, end);
+                    }
+                });
+                
+                // 设置初始滑块主题颜色
+                sliderComponent.setTheme(currentBallType);
+            }, 100);
+        }
+        
+        // 根据行号范围计算统计数据
+        function calculateStats(startRow, endRow) {
+            // 获取指定范围内的数据行
+            const rangeLines = allLines.slice(startRow - 1, endRow);
+            
+            // 分别统计红色球和蓝色球的出现次数
+            const redCounts = {};
+            const blueCounts = {};
+            
+            rangeLines.forEach(line => {
+                if (line.length === 14) {
+                    // 统计红色球（前12位，每两位一个号码）
+                    for (let i = 0; i < 12; i += 2) {
+                        const redBall = line.substring(i, i + 2);
+                        redCounts[redBall] = (redCounts[redBall] || 0) + 1;
+                    }
+                    
+                    // 统计蓝色球（最后两位）
+                    const blueBall = line.substring(12, 14);
+                    blueCounts[blueBall] = (blueCounts[blueBall] || 0) + 1;
+                }
+            });
+            
+            // 将红色球统计结果转换为数组并按出现次数降序排序
+            const sortedRedCounts = Object.entries(redCounts)
+                .map(([number, count]) => ({ number, count }))
+                .sort((a, b) => b.count - a.count);
+            
+            // 将蓝色球统计结果转换为数组并按出现次数降序排序
+            const sortedBlueCounts = Object.entries(blueCounts)
+                .map(([number, count]) => ({ number, count }))
+                .sort((a, b) => b.count - a.count);
+            
+            // 生成统计表格HTML
+            generateStatsHTML(sortedRedCounts, sortedBlueCounts);
+        }
+        
+        // 生成统计卡片HTML
+        function generateStatsHTML(sortedRedCounts, sortedBlueCounts) {
+            const statsContainer = document.getElementById('statsContent');
+            
+            let html = '';
+            
+            // 根据当前选择的球类型生成统计HTML
+            if (currentBallType === 'red') {
+                // 红色球统计模块 - 响应式布局，最多6个/行，页面变窄时自动调整为3个、2个或1个
+                const totalRedCount = sortedRedCounts.reduce((sum, item) => sum + item.count, 0);
+                html += `<div class="red-stats" style="border: 1px solid #ffccc7; border-radius: 8px; padding: 15px; margin-bottom: 20px;">`;
+                html += `<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); grid-template-rows: auto; gap: 25px; max-width: 100%;">`;
+                
+                sortedRedCounts.forEach((item) => {
+                    html += `<div class="stats-module">`;
+                    html += `<div class="card-left">`;
+                    html += `<div class="ball-circle">${item.number}</div>`;
+                    html += `</div>`;
+                    html += `<div class="card-right">`;
+                    html += `<div class="book-title">${item.count}</div>`;
+                    html += `</div>`;
+                    html += `</div>`;
+                });
+                
+                html += '</div>';
+                html += '</div>';
+            } else {
+                // 蓝色球统计模块 - 响应式布局，最多4个/行，页面变窄时自动调整为2个或1个
+                const totalBlueCount = sortedBlueCounts.reduce((sum, item) => sum + item.count, 0);
+                html += `<div class="blue-stats" style="border: 1px solid #adc6ff; border-radius: 8px; padding: 15px; margin-bottom: 20px;">`;
+                html += `<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); grid-template-rows: auto; gap: 25px; max-width: 100%;">`;
+                
+                sortedBlueCounts.forEach((item) => {
+                    html += `<div class="stats-module">`;
+                    html += `<div class="card-left">`;
+                    html += `<div class="ball-circle">${item.number}</div>`;
+                    html += `</div>`;
+                    html += `<div class="card-right">`;
+                    html += `<div class="book-title">${item.count}</div>`;
+                    html += `</div>`;
+                    html += `</div>`;
+                });
+                
+                html += '</div>';
+                html += '</div>';
+            }
+            
+            statsContainer.innerHTML = html;
+        }
+        
+        // 使用 Fetch API 调用后端接口获取 records.txt 内容
+        fetch('/record/records')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.text();
+            })
+            .then(data => {
+                // 将内容按行分割并过滤空行
+                allLines = data.split('\n').filter(line => line.trim() !== '');
+                
+                if (allLines.length === 0) {
+                    const statsContainer = document.getElementById('statsContent');
+                    statsContainer.innerHTML = '<div class="no-data">没有找到双色球数据</div>';
+                    return;
+                }
+                
+                // 初始化切换按钮事件
+                initSwitchButtons();
+                
+                // 初始化滑块组件
+                initSliderComponent();
+                
+                // 等待滑块组件创建完成，然后设置初始值并计算统计结果
+                setTimeout(() => {
+                    if (sliderComponent) {
+                        sliderComponent.setMaxValue(allLines.length);
+                        const defaultEnd = allLines.length;
+                        const defaultStart = Math.max(1, defaultEnd - 8);
+                        sliderComponent.setDefaultValues(defaultStart, defaultEnd);
+                        // 设置初始滑块主题颜色
+                        sliderComponent.setTheme(currentBallType);
+                    } else {
+                        // 如果滑块组件创建失败，直接计算统计结果
+                        calculateStats(1, allLines.length);
+                    }
+                }, 200);
+            })
+            .catch(error => {
+                const statsContainer = document.getElementById('statsContent');
+                statsContainer.innerHTML = `<div class="error">加载失败: ${error.message}</div>`;
+            });
+    </script>
+</body>
+</html>

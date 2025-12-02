@@ -11,11 +11,11 @@ import java.util.List;
 
 public class RecordFile {
 
-    public static final String FILE_PATH = "/Users/aurorae/Program/Hello/aurorae-service/aurorae-record/aurorae-record-service/src/main/resources/";
-    public static final String RECORD = "record.txt";
-    public static final String RECORDS = "records.txt";
-    public static final String BALL_RED = "ball_red.txt";
-    public static final String BALL_BLUE = "ball_blue.txt";
+    public static final String PATH = "/Users/aurorae/Program/Hello/aurorae-service/aurorae-record/aurorae-record-service/src/main/resources/";
+    public static final String RECORD = "record/record.txt";
+    public static final String RECORDS = "record/records.txt";
+    public static final String BALL_RED = "record/ball_red.txt";
+    public static final String BALL_BLUE = "record/ball_blue.txt";
 
     public static String[] split(String record) {
         // 把字符串按每两位进行分割
@@ -32,12 +32,12 @@ public class RecordFile {
     }
 
     public static String read(String fileName) {
-        return FileUtil.readUtf8String(FILE_PATH + fileName);
+        return FileUtil.readUtf8String(fileName);
     }
 
     @SneakyThrows
     public static BufferedReader reader(String fileName) {
-        return new BufferedReader(new FileReader(FILE_PATH + fileName));
+        return new BufferedReader(new FileReader(fileName));
     }
 
     public static void write(List<Record> records) {
@@ -48,10 +48,10 @@ public class RecordFile {
     }
 
     public static void append(String string, String fileName) {
-        FileUtil.appendUtf8String(string, FILE_PATH + fileName);
+        FileUtil.appendUtf8String(string, PATH + fileName);
     }
 
     public static void append(List<String> strings, String fileName) {
-        FileUtil.appendUtf8Lines(strings, FILE_PATH + fileName);
+        FileUtil.appendUtf8Lines(strings, PATH + fileName);
     }
 }

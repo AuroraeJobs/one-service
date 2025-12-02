@@ -3,6 +3,8 @@ package org.aurorae.record.web;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aurorae.record.client.RecordClient;
+import org.aurorae.record.file.RecordFile;
+import org.aurorae.record.request.RecordRequest;
 import org.aurorae.record.response.Record;
 import org.aurorae.record.service.IRecordService;
 import org.springframework.web.bind.annotation.*;
@@ -32,6 +34,11 @@ public class RecordController {
         return service.findById(id);
     }
 
+    @PostMapping("find")
+    public List<Record> find(@RequestBody RecordRequest request) {
+        return service.find(request);
+    }
+
     @GetMapping("count")
     public List<Record> getByCount(@RequestParam long issueCount) {
         return RecordClient.record(issueCount);
@@ -40,5 +47,10 @@ public class RecordController {
     @GetMapping("issue")
     public List<Record> getByIssue(@RequestParam String start, @RequestParam String end) {
         return RecordClient.record(start, end);
+    }
+
+    @GetMapping("records")
+    public String getRecords() {
+        return RecordFile.read(RecordFile.RECORDS);
     }
 }

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据记录</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 70px 20px;
+        }
+        /* 导航栏样式 */
+        .navbar {
+            background-color: #333;
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        .navbar-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar-brand {
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+        .navbar-links {
+            display: flex;
+            gap: 20px;
+        }
+        .navbar-links a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+        }
+        .navbar-links a:hover {
+            background-color: #555;
+        }
+        /* 容器样式 */
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .lottery-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        .lottery-item {
+            background-color: #fafafa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .lottery-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .lottery-issue {
+            font-weight: bold;
+            color: #666;
+            font-size: 14px;
+        }
+        .lottery-issue.left {
+            text-align: left;
+        }
+        .lottery-issue.right {
+            text-align: right;
+        }
+        /* 查询输入区域样式 */
+        .query-inputs {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex: 1;
+            flex-wrap: wrap;
+        }
+
+
+        .balls-container {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+        .ball {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 16px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s ease;
+        }
+        .ball:hover {
+            transform: scale(1.1);
+        }
+        .red-ball {
+            background-color: #ff4d4f;
+            color: white;
+        }
+        .blue-ball {
+            background-color: #1890ff;
+            color: white;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+            grid-column: 1 / -1;
+        }
+        .error {
+            text-align: center;
+            color: #d9534f;
+            padding: 20px;
+            grid-column: 1 / -1;
+        }
+        .no-data {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+            grid-column: 1 / -1;
+        }
+        
+
+    </style>
+    <script src="navbar.js"></script>
+    <script src="slider-component.js"></script>
+    <script>
+        // 动态加载滑块组件HTML
+        fetch('slider-component.html')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('sliderContainer').innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Failed to load slider component:', error);
+            });
+    </script>
+</head>
+<body>
+        <div class="container">
+            <!-- 滑块组件容器 -->
+            <div id="sliderContainer"></div>
+            
+
+            
+            <div id="lotteryContent" class="loading">加载中...</div>
+        </div>
+
+    <script>
+        // 保存所有原始数据
+        let allRecords = [];
+        // 保存最大行号
+        let maxLineNum = 0;
+        
+        // 显示加载状态
+        function showLoading() {
+            const lotteryContainer = document.getElementById('lotteryContent');
+            lotteryContainer.innerHTML = '<div class="loading">加载中...</div>';
+        }
+        
+        // 显示错误信息
+        function showError(message) {
+            const lotteryContainer = document.getElementById('lotteryContent');
+            lotteryContainer.innerHTML = `<div class="error">${message}</div>`;
+        }
+        
+        // 根据行号范围筛选数据
+        function filterByIssueRange(records, start, end) {
+            // 将输入的开始和结束期号转换为数字
+            const startNum = parseInt(start);
+            const endNum = parseInt(end);
+            
+            return records.filter(record => {
+                const recordLineNum = record.lineNum;
+                
+                // 根据行号进行筛选
+                return recordLineNum >= startNum && recordLineNum <= endNum;
+            });
+        }
+        
+        // 根据行号范围查询
+        function queryByIssue(start, end) {
+            // 从所有记录中筛选符合条件的记录
+            const filteredRecords = filterByIssueRange(allRecords, start, end);
+            
+            // 显示筛选结果
+            displayLotteryRecords(filteredRecords);
+        }
+        
+        // 滑块组件实例
+        let sliderComponent = null;
+        
+        // 初始化滑块组件
+        function initSliderComponent() {
+            // 等待DOM加载完成
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    createSliderComponent();
+                });
+            } else {
+                createSliderComponent();
+            }
+        }
+        
+        // 创建滑块组件
+        function createSliderComponent() {
+            // 等待滑块组件HTML加载完成
+            setTimeout(() => {
+                sliderComponent = new SliderComponent({
+                    maxValue: maxLineNum,
+                    defaultStart: 1,
+                    defaultEnd: maxLineNum,
+                    onChange: function(start, end) {
+                        queryByIssue(start, end);
+                    }
+                });
+                // 设置滑块主题为蓝色，使滑动值背景颜色为蓝色
+                sliderComponent.setTheme('blue');
+            }, 100);
+        }
+        
+
+        
+        // 显示双色球记录
+        function displayLotteryRecords(records) {
+            const lotteryContainer = document.getElementById('lotteryContent');
+            
+            if (!records || records.length === 0) {
+                lotteryContainer.innerHTML = '<div class="no-data">没有找到双色球数据</div>';
+                return;
+            }
+            
+            // 解析每一条数据并生成HTML
+            let html = '<div class="lottery-container">';
+            
+            records.forEach((record, index) => {
+                // 解析红色球和蓝色球
+                let redBallsHtml = '';
+                const redBalls = record.redBalls;
+                redBalls.forEach(ball => {
+                    redBallsHtml += `<div class="ball red-ball">${ball}</div>`;
+                });
+                
+                let blueBallHtml = '';
+                if (record.blueBall) {
+                    blueBallHtml = `<div class="ball blue-ball">${record.blueBall}</div>`;
+                }
+                
+                // 生成单个双色球记录的HTML
+                html += `
+                    <div class="lottery-item">
+                        <div class="lottery-header">
+                            <div class="lottery-issue left">
+                                <strong>期号:</strong> 第 ${record.issue} 期
+                            </div>
+                        </div>
+                        <div class="balls-container">
+                            ${redBallsHtml}
+                            ${blueBallHtml}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            lotteryContainer.innerHTML = html;
+        }
+        
+        // 初始加载数据
+        function loadInitialData() {
+            showLoading();
+            
+            // 使用 Fetch API 调用后端接口获取 records.txt 内容
+            fetch('/record/records')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    const lotteryContainer = document.getElementById('lotteryContent');
+                    
+                    // 将内容按行分割并过滤空行
+                    const lines = data.split('\n').filter(line => line.trim() !== '');
+                    
+                    if (lines.length === 0) {
+                        lotteryContainer.innerHTML = '<div class="no-data">没有找到双色球数据</div>';
+                        return;
+                    }
+                    
+                    // 反转数据顺序，让最新一期（文件最后一条）显示在最前面
+                    const reversedLines = [...lines].reverse();
+                    
+                    // 解析每一行数据并保存到allRecords数组
+                    allRecords = reversedLines.map((line, index) => {
+                        if (line.length === 14) {
+                            // 计算原始期号（从文件最后一行开始为最新一期）
+                            const originalIndex = lines.length - index;
+                            
+                            // 解析红色球（前12位，每两位一个号码）
+                            const redBalls = [];
+                            for (let i = 0; i < 12; i += 2) {
+                                redBalls.push(line.substring(i, i + 2));
+                            }
+                            
+                            // 解析蓝色球（最后两位）
+                            const blueBall = line.substring(12, 14);
+                            
+                            // 生成期号（格式：年份+期数，这里简化处理，使用原始期号）
+                            // 注意：这里需要根据实际情况调整期号生成逻辑
+                            const code = String(originalIndex).padStart(7, '0');
+                            
+                            // 行号就是原始期号（从1开始）
+                            const lineNum = originalIndex;
+                            
+                            return {
+                                issue: originalIndex,
+                                code: code,
+                                lineNum: lineNum,
+                                redBalls: redBalls,
+                                blueBall: blueBall
+                            };
+                        }
+                        return null;
+                    }).filter(record => record !== null);
+                    
+                    // 如果有数据，初始化滑块组件
+                    if (allRecords.length > 0) {
+                        // 获取所有行号的最大值
+                        maxLineNum = Math.max(...allRecords.map(record => record.lineNum));
+                        
+                        // 开始行号是结束行号减7，确保开始行号不小于1
+                        const defaultEndLine = maxLineNum;
+                        const defaultStartLine = Math.max(1, defaultEndLine - 7);
+                        
+                        // 初始化滑块组件
+                        initSliderComponent();
+                        
+                        // 等待滑块组件创建完成，然后设置初始值并查询数据
+                        setTimeout(() => {
+                            if (sliderComponent) {
+                                sliderComponent.setMaxValue(maxLineNum);
+                                sliderComponent.setDefaultValues(defaultStartLine, defaultEndLine);
+                            }
+                        }, 200);
+                    }
+                })
+                .catch(error => {
+                    showError(`加载失败: ${error.message}`);
+                });
+        }
+        
+        // 页面加载完成后执行初始加载
+        window.onload = loadInitialData;
+    </script>
+</body>
+</html>

@@ -3,10 +3,13 @@ package org.aurorae.record.ball;
 import lombok.Getter;
 import lombok.Setter;
 import org.aurorae.record.enums.BlueBall;
+import org.aurorae.record.file.RecordFile;
 
 @Getter
 @Setter
 public class BlueBox implements IBox {
+
+    private String readFrom = RecordFile.BALL_BLUE;
 
     private Box box;
 

@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>奇偶号码统计</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 70px 20px;
+        }
+        /* 导航栏样式 */
+        .navbar {
+            background-color: #333;
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        .navbar-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar-brand {
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+        .navbar-links {
+            display: flex;
+            gap: 20px;
+        }
+        .navbar-links a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+        }
+        .navbar-links a:hover {
+            background-color: #555;
+        }
+        /* 容器样式 */
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        /* 查询区域样式 */
+        .query-section {
+            background-color: #fafafa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        
+        /* 查询控制栏 */
+        .query-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        /* 滑块容器样式 */
+        .slider-container {
+            width: 100%;
+            padding: 10px 0;
+        }
+        
+        /* 滑块行样式 */
+        .slider-row {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+        }
+        
+        /* 单个滑块样式 */
+        .single-slider {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            position: relative;
+        }
+        
+        /* 滑块值显示样式 */
+        .slider-value {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #1890ff;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 10px;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            pointer-events: none;
+        }
+        
+        /* 滑块样式 */
+        .slider {
+            width: 100%;
+            height: 6px;
+            background-color: #e8e8e8;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            border-radius: 3px;
+        }
+        
+        /* 滑块轨道样式 - WebKit浏览器 */
+        .slider::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            background-color: #e8e8e8;
+            border-radius: 3px;
+        }
+        
+        /* 滑块轨道样式 - Firefox浏览器 */
+        .slider::-moz-range-track {
+            width: 100%;
+            height: 6px;
+            background-color: #e8e8e8;
+            border-radius: 3px;
+        }
+        
+        /* 滑块拇指样式 - WebKit浏览器 */
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background-color: #1890ff;
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+            margin-top: -7px; /* 调整拇指位置，使其居中 */
+        }
+        
+        /* 滑块拇指悬停样式 - WebKit浏览器 */
+        .slider::-webkit-slider-thumb:hover {
+            background-color: #40a9ff;
+            transform: scale(1.2);
+        }
+        
+        /* 滑块拇指样式 - Firefox浏览器 */
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background-color: #1890ff;
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+        }
+        
+        /* 滑块拇指悬停样式 - Firefox浏览器 */
+        .slider::-moz-range-thumb:hover {
+            background-color: #40a9ff;
+            transform: scale(1.2);
+        }
+        
+        /* 滑块拇指焦点样式 */
+        .slider:focus::-webkit-slider-thumb {
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(24, 144, 255, 0.2);
+        }
+        
+        .slider:focus::-moz-range-thumb {
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(24, 144, 255, 0.2);
+        }
+        
+        /* 统计结果布局 */
+        .stats-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        /* 单个统计模块样式 */
+        .stats-module {
+            background-color: #fafafa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .stats-module h2 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        
+        /* 奇偶统计样式 */
+        .even-odd-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+        }
+        
+        /* 单个统计项样式 */
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 红色球偶数统计样式 */
+        .red-even {
+            background-color: #fff2f0;
+            border: 1px solid #ffccc7;
+        }
+        
+        /* 红色球奇数统计样式 */
+        .red-odd {
+            background-color: #fff2f0;
+            border: 1px solid #ffccc7;
+        }
+        
+        /* 红色球差值统计样式 */
+        .red-difference {
+            background-color: #fff2f0;
+            border: 1px solid #ffccc7;
+        }
+        
+        /* 蓝色球偶数统计样式 */
+        .blue-even {
+            background-color: #f0f5ff;
+            border: 1px solid #adc6ff;
+        }
+        
+        /* 蓝色球奇数统计样式 */
+        .blue-odd {
+            background-color: #f0f5ff;
+            border: 1px solid #adc6ff;
+        }
+        
+        /* 蓝色球差值统计样式 */
+        .blue-difference {
+            background-color: #f0f5ff;
+            border: 1px solid #adc6ff;
+        }
+        
+        /* 统计标题样式 */
+        .stat-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        /* 红色球标题样式 */
+        .red-title {
+            color: #ff4d4f;
+        }
+        
+        /* 蓝色球标题样式 */
+        .blue-title {
+            color: #1890ff;
+        }
+        
+        /* 统计数值样式 */
+        .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        /* 红色球数值样式 */
+        .red-value {
+            color: #ff4d4f;
+        }
+        
+        /* 蓝色球数值样式 */
+        .blue-value {
+            color: #1890ff;
+        }
+        
+        /* 统计描述样式 */
+        .stat-desc {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        /* 加载状态样式 */
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+        }
+        
+        /* 错误状态样式 */
+        .error {
+            text-align: center;
+            color: #d9534f;
+            padding: 40px;
+        }
+        
+        /* 无数据状态样式 */
+        .no-data {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+        }
+    </style>
+    <script src="navbar.js"></script>
+    <script src="slider-component.js"></script>
+    <script>
+        // 动态加载滑块组件HTML
+        fetch('slider-component.html')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('sliderContainer').innerHTML = html;
+                // 滑块组件HTML加载完成后，初始化滑块
+                initSliderComponent();
+            })
+            .catch(error => {
+                console.error('Failed to load slider component:', error);
+            });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>奇偶号码统计</h1>
+        
+        <!-- 滑块组件容器 -->
+        <div id="sliderContainer"></div>
+        
+        
+        <div id="statsContent" class="loading">加载中...</div>
+    </div>
+
+    <script>
+        // 全局变量存储所有数据行
+        let allLines = [];
+        let sliderComponent = null;
+        
+        // 初始化滑块组件
+        function initSliderComponent() {
+            // 等待DOM加载完成
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    createSliderComponent();
+                });
+            } else {
+                createSliderComponent();
+            }
+        }
+        
+        // 创建滑块组件
+        function createSliderComponent() {
+            // 等待滑块组件HTML加载完成
+            setTimeout(() => {
+                const maxValue = allLines.length || 1000;
+                const defaultEnd = maxValue;
+                const defaultStart = Math.max(1, defaultEnd - 7);
+                
+                sliderComponent = new SliderComponent({
+                    maxValue: maxValue,
+                    defaultStart: defaultStart,
+                    defaultEnd: defaultEnd,
+                    onChange: function(start, end) {
+                        // 根据选择的范围重新计算统计数据
+                        calculateStats(start, end);
+                    }
+                });
+            }, 100);
+        }
+        
+        // 根据行号范围计算统计数据
+        function calculateStats(startRow, endRow) {
+            // 获取指定范围内的数据行
+            const rangeLines = allLines.slice(startRow - 1, endRow);
+            
+            // 分别统计红色球和蓝色球的偶数和奇数出现次数
+            let redEvenCount = 0;
+            let redOddCount = 0;
+            let blueEvenCount = 0;
+            let blueOddCount = 0;
+            
+            rangeLines.forEach(line => {
+                if (line.length === 14) {
+                    // 统计红色球（前12位，每两位一个号码）
+                    for (let i = 0; i < 12; i += 2) {
+                        const redBall = line.substring(i, i + 2);
+                        const redBallNum = parseInt(redBall);
+                        if (redBallNum % 2 === 0) {
+                            redEvenCount++;
+                        } else {
+                            redOddCount++;
+                        }
+                    }
+                    
+                    // 统计蓝色球（最后两位）
+                    const blueBall = line.substring(12, 14);
+                    const blueBallNum = parseInt(blueBall);
+                    if (blueBallNum % 2 === 0) {
+                        blueEvenCount++;
+                    } else {
+                        blueOddCount++;
+                    }
+                }
+            });
+            
+            // 计算差值（偶数 - 奇数）
+            const redDifference = redEvenCount - redOddCount;
+            const blueDifference = blueEvenCount - blueOddCount;
+            
+            // 生成统计HTML
+            generateStatsHTML(redEvenCount, redOddCount, redDifference, blueEvenCount, blueOddCount, blueDifference);
+        }
+        
+        // 生成统计HTML
+        function generateStatsHTML(redEvenCount, redOddCount, redDifference, blueEvenCount, blueOddCount, blueDifference) {
+            const statsContainer = document.getElementById('statsContent');
+            
+            let html = '<div class="stats-container">';
+            
+            // 红色球统计模块
+            html += '<div class="stats-module">';
+            html += '<h2>红色球奇偶统计</h2>';
+            html += '<div class="even-odd-stats">';
+            
+            // 红色球偶数统计
+            html += '<div class="stat-item red-even">';
+            html += '<div class="stat-title red-title">偶数</div>';
+            html += `<div class="stat-value red-value">${redEvenCount}</div>`;
+            html += '<div class="stat-desc">红色球偶数出现次数</div>';
+            html += '</div>';
+            
+            // 红色球奇数统计
+            html += '<div class="stat-item red-odd">';
+            html += '<div class="stat-title red-title">奇数</div>';
+            html += `<div class="stat-value red-value">${redOddCount}</div>`;
+            html += '<div class="stat-desc">红色球奇数出现次数</div>';
+            html += '</div>';
+            
+            // 红色球差值统计
+            html += '<div class="stat-item red-difference">';
+            html += '<div class="stat-title red-title">差值</div>';
+            html += `<div class="stat-value red-value">${redDifference}</div>`;
+            html += '<div class="stat-desc">红色球偶数 - 奇数</div>';
+            html += '</div>';
+            
+            html += '</div>';
+            html += '</div>';
+            
+            // 蓝色球统计模块
+            html += '<div class="stats-module">';
+            html += '<h2>蓝色球奇偶统计</h2>';
+            html += '<div class="even-odd-stats">';
+            
+            // 蓝色球偶数统计
+            html += '<div class="stat-item blue-even">';
+            html += '<div class="stat-title blue-title">偶数</div>';
+            html += `<div class="stat-value blue-value">${blueEvenCount}</div>`;
+            html += '<div class="stat-desc">蓝色球偶数出现次数</div>';
+            html += '</div>';
+            
+            // 蓝色球奇数统计
+            html += '<div class="stat-item blue-odd">';
+            html += '<div class="stat-title blue-title">奇数</div>';
+            html += `<div class="stat-value blue-value">${blueOddCount}</div>`;
+            html += '<div class="stat-desc">蓝色球奇数出现次数</div>';
+            html += '</div>';
+            
+            // 蓝色球差值统计
+            html += '<div class="stat-item blue-difference">';
+            html += '<div class="stat-title blue-title">差值</div>';
+            html += `<div class="stat-value blue-value">${blueDifference}</div>`;
+            html += '<div class="stat-desc">蓝色球偶数 - 奇数</div>';
+            html += '</div>';
+            
+            html += '</div>';
+            html += '</div>';
+            
+            html += '</div>';
+            
+            statsContainer.innerHTML = html;
+        }
+        
+        // 使用 Fetch API 调用后端接口获取 records.txt 内容
+        fetch('/record/records')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.text();
+            })
+            .then(data => {
+                // 将内容按行分割并过滤空行
+                allLines = data.split('\n').filter(line => line.trim() !== '');
+                
+                if (allLines.length === 0) {
+                    const statsContainer = document.getElementById('statsContent');
+                    statsContainer.innerHTML = '<div class="no-data">没有找到双色球数据</div>';
+                    return;
+                }
+                
+                // 如果滑块组件已经初始化，更新其最大值和默认值
+                if (sliderComponent) {
+                    const maxValue = allLines.length;
+                    const defaultEnd = maxValue;
+                    const defaultStart = Math.max(1, defaultEnd - 7);
+                    
+                    sliderComponent.setMaxValue(maxValue);
+                    sliderComponent.setDefaultValues(defaultStart, defaultEnd);
+                } else {
+                    // 如果滑块组件还未初始化，直接生成统计结果
+                    calculateStats(1, allLines.length);
+                }
+            })
+            .catch(error => {
+                const statsContainer = document.getElementById('statsContent');
+                statsContainer.innerHTML = `<div class="error">加载失败: ${error.message}</div>`;
+            });
+    </script>
+</body>
+</html>
