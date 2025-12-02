@@ -42,12 +42,14 @@ public class RecordCalendar {
         Date startTime = calendar.getTime();
         String start = FORMAT.format(startTime);
 
-        log.info("> {{}} - {{}} - {{}}", now, start, end);
+        log.info("> ✅当前日期: {}", now);
 
         // 只有当结束时间已经过了开始时间才请求更新
         if (endTime.after(startTime)) {
+            log.info("> ✅开始日期: {}", start);
+            log.info("> ✅结束日期: {}", end);
             List<Record> records = RecordClient.record(start, end);
-            log.info("> {}", StreamUtil.toList(records, Record::record));
+            log.info("> ✅{}", StreamUtil.toList(records, Record::record));
             return records;
         }
         return null;
