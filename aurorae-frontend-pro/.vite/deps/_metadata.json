@@ -1,0 +1,102 @@
+{
+  "hash": "a6afd60c",
+  "configHash": "18939e45",
+  "lockfileHash": "3dbf0ec5",
+  "browserHash": "ca65563b",
+  "optimized": {
+    "@ant-design/icons": {
+      "src": "../../node_modules/@ant-design/icons/es/index.js",
+      "file": "@ant-design_icons.js",
+      "fileHash": "52576942",
+      "needsInterop": false
+    },
+    "@ant-design/pro-components": {
+      "src": "../../node_modules/@ant-design/pro-components/es/index.js",
+      "file": "@ant-design_pro-components.js",
+      "fileHash": "47d84138",
+      "needsInterop": false
+    },
+    "antd": {
+      "src": "../../node_modules/antd/es/index.js",
+      "file": "antd.js",
+      "fileHash": "0c95e413",
+      "needsInterop": false
+    },
+    "antd/locale/zh_CN": {
+      "src": "../../node_modules/antd/locale/zh_CN.js",
+      "file": "antd_locale_zh_CN.js",
+      "fileHash": "f8365670",
+      "needsInterop": true
+    },
+    "axios": {
+      "src": "../../node_modules/axios/index.js",
+      "file": "axios.js",
+      "fileHash": "daaa2ea4",
+      "needsInterop": false
+    },
+    "dayjs": {
+      "src": "../../node_modules/dayjs/dayjs.min.js",
+      "file": "dayjs.js",
+      "fileHash": "5941e4e3",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "49f261a9",
+      "needsInterop": true
+    },
+    "react-router-dom": {
+      "src": "../../node_modules/react-router-dom/dist/index.mjs",
+      "file": "react-router-dom.js",
+      "fileHash": "c193f4ea",
+      "needsInterop": false
+    },
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "424c4176",
+      "needsInterop": true
+    },
+    "react/jsx-dev-runtime": {
+      "src": "../../node_modules/react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "a9d6a089",
+      "needsInterop": true
+    }
+  },
+  "chunks": {
+    "chunk-C3fVp-vY": {
+      "file": "chunk-C3fVp-vY.js",
+      "isDynamicEntry": false
+    },
+    "dayjs.min-DuA4ei2q": {
+      "file": "dayjs.min-DuA4ei2q.js",
+      "isDynamicEntry": false
+    },
+    "es-CCPAqpcj": {
+      "file": "es-CCPAqpcj.js",
+      "isDynamicEntry": false
+    },
+    "es-CNQlnB18": {
+      "file": "es-CNQlnB18.js",
+      "isDynamicEntry": false
+    },
+    "objectSpread2-A677EIK2": {
+      "file": "objectSpread2-A677EIK2.js",
+      "isDynamicEntry": false
+    },
+    "react-D_ztdoUO": {
+      "file": "react-D_ztdoUO.js",
+      "isDynamicEntry": false
+    },
+    "react-dom-wi3UU5rH": {
+      "file": "react-dom-wi3UU5rH.js",
+      "isDynamicEntry": false
+    },
+    "ref-D2Bphb3R": {
+      "file": "ref-D2Bphb3R.js",
+      "isDynamicEntry": false
+    }
+  }
+}

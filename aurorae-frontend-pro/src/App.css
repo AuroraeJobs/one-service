@@ -52,8 +52,8 @@ body {
 
 /* 应用底部 */
 .app-footer {
-  background-color: #001529;
-  color: #fff;
+  background-color: #fff;
+  color: #000;
   text-align: center;
   padding: 24px;
   border-top: none;

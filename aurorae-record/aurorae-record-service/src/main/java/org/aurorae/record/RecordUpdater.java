@@ -12,6 +12,7 @@ import org.aurorae.record.service.IRecordService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,13 +25,22 @@ public class RecordUpdater implements CommandLineRunner {
 
     private final IBoxService boxService;
 
+    public static boolean hasArg(String arg, String... args) {
+        return args != null
+                && args.length > 0
+                && Arrays.asList(args).contains(arg);
+    }
+
     @Override
     public void run(String... args) {
+        if (!hasArg("RecordUpdate", args)) {
+            return;
+        }
         Record record = recordService.findLast();
         if (record != null) {
             update(record.date(), record.getCode());
             //update();
-        } else {
+        } else if (hasArg("RecordInit", args)) {
             init();
         }
     }
