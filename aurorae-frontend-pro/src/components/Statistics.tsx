@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, Row, Col, Statistic, Progress, Spin, Tabs, Slider, message, Tooltip, Select } from 'antd';
+import { Card, Row, Col, Statistic, Progress, Spin, Tabs, Slider, message, Tooltip } from 'antd';
 import {
   BarChartOutlined,
   PieChartOutlined,
@@ -20,9 +20,10 @@ import {
   ClearOutlined,
   AppstoreAddOutlined
 } from '@ant-design/icons';
-import { Column } from '@ant-design/charts';
 import { useLocation } from 'react-router-dom';
 import { recordApi } from '../services/api';
+// 导入 ECharts
+import ReactECharts from 'echarts-for-react';
 
 // 定义数据接口
 interface AnalysisResult {
@@ -144,33 +145,9 @@ const Statistics: React.FC = () => {
   const [buttonDragOffset, setButtonDragOffset] = useState({ x: 0, y: 0 });
   // 图表数据状态 - 存储选中号码每期的累计次数
   const [chartData, setChartData] = useState<ChartDataItem[]>([]);
-  // 触摸滑动相关状态 - 必须在组件顶层定义
-  const touchStartX = useRef(0);
-  const touchEndX = useRef(0);
-  // 标记是否是初始加载
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  // 图表显示窗口状态 - 用于滑动查看更多数据
-  // 初始值设为-1，在useEffect中根据实际数据长度设置
-  const [chartWindowStart, setChartWindowStart] = useState(-1);
-  // 每页显示的数据期数，默认为10
-  const [chartDisplayCount, setChartDisplayCount] = useState(10);
 
-  // 当记录数据加载完成且有选中号码时，确保chartWindowStart有效
-  useEffect(() => {
-    // 只有当chartWindowStart无效（< 0）、有选中号码且有记录数据时，才更新chartWindowStart
-    if (selectedNumbers.length > 0 && allRecords.length > 0 && chartWindowStart < 0) {
-      // 计算显示窗口的起始位置
-      let lastWindowStart;
-      if (isInitialLoad) {
-        // 初始加载时，显示最后一期数据
-        lastWindowStart = Math.max(0, allRecords.length - 1);
-      } else {
-        // 用户手动选择号码时，显示最后chartDisplayCount期数据
-        lastWindowStart = Math.max(0, allRecords.length - chartDisplayCount);
-      }
-      setChartWindowStart(lastWindowStart);
-    }
-  }, [selectedNumbers, allRecords, isInitialLoad, chartWindowStart, chartDisplayCount]);
+  
+  // 图表数据控制 - 显示所有数据，去掉分页逻辑
 
   // 监听路由变化，当路由为/charts时默认显示图表统计
   useEffect(() => {
@@ -491,9 +468,6 @@ const Statistics: React.FC = () => {
 
   // 处理号码选择
   const handleNumberSelect = (number: string) => {
-    // 用户手动选择号码，标记为非初始加载
-    setIsInitialLoad(false);
-    
     // 计算新的选中号码列表
     const newSelectedNumbers = selectedNumbers.includes(number) 
       ? selectedNumbers.filter(n => n !== number) 
@@ -502,24 +476,13 @@ const Statistics: React.FC = () => {
     // 直接设置选中号码
     setSelectedNumbers(newSelectedNumbers);
     
-    // 如果有新的选中号码和记录数据，直接计算并设置chartWindowStart
-      if (newSelectedNumbers.length > 0 && allRecords.length > 0) {
-        // 用户手动选择号码时，显示最后chartDisplayCount期数据
-        const lastWindowStart = Math.max(0, allRecords.length - chartDisplayCount);
-        setChartWindowStart(lastWindowStart);
-      } else {
-        // 如果没有选中号码，设置chartWindowStart为-1
-        setChartWindowStart(-1);
-      }
+    // 无需设置chartWindowStart，已去掉分页逻辑
   };
 
   // 清除所有选择
   const clearAllSelections = () => {
-    // 用户手动清除选择，标记为非初始加载
-    setIsInitialLoad(false);
     setSelectedNumbers([]);
-    // 清除选择后，设置chartWindowStart为-1
-    setChartWindowStart(-1);
+    // 无需设置chartWindowStart，已去掉分页逻辑
   };
 
   // 生成所有可能的号码列表
@@ -680,165 +643,137 @@ const Statistics: React.FC = () => {
       );
     }
 
-    // 触摸滑动相关状态已移至组件顶层
-
-    // 图表配置
-    const config = {
-      data: chartData,
-      xField: 'period',
-      yField: 'count',
-      seriesField: 'number',
-      // 关闭初始动画，避免闪现问题
-      animation: {
-        appear: false,
+    // 处理图表数据，转换为ECharts所需格式
+    // 获取所有唯一的期数
+    const periods = [...new Set(chartData.map(item => item.period))].sort((a, b) => a - b);
+    
+    // 获取所有选中的号码
+    const numbers = [...new Set(chartData.map(item => item.number))];
+    
+    // 颜色配置
+    const colors = [
+      '#1890ff', '#f5222d', '#52c41a', '#faad14', '#722ed1',
+      '#13c2c2', '#fa8c16', '#eb2f96', '#a0d911', '#2f54eb',
+      '#ff7875', '#52c41a', '#13c2c2', '#722ed1', '#faad14',
+      '#eb2f96', '#fa8c16', '#a0d911', '#2f54eb', '#1890ff'
+    ];
+    
+    // 构建ECharts系列数据
+    const series = numbers.map((number) => {
+      // 为每个号码构建数据数组，按期数顺序排列
+      const data = periods.map(period => {
+        const item = chartData.find(item => item.period === period && item.number === number);
+        return item ? item.count : 0;
+      });
+      
+      return {
+        name: number,
+        type: 'line',
+        data: data,
+        itemStyle: {
+          // 为每个号码分配固定颜色，使用号码的数值作为颜色索引
+          color: colors[Number(number) % colors.length]
+        },
+        lineStyle: {
+          width: 3,
+          type: 'solid'
+        },
+        symbol: 'circle',
+        symbolSize: 8,
+        symbolRotate: 0,
+        emphasis: {
+          focus: 'series',
+          scale: true,
+          symbolSize: 12,
+          itemStyle: {
+            shadowBlur: 10,
+            shadowColor: 'rgba(0, 0, 0, 0.3)'
+          }
+        },
+        label: {
+          show: false
+        },
+        smooth: false
+      };
+    });
+    
+    // ECharts配置项
+    const option = {
+      animation: false, // 关闭初始动画
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'shadow'
+        },
+        formatter: function(params: any) {
+          let result = `${params[0].axisValue}期<br/>`;
+          params.forEach((param: any) => {
+            result += `${param.marker}${param.seriesName}: ${param.value}次<br/>`;
+          });
+          return result;
+        }
       },
       legend: {
-        position: 'top',
-        itemName: {
-          style: {
-            fontSize: 12,
-          },
-        },
-      },
-      tooltip: {
-        showMarkers: true,
-        formatter: (datum: any) => {
-          return {
-            name: `${datum.number}`,
-            value: `${datum.count}次`,
-          };
-        },
-      },
-      xAxis: {
-        title: {
-          text: '期数',
-          style: {
-            fontSize: 14,
-            fontWeight: 'bold',
-          },
-        },
-        label: {
-          autoHide: true,
-          autoRotate: 45,
-          style: {
-            fontSize: 12,
-          },
-        },
-        grid: {
-          line: {
-            style: {
-              stroke: '#f0f0f0',
-            },
-          },
-        },
-      },
-      yAxis: {
-        title: {
-          text: '累计次数',
-          style: {
-            fontSize: 14,
-            fontWeight: 'bold',
-          },
-        },
-        label: {
-          style: {
-            fontSize: 12,
-          },
-        },
-        grid: {
-          line: {
-            style: {
-              stroke: '#f0f0f0',
-            },
-          },
-        },
-      },
-      colorField: 'number',
-      color: [
-        '#1890ff', '#f5222d', '#52c41a', '#faad14', '#722ed1',
-        '#13c2c2', '#fa8c16', '#eb2f96', '#a0d911', '#2f54eb',
-        '#ff7875', '#52c41a', '#13c2c2', '#722ed1', '#faad14',
-        '#eb2f96', '#fa8c16', '#a0d911', '#2f54eb', '#1890ff'
-      ],
-      columnWidth: 30, // 设置固定的柱子宽度
-      maxColumnWidth: 35, // 设置最大柱子宽度
-      minColumnWidth: 25, // 设置最小柱子宽度
-      isGroup: true,
-      // 在柱子上显示数值，优化可读性
-      label: {
-        position: 'top',
-        style: {
-          fill: '#333', // 更深的颜色，提高对比度
-          fontSize: 14, // 增大字体大小
-          fontWeight: 'bold', // 加粗字体
-          textAlign: 'center', // 居中对齐
-        },
-        // 为数值添加背景，提高可读性
-        background: {
-          fill: 'rgba(255, 255, 255, 0.8)', // 半透明白色背景
-          padding: [2, 4, 2, 4], // 上下左右内边距
-          radius: 2, // 圆角
-          stroke: '#ccc', // 边框颜色
-          lineWidth: 1, // 边框宽度
-        },
-      },
-    };
-
-    // 滑动控制函数
-    const handleSlideForward = () => {
-      if (chartWindowStart + chartDisplayCount < allRecords.length) {
-        setChartWindowStart(prev => prev + 1);
-      }
-    };
-
-    const handleSlideBackward = () => {
-      if (chartWindowStart > 0) {
-        setChartWindowStart(prev => prev - 1);
-      }
-    };
-
-    const handleSlideToStart = () => {
-      setChartWindowStart(0);
-    };
-
-    const handleSlideToEnd = () => {
-      setChartWindowStart(Math.max(0, allRecords.length - chartDisplayCount));
-    };
-
-    // 触摸开始事件
-    const handleTouchStart = (e: React.TouchEvent) => {
-      touchStartX.current = e.touches[0].clientX;
-    };
-
-    // 触摸结束事件
-    const handleTouchEnd = () => {
-      touchEndX.current = 0;
-    };
-
-    // 触摸移动事件
-    const handleTouchMove = (e: React.TouchEvent) => {
-      if (touchStartX.current === 0) return;
-      
-      touchEndX.current = e.touches[0].clientX;
-      const diff = touchEndX.current - touchStartX.current;
-      
-      // 如果滑动距离超过50px，触发页面切换
-      if (Math.abs(diff) > 50) {
-        if (diff > 0) {
-          // 向右滑动，显示上一页
-          handleSlideBackward();
-        } else {
-          // 向左滑动，显示下一页
-          handleSlideForward();
+        data: numbers,
+        top: 0,
+        textStyle: {
+          fontSize: 12
         }
-        // 重置触摸起始位置
-        touchStartX.current = touchEndX.current;
-      }
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        top: '8%',
+        containLabel: true
+      },
+      xAxis: [
+        {
+          type: 'category',
+          data: periods,
+          axisLabel: {
+            fontSize: 12,
+            rotate: 45
+          },
+          axisLine: {
+            lineStyle: {
+              color: '#f0f0f0'
+            }
+          },
+          splitLine: {
+            show: true,
+            lineStyle: {
+              color: '#f0f0f0'
+            }
+          },
+          name: '期数',
+          nameTextStyle: {
+            fontSize: 14,
+            fontWeight: 'bold'
+          }
+        }
+      ],
+      yAxis: [
+        {
+          type: 'value',
+          axisLabel: {
+            fontSize: 12
+          },
+          axisLine: {
+            lineStyle: {
+              color: '#f0f0f0'
+            }
+          },
+          splitLine: {
+            show: true,
+            lineStyle: {
+              color: '#f0f0f0'
+            }
+          }
+        }
+      ],
+      series: series
     };
-
-    // 计算当前显示的期数范围
-    const currentStart = chartWindowStart + 1;
-    const currentEnd = Math.min(chartWindowStart + chartDisplayCount, allRecords.length);
 
     return (
       <div 
@@ -847,136 +782,24 @@ const Statistics: React.FC = () => {
           borderRadius: '6px',
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)',
           padding: '16px',
-          touchAction: 'pan-y', // 允许垂直滚动，禁止水平滚动
-          width: '100%', // 确保容器宽度为100%
-          maxWidth: '100%', // 确保最大宽度为100%
-          boxSizing: 'border-box' // 确保padding不会影响宽度
+          width: '100%',
+          maxWidth: '100%',
+          boxSizing: 'border-box'
         }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
       >
-        {/* 每页显示数量设置和滑动控制按钮 */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          marginBottom: '16px',
-          width: '100%', // 确保容器宽度为100%
-          boxSizing: 'border-box', // 确保padding不会影响宽度
-          flexWrap: 'wrap', // 允许换行，避免小屏幕下溢出
-          gap: '16px' // 添加间距
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '14px', color: '#666' }}>
-              显示期数: {currentStart} - {currentEnd} / {allRecords.length}
-            </span>
-            <span style={{ fontSize: '14px', color: '#666' }}>
-              每页显示: {chartDisplayCount} 期
-            </span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '14px', color: '#666' }}>每页数量:</span>
-            <Select
-              value={chartDisplayCount}
-              onChange={setChartDisplayCount}
-              style={{ width: 120 }}
-              options={[
-                { value: 1, label: '1期' },
-                { value: 5, label: '5期' },
-                { value: 10, label: '10期' },
-                { value: 15, label: '15期' },
-                { value: 20, label: '20期' },
-                { value: 30, label: '30期' },
-                { value: 50, label: '50期' }
-              ]}
-            />
-          </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              onClick={handleSlideToStart}
-              disabled={chartWindowStart === 0}
-              style={{
-                padding: '4px 12px',
-                borderRadius: '4px',
-                border: '1px solid #d9d9d9',
-                backgroundColor: chartWindowStart === 0 ? '#f5f5f5' : '#fff',
-                cursor: chartWindowStart === 0 ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}
-            >
-              <FastBackwardOutlined />
-              首页
-            </button>
-            <button
-              onClick={handleSlideBackward}
-              disabled={chartWindowStart === 0}
-              style={{
-                padding: '4px 12px',
-                borderRadius: '4px',
-                border: '1px solid #d9d9d9',
-                backgroundColor: chartWindowStart === 0 ? '#f5f5f5' : '#fff',
-                cursor: chartWindowStart === 0 ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}
-            >
-              <StepBackwardOutlined />
-              上一页
-            </button>
-            <button
-              onClick={handleSlideForward}
-              disabled={chartWindowStart + chartDisplayCount >= allRecords.length}
-              style={{
-                padding: '4px 12px',
-                borderRadius: '4px',
-                border: '1px solid #d9d9d9',
-                backgroundColor: chartWindowStart + chartDisplayCount >= allRecords.length ? '#f5f5f5' : '#fff',
-                cursor: chartWindowStart + chartDisplayCount >= allRecords.length ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}
-            >
-              下一页
-              <StepForwardOutlined />
-            </button>
-            <button
-              onClick={handleSlideToEnd}
-              disabled={chartWindowStart + chartDisplayCount >= allRecords.length}
-              style={{
-                padding: '4px 12px',
-                borderRadius: '4px',
-                border: '1px solid #d9d9d9',
-                backgroundColor: chartWindowStart + chartDisplayCount >= allRecords.length ? '#f5f5f5' : '#fff',
-                cursor: chartWindowStart + chartDisplayCount >= allRecords.length ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}
-            >
-              末页
-              <FastForwardOutlined />
-            </button>
-          </div>
-        </div>
+        {/* 显示所有期数信息 */}
+        {/* 删除了显示期数的文本 */}
         
         {/* 图表容器 */}
         <div 
           style={{ 
             height: '400px',
-            width: '100%', // 确保图表容器宽度为100%
-            maxWidth: '100%', // 确保最大宽度为100%
-            boxSizing: 'border-box' // 确保padding不会影响宽度
+            width: '100%',
+            maxWidth: '100%',
+            boxSizing: 'border-box'
           }}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
         >
-          <Column {...config} />
+          <ReactECharts option={option} style={{ height: '100%', width: '100%' }} />
         </div>
       </div>
     );
@@ -1569,14 +1392,18 @@ const Statistics: React.FC = () => {
 
   // 计算选中号码每期的累计次数
   useEffect(() => {
-    // 只有当chartWindowStart有效（>= 0）、有选中号码且有记录数据时，才生成图表数据
-    if (selectedNumbers.length === 0 || allRecords.length === 0 || chartWindowStart < 0) {
+    // 只有当有选中号码且有记录数据时，才生成图表数据
+    if (selectedNumbers.length === 0 || allRecords.length === 0) {
       setChartData([]);
       return;
     }
 
-    // 生成完整的累计计数数据
-    const fullChartData: ChartDataItem[] = [];
+    // 获取滑块范围内的记录
+    const [startIndex, endIndex] = sliderRange;
+    const selectedRangeRecords = allRecords.slice(startIndex, endIndex + 1);
+
+    // 生成滑块范围内的累计计数数据
+    const chartData: ChartDataItem[] = [];
     const cumulativeCounts: { [key: string]: number } = {};
     
     // 初始化累计计数
@@ -1584,9 +1411,9 @@ const Statistics: React.FC = () => {
       cumulativeCounts[num] = 0;
     });
 
-    // 计算所有期的累计次数
-    allRecords.forEach((record, index) => {
-      const period = index + 1; // 期数从1开始
+    // 计算滑块范围内的累计次数
+    selectedRangeRecords.forEach((record, index) => {
+      const period = startIndex + index + 1; // 期数从滑块开始位置+1开始
       
       // 解析当前期的号码
       const isRed = statisticType === 'red';
@@ -1609,7 +1436,7 @@ const Statistics: React.FC = () => {
         }
         
         // 为每期每个选中号码生成数据，无论是否出现
-        fullChartData.push({
+        chartData.push({
           period: period,
           number: num,
           count: cumulativeCounts[num]
@@ -1617,14 +1444,9 @@ const Statistics: React.FC = () => {
       });
     });
 
-    // 根据当前窗口位置截取显示数据
-    const endIndex = Math.min(chartWindowStart + chartDisplayCount, allRecords.length);
-    const displayedChartData = fullChartData.filter(item => 
-      item.period > chartWindowStart && item.period <= endIndex
-    );
-
-    setChartData(displayedChartData);
-  }, [selectedNumbers, allRecords, statisticType, chartWindowStart, chartDisplayCount]);
+    // 设置滑块范围内的图表数据
+    setChartData(chartData);
+  }, [selectedNumbers, allRecords, statisticType, sliderRange]);
 
   // 处理滑块变化
   const handleSliderChange = (value: number[]) => {
@@ -1667,27 +1489,15 @@ const Statistics: React.FC = () => {
   // 当前活动标签页
   const [activeTabKey, setActiveTabKey] = useState<string>(statisticType === 'red' ? '1' : '2');
 
-  // 当切换到图表统计tab时，默认选择所有号码
+  // 当切换到图表统计tab时，不默认选择所有号码
+  // 避免一次性计算大量数据导致页面卡死
   useEffect(() => {
     // 检查是否切换到了图表统计tab
     if (activeTabKey === '7' || activeTabKey === '8') {
-      // 初始进入图表统计tab时，标记为初始加载
-      setIsInitialLoad(true);
-      
-      // 生成所有号码
-      const allNumbers = generateNumberList();
-      
-      // 直接设置选中号码
-      setSelectedNumbers(allNumbers);
-      
-      // 如果有记录数据，直接计算并设置chartWindowStart
-      if (allRecords.length > 0) {
-        // 初始加载时，显示最后一期数据
-        const lastWindowStart = Math.max(0, allRecords.length - 1);
-        setChartWindowStart(lastWindowStart);
-      }
+      // 不默认选择任何号码，让用户手动选择
+      setSelectedNumbers([]);
     }
-  }, [activeTabKey, statisticType, allRecords]);
+  }, [activeTabKey, statisticType]);
 
   // 渲染频率统计列表
   const renderFrequencyList = (data: AnalysisResult) => {
@@ -1811,8 +1621,8 @@ const Statistics: React.FC = () => {
                       }}
                 onMouseEnter={(e) => {
                   const card = e.currentTarget;
-                  card.style.transform = 'translateY(-4px) rotateX(0deg) rotateY(0deg) translateZ(20px)';
-                  card.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.2)';
+                  card.style.transform = 'translateY(-4px) rotateX(0deg) rotateY(0deg) translateZ(40px)';
+                  card.style.boxShadow = '0 12px 32px rgba(0, 0, 0, 0.25)';
                   card.style.cursor = 'grabbing';
                 }}
                 onMouseMove={(e) => {
@@ -1824,7 +1634,7 @@ const Statistics: React.FC = () => {
                   const centerY = rect.height / 2;
                   const rotateX = (y - centerY) / 5;
                   const rotateY = (centerX - x) / 5;
-                  card.style.transform = `translateY(-4px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(20px)`;
+                  card.style.transform = `translateY(-4px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(40px)`;
                 }}
                 onMouseLeave={(e) => {
                   const card = e.currentTarget;
@@ -1967,8 +1777,8 @@ const Statistics: React.FC = () => {
                   }}
                   onMouseEnter={(e) => {
                     const card = e.currentTarget;
-                    card.style.transform = 'translateY(-4px) rotateX(0deg) rotateY(0deg) translateZ(20px)';
-                    card.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.2)';
+                    card.style.transform = 'translateY(-4px) rotateX(0deg) rotateY(0deg) translateZ(40px)';
+                    card.style.boxShadow = '0 12px 32px rgba(0, 0, 0, 0.25)';
                     card.style.cursor = 'grabbing';
                   }}
                   onMouseMove={(e) => {
@@ -1980,7 +1790,7 @@ const Statistics: React.FC = () => {
                     const centerY = rect.height / 2;
                     const rotateX = (y - centerY) / 5;
                     const rotateY = (centerX - x) / 5;
-                    card.style.transform = `translateY(-4px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(20px)`;
+                    card.style.transform = `translateY(-4px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(40px)`;
                   }}
                   onMouseLeave={(e) => {
                     const card = e.currentTarget;
@@ -2180,8 +1990,8 @@ const Statistics: React.FC = () => {
                   }}
                   onMouseEnter={(e) => {
                     const card = e.currentTarget;
-                    card.style.transform = 'translateY(-4px) rotateX(0deg) rotateY(0deg) translateZ(20px)';
-                    card.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.2)';
+                    card.style.transform = 'translateY(-4px) rotateX(0deg) rotateY(0deg) translateZ(40px)';
+                    card.style.boxShadow = '0 12px 32px rgba(0, 0, 0, 0.25)';
                     card.style.cursor = 'grabbing';
                   }}
                   onMouseMove={(e) => {
@@ -2193,7 +2003,7 @@ const Statistics: React.FC = () => {
                     const centerY = rect.height / 2;
                     const rotateX = (y - centerY) / 5;
                     const rotateY = (centerX - x) / 5;
-                    card.style.transform = `translateY(-4px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(20px)`;
+                    card.style.transform = `translateY(-4px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(40px)`;
                   }}
                   onMouseLeave={(e) => {
                     const card = e.currentTarget;
@@ -2429,7 +2239,7 @@ const Statistics: React.FC = () => {
             }}
             onMouseEnter={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'translateY(-4px) rotateX(0deg) rotateY(0deg) translateZ(20px)';
+              card.style.transform = 'translateY(-4px) rotateX(0deg) rotateY(0deg) translateZ(40px)';
               card.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.2)';
             }}
             onMouseMove={(e) => {
@@ -2441,7 +2251,7 @@ const Statistics: React.FC = () => {
               const centerY = rect.height / 2;
               const rotateX = (y - centerY) / 5;
               const rotateY = (centerX - x) / 5;
-              card.style.transform = `translateY(-4px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(20px)`;
+              card.style.transform = `translateY(-4px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(40px)`;
             }}
             onMouseLeave={(e) => {
               const card = e.currentTarget;

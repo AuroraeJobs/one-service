@@ -4,7 +4,7 @@ import { AppleFilled, SearchOutlined, BarChartOutlined, AreaChartOutlined } from
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import RecordList from './components/RecordList';
 import Statistics from './components/Statistics';
-import ChartPage from './components/ChartPage';
+import Analysis from './components/Analysis';
 import './App.css';
 
 function App() {
@@ -52,9 +52,9 @@ function App() {
                     label: <Link to="/statistics">统计</Link>,
                   },
                   {
-                    key: 'charts',
+                    key: 'analysis',
                     icon: <AreaChartOutlined />,
-                    label: <Link to="/charts">图表</Link>,
+                    label: <Link to="/analysis">分析</Link>,
                   },
                 ]}
                 style={{ 
@@ -70,7 +70,7 @@ function App() {
             <Routes>
               <Route path="/" element={<RecordList />} />
               <Route path="/statistics" element={<Statistics />} />
-              <Route path="/charts" element={<ChartPage />} />
+              <Route path="/analysis" element={<Analysis />} />
             </Routes>
           </main>
           <footer className="app-footer" style={{ textAlign: 'center' }}>
