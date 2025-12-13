@@ -9,11 +9,8 @@ import Analysis from './components/Analysis';
 import './App.css';
 
 function App() {
-  // 筛选条件div显示/隐藏状态，提升到App组件中，以便页脚图标可以控制
-  const [isFilterVisible, setIsFilterVisible] = useState(false);
-  
   // Tab显示/隐藏状态，提升到App组件中，以便页脚图标可以控制
-  const [isTabVisible, setIsTabVisible] = useState(true);
+  const [isTabVisible] = useState(false);
   
   return (
     <Router>
@@ -77,9 +74,9 @@ function App() {
           </header>
           <main className="app-main" style={{ paddingTop: '64px', paddingBottom: '20px' }}>
             <Routes>
-              <Route path="/" element={<RecordList isFilterVisible={isFilterVisible} setIsFilterVisible={setIsFilterVisible} />} />
-              <Route path="/statistics" element={<Statistics isTabVisible={isTabVisible} setIsTabVisible={setIsTabVisible} />} />
-              <Route path="/analysis" element={<Analysis isTabVisible={isTabVisible} setIsTabVisible={setIsTabVisible} />} />
+              <Route path="/" element={<RecordList />} />
+              <Route path="/statistics" element={<Statistics isTabVisible={isTabVisible} />} />
+              <Route path="/analysis" element={<Analysis isTabVisible={isTabVisible} />} />
             </Routes>
           </main>
 

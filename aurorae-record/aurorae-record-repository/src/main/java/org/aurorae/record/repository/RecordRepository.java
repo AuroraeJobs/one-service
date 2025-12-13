@@ -14,4 +14,6 @@ public interface RecordRepository extends MongoRepository<Record, String> {
     List<Record> findByCodeBetween(String start, String end);
 
     List<Record> findByDateBetween(String start, String end);
+
+    List<Record> findByLineBetween(long start, long end);
 }

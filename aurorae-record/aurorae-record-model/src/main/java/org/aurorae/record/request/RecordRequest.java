@@ -13,6 +13,9 @@ public class RecordRequest {
 
     private long issueCount;
 
+    private long lineStart;
+    private long lineEnd;
+
     private String issueStart;
     private String issueEnd;
 

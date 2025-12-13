@@ -16,7 +16,10 @@ import {
   ManOutlined,
   SettingOutlined,
   StarFilled,
-  AppleFilled
+  AppleFilled,
+  ChromeOutlined,
+  DockerOutlined,
+  RubyOutlined
 } from '@ant-design/icons';
 
 import { recordApi } from '../services/api';
@@ -37,15 +40,7 @@ interface AnalysisResult {
 
 
 
-const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: boolean) => void }> = ({ isTabVisible, setIsTabVisible }) => {
-  // 切换Tab显示/隐藏
-  const toggleTabVisible = () => {
-    if (setIsTabVisible) {
-      setIsTabVisible(!isTabVisible);
-    }
-  };
-
-  
+const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
   // 状态管理
   const [loading, setLoading] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
@@ -69,6 +64,11 @@ const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: b
     groups: AnalysisResult; // 每组出现总次数
     absentCounts: { [key: string]: number }; // 每个号码距离上次出现之后累计没出现的次数
   }>({ individual: {}, groups: {}, absentCounts: {} });
+  // 统计范围内中奖号码总和
+  const [winningNumbersSum, setWinningNumbersSum] = useState<{
+    redSum: number;
+    blueSum: number;
+  }>({ redSum: 0, blueSum: 0 });
   // 滑块相关状态
   const [allRecords, setAllRecords] = useState<string[]>([]);
   const [sliderRange, setSliderRange] = useState<[number, number]>([0, 0]);
@@ -445,6 +445,10 @@ const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: b
     let totalRedBalls = 0;
     let totalBlueBalls = 0;
 
+    // 统计范围内中奖号码总和
+    let redSum = 0;
+    let blueSum = 0;
+
     // 计算每个号码距离上次出现之后累计没出现的次数
     // 记录每个号码最后一次出现的位置
     const redBallLastPosition: { [key: string]: number } = {};
@@ -510,8 +514,11 @@ const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: b
         redBallCount[redBall] = (redBallCount[redBall] || 0) + 1;
         totalRedBalls++;
         
-        // 统计红球奇偶
+        // 计算红球总和
         const redNum = parseInt(redBall);
+        redSum += redNum;
+        
+        // 统计红球奇偶
         if (redNum % 2 === 0) {
           redOddEvenCount.even++;
         } else {
@@ -531,8 +538,11 @@ const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: b
       blueBallCount[blueBall] = (blueBallCount[blueBall] || 0) + 1;
       totalBlueBalls++;
       
-      // 统计蓝球奇偶
+      // 计算蓝球总和
       const blueNum = parseInt(blueBall);
+      blueSum += blueNum;
+      
+      // 统计蓝球奇偶
       if (blueNum % 2 === 0) {
         blueOddEvenCount.even++;
       } else {
@@ -546,6 +556,9 @@ const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: b
         blueSizeCount.large++;
       }
     });
+
+    // 更新统计范围内中奖号码总和
+    setWinningNumbersSum({ redSum, blueSum });
 
     // 计算百分比
     const calculatePercent = (count: number, total: number) => {
@@ -1019,21 +1032,51 @@ const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: b
               onDrop={() => handleDrop(index)}
             >
               <Card 
-                      title={isWinningNumber ? (
+                      title={
                         <div style={{ 
-                          backgroundColor: currentColor, 
-                          color: '#fff',
-                          borderRadius: '50%',
-                          width: '30px',
+                          position: 'relative',
+                          textAlign: 'center',
                           height: '30px',
                           display: 'flex',
                           justifyContent: 'center',
-                          alignItems: 'center',
-                          margin: '0 auto'
+                          alignItems: 'center'
                         }}>
-                          {item.name}
+                          {/* 左上角显示中奖号码标记（五角星） */}
+                          {isWinningNumber && (
+                            <StarFilled 
+                              style={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '0px',
+                                color: currentColor,
+                                fontSize: '18px',
+                                zIndex: 10,
+                                transform: 'translateY(-50%)'
+                              }}
+                            />
+                          )}
+                          {/* 右上角显示号码 */}
+                          <div style={{ 
+                            position: 'absolute',
+                            top: '50%',
+                            right: '0',
+                            color: currentColor,
+                            fontSize: '14px',
+                            fontWeight: 'bold',
+                            transform: 'translateY(-50%)'
+                          }}>
+                            {item.name}
+                          </div>
+                          {/* 中间显示人物名称 */}
+                          <div style={{ 
+                            fontSize: '14px',
+                            fontWeight: 'bold',
+                            color: currentColor
+                          }}>
+                            {isRed ? redBallConfig.numberToName[item.name as keyof typeof redBallConfig.numberToName] : blueBallConfig.numberToName[item.name as keyof typeof blueBallConfig.numberToName]}
+                          </div>
                         </div>
-                      ) : item.name} 
+                      } 
                       variant="outlined"
                       size="small"
                       draggable
@@ -1087,7 +1130,7 @@ const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: b
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '14px', color: '#666' }}>次数</span>
                     <span style={{ fontSize: '16px', fontWeight: 'bold', color: currentColor }}>
-                      {item.count}次
+                      {item.count}
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1095,7 +1138,7 @@ const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: b
                       连续未出现
                     </span>
                     <span style={{ fontSize: '16px', fontWeight: 'bold', color: currentColor }}>
-                      {(stats.absentCounts[item.name] || 0)}期
+                      {(stats.absentCounts[item.name] || 0)}
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1107,7 +1150,7 @@ const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: b
                       fontWeight: 'bold', 
                       color: diff >= 0 ? '#389e0d' : '#ff4d4f'
                     }}>
-                      {`${diff >= 0 ? '+' : ''}${diff.toFixed(1)}次`}
+                      {`${diff >= 0 ? '+' : ''}${diff.toFixed(1)}`}
                     </span>
                   </div>
                   <Progress 
@@ -1188,7 +1231,7 @@ const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: b
                 onDrop={() => handleDrop(index)}
               >
                 <Card 
-                  title={item.name} 
+                  title={<div style={{ textAlign: 'center', fontSize: '16px', fontWeight: 'bold', color: currentColor }}>{item.name}</div>} 
                   variant="outlined"
                   size="small"
                   draggable
@@ -1255,7 +1298,7 @@ const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: b
                   }}>
                     <span style={{ fontSize: '14px', color: '#666' }}>次数</span>
                     <span style={{ fontSize: '16px', fontWeight: 'bold', color: currentColor }}>
-                      {item.count}次
+                      {item.count}
                     </span>
                   </div>
                   <Progress 
@@ -1441,22 +1484,51 @@ const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: b
                       fontSize: '14px',
                       fontWeight: 'bold',
                       textAlign: 'center',
-                      position: 'relative'
+                      position: 'relative',
+                      height: '30px',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center'
                     }}>
-                      {item.name}
-                      {/* 为最后一期中奖号码添加红色或蓝色实心星星图标 */}
+                      {/* 左上角显示星星图标（如果是中奖号码） */}
                       {item.type === 'number' && endLineNumbers.includes((item as { number: string }).number) && (
                         <StarFilled 
                           style={{
                             position: 'absolute',
-                            top: '0px',
+                            top: '50%',
                             left: '0px',
-                            color: currentColor, // 使用当前统计类型的颜色（红球红色，蓝球蓝色）
+                            color: currentColor,
                             fontSize: '18px',
-                            zIndex: 10
+                            zIndex: 10,
+                            transform: 'translateY(-50%)'
                           }}
                         />
                       )}
+                      {/* 右上角显示号码（如果是数字类型卡片） */}
+                      {item.type === 'number' && (
+                        <div style={{ 
+                          position: 'absolute',
+                          top: '50%',
+                          right: '0',
+                          color: currentColor,
+                          fontSize: '14px',
+                          fontWeight: 'bold',
+                          transform: 'translateY(-50%)'
+                        }}>
+                          {(item as { number: string }).number}
+                        </div>
+                      )}
+                      {/* 中间显示名称 */}
+                      <div style={{ 
+                        flex: 1,
+                        textAlign: 'center',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        height: '100%'
+                      }}>
+                        {item.name}
+                      </div>
                     </div>
                   } 
                   variant="outlined"
@@ -1519,7 +1591,7 @@ const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: b
                         {item.type === 'group' ? '总次数' : '次数'}
                       </span>
                       <span style={{ fontSize: '16px', fontWeight: 'bold', color: currentColor }}>
-                        {item.count}次
+                        {item.count}
                       </span>
                     </div>
                     {item.type === 'group' && (
@@ -1539,9 +1611,9 @@ const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: b
                                 const maxAbsentCount = Math.max(...currentGroupConfig.numbers.map(number => {
                                   return stats.absentCounts[number] || 0;
                                 }));
-                                return `${maxAbsentCount}期`;
+                                return `${maxAbsentCount}`;
                               }
-                              return '0期';
+                              return '0';
                             })()}
                           </span>
                         </div>
@@ -1579,7 +1651,7 @@ const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: b
                               const avgCountForGroup = avgCountPerNumber * groupSize;
                               const diff = item.count - avgCountForGroup;
                               // 根据差值正负添加前缀
-                              return `${diff >= 0 ? '+' : ''}${diff.toFixed(1)}次`;
+                              return `${diff >= 0 ? '+' : ''}${diff.toFixed(1)}`;
                             })()}
                           </span>
                         </div>
@@ -1592,10 +1664,10 @@ const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: b
                             连续未出现
                           </span>
                           <span style={{ fontSize: '16px', fontWeight: 'bold', color: currentColor }}>
-                            {(isRed ? stats.absentCounts[(item as { number: string }).number] : stats.absentCounts[(item as { number: string }).number]) || 0}期
+                            {(isRed ? stats.absentCounts[(item as { number: string }).number] : stats.absentCounts[(item as { number: string }).number]) || 0}
                           </span>
                         </div>
-                        {/* 计算出现次数与平均次数的差值 */}
+                        {/* 计算出现次数与平均的差值 */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ fontSize: '14px', color: '#666' }}>
                             与平均值差值
@@ -1617,7 +1689,7 @@ const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: b
                               const avgCount = isRed ? totalCount / 33 : totalCount / 16;
                               const diff = item.count - avgCount;
                               // 根据差值正负添加前缀
-                              return `${diff >= 0 ? '+' : ''}${diff.toFixed(1)}次`;
+                              return `${diff >= 0 ? '+' : ''}${diff.toFixed(1)}`;
                             })()}
                           </span>
                         </div>
@@ -1720,9 +1792,9 @@ const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: b
       </div>
       
       {/* 统计卡片 */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        {/* 总记录数卡片 */}
-        <Col xs={24} sm={12} md={6}>
+      <div style={{ marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+        {/* 总数据量卡片 */}
+        <div style={{ flex: 1, minWidth: '160px' }}>
           <Card 
             variant="outlined"
             style={{
@@ -1739,6 +1811,9 @@ const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: b
               perspective: '1500px',
               transformOrigin: 'center center',
               backfaceVisibility: 'hidden',
+              width: '100%',
+              height: '100%',
+              minHeight: '120px'
             }}
             onMouseEnter={(e) => {
               const card = e.currentTarget;
@@ -1769,10 +1844,10 @@ const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: b
               valueStyle={{ color: statisticType === 'red' ? '#f5222d' : '#1890ff', fontWeight: 'bold' }}
             />
           </Card>
-        </Col>
+        </div>
         
         {/* 红球/蓝球总数卡片 */}
-        <Col xs={24} sm={12} md={6}>
+        <div style={{ flex: 1, minWidth: '160px' }}>
           <Card 
             variant="outlined"
             style={{
@@ -1785,26 +1860,23 @@ const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: b
               cursor: 'pointer',
               transformStyle: 'preserve-3d',
               perspective: '1000px',
+              width: '100%',
+              height: '100%',
+              minHeight: '120px'
             }}
             onMouseEnter={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'translateY(-4px) rotateX(0deg) rotateY(0deg)';
+              card.style.transform = 'translateY(-4px)';
               card.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
             }}
             onMouseMove={(e) => {
+              // 简化3D效果，只保留上下浮动，去掉旋转
               const card = e.currentTarget;
-              const rect = card.getBoundingClientRect();
-              const x = e.clientX - rect.left;
-              const y = e.clientY - rect.top;
-              const centerX = rect.width / 2;
-              const centerY = rect.height / 2;
-              const rotateX = (y - centerY) / 10;
-              const rotateY = (centerX - x) / 10;
-              card.style.transform = `translateY(-4px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+              card.style.transform = 'translateY(-4px)';
             }}
             onMouseLeave={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'translateY(0) rotateX(0deg) rotateY(0deg)';
+              card.style.transform = 'translateY(0)';
               card.style.boxShadow = '';
             }}
           >
@@ -1817,10 +1889,10 @@ const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: b
               valueStyle={{ color: statisticType === 'red' ? '#f5222d' : '#1890ff', fontWeight: 'bold' }}
             />
           </Card>
-        </Col>
+        </div>
         
         {/* 平均次数卡片 */}
-        <Col xs={24} sm={12} md={6}>
+        <div style={{ flex: 1, minWidth: '160px' }}>
           <Card 
             variant="outlined"
             style={{
@@ -1833,43 +1905,40 @@ const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: b
               cursor: 'pointer',
               transformStyle: 'preserve-3d',
               perspective: '1000px',
+              width: '100%',
+              height: '100%',
+              minHeight: '120px'
             }}
             onMouseEnter={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'translateY(-4px) rotateX(0deg) rotateY(0deg)';
+              card.style.transform = 'translateY(-4px)';
               card.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
             }}
             onMouseMove={(e) => {
+              // 简化3D效果，只保留上下浮动，去掉旋转
               const card = e.currentTarget;
-              const rect = card.getBoundingClientRect();
-              const x = e.clientX - rect.left;
-              const y = e.clientY - rect.top;
-              const centerX = rect.width / 2;
-              const centerY = rect.height / 2;
-              const rotateX = (y - centerY) / 10;
-              const rotateY = (centerX - x) / 10;
-              card.style.transform = `translateY(-4px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+              card.style.transform = 'translateY(-4px)';
             }}
             onMouseLeave={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'translateY(0) rotateX(0deg) rotateY(0deg)';
+              card.style.transform = 'translateY(0)';
               card.style.boxShadow = '';
             }}
           >
             <Statistic
-              title="平均次数"
+              title="平均"
               value={statisticType === 'red' 
                 ? Math.round(Object.values(redBallFrequency).reduce((sum, item) => sum + item.count, 0) / 33 * 10) / 10 
                 : Math.round(Object.values(blueBallFrequency).reduce((sum, item) => sum + item.count, 0) / 16 * 10) / 10}
               prefix={<PieChartOutlined />}
               valueStyle={{ color: statisticType === 'red' ? '#f5222d' : '#1890ff', fontWeight: 'bold' }}
-              suffix="次"
+
             />
           </Card>
-        </Col>
+        </div>
         
         {/* 红球/蓝球号码覆盖卡片 */}
-        <Col xs={24} sm={12} md={6}>
+        <div style={{ flex: 1, minWidth: '160px' }}>
           <Card 
             variant="outlined"
             style={{
@@ -1882,26 +1951,23 @@ const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: b
               cursor: 'pointer',
               transformStyle: 'preserve-3d',
               perspective: '1000px',
+              width: '100%',
+              height: '100%',
+              minHeight: '120px'
             }}
             onMouseEnter={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'translateY(-4px) rotateX(0deg) rotateY(0deg)';
+              card.style.transform = 'translateY(-4px)';
               card.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
             }}
             onMouseMove={(e) => {
+              // 简化3D效果，只保留上下浮动，去掉旋转
               const card = e.currentTarget;
-              const rect = card.getBoundingClientRect();
-              const x = e.clientX - rect.left;
-              const y = e.clientY - rect.top;
-              const centerX = rect.width / 2;
-              const centerY = rect.height / 2;
-              const rotateX = (y - centerY) / 10;
-              const rotateY = (centerX - x) / 10;
-              card.style.transform = `translateY(-4px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+              card.style.transform = 'translateY(-4px)';
             }}
             onMouseLeave={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'translateY(0) rotateX(0deg) rotateY(0deg)';
+              card.style.transform = 'translateY(0)';
               card.style.boxShadow = '';
             }}
           >
@@ -1915,8 +1981,57 @@ const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: b
               suffix={statisticType === 'red' ? "/33" : "/16"}
             />
           </Card>
-        </Col>
-      </Row>
+        </div>
+        
+        {/* 中奖号码总和卡片 - 放在最后 */}
+        <div style={{ flex: 1, minWidth: '160px' }}>
+          <Card 
+            variant="outlined"
+            style={{
+              background: statisticType === 'red' 
+                ? 'linear-gradient(135deg, #ffffff 0%, rgba(245, 34, 45, 0.025) 100%)' 
+                : 'linear-gradient(135deg, #ffffff 0%, rgba(24, 144, 255, 0.025) 100%)',
+              border: `1px solid ${statisticType === 'red' ? 'rgba(245, 34, 45, 0.1)' : 'rgba(24, 144, 255, 0.1)'}`,
+              borderRadius: '6px',
+              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+              cursor: 'pointer',
+              transformStyle: 'preserve-3d',
+              perspective: '1000px',
+              width: '100%',
+              height: '100%',
+              minHeight: '120px'
+            }}
+            onMouseEnter={(e) => {
+              const card = e.currentTarget;
+              card.style.transform = 'translateY(-4px) rotateX(0deg) rotateY(0deg)';
+              card.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+            }}
+            onMouseMove={(e) => {
+              const card = e.currentTarget;
+              const rect = card.getBoundingClientRect();
+              const x = e.clientX - rect.left;
+              const y = e.clientY - rect.top;
+              const centerX = rect.width / 2;
+              const centerY = rect.height / 2;
+              const rotateX = (y - centerY) / 10;
+              const rotateY = (centerX - x) / 10;
+              card.style.transform = `translateY(-4px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            }}
+            onMouseLeave={(e) => {
+              const card = e.currentTarget;
+              card.style.transform = 'translateY(0) rotateX(0deg) rotateY(0deg)';
+              card.style.boxShadow = '';
+            }}
+          >
+            <Statistic
+              title="总和"
+              value={statisticType === 'red' ? winningNumbersSum.redSum : winningNumbersSum.blueSum}
+              prefix={<StarFilled />}
+              valueStyle={{ color: statisticType === 'red' ? '#f5222d' : '#1890ff', fontWeight: 'bold' }}
+            />
+          </Card>
+        </div>
+      </div>
 
       {/* 分析结果 */}
       <Spin spinning={loading} indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}>
@@ -2616,12 +2731,71 @@ const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: b
         justifyContent: 'center', 
         alignItems: 'center',
         backgroundColor: '#fff',
-        zIndex: 1000
+        zIndex: 1000,
+        padding: '0 20px',
+        boxSizing: 'border-box'
       }}>
+        {/* 图标 - 点击回到频率页面 */}
         <AppleFilled 
-          style={{ fontSize: '24px', color: '#000', cursor: 'pointer' }} 
-          onClick={toggleTabVisible}
+          style={{ fontSize: '24px', color: '#000', cursor: 'pointer', marginRight: '20px' }} 
+          onClick={() => setActiveTabKey(statisticType === 'red' ? '1' : '2')}
         />
+        {/* 三个Tab名称（菜单）放在图标右侧，顺序：频率统计，分组统计，分布统计 */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          gap: '20px'
+        }}>
+          {/* 频率统计 */}
+          <div 
+            style={{ 
+              fontSize: '14px', 
+              color: '#000',
+              cursor: 'pointer',
+              fontWeight: (statisticType === 'red' && activeTabKey === '1') || (statisticType === 'blue' && activeTabKey === '2') ? 'bold' : 'normal',
+              transition: 'color 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px'
+            }}
+            onClick={() => setActiveTabKey(statisticType === 'red' ? '1' : '2')}
+          >
+            <ChromeOutlined /> 频率
+          </div>
+          {/* 分组统计 */}
+          <div 
+            style={{ 
+              fontSize: '14px', 
+              color: '#000',
+              cursor: 'pointer',
+              fontWeight: (statisticType === 'red' && activeTabKey === '5') || (statisticType === 'blue' && activeTabKey === '6') ? 'bold' : 'normal',
+              transition: 'color 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px'
+            }}
+            onClick={() => setActiveTabKey(statisticType === 'red' ? '5' : '6')}
+          >
+            <DockerOutlined /> 分组
+          </div>
+          {/* 分布统计 */}
+          <div 
+            style={{ 
+              fontSize: '14px', 
+              color: '#000',
+              cursor: 'pointer',
+              fontWeight: (statisticType === 'red' && activeTabKey === '3') || (statisticType === 'blue' && activeTabKey === '4') ? 'bold' : 'normal',
+              transition: 'color 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px'
+            }}
+            onClick={() => setActiveTabKey(statisticType === 'red' ? '3' : '4')}
+          >
+            <RubyOutlined /> 分布
+          </div>
+        </div>
       </footer>
     </div>
   );

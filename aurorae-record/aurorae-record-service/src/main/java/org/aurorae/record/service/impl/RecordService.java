@@ -49,6 +49,9 @@ public class RecordService implements IRecordService {
         if (StringUtils.hasText(request.getDayStart()) && StringUtils.hasText(request.getDayEnd())) {
             return repository.findByDateBetween(request.getDayStart(), request.getDayEnd());
         }
+        if (request.getLineStart() != 0 && request.getLineEnd() != 0) {
+            return repository.findByLineBetween(request.getLineStart(), request.getLineEnd());
+        }
         return null;
     }
 }

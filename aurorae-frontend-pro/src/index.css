@@ -56,3 +56,13 @@ button:focus-visible {
 }
 
 /* 移除了基于系统主题的媒体查询，使用固定的浅色主题 */
+
+/* 旋转动画 */
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

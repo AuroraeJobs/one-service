@@ -13,6 +13,7 @@ interface RecordItem {
   blue: string;
   sales: string;
   poolmoney: string;
+  line?: string;
 }
 
 // 查询参数类型定义
@@ -26,11 +27,10 @@ interface QueryParams {
 
 // RecordList组件的props接口
 interface RecordListProps {
-  isFilterVisible: boolean;
-  setIsFilterVisible: (visible: boolean) => void;
+  // 筛选条件框现在始终显示，不再需要控制显示/隐藏的props
 }
 
-const RecordList: React.FC<RecordListProps> = ({ isFilterVisible, setIsFilterVisible }) => {
+const RecordList: React.FC<RecordListProps> = () => {
   // 状态管理
   const [records, setRecords] = useState<RecordItem[]>([]);
   const [issueRange, setIssueRange] = useState<[string, string]>(['', '']);
@@ -49,34 +49,10 @@ const RecordList: React.FC<RecordListProps> = ({ isFilterVisible, setIsFilterVis
   
   // 分页状态管理
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 20; // 4个/行 * 5行 = 20个
+  const pageSize = 12; // 4个/行 * 3行 = 12个
   
-  // 筛选条件div拖动相关状态
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [filterPosition, setFilterPosition] = useState({
-    x: '50%', // 默认居中
-    y: 'auto',
-    bottom: '64px' // 默认位于页脚上方
-  });
-  
-  // 筛选条件div显示/隐藏状态从props获取
-
-  // 切换筛选条件显示/隐藏
-  const toggleFilterVisible = () => {
-    setIsFilterVisible(!isFilterVisible);
-  };
-
   // 使用ref防止useEffect在StrictMode下运行两次
   const hasFetchedRef = useRef(false);
-  
-  // 筛选条件div双击隐藏处理
-  const handleFilterDoubleClick = () => {
-    // 确保正确调用setIsFilterVisible，传递false值隐藏筛选条件div
-    setIsFilterVisible(false);
-    // 阻止事件冒泡，避免触发其他事件
-    event?.stopPropagation();
-  };
   
   // 时间筛选框滚轮事件处理
   const handleDateWheel = (e: React.WheelEvent, isStartDate: boolean) => {
@@ -85,11 +61,11 @@ const RecordList: React.FC<RecordListProps> = ({ isFilterVisible, setIsFilterVis
     const currentDate = isStartDate ? startDate : endDate;
     let newDate;
     
-    // 向上滚动是后一天，向下滚动是前一天
+    // 向上滚动是前一天，向下滚动是后一天
     if (e.deltaY < 0) {
-      newDate = currentDate.add(1, 'day');
-    } else {
       newDate = currentDate.subtract(1, 'day');
+    } else {
+      newDate = currentDate.add(1, 'day');
     }
     
     if (isStartDate) {
@@ -114,11 +90,11 @@ const RecordList: React.FC<RecordListProps> = ({ isFilterVisible, setIsFilterVis
     const currentIssue = issueRange[index] || '0000000';
     let issueNum = parseInt(currentIssue);
     
-    // 向上滚动加一，向下滚动减一
+    // 向上滚动减一，向下滚动加一
     if (e.deltaY < 0) {
-      issueNum += 1;
-    } else {
       issueNum = Math.max(1, issueNum - 1);
+    } else {
+      issueNum += 1;
     }
     
     // 格式化为7位数字
@@ -177,62 +153,6 @@ const RecordList: React.FC<RecordListProps> = ({ isFilterVisible, setIsFilterVis
   }, [startDate, endDate, handleDateWheel]);
 
 
-  // 筛选条件div拖动事件处理
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    setDragOffset({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    });
-  };
-  
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging) {
-      const newX = e.clientX - dragOffset.x;
-      const newY = e.clientY - dragOffset.y;
-      
-      setFilterPosition({
-        x: `${newX}px`,
-        y: `${newY}px`,
-        bottom: 'auto'
-      });
-    }
-  };
-  
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-  
-  // 添加全局事件监听
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove as unknown as EventListener);
-      document.addEventListener('mouseup', handleMouseUp);
-    }
-    
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove as unknown as EventListener);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, dragOffset]);
-  
-  // 窗口大小变化时调整筛选条件div位置，确保不会超出屏幕
-      useEffect(() => {
-        const handleResize = () => {
-          // 确保筛选条件div不会超出屏幕
-          if (filterPosition.x !== '50%') {
-            setFilterPosition(prev => ({
-              ...prev,
-              x: `${Math.max(0, Math.min(parseInt(prev.x.replace('px', '')), window.innerWidth - 480))}px`
-            }));
-          }
-        };
-        
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-      }, [filterPosition]);
-
   // 获取记录数据
   const fetchRecords = (start: string, end: string, isDateRange = false) => {
 
@@ -254,7 +174,7 @@ const RecordList: React.FC<RecordListProps> = ({ isFilterVisible, setIsFilterVis
       .then((data) => {
         if (Array.isArray(data)) {
           // 按期号倒序排序
-          const sortedData = data.sort((a: RecordItem, b: RecordItem) => {
+          const sortedData = data.sort((a, b) => {
             return b.code.localeCompare(a.code);
           });
           setRecords(sortedData);
@@ -357,12 +277,12 @@ const RecordList: React.FC<RecordListProps> = ({ isFilterVisible, setIsFilterVis
   return (
     <div style={{ paddingTop: '20px', position: 'relative', paddingBottom: '64px' }}>
       {/* 记录列表 */}
-      <Card bordered={false} style={{ width: '100%' }}>
+      <Card variant="outlined" style={{ width: '100%', border: 'none' }}>
         <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '16px', justifyContent: 'center', perspective: '1000px' }}>
           {records.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((record) => (
             <Card 
               key={record.code} 
-              bordered={true} 
+              variant="outlined" 
               style={{ 
                 width: 'calc(25% - 12px)', 
                 minWidth: '240px', 
@@ -376,11 +296,10 @@ const RecordList: React.FC<RecordListProps> = ({ isFilterVisible, setIsFilterVis
                 // 3d效果
                 transformStyle: 'preserve-3d',
                 transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                // 光标悬停时产生中间往下弯曲，两边往上翘起的效果
-                // 使用perspective创建3D空间，rotateX负值让中间向下弯曲
+                // 光标悬停时简单上浮效果，去掉右下角翘起
                 transform: hoveredCard === record.code 
-                  ? 'perspective(1000px) rotateX(-10deg) translateZ(15px)' 
-                  : 'perspective(1000px) rotateX(0deg) translateZ(0)',
+                  ? 'perspective(1000px) translateZ(10px)' 
+                  : 'perspective(1000px) translateZ(0)',
                 // 增强厚度视觉效果 - 多层阴影模拟真实厚度
                 boxShadow: hoveredCard === record.code 
                   ? '0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)' 
@@ -394,7 +313,7 @@ const RecordList: React.FC<RecordListProps> = ({ isFilterVisible, setIsFilterVis
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {/* 期号和日期 */}
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px' }}>
-                  <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: '#333' }}>{record.code}</h4>
+                  <span style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: '#333' }}>{record.code}</span>
                   <span style={{ fontSize: '14px', color: '#666' }}>{record.date} {record.week}</span>
                 </div>
                 
@@ -413,15 +332,17 @@ const RecordList: React.FC<RecordListProps> = ({ isFilterVisible, setIsFilterVis
                         key={index}
                         style={{
                           display: 'inline-block',
-                          width: '32px',
-                          height: '32px',
+                          width: '36px',
+                          height: '36px',
                           borderRadius: '50%',
-                          backgroundColor: '#f5222d',
+                          background: 'radial-gradient(circle at 30% 30%, #ff6b6b 0%, #f5222d 70%, #c9184a 100%)',
                           color: '#fff',
                           textAlign: 'center',
-                          lineHeight: '32px',
+                          lineHeight: '36px',
                           fontSize: '14px',
                           fontWeight: 'bold',
+                          boxShadow: '0 4px 8px rgba(245, 34, 45, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.3), inset 0 -2px 4px rgba(193, 53, 53, 0.5)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
                         }}
                       >
                         {ball}
@@ -434,19 +355,167 @@ const RecordList: React.FC<RecordListProps> = ({ isFilterVisible, setIsFilterVis
                     <span
                       style={{
                         display: 'inline-block',
-                        width: '32px',
-                        height: '32px',
+                        width: '36px',
+                        height: '36px',
                         borderRadius: '50%',
-                        backgroundColor: '#1890ff',
+                        background: 'radial-gradient(circle at 30% 30%, #69b1ff 0%, #1890ff 70%, #096dd9 100%)',
                         color: '#fff',
                         textAlign: 'center',
-                        lineHeight: '32px',
+                        lineHeight: '36px',
                         fontSize: '14px',
                         fontWeight: 'bold',
+                        boxShadow: '0 4px 8px rgba(24, 144, 255, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.3), inset 0 -2px 4px rgba(10, 100, 190, 0.5)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
                       }}
                     >
                       {record.blue}
                     </span>
+                  </div>
+                </div>
+                
+                {/* 号码总和进度条 */}
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  padding: '8px 16px',
+                  gap: '16px',
+                  flexDirection: 'column'
+                }}>
+                  {/* 红球总和和全部总和 */}
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    width: '100%',
+                    gap: '16px'
+                  }}>
+                    {/* 红球号码总和进度条 */}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <div style={{ 
+                        width: '100%', 
+                        height: '8px', 
+                        backgroundColor: '#f5222d',
+                        borderRadius: '4px',
+                        overflow: 'hidden'
+                      }}>
+                        <div 
+                          style={{
+                            height: '100%',
+                            backgroundColor: '#ff6b6b',
+                            borderRadius: '4px',
+                            width: `${Math.min(100, Math.max(0, ((record.red.split(',').reduce((sum, ball) => sum + parseInt(ball), 0) - 21) / (183 - 21)) * 100))}%`,
+                            transition: 'width 0.3s ease'
+                          }}
+                        />
+                      </div>
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        fontSize: '12px',
+                        color: '#666'
+                      }}>
+                        <span style={{ color: '#f5222d', fontWeight: 'bold' }}>{record.red.split(',').reduce((sum, ball) => sum + parseInt(ball), 0)}</span>
+                        <span style={{ color: '#f5222d' }}>红球</span>
+                      </div>
+                    </div>
+                    
+                    {/* 所有号码总和进度条 */}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <div style={{ 
+                        width: '100%', 
+                        height: '8px', 
+                        backgroundColor: '#1890ff',
+                        borderRadius: '4px',
+                        overflow: 'hidden'
+                      }}>
+                        <div 
+                          style={{
+                            height: '100%',
+                            backgroundColor: '#69b1ff',
+                            borderRadius: '4px',
+                            width: `${Math.min(100, Math.max(0, ((record.red.split(',').reduce((sum, ball) => sum + parseInt(ball), 0) + parseInt(record.blue) - 22) / (199 - 22)) * 100))}%`,
+                            transition: 'width 0.3s ease'
+                          }}
+                        />
+                      </div>
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        fontSize: '12px',
+                        color: '#666'
+                      }}>
+                        <span style={{ color: '#1890ff', fontWeight: 'bold' }}>{record.red.split(',').reduce((sum, ball) => sum + parseInt(ball), 0) + parseInt(record.blue)}</span>
+                        <span style={{ color: '#1890ff' }}>全部</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* 奇数和偶数数量 */}
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    width: '100%',
+                    gap: '16px'
+                  }}>
+                    {/* 奇数数量进度条 */}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <div style={{ 
+                        width: '100%', 
+                        height: '8px', 
+                        backgroundColor: '#722ed1',
+                        borderRadius: '4px',
+                        overflow: 'hidden'
+                      }}>
+                        <div 
+                          style={{
+                            height: '100%',
+                            backgroundColor: '#b37feb',
+                            borderRadius: '4px',
+                            width: `${Math.min(100, Math.max(0, (([...record.red.split(','), record.blue].filter(ball => parseInt(ball) % 2 !== 0).length - 0) / (7 - 0)) * 100))}%`,
+                            transition: 'width 0.3s ease'
+                          }}
+                        />
+                      </div>
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        fontSize: '12px',
+                        color: '#666'
+                      }}>
+                        <span style={{ color: '#722ed1', fontWeight: 'bold' }}>{[...record.red.split(','), record.blue].filter(ball => parseInt(ball) % 2 !== 0).length}</span>
+                        <span style={{ color: '#722ed1' }}>奇数</span>
+                      </div>
+                    </div>
+                    
+                    {/* 偶数数量进度条 */}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <div style={{ 
+                        width: '100%', 
+                        height: '8px', 
+                        backgroundColor: '#52c41a',
+                        borderRadius: '4px',
+                        overflow: 'hidden'
+                      }}>
+                        <div 
+                          style={{
+                            height: '100%',
+                            backgroundColor: '#95de64',
+                            borderRadius: '4px',
+                            width: `${Math.min(100, Math.max(0, (([...record.red.split(','), record.blue].filter(ball => parseInt(ball) % 2 === 0).length - 0) / (7 - 0)) * 100))}%`,
+                            transition: 'width 0.3s ease'
+                          }}
+                        />
+                      </div>
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        fontSize: '12px',
+                        color: '#666'
+                      }}>
+                        <span style={{ color: '#52c41a', fontWeight: 'bold' }}>{[...record.red.split(','), record.blue].filter(ball => parseInt(ball) % 2 === 0).length}</span>
+                        <span style={{ color: '#52c41a' }}>偶数</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 
@@ -459,255 +528,6 @@ const RecordList: React.FC<RecordListProps> = ({ isFilterVisible, setIsFilterVis
 
       </Card>
 
-      {/* 可拖动的查询条件和分页区域 */}
-      {isFilterVisible && (
-        <div 
-          className="query-container"
-          style={{
-            position: 'fixed',
-            left: filterPosition.x,
-            top: filterPosition.y,
-            bottom: filterPosition.bottom,
-            transform: filterPosition.x === '50%' ? 'translateX(-50%)' : 'none',
-            // 左边从左往右红色渐变，右边从右往左蓝色渐变，进一步增加透明度
-            background: 'linear-gradient(90deg, rgba(245,34,45,0.6) 0%, rgba(255,255,255,0.8) 45%, rgba(255,255,255,0.8) 55%, rgba(24,144,255,0.6) 100%)',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-            padding: '12px 16px',
-            borderRadius: '16px', // 添加圆角
-            zIndex: 10000, // 增加zIndex值，确保显示在最上层
-            // 移除overflowY和maxHeight，避免日期弹出框被裁剪
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '12px', // 组件之间的间距
-            minWidth: '480px', // 减小最小宽度
-            cursor: isDragging ? 'grabbing' : 'grab',
-            userSelect: 'none',
-            touchAction: 'none'
-          }}
-          onMouseDown={handleMouseDown}
-          onDoubleClick={handleFilterDoubleClick}
-        >
-          {/* 分页组件行 - 单独占一行，只有多于一页的时候才显示 */}
-          {records.length > pageSize && (
-            <div style={{ width: '100%', textAlign: 'center', margin: '8px 0' }}>
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', margin: '0 auto' }}>
-                {/* 第一页按钮 */}
-                <button
-                  onClick={() => setCurrentPage(1)}
-                  disabled={currentPage === 1}
-                  style={{ 
-                    padding: '4px 8px',
-                    // 去掉渐变色，使用简单纯色
-                    background: currentPage === 1 ? '#f5f5f5' : '#ffffff',
-                    color: currentPage === 1 ? '#999' : '#333',
-                    border: '1px solid rgba(0, 0, 0, 0.1)',
-                    borderRadius: '50%', // 将方形改为圆形
-                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                    fontSize: '16px',
-                    width: '32px',
-                    height: '32px',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)'
-                  }}
-                >
-                  <StepBackwardOutlined />
-                </button>
-                
-                {/* 上一页按钮 */}
-                <button
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  style={{ 
-                    padding: '4px 8px',
-                    // 去掉渐变色，使用简单纯色
-                    background: currentPage === 1 ? '#f5f5f5' : '#ffffff',
-                    color: currentPage === 1 ? '#999' : '#333',
-                    border: '1px solid rgba(0, 0, 0, 0.1)',
-                    borderRadius: '50%', // 将方形改为圆形
-                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                    fontSize: '16px',
-                    width: '32px',
-                    height: '32px',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)'
-                  }}
-                >
-                  <CaretLeftOutlined />
-                </button>
-                
-                {/* 记录总数显示 */}
-                <span style={{ fontSize: '13px', color: '#666', fontWeight: 'bold' }}>
-                  共 {records.length} 条
-                </span>
-                {/* 页码显示 */}
-                <span style={{ fontSize: '13px', color: '#666', fontWeight: 'bold' }}>
-                  {currentPage} / {Math.ceil(records.length / pageSize)}
-                </span>
-                
-                {/* 下一页按钮 */}
-                <button
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  disabled={currentPage * pageSize >= records.length}
-                  style={{ 
-                    padding: '4px 8px',
-                    // 去掉渐变色，使用简单纯色
-                    background: currentPage * pageSize >= records.length ? '#f5f5f5' : '#ffffff',
-                    color: currentPage * pageSize >= records.length ? '#999' : '#333',
-                    border: '1px solid rgba(0, 0, 0, 0.1)',
-                    borderRadius: '50%', // 将方形改为圆形
-                    cursor: currentPage * pageSize >= records.length ? 'not-allowed' : 'pointer',
-                    fontSize: '16px',
-                    width: '32px',
-                    height: '32px',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)'
-                  }}
-                >
-                  <CaretRightOutlined />
-                </button>
-                
-                {/* 最后一页按钮 */}
-                <button
-                  onClick={() => setCurrentPage(Math.ceil(records.length / pageSize))}
-                  disabled={currentPage * pageSize >= records.length}
-                  style={{ 
-                    padding: '4px 8px',
-                    // 去掉渐变色，使用简单纯色
-                    background: currentPage * pageSize >= records.length ? '#f5f5f5' : '#ffffff',
-                    color: currentPage * pageSize >= records.length ? '#999' : '#333',
-                    border: '1px solid rgba(0, 0, 0, 0.1)',
-                    borderRadius: '50%', // 将方形改为圆形
-                    cursor: currentPage * pageSize >= records.length ? 'not-allowed' : 'pointer',
-                    fontSize: '16px',
-                    width: '32px',
-                    height: '32px',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)'
-                  }}
-                >
-                  <StepForwardOutlined />
-                </button>
-              </div>
-            </div>
-          )}
-          
-          {/* 筛选条件行 */}
-          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
-            {/* 日期筛选框 */}
-            <div style={{ textAlign: 'center', margin: '8px 0' }}>
-              <div style={{ display: 'flex', flexDirection: 'row', gap: '4px', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
-                <div ref={startDatePickerRef} style={{ display: 'inline-block' }}>
-                  <DatePicker
-                    style={{
-                      width: '140px',
-                      // 为日期选择器添加类似的渐变效果和透明度
-                      background: 'linear-gradient(90deg, rgba(245,34,45,0.2) 0%, rgba(255,255,255,0.85) 45%, rgba(255,255,255,0.85) 55%, rgba(24,144,255,0.2) 100%)',
-                      borderColor: 'rgba(0, 0, 0, 0.1)',
-                      borderRadius: '8px',
-                      boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)',
-                      // 字体加粗
-                      fontWeight: 'bold'
-                    }}
-                    popupStyle={{ zIndex: 12000 }}
-                    value={startDate}
-                    onChange={(date) => {
-                      const newStartDate = date || dayjs();
-                      setStartDate(newStartDate);
-                      // 确保两个日期都有值才查询
-                      if (endDate) {
-                        const start = newStartDate.format('YYYY-MM-DD');
-                        const end = endDate.format('YYYY-MM-DD');
-                        fetchRecords(start, end, true);
-                      }
-                    }}
-                    placeholder="开始日期"
-                  />
-                </div>
-                <div ref={endDatePickerRef} style={{ display: 'inline-block' }}>
-                  <DatePicker
-                    style={{
-                      width: '140px',
-                      // 为日期选择器添加类似的渐变效果和透明度
-                      background: 'linear-gradient(90deg, rgba(245,34,45,0.2) 0%, rgba(255,255,255,0.85) 45%, rgba(255,255,255,0.85) 55%, rgba(24,144,255,0.2) 100%)',
-                      borderColor: 'rgba(0, 0, 0, 0.1)',
-                      borderRadius: '8px',
-                      boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)',
-                      // 字体加粗
-                      fontWeight: 'bold'
-                    }}
-                    popupStyle={{ zIndex: 12000 }}
-                    value={endDate}
-                    onChange={(date) => {
-                      const newEndDate = date || dayjs();
-                      setEndDate(newEndDate);
-                      // 确保两个日期都有值才查询
-                      if (startDate) {
-                        const start = startDate.format('YYYY-MM-DD');
-                        const end = newEndDate.format('YYYY-MM-DD');
-                        fetchRecords(start, end, true);
-                      }
-                    }}
-                    placeholder="结束日期"
-                  />
-                </div>
-              </div>
-            </div>
-            
-            {/* 期号筛选框 */}
-            <div style={{ textAlign: 'center', margin: '8px 0' }}>
-              <div style={{ display: 'flex', flexDirection: 'row', gap: '4px', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
-                <Input
-                  style={{
-                    width: '100px',
-                    textAlign: 'center',
-                    // 为期号输入框添加类似的渐变效果和透明度
-                    background: 'linear-gradient(90deg, rgba(245,34,45,0.2) 0%, rgba(255,255,255,0.85) 45%, rgba(255,255,255,0.85) 55%, rgba(24,144,255,0.2) 100%)',
-                    borderColor: 'rgba(0, 0, 0, 0.1)',
-                    borderRadius: '8px',
-                    boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)',
-                    // 字体加粗
-                    fontWeight: 'bold'
-                  }}
-                  value={issueRange[0]}
-                  onChange={(e) => handleInputChange(0, e.target.value)}
-                  onPressEnter={handleIssueQuery}
-                  onWheel={(e) => handleIssueWheel(e, 0)}
-                  placeholder="开始期号"
-                />
-                <Input
-                  style={{
-                    width: '100px',
-                    textAlign: 'center',
-                    // 为期号输入框添加类似的渐变效果和透明度
-                    background: 'linear-gradient(90deg, rgba(245,34,45,0.2) 0%, rgba(255,255,255,0.85) 45%, rgba(255,255,255,0.85) 55%, rgba(24,144,255,0.2) 100%)',
-                    borderColor: 'rgba(0, 0, 0, 0.1)',
-                    borderRadius: '8px',
-                    boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)',
-                    // 字体加粗
-                    fontWeight: 'bold'
-                  }}
-                  value={issueRange[1]}
-                  onChange={(e) => handleInputChange(1, e.target.value)}
-                  onPressEnter={handleIssueQuery}
-                  onWheel={(e) => handleIssueWheel(e, 1)}
-                  placeholder="结束期号"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      
       {/* 页脚 */}
       <footer className="app-footer" style={{ 
         textAlign: 'center', 
@@ -720,12 +540,257 @@ const RecordList: React.FC<RecordListProps> = ({ isFilterVisible, setIsFilterVis
         justifyContent: 'center', 
         alignItems: 'center',
         backgroundColor: '#fff',
-        zIndex: 1000
+        zIndex: 1000,
+        padding: '0 20px'
       }}>
-        <AppleFilled 
-          style={{ fontSize: '24px', color: '#000', cursor: 'pointer' }} 
-          onClick={toggleFilterVisible}
-        />
+        {/* 所有元素统一居中容器 */}
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', gap: '20px', width: '100%' }}>
+          {/* 左侧：图标 */}
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <AppleFilled 
+              style={{ fontSize: '24px', color: '#000', cursor: 'pointer' }} 
+            />
+          </div>
+          
+          {/* 中间：筛选条件 */}
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <div 
+              className="query-container"
+              style={{
+                // 背景颜色改为透明
+                background: 'transparent',
+                // 去掉阴影效果
+                boxShadow: 'none',
+                padding: '12px 16px',
+                borderRadius: '16px', // 添加圆角
+                zIndex: 10000, // 增加zIndex值，确保显示在最上层
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '16px', // 组件之间的间距
+                userSelect: 'none'
+              }}
+            >
+                {/* 日期筛选框 */}
+                <div style={{ textAlign: 'center', margin: '0' }}>
+                  <div style={{ display: 'flex', flexDirection: 'row', gap: '4px', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
+                    <div ref={startDatePickerRef} style={{ display: 'inline-block' }}>
+                      <DatePicker
+                        style={{
+                          width: '140px',
+                          // 背景颜色改为透明
+                          background: 'transparent',
+                          borderColor: 'rgba(0, 0, 0, 0.1)',
+                          borderRadius: '8px',
+                          boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)',
+                          // 字体加粗
+                          fontWeight: 'bold'
+                        }}
+                        popupStyle={{ zIndex: 12000 }}
+                        value={startDate}
+                        onChange={(date) => {
+                          const newStartDate = date || dayjs();
+                          setStartDate(newStartDate);
+                          // 确保两个日期都有值才查询
+                          if (endDate) {
+                            const start = newStartDate.format('YYYY-MM-DD');
+                            const end = endDate.format('YYYY-MM-DD');
+                            fetchRecords(start, end, true);
+                          }
+                        }}
+                        placeholder="开始日期"
+                      />
+                    </div>
+                    <div ref={endDatePickerRef} style={{ display: 'inline-block' }}>
+                      <DatePicker
+                        style={{
+                          width: '140px',
+                          // 背景颜色改为透明
+                          background: 'transparent',
+                          borderColor: 'rgba(0, 0, 0, 0.1)',
+                          borderRadius: '8px',
+                          boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)',
+                          // 字体加粗
+                          fontWeight: 'bold'
+                        }}
+                        popupStyle={{ zIndex: 12000 }}
+                        value={endDate}
+                        onChange={(date) => {
+                          const newEndDate = date || dayjs();
+                          setEndDate(newEndDate);
+                          // 确保两个日期都有值才查询
+                          if (startDate) {
+                            const start = startDate.format('YYYY-MM-DD');
+                            const end = newEndDate.format('YYYY-MM-DD');
+                            fetchRecords(start, end, true);
+                          }
+                        }}
+                        placeholder="结束日期"
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* 期号筛选框 */}
+                <div style={{ textAlign: 'center', margin: '0' }}>
+                  <div style={{ display: 'flex', flexDirection: 'row', gap: '4px', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
+                    <Input
+                      style={{
+                        width: '100px',
+                        textAlign: 'center',
+                        // 背景颜色改为透明
+                        background: 'transparent',
+                        borderColor: 'rgba(0, 0, 0, 0.1)',
+                        borderRadius: '8px',
+                        boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)',
+                        // 字体加粗
+                        fontWeight: 'bold'
+                      }}
+                      value={issueRange[0]}
+                      onChange={(e) => handleInputChange(0, e.target.value)}
+                      onPressEnter={handleIssueQuery}
+                      onWheel={(e) => handleIssueWheel(e, 0)}
+                      placeholder="开始期号"
+                    />
+                    <Input
+                      style={{
+                        width: '100px',
+                        textAlign: 'center',
+                        // 背景颜色改为透明
+                        background: 'transparent',
+                        borderColor: 'rgba(0, 0, 0, 0.1)',
+                        borderRadius: '8px',
+                        boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)',
+                        // 字体加粗
+                        fontWeight: 'bold'
+                      }}
+                      value={issueRange[1]}
+                      onChange={(e) => handleInputChange(1, e.target.value)}
+                      onPressEnter={handleIssueQuery}
+                      onWheel={(e) => handleIssueWheel(e, 1)}
+                      placeholder="结束期号"
+                    />
+                  </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* 右侧：分页组件 */}
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            {/* 分页组件 - 只有多于一页的时候才显示 */}
+            {records.length > pageSize && (
+              <div style={{ width: 'auto', textAlign: 'center', margin: '0' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', margin: '0 auto' }}>
+                  {/* 第一页按钮 */}
+                  <button
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                    style={{ 
+                      padding: '4px 8px',
+                      // 去掉渐变色，使用简单纯色
+                      background: currentPage === 1 ? '#f5f5f5' : '#ffffff',
+                      color: currentPage === 1 ? '#999' : '#333',
+                      border: '1px solid rgba(0, 0, 0, 0.1)',
+                      borderRadius: '50%', // 将方形改为圆形
+                      cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                      fontSize: '16px',
+                      width: '32px',
+                      height: '32px',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)'
+                    }}
+                  >
+                    <StepBackwardOutlined />
+                  </button>
+                  
+                  {/* 上一页按钮 */}
+                  <button
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    style={{ 
+                      padding: '4px 8px',
+                      // 去掉渐变色，使用简单纯色
+                      background: currentPage === 1 ? '#f5f5f5' : '#ffffff',
+                      color: currentPage === 1 ? '#999' : '#333',
+                      border: '1px solid rgba(0, 0, 0, 0.1)',
+                      borderRadius: '50%', // 将方形改为圆形
+                      cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                      fontSize: '16px',
+                      width: '32px',
+                      height: '32px',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)'
+                    }}
+                  >
+                    <CaretLeftOutlined />
+                  </button>
+                  
+                  {/* 记录总数显示 */}
+                  <span style={{ fontSize: '13px', color: '#666', fontWeight: 'bold' }}>
+                    共 {records.length} 条
+                  </span>
+                  {/* 页码显示 */}
+                  <span style={{ fontSize: '13px', color: '#666', fontWeight: 'bold' }}>
+                    {currentPage} / {Math.ceil(records.length / pageSize)}
+                  </span>
+                  
+                  {/* 下一页按钮 */}
+                  <button
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    disabled={currentPage * pageSize >= records.length}
+                    style={{ 
+                      padding: '4px 8px',
+                      // 去掉渐变色，使用简单纯色
+                      background: currentPage * pageSize >= records.length ? '#f5f5f5' : '#ffffff',
+                      color: currentPage * pageSize >= records.length ? '#999' : '#333',
+                      border: '1px solid rgba(0, 0, 0, 0.1)',
+                      borderRadius: '50%', // 将方形改为圆形
+                      cursor: currentPage * pageSize >= records.length ? 'not-allowed' : 'pointer',
+                      fontSize: '16px',
+                      width: '32px',
+                      height: '32px',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)'
+                    }}
+                  >
+                    <CaretRightOutlined />
+                  </button>
+                  
+                  {/* 最后一页按钮 */}
+                  <button
+                    onClick={() => setCurrentPage(Math.ceil(records.length / pageSize))}
+                    disabled={currentPage * pageSize >= records.length}
+                    style={{ 
+                      padding: '4px 8px',
+                      // 去掉渐变色，使用简单纯色
+                      background: currentPage * pageSize >= records.length ? '#f5f5f5' : '#ffffff',
+                      color: currentPage * pageSize >= records.length ? '#999' : '#333',
+                      border: '1px solid rgba(0, 0, 0, 0.1)',
+                      borderRadius: '50%', // 将方形改为圆形
+                      cursor: currentPage * pageSize >= records.length ? 'not-allowed' : 'pointer',
+                      fontSize: '16px',
+                      width: '32px',
+                      height: '32px',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)'
+                    }}
+                  >
+                    <StepForwardOutlined />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </footer>
     </div>
   );
