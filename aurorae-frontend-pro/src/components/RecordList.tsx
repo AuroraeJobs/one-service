@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Card, Row, Col, message, DatePicker, Input } from 'antd';
-import { ProTable } from '@ant-design/pro-components';
+import { Card, message, DatePicker, Input } from 'antd';
+import { CaretLeftOutlined, CaretRightOutlined, StepBackwardOutlined, StepForwardOutlined, AppleFilled } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { recordApi } from '../services/api';
 
@@ -24,58 +24,217 @@ interface QueryParams {
   issueEnd?: string;
 }
 
-const RecordList: React.FC = () => {
+// RecordList组件的props接口
+interface RecordListProps {
+  isFilterVisible: boolean;
+  setIsFilterVisible: (visible: boolean) => void;
+}
+
+const RecordList: React.FC<RecordListProps> = ({ isFilterVisible, setIsFilterVisible }) => {
   // 状态管理
-  const [loading, setLoading] = useState(false);
   const [records, setRecords] = useState<RecordItem[]>([]);
   const [issueRange, setIssueRange] = useState<[string, string]>(['', '']);
-  const [startDate, setStartDate] = useState(dayjs());
+  // 卡片3d效果状态
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  
+  const [startDate, setStartDate] = useState(dayjs().startOf('month'));
   const [endDate, setEndDate] = useState(dayjs());
+  
+  // 用于监听日期选择器滚轮事件的ref
+  const startDatePickerRef = useRef<HTMLDivElement>(null);
+  const endDatePickerRef = useRef<HTMLDivElement>(null);
+  
+  // 防抖定时器ID
+  const debounceTimerRef = useRef<number | null>(null);
+  
   // 分页状态管理
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const pageSize = 20; // 4个/行 * 5行 = 20个
+  
+  // 筛选条件div拖动相关状态
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [filterPosition, setFilterPosition] = useState({
+    x: '50%', // 默认居中
+    y: 'auto',
+    bottom: '64px' // 默认位于页脚上方
+  });
+  
+  // 筛选条件div显示/隐藏状态从props获取
+
+  // 切换筛选条件显示/隐藏
+  const toggleFilterVisible = () => {
+    setIsFilterVisible(!isFilterVisible);
+  };
 
   // 使用ref防止useEffect在StrictMode下运行两次
   const hasFetchedRef = useRef(false);
-
-  // 组件加载时获取最新记录
+  
+  // 筛选条件div双击隐藏处理
+  const handleFilterDoubleClick = () => {
+    // 确保正确调用setIsFilterVisible，传递false值隐藏筛选条件div
+    setIsFilterVisible(false);
+    // 阻止事件冒泡，避免触发其他事件
+    event?.stopPropagation();
+  };
+  
+  // 时间筛选框滚轮事件处理
+  const handleDateWheel = (e: React.WheelEvent, isStartDate: boolean) => {
+    e.preventDefault();
+    
+    const currentDate = isStartDate ? startDate : endDate;
+    let newDate;
+    
+    // 向上滚动是后一天，向下滚动是前一天
+    if (e.deltaY < 0) {
+      newDate = currentDate.add(1, 'day');
+    } else {
+      newDate = currentDate.subtract(1, 'day');
+    }
+    
+    if (isStartDate) {
+      setStartDate(newDate);
+      // 确保两个日期都有值才查询，使用防抖版本
+      if (endDate) {
+        debouncedFetchRecords(newDate.format('YYYY-MM-DD'), endDate.format('YYYY-MM-DD'), true);
+      }
+    } else {
+      setEndDate(newDate);
+      // 确保两个日期都有值才查询，使用防抖版本
+      if (startDate) {
+        debouncedFetchRecords(startDate.format('YYYY-MM-DD'), newDate.format('YYYY-MM-DD'), true);
+      }
+    }
+  };
+  
+  // 期号筛选框滚轮事件处理
+  const handleIssueWheel = (e: React.WheelEvent, index: number) => {
+    e.preventDefault();
+    
+    const currentIssue = issueRange[index] || '0000000';
+    let issueNum = parseInt(currentIssue);
+    
+    // 向上滚动加一，向下滚动减一
+    if (e.deltaY < 0) {
+      issueNum += 1;
+    } else {
+      issueNum = Math.max(1, issueNum - 1);
+    }
+    
+    // 格式化为7位数字
+    const newIssue = issueNum.toString().padStart(7, '0');
+    const newRange = [...issueRange];
+    newRange[index] = newIssue;
+    setIssueRange(newRange as [string, string]);
+    
+    // 使用防抖版本的fetchRecords函数
+    const [start, end] = newRange;
+    if (start && end) {
+      debouncedFetchRecords(start, end, false);
+    }
+  };
+  
+  // 为日期选择器添加滚轮事件监听器
   useEffect(() => {
-    // 防止在StrictMode下运行两次
-    if (hasFetchedRef.current) return;
-    hasFetchedRef.current = true;
+    // 时间筛选框滚轮事件处理函数
+    const handleStartDateWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      handleDateWheel(e as unknown as React.WheelEvent, true);
+    };
+    
+    const handleEndDateWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      handleDateWheel(e as unknown as React.WheelEvent, false);
+    };
+    
+    // 添加事件监听器
+    if (startDatePickerRef.current) {
+      startDatePickerRef.current.addEventListener('wheel', handleStartDateWheel, { passive: false });
+      // 确保日期选择器内部输入框字体加粗
+      const inputElement = startDatePickerRef.current.querySelector('.ant-picker-input input') as HTMLInputElement;
+      if (inputElement) {
+        inputElement.style.fontWeight = 'bold';
+      }
+    }
+    if (endDatePickerRef.current) {
+      endDatePickerRef.current.addEventListener('wheel', handleEndDateWheel, { passive: false });
+      // 确保日期选择器内部输入框字体加粗
+      const inputElement = endDatePickerRef.current.querySelector('.ant-picker-input input') as HTMLInputElement;
+      if (inputElement) {
+        inputElement.style.fontWeight = 'bold';
+      }
+    }
+    
+    // 移除事件监听器
+    return () => {
+      if (startDatePickerRef.current) {
+        startDatePickerRef.current.removeEventListener('wheel', handleStartDateWheel);
+      }
+      if (endDatePickerRef.current) {
+        endDatePickerRef.current.removeEventListener('wheel', handleEndDateWheel);
+      }
+    };
+  }, [startDate, endDate, handleDateWheel]);
 
-    // 获取最新记录
-    recordApi.getLast()
-      .then((data) => {
-        if (data && data.code) {
-          // 解析最新期号，计算起始期号
-          const latestIssue = data.code;
-          if (latestIssue.length === 7) {
-            // 期号格式：YYYYNNN（YYYY为年份，NNN为期数）
-            const year = latestIssue.slice(0, 4);
-            const issueNumber = parseInt(latestIssue.slice(4));
-            // 计算起始期号：最新期号减10，最小为该年第一期
-            const startIssueNumber = Math.max(issueNumber - 10, 1);
-            // 格式化为3位数字，不足补零
-            const formattedStartIssueNumber = startIssueNumber.toString().padStart(3, '0');
-            const startIssue = `${year}${formattedStartIssueNumber}`;
-            
-            // 设置期号范围：起始期号到最新期号
-            setIssueRange([startIssue, latestIssue]);
-            // 自动查询
-            fetchRecords(startIssue, latestIssue);
-          }
-        }
-      })
-      .catch((error) => {
-        console.error('获取最新记录失败:', error);
-        message.error('获取最新记录失败，请稍后重试');
+
+  // 筛选条件div拖动事件处理
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+  };
+  
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isDragging) {
+      const newX = e.clientX - dragOffset.x;
+      const newY = e.clientY - dragOffset.y;
+      
+      setFilterPosition({
+        x: `${newX}px`,
+        y: `${newY}px`,
+        bottom: 'auto'
       });
-  }, []);
+    }
+  };
+  
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+  
+  // 添加全局事件监听
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove as unknown as EventListener);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove as unknown as EventListener);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, dragOffset]);
+  
+  // 窗口大小变化时调整筛选条件div位置，确保不会超出屏幕
+      useEffect(() => {
+        const handleResize = () => {
+          // 确保筛选条件div不会超出屏幕
+          if (filterPosition.x !== '50%') {
+            setFilterPosition(prev => ({
+              ...prev,
+              x: `${Math.max(0, Math.min(parseInt(prev.x.replace('px', '')), window.innerWidth - 480))}px`
+            }));
+          }
+        };
+        
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+      }, [filterPosition]);
 
   // 获取记录数据
   const fetchRecords = (start: string, end: string, isDateRange = false) => {
-    setLoading(true);
 
     // 构建请求体
     const requestBody: QueryParams = {
@@ -99,31 +258,76 @@ const RecordList: React.FC = () => {
             return b.code.localeCompare(a.code);
           });
           setRecords(sortedData);
-          message.success(`查询成功，共${sortedData.length}条记录`);
+          message.success(`获取到 ${sortedData.length} 条记录`);
           
-          // 设置日期组件的初始日期：第一条记录（最新）的日期作为结束日期，最后一条记录（最旧）的日期作为开始日期
-          if (sortedData.length > 0) {
-            const latestRecord = sortedData[0]; // 第一条是最新记录
-            const oldestRecord = sortedData[sortedData.length - 1]; // 最后一条是最旧记录
-            setStartDate(dayjs(oldestRecord.date)); // 开始日期是最旧记录的日期
-            setEndDate(dayjs(latestRecord.date)); // 结束日期是最新记录的日期
-            
-            // 将返回记录对应的开始期号和结束期号回显到期号查询输入框内
-            setIssueRange([oldestRecord.code, latestRecord.code]);
-          }
+          // 只有初次进入页面时才初始化筛选条件，后续查询不再联动更新
+          // 这里不再更新筛选条件，只更新记录数据
         } else {
-          setRecords([]);
-          message.warning('查询结果格式不正确');
+          message.error('获取记录失败，返回数据格式错误');
         }
       })
       .catch((error) => {
         console.error('获取记录失败:', error);
         message.error('获取记录失败，请稍后重试');
       })
-      .finally(() => {
-        setLoading(false);
-      });
+      .finally(() => {});
   };
+  
+  // 防抖版本的fetchRecords函数，停止滑动后2秒执行
+  const debouncedFetchRecords = (start: string, end: string, isDateRange = false) => {
+    // 清除之前的定时器
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
+    // 设置新的定时器，2秒后执行查询
+    debounceTimerRef.current = setTimeout(() => {
+      fetchRecords(start, end, isDateRange);
+      debounceTimerRef.current = null;
+    }, 2000);
+  };
+
+  // 组件加载时获取最新记录
+  useEffect(() => {
+    // 防止在StrictMode下运行两次
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
+
+    // 获取最新记录
+      recordApi.getLast()
+        .then((data) => {
+          if (data && data.code) {
+            // 解析最新期号
+            const latestIssue = data.code;
+            if (latestIssue.length === 7) {
+              // 期号格式：YYYYNNN（YYYY为年份，NNN为期数）
+              const year = latestIssue.slice(0, 4);
+              const issueNumber = parseInt(latestIssue.slice(4));
+              
+              // 计算结束期号：最新期号+1
+              const endIssueNumber = issueNumber + 1;
+              // 计算开始期号：结束期号-21
+              const startIssueNumber = Math.max(endIssueNumber - 21, 1); // 确保不小于1
+              
+              // 格式化为3位数字，不足补零
+              const formattedStartIssueNumber = startIssueNumber.toString().padStart(3, '0');
+              const formattedEndIssueNumber = endIssueNumber.toString().padStart(3, '0');
+              
+              const startIssue = `${year}${formattedStartIssueNumber}`;
+              const endIssue = `${year}${formattedEndIssueNumber}`;
+              
+              // 设置期号范围：起始期号到结束期号
+              setIssueRange([startIssue, endIssue]);
+              // 自动查询
+              fetchRecords(startIssue, endIssue);
+            }
+          }
+        })
+      .catch((error) => {
+        console.error('获取最新记录失败:', error);
+        message.error('获取最新记录失败，请稍后重试');
+      });
+  }, []);
 
   // 根据期号范围查询
   const handleIssueQuery = () => {
@@ -132,113 +336,289 @@ const RecordList: React.FC = () => {
       message.warning('请输入完整的期号范围');
       return;
     }
+    if (start.length !== 7 || end.length !== 7) {
+      message.warning('期号必须为7位数字');
+      return;
+    }
     fetchRecords(start, end, false);
   };
 
-  // 移除未使用的handleDateQuery函数，日期查询直接在onChange事件中处理
-
   // 处理输入变化
   const handleInputChange = (index: number, value: string) => {
+    // 只允许输入数字，并且限制长度为7位
+    const filteredValue = value.replace(/[^0-9]/g, '').slice(0, 7);
     const newRange = [...issueRange];
-    newRange[index] = value;
+    newRange[index] = filteredValue;
     setIssueRange(newRange as [string, string]);
   };
 
-  // 表格列配置
-  const columns = [
-    {
-      title: '期号',
-      dataIndex: 'code',
-      key: 'code',
-      width: 120,
-      ellipsis: true,
-    },
-    {
-      title: '日期',
-      dataIndex: 'date',
-      key: 'date',
-      width: 150,
-      ellipsis: true,
-    },
-    {
-      title: '红球',
-      dataIndex: 'red',
-      key: 'red',
-      width: 200,
-      ellipsis: true,
-      render: (_: React.ReactNode, record: RecordItem) => {
-        const text = record.red;
-        if (!text) return null;
-        const redBalls = text.split(',');
-        return (
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {redBalls.map((ball, index) => (
-              <span
-                key={index}
-                style={{
-                  display: 'inline-block',
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  backgroundColor: '#f5222d',
-                  color: '#fff',
-                  textAlign: 'center',
-                  lineHeight: '32px',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                }}
-              >
-                {ball}
-              </span>
-            ))}
-          </div>
-        );
-      },
-    },
-    {
-      title: '蓝球',
-      dataIndex: 'blue',
-      key: 'blue',
-      width: 80,
-      ellipsis: true,
-      render: (_: React.ReactNode, record: RecordItem) => {
-        const text = record.blue;
-        if (!text) return null;
-        return (
-          <span
-            style={{
-              display: 'inline-block',
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              backgroundColor: '#1890ff',
-              color: '#fff',
-              textAlign: 'center',
-              lineHeight: '32px',
-              fontSize: '14px',
-              fontWeight: 'bold',
-            }}
-          >
-            {text}
-          </span>
-        );
-      },
-    },
-  ];
+
 
   return (
-    <Card title="记录查询" bordered={false} style={{ width: '100%' }}>
-      {/* 查询条件区域 */}
-      <div className="query-container">
-        <Row gutter={[16, 16]}>
-          {/* 按日期范围查询 */}
-          <Col xs={24} sm={24} md={12} lg={12} xl={12} xxl={8}>
-            <h4 style={{ marginBottom: '12px', fontSize: '14px', fontWeight: 500 }}>按日期范围查询</h4>
-            <Row gutter={[16, 16]} align="middle" wrap>
-              <Col xs={24} sm={20} lg={16}>
-                <div style={{ display: 'flex', flexDirection: 'row', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+    <div style={{ paddingTop: '20px', position: 'relative', paddingBottom: '64px' }}>
+      {/* 记录列表 */}
+      <Card bordered={false} style={{ width: '100%' }}>
+        <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '16px', justifyContent: 'center', perspective: '1000px' }}>
+          {records.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((record) => (
+            <Card 
+              key={record.code} 
+              bordered={true} 
+              style={{ 
+                width: 'calc(25% - 12px)', 
+                minWidth: '240px', 
+                marginBottom: '16px',
+                // 从左红色到右蓝色的渐变背景
+                background: 'linear-gradient(90deg, rgba(245,34,45,0.15) 0%, rgba(255,255,255,0.1) 80%, rgba(24,144,255,0.15) 100%)',
+                // 确保边框颜色与渐变协调
+                borderColor: '#e8e8e8',
+                // 添加圆角
+                borderRadius: '12px',
+                // 3d效果
+                transformStyle: 'preserve-3d',
+                transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                // 光标悬停时产生中间往下弯曲，两边往上翘起的效果
+                // 使用perspective创建3D空间，rotateX负值让中间向下弯曲
+                transform: hoveredCard === record.code 
+                  ? 'perspective(1000px) rotateX(-10deg) translateZ(15px)' 
+                  : 'perspective(1000px) rotateX(0deg) translateZ(0)',
+                // 增强厚度视觉效果 - 多层阴影模拟真实厚度
+                boxShadow: hoveredCard === record.code 
+                  ? '0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)' 
+                  : '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+                // 增强边框效果，进一步提升厚度感
+                border: '1px solid rgba(0, 0, 0, 0.1)'
+              }}
+              onMouseEnter={() => setHoveredCard(record.code)}
+              onMouseLeave={() => setHoveredCard(null)}>
+            
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {/* 期号和日期 */}
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px' }}>
+                  <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: '#333' }}>{record.code}</h4>
+                  <span style={{ fontSize: '14px', color: '#666' }}>{record.date} {record.week}</span>
+                </div>
+                
+                {/* 红球和蓝球在一行显示 */}
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '8px', 
+                  flexWrap: 'wrap', 
+                  alignItems: 'center', 
+                  justifyContent: 'center'
+                }}>
+                  {/* 红球 */}
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                    {record.red.split(',').map((ball, index) => (
+                      <span
+                        key={index}
+                        style={{
+                          display: 'inline-block',
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          backgroundColor: '#f5222d',
+                          color: '#fff',
+                          textAlign: 'center',
+                          lineHeight: '32px',
+                          fontSize: '14px',
+                          fontWeight: 'bold',
+                        }}
+                      >
+                        {ball}
+                      </span>
+                    ))}
+                  </div>
+                  
+                  {/* 蓝球 */}
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        backgroundColor: '#1890ff',
+                        color: '#fff',
+                        textAlign: 'center',
+                        lineHeight: '32px',
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                      }}
+                    >
+                      {record.blue}
+                    </span>
+                  </div>
+                </div>
+                
+
+              </div>
+            </Card>
+          ))}
+        </div>
+        
+
+      </Card>
+
+      {/* 可拖动的查询条件和分页区域 */}
+      {isFilterVisible && (
+        <div 
+          className="query-container"
+          style={{
+            position: 'fixed',
+            left: filterPosition.x,
+            top: filterPosition.y,
+            bottom: filterPosition.bottom,
+            transform: filterPosition.x === '50%' ? 'translateX(-50%)' : 'none',
+            // 左边从左往右红色渐变，右边从右往左蓝色渐变，进一步增加透明度
+            background: 'linear-gradient(90deg, rgba(245,34,45,0.6) 0%, rgba(255,255,255,0.8) 45%, rgba(255,255,255,0.8) 55%, rgba(24,144,255,0.6) 100%)',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+            padding: '12px 16px',
+            borderRadius: '16px', // 添加圆角
+            zIndex: 10000, // 增加zIndex值，确保显示在最上层
+            // 移除overflowY和maxHeight，避免日期弹出框被裁剪
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '12px', // 组件之间的间距
+            minWidth: '480px', // 减小最小宽度
+            cursor: isDragging ? 'grabbing' : 'grab',
+            userSelect: 'none',
+            touchAction: 'none'
+          }}
+          onMouseDown={handleMouseDown}
+          onDoubleClick={handleFilterDoubleClick}
+        >
+          {/* 分页组件行 - 单独占一行，只有多于一页的时候才显示 */}
+          {records.length > pageSize && (
+            <div style={{ width: '100%', textAlign: 'center', margin: '8px 0' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', margin: '0 auto' }}>
+                {/* 第一页按钮 */}
+                <button
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  style={{ 
+                    padding: '4px 8px',
+                    // 去掉渐变色，使用简单纯色
+                    background: currentPage === 1 ? '#f5f5f5' : '#ffffff',
+                    color: currentPage === 1 ? '#999' : '#333',
+                    border: '1px solid rgba(0, 0, 0, 0.1)',
+                    borderRadius: '50%', // 将方形改为圆形
+                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                    fontSize: '16px',
+                    width: '32px',
+                    height: '32px',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)'
+                  }}
+                >
+                  <StepBackwardOutlined />
+                </button>
+                
+                {/* 上一页按钮 */}
+                <button
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  style={{ 
+                    padding: '4px 8px',
+                    // 去掉渐变色，使用简单纯色
+                    background: currentPage === 1 ? '#f5f5f5' : '#ffffff',
+                    color: currentPage === 1 ? '#999' : '#333',
+                    border: '1px solid rgba(0, 0, 0, 0.1)',
+                    borderRadius: '50%', // 将方形改为圆形
+                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                    fontSize: '16px',
+                    width: '32px',
+                    height: '32px',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)'
+                  }}
+                >
+                  <CaretLeftOutlined />
+                </button>
+                
+                {/* 记录总数显示 */}
+                <span style={{ fontSize: '13px', color: '#666', fontWeight: 'bold' }}>
+                  共 {records.length} 条
+                </span>
+                {/* 页码显示 */}
+                <span style={{ fontSize: '13px', color: '#666', fontWeight: 'bold' }}>
+                  {currentPage} / {Math.ceil(records.length / pageSize)}
+                </span>
+                
+                {/* 下一页按钮 */}
+                <button
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage * pageSize >= records.length}
+                  style={{ 
+                    padding: '4px 8px',
+                    // 去掉渐变色，使用简单纯色
+                    background: currentPage * pageSize >= records.length ? '#f5f5f5' : '#ffffff',
+                    color: currentPage * pageSize >= records.length ? '#999' : '#333',
+                    border: '1px solid rgba(0, 0, 0, 0.1)',
+                    borderRadius: '50%', // 将方形改为圆形
+                    cursor: currentPage * pageSize >= records.length ? 'not-allowed' : 'pointer',
+                    fontSize: '16px',
+                    width: '32px',
+                    height: '32px',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)'
+                  }}
+                >
+                  <CaretRightOutlined />
+                </button>
+                
+                {/* 最后一页按钮 */}
+                <button
+                  onClick={() => setCurrentPage(Math.ceil(records.length / pageSize))}
+                  disabled={currentPage * pageSize >= records.length}
+                  style={{ 
+                    padding: '4px 8px',
+                    // 去掉渐变色，使用简单纯色
+                    background: currentPage * pageSize >= records.length ? '#f5f5f5' : '#ffffff',
+                    color: currentPage * pageSize >= records.length ? '#999' : '#333',
+                    border: '1px solid rgba(0, 0, 0, 0.1)',
+                    borderRadius: '50%', // 将方形改为圆形
+                    cursor: currentPage * pageSize >= records.length ? 'not-allowed' : 'pointer',
+                    fontSize: '16px',
+                    width: '32px',
+                    height: '32px',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)'
+                  }}
+                >
+                  <StepForwardOutlined />
+                </button>
+              </div>
+            </div>
+          )}
+          
+          {/* 筛选条件行 */}
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
+            {/* 日期筛选框 */}
+            <div style={{ textAlign: 'center', margin: '8px 0' }}>
+              <div style={{ display: 'flex', flexDirection: 'row', gap: '4px', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <div ref={startDatePickerRef} style={{ display: 'inline-block' }}>
                   <DatePicker
-                    style={{ width: '100%', flex: 1, minWidth: '120px' }}
+                    style={{
+                      width: '140px',
+                      // 为日期选择器添加类似的渐变效果和透明度
+                      background: 'linear-gradient(90deg, rgba(245,34,45,0.2) 0%, rgba(255,255,255,0.85) 45%, rgba(255,255,255,0.85) 55%, rgba(24,144,255,0.2) 100%)',
+                      borderColor: 'rgba(0, 0, 0, 0.1)',
+                      borderRadius: '8px',
+                      boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)',
+                      // 字体加粗
+                      fontWeight: 'bold'
+                    }}
+                    popupStyle={{ zIndex: 12000 }}
                     value={startDate}
                     onChange={(date) => {
                       const newStartDate = date || dayjs();
@@ -252,9 +632,20 @@ const RecordList: React.FC = () => {
                     }}
                     placeholder="开始日期"
                   />
-                  <span style={{ margin: '0 8px', whiteSpace: 'nowrap' }}>至</span>
+                </div>
+                <div ref={endDatePickerRef} style={{ display: 'inline-block' }}>
                   <DatePicker
-                    style={{ width: '100%', flex: 1, minWidth: '120px' }}
+                    style={{
+                      width: '140px',
+                      // 为日期选择器添加类似的渐变效果和透明度
+                      background: 'linear-gradient(90deg, rgba(245,34,45,0.2) 0%, rgba(255,255,255,0.85) 45%, rgba(255,255,255,0.85) 55%, rgba(24,144,255,0.2) 100%)',
+                      borderColor: 'rgba(0, 0, 0, 0.1)',
+                      borderRadius: '8px',
+                      boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)',
+                      // 字体加粗
+                      fontWeight: 'bold'
+                    }}
+                    popupStyle={{ zIndex: 12000 }}
                     value={endDate}
                     onChange={(date) => {
                       const newEndDate = date || dayjs();
@@ -269,72 +660,74 @@ const RecordList: React.FC = () => {
                     placeholder="结束日期"
                   />
                 </div>
-              </Col>
-            </Row>
-          </Col>
-
-          {/* 按期号范围查询 */}
-          <Col xs={24} sm={24} md={12} lg={12} xl={12} xxl={8}>
-            <h4 style={{ marginBottom: '12px', fontSize: '14px', fontWeight: 500 }}>按期号范围查询</h4>
-            <Row gutter={[16, 16]} align="middle" wrap>
-              <Col xs={24} sm={20} lg={16}>
-                <div style={{ display: 'flex', flexDirection: 'row', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <Input
-                    style={{ width: '100%', flex: 1, minWidth: '120px' }}
-                    value={issueRange[0]}
-                    onChange={(e) => handleInputChange(0, e.target.value)}
-                    onPressEnter={handleIssueQuery}
-                    placeholder="开始期号"
-                  />
-                  <span style={{ margin: '0 8px', whiteSpace: 'nowrap' }}>至</span>
-                  <Input
-                    style={{ width: '100%', flex: 1, minWidth: '120px' }}
-                    value={issueRange[1]}
-                    onChange={(e) => handleInputChange(1, e.target.value)}
-                    onPressEnter={handleIssueQuery}
-                    placeholder="结束期号"
-                  />
-                </div>
-              </Col>
-            </Row>
-          </Col>
-        </Row>
-      </div>
-
-      {/* 记录列表 */}
-      <div style={{ marginTop: 24, overflowX: 'auto', width: '100%' }}>
-        <ProTable
-          columns={columns}
-          dataSource={records}
-          rowKey="code"
-          loading={loading}
-          pagination={{
-            current: currentPage,
-            pageSize: pageSize,
-            showSizeChanger: true,
-            showTotal: (total) => `共 ${total} 条记录`,
-            responsive: true,
-            onChange: (page, size) => {
-              setCurrentPage(page);
-              setPageSize(size);
-            },
-            onShowSizeChange: (_, size) => {
-              setPageSize(size);
-              setCurrentPage(1); // 当页大小变化时，重置到第一页
-            },
-          }}
-          search={false}
-          toolBarRender={false}
-          scroll={{
-            x: 800, // 最小宽度，确保表格在小屏幕上可以横向滚动
-            y: 'auto',
-          }}
-          size="middle"
-          bordered={false}
-          style={{ width: '100%' }}
+              </div>
+            </div>
+            
+            {/* 期号筛选框 */}
+            <div style={{ textAlign: 'center', margin: '8px 0' }}>
+              <div style={{ display: 'flex', flexDirection: 'row', gap: '4px', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <Input
+                  style={{
+                    width: '100px',
+                    textAlign: 'center',
+                    // 为期号输入框添加类似的渐变效果和透明度
+                    background: 'linear-gradient(90deg, rgba(245,34,45,0.2) 0%, rgba(255,255,255,0.85) 45%, rgba(255,255,255,0.85) 55%, rgba(24,144,255,0.2) 100%)',
+                    borderColor: 'rgba(0, 0, 0, 0.1)',
+                    borderRadius: '8px',
+                    boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)',
+                    // 字体加粗
+                    fontWeight: 'bold'
+                  }}
+                  value={issueRange[0]}
+                  onChange={(e) => handleInputChange(0, e.target.value)}
+                  onPressEnter={handleIssueQuery}
+                  onWheel={(e) => handleIssueWheel(e, 0)}
+                  placeholder="开始期号"
+                />
+                <Input
+                  style={{
+                    width: '100px',
+                    textAlign: 'center',
+                    // 为期号输入框添加类似的渐变效果和透明度
+                    background: 'linear-gradient(90deg, rgba(245,34,45,0.2) 0%, rgba(255,255,255,0.85) 45%, rgba(255,255,255,0.85) 55%, rgba(24,144,255,0.2) 100%)',
+                    borderColor: 'rgba(0, 0, 0, 0.1)',
+                    borderRadius: '8px',
+                    boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)',
+                    // 字体加粗
+                    fontWeight: 'bold'
+                  }}
+                  value={issueRange[1]}
+                  onChange={(e) => handleInputChange(1, e.target.value)}
+                  onPressEnter={handleIssueQuery}
+                  onWheel={(e) => handleIssueWheel(e, 1)}
+                  placeholder="结束期号"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* 页脚 */}
+      <footer className="app-footer" style={{ 
+        textAlign: 'center', 
+        position: 'fixed', 
+        bottom: 0, 
+        left: 0, 
+        right: 0, 
+        height: '64px', 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        zIndex: 1000
+      }}>
+        <AppleFilled 
+          style={{ fontSize: '24px', color: '#000', cursor: 'pointer' }} 
+          onClick={toggleFilterVisible}
         />
-      </div>
-    </Card>
+      </footer>
+    </div>
   );
 };
 

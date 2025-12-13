@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ConfigProvider, Menu } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import { AppleFilled, SearchOutlined, BarChartOutlined, AreaChartOutlined } from '@ant-design/icons';
@@ -8,6 +9,12 @@ import Analysis from './components/Analysis';
 import './App.css';
 
 function App() {
+  // 筛选条件div显示/隐藏状态，提升到App组件中，以便页脚图标可以控制
+  const [isFilterVisible, setIsFilterVisible] = useState(false);
+  
+  // Tab显示/隐藏状态，提升到App组件中，以便页脚图标可以控制
+  const [isTabVisible, setIsTabVisible] = useState(true);
+  
   return (
     <Router>
       <ConfigProvider 
@@ -20,22 +27,25 @@ function App() {
         }}
       >
         <div className="app-container">
-          <header className="app-header" style={{ backgroundColor: '#000', position: 'relative' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', height: '64px' }}>
-              {/* 左侧 Hello World */}
-              <h1 style={{ color: '#fff', margin: 0, fontSize: '20px', marginLeft: '24px' }}>
-                Hello World
-              </h1>
-              
-              {/* 中间苹果白实心图标 - 点击滚动到底部 */}
-              <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+          <header className="app-header" style={{ 
+            backgroundColor: '#000', 
+            position: 'fixed', 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            width: '100%', 
+            zIndex: 1000,
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', height: '64px' }}>
+              {/* 苹果白实心图标 - 放在查询按钮左侧，与菜单一起居中，点击回到首页 */}
+              <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
                 <AppleFilled 
-                  style={{ fontSize: '24px', color: '#fff', cursor: 'pointer' }} 
-                  onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })} 
+                  style={{ fontSize: '24px', color: '#fff', marginRight: '16px', cursor: 'pointer' }} 
                 />
-              </div>
+              </Link>
               
-              {/* 右侧导航菜单 */}
+              {/* 导航菜单 */}
               <Menu
                 mode="horizontal"
                 theme="dark"
@@ -60,25 +70,19 @@ function App() {
                 style={{ 
                   backgroundColor: 'transparent', 
                   borderBottom: 'none',
-                  marginRight: '24px',
                 }}
                 className="custom-menu"
               />
             </div>
           </header>
-          <main className="app-main">
+          <main className="app-main" style={{ paddingTop: '64px', paddingBottom: '20px' }}>
             <Routes>
-              <Route path="/" element={<RecordList />} />
-              <Route path="/statistics" element={<Statistics />} />
-              <Route path="/analysis" element={<Analysis />} />
+              <Route path="/" element={<RecordList isFilterVisible={isFilterVisible} setIsFilterVisible={setIsFilterVisible} />} />
+              <Route path="/statistics" element={<Statistics isTabVisible={isTabVisible} setIsTabVisible={setIsTabVisible} />} />
+              <Route path="/analysis" element={<Analysis isTabVisible={isTabVisible} setIsTabVisible={setIsTabVisible} />} />
             </Routes>
           </main>
-          <footer className="app-footer" style={{ textAlign: 'center' }}>
-            <AppleFilled 
-              style={{ fontSize: '24px', cursor: 'pointer' }} 
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
-            />
-          </footer>
+
         </div>
       </ConfigProvider>
     </Router>

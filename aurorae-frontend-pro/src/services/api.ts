@@ -56,7 +56,7 @@ apiClient.interceptors.response.use(
 // 记录相关API
 export const recordApi = {
   // 查询记录列表
-  find: (params: any): Promise<RecordListResponse[]> => {
+  find: (params: { issueStart?: string; issueEnd?: string; dayStart?: string; dayEnd?: string; name?: string }): Promise<RecordListResponse[]> => {
     return apiClient.post('/record/find', params);
   },
   // 获取最新记录

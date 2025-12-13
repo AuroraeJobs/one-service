@@ -11,6 +11,7 @@ import org.aurorae.record.service.IBoxService;
 import org.aurorae.record.service.IRecordService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -33,26 +34,34 @@ public class RecordUpdater implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (!hasArg("RecordUpdate", args)) {
-            return;
-        }
-        Record record = recordService.findLast();
-        if (record != null) {
-            update(record.date(), record.getCode());
-            //update();
+        if (hasArg("RecordUpdate", args)) {
+            update();
         } else if (hasArg("RecordInit", args)) {
             init();
         }
     }
 
-    private void update(String date, String code) {
+    public void update() {
+        Record last = recordService.findLast();
+        if (last == null) {
+            return;
+        }
         // 从线上获取记录进行计算
-        Optional.ofNullable(RecordCalendar.fetch(date))
-                .ifPresent(records -> Optional.ofNullable(boxService.findById(code))
-                        .ifPresent(box -> save(box, records)));
+        List<Record> records = RecordCalendar.fetch(last.date());
+        if (CollectionUtils.isEmpty(records)) {
+            return;
+        }
+        // 对新记录重新设置一些属性
+        for (int i = 0; i < records.size(); i++) {
+            Record record = records.get(i);
+            record.setLine(last.getLine() + i + 1);
+            record.setDate(record.date());
+        }
+        Optional.ofNullable(boxService.findById(last.getCode()))
+                .ifPresent(box -> save(box, records));
     }
 
-    private void update() {
+    private void reset() {
         // 从数据库里获取记录进行计算
         ColorBox box = ColorBox.one();
         List<Record> records = recordService.findAll();

@@ -16,14 +16,12 @@ import {
   ManOutlined,
   SettingOutlined,
   StarFilled,
-  AppstoreOutlined,
-  ClearOutlined,
-  AppstoreAddOutlined
+  AppleFilled
 } from '@ant-design/icons';
-import { useLocation } from 'react-router-dom';
+
 import { recordApi } from '../services/api';
 // 导入 ECharts
-import ReactECharts from 'echarts-for-react';
+
 
 // 定义数据接口
 interface AnalysisResult {
@@ -33,20 +31,20 @@ interface AnalysisResult {
   };
 }
 
-// 图表数据接口
-interface ChartDataItem {
-  period: number;
-  number: string;
-  count: number;
-}
+
 
 // 移除未使用的TabPane声明
 
 
 
-const Statistics: React.FC = () => {
-  // 获取当前路由
-  const location = useLocation();
+const Statistics: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: boolean) => void }> = ({ isTabVisible, setIsTabVisible }) => {
+  // 切换Tab显示/隐藏
+  const toggleTabVisible = () => {
+    if (setIsTabVisible) {
+      setIsTabVisible(!isTabVisible);
+    }
+  };
+
   
   // 状态管理
   const [loading, setLoading] = useState(false);
@@ -89,14 +87,14 @@ const Statistics: React.FC = () => {
   // 滑块隐藏图标初始位置，放在切换按钮上方
   const [hiddenIconPosition, setHiddenIconPosition] = useState({
     x: window.innerWidth - 90, // 右侧20px，圆心在window.innerWidth - 65px
-    y: window.innerHeight - 130 // 底部80px，位于切换按钮上方，间距10px
+    y: window.innerHeight - 200 // 底部上移，位于切换按钮上方，间距60px
   });
   const [hiddenIconDragOffset, setHiddenIconDragOffset] = useState({ x: 0, y: 0 });
   
-  // 切换按钮初始位置，放在右下角最下面
+  // 切换按钮初始位置，放在右下角，上移避免被页脚挡住
   const [buttonPosition, setButtonPosition] = useState({ 
     x: window.innerWidth - 105, // 右侧20px，竖直中心线在window.innerWidth - 65px
-    y: window.innerHeight - 70 // 底部20px
+    y: window.innerHeight - 140 // 底部上移70px，避免被页脚挡住
   });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   
@@ -105,7 +103,7 @@ const Statistics: React.FC = () => {
   // 初始化滑块位置为右下角，避免遮挡页脚图标
   const [sliderPosition, setSliderPosition] = useState({
     x: window.innerWidth - window.innerWidth / 3 - 20, // 距离右侧20px
-    y: window.innerHeight - 150 - 80 // 距离底部80px
+    y: window.innerHeight - 150 - 150 // 距离底部150px，上移70px
   });
   const [sliderDragOffset, setSliderDragOffset] = useState({ x: 0, y: 0 });
   // 控制滑块是否处于固定定位状态 - 默认始终固定定位
@@ -127,35 +125,18 @@ const Statistics: React.FC = () => {
   
 
   
-  // 跟踪选中号码 - 支持多选
-  const [selectedNumbers, setSelectedNumbers] = useState<string[]>([]);
-  // 控制号码选择器的显示/隐藏
-  const [showNumberSelector, setShowNumberSelector] = useState(false);
-  // 悬浮元素拖动状态管理
-  const [isSelectorDragging, setIsSelectorDragging] = useState(false);
-  const [isButtonDragging, setIsButtonDragging] = useState(false);
-  // 初始位置不要贴在右侧，居中偏左位置
-  const [selectorPosition, setSelectorPosition] = useState({ x: 200, y: 100 });
-  // 初始位置在滑块按钮上方
-  const [floatingButtonPosition, setFloatingButtonPosition] = useState({
-    x: window.innerWidth - 90, // 圆心在window.innerWidth - 65px，与滑块按钮水平对齐
-    y: window.innerHeight - 190 // 在滑块按钮上方，间距10px
+  // Tab容器拖动状态管理
+  const [isTabContainerDragging, setIsTabContainerDragging] = useState(false);
+  const [tabContainerPosition, setTabContainerPosition] = useState({
+    x: window.innerWidth / 2 - 200, // 初始居中，宽度约400px
+    y: window.innerHeight - 140 // 底部上方140px，再往上调整20px
   });
-  const [selectorDragOffset, setSelectorDragOffset] = useState({ x: 0, y: 0 });
-  const [buttonDragOffset, setButtonDragOffset] = useState({ x: 0, y: 0 });
-  // 图表数据状态 - 存储选中号码每期的累计次数
-  const [chartData, setChartData] = useState<ChartDataItem[]>([]);
+  const [tabContainerDragOffset, setTabContainerDragOffset] = useState({ x: 0, y: 0 });
 
   
   // 图表数据控制 - 显示所有数据，去掉分页逻辑
 
-  // 监听路由变化，当路由为/charts时默认显示图表统计
-  useEffect(() => {
-    if (location.pathname === '/charts') {
-      // 根据当前统计类型设置对应的图表tab key
-      setActiveTabKey(statisticType === 'red' ? '7' : '8');
-    }
-  }, [location.pathname, statisticType]);
+
 
   
   // 窗口大小变化时更新滑块初始大小（如果窗口变得太小）以及调整所有悬浮元素位置
@@ -169,10 +150,10 @@ const Statistics: React.FC = () => {
         }));
       }
       
-      // 始终保持距离底部80px，避免遮挡页脚图标
+      // 始终保持距离底部150px，避免遮挡页脚图标和切换按钮
       setSliderPosition(prev => ({
         ...prev,
-        y: window.innerHeight - sliderSize.height - 80
+        y: window.innerHeight - sliderSize.height - 150
       }));
 
       // 计算按钮中心位置：所有按钮的圆心或竖直中心线应该在同一条竖线上
@@ -183,16 +164,9 @@ const Statistics: React.FC = () => {
       // - 圆形按钮的x坐标：window.innerWidth - 65px - 25px = window.innerWidth - 90px
       // - 切换按钮的x坐标：window.innerWidth - 65px - 40px = window.innerWidth - 105px
       
-      // 计算统一的y坐标，确保垂直布局
-      const buttonY = window.innerHeight - 70; // 切换按钮在最底部
-      const hiddenIconY = window.innerHeight - 130; // 滑块隐藏图标在切换按钮上方
-      const floatingButtonY = window.innerHeight - 190; // 显示/隐藏号码选择器按钮在滑块按钮上方
-
-      // 调整显示/隐藏号码选择器按钮的位置，无论窗口放大还是缩小，都保持统一位置
-      setFloatingButtonPosition({
-        x: window.innerWidth - 90, // 圆心在window.innerWidth - 65px
-        y: floatingButtonY // 始终保持在滑块按钮上方
-      });
+      // 计算统一的y坐标，确保垂直布局，同时上移避免被页脚挡住
+      const buttonY = window.innerHeight - 140; // 切换按钮在底部上方140px
+      const hiddenIconY = window.innerHeight - 200; // 滑块隐藏图标在切换按钮上方60px
 
       // 调整滑块隐藏图标的位置，无论窗口放大还是缩小，都保持统一位置
       setHiddenIconPosition({
@@ -203,18 +177,13 @@ const Statistics: React.FC = () => {
       // 调整切换按钮的位置，无论窗口放大还是缩小，都保持统一位置
       setButtonPosition({
         x: window.innerWidth - 105, // 竖直中心线在window.innerWidth - 65px
-        y: buttonY // 始终保持在最底部
+        y: buttonY // 始终保持在底部上方140px，避免被页脚挡住
       });
 
-      // 调整号码选择器的位置，确保不超出窗口边界
-      // 红球选择器尺寸：340px宽，360px高 + 16px*2内边距 = 392px高
-      // 蓝球选择器尺寸：350px宽，220px高 + 16px*2内边距 = 252px高
-      const isRed = statisticType === 'red';
-      const selectorHeight = isRed ? 392 : 252;
-      
-      setSelectorPosition(prev => ({
-        x: Math.min(prev.x, window.innerWidth - 20), // 右侧留20px边距
-        y: Math.min(prev.y, window.innerHeight - selectorHeight - 20) // 底部留20px边距
+      // 调整Tab容器位置，确保在页面缩放时保持居中
+      setTabContainerPosition(prev => ({
+        x: window.innerWidth / 2 - 200, // 初始居中，宽度约400px
+        y: prev.y // 保持原来的y坐标
       }));
     };
     
@@ -238,6 +207,16 @@ const Statistics: React.FC = () => {
     setHiddenIconDragOffset({
       x: e.clientX - hiddenIconPosition.x,
       y: e.clientY - hiddenIconPosition.y
+    });
+  };
+
+  // Tab容器拖拽事件处理
+  const handleTabContainerMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsTabContainerDragging(true);
+    setTabContainerDragOffset({
+      x: e.clientX - tabContainerPosition.x,
+      y: e.clientY - tabContainerPosition.y
     });
   };
 
@@ -295,26 +274,17 @@ const Statistics: React.FC = () => {
         width: Math.max(minWidth, Math.min(newWidth, maxWidth)),
         height: Math.max(minHeight, Math.min(newHeight, maxHeight))
       });
-    } else if (isSelectorDragging) {
-      // 拖动号码选择器，允许拖动到页面任意位置，无边界限制
-      const newX = e.clientX - selectorDragOffset.x;
-      const newY = e.clientY - selectorDragOffset.y;
-      
-      // 完全自由拖动，无边界限制
-      setSelectorPosition({
-        x: newX,
-        y: newY
-      });
-    } else if (isButtonDragging) {
-      // 拖动显示/隐藏按钮
-      const newX = e.clientX - buttonDragOffset.x;
-      const newY = e.clientY - buttonDragOffset.y;
+
+    } else if (isTabContainerDragging) {
+      // 拖动Tab容器
+      const newX = e.clientX - tabContainerDragOffset.x;
+      const newY = e.clientY - tabContainerDragOffset.y;
       
       // 限制在视窗内
-      const maxX = window.innerWidth - 150; // 按钮宽度约150px
-      const maxY = window.innerHeight - 40; // 按钮高度约40px
+      const maxX = window.innerWidth - 400; // Tab容器宽度约400px
+      const maxY = window.innerHeight - 80; // Tab容器高度约80px
       
-      setFloatingButtonPosition({
+      setTabContainerPosition({
         x: Math.max(0, Math.min(newX, maxX)),
         y: Math.max(0, Math.min(newY, maxY))
       });
@@ -326,8 +296,7 @@ const Statistics: React.FC = () => {
     setIsHiddenIconDragging(false);
     setIsSliderDragging(false);
     setIsResizing(false);
-    setIsSelectorDragging(false);
-    setIsButtonDragging(false);
+    setIsTabContainerDragging(false);
   };
   
   // 缩放开始事件
@@ -344,7 +313,7 @@ const Statistics: React.FC = () => {
 
   // 添加全局事件监听
   useEffect(() => {
-    if (isDragging || isHiddenIconDragging || isSliderDragging || isResizing || isSelectorDragging || isButtonDragging) {
+    if (isDragging || isHiddenIconDragging || isSliderDragging || isResizing || isTabContainerDragging) {
       document.addEventListener('mousemove', handleMouseMove as unknown as EventListener);
       document.addEventListener('mouseup', handleMouseUp);
     }
@@ -353,26 +322,7 @@ const Statistics: React.FC = () => {
       document.removeEventListener('mousemove', handleMouseMove as unknown as EventListener);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, isHiddenIconDragging, isSliderDragging, isResizing, isSelectorDragging, isButtonDragging]);
-
-  // 当统计类型切换时，调整号码选择器位置，防止超出页面底部
-  useEffect(() => {
-    if (showNumberSelector) {
-      const isRed = statisticType === 'red';
-      const containerHeight = isRed ? 360 : 220;
-      const padding = 16;
-      const totalHeight = containerHeight + padding * 2;
-      
-      // 检查当前位置是否导致底部超出页面
-      if (selectorPosition.y + totalHeight > window.innerHeight) {
-        // 调整位置，确保底部距离页面底部20px
-        setSelectorPosition(prev => ({
-          ...prev,
-          y: window.innerHeight - totalHeight - 20
-        }));
-      }
-    }
-  }, [statisticType, showNumberSelector, selectorPosition]);
+  }, [isDragging, isHiddenIconDragging, isSliderDragging, isResizing, isTabContainerDragging]);
 
   // 滑块区域拖拽事件处理
   const handleSliderMouseDown = (e: React.MouseEvent) => {
@@ -466,464 +416,16 @@ const Statistics: React.FC = () => {
   // 移除图表相关代码
 
 
-  // 处理号码选择
-  const handleNumberSelect = (number: string) => {
-    // 计算新的选中号码列表
-    const newSelectedNumbers = selectedNumbers.includes(number) 
-      ? selectedNumbers.filter(n => n !== number) 
-      : [...selectedNumbers, number];
-    
-    // 直接设置选中号码
-    setSelectedNumbers(newSelectedNumbers);
-    
-    // 无需设置chartWindowStart，已去掉分页逻辑
-  };
 
-  // 清除所有选择
-  const clearAllSelections = () => {
-    setSelectedNumbers([]);
-    // 无需设置chartWindowStart，已去掉分页逻辑
-  };
-
-  // 生成所有可能的号码列表
-  const generateNumberList = () => {
-    if (statisticType === 'red') {
-      // 红球号码：01-33
-      return Array.from({ length: 33 }, (_, i) => {
-        const num = i + 1;
-        return num < 10 ? `0${num}` : `${num}`;
-      });
-    } else {
-      // 蓝球号码：01-16
-      return Array.from({ length: 16 }, (_, i) => {
-        const num = i + 1;
-        return num < 10 ? `0${num}` : `${num}`;
-      });
-    }
-  };
 
   // 渲染号码选择器 - 固定大小，类似滑块操作面板
-  const renderNumberSelector = () => {
-    const numbers = generateNumberList();
-    const currentColor = statisticType === 'red' ? '#f5222d' : '#1890ff';
-    
-    // 根据统计类型设置不同的布局
-    const isRed = statisticType === 'red';
-    
-    // 红球：33个号码，每行6个，显示6行
-    // 蓝球：16个号码，保持原有布局
-    const containerWidth = isRed ? '340px' : '350px'; // 增加红球容器宽度，确保每行能显示6个号码
-    const containerHeight = isRed ? '360px' : '220px'; // 增加容器高度，确保底部有足够空间
-    const itemWidth = isRed ? '40px' : '40px';
-    const itemHeight = isRed ? '40px' : '40px';
-    const gap = isRed ? '6px' : '8px'; // 减少红球号码间距，确保每行能显示6个号码
 
-    return (
-      <div style={{
-        width: containerWidth, // 固定宽度
-        height: containerHeight, // 固定高度
-        padding: '16px',
-        backgroundColor: '#fff',
-        borderRadius: '6px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)',
-        overflow: 'hidden', // 红球选择器不需要滚动，蓝球可能需要
-        userSelect: 'none',
-        touchAction: 'none',
-        display: 'flex', // 使用flex布局
-        flexDirection: 'column', // 垂直方向排列
-        alignItems: 'center', // 水平居中对齐
-        border: '1px solid #d9d9d9' // 添加白色边框，与Ant Design样式保持一致
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', width: '100%' }}>
-            <h4 style={{ margin: 0, color: currentColor, fontSize: '14px' }}>
-              选择号码
-            </h4>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button 
-                onClick={() => {
-                  // 全选功能
-                  const allNumbers = generateNumberList();
-                  setSelectedNumbers(allNumbers);
-                }}
-                style={{
-                  padding: '4px',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  borderRadius: 0,
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  width: 'auto',
-                  height: 'auto',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center'
-                }}
-                title="全选号码"
-              >
-                <AppstoreAddOutlined style={{ fontSize: '18px', color: '#999', transition: 'color 0.3s ease' }} />
-              </button>
-              <button 
-                onClick={clearAllSelections}
-                style={{
-                  padding: '4px',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  borderRadius: 0,
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  width: 'auto',
-                  height: 'auto',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center'
-                }}
-                title="清除所有选择"
-              >
-                <ClearOutlined style={{ fontSize: '18px', color: '#999', transition: 'color 0.3s ease' }} />
-              </button>
-            </div>
-          </div>
-        <div style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: gap, // 使用动态间距
-          padding: '12px 12px 32px 12px', // 增加底部内边距到32px，增加与容器底部的距离
-          backgroundColor: '#fafafa',
-          borderRadius: '4px',
-          justifyContent: 'center', // 号码在容器内居中显示
-          boxSizing: 'border-box',
-        }}>
-          {numbers.map(number => (
-            <div
-              key={number}
-              onClick={() => handleNumberSelect(number)}
-              style={{
-                width: itemWidth,
-                height: itemHeight,
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                backgroundColor: selectedNumbers.includes(number) ? currentColor : '#fff',
-                color: selectedNumbers.includes(number) ? '#fff' : currentColor,
-                border: `1px solid ${currentColor}`,
-                fontWeight: selectedNumbers.includes(number) ? 'bold' : 'normal',
-                transition: 'all 0.3s ease',
-                flexShrink: 0 // 防止号码被压缩
-              }}
-            >
-              {number}
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  // 双击隐藏号码选择器
-  const handleNumberSelectorDoubleClick = () => {
-    setShowNumberSelector(false);
-  };
 
   // 渲染柱状图
-  const renderLineChart = () => {
-    if (chartData.length === 0 || selectedNumbers.length === 0) {
-      return (
-        <div style={{ 
-          padding: '40px', 
-          textAlign: 'center', 
-          color: '#999',
-          backgroundColor: '#fff',
-          borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)' 
-        }}>
-          请选择至少一个号码查看累计次数趋势图
-        </div>
-      );
-    }
 
-    // 处理图表数据，转换为ECharts所需格式
-    // 获取所有唯一的期数
-    const periods = [...new Set(chartData.map(item => item.period))].sort((a, b) => a - b);
-    
-    // 获取所有选中的号码
-    const numbers = [...new Set(chartData.map(item => item.number))];
-    
-    // 颜色配置
-    const colors = [
-      '#1890ff', '#f5222d', '#52c41a', '#faad14', '#722ed1',
-      '#13c2c2', '#fa8c16', '#eb2f96', '#a0d911', '#2f54eb',
-      '#ff7875', '#52c41a', '#13c2c2', '#722ed1', '#faad14',
-      '#eb2f96', '#fa8c16', '#a0d911', '#2f54eb', '#1890ff'
-    ];
-    
-    // 构建ECharts系列数据
-    const series = numbers.map((number) => {
-      // 为每个号码构建数据数组，按期数顺序排列
-      const data = periods.map(period => {
-        const item = chartData.find(item => item.period === period && item.number === number);
-        return item ? item.count : 0;
-      });
-      
-      return {
-        name: number,
-        type: 'line',
-        data: data,
-        itemStyle: {
-          // 为每个号码分配固定颜色，使用号码的数值作为颜色索引
-          color: colors[Number(number) % colors.length]
-        },
-        lineStyle: {
-          width: 3,
-          type: 'solid'
-        },
-        symbol: 'circle',
-        symbolSize: 8,
-        symbolRotate: 0,
-        emphasis: {
-          focus: 'series',
-          scale: true,
-          symbolSize: 12,
-          itemStyle: {
-            shadowBlur: 10,
-            shadowColor: 'rgba(0, 0, 0, 0.3)'
-          }
-        },
-        label: {
-          show: false
-        },
-        smooth: false
-      };
-    });
-    
-    // ECharts配置项
-    const option = {
-      animation: false, // 关闭初始动画
-      tooltip: {
-        trigger: 'axis',
-        axisPointer: {
-          type: 'shadow'
-        },
-        formatter: function(params: any) {
-          let result = `${params[0].axisValue}期<br/>`;
-          params.forEach((param: any) => {
-            result += `${param.marker}${param.seriesName}: ${param.value}次<br/>`;
-          });
-          return result;
-        }
-      },
-      legend: {
-        data: numbers,
-        top: 0,
-        textStyle: {
-          fontSize: 12
-        }
-      },
-      grid: {
-        left: '3%',
-        right: '4%',
-        bottom: '3%',
-        top: '8%',
-        containLabel: true
-      },
-      xAxis: [
-        {
-          type: 'category',
-          data: periods,
-          axisLabel: {
-            fontSize: 12,
-            rotate: 45
-          },
-          axisLine: {
-            lineStyle: {
-              color: '#f0f0f0'
-            }
-          },
-          splitLine: {
-            show: true,
-            lineStyle: {
-              color: '#f0f0f0'
-            }
-          },
-          name: '期数',
-          nameTextStyle: {
-            fontSize: 14,
-            fontWeight: 'bold'
-          }
-        }
-      ],
-      yAxis: [
-        {
-          type: 'value',
-          axisLabel: {
-            fontSize: 12
-          },
-          axisLine: {
-            lineStyle: {
-              color: '#f0f0f0'
-            }
-          },
-          splitLine: {
-            show: true,
-            lineStyle: {
-              color: '#f0f0f0'
-            }
-          }
-        }
-      ],
-      series: series
-    };
-
-    return (
-      <div 
-        style={{ 
-          backgroundColor: '#fff',
-          borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)',
-          padding: '16px',
-          width: '100%',
-          maxWidth: '100%',
-          boxSizing: 'border-box'
-        }}
-      >
-        {/* 显示所有期数信息 */}
-        {/* 删除了显示期数的文本 */}
-        
-        {/* 图表容器 */}
-        <div 
-          style={{ 
-            height: '400px',
-            width: '100%',
-            maxWidth: '100%',
-            boxSizing: 'border-box'
-          }}
-        >
-          <ReactECharts option={option} style={{ height: '100%', width: '100%' }} />
-        </div>
-      </div>
-    );
-  };
 
   // 渲染号码选择器相关功能
-  const renderChartStats = () => {
-    const currentColor = statisticType === 'red' ? '#f5222d' : '#1890ff';
-    const isRed = statisticType === 'red'; // 在函数内部定义isRed变量
 
-    return (
-      <div style={{ 
-        padding: '16px', 
-        position: 'relative',
-        width: '100%', // 确保容器宽度为100%
-        maxWidth: '100%', // 确保最大宽度为100%
-        boxSizing: 'border-box' // 确保padding不会影响宽度
-      }}>
-        {/* 平滑折线图 */}
-        <div style={{ 
-          marginBottom: '20px',
-          width: '100%', // 确保图表容器宽度为100%
-          boxSizing: 'border-box' // 确保padding不会影响宽度
-        }}>
-          {renderLineChart()}
-        </div>
-        
-        {/* 号码选择器隐藏时，显示圆形图标按钮 - 类似滑块隐藏按钮 */}
-        {!showNumberSelector ? (
-          <div
-            style={{
-              position: 'fixed',
-              left: `${floatingButtonPosition.x}px`,
-              top: `${floatingButtonPosition.y}px`,
-              width: '50px',
-              height: '50px',
-              borderRadius: '50%',
-              backgroundColor: '#fff',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              cursor: isButtonDragging ? 'grabbing' : 'grab',
-              zIndex: 1000,
-              transition: 'all 0.3s ease',
-              userSelect: 'none',
-              touchAction: 'none'
-            }}
-            onMouseDown={(e) => {
-              e.stopPropagation();
-              setIsButtonDragging(true);
-              setButtonDragOffset({
-                x: e.clientX - floatingButtonPosition.x,
-                y: e.clientY - floatingButtonPosition.y
-              });
-            }}
-            onClick={() => {
-              // 显示号码选择器时根据按钮位置调整显示位置
-              // 确保选择器不会超出页面底部
-              const isButtonOnRight = floatingButtonPosition.x > window.innerWidth / 2;
-              // 使用更新后的选择器高度
-              const selectorWidth = isRed ? 340 : 350;
-              const selectorHeight = isRed ? 360 : 220;
-              
-              const newX = isButtonOnRight 
-                ? floatingButtonPosition.x - selectorWidth - 20 // 左侧20px间距
-                : floatingButtonPosition.x + 50 + 20; // 右侧20px间距，按钮宽度50px
-              
-              // 计算Y位置，确保选择器不会超出页面底部，且底部有足够间距
-              let newY = floatingButtonPosition.y - selectorHeight / 2 + 25; // 垂直居中
-              // 如果底部超出页面，则向上调整，距离底部至少40px
-              if (newY + selectorHeight > window.innerHeight) {
-                newY = window.innerHeight - selectorHeight - 40; // 距离底部40px
-              }
-              // 如果顶部超出页面，则向下调整，距离顶部20px
-              if (newY < 0) {
-                newY = 20; // 距离顶部20px
-              }
-              
-              setSelectorPosition({
-                x: Math.max(0, newX), // 只限制左侧，右侧不限制
-                y: newY
-              });
-              setShowNumberSelector(true);
-            }}
-            title="显示号码选择器"
-          >
-            <AppstoreOutlined 
-              style={{
-                fontSize: '24px',
-                color: currentColor,
-                transition: 'all 0.3s ease'
-              }}
-            />
-          </div>
-        ) : (
-          // 号码选择器显示时，显示完整的选择器组件
-          <div
-            style={{
-              position: 'fixed',
-              left: `${selectorPosition.x}px`,
-              top: `${selectorPosition.y}px`,
-              zIndex: 1000,
-              cursor: isSelectorDragging ? 'grabbing' : 'grab',
-              userSelect: 'none',
-              touchAction: 'none'
-            }}
-            onMouseDown={(e) => {
-              e.stopPropagation();
-              setIsSelectorDragging(true);
-              setSelectorDragOffset({
-                x: e.clientX - selectorPosition.x,
-                y: e.clientY - selectorPosition.y
-              });
-            }}
-            onDoubleClick={handleNumberSelectorDoubleClick}
-            title="双击隐藏号码选择器"
-          >
-            {renderNumberSelector()}
-          </div>
-        )}
-      </div>
-    );
-  };
 
   // 解析记录数据
   const parseRecords = (records: string[]) => {
@@ -1390,63 +892,7 @@ const Statistics: React.FC = () => {
     }
   }, [statisticType, allRecords, sliderRange]);
 
-  // 计算选中号码每期的累计次数
-  useEffect(() => {
-    // 只有当有选中号码且有记录数据时，才生成图表数据
-    if (selectedNumbers.length === 0 || allRecords.length === 0) {
-      setChartData([]);
-      return;
-    }
 
-    // 获取滑块范围内的记录
-    const [startIndex, endIndex] = sliderRange;
-    const selectedRangeRecords = allRecords.slice(startIndex, endIndex + 1);
-
-    // 生成滑块范围内的累计计数数据
-    const chartData: ChartDataItem[] = [];
-    const cumulativeCounts: { [key: string]: number } = {};
-    
-    // 初始化累计计数
-    selectedNumbers.forEach(num => {
-      cumulativeCounts[num] = 0;
-    });
-
-    // 计算滑块范围内的累计次数
-    selectedRangeRecords.forEach((record, index) => {
-      const period = startIndex + index + 1; // 期数从滑块开始位置+1开始
-      
-      // 解析当前期的号码
-      const isRed = statisticType === 'red';
-      let currentNumbers: string[] = [];
-      
-      if (isRed) {
-        // 红球：前12位，每两位一个号码
-        for (let i = 0; i < 12; i += 2) {
-          currentNumbers.push(record.substring(i, i + 2));
-        }
-      } else {
-        // 蓝球：最后两位
-        currentNumbers.push(record.substring(12, 14));
-      }
-
-      // 更新累计计数并生成数据
-      selectedNumbers.forEach(num => {
-        if (currentNumbers.includes(num)) {
-          cumulativeCounts[num]++;
-        }
-        
-        // 为每期每个选中号码生成数据，无论是否出现
-        chartData.push({
-          period: period,
-          number: num,
-          count: cumulativeCounts[num]
-        });
-      });
-    });
-
-    // 设置滑块范围内的图表数据
-    setChartData(chartData);
-  }, [selectedNumbers, allRecords, statisticType, sliderRange]);
 
   // 处理滑块变化
   const handleSliderChange = (value: number[]) => {
@@ -1489,15 +935,7 @@ const Statistics: React.FC = () => {
   // 当前活动标签页
   const [activeTabKey, setActiveTabKey] = useState<string>(statisticType === 'red' ? '1' : '2');
 
-  // 当切换到图表统计tab时，不默认选择所有号码
-  // 避免一次性计算大量数据导致页面卡死
-  useEffect(() => {
-    // 检查是否切换到了图表统计tab
-    if (activeTabKey === '7' || activeTabKey === '8') {
-      // 不默认选择任何号码，让用户手动选择
-      setSelectedNumbers([]);
-    }
-  }, [activeTabKey, statisticType]);
+
 
   // 渲染频率统计列表
   const renderFrequencyList = (data: AnalysisResult) => {
@@ -1605,8 +1043,9 @@ const Statistics: React.FC = () => {
                         e.dataTransfer.setDragImage(new Image(), 0, 0);
                       }}
                       style={{
-                        border: '1px solid transparent',
-                        borderRadius: '6px',
+                        border: '2px solid transparent',
+                        borderRadius: '8px',
+                        padding: '16px',
                         backgroundImage: currentColor === '#f5222d' 
                           ? 'linear-gradient(135deg, #ffffff 0%, rgba(245, 34, 45, 0.1) 100%), linear-gradient(135deg, rgba(245, 34, 45, 0.1) 0%, rgba(245, 34, 45, 0.3) 100%)' 
                           : 'linear-gradient(135deg, #ffffff 0%, rgba(24, 144, 255, 0.1) 100%), linear-gradient(135deg, rgba(24, 144, 255, 0.1) 0%, rgba(24, 144, 255, 0.3) 100%)',
@@ -1614,6 +1053,7 @@ const Statistics: React.FC = () => {
                         backgroundClip: 'padding-box, border-box',
                         transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                         cursor: 'grab',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
                         transformStyle: 'preserve-3d',
                         perspective: '1500px',
                         transformOrigin: 'center center',
@@ -1761,8 +1201,9 @@ const Statistics: React.FC = () => {
                     background: currentColor === '#f5222d' 
                       ? 'linear-gradient(135deg, #ffffff 0%, rgba(245, 34, 45, 0.1) 100%)' 
                       : 'linear-gradient(135deg, #ffffff 0%, rgba(24, 144, 255, 0.1) 100%)',
-                    border: '1px solid transparent',
-                    borderRadius: '6px',
+                    border: '2px solid transparent',
+                    borderRadius: '8px',
+                    padding: '16px',
                     backgroundImage: currentColor === '#f5222d' 
                       ? 'linear-gradient(135deg, #ffffff 0%, rgba(245, 34, 45, 0.1) 100%), linear-gradient(135deg, rgba(245, 34, 45, 0.1) 0%, rgba(245, 34, 45, 0.3) 100%)' 
                       : 'linear-gradient(135deg, #ffffff 0%, rgba(24, 144, 255, 0.1) 100%), linear-gradient(135deg, rgba(24, 144, 255, 0.1) 0%, rgba(24, 144, 255, 0.3) 100%)',
@@ -1770,6 +1211,7 @@ const Statistics: React.FC = () => {
                     backgroundClip: 'padding-box, border-box',
                     transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                     cursor: 'grab',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
                     transformStyle: 'preserve-3d',
                     perspective: '1500px',
                     transformOrigin: 'center center',
@@ -1921,14 +1363,77 @@ const Statistics: React.FC = () => {
     return (
       <div>
         {/* 合并个体和分组统计 */}
-        <Card title="分组统计" variant="outlined">
-          {/* 红球分组统计：6列布局，每组12个卡片占2行，共3组36个卡片 */}
-          <Row gutter={[16, 16]}>
-            {orderedCards.map((item, index) => (
-              <Col key={index} xs={24} sm={12} md={8} lg={4} xl={4}
-                onDragOver={handleDragOver}
-                onDrop={() => handleDrop(index)}
+        <Card 
+          title={
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <button
+                onClick={() => setShowOnlyLastWinning(!showOnlyLastWinning)}
+                style={{
+                  padding: '8px',
+                  backgroundColor: showOnlyLastWinning ? '#f5222d' : '#fff',
+                  color: showOnlyLastWinning ? '#fff' : '#f5222d',
+                  border: '1px solid #f5222d',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  transition: 'all 0.3s',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center'
+                }}
+                title={showOnlyLastWinning ? '显示全部' : '只看最后一期中奖号码'}
               >
+                {showOnlyLastWinning ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+              </button>
+            </div>
+          } 
+          variant="outlined">
+          {/* 红球分组统计：6列布局，每组12个卡片占2行，共3组36个卡片 */}
+          {/* 将卡片按组分组，确保每个组名卡片在新行开始 */}
+          {(() => {
+            // 过滤出要显示的卡片
+            const filteredCards = orderedCards.filter(item => {
+              if (!showOnlyLastWinning) return true;
+              if (item.type === 'group') return true;
+              return endLineNumbers.includes((item as { number: string }).number);
+            });
+
+            // 将卡片按组分组
+            const groupedCards = [];
+            let currentGroup: any[] = [];
+            filteredCards.forEach(card => {
+              if (card.type === 'group') {
+                // 如果当前已有组，先保存
+                if (currentGroup.length > 0) {
+                  groupedCards.push(currentGroup);
+                  currentGroup = [];
+                }
+                // 开始新组
+                currentGroup.push(card);
+              } else {
+                // 添加到当前组
+                currentGroup.push(card);
+              }
+            });
+            // 保存最后一组
+            if (currentGroup.length > 0) {
+              groupedCards.push(currentGroup);
+            }
+
+            // 渲染每组卡片，每组使用一个新的Row
+            return groupedCards.map((group, groupIndex) => (
+              <Row key={groupIndex} gutter={[16, 16]}>
+                {group.map((item, index) => (
+                  <Col 
+                    key={`${groupIndex}-${index}`} 
+                    xs={24} 
+                    sm={12} 
+                    md={8} 
+                    lg={4} 
+                    xl={4}
+                    onDragOver={handleDragOver}
+                    onDrop={() => handleDrop(orderedCards.indexOf(item))}
+                  >
                 <Card 
                   title={
                     <div style={{ 
@@ -1962,16 +1467,11 @@ const Statistics: React.FC = () => {
                     // 设置自定义拖动图像为空，避免默认的长方形背景
                     e.dataTransfer.setDragImage(new Image(), 0, 0);
                   }}
-                  onClick={() => {
-                    if (item.type === 'number') {
-                      const number = (item as { number: string }).number;
-                      // 使用新的多选逻辑，将点击的号码添加到选中列表
-                      handleNumberSelect(number);
-                    }
-                  }}
+
                   style={{
-                    border: '1px solid transparent',
-                    borderRadius: '6px',
+                    border: '2px solid transparent',
+                    borderRadius: '8px',
+                    padding: '16px',
                     backgroundImage: item.type === 'group' 
                       ? (isRed 
                         ? 'linear-gradient(135deg, #ffffff 0%, rgba(245, 34, 45, 0.4) 100%), linear-gradient(135deg, rgba(245, 34, 45, 0.4) 0%, rgba(245, 34, 45, 0.6) 100%)' 
@@ -1983,6 +1483,7 @@ const Statistics: React.FC = () => {
                     backgroundClip: 'padding-box, border-box',
                     transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                     cursor: item.type === 'number' ? 'pointer' : 'grab',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
                     transformStyle: 'preserve-3d',
                     perspective: '1500px',
                     transformOrigin: 'center center',
@@ -2131,16 +1632,18 @@ const Statistics: React.FC = () => {
                     />
                   </div>
                 </Card>
-              </Col>
-            ))}
-          </Row>
+                </Col>
+              ))}
+            </Row>
+            ));
+          })()}
         </Card>
       </div>
     );
   };
 
   return (
-    <div className="statistics-container">
+    <div className="statistics-container" style={{ paddingTop: '20px' }}>
       {/* 可拖拽的切换按钮 */}
       <div style={{
         position: 'fixed',
@@ -2417,194 +1920,323 @@ const Statistics: React.FC = () => {
 
       {/* 分析结果 */}
       <Spin spinning={loading} indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}>
-        <Tabs 
-          activeKey={activeTabKey} 
-          type="card"
-          onChange={(key) => setActiveTabKey(key as string)}
-          items={[
-            ...(statisticType === 'red' ? [
-              {
-                key: '1',
-                label: <span style={{ color: '#f5222d' }}>频率统计</span>,
-                children: (
-                  <Row gutter={[16, 16]}>
-                    <Col xs={24}>
-                      <Card 
-                        title={
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span>频率统计</span>
-                            <button
-                              onClick={() => setShowOnlyLastWinning(!showOnlyLastWinning)}
-                              style={{
-                                padding: '8px',
-                                backgroundColor: showOnlyLastWinning ? '#f5222d' : '#fff',
-                                color: showOnlyLastWinning ? '#fff' : '#f5222d',
-                                border: '1px solid #f5222d',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '16px',
-                                transition: 'all 0.3s',
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center'
-                              }}
-                              title={showOnlyLastWinning ? '显示全部' : '只看最后一期中奖号码'}
-                            >
-                              {showOnlyLastWinning ? <EyeOutlined /> : <EyeInvisibleOutlined />}
-                            </button>
-                          </div>
-                        } 
-                        variant="outlined"
+        {/* 内容区域，给底部Tab留出空间 */}
+        <div style={{ marginBottom: '80px' }}>
+          {/* Tab内容显示区域 */}
+          {activeTabKey === '1' && statisticType === 'red' && (
+            <Row gutter={[16, 16]}>
+              <Col xs={24}>
+                <Card 
+                  title={
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                      <button
+                        onClick={() => setShowOnlyLastWinning(!showOnlyLastWinning)}
+                        style={{
+                          padding: '8px',
+                          backgroundColor: showOnlyLastWinning ? '#f5222d' : '#fff',
+                          color: showOnlyLastWinning ? '#fff' : '#f5222d',
+                          border: '1px solid #f5222d',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '16px',
+                          transition: 'all 0.3s',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center'
+                        }}
+                        title={showOnlyLastWinning ? '显示全部' : '只看最后一期中奖号码'}
                       >
-                        {renderFrequencyList(redBallFrequency)}
-                      </Card>
-                    </Col>
-                  </Row>
-                ),
-              },
-              {
-                key: '3',
-                label: <span style={{ color: '#f5222d' }}>分布统计</span>,
-                children: (
-                  <Row gutter={[16, 16]}>
-                    <Col xs={24} sm={24} md={12} lg={12} xl={8}>
-                      <Card title="奇偶分布" variant="outlined">
-                        {renderDistributionList(redBallOddEven)}
-                      </Card>
-                    </Col>
-                    <Col xs={24} sm={24} md={12} lg={12} xl={8}>
-                      <Card 
-                        title={
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span>大小分布</span>
-                            <Tooltip 
-                              title="红球小号范围：1-16，大号范围：17-33" 
-                              placement="top"
-                            >
-                              <InfoCircleOutlined style={{ 
-                                cursor: 'default', 
-                                color: '#999', 
-                                fontSize: '16px',
-                              }} />
-                            </Tooltip>
-                          </div>
-                        } 
-                        variant="outlined"
+                        {showOnlyLastWinning ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+                      </button>
+                    </div>
+                  } 
+                  variant="outlined"
+                >
+                  {renderFrequencyList(redBallFrequency)}
+                </Card>
+              </Col>
+            </Row>
+          )}
+          {activeTabKey === '3' && statisticType === 'red' && (
+            <Row gutter={[16, 16]}>
+              <Col xs={24} sm={24} md={12} lg={12} xl={8}>
+                <Card title="奇偶分布" variant="outlined">
+                  {renderDistributionList(redBallOddEven)}
+                </Card>
+              </Col>
+              <Col xs={24} sm={24} md={12} lg={12} xl={8}>
+                <Card 
+                  title={
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>大小分布</span>
+                      <Tooltip 
+                        title="红球小号范围：1-16，大号范围：17-33" 
+                        placement="top"
                       >
-                        {renderDistributionList(redBallSize)}
-                      </Card>
-                    </Col>
-                    <Col xs={24} sm={24} md={12} lg={12} xl={8}>
-                      <Card title="最后一期" variant="outlined">
-                        {renderDistributionList(lastWinningNumbersTotalRed)}
-                      </Card>
-                    </Col>
-                  </Row>
-                ),
-              },
-              {
-                key: '5',
-                label: <span style={{ color: '#f5222d' }}>分组统计</span>,
-                children: renderSpecialStats(),
-              },
-              {
-                key: '7',
-                label: <span style={{ color: '#f5222d' }}>图表统计</span>,
-                children: renderChartStats(),
-              }
-            ] : [
-              {
-                key: '2',
-                label: <span style={{ color: '#1890ff' }}>频率统计</span>,
-                children: (
-                  <Row gutter={[16, 16]}>
-                    <Col xs={24}>
-                      <Card 
-                        title={
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span>频率统计</span>
-                            <button
-                              onClick={() => setShowOnlyLastWinning(!showOnlyLastWinning)}
-                              style={{
-                                padding: '8px',
-                                backgroundColor: showOnlyLastWinning ? '#1890ff' : '#fff',
-                                color: showOnlyLastWinning ? '#fff' : '#1890ff',
-                                border: '1px solid #1890ff',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '16px',
-                                transition: 'all 0.3s',
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center'
-                              }}
-                              title={showOnlyLastWinning ? '显示全部' : '只看最后一期中奖号码'}
-                            >
-                              {showOnlyLastWinning ? <EyeOutlined /> : <EyeInvisibleOutlined />}
-                            </button>
-                          </div>
-                        } 
-                        variant="outlined"
+                        <InfoCircleOutlined style={{ 
+                          cursor: 'default', 
+                          color: '#999', 
+                          fontSize: '16px',
+                        }} />
+                      </Tooltip>
+                    </div>
+                  } 
+                  variant="outlined"
+                >
+                  {renderDistributionList(redBallSize)}
+                </Card>
+              </Col>
+              <Col xs={24} sm={24} md={12} lg={12} xl={8}>
+                <Card title="最后一期" variant="outlined">
+                  {renderDistributionList(lastWinningNumbersTotalRed)}
+                </Card>
+              </Col>
+            </Row>
+          )}
+          {activeTabKey === '5' && statisticType === 'red' && renderSpecialStats()}
+          {activeTabKey === '2' && statisticType === 'blue' && (
+            <Row gutter={[16, 16]}>
+              <Col xs={24}>
+                <Card 
+                  title={
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                      <button
+                        onClick={() => setShowOnlyLastWinning(!showOnlyLastWinning)}
+                        style={{
+                          padding: '8px',
+                          backgroundColor: showOnlyLastWinning ? '#1890ff' : '#fff',
+                          color: showOnlyLastWinning ? '#fff' : '#1890ff',
+                          border: '1px solid #1890ff',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '16px',
+                          transition: 'all 0.3s',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center'
+                        }}
+                        title={showOnlyLastWinning ? '显示全部' : '只看最后一期中奖号码'}
                       >
-                        {renderFrequencyList(blueBallFrequency)}
-                      </Card>
-                    </Col>
-                  </Row>
-                ),
-              },
-              {
-                key: '4',
-                label: <span style={{ color: '#1890ff' }}>分布统计</span>,
-                children: (
-                  <Row gutter={[16, 16]}>
-                    <Col xs={24} sm={24} md={12} lg={12} xl={8}>
-                      <Card title="奇偶分布" variant="outlined">
-                        {renderDistributionList(blueBallOddEven)}
-                      </Card>
-                    </Col>
-                    <Col xs={24} sm={24} md={12} lg={12} xl={8}>
-                      <Card 
-                        title={
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span>大小分布</span>
-                            <Tooltip 
-                              title="蓝球小号范围：1-8，大号范围：9-16" 
-                              placement="top"
-                            >
-                              <InfoCircleOutlined style={{ 
-                                cursor: 'default', 
-                                color: '#999', 
-                                fontSize: '16px',
-                              }} />
-                            </Tooltip>
-                          </div>
-                        } 
-                        variant="outlined"
+                        {showOnlyLastWinning ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+                      </button>
+                    </div>
+                  } 
+                  variant="outlined"
+                >
+                  {renderFrequencyList(blueBallFrequency)}
+                </Card>
+              </Col>
+            </Row>
+          )}
+          {activeTabKey === '4' && statisticType === 'blue' && (
+            <Row gutter={[16, 16]}>
+              <Col xs={24} sm={24} md={12} lg={12} xl={8}>
+                <Card title="奇偶分布" variant="outlined">
+                  {renderDistributionList(blueBallOddEven)}
+                </Card>
+              </Col>
+              <Col xs={24} sm={24} md={12} lg={12} xl={8}>
+                <Card 
+                  title={
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>大小分布</span>
+                      <Tooltip 
+                        title="蓝球小号范围：1-8，大号范围：9-16" 
+                        placement="top"
                       >
-                        {renderDistributionList(blueBallSize)}
-                      </Card>
-                    </Col>
-                    <Col xs={24} sm={24} md={12} lg={12} xl={8}>
-                      <Card title="最后一期" variant="outlined">
-                        {renderDistributionList(lastWinningNumbersTotalBlue)}
-                      </Card>
-                    </Col>
-                  </Row>
-                ),
-              },
-              {
-                key: '6',
-                label: <span style={{ color: '#1890ff' }}>分组统计</span>,
-                children: renderSpecialStats(),
-              },
-              {
-                key: '8',
-                label: <span style={{ color: '#1890ff' }}>图表统计</span>,
-                children: renderChartStats(),
-              }
-            ])
-          ]}
-        />
+                        <InfoCircleOutlined style={{ 
+                          cursor: 'default', 
+                          color: '#999', 
+                          fontSize: '16px',
+                        }} />
+                      </Tooltip>
+                    </div>
+                  } 
+                  variant="outlined"
+                >
+                  {renderDistributionList(blueBallSize)}
+                </Card>
+              </Col>
+              <Col xs={24} sm={24} md={12} lg={12} xl={8}>
+                <Card title="最后一期" variant="outlined">
+                  {renderDistributionList(lastWinningNumbersTotalBlue)}
+                </Card>
+              </Col>
+            </Row>
+          )}
+          {activeTabKey === '6' && statisticType === 'blue' && renderSpecialStats()}
+        </div>
+        
+        {/* 底部悬浮可拖动Tab */}
+        {isTabVisible && (
+          <div 
+            style={{
+            position: 'fixed',
+            left: `${tabContainerPosition.x}px`,
+            top: `${tabContainerPosition.y}px`,
+            backgroundColor: '#fff',
+            borderRadius: '24px',
+            boxShadow: '0 -2px 12px rgba(0, 0, 0, 0.15)',
+            padding: '8px 24px',
+            width: 'fit-content',
+            minWidth: '400px',
+            maxWidth: '500px',
+            cursor: isTabContainerDragging ? 'grabbing' : 'grab',
+            userSelect: 'none',
+            touchAction: 'none',
+            zIndex: 1000,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
+            onMouseDown={handleTabContainerMouseDown}
+          >
+          <Tabs 
+            activeKey={activeTabKey} 
+            onChange={(key) => setActiveTabKey(key as string)}
+            items={[
+              ...(statisticType === 'red' ? [
+                {
+                  key: '1',
+                  label: (
+                    <div style={{
+                      display: 'inline-block',
+                      color: activeTabKey === '1' ? '#fff' : '#f5222d',
+                      backgroundColor: activeTabKey === '1' ? '#f5222d' : '#f0f0f0',
+                      padding: '6px 12px',
+                      borderRadius: '16px',
+                      marginRight: '8px',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      textAlign: 'center',
+                      fontSize: '14px'
+                    }}>
+                      频率统计
+                    </div>
+                  ),
+                  children: null
+                },
+                {
+                  key: '5',
+                  label: (
+                    <div style={{
+                      display: 'inline-block',
+                      color: activeTabKey === '5' ? '#fff' : '#f5222d',
+                      backgroundColor: activeTabKey === '5' ? '#f5222d' : '#f0f0f0',
+                      padding: '6px 12px',
+                      borderRadius: '16px',
+                      marginRight: '8px',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      textAlign: 'center',
+                      fontSize: '14px'
+                    }}>
+                      分组统计
+                    </div>
+                  ),
+                  children: null
+                },
+                {
+                  key: '3',
+                  label: (
+                    <div style={{
+                      display: 'inline-block',
+                      color: activeTabKey === '3' ? '#fff' : '#f5222d',
+                      backgroundColor: activeTabKey === '3' ? '#f5222d' : '#f0f0f0',
+                      padding: '6px 12px',
+                      borderRadius: '16px',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      textAlign: 'center',
+                      fontSize: '14px'
+                    }}>
+                      分布统计
+                    </div>
+                  ),
+                  children: null
+                },
+
+              ] : [
+                {
+                  key: '2',
+                  label: (
+                    <div style={{
+                      display: 'inline-block',
+                      color: activeTabKey === '2' ? '#fff' : '#1890ff',
+                      backgroundColor: activeTabKey === '2' ? '#1890ff' : '#f0f0f0',
+                      padding: '6px 12px',
+                      borderRadius: '16px',
+                      marginRight: '8px',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      textAlign: 'center',
+                      fontSize: '14px'
+                    }}>
+                      频率统计
+                    </div>
+                  ),
+                  children: null
+                },
+                {
+                  key: '6',
+                  label: (
+                    <div style={{
+                      display: 'inline-block',
+                      color: activeTabKey === '6' ? '#fff' : '#1890ff',
+                      backgroundColor: activeTabKey === '6' ? '#1890ff' : '#f0f0f0',
+                      padding: '6px 12px',
+                      borderRadius: '16px',
+                      marginRight: '8px',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      textAlign: 'center',
+                      fontSize: '14px'
+                    }}>
+                      分组统计
+                    </div>
+                  ),
+                  children: null
+                },
+                {
+                  key: '4',
+                  label: (
+                    <div style={{
+                      display: 'inline-block',
+                      color: activeTabKey === '4' ? '#fff' : '#1890ff',
+                      backgroundColor: activeTabKey === '4' ? '#1890ff' : '#f0f0f0',
+                      padding: '6px 12px',
+                      borderRadius: '16px',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      textAlign: 'center',
+                      fontSize: '14px'
+                    }}>
+                      分布统计
+                    </div>
+                  ),
+                  children: null
+                },
+
+              ])
+            ]}
+            style={{
+              width: '100%',
+              margin: 0,
+              border: 'none',
+              boxShadow: 'none'
+            }}
+            tabBarStyle={{
+              borderBottom: 'none',
+              backgroundColor: 'transparent',
+              padding: '0',
+              margin: '0',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
+          />
+        </div>
+        )}
       </Spin>
       
       {/* 可拖拽且可缩放的数据范围滑块 - 始终固定定位 */}
@@ -2972,8 +2604,25 @@ const Statistics: React.FC = () => {
           )}
         </>
       )}
-      
-
+      {/* 页脚 */}
+      <footer className="app-footer" style={{ 
+        textAlign: 'center', 
+        position: 'fixed', 
+        bottom: 0, 
+        left: 0, 
+        right: 0, 
+        height: '64px', 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        zIndex: 1000
+      }}>
+        <AppleFilled 
+          style={{ fontSize: '24px', color: '#000', cursor: 'pointer' }} 
+          onClick={toggleTabVisible}
+        />
+      </footer>
     </div>
   );
 };

@@ -15,6 +15,8 @@ import java.util.List;
 @Document("BallRecord")
 public class Record implements Serializable {
 
+    private long line;
+
     private String name;
 
     @Id

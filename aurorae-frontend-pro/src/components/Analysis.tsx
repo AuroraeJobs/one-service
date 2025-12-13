@@ -1,37 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, Row, Col, Statistic, Progress, Spin, Tabs, Slider, message, Tooltip } from 'antd';
+import { Tabs, Slider, message } from 'antd';
 import {
-  BarChartOutlined,
-  PieChartOutlined,
-  LoadingOutlined,
-  InfoCircleOutlined,
   FastBackwardOutlined,
   FastForwardOutlined,
   StepBackwardOutlined,
   StepForwardOutlined,
-  EyeInvisibleOutlined,
-  EyeOutlined,
-  AreaChartOutlined,
   WomanOutlined,
   ManOutlined,
   SettingOutlined,
-  StarFilled,
   AppstoreOutlined,
   ClearOutlined,
-  AppstoreAddOutlined
+  AppstoreAddOutlined,
+  AppleFilled
 } from '@ant-design/icons';
-import { useLocation } from 'react-router-dom';
 import { recordApi } from '../services/api';
 // 导入 ECharts
 import ReactECharts from 'echarts-for-react';
-
-// 定义数据接口
-interface AnalysisResult {
-  [key: string]: {
-    count: number;
-    percent: number;
-  };
-}
 
 // 图表数据接口
 interface ChartDataItem {
@@ -40,22 +24,13 @@ interface ChartDataItem {
   count: number;
 }
 
-const Analysis: React.FC = () => {
-  // 获取当前路由
-  const location = useLocation();
-  
+const Analysis: React.FC<{ isTabVisible: boolean; setIsTabVisible: (visible: boolean) => void }> = ({ isTabVisible, setIsTabVisible }) => {
   // 状态管理
-  const [loading, setLoading] = useState(false);
-  const [totalRecords, setTotalRecords] = useState(0);
   // 滑块相关状态
   const [allRecords, setAllRecords] = useState<string[]>([]);
   const [sliderRange, setSliderRange] = useState<[number, number]>([0, 0]);
   // 统计类型切换状态
   const [statisticType, setStatisticType] = useState<'red' | 'blue'>('red');
-  // 结束行中奖号码状态
-  const [endLineNumbers, setEndLineNumbers] = useState<string[]>([]);
-  // 控制是否只显示最后一期中奖号码的状态
-  const [showOnlyLastWinning, setShowOnlyLastWinning] = useState(true);
   // 使用ref防止useEffect在StrictMode下运行两次
   const hasFetchedRef = useRef(false);
   // 切换按钮拖拽状态
@@ -65,14 +40,14 @@ const Analysis: React.FC = () => {
   // 滑块隐藏图标初始位置，放在切换按钮上方
   const [hiddenIconPosition, setHiddenIconPosition] = useState({
     x: window.innerWidth - 90, // 右侧20px，圆心在window.innerWidth - 65px
-    y: window.innerHeight - 130 // 底部80px，位于切换按钮上方，间距10px
+    y: window.innerHeight - 200 // 底部上移，位于切换按钮上方，间距60px
   });
   const [hiddenIconDragOffset, setHiddenIconDragOffset] = useState({ x: 0, y: 0 });
   
-  // 切换按钮初始位置，放在右下角最下面
+  // 切换按钮初始位置，放在右下角，上移避免被页脚挡住
   const [buttonPosition, setButtonPosition] = useState({ 
     x: window.innerWidth - 105, // 右侧20px，竖直中心线在window.innerWidth - 65px
-    y: window.innerHeight - 70 // 底部20px
+    y: window.innerHeight - 140 // 底部上移70px，避免被页脚挡住
   });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   
@@ -81,7 +56,7 @@ const Analysis: React.FC = () => {
   // 初始化滑块位置为右下角，避免遮挡页脚图标
   const [sliderPosition, setSliderPosition] = useState({
     x: window.innerWidth - window.innerWidth / 3 - 20, // 距离右侧20px
-    y: window.innerHeight - 150 - 80 // 距离底部80px
+    y: window.innerHeight - 150 - 150 // 距离底部150px，上移70px
   });
   const [sliderDragOffset, setSliderDragOffset] = useState({ x: 0, y: 0 });
   // 控制滑块是否处于固定定位状态 - 默认始终固定定位
@@ -114,56 +89,25 @@ const Analysis: React.FC = () => {
   // 初始位置在滑块按钮上方
   const [floatingButtonPosition, setFloatingButtonPosition] = useState({
     x: window.innerWidth - 90, // 圆心在window.innerWidth - 65px，与滑块按钮水平对齐
-    y: window.innerHeight - 190 // 在滑块按钮上方，间距10px
+    y: window.innerHeight - 260 // 在滑块按钮上方，间距60px
   });
   const [selectorDragOffset, setSelectorDragOffset] = useState({ x: 0, y: 0 });
   const [buttonDragOffset, setButtonDragOffset] = useState({ x: 0, y: 0 });
+  // Tab容器拖动状态管理
+  const [isTabContainerDragging, setIsTabContainerDragging] = useState(false);
+  const [tabContainerPosition, setTabContainerPosition] = useState({
+    x: window.innerWidth / 2 - 200, // 调整位置，使第二个Tab中心与页脚图标中心对齐
+    y: window.innerHeight - 140 // 底部上方140px，再上移20px
+  });
+  const [tabContainerDragOffset, setTabContainerDragOffset] = useState({ x: 0, y: 0 });
   // 图表数据状态 - 存储选中号码每期的累计次数
   const [chartData, setChartData] = useState<ChartDataItem[]>([]);
   // 奇偶分析数据 - 存储每期的奇偶号码个数
   const [oddEvenData, setOddEvenData] = useState<Array<{ period: number; oddCount: number; evenCount: number }>>([]);
+  // 总和分析数据 - 存储每期的号码总和
+  const [sumData, setSumData] = useState<Array<{ period: number; sum: number }>>([]);
 
-  // 红球号码映射配置
-  const redBallConfig = {
-    // 号码到名字的映射
-    numberToName: {
-      '01': '薛宝钗', '02': '贾元春', '03': '贾探春', '04': '史湘云', '05': '妙玉',
-      '06': '贾迎春', '07': '贾惜春', '08': '王熙凤', '09': '贾巧姐', '10': '李纨',
-      '11': '秦可卿', '12': '薛宝琴', '13': '尤二姐', '14': '尤三姐', '15': '邢岫烟',
-      '16': '李纹', '17': '李绮', '18': '夏金桂', '19': '秋桐', '20': '小红',
-      '21': '龄官', '22': '娇杏', '23': '袭人', '24': '平儿', '25': '鸳鸯',
-      '26': '紫鹃', '27': '莺儿', '28': '玉钏', '29': '金钏', '30': '彩云',
-      '31': '司棋', '32': '芳官', '33': '麝月'
-    },
-    // 分组配置
-    groups: [
-      { name: '林黛玉', numbers: ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11'] },
-      { name: '香菱', numbers: ['12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22'] },
-      { name: '晴雯', numbers: ['23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33'] }
-    ]
-  };
 
-  // 蓝球号码映射配置
-  const blueBallConfig = {
-    // 号码到名字的映射
-    numberToName: {
-      '01': '雨水', '02': '惊蛰', '03': '清明', '04': '谷雨',
-      '05': '小满', '06': '芒种', '07': '小暑', '08': '大暑',
-      '09': '处暑', '10': '白露', '11': '寒露', '12': '霜降',
-      '13': '小雪', '14': '大雪', '15': '小寒', '16': '大寒'
-    },
-    // 分组配置
-    groups: [
-      { name: '立春', numbers: ['01', '02'] },
-      { name: '春分', numbers: ['03', '04'] },
-      { name: '立夏', numbers: ['05', '06'] },
-      { name: '夏至', numbers: ['07', '08'] },
-      { name: '立秋', numbers: ['09', '10'] },
-      { name: '秋分', numbers: ['11', '12'] },
-      { name: '立冬', numbers: ['13', '14'] },
-      { name: '冬至', numbers: ['15', '16'] }
-    ]
-  };
 
   // 处理号码选择
   const handleNumberSelect = (number: string) => {
@@ -179,6 +123,11 @@ const Analysis: React.FC = () => {
   // 清除所有选择
   const clearAllSelections = () => {
     setSelectedNumbers([]);
+  };
+
+  // 解析记录数据 - 空函数，避免调用错误
+  const parseRecords = (_records: string[]) => {
+    // 空函数，因为我们不再使用解析后的统计数据
   };
 
   // 生成所有可能的号码列表
@@ -197,6 +146,20 @@ const Analysis: React.FC = () => {
       });
     }
   };
+
+  // 窗口大小变化时更新Tab容器位置，确保居中显示
+  useEffect(() => {
+    const handleResize = () => {
+      // 调整Tab容器位置，确保在页面缩放时保持居中
+      setTabContainerPosition(prev => ({
+        x: window.innerWidth / 2 - 150, // 初始居中，宽度约300px
+        y: prev.y // 保持原来的y坐标
+      }));
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // 渲染号码选择器 - 固定大小，类似滑块操作面板
   const renderNumberSelector = () => {
@@ -346,12 +309,12 @@ const Analysis: React.FC = () => {
     // 获取所有选中的号码
     const numbers = [...new Set(chartData.map(item => item.number))];
     
-    // 颜色配置
+    // 颜色配置 - 恢复彩色
     const colors = [
-      '#1890ff', '#f5222d', '#52c41a', '#faad14', '#722ed1',
-      '#13c2c2', '#fa8c16', '#eb2f96', '#a0d911', '#2f54eb',
-      '#ff7875', '#52c41a', '#13c2c2', '#722ed1', '#faad14',
-      '#eb2f96', '#fa8c16', '#a0d911', '#2f54eb', '#1890ff'
+      '#f5222d', '#1890ff', '#52c41a', '#faad14', '#722ed1',
+      '#eb2f96', '#fa8c16', '#a0d911', '#13c2c2', '#2f54eb',
+      '#f5222d', '#1890ff', '#52c41a', '#faad14', '#722ed1',
+      '#eb2f96', '#fa8c16', '#a0d911', '#13c2c2', '#2f54eb'
     ];
     
     // 构建ECharts系列数据
@@ -401,9 +364,9 @@ const Analysis: React.FC = () => {
         axisPointer: {
           type: 'shadow'
         },
-        formatter: function(params: any) {
+        formatter: function(params: Array<{ axisValue: number; marker: string; seriesName: string; value: number }>) {
           let result = `${params[0].axisValue}期<br/>`;
-          params.forEach((param: any) => {
+          params.forEach((param) => {
             result += `${param.marker}${param.seriesName}: ${param.value}次<br/>`;
           });
           return result;
@@ -450,13 +413,13 @@ const Analysis: React.FC = () => {
           },
           startLabel: {
             show: true,
-            formatter: function(params: any) {
+            formatter: function(params: { value: number }) {
               return params.value + '期';
             }
           },
           endLabel: {
             show: true,
-            formatter: function(params: any) {
+            formatter: function(params: { value: number }) {
               return params.value + '期';
             }
           }
@@ -570,9 +533,9 @@ const Analysis: React.FC = () => {
             backgroundColor: '#6a7985'
           }
         },
-        formatter: function(params: any) {
+        formatter: function(params: Array<{ axisValue: number; marker: string; seriesName: string; value: number }>) {
           let result = `${params[0].axisValue}期<br/>`;
-          params.forEach((param: any) => {
+          params.forEach((param) => {
             result += `${param.marker}${param.seriesName}: ${param.value}个<br/>`;
           });
           return result;
@@ -619,13 +582,13 @@ const Analysis: React.FC = () => {
           },
           startLabel: {
             show: true,
-            formatter: function(params: any) {
+            formatter: function(params: { value: number }) {
               return params.value + '期';
             }
           },
           endLabel: {
             show: true,
-            formatter: function(params: any) {
+            formatter: function(params: { value: number }) {
               return params.value + '期';
             }
           }
@@ -683,7 +646,7 @@ const Analysis: React.FC = () => {
         }
       ],
       series: [
-        {
+        {        
           name: '奇数个数',
           type: 'line',
           smooth: true,
@@ -764,6 +727,230 @@ const Analysis: React.FC = () => {
           }}
         >
           <ReactECharts option={option} style={{ height: '100%', width: '100%' }} />
+        </div>
+      </div>
+    );
+  };
+
+  // 渲染总和分析平滑曲线
+  const renderSumChart = () => {
+    if (sumData.length === 0) {
+      return (
+        <div style={{ 
+          padding: '40px', 
+          textAlign: 'center', 
+          color: '#999',
+          backgroundColor: '#fff',
+          borderRadius: '6px',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)' 
+        }}>
+          暂无总和分析数据
+        </div>
+      );
+    }
+
+    // 处理图表数据，转换为ECharts所需格式
+    const periods = sumData.map(item => item.period);
+    const sums = sumData.map(item => item.sum);
+    
+    // ECharts配置项
+    const option = {
+      animation: false, // 关闭初始动画
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'cross',
+          label: {
+            backgroundColor: '#6a7985'
+          }
+        },
+        formatter: function(params: Array<{ axisValue: number; marker: string; seriesName: string; value: number }>) {
+          let result = `${params[0].axisValue}期<br/>`;
+          params.forEach((param) => {
+            result += `${param.marker}${param.seriesName}: ${param.value}<br/>`;
+          });
+          return result;
+        }
+      },
+      legend: {
+        data: ['号码总和'],
+        top: 0,
+        textStyle: {
+          fontSize: 12
+        }
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '15%', // 增加底部空间，为缩略轴留出位置
+        top: '8%',
+        containLabel: true
+      },
+      // 添加缩略轴
+      dataZoom: [
+        {
+          type: 'inside', // 内置的缩略轴，可通过鼠标滚轮或双击缩放
+          start: 0,
+          end: 100,
+          xAxisIndex: 0
+        },
+        {
+          type: 'slider', // 底部的滑块式缩略轴
+          start: 0,
+          end: 100,
+          show: true,
+          xAxisIndex: 0,
+          bottom: '3%', // 放置在底部
+          height: 20, // 高度
+          backgroundColor: 'rgba(0, 0, 0, 0.05)',
+          borderColor: 'rgba(0, 0, 0, 0.1)',
+          fillerColor: statisticType === 'red' ? 'rgba(245, 34, 45, 0.2)' : 'rgba(24, 144, 255, 0.2)',
+          handleStyle: {
+            color: statisticType === 'red' ? '#f5222d' : '#1890ff'
+          },
+          textStyle: {
+            color: '#666'
+          },
+          startLabel: {
+            show: true,
+            formatter: function(params: { value: number }) {
+              return params.value + '期';
+            }
+          },
+          endLabel: {
+            show: true,
+            formatter: function(params: { value: number }) {
+              return params.value + '期';
+            }
+          }
+        }
+      ],
+      xAxis: [
+        {
+          type: 'category',
+          boundaryGap: false,
+          data: periods,
+          axisLabel: {
+            fontSize: 12,
+            rotate: 45
+          },
+          axisLine: {
+            lineStyle: {
+              color: '#f0f0f0'
+            }
+          },
+          splitLine: {
+            show: true,
+            lineStyle: {
+              color: '#f0f0f0'
+            }
+          },
+          name: '期数',
+          nameTextStyle: {
+            fontSize: 14,
+            fontWeight: 'bold'
+          }
+        }
+      ],
+      yAxis: [
+        {
+          type: 'value',
+          axisLabel: {
+            fontSize: 12
+          },
+          axisLine: {
+            lineStyle: {
+              color: '#f0f0f0'
+            }
+          },
+          splitLine: {
+            show: true,
+            lineStyle: {
+              color: '#f0f0f0'
+            }
+          },
+          name: '号码总和',
+          nameTextStyle: {
+            fontSize: 14,
+            fontWeight: 'bold'
+          }
+        }
+      ],
+      series: [
+        {        
+          name: '号码总和',
+          type: 'line',
+          smooth: true,
+          data: sums,
+          itemStyle: {
+            color: '#52c41a'
+          },
+          lineStyle: {
+            width: 3,
+            type: 'solid',
+            color: '#52c41a'
+          },
+          symbol: 'circle',
+          symbolSize: 6,
+          emphasis: {
+            focus: 'series',
+            scale: true,
+            symbolSize: 10,
+            itemStyle: {
+              shadowBlur: 10,
+              shadowColor: 'rgba(82, 196, 26, 0.5)'
+            }
+          },
+          label: {
+            show: false
+          }
+        }
+      ]
+    };
+
+    return (
+      <div 
+        style={{ 
+          backgroundColor: '#fff',
+          borderRadius: '6px',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)',
+          padding: '16px',
+          width: '100%',
+          maxWidth: '100%',
+          boxSizing: 'border-box'
+        }}
+      >
+        {/* 图表容器 */}
+        <div 
+          style={{ 
+            height: '400px',
+            width: '100%',
+            maxWidth: '100%',
+            boxSizing: 'border-box'
+          }}
+        >
+          <ReactECharts option={option} style={{ height: '100%', width: '100%' }} />
+        </div>
+      </div>
+    );
+  };
+
+  // 渲染总和分析
+  const renderSumStats = () => {
+    return (
+      <div style={{ 
+        padding: '16px', 
+        width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box'
+      }}>
+        {/* 平滑曲线图表 */}
+        <div style={{ 
+          marginBottom: '20px',
+          width: '100%',
+          boxSizing: 'border-box'
+        }}>
+          {renderSumChart()}
         </div>
       </div>
     );
@@ -910,44 +1097,6 @@ const Analysis: React.FC = () => {
     );
   };
 
-  // 解析记录数据
-  const parseRecords = (records: string[]) => {
-    // 红球号码统计
-    const redBallCount: { [key: string]: number } = {};
-    // 蓝球号码统计
-    const blueBallCount: { [key: string]: number } = {};
-
-    let totalRedBalls = 0;
-    let totalBlueBalls = 0;
-
-    // 解析每条记录
-    records.forEach((record) => {
-      if (record.length < 14) return;
-
-      // 获取当前记录中的红球和蓝球
-      const currentRedBalls: string[] = [];
-      for (let i = 0; i < 12; i += 2) {
-        currentRedBalls.push(record.substring(i, i + 2));
-      }
-      const currentBlueBall = record.substring(12, 14);
-
-      // 解析红球：前12位，每两位一个号码
-      for (let i = 0; i < 12; i += 2) {
-        const redBall = record.substring(i, i + 2);
-        redBallCount[redBall] = (redBallCount[redBall] || 0) + 1;
-        totalRedBalls++;
-      }
-
-      // 解析蓝球：最后两位
-      const blueBall = record.substring(12, 14);
-      blueBallCount[blueBall] = (blueBallCount[blueBall] || 0) + 1;
-      totalBlueBalls++;
-    });
-
-    // 更新状态
-    setTotalRecords(records.length);
-  };
-
   // 获取记录数据
   useEffect(() => {
     // 防止在StrictMode下运行两次
@@ -955,7 +1104,7 @@ const Analysis: React.FC = () => {
     hasFetchedRef.current = true;
 
     const fetchRecords = async () => {
-      setLoading(true);
+
       try {
         const data = await recordApi.getAllRecords();
         
@@ -1005,27 +1154,6 @@ const Analysis: React.FC = () => {
         setSliderRange(initialRange);
         // 解析所有记录
         parseRecords(recordsToUse);
-        
-        // 初始化结束行中奖号码
-        if (recordsToUse.length > 0) {
-          const endIndex = initialRange[1];
-          const endRecord = recordsToUse[endIndex];
-          if (endRecord && endRecord.length >= 14) {
-            // 解析红球：前12位，每两位一个号码
-            const redBalls = [];
-            for (let i = 0; i < 12; i += 2) {
-              redBalls.push(endRecord.substring(i, i + 2));
-            }
-            // 解析蓝球：最后两位
-            const blueBall = endRecord.substring(12, 14);
-            // 合并红球和蓝球，根据当前统计类型设置显示的号码
-            if (statisticType === 'red') {
-              setEndLineNumbers(redBalls);
-            } else {
-              setEndLineNumbers([blueBall]);
-            }
-          }
-        }
       } catch (error) {
         console.error('获取记录失败:', error);
         // API请求失败时使用模拟数据
@@ -1055,57 +1183,18 @@ const Analysis: React.FC = () => {
         const initialRange: [number, number] = [0, recordsToUse.length - 1];
         setSliderRange(initialRange);
         parseRecords(recordsToUse);
-        
-        // 初始化结束行中奖号码（模拟数据）
-        if (recordsToUse.length > 0) {
-          const endIndex = initialRange[1];
-          const endRecord = recordsToUse[endIndex];
-          if (endRecord && endRecord.length >= 14) {
-            // 解析红球：前12位，每两位一个号码
-            const redBalls = [];
-            for (let i = 0; i < 12; i += 2) {
-              redBalls.push(endRecord.substring(i, i + 2));
-            }
-            // 解析蓝球：最后两位
-            const blueBall = endRecord.substring(12, 14);
-            // 合并红球和蓝球，根据当前统计类型设置显示的号码
-            if (statisticType === 'red') {
-              setEndLineNumbers(redBalls);
-            } else {
-              setEndLineNumbers([blueBall]);
-            }
-          }
-        }
         message.info(`API请求失败，使用模拟数据，共 ${recordsToUse.length} 条记录`);
       } finally {
-        setLoading(false);
+
       }
     };
 
     fetchRecords();
   }, []);
 
-  // 当统计类型切换时，更新结束行中奖号码
+  // 当统计类型切换时，无需更新结束行中奖号码，因为我们不再使用这个状态
   useEffect(() => {
-    if (allRecords.length > 0 && sliderRange[1] < allRecords.length) {
-      const endIndex = sliderRange[1];
-      const endRecord = allRecords[endIndex];
-      if (endRecord && endRecord.length >= 14) {
-        // 解析红球：前12位，每两位一个号码
-        const redBalls = [];
-        for (let i = 0; i < 12; i += 2) {
-          redBalls.push(endRecord.substring(i, i + 2));
-        }
-        // 解析蓝球：最后两位
-        const blueBall = endRecord.substring(12, 14);
-        // 合并红球和蓝球，根据当前统计类型设置显示的号码
-        if (statisticType === 'red') {
-          setEndLineNumbers(redBalls);
-        } else {
-          setEndLineNumbers([blueBall]);
-        }
-      }
-    }
+    // 空的useEffect，保持依赖项，避免警告
   }, [statisticType, allRecords, sliderRange]);
 
   // 计算选中号码每期的累计次数
@@ -1135,7 +1224,7 @@ const Analysis: React.FC = () => {
       
       // 解析当前期的号码
       const isRed = statisticType === 'red';
-      let currentNumbers: string[] = [];
+      const currentNumbers: string[] = [];
       
       if (isRed) {
         // 红球：前12位，每两位一个号码
@@ -1181,7 +1270,7 @@ const Analysis: React.FC = () => {
     const oddEvenData = selectedRangeRecords.map((record, index) => {
       const period = startIndex + index + 1;
       const isRed = statisticType === 'red';
-      let numbers: string[] = [];
+      const numbers: string[] = [];
       
       if (isRed) {
         // 红球：前12位，每两位一个号码
@@ -1212,6 +1301,44 @@ const Analysis: React.FC = () => {
     setOddEvenData(oddEvenData);
   }, [allRecords, statisticType, sliderRange]);
 
+  // 计算每期的号码总和
+  useEffect(() => {
+    if (allRecords.length === 0) {
+      setSumData([]);
+      return;
+    }
+
+    // 获取滑块范围内的记录
+    const [startIndex, endIndex] = sliderRange;
+    const selectedRangeRecords = allRecords.slice(startIndex, endIndex + 1);
+
+    // 计算每期的号码总和
+    const sumData = selectedRangeRecords.map((record, index) => {
+      const period = startIndex + index + 1;
+      const isRed = statisticType === 'red';
+      const numbers: string[] = [];
+      
+      if (isRed) {
+        // 红球：前12位，每两位一个号码
+        for (let i = 0; i < 12; i += 2) {
+          numbers.push(record.substring(i, i + 2));
+        }
+      } else {
+        // 蓝球：最后两位
+        numbers.push(record.substring(12, 14));
+      }
+
+      // 计算总和
+      const sum = numbers.reduce((total, number) => {
+        return total + parseInt(number);
+      }, 0);
+
+      return { period, sum };
+    });
+
+    setSumData(sumData);
+  }, [allRecords, statisticType, sliderRange]);
+
   // 处理滑块变化
   const handleSliderChange = (value: number[]) => {
     const range = value as [number, number];
@@ -1220,36 +1347,18 @@ const Analysis: React.FC = () => {
     const selectedRecords = allRecords.slice(range[0], range[1] + 1);
     // 重新解析数据
     parseRecords(selectedRecords);
-    
-    // 获取结束行的中奖号码
-    if (allRecords.length > 0) {
-      const endIndex = range[1];
-      const endRecord = allRecords[endIndex];
-      if (endRecord && endRecord.length >= 14) {
-        // 解析红球：前12位，每两位一个号码
-        const redBalls = [];
-        for (let i = 0; i < 12; i += 2) {
-          redBalls.push(endRecord.substring(i, i + 2));
-        }
-        // 解析蓝球：最后两位
-        const blueBall = endRecord.substring(12, 14);
-        
-        // 合并红球和蓝球，根据当前统计类型设置显示的号码
-        if (statisticType === 'red') {
-          setEndLineNumbers(redBalls);
-        } else {
-          setEndLineNumbers([blueBall]);
-        }
-      }
-    }
   };
 
   // 当前活动标签页
-  const [activeTabKey, setActiveTabKey] = useState<string>('1');
+  const [activeTabKey, setActiveTabKey] = useState<string>('2');
+  // 切换Tab显示/隐藏
+  const toggleTabVisible = () => {
+    setIsTabVisible(!isTabVisible);
+  };
 
   // 当切换到不同tab时，处理相关状态
   useEffect(() => {
-    // 当切换到奇偶分析tab时，隐藏号码选择器
+    // 当切换到非累计分析tab时，隐藏号码选择器
     if (activeTabKey !== '1') {
       setShowNumberSelector(false);
     }
@@ -1362,6 +1471,19 @@ const Analysis: React.FC = () => {
         x: Math.max(0, Math.min(newX, maxX)),
         y: Math.max(0, Math.min(newY, maxY))
       });
+    } else if (isTabContainerDragging) {
+      // 拖动Tab容器
+      const newX = e.clientX - tabContainerDragOffset.x;
+      const newY = e.clientY - tabContainerDragOffset.y;
+      
+      // 限制在视窗内
+      const maxX = window.innerWidth - 300; // Tab容器宽度约300px
+      const maxY = window.innerHeight - 60; // Tab容器高度约60px
+      
+      setTabContainerPosition({
+        x: Math.max(0, Math.min(newX, maxX)),
+        y: Math.max(0, Math.min(newY, maxY))
+      });
     }
   };
 
@@ -1372,11 +1494,12 @@ const Analysis: React.FC = () => {
     setIsResizing(false);
     setIsSelectorDragging(false);
     setIsButtonDragging(false);
+    setIsTabContainerDragging(false);
   };
 
   // 添加全局事件监听
   useEffect(() => {
-    if (isDragging || isHiddenIconDragging || isSliderDragging || isResizing || isSelectorDragging || isButtonDragging) {
+    if (isDragging || isHiddenIconDragging || isSliderDragging || isResizing || isSelectorDragging || isButtonDragging || isTabContainerDragging) {
       document.addEventListener('mousemove', handleMouseMove as unknown as EventListener);
       document.addEventListener('mouseup', handleMouseUp);
     }
@@ -1385,7 +1508,7 @@ const Analysis: React.FC = () => {
       document.removeEventListener('mousemove', handleMouseMove as unknown as EventListener);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, isHiddenIconDragging, isSliderDragging, isResizing, isSelectorDragging, isButtonDragging]);
+  }, [isDragging, isHiddenIconDragging, isSliderDragging, isResizing, isSelectorDragging, isButtonDragging, isTabContainerDragging]);
 
   // 窗口大小变化时更新滑块初始大小（如果窗口变得太小）以及调整所有悬浮元素位置
   useEffect(() => {
@@ -1398,10 +1521,10 @@ const Analysis: React.FC = () => {
         }));
       }
       
-      // 始终保持距离底部80px，避免遮挡页脚图标
+      // 始终保持距离底部150px，避免遮挡页脚图标和切换按钮
       setSliderPosition(prev => ({
         ...prev,
-        y: window.innerHeight - sliderSize.height - 80
+        y: window.innerHeight - sliderSize.height - 150
       }));
 
       // 计算按钮中心位置：所有按钮的圆心或竖直中心线应该在同一条竖线上
@@ -1412,10 +1535,10 @@ const Analysis: React.FC = () => {
       // - 圆形按钮的x坐标：window.innerWidth - 65px - 25px = window.innerWidth - 90px
       // - 切换按钮的x坐标：window.innerWidth - 65px - 40px = window.innerWidth - 105px
       
-      // 计算统一的y坐标，确保垂直布局
-      const buttonY = window.innerHeight - 70; // 切换按钮在最底部
-      const hiddenIconY = window.innerHeight - 130; // 滑块隐藏图标在切换按钮上方
-      const floatingButtonY = window.innerHeight - 190; // 显示/隐藏号码选择器按钮在滑块按钮上方
+      // 计算统一的y坐标，确保垂直布局，同时上移避免被页脚挡住
+      const buttonY = window.innerHeight - 140; // 切换按钮在底部上方140px
+      const hiddenIconY = window.innerHeight - 200; // 滑块隐藏图标在切换按钮上方60px
+      const floatingButtonY = window.innerHeight - 260; // 显示/隐藏号码选择器按钮在滑块按钮上方60px
 
       // 调整显示/隐藏号码选择器按钮的位置，无论窗口放大还是缩小，都保持统一位置
       setFloatingButtonPosition({
@@ -1432,7 +1555,7 @@ const Analysis: React.FC = () => {
       // 调整切换按钮的位置，无论窗口放大还是缩小，都保持统一位置
       setButtonPosition({
         x: window.innerWidth - 105, // 竖直中心线在window.innerWidth - 65px
-        y: buttonY // 始终保持在最底部
+        y: buttonY // 始终保持在底部上方140px，避免被页脚挡住
       });
 
       // 调整号码选择器的位置，确保不超出窗口边界
@@ -1457,6 +1580,16 @@ const Analysis: React.FC = () => {
     setDragOffset({
       x: e.clientX - buttonPosition.x,
       y: e.clientY - buttonPosition.y
+    });
+  };
+
+  // Tab容器拖拽事件处理
+  const handleTabContainerMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsTabContainerDragging(true);
+    setTabContainerDragOffset({
+      x: e.clientX - tabContainerPosition.x,
+      y: e.clientY - tabContainerPosition.y
     });
   };
 
@@ -1891,25 +2024,138 @@ const Analysis: React.FC = () => {
         </>
       )}
       
-      {/* 标签页 */}
-      <Tabs
-        activeKey={activeTabKey}
-        onChange={setActiveTabKey}
-        type="card"
-        items={[
-          {
-            key: '1',
-            label: <span style={{ color: statisticType === 'red' ? '#f5222d' : '#1890ff' }}>累计次数</span>,
-            children: renderChartStats(),
-          },
-          {
-            key: '2',
-            label: <span style={{ color: statisticType === 'red' ? '#f5222d' : '#1890ff' }}>奇偶分析</span>,
-            children: renderOddEvenStats(),
-          },
-        ]}
-        style={{ marginTop: '20px' }}
-      />
+      {/* 内容区域，给底部Tab留出空间 */}
+      <div style={{ marginBottom: '60px' }}>
+        {/* Tab内容显示区域 */}
+        {activeTabKey === '1' && renderChartStats()}
+        {activeTabKey === '2' && renderOddEvenStats()}
+        {activeTabKey === '3' && renderSumStats()}
+      </div>
+      
+      {/* 底部悬浮可拖动Tab */}
+      {isTabVisible && (
+        <div 
+          style={{
+            position: 'fixed',
+            left: `${tabContainerPosition.x}px`,
+            top: `${tabContainerPosition.y}px`,
+            backgroundColor: '#fff',
+            borderRadius: '24px',
+            boxShadow: '0 -2px 12px rgba(0, 0, 0, 0.15)',
+            padding: '8px 24px',
+            width: 'fit-content',
+            minWidth: '400px',
+            maxWidth: '500px',
+            cursor: isTabContainerDragging ? 'grabbing' : 'grab',
+            userSelect: 'none',
+            touchAction: 'none',
+            zIndex: 1000,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
+          onMouseDown={handleTabContainerMouseDown}
+        >
+        <Tabs
+          activeKey={activeTabKey}
+          onChange={setActiveTabKey}
+          items={[
+            {
+              key: '2',
+              label: (
+                <div style={{
+                  display: 'inline-block',
+                  color: activeTabKey === '2' ? '#fff' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
+                  backgroundColor: activeTabKey === '2' ? (statisticType === 'red' ? '#f5222d' : '#1890ff') : '#f0f0f0',
+                  padding: '6px 12px',
+                  borderRadius: '16px',
+                  marginRight: '8px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  textAlign: 'center',
+                  fontSize: '14px'
+                }}>
+                  奇偶分析
+                </div>
+              ),
+              children: null
+            },
+            {
+              key: '3',
+              label: (
+                <div style={{
+                  display: 'inline-block',
+                  color: activeTabKey === '3' ? '#fff' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
+                  backgroundColor: activeTabKey === '3' ? (statisticType === 'red' ? '#f5222d' : '#1890ff') : '#f0f0f0',
+                  padding: '6px 12px',
+                  borderRadius: '16px',
+                  marginRight: '8px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  textAlign: 'center',
+                  fontSize: '14px'
+                }}>
+                  总和分析
+                </div>
+              ),
+              children: null
+            },
+            {
+              key: '1',
+              label: (
+                <div style={{
+                  display: 'inline-block',
+                  color: activeTabKey === '1' ? '#fff' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
+                  backgroundColor: activeTabKey === '1' ? (statisticType === 'red' ? '#f5222d' : '#1890ff') : '#f0f0f0',
+                  padding: '6px 12px',
+                  borderRadius: '16px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  textAlign: 'center',
+                  fontSize: '14px'
+                }}>
+                  累计分析
+                </div>
+              ),
+              children: null
+            }
+          ]}
+          style={{
+            width: '100%',
+            margin: 0,
+            border: 'none',
+            boxShadow: 'none'
+          }}
+          tabBarStyle={{
+            borderBottom: 'none',
+            backgroundColor: 'transparent',
+            padding: '0',
+            margin: '0',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
+        />
+      </div>)}
+      {/* 页脚 */}
+      <footer className="app-footer" style={{ 
+        textAlign: 'center', 
+        position: 'fixed', 
+        bottom: 0, 
+        left: 0, 
+        right: 0, 
+        height: '64px', 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        zIndex: 1000
+      }}>
+        <AppleFilled 
+          style={{ fontSize: '24px', color: '#000', cursor: 'pointer' }} 
+          onClick={toggleTabVisible}
+        />
+      </footer>
     </div>
   );
 };
