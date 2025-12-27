@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { ConfigProvider, Menu } from 'antd';
+import { ConfigProvider, theme } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
-import { AppleFilled, SearchOutlined, BarChartOutlined, AreaChartOutlined } from '@ant-design/icons';
+import { CloudFilled, SearchOutlined, BarChartOutlined, AreaChartOutlined, DotChartOutlined } from '@ant-design/icons';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import RecordList from './components/RecordList';
 import Statistics from './components/Statistics';
 import Analysis from './components/Analysis';
+import Taiji from './components/Taiji';
 import './App.css';
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
       <ConfigProvider 
         locale={zhCN} 
         theme={{
+          algorithm: theme.darkAlgorithm,
           token: {
             colorPrimary: '#1890ff',
             borderRadius: 6,
@@ -37,46 +39,83 @@ function App() {
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', height: '64px' }}>
               {/* 苹果白实心图标 - 放在查询按钮左侧，与菜单一起居中，点击回到首页 */}
               <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-                <AppleFilled 
+                <CloudFilled 
                   style={{ fontSize: '24px', color: '#fff', marginRight: '16px', cursor: 'pointer' }} 
                 />
               </Link>
               
-              {/* 导航菜单 */}
-              <Menu
-                mode="horizontal"
-                theme="dark"
-                defaultSelectedKeys={['query']}
-                items={[
-                  {
-                    key: 'query',
-                    icon: <SearchOutlined />,
-                    label: <Link to="/">查询</Link>,
-                  },
-                  {
-                    key: 'statistics',
-                    icon: <BarChartOutlined />,
-                    label: <Link to="/statistics">统计</Link>,
-                  },
-                  {
-                    key: 'analysis',
-                    icon: <AreaChartOutlined />,
-                    label: <Link to="/analysis">分析</Link>,
-                  },
-                ]}
-                style={{ 
-                  backgroundColor: 'transparent', 
-                  borderBottom: 'none',
-                }}
-                className="custom-menu"
-              />
+              {/* 自定义导航菜单 */}
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                <Link to="/taiji" style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '4px', 
+                  color: '#fff', 
+                  textDecoration: 'none',
+                  padding: '6px 8px',
+                  borderRadius: '4px',
+                  transition: 'background-color 0.3s ease',
+                  fontSize: '12px',
+                  fontWeight: 'normal'
+                }}>
+                  <DotChartOutlined />
+                  宇宙
+                </Link>
+                <Link to="/analysis" style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '4px', 
+                  color: '#fff', 
+                  textDecoration: 'none',
+                  padding: '6px 8px',
+                  borderRadius: '4px',
+                  transition: 'background-color 0.3s ease',
+                  fontSize: '12px',
+                  fontWeight: 'normal'
+                }}>
+                  <AreaChartOutlined />
+                  时间
+                </Link>
+                <Link to="/statistics" style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '4px', 
+                  color: '#fff', 
+                  textDecoration: 'none',
+                  padding: '6px 8px',
+                  borderRadius: '4px',
+                  transition: 'background-color 0.3s ease',
+                  fontSize: '12px',
+                  fontWeight: 'normal'
+                }}>
+                  <BarChartOutlined />
+                  空间
+                </Link>
+                <Link to="/record" style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '4px', 
+                  color: '#fff', 
+                  textDecoration: 'none',
+                  padding: '6px 8px',
+                  borderRadius: '4px',
+                  transition: 'background-color 0.3s ease',
+                  fontSize: '12px',
+                  fontWeight: 'normal'
+                }}>
+                  <SearchOutlined />
+                  探索
+                </Link>
+              </div>
             </div>
           </header>
-          <main className="app-main" style={{ paddingTop: '64px', paddingBottom: '20px' }}>
+          <main className="app-main" style={{ paddingTop: '64px', paddingBottom: '20px', backgroundColor: '#000' }}>
             <Routes>
-              <Route path="/" element={<RecordList />} />
+              <Route path="/" element={<Taiji />} />
               <Route path="/statistics" element={<Statistics isTabVisible={isTabVisible} />} />
               <Route path="/analysis" element={<Analysis isTabVisible={isTabVisible} />} />
+              <Route path="/taiji" element={<Taiji />} />
+              <Route path="/record" element={<RecordList />} />
             </Routes>
           </main>
 

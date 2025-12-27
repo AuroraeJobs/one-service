@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Card, message, DatePicker, Input } from 'antd';
-import { CaretLeftOutlined, CaretRightOutlined, StepBackwardOutlined, StepForwardOutlined, AppleFilled } from '@ant-design/icons';
+import { CaretLeftOutlined, CaretRightOutlined, StepBackwardOutlined, StepForwardOutlined, CloudFilled } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { recordApi } from '../services/api';
 
@@ -275,9 +275,9 @@ const RecordList: React.FC<RecordListProps> = () => {
 
 
   return (
-    <div style={{ paddingTop: '20px', position: 'relative', paddingBottom: '64px' }}>
+    <>
       {/* 记录列表 */}
-      <Card variant="outlined" style={{ width: '100%', border: 'none' }}>
+      <Card variant="outlined" style={{ width: '100%', border: 'none', backgroundColor: 'transparent' }}>
         <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '16px', justifyContent: 'center', perspective: '1000px' }}>
           {records.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((record) => (
             <Card 
@@ -287,10 +287,10 @@ const RecordList: React.FC<RecordListProps> = () => {
                 width: 'calc(25% - 12px)', 
                 minWidth: '240px', 
                 marginBottom: '16px',
-                // 从左红色到右蓝色的渐变背景
-                background: 'linear-gradient(90deg, rgba(245,34,45,0.15) 0%, rgba(255,255,255,0.1) 80%, rgba(24,144,255,0.15) 100%)',
-                // 确保边框颜色与渐变协调
-                borderColor: '#e8e8e8',
+                // 透明背景
+                background: 'transparent',
+                // 确保边框颜色与深色主题协调
+                borderColor: 'rgba(255, 255, 255, 0.1)',
                 // 添加圆角
                 borderRadius: '12px',
                 // 3d效果
@@ -302,10 +302,10 @@ const RecordList: React.FC<RecordListProps> = () => {
                   : 'perspective(1000px) translateZ(0)',
                 // 增强厚度视觉效果 - 多层阴影模拟真实厚度
                 boxShadow: hoveredCard === record.code 
-                  ? '0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)' 
-                  : '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+                  ? '0 8px 16px rgba(255, 255, 255, 0.1), 0 24px 48px rgba(255, 255, 255, 0.15), 0 32px 64px rgba(255, 255, 255, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.05)' 
+                  : '0 4px 8px rgba(255, 255, 255, 0.08), 0 12px 24px rgba(255, 255, 255, 0.12), 0 16px 32px rgba(255, 255, 255, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.05)',
                 // 增强边框效果，进一步提升厚度感
-                border: '1px solid rgba(0, 0, 0, 0.1)'
+                border: '1px solid rgba(255, 255, 255, 0.1)'
               }}
               onMouseEnter={() => setHoveredCard(record.code)}
               onMouseLeave={() => setHoveredCard(null)}>
@@ -539,7 +539,7 @@ const RecordList: React.FC<RecordListProps> = () => {
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center',
-        backgroundColor: '#fff',
+        backgroundColor: '#000',
         zIndex: 1000,
         padding: '0 20px'
       }}>
@@ -547,8 +547,8 @@ const RecordList: React.FC<RecordListProps> = () => {
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', gap: '20px', width: '100%' }}>
           {/* 左侧：图标 */}
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <AppleFilled 
-              style={{ fontSize: '24px', color: '#000', cursor: 'pointer' }} 
+            <CloudFilled 
+              style={{ fontSize: '24px', color: '#fff', cursor: 'pointer' }} 
             />
           </div>
           
@@ -688,10 +688,10 @@ const RecordList: React.FC<RecordListProps> = () => {
                     disabled={currentPage === 1}
                     style={{ 
                       padding: '4px 8px',
-                      // 去掉渐变色，使用简单纯色
-                      background: currentPage === 1 ? '#f5f5f5' : '#ffffff',
-                      color: currentPage === 1 ? '#999' : '#333',
-                      border: '1px solid rgba(0, 0, 0, 0.1)',
+                      // 透明背景
+                      background: 'transparent',
+                      color: currentPage === 1 ? '#666' : '#fff',
+                      border: '1px solid transparent',
                       borderRadius: '50%', // 将方形改为圆形
                       cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
                       fontSize: '16px',
@@ -700,7 +700,7 @@ const RecordList: React.FC<RecordListProps> = () => {
                       display: 'flex',
                       justifyContent: 'center',
                       alignItems: 'center',
-                      boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)'
+                      boxShadow: 'none'
                     }}
                   >
                     <StepBackwardOutlined />
@@ -712,10 +712,10 @@ const RecordList: React.FC<RecordListProps> = () => {
                     disabled={currentPage === 1}
                     style={{ 
                       padding: '4px 8px',
-                      // 去掉渐变色，使用简单纯色
-                      background: currentPage === 1 ? '#f5f5f5' : '#ffffff',
-                      color: currentPage === 1 ? '#999' : '#333',
-                      border: '1px solid rgba(0, 0, 0, 0.1)',
+                      // 透明背景
+                      background: 'transparent',
+                      color: currentPage === 1 ? '#666' : '#fff',
+                      border: '1px solid transparent',
                       borderRadius: '50%', // 将方形改为圆形
                       cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
                       fontSize: '16px',
@@ -724,7 +724,7 @@ const RecordList: React.FC<RecordListProps> = () => {
                       display: 'flex',
                       justifyContent: 'center',
                       alignItems: 'center',
-                      boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)'
+                      boxShadow: 'none'
                     }}
                   >
                     <CaretLeftOutlined />
@@ -745,10 +745,10 @@ const RecordList: React.FC<RecordListProps> = () => {
                     disabled={currentPage * pageSize >= records.length}
                     style={{ 
                       padding: '4px 8px',
-                      // 去掉渐变色，使用简单纯色
-                      background: currentPage * pageSize >= records.length ? '#f5f5f5' : '#ffffff',
-                      color: currentPage * pageSize >= records.length ? '#999' : '#333',
-                      border: '1px solid rgba(0, 0, 0, 0.1)',
+                      // 透明背景
+                      background: 'transparent',
+                      color: currentPage * pageSize >= records.length ? '#666' : '#fff',
+                      border: '1px solid transparent',
                       borderRadius: '50%', // 将方形改为圆形
                       cursor: currentPage * pageSize >= records.length ? 'not-allowed' : 'pointer',
                       fontSize: '16px',
@@ -757,7 +757,7 @@ const RecordList: React.FC<RecordListProps> = () => {
                       display: 'flex',
                       justifyContent: 'center',
                       alignItems: 'center',
-                      boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)'
+                      boxShadow: 'none'
                     }}
                   >
                     <CaretRightOutlined />
@@ -769,10 +769,10 @@ const RecordList: React.FC<RecordListProps> = () => {
                     disabled={currentPage * pageSize >= records.length}
                     style={{ 
                       padding: '4px 8px',
-                      // 去掉渐变色，使用简单纯色
-                      background: currentPage * pageSize >= records.length ? '#f5f5f5' : '#ffffff',
-                      color: currentPage * pageSize >= records.length ? '#999' : '#333',
-                      border: '1px solid rgba(0, 0, 0, 0.1)',
+                      // 透明背景
+                      background: 'transparent',
+                      color: currentPage * pageSize >= records.length ? '#666' : '#fff',
+                      border: '1px solid transparent',
                       borderRadius: '50%', // 将方形改为圆形
                       cursor: currentPage * pageSize >= records.length ? 'not-allowed' : 'pointer',
                       fontSize: '16px',
@@ -781,7 +781,7 @@ const RecordList: React.FC<RecordListProps> = () => {
                       display: 'flex',
                       justifyContent: 'center',
                       alignItems: 'center',
-                      boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)'
+                      boxShadow: 'none'
                     }}
                   >
                     <StepForwardOutlined />
@@ -792,7 +792,7 @@ const RecordList: React.FC<RecordListProps> = () => {
           </div>
         </div>
       </footer>
-    </div>
+    </>
   );
 };
 

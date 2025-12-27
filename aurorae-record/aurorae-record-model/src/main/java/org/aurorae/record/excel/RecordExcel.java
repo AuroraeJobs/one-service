@@ -10,10 +10,10 @@ import java.util.Map;
 @Slf4j
 public class RecordExcel {
 
-    public static final String FILE_PATH = "/Users/aurorae/Documents/中奖啦/%s.xlsx";
+    public static final String PATH = "/Users/aurorae/Program/Hello/aurorae-service/aurorae-record/aurorae-record-service/src/main/resources/ticai/%s.xlsx";
 
     public static String getFilePath(String filename) {
-        return String.format(FILE_PATH, filename);
+        return String.format(PATH, filename);
     }
 
     public static void write(ExcelWorkBook workBook, String filename) {

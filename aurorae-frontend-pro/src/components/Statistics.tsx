@@ -16,7 +16,7 @@ import {
   ManOutlined,
   SettingOutlined,
   StarFilled,
-  AppleFilled,
+  CloudFilled,
   ChromeOutlined,
   DockerOutlined,
   RubyOutlined
@@ -108,14 +108,11 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
   const [sliderDragOffset, setSliderDragOffset] = useState({ x: 0, y: 0 });
   // 控制滑块是否处于固定定位状态 - 默认始终固定定位
   const [isSliderFixed, setIsSliderFixed] = useState(true);
-  // 滑块缩放状态
-  const [isResizing, setIsResizing] = useState(false);
-  // 初始化滑块尺寸为页面宽度的1/3
-  const [sliderSize, setSliderSize] = useState({ 
+  // 固定滑块尺寸为页面宽度的1/3
+  const sliderSize = { 
     width: window.innerWidth / 3, 
     height: 150 
-  });
-  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  };
   // 滑块隐藏状态 - 默认隐藏
   const [isSliderHidden, setIsSliderHidden] = useState(true);
   // 滑块双击隐藏事件
@@ -139,17 +136,9 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
 
 
   
-  // 窗口大小变化时更新滑块初始大小（如果窗口变得太小）以及调整所有悬浮元素位置
+  // 窗口大小变化时调整所有悬浮元素位置
   useEffect(() => {
     const handleResize = () => {
-      // 如果窗口宽度小于当前滑块宽度的2倍，调整滑块宽度
-      if (window.innerWidth < sliderSize.width * 2) {
-        setSliderSize(prev => ({
-          ...prev,
-          width: window.innerWidth / 3
-        }));
-      }
-      
       // 始终保持距离底部150px，避免遮挡页脚图标和切换按钮
       setSliderPosition(prev => ({
         ...prev,
@@ -260,21 +249,6 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
         x: Math.max(0, Math.min(newX, maxX)),
         y: Math.max(0, Math.min(newY, maxY))
       });
-    } else if (isResizing) {
-      const newWidth = e.clientX - resizeStart.x + resizeStart.width;
-      const newHeight = e.clientY - resizeStart.y + resizeStart.height;
-      
-      // 限制最小和最大尺寸
-      const minWidth = 300;
-      const minHeight = 100;
-      const maxWidth = window.innerWidth - 50;
-      const maxHeight = window.innerHeight - 50;
-      
-      setSliderSize({
-        width: Math.max(minWidth, Math.min(newWidth, maxWidth)),
-        height: Math.max(minHeight, Math.min(newHeight, maxHeight))
-      });
-
     } else if (isTabContainerDragging) {
       // 拖动Tab容器
       const newX = e.clientX - tabContainerDragOffset.x;
@@ -295,25 +269,14 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     setIsDragging(false);
     setIsHiddenIconDragging(false);
     setIsSliderDragging(false);
-    setIsResizing(false);
     setIsTabContainerDragging(false);
   };
   
-  // 缩放开始事件
-  const handleResizeStart = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsResizing(true);
-    setResizeStart({
-      x: e.clientX,
-      y: e.clientY,
-      width: sliderSize.width,
-      height: sliderSize.height
-    });
-  };
+
 
   // 添加全局事件监听
   useEffect(() => {
-    if (isDragging || isHiddenIconDragging || isSliderDragging || isResizing || isTabContainerDragging) {
+    if (isDragging || isHiddenIconDragging || isSliderDragging || isTabContainerDragging) {
       document.addEventListener('mousemove', handleMouseMove as unknown as EventListener);
       document.addEventListener('mouseup', handleMouseUp);
     }
@@ -322,7 +285,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       document.removeEventListener('mousemove', handleMouseMove as unknown as EventListener);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, isHiddenIconDragging, isSliderDragging, isResizing, isTabContainerDragging]);
+  }, [isDragging, isHiddenIconDragging, isSliderDragging, isTabContainerDragging]);
 
   // 滑块区域拖拽事件处理
   const handleSliderMouseDown = (e: React.MouseEvent) => {
@@ -1086,47 +1049,47 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                         e.dataTransfer.setDragImage(new Image(), 0, 0);
                       }}
                       style={{
-                        border: '2px solid transparent',
-                        borderRadius: '8px',
-                        padding: '16px',
+                        width: '100%',
+                        marginBottom: '16px',
+                        // 增大内边距，让内容离边缘更远
+                        padding: '20px',
+                        // 随切换按钮颜色变化的渐变背景，从左上角到右下角逐渐加深
                         backgroundImage: currentColor === '#f5222d' 
-                          ? 'linear-gradient(135deg, #ffffff 0%, rgba(245, 34, 45, 0.1) 100%), linear-gradient(135deg, rgba(245, 34, 45, 0.1) 0%, rgba(245, 34, 45, 0.3) 100%)' 
-                          : 'linear-gradient(135deg, #ffffff 0%, rgba(24, 144, 255, 0.1) 100%), linear-gradient(135deg, rgba(24, 144, 255, 0.1) 0%, rgba(24, 144, 255, 0.3) 100%)',
-                        backgroundOrigin: 'padding-box, border-box',
-                        backgroundClip: 'padding-box, border-box',
-                        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                        cursor: 'grab',
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                          ? 'linear-gradient(135deg, rgba(245,34,45,0.2) 0%, rgba(245,34,45,0.4) 100%)' 
+                          : 'linear-gradient(135deg, rgba(24,144,255,0.2) 0%, rgba(24,144,255,0.4) 100%)',
+                        // 设置背景颜色为透明，确保渐变效果可以显示
+                        backgroundColor: 'transparent',
+                        // 确保边框颜色与渐变协调
+                        borderColor: currentColor === '#f5222d' ? 'rgba(245,34,45,0.4)' : 'rgba(24,144,255,0.4)',
+                        // 添加圆角
+                        borderRadius: '12px',
+                        // 3d效果
                         transformStyle: 'preserve-3d',
-                        perspective: '1500px',
-                        transformOrigin: 'center center',
-                        backfaceVisibility: 'hidden',
+                        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                        // 初始状态
+                        transform: 'perspective(1000px) translateZ(0)',
+                        // 增强厚度视觉效果 - 多层阴影模拟真实厚度
+                        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+                        // 增强边框效果，进一步提升厚度感
+                        border: '1px solid rgba(0, 0, 0, 0.1)',
+                        cursor: 'grab',
+                        // 确保背景样式能够覆盖组件默认样式
+                        backgroundClip: 'padding-box'
                       }}
                 onMouseEnter={(e) => {
                   const card = e.currentTarget;
-                  card.style.transform = 'translateY(-4px) rotateX(0deg) rotateY(0deg) translateZ(40px)';
-                  card.style.boxShadow = '0 12px 32px rgba(0, 0, 0, 0.25)';
+                  card.style.transform = 'perspective(1000px) translateZ(10px)';
+                  card.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
                   card.style.cursor = 'grabbing';
-                }}
-                onMouseMove={(e) => {
-                  const card = e.currentTarget;
-                  const rect = card.getBoundingClientRect();
-                  const x = e.clientX - rect.left;
-                  const y = e.clientY - rect.top;
-                  const centerX = rect.width / 2;
-                  const centerY = rect.height / 2;
-                  const rotateX = (y - centerY) / 5;
-                  const rotateY = (centerX - x) / 5;
-                  card.style.transform = `translateY(-4px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(40px)`;
                 }}
                 onMouseLeave={(e) => {
                   const card = e.currentTarget;
-                  card.style.transform = 'translateY(0) rotateX(0deg) rotateY(0deg) translateZ(0)';
-                  card.style.boxShadow = '';
+                  card.style.transform = 'perspective(1000px) translateZ(0)';
+                  card.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
                   card.style.cursor = 'grab';
                 }}
               >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '14px', color: '#666' }}>次数</span>
                     <span style={{ fontSize: '16px', fontWeight: 'bold', color: currentColor }}>
@@ -1170,7 +1133,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
   };
 
   // 渲染分布统计列表
-  const renderDistributionList = (data: AnalysisResult) => {
+  const renderDistributionList = (data: AnalysisResult, type?: 'red' | 'blue') => {
     const distributionData = Object.entries(data).map(([key, value]) => ({
       name: key === 'odd' ? '奇数' : 
             key === 'even' ? '偶数' : 
@@ -1180,7 +1143,8 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             key === 'non_winning_total' ? '未中奖号码总和' : 
             key,
       count: value.count,
-      percent: value.percent
+      percent: value.percent,
+      originalKey: key
     }));
 
     // 初始化卡片顺序
@@ -1231,7 +1195,25 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                 onDrop={() => handleDrop(index)}
               >
                 <Card 
-                  title={<div style={{ textAlign: 'center', fontSize: '16px', fontWeight: 'bold', color: currentColor }}>{item.name}</div>} 
+                  title={
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '16px', fontWeight: 'bold', color: currentColor }}>
+                      {item.name}
+                      {(item.originalKey === 'small' || item.originalKey === 'large') && type && (
+                        <Tooltip 
+                          title={type === 'red' ? 
+                            (item.originalKey === 'small' ? '红球小号范围：1-16' : '红球大号范围：17-33') : 
+                            (item.originalKey === 'small' ? '蓝球小号范围：1-8' : '蓝球大号范围：9-16')} 
+                          placement="top"
+                        >
+                          <InfoCircleOutlined style={{ 
+                            cursor: 'default', 
+                            color: '#999', 
+                            fontSize: '16px',
+                          }} />
+                        </Tooltip>
+                      )}
+                    </div>
+                  } 
                   variant="outlined"
                   size="small"
                   draggable
@@ -1241,53 +1223,50 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                     e.dataTransfer.setDragImage(new Image(), 0, 0);
                   }}
                   style={{
-                    background: currentColor === '#f5222d' 
-                      ? 'linear-gradient(135deg, #ffffff 0%, rgba(245, 34, 45, 0.1) 100%)' 
-                      : 'linear-gradient(135deg, #ffffff 0%, rgba(24, 144, 255, 0.1) 100%)',
-                    border: '2px solid transparent',
-                    borderRadius: '8px',
-                    padding: '16px',
+                    width: '100%',
+                    marginBottom: '16px',
+                    // 增大内边距，让内容离边缘更远
+                    padding: '20px',
+                    // 随切换按钮颜色变化的渐变背景，从左上角到右下角逐渐加深
                     backgroundImage: currentColor === '#f5222d' 
-                      ? 'linear-gradient(135deg, #ffffff 0%, rgba(245, 34, 45, 0.1) 100%), linear-gradient(135deg, rgba(245, 34, 45, 0.1) 0%, rgba(245, 34, 45, 0.3) 100%)' 
-                      : 'linear-gradient(135deg, #ffffff 0%, rgba(24, 144, 255, 0.1) 100%), linear-gradient(135deg, rgba(24, 144, 255, 0.1) 0%, rgba(24, 144, 255, 0.3) 100%)',
-                    backgroundOrigin: 'padding-box, border-box',
-                    backgroundClip: 'padding-box, border-box',
-                    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                    cursor: 'grab',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                      ? 'linear-gradient(135deg, rgba(245,34,45,0.2) 0%, rgba(245,34,45,0.4) 100%)' 
+                      : 'linear-gradient(135deg, rgba(24,144,255,0.2) 0%, rgba(24,144,255,0.4) 100%)',
+                    // 设置背景颜色为透明，确保渐变效果可以显示
+                    backgroundColor: 'transparent',
+                    // 确保边框颜色与渐变协调
+                    borderColor: currentColor === '#f5222d' ? 'rgba(245,34,45,0.4)' : 'rgba(24,144,255,0.4)',
+                    // 添加圆角
+                    borderRadius: '12px',
+                    // 3d效果
                     transformStyle: 'preserve-3d',
-                    perspective: '1500px',
-                    transformOrigin: 'center center',
-                    backfaceVisibility: 'hidden',
+                    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                    // 初始状态
+                    transform: 'perspective(1000px) translateZ(0)',
+                    // 增强厚度视觉效果 - 多层阴影模拟真实厚度
+                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+                    // 增强边框效果，进一步提升厚度感
+                    border: '1px solid rgba(0, 0, 0, 0.1)',
+                    cursor: 'grab',
+                    // 确保背景样式能够覆盖组件默认样式
+                    backgroundClip: 'padding-box'
                   }}
                   onMouseEnter={(e) => {
                     const card = e.currentTarget;
-                    card.style.transform = 'translateY(-4px) rotateX(0deg) rotateY(0deg) translateZ(40px)';
-                    card.style.boxShadow = '0 12px 32px rgba(0, 0, 0, 0.25)';
+                    card.style.transform = 'perspective(1000px) translateZ(10px)';
+                    card.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
                     card.style.cursor = 'grabbing';
-                  }}
-                  onMouseMove={(e) => {
-                    const card = e.currentTarget;
-                    const rect = card.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
-                    const centerX = rect.width / 2;
-                    const centerY = rect.height / 2;
-                    const rotateX = (y - centerY) / 5;
-                    const rotateY = (centerX - x) / 5;
-                    card.style.transform = `translateY(-4px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(40px)`;
                   }}
                   onMouseLeave={(e) => {
                     const card = e.currentTarget;
-                    card.style.transform = 'translateY(0) rotateX(0deg) rotateY(0deg) translateZ(0)';
-                    card.style.boxShadow = '';
+                    card.style.transform = 'perspective(1000px) translateZ(0)';
+                    card.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
                     card.style.cursor = 'grab';
                   }}
                 >
                 <div style={{ 
                   display: 'flex', 
                   flexDirection: 'column', 
-                  gap: '8px',
+                  gap: '12px',
                   justifyContent: 'center'
                 }}>
                   <div style={{ 
@@ -1413,9 +1392,9 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                 onClick={() => setShowOnlyLastWinning(!showOnlyLastWinning)}
                 style={{
                   padding: '8px',
-                  backgroundColor: showOnlyLastWinning ? '#f5222d' : '#fff',
-                  color: showOnlyLastWinning ? '#fff' : '#f5222d',
-                  border: '1px solid #f5222d',
+                  backgroundColor: 'transparent',
+                  color: '#f5222d',
+                  border: 'none',
                   borderRadius: '4px',
                   cursor: 'pointer',
                   fontSize: '16px',
@@ -1430,7 +1409,9 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               </button>
             </div>
           } 
-          variant="outlined">
+          style={{ backgroundColor: 'transparent', border: 'none' }}>
+
+
           {/* 红球分组统计：6列布局，每组12个卡片占2行，共3组36个卡片 */}
           {/* 将卡片按组分组，确保每个组名卡片在新行开始 */}
           {(() => {
@@ -1465,7 +1446,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
 
             // 渲染每组卡片，每组使用一个新的Row
             return groupedCards.map((group, groupIndex) => (
-              <Row key={groupIndex} gutter={[16, 16]}>
+              <Row key={groupIndex} gutter={[16, 16]} style={{ marginBottom: '16px' }}>
                 {group.map((item, index) => (
                   <Col 
                     key={`${groupIndex}-${index}`} 
@@ -1541,51 +1522,47 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                   }}
 
                   style={{
-                    border: '2px solid transparent',
-                    borderRadius: '8px',
-                    padding: '16px',
-                    backgroundImage: item.type === 'group' 
-                      ? (isRed 
-                        ? 'linear-gradient(135deg, #ffffff 0%, rgba(245, 34, 45, 0.4) 100%), linear-gradient(135deg, rgba(245, 34, 45, 0.4) 0%, rgba(245, 34, 45, 0.6) 100%)' 
-                        : 'linear-gradient(135deg, #ffffff 0%, rgba(24, 144, 255, 0.4) 100%), linear-gradient(135deg, rgba(24, 144, 255, 0.4) 0%, rgba(24, 144, 255, 0.6) 100%)')
-                      : (isRed 
-                        ? 'linear-gradient(135deg, #ffffff 0%, rgba(245, 34, 45, 0.1) 100%), linear-gradient(135deg, rgba(245, 34, 45, 0.1) 0%, rgba(245, 34, 45, 0.3) 100%)' 
-                        : 'linear-gradient(135deg, #ffffff 0%, rgba(24, 144, 255, 0.1) 100%), linear-gradient(135deg, rgba(24, 144, 255, 0.1) 0%, rgba(24, 144, 255, 0.3) 100%)'),
-                    backgroundOrigin: 'padding-box, border-box',
-                    backgroundClip: 'padding-box, border-box',
-                    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                    cursor: item.type === 'number' ? 'pointer' : 'grab',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                    width: '100%',
+                    marginBottom: '16px',
+                    // 增大内边距，让内容离边缘更远
+                    padding: '20px',
+                    // 随切换按钮颜色变化的渐变背景，从左上角到右下角逐渐加深
+                    backgroundImage: currentColor === '#f5222d' 
+                      ? 'linear-gradient(135deg, rgba(245,34,45,0.2) 0%, rgba(245,34,45,0.4) 100%)' 
+                      : 'linear-gradient(135deg, rgba(24,144,255,0.2) 0%, rgba(24,144,255,0.4) 100%)',
+                    // 设置背景颜色为透明，确保渐变效果可以显示
+                    backgroundColor: 'transparent',
+                    // 确保边框颜色与渐变协调
+                    borderColor: currentColor === '#f5222d' ? 'rgba(245,34,45,0.4)' : 'rgba(24,144,255,0.4)',
+                    // 添加圆角
+                    borderRadius: '12px',
+                    // 3d效果
                     transformStyle: 'preserve-3d',
-                    perspective: '1500px',
-                    transformOrigin: 'center center',
-                    backfaceVisibility: 'hidden',
+                    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                    // 初始状态
+                    transform: 'perspective(1000px) translateZ(0)',
+                    // 增强厚度视觉效果 - 多层阴影模拟真实厚度
+                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+                    // 增强边框效果，进一步提升厚度感
+                    border: '1px solid rgba(0, 0, 0, 0.1)',
+                    cursor: item.type === 'number' ? 'pointer' : 'grab',
+                    // 确保背景样式能够覆盖组件默认样式
+                    backgroundClip: 'padding-box'
                   }}
                   onMouseEnter={(e) => {
                     const card = e.currentTarget;
-                    card.style.transform = 'translateY(-4px) rotateX(0deg) rotateY(0deg) translateZ(40px)';
-                    card.style.boxShadow = '0 12px 32px rgba(0, 0, 0, 0.25)';
+                    card.style.transform = 'perspective(1000px) translateZ(10px)';
+                    card.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
                     card.style.cursor = 'grabbing';
-                  }}
-                  onMouseMove={(e) => {
-                    const card = e.currentTarget;
-                    const rect = card.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
-                    const centerX = rect.width / 2;
-                    const centerY = rect.height / 2;
-                    const rotateX = (y - centerY) / 5;
-                    const rotateY = (centerX - x) / 5;
-                    card.style.transform = `translateY(-4px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(40px)`;
                   }}
                   onMouseLeave={(e) => {
                     const card = e.currentTarget;
-                    card.style.transform = 'translateY(0) rotateX(0deg) rotateY(0deg) translateZ(0)';
-                    card.style.boxShadow = '';
-                    card.style.cursor = 'grab';
+                    card.style.transform = 'perspective(1000px) translateZ(0)';
+                    card.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+                    card.style.cursor = item.type === 'number' ? 'pointer' : 'grab';
                   }}
                 >
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: '14px', color: '#666' }}>
                         {item.type === 'group' ? '总次数' : '次数'}
@@ -1715,7 +1692,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
   };
 
   return (
-    <div className="statistics-container" style={{ paddingTop: '20px' }}>
+    <>
       {/* 可拖拽的切换按钮 */}
       <div style={{
         position: 'fixed',
@@ -1725,11 +1702,11 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#fff',
+        backgroundColor: 'transparent',
         borderRadius: '4px', // 长方形
         width: '80px', // 更长的长方形
         height: '50px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
         cursor: isDragging ? 'grabbing' : 'grab',
         userSelect: 'none',
         touchAction: 'none'
@@ -1792,53 +1769,54 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       </div>
       
       {/* 统计卡片 */}
-      <div style={{ marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+      <div style={{ marginTop: 32, marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
         {/* 总数据量卡片 */}
         <div style={{ flex: 1, minWidth: '160px' }}>
           <Card 
             variant="outlined"
             style={{
-              border: '1px solid transparent',
-              borderRadius: '6px',
-              backgroundImage: statisticType === 'red' 
-                ? 'linear-gradient(135deg, #ffffff 0%, rgba(245, 34, 45, 0.1) 100%), linear-gradient(135deg, rgba(245, 34, 45, 0.1) 0%, rgba(245, 34, 45, 0.3) 100%)' 
-                : 'linear-gradient(135deg, #ffffff 0%, rgba(24, 144, 255, 0.1) 100%), linear-gradient(135deg, rgba(24, 144, 255, 0.1) 0%, rgba(24, 144, 255, 0.3) 100%)',
-              backgroundOrigin: 'padding-box, border-box',
-              backgroundClip: 'padding-box, border-box',
-              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-              cursor: 'pointer',
-              transformStyle: 'preserve-3d',
-              perspective: '1500px',
-              transformOrigin: 'center center',
-              backfaceVisibility: 'hidden',
               width: '100%',
+              marginBottom: '16px',
+              // 增大内边距，让内容离边缘更远
+              padding: '20px',
+              // 随切换按钮颜色变化的渐变背景，从左上角到右下角逐渐加深
+              backgroundImage: statisticType === 'red' 
+                ? 'linear-gradient(135deg, rgba(245,34,45,0.2) 0%, rgba(245,34,45,0.4) 100%)' 
+                : 'linear-gradient(135deg, rgba(24,144,255,0.2) 0%, rgba(24,144,255,0.4) 100%)',
+              // 设置背景颜色为透明，确保渐变效果可以显示
+              backgroundColor: 'transparent',
+              // 确保边框颜色与渐变协调
+              borderColor: statisticType === 'red' ? 'rgba(245,34,45,0.4)' : 'rgba(24,144,255,0.4)',
+              // 添加圆角
+              borderRadius: '12px',
+              // 3d效果
+              transformStyle: 'preserve-3d',
+              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+              // 初始状态
+              transform: 'perspective(1000px) translateZ(0)',
+              // 增强厚度视觉效果 - 多层阴影模拟真实厚度
+              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+              // 增强边框效果，进一步提升厚度感
+              border: '1px solid rgba(0, 0, 0, 0.1)',
+              cursor: 'pointer',
               height: '100%',
               minHeight: '120px'
             }}
             onMouseEnter={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'translateY(-4px) rotateX(0deg) rotateY(0deg) translateZ(40px)';
-              card.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.2)';
-            }}
-            onMouseMove={(e) => {
-              const card = e.currentTarget;
-              const rect = card.getBoundingClientRect();
-              const x = e.clientX - rect.left;
-              const y = e.clientY - rect.top;
-              const centerX = rect.width / 2;
-              const centerY = rect.height / 2;
-              const rotateX = (y - centerY) / 5;
-              const rotateY = (centerX - x) / 5;
-              card.style.transform = `translateY(-4px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(40px)`;
+              card.style.transform = 'perspective(1000px) translateZ(10px)';
+              card.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+              card.style.cursor = 'pointer';
             }}
             onMouseLeave={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'translateY(0) rotateX(0deg) rotateY(0deg) translateZ(0)';
-              card.style.boxShadow = '';
+              card.style.transform = 'perspective(1000px) translateZ(0)';
+              card.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+              card.style.cursor = 'pointer';
             }}
           >
             <Statistic
-              title="总数据量"
+              title={<div style={{ color: '#ffffff', fontWeight: 'bold', textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>总数据量</div>}
               value={totalRecords}
               prefix={<AreaChartOutlined />}
               valueStyle={{ color: statisticType === 'red' ? '#f5222d' : '#1890ff', fontWeight: 'bold' }}
@@ -1851,37 +1829,48 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           <Card 
             variant="outlined"
             style={{
-              background: statisticType === 'red' 
-                ? 'linear-gradient(135deg, #ffffff 0%, rgba(245, 34, 45, 0.025) 100%)' 
-                : 'linear-gradient(135deg, #ffffff 0%, rgba(24, 144, 255, 0.025) 100%)',
-              border: `1px solid ${statisticType === 'red' ? 'rgba(245, 34, 45, 0.1)' : 'rgba(24, 144, 255, 0.1)'}`,
-              borderRadius: '6px',
-              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-              cursor: 'pointer',
-              transformStyle: 'preserve-3d',
-              perspective: '1000px',
               width: '100%',
+              marginBottom: '16px',
+              // 增大内边距，让内容离边缘更远
+              padding: '20px',
+              // 随切换按钮颜色变化的渐变背景，从左上角到右下角逐渐加深
+              backgroundImage: statisticType === 'red' 
+                ? 'linear-gradient(135deg, rgba(245,34,45,0.2) 0%, rgba(245,34,45,0.4) 100%)' 
+                : 'linear-gradient(135deg, rgba(24,144,255,0.2) 0%, rgba(24,144,255,0.4) 100%)',
+              // 设置背景颜色为透明，确保渐变效果可以显示
+              backgroundColor: 'transparent',
+              // 确保边框颜色与渐变协调
+              borderColor: statisticType === 'red' ? 'rgba(245,34,45,0.4)' : 'rgba(24,144,255,0.4)',
+              // 添加圆角
+              borderRadius: '12px',
+              // 3d效果
+              transformStyle: 'preserve-3d',
+              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+              // 初始状态
+              transform: 'perspective(1000px) translateZ(0)',
+              // 增强厚度视觉效果 - 多层阴影模拟真实厚度
+              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+              // 增强边框效果，进一步提升厚度感
+              border: '1px solid rgba(0, 0, 0, 0.1)',
+              cursor: 'pointer',
               height: '100%',
               minHeight: '120px'
             }}
             onMouseEnter={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'translateY(-4px)';
-              card.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
-            }}
-            onMouseMove={(e) => {
-              // 简化3D效果，只保留上下浮动，去掉旋转
-              const card = e.currentTarget;
-              card.style.transform = 'translateY(-4px)';
+              card.style.transform = 'perspective(1000px) translateZ(10px)';
+              card.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+              card.style.cursor = 'pointer';
             }}
             onMouseLeave={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'translateY(0)';
-              card.style.boxShadow = '';
+              card.style.transform = 'perspective(1000px) translateZ(0)';
+              card.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+              card.style.cursor = 'pointer';
             }}
           >
             <Statistic
-              title="总次数"
+              title={<div style={{ color: '#ffffff', fontWeight: 'bold', textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>总次数</div>}
               value={statisticType === 'red' 
                 ? Object.values(redBallFrequency).reduce((sum, item) => sum + item.count, 0) 
                 : Object.values(blueBallFrequency).reduce((sum, item) => sum + item.count, 0)}
@@ -1896,43 +1885,53 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           <Card 
             variant="outlined"
             style={{
-              background: statisticType === 'red' 
-                ? 'linear-gradient(135deg, #ffffff 0%, rgba(245, 34, 45, 0.025) 100%)' 
-                : 'linear-gradient(135deg, #ffffff 0%, rgba(24, 144, 255, 0.025) 100%)',
-              border: `1px solid ${statisticType === 'red' ? 'rgba(245, 34, 45, 0.1)' : 'rgba(24, 144, 255, 0.1)'}`,
-              borderRadius: '6px',
-              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-              cursor: 'pointer',
-              transformStyle: 'preserve-3d',
-              perspective: '1000px',
               width: '100%',
+              marginBottom: '16px',
+              // 增大内边距，让内容离边缘更远
+              padding: '20px',
+              // 随切换按钮颜色变化的渐变背景，从左上角到右下角逐渐加深
+              backgroundImage: statisticType === 'red' 
+                ? 'linear-gradient(135deg, rgba(245,34,45,0.2) 0%, rgba(245,34,45,0.4) 100%)' 
+                : 'linear-gradient(135deg, rgba(24,144,255,0.2) 0%, rgba(24,144,255,0.4) 100%)',
+              // 设置背景颜色为透明，确保渐变效果可以显示
+              backgroundColor: 'transparent',
+              // 确保边框颜色与渐变协调
+              borderColor: statisticType === 'red' ? 'rgba(245,34,45,0.4)' : 'rgba(24,144,255,0.4)',
+              // 添加圆角
+              borderRadius: '12px',
+              // 3d效果
+              transformStyle: 'preserve-3d',
+              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+              // 初始状态
+              transform: 'perspective(1000px) translateZ(0)',
+              // 增强厚度视觉效果 - 多层阴影模拟真实厚度
+              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+              // 增强边框效果，进一步提升厚度感
+              border: '1px solid rgba(0, 0, 0, 0.1)',
+              cursor: 'pointer',
               height: '100%',
               minHeight: '120px'
             }}
             onMouseEnter={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'translateY(-4px)';
-              card.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
-            }}
-            onMouseMove={(e) => {
-              // 简化3D效果，只保留上下浮动，去掉旋转
-              const card = e.currentTarget;
-              card.style.transform = 'translateY(-4px)';
+              card.style.transform = 'perspective(1000px) translateZ(10px)';
+              card.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+              card.style.cursor = 'pointer';
             }}
             onMouseLeave={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'translateY(0)';
-              card.style.boxShadow = '';
+              card.style.transform = 'perspective(1000px) translateZ(0)';
+              card.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+              card.style.cursor = 'pointer';
             }}
           >
             <Statistic
-              title="平均"
+              title={<div style={{ color: '#ffffff', fontWeight: 'bold', textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>平均</div>}
               value={statisticType === 'red' 
                 ? Math.round(Object.values(redBallFrequency).reduce((sum, item) => sum + item.count, 0) / 33 * 10) / 10 
                 : Math.round(Object.values(blueBallFrequency).reduce((sum, item) => sum + item.count, 0) / 16 * 10) / 10}
               prefix={<PieChartOutlined />}
               valueStyle={{ color: statisticType === 'red' ? '#f5222d' : '#1890ff', fontWeight: 'bold' }}
-
             />
           </Card>
         </div>
@@ -1942,37 +1941,48 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           <Card 
             variant="outlined"
             style={{
-              background: statisticType === 'red' 
-                ? 'linear-gradient(135deg, #ffffff 0%, rgba(245, 34, 45, 0.025) 100%)' 
-                : 'linear-gradient(135deg, #ffffff 0%, rgba(24, 144, 255, 0.025) 100%)',
-              border: `1px solid ${statisticType === 'red' ? 'rgba(245, 34, 45, 0.1)' : 'rgba(24, 144, 255, 0.1)'}`,
-              borderRadius: '6px',
-              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-              cursor: 'pointer',
-              transformStyle: 'preserve-3d',
-              perspective: '1000px',
               width: '100%',
+              marginBottom: '16px',
+              // 增大内边距，让内容离边缘更远
+              padding: '20px',
+              // 随切换按钮颜色变化的渐变背景，从左上角到右下角逐渐加深
+              backgroundImage: statisticType === 'red' 
+                ? 'linear-gradient(135deg, rgba(245,34,45,0.2) 0%, rgba(245,34,45,0.4) 100%)' 
+                : 'linear-gradient(135deg, rgba(24,144,255,0.2) 0%, rgba(24,144,255,0.4) 100%)',
+              // 设置背景颜色为透明，确保渐变效果可以显示
+              backgroundColor: 'transparent',
+              // 确保边框颜色与渐变协调
+              borderColor: statisticType === 'red' ? 'rgba(245,34,45,0.4)' : 'rgba(24,144,255,0.4)',
+              // 添加圆角
+              borderRadius: '12px',
+              // 3d效果
+              transformStyle: 'preserve-3d',
+              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+              // 初始状态
+              transform: 'perspective(1000px) translateZ(0)',
+              // 增强厚度视觉效果 - 多层阴影模拟真实厚度
+              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+              // 增强边框效果，进一步提升厚度感
+              border: '1px solid rgba(0, 0, 0, 0.1)',
+              cursor: 'pointer',
               height: '100%',
               minHeight: '120px'
             }}
             onMouseEnter={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'translateY(-4px)';
-              card.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
-            }}
-            onMouseMove={(e) => {
-              // 简化3D效果，只保留上下浮动，去掉旋转
-              const card = e.currentTarget;
-              card.style.transform = 'translateY(-4px)';
+              card.style.transform = 'perspective(1000px) translateZ(10px)';
+              card.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+              card.style.cursor = 'pointer';
             }}
             onMouseLeave={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'translateY(0)';
-              card.style.boxShadow = '';
+              card.style.transform = 'perspective(1000px) translateZ(0)';
+              card.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+              card.style.cursor = 'pointer';
             }}
           >
             <Statistic
-              title="覆盖率"
+              title={<div style={{ color: '#ffffff', fontWeight: 'bold', textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>覆盖率</div>}
               value={statisticType === 'red' 
                 ? Object.keys(redBallFrequency).length 
                 : Object.keys(blueBallFrequency).length}
@@ -1988,45 +1998,50 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           <Card 
             variant="outlined"
             style={{
-              background: statisticType === 'red' 
-                ? 'linear-gradient(135deg, #ffffff 0%, rgba(245, 34, 45, 0.025) 100%)' 
-                : 'linear-gradient(135deg, #ffffff 0%, rgba(24, 144, 255, 0.025) 100%)',
-              border: `1px solid ${statisticType === 'red' ? 'rgba(245, 34, 45, 0.1)' : 'rgba(24, 144, 255, 0.1)'}`,
-              borderRadius: '6px',
-              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-              cursor: 'pointer',
-              transformStyle: 'preserve-3d',
-              perspective: '1000px',
               width: '100%',
+              marginBottom: '16px',
+              // 增大内边距，让内容离边缘更远
+              padding: '20px',
+              // 随切换按钮颜色变化的渐变背景，从左上角到右下角逐渐加深
+              backgroundImage: statisticType === 'red' 
+                ? 'linear-gradient(135deg, rgba(245,34,45,0.2) 0%, rgba(245,34,45,0.4) 100%)' 
+                : 'linear-gradient(135deg, rgba(24,144,255,0.2) 0%, rgba(24,144,255,0.4) 100%)',
+              // 设置背景颜色为透明，确保渐变效果可以显示
+              backgroundColor: 'transparent',
+              // 确保边框颜色与渐变协调
+              borderColor: statisticType === 'red' ? 'rgba(245,34,45,0.4)' : 'rgba(24,144,255,0.4)',
+              // 添加圆角
+              borderRadius: '12px',
+              // 3d效果
+              transformStyle: 'preserve-3d',
+              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+              // 初始状态
+              transform: 'perspective(1000px) translateZ(0)',
+              // 增强厚度视觉效果 - 多层阴影模拟真实厚度
+              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+              // 增强边框效果，进一步提升厚度感
+              border: '1px solid rgba(0, 0, 0, 0.1)',
+              cursor: 'pointer',
               height: '100%',
               minHeight: '120px'
             }}
             onMouseEnter={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'translateY(-4px) rotateX(0deg) rotateY(0deg)';
-              card.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
-            }}
-            onMouseMove={(e) => {
-              const card = e.currentTarget;
-              const rect = card.getBoundingClientRect();
-              const x = e.clientX - rect.left;
-              const y = e.clientY - rect.top;
-              const centerX = rect.width / 2;
-              const centerY = rect.height / 2;
-              const rotateX = (y - centerY) / 10;
-              const rotateY = (centerX - x) / 10;
-              card.style.transform = `translateY(-4px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+              card.style.transform = 'perspective(1000px) translateZ(10px)';
+              card.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+              card.style.cursor = 'pointer';
             }}
             onMouseLeave={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'translateY(0) rotateX(0deg) rotateY(0deg)';
-              card.style.boxShadow = '';
+              card.style.transform = 'perspective(1000px) translateZ(0)';
+              card.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+              card.style.cursor = 'pointer';
             }}
           >
             <Statistic
-              title="总和"
+              title={<div style={{ color: '#ffffff', fontWeight: 'bold', textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>总和</div>}
               value={statisticType === 'red' ? winningNumbersSum.redSum : winningNumbersSum.blueSum}
-              prefix={<StarFilled />}
+              prefix={<PieChartOutlined />}
               valueStyle={{ color: statisticType === 'red' ? '#f5222d' : '#1890ff', fontWeight: 'bold' }}
             />
           </Card>
@@ -2048,9 +2063,9 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                         onClick={() => setShowOnlyLastWinning(!showOnlyLastWinning)}
                         style={{
                           padding: '8px',
-                          backgroundColor: showOnlyLastWinning ? '#f5222d' : '#fff',
-                          color: showOnlyLastWinning ? '#fff' : '#f5222d',
-                          border: '1px solid #f5222d',
+                          backgroundColor: 'transparent',
+                          color: '#f5222d',
+                          border: 'none',
                           borderRadius: '4px',
                           cursor: 'pointer',
                           fontSize: '16px',
@@ -2065,7 +2080,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                       </button>
                     </div>
                   } 
-                  variant="outlined"
+                  style={{ backgroundColor: 'transparent', border: 'none' }}
                 >
                   {renderFrequencyList(redBallFrequency)}
                 </Card>
@@ -2075,34 +2090,21 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           {activeTabKey === '3' && statisticType === 'red' && (
             <Row gutter={[16, 16]}>
               <Col xs={24} sm={24} md={12} lg={12} xl={8}>
-                <Card title="奇偶分布" variant="outlined">
+                <Card 
+                  title={<div style={{ textAlign: 'center' }}>奇偶分布</div>} style={{ backgroundColor: 'transparent', border: 'none' }}>
                   {renderDistributionList(redBallOddEven)}
                 </Card>
               </Col>
               <Col xs={24} sm={24} md={12} lg={12} xl={8}>
                 <Card 
-                  title={
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span>大小分布</span>
-                      <Tooltip 
-                        title="红球小号范围：1-16，大号范围：17-33" 
-                        placement="top"
-                      >
-                        <InfoCircleOutlined style={{ 
-                          cursor: 'default', 
-                          color: '#999', 
-                          fontSize: '16px',
-                        }} />
-                      </Tooltip>
-                    </div>
-                  } 
-                  variant="outlined"
+                  title={<div style={{ textAlign: 'center' }}>大小分布</div>} 
+                  style={{ backgroundColor: 'transparent', border: 'none' }}
                 >
-                  {renderDistributionList(redBallSize)}
+                  {renderDistributionList(redBallSize, 'red')}
                 </Card>
               </Col>
               <Col xs={24} sm={24} md={12} lg={12} xl={8}>
-                <Card title="最后一期" variant="outlined">
+                <Card title={<div style={{ textAlign: 'center' }}>最后一期</div>} style={{ backgroundColor: 'transparent', border: 'none' }}>
                   {renderDistributionList(lastWinningNumbersTotalRed)}
                 </Card>
               </Col>
@@ -2119,9 +2121,9 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                         onClick={() => setShowOnlyLastWinning(!showOnlyLastWinning)}
                         style={{
                           padding: '8px',
-                          backgroundColor: showOnlyLastWinning ? '#1890ff' : '#fff',
-                          color: showOnlyLastWinning ? '#fff' : '#1890ff',
-                          border: '1px solid #1890ff',
+                          backgroundColor: 'transparent',
+                          color: '#1890ff',
+                          border: 'none',
                           borderRadius: '4px',
                           cursor: 'pointer',
                           fontSize: '16px',
@@ -2136,7 +2138,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                       </button>
                     </div>
                   } 
-                  variant="outlined"
+                  style={{ backgroundColor: 'transparent', border: 'none' }}
                 >
                   {renderFrequencyList(blueBallFrequency)}
                 </Card>
@@ -2146,34 +2148,20 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           {activeTabKey === '4' && statisticType === 'blue' && (
             <Row gutter={[16, 16]}>
               <Col xs={24} sm={24} md={12} lg={12} xl={8}>
-                <Card title="奇偶分布" variant="outlined">
+                <Card title={<div style={{ textAlign: 'center' }}>奇偶分布</div>} style={{ backgroundColor: 'transparent', border: 'none' }}>
                   {renderDistributionList(blueBallOddEven)}
                 </Card>
               </Col>
               <Col xs={24} sm={24} md={12} lg={12} xl={8}>
                 <Card 
-                  title={
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span>大小分布</span>
-                      <Tooltip 
-                        title="蓝球小号范围：1-8，大号范围：9-16" 
-                        placement="top"
-                      >
-                        <InfoCircleOutlined style={{ 
-                          cursor: 'default', 
-                          color: '#999', 
-                          fontSize: '16px',
-                        }} />
-                      </Tooltip>
-                    </div>
-                  } 
-                  variant="outlined"
+                  title={<div style={{ textAlign: 'center' }}>大小分布</div>} 
+                  style={{ backgroundColor: 'transparent', border: 'none' }}
                 >
-                  {renderDistributionList(blueBallSize)}
+                  {renderDistributionList(blueBallSize, 'blue')}
                 </Card>
               </Col>
               <Col xs={24} sm={24} md={12} lg={12} xl={8}>
-                <Card title="最后一期" variant="outlined">
+                <Card title={<div style={{ textAlign: 'center' }}>最后一期</div>} style={{ backgroundColor: 'transparent', border: 'none' }}>
                   {renderDistributionList(lastWinningNumbersTotalBlue)}
                 </Card>
               </Col>
@@ -2189,9 +2177,9 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             position: 'fixed',
             left: `${tabContainerPosition.x}px`,
             top: `${tabContainerPosition.y}px`,
-            backgroundColor: '#fff',
+            backgroundColor: '#2a2a2a',
             borderRadius: '24px',
-            boxShadow: '0 -2px 12px rgba(0, 0, 0, 0.15)',
+            boxShadow: '0 -2px 12px rgba(0, 0, 0, 0.5)',
             padding: '8px 24px',
             width: 'fit-content',
             minWidth: '400px',
@@ -2217,7 +2205,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                     <div style={{
                       display: 'inline-block',
                       color: activeTabKey === '1' ? '#fff' : '#f5222d',
-                      backgroundColor: activeTabKey === '1' ? '#f5222d' : '#f0f0f0',
+                      backgroundColor: activeTabKey === '1' ? '#f5222d' : '#3a3a3a',
                       padding: '6px 12px',
                       borderRadius: '16px',
                       marginRight: '8px',
@@ -2368,8 +2356,8 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               width: '50px',
               height: '50px',
               borderRadius: '50%',
-              backgroundColor: '#fff',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+              backgroundColor: 'transparent',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
@@ -2403,9 +2391,9 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               left: `${sliderPosition.x}px`,
               top: `${sliderPosition.y}px`,
               padding: '16px', 
-              backgroundColor: '#fff', 
+              backgroundColor: '#2a2a2a', 
               borderRadius: 6, 
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
               textAlign: 'center',
               cursor: isSliderDragging ? 'grabbing' : 'grab',
               userSelect: 'none',
@@ -2419,45 +2407,19 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             onMouseDown={handleSliderMouseDown}
             onDoubleClick={handleSliderDoubleClick}
             >
-          {/* 缩放手柄 */}
-          {isSliderFixed && (
-            <div style={{
-              position: 'absolute',
-              right: '-8px',
-              bottom: '-8px',
-              width: '16px',
-              height: '16px',
-              backgroundColor: '#fff',
-              border: '1px solid #d9d9d9',
-              borderRadius: '50%',
-              cursor: 'nwse-resize',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-              zIndex: 1000
-            }}
-            onMouseDown={handleResizeStart}
-            />
-          )}
-          <div style={{ 
-            display: 'flex', 
-            gap: '16px',
-            marginBottom: 16 
-          }}>
-            {/* 滑块div */}
-            <div style={{ 
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center'
-            }}>
+
               <div style={{ 
                 position: 'relative', 
                 width: '100%',
-                padding: '16px 20px',
-                background: statisticType === 'red' 
-                  ? 'linear-gradient(135deg, rgba(245, 34, 45, 0.05) 0%, rgba(245, 34, 45, 0.15) 100%)' 
-                  : 'linear-gradient(135deg, rgba(24, 144, 255, 0.05) 0%, rgba(24, 144, 255, 0.15) 100%)',
-                borderRadius: 6
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                padding: '0 20px',
+                boxSizing: 'border-box'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: 12 }}>
                   {/* 快退图标 - 最左侧，带圆圈边框 */}
                   <div style={{
                     cursor: sliderRange[0] <= 0 ? 'not-allowed' : 'pointer',
@@ -2474,7 +2436,8 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                     borderColor: sliderRange[0] <= 0 ? '#d9d9d9' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
                     padding: 0,
                     margin: 0,
-                    opacity: sliderRange[0] <= 0 ? 0.5 : 1
+                    opacity: sliderRange[0] <= 0 ? 0.5 : 1,
+                    backgroundColor: 'transparent'
                   }}
                   onClick={() => {
                     if (sliderRange[0] > 0) {
@@ -2504,7 +2467,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                         height: '32px',
                         borderRadius: '50%',
                         border: `1px solid ${sliderRange[0] <= 0 ? '#d9d9d9' : (statisticType === 'red' ? '#f5222d' : '#1890ff')}`,
-                        backgroundColor: '#fff',
+                        backgroundColor: 'transparent',
                         color: sliderRange[0] <= 0 ? '#d9d9d9' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
                         cursor: sliderRange[0] <= 0 ? 'not-allowed' : 'pointer',
                         display: 'flex',
@@ -2535,7 +2498,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                         height: '32px',
                         borderRadius: '50%',
                         border: `1px solid ${statisticType === 'red' ? '#f5222d' : '#1890ff'}`,
-                        backgroundColor: '#fff',
+                        backgroundColor: 'transparent',
                         color: statisticType === 'red' ? '#f5222d' : '#1890ff',
                         cursor: 'pointer',
                         display: 'flex',
@@ -2567,7 +2530,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                         height: '32px',
                         borderRadius: '50%',
                         border: `1px solid ${statisticType === 'red' ? '#f5222d' : '#1890ff'}`,
-                        backgroundColor: '#fff',
+                        backgroundColor: 'transparent',
                         color: statisticType === 'red' ? '#f5222d' : '#1890ff',
                         cursor: 'pointer',
                         display: 'flex',
@@ -2597,7 +2560,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                         height: '32px',
                         borderRadius: '50%',
                         border: `1px solid ${sliderRange[1] >= allRecords.length - 1 ? '#d9d9d9' : (statisticType === 'red' ? '#f5222d' : '#1890ff')}`,
-                        backgroundColor: '#fff',
+                        backgroundColor: 'transparent',
                         color: sliderRange[1] >= allRecords.length - 1 ? '#d9d9d9' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
                         cursor: sliderRange[1] >= allRecords.length - 1 ? 'not-allowed' : 'pointer',
                         display: 'flex',
@@ -2629,7 +2592,8 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                     borderColor: sliderRange[1] >= allRecords.length - 1 ? '#d9d9d9' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
                     padding: 0,
                     margin: 0,
-                    opacity: sliderRange[1] >= allRecords.length - 1 ? 0.5 : 1
+                    opacity: sliderRange[1] >= allRecords.length - 1 ? 0.5 : 1,
+                    backgroundColor: 'transparent'
                   }}
                   onClick={() => {
                     if (sliderRange[1] < allRecords.length - 1) {
@@ -2690,31 +2654,17 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                     ]}
                     handleStyle={[
                       {
-                        borderWidth: 2,
-                        borderColor: statisticType === 'red' ? '#f5222d' : '#1890ff',
-                        backgroundColor: statisticType === 'red' ? '#f5222d' : '#1890ff',
-                        width: '12px',
-                        height: '12px',
-                        borderRadius: '50%',
-                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
+                        backgroundColor: 'transparent',
+                        borderColor: statisticType === 'red' ? '#f5222d' : '#1890ff'
                       },
                       {
-                        borderWidth: 2,
-                        borderColor: statisticType === 'red' ? '#f5222d' : '#1890ff',
-                        backgroundColor: statisticType === 'red' ? '#f5222d' : '#1890ff',
-                        width: '12px',
-                        height: '12px',
-                        borderRadius: '50%',
-                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
+                        backgroundColor: 'transparent',
+                        borderColor: statisticType === 'red' ? '#f5222d' : '#1890ff'
                       }
                     ]}
                   />
                 </div>
               </div>
-            </div>
-            
-
-          </div>
             </div>
           )}
         </>
@@ -2730,14 +2680,14 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center',
-        backgroundColor: '#fff',
+        backgroundColor: '#000',
         zIndex: 1000,
         padding: '0 20px',
         boxSizing: 'border-box'
       }}>
         {/* 图标 - 点击回到频率页面 */}
-        <AppleFilled 
-          style={{ fontSize: '24px', color: '#000', cursor: 'pointer', marginRight: '20px' }} 
+        <CloudFilled 
+          style={{ fontSize: '24px', color: '#fff', cursor: 'pointer', marginRight: '20px' }} 
           onClick={() => setActiveTabKey(statisticType === 'red' ? '1' : '2')}
         />
         {/* 三个Tab名称（菜单）放在图标右侧，顺序：频率统计，分组统计，分布统计 */}
@@ -2751,7 +2701,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           <div 
             style={{ 
               fontSize: '14px', 
-              color: '#000',
+              color: '#fff',
               cursor: 'pointer',
               fontWeight: (statisticType === 'red' && activeTabKey === '1') || (statisticType === 'blue' && activeTabKey === '2') ? 'bold' : 'normal',
               transition: 'color 0.3s ease',
@@ -2767,7 +2717,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           <div 
             style={{ 
               fontSize: '14px', 
-              color: '#000',
+              color: '#fff',
               cursor: 'pointer',
               fontWeight: (statisticType === 'red' && activeTabKey === '5') || (statisticType === 'blue' && activeTabKey === '6') ? 'bold' : 'normal',
               transition: 'color 0.3s ease',
@@ -2783,7 +2733,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           <div 
             style={{ 
               fontSize: '14px', 
-              color: '#000',
+              color: '#fff',
               cursor: 'pointer',
               fontWeight: (statisticType === 'red' && activeTabKey === '3') || (statisticType === 'blue' && activeTabKey === '4') ? 'bold' : 'normal',
               transition: 'color 0.3s ease',
@@ -2797,7 +2747,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           </div>
         </div>
       </footer>
-    </div>
+    </>
   );
 };
 

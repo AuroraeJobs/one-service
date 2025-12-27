@@ -11,11 +11,13 @@ import {
   AppstoreOutlined,
   ClearOutlined,
   AppstoreAddOutlined,
-  AppleFilled,
+  CloudFilled,
   HarmonyOSOutlined,
   OpenAIOutlined,
   LinuxOutlined,
-  DribbbleOutlined
+  DribbbleOutlined,
+  HeartOutlined,
+  ExperimentOutlined
 } from '@ant-design/icons';
 import { recordApi } from '../services/api';
 // 导入 ECharts
@@ -50,15 +52,15 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
   const [isHiddenIconDragging, setIsHiddenIconDragging] = useState(false);
   // 滑块隐藏图标初始位置，放在切换按钮上方，避免被页脚遮挡
   const [hiddenIconPosition, setHiddenIconPosition] = useState({
-    x: window.innerWidth - 85, // 右侧25px，圆心在window.innerWidth - 60px，与切换按钮中心线对齐
-    y: window.innerHeight - 180 // 底部上移，位于切换按钮上方，间距60px，避免被页脚遮挡
+    x: window.innerWidth - 90, // 右侧20px，圆心在window.innerWidth - 65px
+    y: window.innerHeight - 200 // 底部上移，位于切换按钮上方，间距60px
   });
   const [hiddenIconDragOffset, setHiddenIconDragOffset] = useState({ x: 0, y: 0 });
   
-  // 切换按钮初始位置，放在右下角，避免被页脚遮挡
-  const [buttonPosition, setButtonPosition] = useState({
-    x: window.innerWidth - 100, // 右侧20px，竖直中心线在window.innerWidth - 60px
-    y: window.innerHeight - 120 // 底部上移70px，避免被页脚遮挡
+  // 切换按钮初始位置，放在右下角，上移避免被页脚挡住
+  const [buttonPosition, setButtonPosition] = useState({ 
+    x: window.innerWidth - 105, // 右侧20px，竖直中心线在window.innerWidth - 65px
+    y: window.innerHeight - 140 // 底部上移70px，避免被页脚挡住
   });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   
@@ -72,14 +74,11 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
   const [sliderDragOffset, setSliderDragOffset] = useState({ x: 0, y: 0 });
   // 控制滑块是否处于固定定位状态 - 默认始终固定定位
   const [isSliderFixed, setIsSliderFixed] = useState(true);
-  // 滑块缩放状态
-  const [isResizing, setIsResizing] = useState(false);
-  // 初始化滑块尺寸为页面宽度的1/3
-  const [sliderSize, setSliderSize] = useState({ 
+  // 固定滑块尺寸为页面宽度的1/3
+  const sliderSize = { 
     width: window.innerWidth / 3, 
     height: 150 
-  });
-  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  };
   // 滑块隐藏状态 - 默认隐藏
   const [isSliderHidden, setIsSliderHidden] = useState(true);
   // 滑块双击隐藏事件
@@ -99,18 +98,19 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
   const [selectorPosition, setSelectorPosition] = useState({ x: 200, y: 0 }); // y值设为0，选择器顶部紧贴视口顶部
   // 初始位置在滑块按钮上方
   const [floatingButtonPosition, setFloatingButtonPosition] = useState({
-    x: window.innerWidth - 85, // 圆心在window.innerWidth - 60px，与滑块按钮中心线对齐
-    y: window.innerHeight - 240 // 保持原位置，不移动
+    x: window.innerWidth - 90, // 右侧20px，圆心在window.innerWidth - 65px
+    y: window.innerHeight - 260 // 滑块隐藏图标上方60px
   });
   const [selectorDragOffset, setSelectorDragOffset] = useState({ x: 0, y: 0 });
   const [buttonDragOffset, setButtonDragOffset] = useState({ x: 0, y: 0 });
   // Tab容器拖动状态管理
   const [isTabContainerDragging, setIsTabContainerDragging] = useState(false);
   const [tabContainerPosition, setTabContainerPosition] = useState({
-    x: window.innerWidth / 2 - 200, // 调整位置，使第二个Tab中心与页脚图标中心对齐
+    x: window.innerWidth / 2 - 200, // 初始居中，宽度约400px
     y: window.innerHeight - 140 // 底部上方140px，再上移20px
   });
   const [tabContainerDragOffset, setTabContainerDragOffset] = useState({ x: 0, y: 0 });
+
   // 图表数据状态 - 存储选中号码每期的累计次数
   const [chartData, setChartData] = useState<ChartDataItem[]>([]);
   // 宁荣两府数据 - 存储每期的奇偶号码个数
@@ -119,8 +119,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
   const [oddEvenCombinationData, setOddEvenCombinationData] = useState<Array<{ combination: string; count: number }>>([]);
   // 每期奇偶组合累计次数数据 - 存储每期每个组合的累计出现次数
   const [oddEvenCombinationAccumulatedData, setOddEvenCombinationAccumulatedData] = useState<Array<{ period: number; combinations: { [key: string]: number } }>>([]);
-  // 卦象统计数据 - 存储每个卦出现的次数
-  const [hexagramCountData, setHexagramCountData] = useState<Array<{ hexagram: string; count: number }>>([]);
+
   // 能量分析数据 - 存储每期的号码总和
   const [sumData, setSumData] = useState<Array<{ period: number; sum: number }>>([]);
   // 总和结果统计数据 - 存储每个总和结果出现的次数
@@ -130,12 +129,23 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
   // 当前显示的组合类型
   const [currentCombination, setCurrentCombination] = useState<string>('3奇3偶');
   
+  // 位置分析数据 - 存储每个位置上每个号码出现的次数
+  // 红球有6个位置，蓝球有1个位置
+  interface PositionAnalysisItem {
+    position: number;
+    numberCounts: Record<string, number>;
+  }
+  const [positionAnalysisData, setPositionAnalysisData] = useState<PositionAnalysisItem[]>([]);
+  
+  // 每个号码累计出现次数数据
+  const [numberAccumulatedCountData, setNumberAccumulatedCountData] = useState<Array<{ number: string; count: number }>>([]);
+  
   // 当统计类型切换时，确保当前组合类型在可选范围内
   useEffect(() => {
     let allPossibleCombinations: string[];
     if (statisticType === 'red') {
       // 红球：7种组合（七大行星）
-      allPossibleCombinations = ['水星', '金星', '地球', '火星', '木星', '土星', '天王星'];
+      allPossibleCombinations = ['地球', '水星', '金星', '火星', '木星', '土星', '天王星'];
     } else {
       // 蓝球：2种组合（太阳和月亮）
       allPossibleCombinations = ['太阳', '月亮'];
@@ -158,8 +168,8 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
   const [isSumButtonDragging, setIsSumButtonDragging] = useState(false);
   // 南北半球切换按钮初始位置，放在显示/隐藏号码选择器按钮（期号滑块按钮）的正上方
   const [sumButtonPosition, setSumButtonPosition] = useState({
-    x: window.innerWidth - 100, // 右侧20px，与红蓝球切换按钮保持一致的右侧距离
-    y: window.innerHeight - 240 // 期号滑块按钮正上方，距离60px，与红蓝球切换按钮距离一致
+    x: window.innerWidth - 105, // 右侧20px，竖直中心线在window.innerWidth - 65px
+    y: window.innerHeight - 260 // 滑块隐藏图标上方60px
   });
   const [sumButtonDragOffset, setSumButtonDragOffset] = useState({ x: 0, y: 0 });
   
@@ -209,11 +219,19 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     // 定义奇偶组合到新名称的映射
     const combinationToNameMap: { [key: string]: string } = {};
     
+    // 初始化每个号码累计出现次数
+    const numberCount: { [key: string]: number } = {};
+    // 生成所有可能的号码列表并初始化为0
+    const allNumbers = generateNumberList();
+    allNumbers.forEach(number => {
+      numberCount[number] = 0;
+    });
+    
     if (statisticType === 'red') {
       // 红球：7种组合（七大行星）
-      combinationToNameMap['0奇6偶'] = '水星';
-      combinationToNameMap['1奇5偶'] = '金星';
-      combinationToNameMap['2奇4偶'] = '地球';
+      combinationToNameMap['0奇6偶'] = '地球';
+      combinationToNameMap['1奇5偶'] = '水星';
+      combinationToNameMap['2奇4偶'] = '金星';
       combinationToNameMap['3奇3偶'] = '火星';
       combinationToNameMap['4奇2偶'] = '木星';
       combinationToNameMap['5奇1偶'] = '土星';
@@ -278,6 +296,11 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           } else {
             oddCount++;
           }
+          
+          // 更新每个号码的累计出现次数
+          if (numberCount[number] !== undefined) {
+            numberCount[number]++;
+          }
         });
         
         // 记录本期的奇偶个数
@@ -335,16 +358,15 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     // 更新每期奇偶组合累计次数数据
     setOddEvenCombinationAccumulatedData(parsedOddEvenCombinationAccumulatedData);
     
-    // 转换卦象统计数据格式
-    const hexagramData = Object.entries(hexagramCount).map(([hexagram, count]) => ({
-      hexagram,
+    // 转换每个号码累计出现次数数据格式
+    const numberAccumulatedData = Object.entries(numberCount).map(([number, count]) => ({
+      number,
       count
     }))
-    .filter(item => item.count > 0) // 只显示出现过的卦
-    .sort((a, b) => b.count - a.count); // 按出现次数从大到小排序
+    .sort((a, b) => parseInt(a.number) - parseInt(b.number)); // 按号码从小到大排序
     
-    // 更新卦象统计数据
-    setHexagramCountData(hexagramData);
+    // 更新每个号码累计出现次数数据
+    setNumberAccumulatedCountData(numberAccumulatedData);
   };
 
   // 生成所有可能的号码列表
@@ -412,9 +434,9 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
         width: containerWidth,
         height: containerHeight,
         padding: containerPadding,
-        backgroundColor: '#fff',
+        backgroundColor: '#1a1a1a',
         borderRadius: '16px',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.12)',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
         overflow: 'auto',
         userSelect: 'none',
         touchAction: 'none',
@@ -426,14 +448,14 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       }}>
         {/* 顶部操作按钮 */}
         <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          gap: '12px',
-          marginBottom: '20px',
-          paddingBottom: '16px',
-          borderBottom: '1px solid #f0f0f0',
-          width: '100%'
-        }}>
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '12px',
+            marginBottom: '20px',
+            paddingBottom: '16px',
+            borderBottom: '1px solid #444',
+            width: '100%'
+          }}>
           {/* 全选按钮 */}
           <button 
             onClick={() => {
@@ -442,7 +464,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             }}
             style={{
               padding: '10px 24px',
-              backgroundColor: '#fff',
+              backgroundColor: '#3a3a3a',
               border: `1px solid ${currentColor}`,
               borderRadius: '24px',
               cursor: 'pointer',
@@ -453,7 +475,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               color: currentColor,
               fontSize: '14px',
               fontWeight: '500',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
             }}
             title="全选号码"
           >
@@ -465,7 +487,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             onClick={clearAllSelections}
             style={{
               padding: '10px 24px',
-              backgroundColor: '#fff',
+              backgroundColor: '#3a3a3a',
               border: `1px solid ${currentColor}`,
               borderRadius: '24px',
               cursor: 'pointer',
@@ -476,7 +498,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               color: currentColor,
               fontSize: '14px',
               fontWeight: '500',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
             }}
             title="清除所有选择"
           >
@@ -517,11 +539,11 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                     alignItems: 'center',
                     borderRadius: '18px', // 采用圆角矩形设计
                     cursor: 'pointer',
-                    backgroundColor: selectedNumbers.includes(number) ? currentColor : '#f8f9fa',
+                    backgroundColor: selectedNumbers.includes(number) ? currentColor : '#3a3a3a',
                     color: selectedNumbers.includes(number) ? '#fff' : currentColor,
                     border: selectedNumbers.includes(number) 
                       ? `2px solid ${currentColor}` 
-                      : `1px solid ${isRed ? '#ffccc7' : '#e6f7ff'}`,
+                      : `1px solid ${isRed ? '#4a2a2a' : '#2a2a4a'}`,
                     fontWeight: selectedNumbers.includes(number) ? 'bold' : 'normal',
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     flexShrink: 0,
@@ -530,7 +552,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                     padding: '0 12px',
                     boxShadow: selectedNumbers.includes(number) 
                       ? `0 4px 12px rgba(${isRed ? '245, 34, 45' : '24, 144, 255'}, 0.3)` 
-                      : '0 1px 3px rgba(0, 0, 0, 0.05)',
+                      : '0 1px 3px rgba(0, 0, 0, 0.3)',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis'
@@ -560,9 +582,9 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           padding: '40px', 
           textAlign: 'center', 
           color: '#999',
-          backgroundColor: '#fff',
+          backgroundColor: 'transparent',
           borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)' 
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)' 
         }}>
           请选择至少一个号码查看累计次数趋势图
         </div>
@@ -633,6 +655,10 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     
     // ECharts配置项
     const option = {
+      backgroundColor: 'transparent',
+      textStyle: {
+        color: '#fff'
+      },
       animation: false, // 关闭初始动画
       tooltip: {
         trigger: 'axis',
@@ -710,13 +736,13 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           },
           axisLine: {
             lineStyle: {
-              color: '#f0f0f0'
+              color: '#666'
             }
           },
           splitLine: {
             show: true,
             lineStyle: {
-              color: '#f0f0f0'
+              color: '#444'
             }
           },
           name: '期数',
@@ -734,13 +760,13 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           },
           axisLine: {
             lineStyle: {
-              color: '#f0f0f0'
+              color: '#666'
             }
           },
           splitLine: {
             show: true,
             lineStyle: {
-              color: '#f0f0f0'
+              color: '#444'
             }
           }
         }
@@ -751,9 +777,9 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     return (
       <div 
         style={{ 
-          backgroundColor: '#fff',
+          backgroundColor: 'transparent',
           borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
           padding: '16px',
           width: '100%',
           maxWidth: '100%',
@@ -769,121 +795,14 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             boxSizing: 'border-box'
           }}
         >
-          <ReactECharts option={option} style={{ height: '100%', width: '100%' }} />
+          <ReactECharts option={option} style={{ height: '100%', width: '100%', backgroundColor: 'transparent' }} />
         </div>
       </div>
     );
   };
 
   // 渲染卦象出现次数占比饼状图
-  const renderHexagramPieChart = () => {
-    if (hexagramCountData.length === 0) {
-      return (
-        <div style={{ 
-          padding: '40px', 
-          textAlign: 'center', 
-          color: '#999',
-          backgroundColor: '#fff',
-          borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)' 
-        }}>
-          暂无卦象数据
-        </div>
-      );
-    }
 
-    // 处理饼状图数据
-    const pieData = hexagramCountData.map(item => ({
-      name: item.hexagram,
-      value: item.count
-    }));
-    
-    // ECharts配置项
-    const option = {
-      animation: false, // 关闭初始动画
-      tooltip: {
-        trigger: 'item',
-        formatter: '{b}: {c}次 ({d}%)'
-      },
-      legend: {
-        orient: 'horizontal',
-        top: '5%',
-        left: 'center',
-        data: pieData.map(item => item.name),
-        type: 'scroll',
-        textStyle: {
-          fontSize: 12
-        },
-        itemWidth: 15,
-        itemHeight: 15,
-        maxWidth: 500,
-        pageIconSize: 12,
-        pageTextStyle: {
-          fontSize: 10
-        }
-      },
-      series: [
-        {
-          name: '卦象出现次数',
-          type: 'pie',
-          radius: ['40%', '70%'],
-          center: ['50%', '55%'],
-          avoidLabelOverlap: false,
-          itemStyle: {
-            borderRadius: 10,
-            borderColor: '#fff',
-            borderWidth: 2
-          },
-          label: {
-            show: true,
-            position: 'outside',
-            formatter: '{b}\n{c}次',
-            fontSize: 12,
-            fontWeight: 'normal'
-          },
-          emphasis: {
-            label: {
-              show: true,
-              fontSize: 16,
-              fontWeight: 'bold',
-              formatter: '{b}: {c}次 ({d}%)'
-            }
-          },
-          labelLine: {
-            show: true,
-            length: 20,
-            length2: 10
-          },
-          data: pieData
-        }
-      ]
-    };
-
-    return (
-      <div 
-        style={{ 
-          backgroundColor: '#fff',
-          borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)',
-          padding: '16px',
-          width: '100%',
-          maxWidth: '100%',
-          boxSizing: 'border-box'
-        }}
-      >
-        <div 
-          style={{ 
-            height: '500px',
-            width: '100%',
-            maxWidth: '100%',
-            boxSizing: 'border-box'
-          }}
-        >
-          <ReactECharts option={option} style={{ height: '100%', width: '100%' }} />
-        </div>
-      </div>
-    );
-  };
 
   // 渲染宁荣两府平滑曲线
   const renderOddEvenChart = () => {
@@ -894,9 +813,9 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           padding: '40px', 
           textAlign: 'center', 
           color: '#999',
-          backgroundColor: '#fff',
+          backgroundColor: 'transparent',
           borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)' 
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)' 
         }}>
           暂无宁荣两府数据
         </div>
@@ -915,9 +834,9 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           padding: '40px', 
           textAlign: 'center', 
           color: '#999',
-          backgroundColor: '#fff',
+          backgroundColor: 'transparent',
           borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)' 
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)' 
         }}>
           暂无宁荣两府数据
         </div>
@@ -931,9 +850,9 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           padding: '40px', 
           textAlign: 'center', 
           color: '#999',
-          backgroundColor: '#fff',
+          backgroundColor: 'transparent',
           borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)' 
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)' 
         }}>
           暂无宁荣两府数据
         </div>
@@ -946,12 +865,12 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     if (statisticType === 'red') {
       // 红球：7种组合（七大行星）
       // 红球颜色：红橙黄绿青蓝紫
-      nameToColorMap['水星'] = '#f5222d'; // 红
-      nameToColorMap['金星'] = '#fa8c16'; // 橙
-      nameToColorMap['地球'] = '#faad14'; // 黄
-      nameToColorMap['火星'] = '#52c41a'; // 绿
+      nameToColorMap['地球'] = '#1890ff'; // 蓝
+      nameToColorMap['水星'] = '#52c41a'; // 绿
+      nameToColorMap['金星'] = '#faad14'; // 黄
+      nameToColorMap['火星'] = '#f5222d'; // 红
       nameToColorMap['木星'] = '#13c2c2'; // 青
-      nameToColorMap['土星'] = '#1890ff'; // 蓝
+      nameToColorMap['土星'] = '#fa8c16'; // 橙
       nameToColorMap['天王星'] = '#722ed1'; // 紫
     } else {
       // 蓝球：2种组合（太阳和月亮）
@@ -963,17 +882,18 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     // 处理图表数据，转换为ECharts所需格式
     const periods = oddEvenCombinationAccumulatedData.map(item => item.period);
     
-    // 获取所有唯一的组合名称，并根据当前统计类型过滤
+    // 获取所有唯一的组合名称，并根据当前统计类型过滤和排序
     const allCombinations = oddEvenCombinationAccumulatedData.length > 0 
-      ? Object.keys(oddEvenCombinationAccumulatedData[0].combinations)
-          .filter(combination => {
-            if (statisticType === 'blue') {
-              // 蓝球模式只显示太阳和月亮
-              return combination === '太阳' || combination === '月亮';
-            }
-            // 红球模式显示所有组合
-            return true;
-          })
+      ? (() => {
+          const combinations = Object.keys(oddEvenCombinationAccumulatedData[0].combinations);
+          if (statisticType === 'blue') {
+            // 蓝球模式只显示太阳和月亮
+            return combinations.filter(comb => comb === '太阳' || comb === '月亮');
+          }
+          // 红球模式：按照指定顺序显示七大行星
+          const desiredOrder = ['地球', '水星', '金星', '火星', '木星', '土星', '天王星'];
+          return desiredOrder.filter(comb => combinations.includes(comb));
+        })()
       : [];
     
     // 准备系列数据
@@ -1024,6 +944,10 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     
     // ECharts配置项
     const option = {
+      backgroundColor: 'transparent',
+      textStyle: {
+        color: '#fff'
+      },
       animation: false, // 关闭初始动画
       tooltip: {
         trigger: 'axis',
@@ -1105,13 +1029,13 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           },
           axisLine: {
             lineStyle: {
-              color: '#f0f0f0'
+              color: '#666'
             }
           },
           splitLine: {
             show: true,
             lineStyle: {
-              color: '#f0f0f0'
+              color: '#444'
             }
           },
           name: '期数',
@@ -1129,13 +1053,13 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           },
           axisLine: {
             lineStyle: {
-              color: '#f0f0f0'
+              color: '#666'
             }
           },
           splitLine: {
             show: true,
             lineStyle: {
-              color: '#f0f0f0'
+              color: '#444'
             }
           },
           name: '累计次数',
@@ -1151,9 +1075,9 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     return (
       <div 
         style={{ 
-          backgroundColor: '#fff',
+          backgroundColor: 'transparent',
           borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
           padding: '16px',
           width: '100%',
           maxWidth: '100%',
@@ -1169,7 +1093,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             boxSizing: 'border-box'
           }}
         >
-          <ReactECharts option={option} style={{ height: '100%', width: '100%' }} />
+          <ReactECharts option={option} style={{ height: '100%', width: '100%', backgroundColor: 'transparent' }} />
         </div>
       </div>
     );
@@ -1183,9 +1107,9 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           padding: '40px', 
           textAlign: 'center', 
           color: '#999',
-          backgroundColor: '#fff',
+          backgroundColor: 'transparent',
           borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)' 
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)' 
         }}>
           暂无能量分析数据
         </div>
@@ -1213,6 +1137,10 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     
     // ECharts配置项
     const option = {
+      backgroundColor: 'transparent',
+      textStyle: {
+        color: '#fff'
+      },
       animation: false, // 关闭初始动画
       tooltip: {
         trigger: 'axis',
@@ -1294,13 +1222,13 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           },
           axisLine: {
             lineStyle: {
-              color: '#f0f0f0'
+              color: '#666'
             }
           },
           splitLine: {
             show: true,
             lineStyle: {
-              color: '#f0f0f0'
+              color: '#444'
             }
           },
           name: '期数',
@@ -1318,13 +1246,13 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           },
           axisLine: {
             lineStyle: {
-              color: '#f0f0f0'
+              color: '#666'
             }
           },
           splitLine: {
             show: true,
             lineStyle: {
-              color: '#f0f0f0'
+              color: '#444'
             }
           },
           name: '能量总和',
@@ -1369,9 +1297,9 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     return (
       <div 
         style={{ 
-          backgroundColor: '#fff',
+          backgroundColor: 'transparent',
           borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
           padding: '16px',
           width: '100%',
           maxWidth: '100%',
@@ -1387,7 +1315,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             boxSizing: 'border-box'
           }}
         >
-          <ReactECharts option={option} style={{ height: '100%', width: '100%' }} />
+          <ReactECharts option={option} style={{ height: '100%', width: '100%', backgroundColor: 'transparent' }} />
         </div>
       </div>
     );
@@ -1401,9 +1329,9 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           padding: '40px', 
           textAlign: 'center', 
           color: '#999',
-          backgroundColor: '#fff',
+          backgroundColor: 'transparent',
           borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)' 
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)' 
         }}>
           暂无能量分析数据
         </div>
@@ -1457,6 +1385,10 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     
     // ECharts配置项
     const option = {
+      backgroundColor: 'transparent',
+      textStyle: {
+        color: '#fff'
+      },
       animation: false, // 关闭初始动画
       tooltip: {
         trigger: 'axis',
@@ -1534,13 +1466,13 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           },
           axisLine: {
             lineStyle: {
-              color: '#f0f0f0'
+              color: '#666'
             }
           },
           splitLine: {
             show: true,
             lineStyle: {
-              color: '#f0f0f0'
+              color: '#444'
             }
           },
           name: '能量总和',
@@ -1558,13 +1490,13 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           },
           axisLine: {
             lineStyle: {
-              color: '#f0f0f0'
+              color: '#666'
             }
           },
           splitLine: {
             show: true,
             lineStyle: {
-              color: '#f0f0f0'
+              color: '#444'
             }
           },
           name: '出现次数',
@@ -1580,7 +1512,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           },
           axisLine: {
             lineStyle: {
-              color: '#f0f0f0'
+              color: '#666'
             }
           },
           splitLine: {
@@ -1644,9 +1576,9 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     return (
       <div 
         style={{ 
-          backgroundColor: '#fff',
+          backgroundColor: 'transparent',
           borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
           padding: '16px',
           width: '100%',
           maxWidth: '100%',
@@ -1663,8 +1595,200 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             boxSizing: 'border-box'
           }}
         >
-          <ReactECharts option={option} style={{ height: '100%', width: '100%' }} />
+          <ReactECharts option={option} style={{ height: '100%', width: '100%', backgroundColor: 'transparent' }} />
         </div>
+      </div>
+    );
+  };
+
+  // 预测功能状态管理
+  const [predictionRedNumbers, setPredictionRedNumbers] = useState<string[]>([]);
+  const [predictionBlueNumber, setPredictionBlueNumber] = useState<string>('');
+  const [isShaking, setIsShaking] = useState(false);
+
+  // 生成随机号码的函数
+  const generateRandomNumbers = () => {
+    // 生成红球：33选6，不重复
+    const redPool = Array.from({ length: 33 }, (_, i) => {
+      const num = i + 1;
+      return num < 10 ? `0${num}` : `${num}`;
+    });
+    
+    const redNumbers: string[] = [];
+    const shuffledRed = [...redPool].sort(() => Math.random() - 0.5);
+    for (let i = 0; i < 6; i++) {
+      redNumbers.push(shuffledRed[i]);
+    }
+    // 排序
+    redNumbers.sort((a, b) => parseInt(a) - parseInt(b));
+    
+    // 生成蓝球：16选1
+    const bluePool = Array.from({ length: 16 }, (_, i) => {
+      const num = i + 1;
+      return num < 10 ? `0${num}` : `${num}`;
+    });
+    const blueNumber = bluePool[Math.floor(Math.random() * bluePool.length)];
+    
+    return { redNumbers, blueNumber };
+  };
+
+  // 摇奖功能
+  const handleShake = () => {
+    setIsShaking(true);
+    
+    // 模拟摇奖过程，显示随机变化的号码
+    const shakeInterval = setInterval(() => {
+      const { redNumbers, blueNumber } = generateRandomNumbers();
+      setPredictionRedNumbers(redNumbers);
+      setPredictionBlueNumber(blueNumber);
+    }, 100);
+    
+    // 3秒后停止摇奖
+    setTimeout(() => {
+      clearInterval(shakeInterval);
+      const { redNumbers, blueNumber } = generateRandomNumbers();
+      setPredictionRedNumbers(redNumbers);
+      setPredictionBlueNumber(blueNumber);
+      setIsShaking(false);
+    }, 3000);
+  };
+
+  // 渲染预测tab内容
+  const renderPredictionStats = () => {
+    return (
+      <div style={{ 
+        padding: '48px 16px 16px',
+        width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box',
+        textAlign: 'center'
+      }}>
+        <div style={{ 
+          fontSize: '24px', 
+          fontWeight: 'bold', 
+          color: '#f5222d',
+          marginBottom: '30px'
+        }}>
+          摇奖预测
+        </div>
+        
+        {/* 摇奖结果显示区域 */}
+        <div style={{ 
+          marginBottom: '40px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '20px'
+        }}>
+          {/* 红球显示 */}
+          <div style={{ 
+            display: 'flex',
+            gap: '12px',
+            justifyContent: 'center',
+            flexWrap: 'wrap'
+          }}>
+            {predictionRedNumbers.map((num, index) => (
+              <div 
+                key={`red-${index}`}
+                style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '50%',
+                  backgroundColor: '#f5222d',
+                  color: '#fff',
+                  fontSize: '24px',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  boxShadow: '0 4px 12px rgba(245, 34, 45, 0.3)',
+                  animation: isShaking ? 'shake 0.5s infinite' : 'none',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                {num}
+              </div>
+            ))}
+          </div>
+          
+          {/* 蓝球显示 */}
+          <div style={{ 
+            display: 'flex',
+            gap: '12px',
+            justifyContent: 'center'
+          }}>
+            <div 
+              style={{
+                width: '80px',
+                height: '80px',
+                borderRadius: '50%',
+                backgroundColor: '#1890ff',
+                color: '#fff',
+                fontSize: '32px',
+                fontWeight: 'bold',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                boxShadow: '0 4px 12px rgba(24, 144, 255, 0.3)',
+                animation: isShaking ? 'shake 0.5s infinite' : 'none',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              {predictionBlueNumber}
+            </div>
+          </div>
+        </div>
+        
+        {/* 摇奖按钮 */}
+        <button
+          onClick={handleShake}
+          disabled={isShaking}
+          style={{
+            padding: '16px 48px',
+            fontSize: '18px',
+            fontWeight: 'bold',
+            backgroundColor: isShaking ? '#d9d9d9' : '#52c41a',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '32px',
+            cursor: isShaking ? 'not-allowed' : 'pointer',
+            transition: 'all 0.3s ease',
+            boxShadow: isShaking ? 'none' : '0 4px 16px rgba(82, 196, 26, 0.3)',
+            animation: isShaking ? 'pulse 1s infinite' : 'none'
+          }}
+        >
+          {isShaking ? '摇奖中...' : '开始摇奖'}
+        </button>
+        
+        {/* 摇奖说明 */}
+        <div style={{ 
+          marginTop: '40px',
+          fontSize: '14px', 
+          color: '#666',
+          maxWidth: '600px',
+          marginLeft: 'auto',
+          marginRight: 'auto',
+          lineHeight: '1.6'
+        }}>
+          <p>• 红球：从33个号码（01-33）中随机摇出6个</p>
+          <p>• 蓝球：从16个号码（01-16）中随机摇出1个</p>
+          <p>• 点击"开始摇奖"按钮即可生成随机号码</p>
+        </div>
+        
+        {/* 摇奖动画样式 */}
+        <style>{`
+          @keyframes shake {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            25% { transform: translateX(-10px) rotate(-5deg); }
+            50% { transform: translateX(10px) rotate(5deg); }
+            75% { transform: translateX(-10px) rotate(-5deg); }
+          }
+          
+          @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+          }
+        `}</style>
       </div>
     );
   };
@@ -1700,9 +1824,9 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       const combinationToNameMap: { [key: string]: string } = {};
       
       if (statisticType === 'red') {
-        combinationToNameMap['0奇6偶'] = '水星';
-        combinationToNameMap['1奇5偶'] = '金星';
-        combinationToNameMap['2奇4偶'] = '地球';
+        combinationToNameMap['0奇6偶'] = '地球';
+        combinationToNameMap['1奇5偶'] = '水星';
+        combinationToNameMap['2奇4偶'] = '金星';
         combinationToNameMap['3奇3偶'] = '火星';
         combinationToNameMap['4奇2偶'] = '木星';
         combinationToNameMap['5奇1偶'] = '土星';
@@ -1715,7 +1839,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       return combinationToNameMap[originalCombination] || originalCombination;
     };
 
-    // 计算红球对应的卦象
+    // 计算红球对应的卦名
     const calculateHexagram = (redNumbers: string[]) => {
       // 将每个红球号码转换为爻（1为阳，0为阴）
       // 红球号码顺序：第一位对应第一爻（最下面），第六位对应第六爻（最上面）
@@ -1725,8 +1849,8 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       });
       // 组合6个爻为卦象编码
       const hexagramCode = trigrams.join('');
-      // 返回对应的卦对象
-      return HEXAGRAMS[hexagramCode as keyof typeof HEXAGRAMS] || { name: '坤', symbol: '--\n--\n--\n--\n--\n--' };
+      // 返回对应的卦名
+      return HEXAGRAMS[hexagramCode as keyof typeof HEXAGRAMS]?.name || '坤';
     };
 
     // 计算蓝球的阴阳属性
@@ -1761,7 +1885,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           totalSum = parseInt(blueNumber);
         }
 
-        // 计算红球对应的卦象
+        // 计算红球对应的卦名
         const hexagram = calculateHexagram(redNumbers);
         
         // 计算蓝球的阴阳属性
@@ -1775,7 +1899,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           hexagram,
           blueYinYang
         };
-      }).filter(Boolean) as Array<{ period: number; redNumbers: string[]; blueNumber: string; totalSum: number; hexagram: { name: string; symbol: string }; blueYinYang: string }>;
+      }).filter(Boolean) as Array<{ period: number; redNumbers: string[]; blueNumber: string; totalSum: number; hexagram: string; blueYinYang: string }>;
     };
 
     // 根据滑块范围获取选定的记录
@@ -1803,6 +1927,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
           gap: '16px',
           justifyContent: 'center',
+          justifyItems: 'center',
           maxWidth: '1400px',
           margin: '0 auto'
         }}>
@@ -1820,23 +1945,23 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               width: '300px',
               height: '300px',
               borderRadius: '50%',
-              boxShadow: `0 12px 35px rgba(0, 0, 0, 0.25), inset 0 0 40px rgba(255, 255, 255, 0.25)`,
+              boxShadow: `0 12px 35px rgba(0, 0, 0, 0.5), inset 0 0 40px rgba(255, 255, 255, 0.1)`,
               boxSizing: 'border-box',
               position: 'relative',
               opacity: 0.95,
               overflow: 'hidden',
-              background: `radial-gradient(circle at 50% 50%, ${centerColor} 0%, #f5f5f5 65%, #e5e5e5 100%)`,
+              background: `radial-gradient(circle at 50% 50%, ${centerColor} 0%, #2a2a2a 65%, #1a1a1a 100%)`,
               transition: 'all 0.3s ease',
               cursor: 'pointer'
             }} onMouseEnter={(e) => {
               const target = e.currentTarget as HTMLElement;
               target.style.transform = 'scale(1.05)';
-              target.style.boxShadow = `0 15px 40px rgba(0, 0, 0, 0.3), inset 0 0 50px rgba(255, 255, 255, 0.35)`;
+              target.style.boxShadow = `0 15px 40px rgba(0, 0, 0, 0.6), inset 0 0 50px rgba(255, 255, 255, 0.15)`;
               target.style.opacity = '1';
             }} onMouseLeave={(e) => {
               const target = e.currentTarget as HTMLElement;
               target.style.transform = 'scale(1) rotate(0deg)';
-              target.style.boxShadow = `0 12px 35px rgba(0, 0, 0, 0.25), inset 0 0 40px rgba(255, 255, 255, 0.25)`;
+              target.style.boxShadow = `0 12px 35px rgba(0, 0, 0, 0.5), inset 0 0 40px rgba(255, 255, 255, 0.1)`;
               target.style.opacity = '0.95';
             }}>
               {/* 定义扩散动画 */}
@@ -1904,21 +2029,21 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                   }
                   @keyframes initialSpreadOut-blue {
                     0% {
-                      transform: translateY(-50%) scale(0.5);
+                      transform: translate(-50%, -50%) scale(0.5);
                       opacity: 0;
                     }
                     100% {
-                      transform: translateY(-50%) scale(1);
+                      transform: translateX(-50%) scale(1);
                       opacity: 1;
                     }
                   }
                 `}
               </style>
               
-              {/* 圆心文字显示 */}
+              {/* 圆心文字显示 - 整体上移 */}
               <div style={{
                 position: 'absolute',
-                top: '50%',
+                top: '45%',
                 left: '50%',
                 width: '150px',
                 height: '150px',
@@ -1963,23 +2088,9 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                   gap: '8px',
                   flexDirection: 'row'
                 }}>
-                  {/* 红球显示卦象（名称+符号），蓝球显示阴阳 */}
+                  {/* 红球显示卦名，蓝球显示阴阳 */}
                   {statisticType === 'red' ? (
-                    <>
-                      <span>{record.hexagram.name}</span>
-                      <div style={{
-                        fontSize: '10px',
-                        lineHeight: '0.4',
-                        whiteSpace: 'pre',
-                        textAlign: 'center',
-                        letterSpacing: '1px',
-                        fontWeight: 'bold',
-                        display: 'inline-block',
-                        verticalAlign: 'middle'
-                      }}>
-                        {record.hexagram.symbol}
-                      </div>
-                    </>
+                    <span>{record.hexagram}</span>
                   ) : (
                     <span>{record.blueYinYang}</span>
                   )}
@@ -2039,12 +2150,12 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                   );
                 })
               ) : (
-                // 蓝球模式，号码放在卡片右侧
+                // 蓝球模式，号码放在卡片底部
                 <div style={{
                   position: 'absolute',
-                  top: '50%',
-                  right: '10%',
-                  transform: 'translateY(-50%)',
+                  bottom: '10%',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
                   borderRadius: '50%',
                   width: '70px',
                   height: '70px',
@@ -2066,11 +2177,11 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                   animation: `initialSpreadOut-blue 1s ease-out forwards`
                 }} onMouseEnter={(e) => {
                   const target = e.currentTarget as HTMLElement;
-                  target.style.transform = 'translateY(-50%) scale(1.2) rotate(5deg)';
+                  target.style.transform = 'translateX(-50%) scale(1.2) rotate(-5deg)';
                   target.style.boxShadow = `0 15px 35px rgba(0, 0, 0, 0.35), inset 0 0 20px rgba(255, 255, 255, 0.5), inset 0 -15px 20px rgba(0, 0, 0, 0.15)`;
                 }} onMouseLeave={(e) => {
                   const target = e.currentTarget as HTMLElement;
-                  target.style.transform = 'translateY(-50%) scale(1) rotate(0deg)';
+                  target.style.transform = 'translateX(-50%) scale(1) rotate(0deg)';
                   target.style.boxShadow = `0 10px 25px rgba(0, 0, 0, 0.25), inset 0 0 15px rgba(255, 255, 255, 0.4), inset 0 -10px 15px rgba(0, 0, 0, 0.1)`;
                 }}>
                   {blueBallCharacterMap[record.blueNumber] || record.blueNumber}
@@ -2315,9 +2426,9 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     return (
       <div 
         style={{ 
-          backgroundColor: '#fff',
+          backgroundColor: 'transparent',
           borderRadius: '12px',
-          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.5)',
           padding: '20px',
           maxWidth: '100%', // 移除固定宽度，适应页面宽度
           boxSizing: 'border-box',
@@ -2325,8 +2436,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           marginLeft: 'auto',
           marginRight: 'auto',
           position: 'relative', // 用于定位右上角的所选个数
-          overflow: 'hidden',
-          background: 'linear-gradient(135deg, #fafafa 0%, #ffffff 100%)' // 添加轻微渐变背景
+          overflow: 'hidden'
         }}
       >
         {/* 右下角显示所选个数 */}
@@ -2409,9 +2519,9 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           padding: '40px', 
           textAlign: 'center', 
           color: '#999',
-          backgroundColor: '#fff',
+          backgroundColor: 'transparent',
           borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)' 
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)' 
         }}>
           暂无总和分析数据
         </div>
@@ -2554,7 +2664,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       if (!record) return null;
       
       // 解析中奖号码
-      let numbers: string[] = [];
+      const numbers: string[] = [];
       if (statisticType === 'red') {
         // 红球：前12位，每2位一个号码
         for (let i = 0; i < 12; i += 2) {
@@ -2615,12 +2725,12 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               width: '200px',
               height: '200px',
               borderRadius: '50%',
-              boxShadow: `0 12px 35px rgba(0, 0, 0, 0.25), inset 0 0 40px rgba(255, 255, 255, 0.25)`,
+              boxShadow: `0 12px 35px rgba(0, 0, 0, 0.5), inset 0 0 40px rgba(255, 255, 255, 0.1)`,
               boxSizing: 'border-box',
               position: 'relative',
               opacity: 0.95,
               overflow: 'hidden',
-              background: `radial-gradient(circle at 50% 50%, ${centerColor} 0%, #f5f5f5 65%, #e5e5e5 100%)`,
+              background: `radial-gradient(circle at 50% 50%, ${centerColor} 0%, #2a2a2a 65%, #1a1a1a 100%)`,
               transition: 'all 0.3s ease'
             }}
           >
@@ -2763,8 +2873,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                     boxShadow: `0 10px 25px rgba(0, 0, 0, 0.25), inset 0 0 15px rgba(255, 255, 255, 0.4), inset 0 -10px 15px rgba(0, 0, 0, 0.1)`,
                     zIndex: 3,
                     opacity: 0,
-                    animation: `spreadOut-${index} 0.8s ease-out forwards`,
-                    animationDelay: `${index * 0.1}s`
+                    animation: `spreadOut-${index} 0.8s ease-out ${index * 0.1}s forwards`
                   }}>
                     {number}
                   </div>
@@ -2792,8 +2901,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                 boxShadow: `0 10px 25px rgba(0, 0, 0, 0.25), inset 0 0 15px rgba(255, 255, 255, 0.4), inset 0 -10px 15px rgba(0, 0, 0, 0.1)`,
                 zIndex: 3,
                 opacity: 0,
-                animation: 'spreadOut-blue 0.8s ease-out forwards',
-                animationDelay: '0s'
+                animation: 'spreadOut-blue 0.8s ease-out 0s forwards'
               }}>
                 {numbers[0]}
               </div>
@@ -2825,9 +2933,9 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     
     return (
         <div style={{ 
-          backgroundColor: '#fff',
+          backgroundColor: 'transparent',
           borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
           padding: '20px',
           width: '100%',
           maxWidth: '100%',
@@ -2901,9 +3009,9 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           padding: '40px', 
           textAlign: 'center', 
           color: '#999',
-          backgroundColor: '#fff',
+          backgroundColor: 'transparent',
           borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)' 
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)' 
         }}>
           暂无每期组合数据
         </div>
@@ -2917,9 +3025,9 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     
     if (statisticType === 'red') {
       // 红球：7种组合（七大行星）
-      combinationToNameMap['0奇6偶'] = '水星';
-      combinationToNameMap['1奇5偶'] = '金星';
-      combinationToNameMap['2奇4偶'] = '地球';
+      combinationToNameMap['0奇6偶'] = '地球';
+      combinationToNameMap['1奇5偶'] = '水星';
+      combinationToNameMap['2奇4偶'] = '金星';
       combinationToNameMap['3奇3偶'] = '火星';
       combinationToNameMap['4奇2偶'] = '木星';
       combinationToNameMap['5奇1偶'] = '土星';
@@ -3169,10 +3277,10 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               numbers.map((number, index) => {
                 
                 // 计算每个号码的位置，均匀分布在球体边缘
-                const angle = (index / 6) * 2 * Math.PI;
-                const radius = 60; // 球体半径
-                const x = Math.cos(angle) * radius;
-                const y = Math.sin(angle) * radius;
+                // const angle = (index / 6) * 2 * Math.PI;
+                // const radius = 60; // 球体半径
+                // const x = Math.cos(angle) * radius;
+                // const y = Math.sin(angle) * radius;
                 
                 return (
                   <div key={number} style={{
@@ -3181,8 +3289,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                     left: '50%',
                     transform: `translate(-50%, -50%) translate(0, 0) scale(0.5)`,
                     opacity: 0,
-                    animation: `spreadOutRed-${selectedPeriod}-${index} 0.5s ease-out forwards`,
-                    animationDelay: `${index * 0.05}s`,
+                    animation: `spreadOutRed-${selectedPeriod}-${index} 0.5s ease-out ${index * 0.05}s forwards`,
                     borderRadius: '50%',
                     width: '40px',
                     height: '40px',
@@ -3244,7 +3351,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     let allPossibleCombinations: string[];
     if (statisticType === 'red') {
       // 红球：7种组合（七大行星）
-      allPossibleCombinations = ['水星', '金星', '地球', '火星', '木星', '土星', '天王星'];
+      allPossibleCombinations = ['地球', '水星', '金星', '火星', '木星', '土星', '天王星'];
     } else {
       // 蓝球：2种组合（太阳和月亮）
       allPossibleCombinations = ['太阳', '月亮'];
@@ -3252,9 +3359,9 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     
     return (
       <div style={{ 
-        backgroundColor: '#fff',
+        backgroundColor: 'transparent',
         borderRadius: '6px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
         padding: '16px',
         width: '100%',
         maxWidth: '100%',
@@ -3360,6 +3467,350 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
 
 
 
+  // 渲染位置分析柱状图
+  const renderPositionAnalysis = () => {
+    if (positionAnalysisData.length === 0) {
+      return (
+        <div style={{ 
+          padding: '40px', 
+          textAlign: 'center', 
+          color: '#999',
+          backgroundColor: 'transparent',
+          borderRadius: '6px',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)' 
+        }}>
+          暂无位置分析数据
+        </div>
+      );
+    }
+
+    // 根据统计类型生成所有可能的号码列表
+    const generateAllNumbers = () => {
+      if (statisticType === 'red') {
+        // 红球号码：01-33
+        return Array.from({ length: 33 }, (_, i) => {
+          const num = i + 1;
+          return num < 10 ? `0${num}` : `${num}`;
+        });
+      } else {
+        // 蓝球号码：01-16
+        return Array.from({ length: 16 }, (_, i) => {
+          const num = i + 1;
+          return num < 10 ? `0${num}` : `${num}`;
+        });
+      }
+    };
+
+    const allNumbers = generateAllNumbers();
+    const currentColor = statisticType === 'red' ? '#f5222d' : '#1890ff';
+
+    return (
+      <div style={{ 
+        padding: '16px', 
+        width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box'
+      }}>
+        {/* 每个位置一个柱状图 */}
+        {positionAnalysisData.map((positionData) => {
+          // 准备柱状图数据，确保所有号码都有数据，未出现的号码次数为0
+          const barData = allNumbers.map(number => ({
+            name: number,
+            value: positionData.numberCounts[number] || 0
+          }));
+
+          // ECharts配置项
+          const option = {
+            backgroundColor: 'transparent',
+            textStyle: {
+              color: '#fff'
+            },
+            animation: false, // 关闭初始动画
+            tooltip: {
+              trigger: 'axis',
+              axisPointer: {
+                type: 'shadow'
+              },
+              formatter: '{b}: {c}次'
+            },
+            legend: {
+              show: false // 隐藏图例
+            },
+            grid: {
+              left: '3%',
+              right: '4%',
+              bottom: '15%',
+              top: '8%',
+              containLabel: true
+            },
+            xAxis: [
+              {
+                type: 'category',
+                data: barData.map(item => item.name),
+                axisLabel: {
+                  fontSize: 10,
+                  rotate: 45,
+                  interval: statisticType === 'red' ? 2 : 0 // 红球每3个显示一个标签，避免重叠
+                },
+                axisLine: {
+                  lineStyle: {
+                    color: '#f0f0f0'
+                  }
+                },
+                splitLine: {
+                  show: false
+                },
+                name: '号码',
+                nameTextStyle: {
+                  fontSize: 14,
+                  fontWeight: 'bold'
+                }
+              }
+            ],
+            yAxis: [
+              {
+                type: 'value',
+                axisLabel: {
+                  fontSize: 12
+                },
+                axisLine: {
+                  lineStyle: {
+                    color: '#f0f0f0'
+                  }
+                },
+                splitLine: {
+                  show: true,
+                  lineStyle: {
+                    color: '#f0f0f0'
+                  }
+                },
+                name: '出现次数',
+                nameTextStyle: {
+                  fontSize: 14,
+                  fontWeight: 'bold'
+                }
+              }
+            ],
+            series: [
+              {
+                name: '出现次数',
+                type: 'bar',
+                data: barData.map(item => item.value),
+                itemStyle: {
+                  color: currentColor,
+                  borderRadius: [4, 4, 0, 0]
+                },
+                emphasis: {
+                  focus: 'series',
+                  itemStyle: {
+                    shadowBlur: 10,
+                    shadowOffsetX: 0,
+                    shadowColor: 'rgba(0, 0, 0, 0.2)'
+                  }
+                },
+                label: {
+                  show: false
+                }
+              }
+            ]
+          };
+
+          return (
+            <div 
+              key={positionData.position}
+              style={{ 
+                backgroundColor: 'transparent',
+                borderRadius: '6px',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
+                padding: '16px',
+                marginBottom: '20px',
+                width: '100%',
+                boxSizing: 'border-box'
+              }}
+            >
+              {/* 位置标题 */}
+              <div style={{
+                fontSize: '16px',
+                fontWeight: 'bold',
+                color: currentColor,
+                marginBottom: '12px',
+                textAlign: 'center'
+              }}>
+                {statisticType === 'red' ? `红球位置${positionData.position}` : '蓝球位置'}
+              </div>
+              
+              {/* 图表容器 */}
+              <div 
+                style={{ 
+                  height: '400px',
+                  width: '100%',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <ReactECharts option={option} style={{ height: '100%', width: '100%', backgroundColor: 'transparent' }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+  
+  // 渲染每个号码累计次数柱状图
+  const renderNumberAccumulatedChart = () => {
+    if (numberAccumulatedCountData.length === 0) {
+      return (
+        <div style={{ 
+          padding: '40px', 
+          textAlign: 'center', 
+          color: '#999',
+          backgroundColor: '#fff',
+          borderRadius: '6px',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)' 
+        }}>
+          暂无号码累计次数数据
+        </div>
+      );
+    }
+    
+    const currentColor = statisticType === 'red' ? '#f5222d' : '#1890ff';
+    const isRed = statisticType === 'red';
+    
+    // 获取人物映射
+    const characterMap = isRed ? GLOBAL_CHARACTER_MAPS.red : GLOBAL_CHARACTER_MAPS.blue;
+    
+    // ECharts配置项
+    const option = {
+      backgroundColor: 'transparent',
+      textStyle: {
+        color: '#fff'
+      },
+      animation: false, // 关闭初始动画
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'shadow'
+        },
+        formatter: function(params: Array<{ axisValue: string; marker: string; seriesName: string; value: number }>) {
+          const number = params[0].axisValue;
+          const characterName = characterMap[number] || number;
+          return `${characterName}: ${params[0].value}次`;
+        }
+      },
+      legend: {
+        show: true,
+        data: ['累计出现次数'],
+        top: '5%',
+        left: 'center'
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '15%',
+        top: '10%',
+        containLabel: true
+      },
+      xAxis: [
+        {
+          type: 'category',
+          data: numberAccumulatedCountData.map(item => item.number),
+          axisLabel: {
+            fontSize: 10,
+            rotate: 45,
+            interval: isRed ? 2 : 0, // 红球每3个显示一个标签，蓝球全显示
+            formatter: function(value: string) {
+              return characterMap[value] || value;
+            }
+          },
+          axisLine: {
+            lineStyle: {
+              color: '#666'
+            }
+          },
+          splitLine: {
+            show: false
+          },
+          name: isRed ? '红球号码' : '蓝球号码',
+          nameTextStyle: {
+            fontSize: 14,
+            fontWeight: 'bold'
+          }
+        }
+      ],
+      yAxis: [
+        {
+          type: 'value',
+          axisLabel: {
+            fontSize: 12
+          },
+          axisLine: {
+            lineStyle: {
+              color: '#666'
+            }
+          },
+          splitLine: {
+            show: true,
+            lineStyle: {
+              color: '#444'
+            }
+          },
+          name: '累计出现次数',
+          nameTextStyle: {
+            fontSize: 14,
+            fontWeight: 'bold'
+          }
+        }
+      ],
+      series: [
+        {
+          name: '累计出现次数',
+          type: 'bar',
+          data: numberAccumulatedCountData.map(item => item.count),
+          itemStyle: {
+            color: currentColor,
+            borderRadius: [4, 4, 0, 0]
+          },
+          emphasis: {
+            focus: 'series',
+            itemStyle: {
+              shadowBlur: 10,
+              shadowOffsetX: 0,
+              shadowColor: 'rgba(0, 0, 0, 0.2)'
+            }
+          },
+          label: {
+            show: false
+          }
+        }
+      ]
+    };
+    
+    return (
+      <div style={{ 
+        backgroundColor: 'transparent',
+        borderRadius: '6px',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
+        padding: '16px',
+        marginBottom: '20px',
+        width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box'
+      }}>
+        {/* 图表容器 */}
+        <div 
+          style={{ 
+            height: '500px',
+            width: '100%',
+            maxWidth: '100%',
+            boxSizing: 'border-box'
+          }}
+        >
+          <ReactECharts option={option} style={{ height: '100%', width: '100%', backgroundColor: 'transparent' }} />
+        </div>
+      </div>
+    );
+  };
+
   // 渲染能量分析
   const renderSumStats = () => {
     return (
@@ -3423,6 +3874,15 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
         maxWidth: '100%', // 确保最大宽度为100%
         boxSizing: 'border-box' // 确保padding不会影响宽度
       }}>
+        {/* 每个号码累计次数柱状图 */}
+        <div style={{ 
+          marginBottom: '20px',
+          width: '100%', // 确保图表容器宽度为100%
+          boxSizing: 'border-box' // 确保padding不会影响宽度
+        }}>
+          {renderNumberAccumulatedChart()}
+        </div>
+        
         {/* 平滑折线图 */}
         <div style={{ 
           marginBottom: '20px',
@@ -3442,8 +3902,8 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               width: '50px',
               height: '50px',
               borderRadius: '50%',
-              backgroundColor: '#fff',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+              backgroundColor: 'transparent',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
@@ -3556,12 +4016,12 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     if (statisticType === 'red') {
       // 红球：7种组合（七大行星）
       // 红球颜色：红橙黄绿青蓝紫
-      nameToColorMap['水星'] = '#f5222d'; // 红
-      nameToColorMap['金星'] = '#fa8c16'; // 橙
-      nameToColorMap['地球'] = '#faad14'; // 黄
-      nameToColorMap['火星'] = '#52c41a'; // 绿
+      nameToColorMap['地球'] = '#1890ff'; // 蓝
+      nameToColorMap['水星'] = '#52c41a'; // 绿
+      nameToColorMap['金星'] = '#faad14'; // 黄
+      nameToColorMap['火星'] = '#f5222d'; // 红
       nameToColorMap['木星'] = '#13c2c2'; // 青
-      nameToColorMap['土星'] = '#1890ff'; // 蓝
+      nameToColorMap['土星'] = '#fa8c16'; // 橙
       nameToColorMap['天王星'] = '#722ed1'; // 紫
     } else {
       // 蓝球：2种组合（太阳和月亮）
@@ -3570,17 +4030,32 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       nameToColorMap['月亮'] = '#722ed1'; // 紫色
     }
     
-    // 处理饼状图数据，添加颜色属性
-    const pieData = oddEvenCombinationData.map(item => ({
-      name: item.combination,
-      value: item.count,
-      itemStyle: {
-        color: nameToColorMap[item.combination as keyof typeof nameToColorMap] || '#999'
-      }
-    }));
+    // 处理饼状图数据，添加颜色属性并按照指定顺序排列
+    const desiredOrder = statisticType === 'red' 
+      ? ['地球', '水星', '金星', '火星', '木星', '土星', '天王星'] // 红球：七大行星
+      : ['太阳', '月亮']; // 蓝球：太阳和月亮
+    const pieData = desiredOrder
+      .map(name => {
+        const item = oddEvenCombinationData.find(item => item.combination === name);
+        if (item) {
+          return {
+            name: item.combination,
+            value: item.count,
+            itemStyle: {
+              color: nameToColorMap[item.combination as keyof typeof nameToColorMap] || '#999'
+            }
+          };
+        }
+        return null;
+      })
+      .filter(item => item !== null) as Array<{ name: string; value: number; itemStyle: { color: string } }>;
     
     // ECharts配置项
     const option = {
+      backgroundColor: 'transparent',
+      textStyle: {
+        color: '#fff'
+      },
       animation: false, // 关闭初始动画
       tooltip: {
         trigger: 'item',
@@ -3643,9 +4118,9 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     return (
       <div 
         style={{ 
-          backgroundColor: '#fff',
+          backgroundColor: 'transparent',
           borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
           padding: '16px',
           width: '100%',
           maxWidth: '100%',
@@ -3660,7 +4135,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             boxSizing: 'border-box'
           }}
         >
-          <ReactECharts option={option} style={{ height: '100%', width: '100%' }} />
+          <ReactECharts option={option} style={{ height: '100%', width: '100%', backgroundColor: 'transparent' }} />
         </div>
       </div>
     );
@@ -3684,311 +4159,6 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       }
     }
     // 渲染蓝球模式下的阴阳累计次数柱状图
-    const renderYinYangStats = () => {
-      if (statisticType !== 'blue') return null;
-      
-      // 获取太阳和月亮的累计次数
-      const sunItem = oddEvenCombinationData.find(item => item.combination === '太阳') || { count: 0 };
-      const moonItem = oddEvenCombinationData.find(item => item.combination === '月亮') || { count: 0 };
-      
-      // 准备柱状图数据
-      const barData = [
-        { name: '阳', value: sunItem.count, color: '#f5222d' },
-        { name: '阴', value: moonItem.count, color: '#722ed1' }
-      ];
-      
-      // ECharts配置项
-      const option = {
-        animation: false, // 关闭初始动画
-        tooltip: {
-          trigger: 'axis',
-          axisPointer: {
-            type: 'shadow'
-          },
-          formatter: '{b}: {c}次'
-        },
-        legend: {
-          show: false // 隐藏图例
-        },
-        grid: {
-          left: '3%',
-          right: '4%',
-          bottom: '3%',
-          top: '8%',
-          containLabel: true
-        },
-        xAxis: [
-          {
-            type: 'category',
-            data: barData.map(item => item.name),
-            axisLabel: {
-              fontSize: 14,
-              fontWeight: 'bold'
-            },
-            axisLine: {
-              lineStyle: {
-                color: '#f0f0f0'
-              }
-            },
-            splitLine: {
-              show: false
-            }
-          }
-        ],
-        yAxis: [
-          {
-            type: 'value',
-            axisLabel: {
-              fontSize: 12
-            },
-            axisLine: {
-              lineStyle: {
-                color: '#f0f0f0'
-              }
-            },
-            splitLine: {
-              show: true,
-              lineStyle: {
-                color: '#f0f0f0'
-              }
-            },
-            name: '累计出现次数',
-            nameTextStyle: {
-              fontSize: 14,
-              fontWeight: 'bold'
-            }
-          }
-        ],
-        series: [
-          {
-            name: '累计出现次数',
-            type: 'bar',
-            data: barData.map(item => item.value),
-            barWidth: '60%',
-            itemStyle: {
-              color: function(params) {
-                return barData[params.dataIndex].color;
-              },
-              borderRadius: [8, 8, 0, 0]
-            },
-            emphasis: {
-              focus: 'series',
-              itemStyle: {
-                shadowBlur: 10,
-                shadowOffsetX: 0,
-                shadowColor: 'rgba(0, 0, 0, 0.2)'
-              }
-            },
-            label: {
-              show: true,
-              position: 'top',
-              fontSize: 16,
-              fontWeight: 'bold',
-              color: function(params) {
-                // 确保数字颜色与柱状图颜色一致
-                return barData[params.dataIndex].color;
-              },
-              // 确保颜色设置优先
-              emphasis: {
-                color: function(params) {
-                  return barData[params.dataIndex].color;
-                }
-              }
-            }
-          }
-        ]
-      };
-      
-      return (
-        <div style={{
-          backgroundColor: '#fff',
-          borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)',
-          padding: '16px',
-          marginBottom: '20px',
-          width: '100%',
-          boxSizing: 'border-box'
-        }}>
-          <div 
-            style={{
-              height: '500px',
-              width: '100%',
-              boxSizing: 'border-box'
-            }}
-          >
-            <ReactECharts option={option} style={{ height: '100%', width: '100%' }} />
-          </div>
-        </div>
-      );
-    };
-    
-    // 渲染卦象统计图表
-    const renderHexagramChart = () => {
-      if (hexagramCountData.length === 0) {
-        return null;
-      }
-
-      // 计算最后一期中奖号码对应的卦象
-      let lastHexagramName = '';
-      if (allRecords.length > 0) {
-        // 使用滑块控制的最后一期索引
-        const lastIndex = sliderRange[1];
-        const lastRecord = allRecords[lastIndex];
-        if (lastRecord && lastRecord.length >= 12) {
-          // 解析最后一期红球：前12位，每两位一个号码
-          const lastRedBalls: string[] = [];
-          for (let i = 0; i < 12; i += 2) {
-            lastRedBalls.push(lastRecord.substring(i, i + 2));
-          }
-          
-          // 生成卦象编码
-          const hexagramCode = lastRedBalls.map(num => {
-            const n = parseInt(num, 10);
-            return n % 2 === 1 ? '1' : '0';
-          }).join('');
-          
-          // 获取卦象对象
-          const hexagram = HEXAGRAMS[hexagramCode as keyof typeof HEXAGRAMS] || { name: '坤' };
-          lastHexagramName = hexagram.name;
-        }
-      }
-
-      // ECharts配置项
-      const option = {
-        animation: false, // 关闭初始动画
-        tooltip: {
-          trigger: 'axis',
-          axisPointer: {
-            type: 'shadow'
-          },
-          formatter: function(params: Array<{ axisValue: string; marker: string; seriesName: string; value: number }>) {
-            let result = `${params[0].axisValue}<br/>`;
-            params.forEach((param) => {
-              result += `${param.marker}${param.seriesName}: ${param.value}次<br/>`;
-            });
-            return result;
-          }
-        },
-        legend: {
-          show: false // 隐藏图例
-        },
-        grid: {
-          left: '3%',
-          right: '4%',
-          bottom: '12%', // 进一步减小底部空间，减少下方空白
-          top: '8%',
-          containLabel: true
-        },
-        xAxis: [
-          {
-            type: 'category',
-            data: hexagramCountData.map(item => item.hexagram),
-            axisLabel: {
-              fontSize: 11,
-              rotate: 45, // 旋转标签，避免重叠
-              interval: 0 // 显示所有标签
-            },
-            axisLine: {
-              lineStyle: {
-                color: '#f0f0f0'
-              }
-            },
-            splitLine: {
-              show: false
-            },
-            name: '卦象',
-            nameTextStyle: {
-              fontSize: 12,
-              fontWeight: 'bold'
-            },
-            nameLocation: 'middle',
-            nameGap: 25 // 调整名称与坐标轴的距离
-          }
-        ],
-        yAxis: [
-          {
-            type: 'value',
-            axisLabel: {
-              fontSize: 12
-            },
-            axisLine: {
-              lineStyle: {
-                color: '#f0f0f0'
-              }
-            },
-            splitLine: {
-              show: true,
-              lineStyle: {
-                color: '#f0f0f0'
-              }
-            },
-            name: '出现次数',
-            nameTextStyle: {
-              fontSize: 14,
-              fontWeight: 'bold'
-            }
-          }
-        ],
-        series: [
-          {
-            name: '出现次数',
-            type: 'bar',
-            data: hexagramCountData.map(item => item.count),
-            itemStyle: {
-              color: function(params: { dataIndex: number }) {
-                // 将最后一期中奖号码对应的卦象柱状图改为红色
-                const currentHexagram = hexagramCountData[params.dataIndex].hexagram;
-                return currentHexagram === lastHexagramName ? '#f5222d' : '#52c41a';
-              }
-            },
-            emphasis: {
-              focus: 'series',
-              itemStyle: {
-                shadowBlur: 10,
-                shadowColor: function(params: { dataIndex: number }) {
-                  const currentHexagram = hexagramCountData[params.dataIndex].hexagram;
-                  return currentHexagram === lastHexagramName ? 'rgba(245, 34, 45, 0.5)' : 'rgba(82, 196, 26, 0.5)';
-                }
-              }
-            },
-            label: {
-              show: true,
-              position: 'top',
-              fontSize: 10
-            }
-          }
-        ]
-      };
-
-      return (
-        <div 
-          style={{ 
-            backgroundColor: '#fff',
-            borderRadius: '6px',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)',
-            padding: '16px',
-            width: '100%',
-            maxWidth: '100%',
-            boxSizing: 'border-box',
-            marginTop: '20px',
-            marginBottom: '20px'
-          }}
-        >
-          {/* 图表容器 */}
-          <div 
-            style={{ 
-              height: '400px',
-              width: '100%',
-              maxWidth: '100%',
-              boxSizing: 'border-box'
-            }}
-          >
-            <ReactECharts option={option} style={{ height: '100%', width: '100%' }} />
-          </div>
-        </div>
-      );
-    };
-
     return (
       <div style={{ 
         padding: '16px', 
@@ -3996,19 +4166,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
         maxWidth: '100%',
         boxSizing: 'border-box'
       }}>
-        {/* 卦象统计图表 */}
-        {statisticType === 'red' && renderHexagramChart()}
-        
-        {/* 平滑曲线图表 - 显示太阳和月亮的累计次数 */}
-        <div style={{ 
-          marginBottom: '20px',
-          width: '100%',
-          boxSizing: 'border-box'
-        }}>
-          {renderOddEvenChart()}
-        </div>
-        
-        {/* 饼状图和每期组合出现情况并排布局 */}
+        {/* 两个统计图并排布局 */}
         <div style={{ 
           display: 'flex',
           gap: '20px',
@@ -4016,22 +4174,20 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           width: '100%',
           boxSizing: 'border-box'
         }}>
+          {/* 平滑曲线图表 - 占50%空间 */}
+          <div style={{ 
+            width: '50%',
+            boxSizing: 'border-box'
+          }}>
+            {renderOddEvenChart()}
+          </div>
+          
           {/* 奇偶组合饼状图 - 占50%空间 */}
           <div style={{ 
-            marginBottom: '20px',
             width: '50%',
             boxSizing: 'border-box'
           }}>
             {renderOddEvenPieChart()}
-          </div>
-          
-          {/* 右侧区域：蓝球模式显示阴阳统计，红球模式显示卦象饼状图 - 占50%空间 */}
-          <div style={{ 
-            marginBottom: '20px',
-            width: '50%',
-            boxSizing: 'border-box'
-          }}>
-            {statisticType === 'blue' ? renderYinYangStats() : renderHexagramPieChart()}
           </div>
         </div>
         
@@ -4145,8 +4301,6 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     // 统计类型变化时，立即清空所有相关状态
     setOddEvenCombinationData([]);
     setOddEvenCombinationAccumulatedData([]);
-    // 清空卦象数据，避免闪现红球卦象
-    setHexagramCountData([]);
     // 清空能量分析相关数据
     setSumData([]);
     setSumCountData([]);
@@ -4321,6 +4475,49 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     setSumCountData(sumCountArray);
   }, [allRecords, statisticType, sliderRange]);
 
+  // 计算每个位置上每个号码出现的次数
+  useEffect(() => {
+    if (allRecords.length === 0) {
+      setPositionAnalysisData([]);
+      return;
+    }
+
+    // 获取滑块范围内的记录
+    const [startIndex, endIndex] = sliderRange;
+    const selectedRangeRecords = allRecords.slice(startIndex, endIndex + 1);
+
+    // 根据统计类型确定位置数量
+    const positionCount = statisticType === 'red' ? 6 : 1;
+    // 初始化位置分析数据
+      const initialPositionData: PositionAnalysisItem[] = Array.from({ length: positionCount }, (_, i) => ({
+        position: i + 1,
+        numberCounts: {}
+      }));
+
+    // 遍历所有记录，统计每个位置上每个号码出现的次数
+    selectedRangeRecords.forEach(record => {
+      if (typeof record === 'string') {
+        // 解析每个位置的号码
+        for (let position = 0; position < positionCount; position++) {
+          let number: string;
+          if (statisticType === 'red') {
+            // 红球：前12位，每两位一个号码，每个位置对应两个字符
+            number = record.substring(position * 2, position * 2 + 2);
+          } else {
+            // 蓝球：后两位
+            number = record.substring(12, 14);
+          }
+
+          // 更新该位置上该号码的出现次数
+          initialPositionData[position].numberCounts[number] = 
+            (initialPositionData[position].numberCounts[number] || 0) + 1;
+        }
+      }
+    });
+
+    setPositionAnalysisData(initialPositionData);
+  }, [allRecords, statisticType, sliderRange]);
+
   // 计算每个总和值对应的组合数量
   useEffect(() => {
     // 红球：计算所有可能的6个红球组合的总和
@@ -4419,17 +4616,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     });
   };
 
-  // 缩放开始事件
-  const handleResizeStart = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsResizing(true);
-    setResizeStart({
-      x: e.clientX,
-      y: e.clientY,
-      width: sliderSize.width,
-      height: sliderSize.height
-    });
-  };
+
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (isDragging) {
@@ -4481,20 +4668,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
         x: Math.max(0, Math.min(newX, maxX)),
         y: Math.max(0, Math.min(newY, maxY))
       });
-    } else if (isResizing) {
-      const newWidth = e.clientX - resizeStart.x + resizeStart.width;
-      const newHeight = e.clientY - resizeStart.y + resizeStart.height;
-      
-      // 限制最小和最大尺寸
-      const minWidth = 300;
-      const minHeight = 100;
-      const maxWidth = window.innerWidth - 50;
-      const maxHeight = window.innerHeight - 50;
-      
-      setSliderSize({
-        width: Math.max(minWidth, Math.min(newWidth, maxWidth)),
-        height: Math.max(minHeight, Math.min(newHeight, maxHeight))
-      });
+
     } else if (isSelectorDragging) {
       // 拖动号码选择器，允许拖动到页面任意位置，无边界限制
       const newX = e.clientX - selectorDragOffset.x;
@@ -4539,7 +4713,6 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     setIsSumButtonDragging(false);
     setIsHiddenIconDragging(false);
     setIsSliderDragging(false);
-    setIsResizing(false);
     setIsSelectorDragging(false);
     setIsButtonDragging(false);
     setIsTabContainerDragging(false);
@@ -4547,7 +4720,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
 
   // 添加全局事件监听
   useEffect(() => {
-    if (isDragging || isSumButtonDragging || isHiddenIconDragging || isSliderDragging || isResizing || isSelectorDragging || isButtonDragging || isTabContainerDragging) {
+    if (isDragging || isSumButtonDragging || isHiddenIconDragging || isSliderDragging || isSelectorDragging || isButtonDragging || isTabContainerDragging) {
       document.addEventListener('mousemove', handleMouseMove as unknown as EventListener);
       document.addEventListener('mouseup', handleMouseUp);
     }
@@ -4556,19 +4729,11 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       document.removeEventListener('mousemove', handleMouseMove as unknown as EventListener);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, isSumButtonDragging, isHiddenIconDragging, isSliderDragging, isResizing, isSelectorDragging, isButtonDragging, isTabContainerDragging]);
+  }, [isDragging, isSumButtonDragging, isHiddenIconDragging, isSliderDragging, isSelectorDragging, isButtonDragging, isTabContainerDragging]);
 
-  // 窗口大小变化时更新滑块初始大小（如果窗口变得太小）以及调整所有悬浮元素位置
+  // 窗口大小变化时调整所有悬浮元素位置
   useEffect(() => {
     const handleResize = () => {
-      // 如果窗口宽度小于当前滑块宽度的2倍，调整滑块宽度
-      if (window.innerWidth < sliderSize.width * 2) {
-        setSliderSize(prev => ({
-          ...prev,
-          width: window.innerWidth / 3
-        }));
-      }
-      
       // 始终保持距离底部150px，避免遮挡页脚图标和切换按钮
       setSliderPosition(prev => ({
         ...prev,
@@ -4583,31 +4748,34 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       // - 圆形按钮的x坐标：window.innerWidth - 65px - 25px = window.innerWidth - 90px
       // - 切换按钮的x坐标：window.innerWidth - 65px - 40px = window.innerWidth - 105px
       
-      // 计算统一的y坐标，确保垂直布局，同时避免被页脚遮挡
-      const buttonY = window.innerHeight - 120; // 切换按钮在底部上方70px，避免被页脚遮挡
+      // 计算统一的y坐标，确保垂直布局，同时上移避免被页脚挡住
+      // 调整三者之间的距离，保持一致
+      const buttonY = window.innerHeight - 140; // 切换按钮在底部上方140px
+      const hiddenIconY = window.innerHeight - 200; // 滑块隐藏图标在切换按钮上方60px
+      const sumButtonY = window.innerHeight - 260; // 南北切换按钮在滑块隐藏图标上方60px，保持三者间距一致
 
       // 调整显示/隐藏号码选择器按钮的位置，无论窗口放大还是缩小，都保持统一位置
       setFloatingButtonPosition({
-        x: window.innerWidth - 85, // 圆心在window.innerWidth - 60px，与滑块按钮中心线对齐
-        y: window.innerHeight - 240 // 始终保持在滑块按钮上方，间距60px，与南北半球切换按钮距离一致
+        x: window.innerWidth - 90, // 右侧20px，圆心在window.innerWidth - 65px
+        y: window.innerHeight - 320 // 南北切换按钮上方60px
       });
 
       // 调整滑块隐藏图标的位置，无论窗口放大还是缩小，都保持统一位置
       setHiddenIconPosition({
-        x: window.innerWidth - 85, // 圆心在window.innerWidth - 60px，与切换按钮中心线对齐
-        y: window.innerHeight - 180 // 始终保持在切换按钮上方60px
+        x: window.innerWidth - 90, // 圆心在window.innerWidth - 65px
+        y: hiddenIconY // 始终保持在切换按钮上方
       });
 
-      // 调整南北半球切换按钮的位置，无论窗口放大还是缩小，都保持在显示/隐藏号码选择器按钮（期号滑块按钮）正上方
+      // 调整南北半球切换按钮的位置，无论窗口放大还是缩小，都保持统一位置
       setSumButtonPosition({
-        x: window.innerWidth - 100, // 右侧20px，与红蓝球切换按钮保持一致的右侧距离
-        y: window.innerHeight - 240 // 期号滑块按钮正上方，距离60px，与红蓝球切换按钮距离一致
+        x: window.innerWidth - 105, // 右侧20px，竖直中心线在window.innerWidth - 65px
+        y: sumButtonY // 滑块隐藏图标上方60px，保持三者间距一致
       });
       
       // 调整切换按钮的位置，无论窗口放大还是缩小，都保持统一位置
       setButtonPosition({
-        x: window.innerWidth - 100, // 竖直中心线在window.innerWidth - 60px
-        y: buttonY // 始终保持在底部上方20px，靠近页面右下角
+        x: window.innerWidth - 105, // 竖直中心线在window.innerWidth - 65px
+        y: buttonY // 始终保持在底部上方140px，避免被页脚挡住
       });
 
       // 调整号码选择器的位置，确保不超出窗口边界
@@ -4646,7 +4814,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
   };
 
   return (
-    <div className="statistics-container">
+    <>
       {/* 可拖拽的南北半球切换按钮 - 只在能量分析页面显示 */}
       {activeTabKey === '3' && (
         <div style={{
@@ -4657,11 +4825,11 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          backgroundColor: '#fff',
+          backgroundColor: 'transparent',
           borderRadius: '4px', // 长方形
           width: '80px', // 更长的长方形
           height: '50px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
           cursor: isSumButtonDragging ? 'grabbing' : 'grab',
           userSelect: 'none',
           touchAction: 'none'
@@ -4723,11 +4891,11 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#fff',
+        backgroundColor: 'transparent',
         borderRadius: '4px', // 长方形
         width: '80px', // 更长的长方形
         height: '50px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
         cursor: isDragging ? 'grabbing' : 'grab',
         userSelect: 'none',
         touchAction: 'none'
@@ -4785,8 +4953,8 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               width: '50px',
               height: '50px',
               borderRadius: '50%',
-              backgroundColor: '#fff',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+              backgroundColor: 'transparent',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
@@ -4818,7 +4986,6 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               });
               setIsSliderHidden(false);
             }}
-            title={isSliderHidden ? "显示期号选择滑块" : "隐藏期号选择滑块"}
             >
               <SettingOutlined style={{ fontSize: '24px', color: statisticType === 'red' ? '#f5222d' : '#1890ff' }} />
             </div>
@@ -4829,9 +4996,9 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               top: `${sliderPosition.y}px`,
               width: `${sliderSize.width}px`,
               height: `${sliderSize.height}px`,
-              backgroundColor: '#fff',
+              backgroundColor: '#2a2a2a',
               borderRadius: '6px',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.8)',
               padding: '16px',
               zIndex: 999,
               cursor: isSliderDragging ? 'grabbing' : 'grab',
@@ -4843,62 +5010,37 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             onMouseDown={handleSliderMouseDown}
             onDoubleClick={handleSliderDoubleClick}
             title="双击隐藏滑块">
-              {/* 缩放手柄 */}
-              {isSliderFixed && (
-                <div style={{
-                  position: 'absolute',
-                  right: '-8px',
-                  bottom: '-8px',
-                  width: '16px',
-                  height: '16px',
-                  backgroundColor: '#fff',
-                  border: '1px solid #d9d9d9',
-                  borderRadius: '50%',
-                  cursor: 'nwse-resize',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-                  zIndex: 1000
-                }}
-                onMouseDown={handleResizeStart}
-                />
-              )}
+
               <div style={{ 
-                display: 'flex', 
-                gap: '16px',
-                marginBottom: 16 
+                position: 'relative', 
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                padding: '0 20px',
+                boxSizing: 'border-box'
               }}>
-                {/* 滑块div */}
-                <div style={{ 
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center'
-                }}>
-                  <div style={{ 
-                    position: 'relative', 
-                    width: '100%',
-                    padding: '16px 20px',
-                    background: statisticType === 'red' 
-                      ? 'linear-gradient(135deg, rgba(245, 34, 45, 0.05) 0%, rgba(245, 34, 45, 0.15) 100%)' 
-                      : 'linear-gradient(135deg, rgba(24, 144, 255, 0.05) 0%, rgba(24, 144, 255, 0.15) 100%)',
-                    borderRadius: 6
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: 16 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: 12 }}>
                       {/* 快退图标 - 最左侧，带圆圈边框 */}
                       <div style={{
                         cursor: sliderRange[0] <= 0 ? 'not-allowed' : 'pointer',
                         userSelect: 'none',
-                        border: `1px solid ${statisticType === 'red' ? '#f5222d' : '#1890ff'}`,
+                        border: '1px solid #ff0000',
                         borderRadius: '50%',
-                        width: '40px',
-                        height: '40px',
+                        width: '36px',
+                        height: '36px',
                         display: 'flex',
                         justifyContent: 'center',
                         alignItems: 'center',
                         transition: 'all 0.3s',
-                        color: sliderRange[0] <= 0 ? '#d9d9d9' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
-                        borderColor: sliderRange[0] <= 0 ? '#d9d9d9' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
+                        color: '#ff0000',
+                        borderColor: '#ff0000',
                         padding: 0,
                         margin: 0,
-                        opacity: sliderRange[0] <= 0 ? 0.5 : 1
+                        opacity: sliderRange[0] <= 0 ? 0.3 : 1,
+                        backgroundColor: 'transparent'
                       }}
                       onClick={() => {
                         if (sliderRange[0] > 0) {
@@ -4927,9 +5069,9 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                             width: '32px',
                             height: '32px',
                             borderRadius: '50%',
-                            border: `1px solid ${sliderRange[0] <= 0 ? '#d9d9d9' : (statisticType === 'red' ? '#f5222d' : '#1890ff')}`,
-                            backgroundColor: '#fff',
-                            color: sliderRange[0] <= 0 ? '#d9d9d9' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
+                            border: `1px solid ${sliderRange[0] <= 0 ? '#666' : (statisticType === 'red' ? '#f5222d' : '#1890ff')}`,
+                            backgroundColor: 'transparent',
+                            color: sliderRange[0] <= 0 ? '#999' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
                             cursor: sliderRange[0] <= 0 ? 'not-allowed' : 'pointer',
                             display: 'flex',
                             justifyContent: 'center',
@@ -4959,7 +5101,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                             height: '32px',
                             borderRadius: '50%',
                             border: `1px solid ${statisticType === 'red' ? '#f5222d' : '#1890ff'}`,
-                            backgroundColor: '#fff',
+                            backgroundColor: 'transparent',
                             color: statisticType === 'red' ? '#f5222d' : '#1890ff',
                             cursor: 'pointer',
                             display: 'flex',
@@ -4991,7 +5133,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                             height: '32px',
                             borderRadius: '50%',
                             border: `1px solid ${statisticType === 'red' ? '#f5222d' : '#1890ff'}`,
-                            backgroundColor: '#fff',
+                            backgroundColor: 'transparent',
                             color: statisticType === 'red' ? '#f5222d' : '#1890ff',
                             cursor: 'pointer',
                             display: 'flex',
@@ -5021,7 +5163,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                             height: '32px',
                             borderRadius: '50%',
                             border: `1px solid ${sliderRange[1] >= allRecords.length - 1 ? '#d9d9d9' : (statisticType === 'red' ? '#f5222d' : '#1890ff')}`,
-                            backgroundColor: '#fff',
+                            backgroundColor: 'transparent',
                             color: sliderRange[1] >= allRecords.length - 1 ? '#d9d9d9' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
                             cursor: sliderRange[1] >= allRecords.length - 1 ? 'not-allowed' : 'pointer',
                             display: 'flex',
@@ -5053,7 +5195,8 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                         borderColor: sliderRange[1] >= allRecords.length - 1 ? '#d9d9d9' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
                         padding: 0,
                         margin: 0,
-                        opacity: sliderRange[1] >= allRecords.length - 1 ? 0.5 : 1
+                        opacity: sliderRange[1] >= allRecords.length - 1 ? 0.5 : 1,
+                        backgroundColor: 'transparent'
                       }}
                       onClick={() => {
                         if (sliderRange[1] < allRecords.length - 1) {
@@ -5075,19 +5218,17 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                       position: 'relative',
                       boxSizing: 'border-box'
                     }}>
-                      {/* 简单的背景线，去掉粗细渐变效果 */}
+                      {/* 简单的背景线，与图片样式一致 */}
                       <div style={{
                         position: 'absolute',
                         top: '50%',
-                        left: '6px',
-                        right: '6px',
-                        height: '6px',
+                        left: '0px',
+                        right: '0px',
+                        height: '2px',
                         transform: 'translateY(-50%)',
                         zIndex: -1,
-                        background: statisticType === 'red' 
-                          ? 'rgba(245, 34, 45, 0.15)'
-                          : 'rgba(24, 144, 255, 0.15)',
-                        borderRadius: '3px'
+                        background: '#333',
+                        borderRadius: '1px'
                       }} />
                       
                       {/* 实际滑块 */}
@@ -5104,38 +5245,40 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                         }}
                         trackStyle={[
                           {
-                            background: statisticType === 'red' 
-                              ? 'linear-gradient(90deg, #f5222d 0%, #cf1322 100%)' 
-                              : 'linear-gradient(90deg, #1890ff 0%, #096dd9 100%)',
-                            height: '4px',
-                            borderRadius: '2px',
+                            background: '#ff0000',
+                            height: '2px',
+                            borderRadius: '1px',
                             boxShadow: 'none'
                           }
                         ]}
                         handleStyle={[
                           {
                             borderWidth: 2,
-                            borderColor: statisticType === 'red' ? '#f5222d' : '#1890ff',
-                            backgroundColor: statisticType === 'red' ? '#f5222d' : '#1890ff',
-                            width: '12px',
-                            height: '12px',
+                            borderColor: '#0078d4',
+                            backgroundColor: 'transparent',
+                            width: '16px',
+                            height: '16px',
                             borderRadius: '50%',
-                            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
+                            boxShadow: 'none',
+                            cursor: 'pointer',
+                            outline: 'none',
+                            backgroundImage: 'none'
                           },
                           {
                             borderWidth: 2,
-                            borderColor: statisticType === 'red' ? '#f5222d' : '#1890ff',
-                            backgroundColor: statisticType === 'red' ? '#f5222d' : '#1890ff',
-                            width: '12px',
-                            height: '12px',
+                            borderColor: '#0078d4',
+                            backgroundColor: 'transparent',
+                            width: '16px',
+                            height: '16px',
                             borderRadius: '50%',
-                            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
+                            boxShadow: 'none',
+                            cursor: 'pointer',
+                            outline: 'none',
+                            backgroundImage: 'none'
                           }
                         ]}
                       />
                     </div>
-                  </div>
-                </div>
               </div>
             </div>
           )}
@@ -5149,6 +5292,66 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
         {activeTabKey === '2' && renderOddEvenStats()}
         {activeTabKey === '3' && renderSumStats()}
         {activeTabKey === '4' && renderTaiXuHuanJingStats()}
+        {activeTabKey === '5' && renderPredictionStats()}
+        {activeTabKey === '6' && renderPositionAnalysis()}
+      </div>
+      
+      {/* 可拖拽的切换按钮 */}
+      <div style={{
+        position: 'fixed',
+        left: `${buttonPosition.x}px`,
+        top: `${buttonPosition.y}px`,
+        zIndex: 1000,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'transparent',
+        borderRadius: '4px', // 长方形
+        width: '80px', // 更长的长方形
+        height: '50px',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
+        cursor: isDragging ? 'grabbing' : 'grab',
+        userSelect: 'none',
+        touchAction: 'none'
+      }}
+      onMouseDown={handleMouseDown}
+      >
+        <div style={{
+          display: 'flex', 
+          alignItems: 'center',
+          backgroundColor: statisticType === 'red' ? '#f5222d' : '#1890ff',
+          borderRadius: '15px',
+          cursor: 'pointer',
+          transition: 'background-color 0.3s',
+          width: '45px',
+          height: '24px',
+          position: 'relative',
+          overflow: 'hidden'
+        }}
+        onClick={() => {
+          setStatisticType(statisticType === 'red' ? 'blue' : 'red');
+        }}
+        >
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            position: 'absolute',
+            top: '2px',
+            left: statisticType === 'red' ? '2px' : '23px',
+            width: '20px',
+            height: '20px',
+            borderRadius: '50%',
+            backgroundColor: '#fff',
+            color: statisticType === 'red' ? '#f5222d' : '#1890ff',
+            fontWeight: 'bold',
+            transition: 'left 0.3s',
+            fontSize: '12px',
+            zIndex: 1
+          }}>
+            {statisticType === 'red' ? <WomanOutlined /> : <ManOutlined />}
+          </div>
+        </div>
       </div>
       
       {/* 底部悬浮可拖动Tab */}
@@ -5158,9 +5361,9 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             position: 'fixed',
             left: `${tabContainerPosition.x}px`,
             top: `${tabContainerPosition.y}px`,
-            backgroundColor: '#fff',
+            backgroundColor: '#2a2a2a',
             borderRadius: '24px',
-            boxShadow: '0 -2px 12px rgba(0, 0, 0, 0.15)',
+            boxShadow: '0 -2px 12px rgba(0, 0, 0, 0.5)',
             padding: '8px 24px',
             width: 'fit-content',
             minWidth: '400px',
@@ -5214,7 +5417,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                   textAlign: 'center',
                   fontSize: '14px'
                 }}>
-                  宁荣两府
+                  星球
                 </div>
               ),
               children: null
@@ -5248,12 +5451,52 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                   backgroundColor: activeTabKey === '1' ? (statisticType === 'red' ? '#f5222d' : '#1890ff') : '#f0f0f0',
                   padding: '6px 12px',
                   borderRadius: '16px',
+                  marginRight: '8px',
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
                   textAlign: 'center',
                   fontSize: '14px'
                 }}>
                   累计分析
+                </div>
+              ),
+              children: null
+            },
+            {
+              key: '6',
+              label: (
+                <div style={{
+                  display: 'inline-block',
+                  color: activeTabKey === '6' ? '#fff' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
+                  backgroundColor: activeTabKey === '6' ? (statisticType === 'red' ? '#f5222d' : '#1890ff') : '#f0f0f0',
+                  padding: '6px 12px',
+                  borderRadius: '16px',
+                  marginRight: '8px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  textAlign: 'center',
+                  fontSize: '14px'
+                }}>
+                  位置
+                </div>
+              ),
+              children: null
+            },
+            {
+              key: '5',
+              label: (
+                <div style={{
+                  display: 'inline-block',
+                  color: activeTabKey === '5' ? '#fff' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
+                  backgroundColor: activeTabKey === '5' ? (statisticType === 'red' ? '#f5222d' : '#1890ff') : '#f0f0f0',
+                  padding: '6px 12px',
+                  borderRadius: '16px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  textAlign: 'center',
+                  fontSize: '14px'
+                }}>
+                  预测
                 </div>
               ),
               children: null
@@ -5287,17 +5530,17 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center',
-        backgroundColor: '#fff',
+        backgroundColor: '#000',
         zIndex: 1000,
         padding: '0 20px',
         boxSizing: 'border-box'
       }}>
         {/* 图标 - 点击回到幻境页面 */}
-        <AppleFilled 
-          style={{ fontSize: '24px', color: '#000', cursor: 'pointer', marginRight: '20px' }} 
+        <CloudFilled 
+          style={{ fontSize: '24px', color: '#fff', cursor: 'pointer', marginRight: '20px' }} 
           onClick={() => setActiveTabKey('4')}
         />
-        {/* 四个Tab名称（菜单）放在图标右侧，顺序：幻境，宁荣，能量，累计 */}
+        {/* 五个Tab名称（菜单）放在图标右侧，顺序：幻境，星球，能量，累计，预测，位置 */}
         <div style={{ 
           display: 'flex', 
           justifyContent: 'center', 
@@ -5307,7 +5550,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           <div 
             style={{ 
               fontSize: '14px', 
-              color: '#000', // 字体颜色改为黑色
+              color: '#fff', // 字体颜色改为白色
               cursor: 'pointer',
               fontWeight: activeTabKey === '4' ? 'bold' : 'normal',
               transition: 'color 0.3s ease',
@@ -5322,7 +5565,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           <div 
             style={{ 
               fontSize: '14px', 
-              color: '#000', // 字体颜色改为黑色
+              color: '#fff', // 字体颜色改为白色
               cursor: 'pointer',
               fontWeight: activeTabKey === '2' ? 'bold' : 'normal',
               transition: 'color 0.3s ease',
@@ -5332,12 +5575,12 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             }}
             onClick={() => setActiveTabKey('2')}
           >
-            <OpenAIOutlined /> 宁荣
+            <OpenAIOutlined /> 星球
           </div>
           <div 
             style={{ 
               fontSize: '14px', 
-              color: '#000', // 字体颜色改为黑色
+              color: '#fff', // 字体颜色改为白色
               cursor: 'pointer',
               fontWeight: activeTabKey === '3' ? 'bold' : 'normal',
               transition: 'color 0.3s ease',
@@ -5352,7 +5595,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           <div 
             style={{ 
               fontSize: '14px', 
-              color: '#000', // 字体颜色改为黑色
+              color: '#fff', // 字体颜色改为白色
               cursor: 'pointer',
               fontWeight: activeTabKey === '1' ? 'bold' : 'normal',
               transition: 'color 0.3s ease',
@@ -5364,9 +5607,39 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           >
             <DribbbleOutlined /> 累计
           </div>
+          <div 
+            style={{ 
+              fontSize: '14px', 
+              color: '#fff', // 字体颜色改为白色
+              cursor: 'pointer',
+              fontWeight: activeTabKey === '6' ? 'bold' : 'normal',
+              transition: 'color 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px'
+            }}
+            onClick={() => setActiveTabKey('6')}
+          >
+            <ExperimentOutlined /> 位置
+          </div>
+          <div 
+            style={{ 
+              fontSize: '14px', 
+              color: '#fff', // 字体颜色改为白色
+              cursor: 'pointer',
+              fontWeight: activeTabKey === '5' ? 'bold' : 'normal',
+              transition: 'color 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px'
+            }}
+            onClick={() => setActiveTabKey('5')}
+          >
+            <HeartOutlined /> 预测
+          </div>
         </div>
       </footer>
-    </div>
+    </>
   );
 };
 
