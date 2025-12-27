@@ -287,53 +287,28 @@ const RecordList: React.FC<RecordListProps> = () => {
                 width: 'calc(25% - 12px)', 
                 minWidth: '240px', 
                 marginBottom: '16px',
-                // 使用与统计页面一致的双线性渐变背景
-                background: 'linear-gradient(135deg, #ffffff 0%, rgba(245, 34, 45, 0.1) 100%), linear-gradient(135deg, rgba(245, 34, 45, 0.1) 0%, rgba(24, 144, 255, 0.3) 100%)',
-                // 透明边框，用于实现边框渐变效果
-                border: '2px solid transparent',
-                // 圆角设置与统计页面一致
-                borderRadius: '8px',
-                padding: '16px',
-                // 背景图设置，与统计页面一致
-                backgroundOrigin: 'padding-box, border-box',
-                backgroundClip: 'padding-box, border-box',
+                // 从左红色到右蓝色的渐变背景
+                background: 'linear-gradient(90deg, rgba(245,34,45,0.15) 0%, rgba(255,255,255,0.1) 80%, rgba(24,144,255,0.15) 100%)',
+                // 确保边框颜色与渐变协调
+                borderColor: '#e8e8e8',
+                // 添加圆角
+                borderRadius: '12px',
                 // 3d效果
                 transformStyle: 'preserve-3d',
-                perspective: '1500px',
-                transformOrigin: 'center center',
-                backfaceVisibility: 'hidden',
-                // 过渡效果与统计页面一致
                 transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                // 初始状态
-                transform: 'translateY(0) rotateX(0deg) rotateY(0deg) translateZ(0)',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-                cursor: 'grab'
+                // 光标悬停时简单上浮效果，去掉右下角翘起
+                transform: hoveredCard === record.code 
+                  ? 'perspective(1000px) translateZ(10px)' 
+                  : 'perspective(1000px) translateZ(0)',
+                // 增强厚度视觉效果 - 多层阴影模拟真实厚度
+                boxShadow: hoveredCard === record.code 
+                  ? '0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)' 
+                  : '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+                // 增强边框效果，进一步提升厚度感
+                border: '1px solid rgba(0, 0, 0, 0.1)'
               }}
-              onMouseEnter={(e) => {
-                setHoveredCard(record.code);
-                const card = e.currentTarget;
-                card.style.transform = 'translateY(-4px) rotateX(0deg) rotateY(0deg) translateZ(40px)';
-                card.style.boxShadow = '0 12px 32px rgba(0, 0, 0, 0.25)';
-                card.style.cursor = 'grabbing';
-              }}
-              onMouseMove={(e) => {
-                const card = e.currentTarget;
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-                const rotateX = (y - centerY) / 5;
-                const rotateY = (centerX - x) / 5;
-                card.style.transform = `translateY(-4px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(40px)`;
-              }}
-              onMouseLeave={(e) => {
-                setHoveredCard(null);
-                const card = e.currentTarget;
-                card.style.transform = 'translateY(0) rotateX(0deg) rotateY(0deg) translateZ(0)';
-                card.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
-                card.style.cursor = 'grab';
-              }}>
+              onMouseEnter={() => setHoveredCard(record.code)}
+              onMouseLeave={() => setHoveredCard(null)}>
             
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {/* 期号和日期 */}
