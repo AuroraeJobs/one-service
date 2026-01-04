@@ -2,3 +2,8 @@ server:
   port: ${ServerPort:8888}
   servlet:
     context-path: /
+hello:
+  record:
+    init: false
+    update: false
+    reset: false

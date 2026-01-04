@@ -1,4 +1,4 @@
-package org.aurorae.record;
+package org.aurorae.record.command;
 
 import org.aurorae.record.ball.BlueBox;
 import org.aurorae.record.ball.IBox;

@@ -10,6 +10,7 @@ interface LastRecordResponse {
   blue: string;
   sales: string;
   poolmoney: string;
+  line: string;
 }
 
 interface RecordListResponse {
@@ -20,6 +21,7 @@ interface RecordListResponse {
   blue: string;
   sales: string;
   poolmoney: string;
+  line: string;
 }
 
 // 创建axios实例
@@ -56,7 +58,7 @@ apiClient.interceptors.response.use(
 // 记录相关API
 export const recordApi = {
   // 查询记录列表
-  find: (params: { issueStart?: string; issueEnd?: string; dayStart?: string; dayEnd?: string; name?: string }): Promise<RecordListResponse[]> => {
+  find: (params: { issueStart?: string; issueEnd?: string; lineStart?: string; lineEnd?: string; dayStart?: string; dayEnd?: string; name?: string }): Promise<RecordListResponse[]> => {
     return apiClient.post('/record/find', params);
   },
   // 获取最新记录

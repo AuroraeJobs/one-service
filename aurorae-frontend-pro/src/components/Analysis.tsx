@@ -19,7 +19,7 @@ import {
   HeartOutlined,
   ExperimentOutlined
 } from '@ant-design/icons';
-import { recordApi } from '../services/api';
+import { useRecordContext } from '../contexts/RecordContext';
 // 导入 ECharts
 import ReactECharts from 'echarts-for-react';
 // 导入全局颜色和人物配置
@@ -46,6 +46,9 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
   const [statisticType, setStatisticType] = useState<'red' | 'blue'>('red');
   // 使用ref防止useEffect在StrictMode下运行两次
   const hasFetchedRef = useRef(false);
+  // 从Context获取数据
+  const { allRecords: contextAllRecords } = useRecordContext();
+  
   // 切换按钮拖拽状态
   const [isDragging, setIsDragging] = useState(false);
   // 滑块隐藏图标拖拽状态
@@ -740,15 +743,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             }
           },
           splitLine: {
-            show: true,
-            lineStyle: {
-              color: '#444'
-            }
-          },
-          name: '期数',
-          nameTextStyle: {
-            fontSize: 14,
-            fontWeight: 'bold'
+            show: false
           }
         }
       ],
@@ -764,10 +759,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             }
           },
           splitLine: {
-            show: true,
-            lineStyle: {
-              color: '#444'
-            }
+            show: false
           }
         }
       ],
@@ -1033,15 +1025,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             }
           },
           splitLine: {
-            show: true,
-            lineStyle: {
-              color: '#444'
-            }
-          },
-          name: '期数',
-          nameTextStyle: {
-            fontSize: 14,
-            fontWeight: 'bold'
+            show: false
           }
         }
       ],
@@ -1057,15 +1041,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             }
           },
           splitLine: {
-            show: true,
-            lineStyle: {
-              color: '#444'
-            }
-          },
-          name: '累计次数',
-          nameTextStyle: {
-            fontSize: 14,
-            fontWeight: 'bold'
+            show: false
           }
         }
       ],
@@ -1226,15 +1202,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             }
           },
           splitLine: {
-            show: true,
-            lineStyle: {
-              color: '#444'
-            }
-          },
-          name: '期数',
-          nameTextStyle: {
-            fontSize: 14,
-            fontWeight: 'bold'
+            show: false
           }
         }
       ],
@@ -1250,15 +1218,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             }
           },
           splitLine: {
-            show: true,
-            lineStyle: {
-              color: '#444'
-            }
-          },
-          name: '能量总和',
-          nameTextStyle: {
-            fontSize: 14,
-            fontWeight: 'bold'
+            show: false
           }
         }
       ],
@@ -1470,15 +1430,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             }
           },
           splitLine: {
-            show: true,
-            lineStyle: {
-              color: '#444'
-            }
-          },
-          name: '能量总和',
-          nameTextStyle: {
-            fontSize: 14,
-            fontWeight: 'bold'
+            show: false
           }
         }
       ],
@@ -1494,15 +1446,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             }
           },
           splitLine: {
-            show: true,
-            lineStyle: {
-              color: '#444'
-            }
-          },
-          name: '出现次数',
-          nameTextStyle: {
-            fontSize: 14,
-            fontWeight: 'bold'
+            show: false
           }
         },
         {
@@ -1517,11 +1461,6 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           },
           splitLine: {
             show: false
-          },
-          name: '组合数量',
-          nameTextStyle: {
-            fontSize: 14,
-            fontWeight: 'bold'
           }
         }
       ],
@@ -1669,111 +1608,100 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           color: '#f5222d',
           marginBottom: '30px'
         }}>
-          摇奖预测
+
         </div>
         
-        {/* 摇奖结果显示区域 */}
-        <div style={{ 
-          marginBottom: '40px',
+        {/* 摇奖结果显示区域 - 固定在底部悬浮，开始按钮上方 */}
+        <div style={{
+          position: 'fixed',
+          bottom: '160px',
+          left: '50%',
+          transform: 'translateX(-50%)',
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
-          gap: '20px'
+          gap: '12px',
+          justifyContent: 'center',
+          flexWrap: 'nowrap',
+          zIndex: 1000
         }}>
           {/* 红球显示 */}
-          <div style={{ 
-            display: 'flex',
-            gap: '12px',
-            justifyContent: 'center',
-            flexWrap: 'wrap'
-          }}>
-            {predictionRedNumbers.map((num, index) => (
-              <div 
-                key={`red-${index}`}
-                style={{
-                  width: '60px',
-                  height: '60px',
-                  borderRadius: '50%',
-                  backgroundColor: '#f5222d',
-                  color: '#fff',
-                  fontSize: '24px',
-                  fontWeight: 'bold',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  boxShadow: '0 4px 12px rgba(245, 34, 45, 0.3)',
-                  animation: isShaking ? 'shake 0.5s infinite' : 'none',
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                {num}
-              </div>
-            ))}
-          </div>
-          
-          {/* 蓝球显示 */}
-          <div style={{ 
-            display: 'flex',
-            gap: '12px',
-            justifyContent: 'center'
-          }}>
+          {predictionRedNumbers.map((num, index) => (
             <div 
+              key={`red-${index}`}
               style={{
-                width: '80px',
-                height: '80px',
+                width: '60px',
+                height: '60px',
                 borderRadius: '50%',
-                backgroundColor: '#1890ff',
-                color: '#fff',
-                fontSize: '32px',
+                background: 'radial-gradient(circle at 30% 30%, #ff6b6b 0%, #f5222d 70%, #c9184a 100%)',
+                color: '#000',
+                fontSize: '24px',
                 fontWeight: 'bold',
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
-                boxShadow: '0 4px 12px rgba(24, 144, 255, 0.3)',
+                boxShadow: '0 6px 16px rgba(245, 34, 45, 0.4), 0 2px 8px rgba(245, 34, 45, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.3), inset 0 -2px 4px rgba(193, 53, 53, 0.5)',
                 animation: isShaking ? 'shake 0.5s infinite' : 'none',
-                transition: 'all 0.3s ease'
+                transition: 'all 0.3s ease',
+                border: '1px solid rgba(255, 255, 255, 0.2)'
               }}
             >
-              {predictionBlueNumber}
+              {num}
             </div>
+          ))}
+          
+          {/* 蓝球显示 - 保持较大尺寸，与红球形成对比 */}
+          <div 
+            style={{
+              width: '80px',
+              height: '80px',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle at 30% 30%, #4da6ff 0%, #1890ff 70%, #0050b3 100%)',
+              color: '#000',
+              fontSize: '32px',
+              fontWeight: 'bold',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              boxShadow: '0 6px 20px rgba(24, 144, 255, 0.4), 0 2px 10px rgba(24, 144, 255, 0.2), inset 0 2px 6px rgba(255, 255, 255, 0.3), inset 0 -2px 6px rgba(0, 72, 186, 0.5)',
+              animation: isShaking ? 'shake 0.5s infinite' : 'none',
+              transition: 'all 0.3s ease',
+              border: '1px solid rgba(255, 255, 255, 0.2)'
+            }}
+          >
+            {predictionBlueNumber}
           </div>
         </div>
         
-        {/* 摇奖按钮 */}
-        <button
-          onClick={handleShake}
-          disabled={isShaking}
-          style={{
-            padding: '16px 48px',
-            fontSize: '18px',
-            fontWeight: 'bold',
-            backgroundColor: isShaking ? '#d9d9d9' : '#52c41a',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '32px',
-            cursor: isShaking ? 'not-allowed' : 'pointer',
-            transition: 'all 0.3s ease',
-            boxShadow: isShaking ? 'none' : '0 4px 16px rgba(82, 196, 26, 0.3)',
-            animation: isShaking ? 'pulse 1s infinite' : 'none'
-          }}
-        >
-          {isShaking ? '摇奖中...' : '开始摇奖'}
-        </button>
-        
-        {/* 摇奖说明 */}
-        <div style={{ 
-          marginTop: '40px',
-          fontSize: '14px', 
-          color: '#666',
-          maxWidth: '600px',
-          marginLeft: 'auto',
-          marginRight: 'auto',
-          lineHeight: '1.6'
+        {/* 摇奖按钮 - 固定在底部悬浮，避免被页脚遮挡 */}
+        <div style={{
+          position: 'fixed',
+          bottom: '80px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 1000
         }}>
-          <p>• 红球：从33个号码（01-33）中随机摇出6个</p>
-          <p>• 蓝球：从16个号码（01-16）中随机摇出1个</p>
-          <p>• 点击"开始摇奖"按钮即可生成随机号码</p>
+          <button
+            onClick={handleShake}
+            disabled={isShaking}
+            style={{
+              padding: '16px 48px',
+              fontSize: '18px',
+              fontWeight: 'bold',
+              backgroundColor: isShaking ? '#d9d9d9' : '#52c41a',
+              color: '#000',
+              border: 'none',
+              borderRadius: '32px',
+              cursor: isShaking ? 'not-allowed' : 'pointer',
+              transition: 'all 0.3s ease',
+              boxShadow: isShaking ? 'none' : '0 4px 16px rgba(82, 196, 26, 0.3)',
+              animation: isShaking ? 'pulse 1s infinite' : 'none'
+            }}
+          >
+            {isShaking ? '预测中' : '开始'}
+          </button>
         </div>
+        
+
         
         {/* 摇奖动画样式 */}
         <style>{`
@@ -1924,8 +1852,8 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
 
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-          gap: '16px',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+          gap: '40px',
           justifyContent: 'center',
           justifyItems: 'center',
           maxWidth: '1400px',
@@ -1942,15 +1870,15 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             
             return (
             <div key={record.period} style={{
-              width: '300px',
-              height: '300px',
+              width: '250px',
+              height: '250px',
               borderRadius: '50%',
               boxShadow: `0 12px 35px rgba(0, 0, 0, 0.5), inset 0 0 40px rgba(255, 255, 255, 0.1)`,
               boxSizing: 'border-box',
               position: 'relative',
               opacity: 0.95,
               overflow: 'hidden',
-              background: `radial-gradient(circle at 50% 50%, ${centerColor} 0%, #2a2a2a 65%, #1a1a1a 100%)`,
+              background: `radial-gradient(circle at 50% 50%, ${centerColor} 0%, #f0f0f0 65%, #ffffff 100%)`,
               transition: 'all 0.3s ease',
               cursor: 'pointer'
             }} onMouseEnter={(e) => {
@@ -1973,7 +1901,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                       opacity: 0;
                     }
                     100% {
-                      transform: translate(-50%, -50%) translate(${Math.cos(0 * Math.PI / 6) * 90}px, ${Math.sin(0 * Math.PI / 6) * 90}px) scale(1);
+                      transform: translate(-50%, -50%) translate(${Math.cos(0 * Math.PI / 6) * 75}px, ${Math.sin(0 * Math.PI / 6) * 75}px) scale(1);
                       opacity: 1;
                     }
                   }
@@ -1983,7 +1911,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                       opacity: 0;
                     }
                     100% {
-                      transform: translate(-50%, -50%) translate(${Math.cos(1 * Math.PI / 6) * 90}px, ${Math.sin(1 * Math.PI / 6) * 90}px) scale(1);
+                      transform: translate(-50%, -50%) translate(${Math.cos(1 * Math.PI / 6) * 75}px, ${Math.sin(1 * Math.PI / 6) * 75}px) scale(1);
                       opacity: 1;
                     }
                   }
@@ -1993,7 +1921,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                       opacity: 0;
                     }
                     100% {
-                      transform: translate(-50%, -50%) translate(${Math.cos(2 * Math.PI / 6) * 90}px, ${Math.sin(2 * Math.PI / 6) * 90}px) scale(1);
+                      transform: translate(-50%, -50%) translate(${Math.cos(2 * Math.PI / 6) * 75}px, ${Math.sin(2 * Math.PI / 6) * 75}px) scale(1);
                       opacity: 1;
                     }
                   }
@@ -2003,7 +1931,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                       opacity: 0;
                     }
                     100% {
-                      transform: translate(-50%, -50%) translate(${Math.cos(3 * Math.PI / 6) * 90}px, ${Math.sin(3 * Math.PI / 6) * 90}px) scale(1);
+                      transform: translate(-50%, -50%) translate(${Math.cos(3 * Math.PI / 6) * 75}px, ${Math.sin(3 * Math.PI / 6) * 75}px) scale(1);
                       opacity: 1;
                     }
                   }
@@ -2013,7 +1941,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                       opacity: 0;
                     }
                     100% {
-                      transform: translate(-50%, -50%) translate(${Math.cos(4 * Math.PI / 6) * 90}px, ${Math.sin(4 * Math.PI / 6) * 90}px) scale(1);
+                      transform: translate(-50%, -50%) translate(${Math.cos(4 * Math.PI / 6) * 75}px, ${Math.sin(4 * Math.PI / 6) * 75}px) scale(1);
                       opacity: 1;
                     }
                   }
@@ -2023,7 +1951,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                       opacity: 0;
                     }
                     100% {
-                      transform: translate(-50%, -50%) translate(${Math.cos(5 * Math.PI / 6) * 90}px, ${Math.sin(5 * Math.PI / 6) * 90}px) scale(1);
+                      transform: translate(-50%, -50%) translate(${Math.cos(5 * Math.PI / 6) * 75}px, ${Math.sin(5 * Math.PI / 6) * 75}px) scale(1);
                       opacity: 1;
                     }
                   }
@@ -2057,30 +1985,28 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               }}>
                 {/* 号码总和显示在中心名称上方，只显示数字 */}
                 <div style={{
-                  color: '#fff',
+                  color: '#000',
                   fontSize: '12px',
                   fontWeight: 'bold',
-                  textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
+
                   marginBottom: '4px'
                 }}>
                   {record.totalSum}
                 </div>
                 {/* 显示奇偶组合名称（主要显示内容） */}
                 <div style={{
-                  color: '#fff',
-                  fontSize: '28px',
+                  color: '#000',
+                  fontSize: '24px',
                   fontWeight: 'bold',
-                  textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
                   marginBottom: '4px'
                 }}>
                   {combination}
                 </div>
                 {/* 卦象或阴阳（次要显示内容） */}
                 <div style={{
-                  color: '#fff',
+                  color: '#000',
                   fontSize: '18px',
                   fontWeight: 'bold',
-                  textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
                   marginTop: '4px',
                   display: 'flex',
                   alignItems: 'center',
@@ -2109,7 +2035,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                   
                   // 计算每个号码的位置，均匀分布在圆形边缘，离中心更近
                   const angle = (index / 6) * 2 * Math.PI;
-                  const radius = 90; // 增大半径，让号码更靠近卡片中心
+                  const radius = 75; // 减小半径，适应较小的卡片尺寸
                   const x = Math.cos(angle) * radius;
                   const y = Math.sin(angle) * radius;
                   
@@ -2120,10 +2046,10 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                       left: '50%',
                       transform: `translate(-50%, -50%) translate(${x}px, ${y}px)`,
                       borderRadius: '50%',
-                      width: '60px',
-                      height: '60px',
+                      width: '50px',
+                      height: '50px',
                       padding: '0',
-                      fontSize: '14px',
+                      fontSize: '12px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -2157,10 +2083,10 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                   left: '50%',
                   transform: 'translateX(-50%)',
                   borderRadius: '50%',
-                  width: '70px',
-                  height: '70px',
+                  width: '60px',
+                  height: '60px',
                   padding: '0',
-                  fontSize: '16px',
+                  fontSize: '14px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -2194,9 +2120,10 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                 top: '10%',
                 left: '50%',
                 transform: 'translateX(-50%)',
-                color: '#333',
+                color: '#000',
                 fontSize: '12px',
                 fontWeight: 'bold',
+                
                 zIndex: 4
               }}>
                 {record.period}
@@ -2310,7 +2237,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             style={{
               cursor: 'pointer',
               transition: 'transform 0.2s ease',
-              outline: selectedSums.includes(sum) ? '2px solid #fff' : 'none'
+              outline: 'none'
             }}
 
             onClick={handleGridItemClick}
@@ -2432,18 +2359,20 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           padding: '20px',
           maxWidth: '100%', // 移除固定宽度，适应页面宽度
           boxSizing: 'border-box',
-          marginTop: '20px',
+          marginTop: '80px',
+          marginBottom: '80px',
           marginLeft: 'auto',
           marginRight: 'auto',
           position: 'relative', // 用于定位右上角的所选个数
-          overflow: 'hidden'
+          overflow: 'visible'
         }}
       >
-        {/* 右下角显示所选个数 */}
+        {/* 底部居中显示所选个数 */}
         <div style={{
           position: 'absolute',
-          bottom: '16px',
-          right: '16px',
+          bottom: '-60px',
+          left: '20%',
+          transform: 'translateX(-50%)',
           backgroundColor: statisticType === 'red' ? '#f5222d' : '#1890ff',
           color: '#fff',
           fontSize: '14px',
@@ -2452,7 +2381,8 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           borderRadius: '16px',
           boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
           minWidth: '50px', // 与下方显示号码个数的按钮长度一致
-          textAlign: 'center'
+          textAlign: 'center',
+          zIndex: 10
         }}>
           {selectedSums.length}
         </div>
@@ -2730,7 +2660,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               position: 'relative',
               opacity: 0.95,
               overflow: 'hidden',
-              background: `radial-gradient(circle at 50% 50%, ${centerColor} 0%, #2a2a2a 65%, #1a1a1a 100%)`,
+              background: `radial-gradient(circle at 50% 50%, ${centerColor} 0%, #f0f0f0 65%, #ffffff 100%)`,
               transition: 'all 0.3s ease'
             }}
           >
@@ -2823,20 +2753,18 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             }}>
               {/* 期号显示在上方 */}
               <div style={{
-                color: '#fff',
+                color: '#000',
                 fontSize: '16px',
                 fontWeight: 'bold',
-                textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
                 marginBottom: '4px'
               }}>
                 {selectedPeriod}期
               </div>
               {/* 总和显示在下方 */}
               <div style={{
-                color: '#fff',
+                color: '#000',
                 fontSize: '14px',
-                fontWeight: 'bold',
-                textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
+                fontWeight: 'bold'
               }}>
                 总和: {sumItem.sum}
               </div>
@@ -2940,21 +2868,25 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           width: '100%',
           maxWidth: '100%',
           boxSizing: 'border-box',
-          overflow: 'hidden',
-          position: 'relative' // 添加相对定位，使气泡相对于容器定位
+          overflow: 'visible',
+          position: 'relative', // 添加相对定位，使气泡相对于容器定位
+          marginTop: '80px',
+          marginBottom: '80px'
         }}>
-        {/* 右上角显示实际显示的六边形数量 */}
+        {/* 顶部居中显示实际显示的六边形数量 */}
         <div style={{
           position: 'absolute',
-          top: '16px',
-          right: '16px',
+          top: '-60px',
+          left: '80%',
+          transform: 'translateX(-50%)',
           backgroundColor: statisticType === 'red' ? '#f5222d' : '#1890ff',
           color: '#fff',
           fontSize: '14px',
           fontWeight: 'bold',
           padding: '4px 12px',
           borderRadius: '12px',
-          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+          zIndex: 10
         }}>
           {displayedHexagonCount}
         </div>
@@ -2974,7 +2906,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           }}>
             <svg
             width={actualContainerWidth}
-            height={Math.ceil(filteredSumData.length / itemsPerRow) * rowHeight + hexSize + 20}
+            height={Math.max(Math.ceil(filteredSumData.length / itemsPerRow) * rowHeight + hexSize + 20, 300)} // 设置最小高度为300px
             style={{ overflow: 'hidden' }}
           >
             {[...filteredSumData].reverse().map((item, index) => {
@@ -3262,10 +3194,9 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             }}>
               {/* 期号显示在中心 */}
               <div style={{
-                color: '#fff',
+                color: '#000',
                 fontSize: '18px',
-                fontWeight: 'bold',
-                textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
+                fontWeight: 'bold'
               }}>
                 {selectedPeriod}期
               </div>
@@ -3417,7 +3348,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           }}>
             <svg
               width={actualContainerWidth}
-              height={Math.ceil(filteredData.length / itemsPerRow) * rowHeight + hexSize}
+              height={Math.max(Math.ceil(filteredData.length / itemsPerRow) * rowHeight + hexSize, 300)} // 设置最小高度为300px
               style={{ overflow: 'visible' }}
             >
               {/* 定义渐变，透明度从中心到边缘逐渐变浅 */}
@@ -3511,39 +3442,47 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
         maxWidth: '100%',
         boxSizing: 'border-box'
       }}>
-        {/* 每个位置一个柱状图 */}
-        {positionAnalysisData.map((positionData) => {
-          // 准备柱状图数据，确保所有号码都有数据，未出现的号码次数为0
-          const barData = allNumbers.map(number => ({
-            name: number,
-            value: positionData.numberCounts[number] || 0
-          }));
+        {/* 根据统计类型显示不同布局 */}
+        <div style={{ 
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '20px',
+          width: '100%',
+          boxSizing: 'border-box',
+          justifyContent: statisticType === 'blue' ? 'center' : 'flex-start'
+        }}>
+          {positionAnalysisData.map((positionData) => {
+            // 准备柱状图数据，确保所有号码都有数据，未出现的号码次数为0
+            const barData = allNumbers.map(number => ({
+              name: number,
+              value: positionData.numberCounts[number] || 0
+            }));
 
-          // ECharts配置项
-          const option = {
-            backgroundColor: 'transparent',
-            textStyle: {
-              color: '#fff'
-            },
-            animation: false, // 关闭初始动画
-            tooltip: {
-              trigger: 'axis',
-              axisPointer: {
-                type: 'shadow'
+            // ECharts配置项
+            const option = {
+              backgroundColor: 'transparent',
+              textStyle: {
+                color: '#fff'
               },
-              formatter: '{b}: {c}次'
-            },
-            legend: {
-              show: false // 隐藏图例
-            },
-            grid: {
-              left: '3%',
-              right: '4%',
-              bottom: '15%',
-              top: '8%',
-              containLabel: true
-            },
-            xAxis: [
+              animation: false, // 关闭初始动画
+              tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                  type: 'shadow'
+                },
+                formatter: '{b}\n{c}次'
+              },
+              legend: {
+                show: false // 隐藏图例
+              },
+              grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '15%',
+                top: '8%',
+                containLabel: true
+              },
+              xAxis: [
               {
                 type: 'category',
                 data: barData.map(item => item.name),
@@ -3559,11 +3498,6 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                 },
                 splitLine: {
                   show: false
-                },
-                name: '号码',
-                nameTextStyle: {
-                  fontSize: 14,
-                  fontWeight: 'bold'
                 }
               }
             ],
@@ -3579,79 +3513,80 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                   }
                 },
                 splitLine: {
-                  show: true,
-                  lineStyle: {
-                    color: '#f0f0f0'
-                  }
-                },
-                name: '出现次数',
-                nameTextStyle: {
-                  fontSize: 14,
-                  fontWeight: 'bold'
-                }
-              }
-            ],
-            series: [
-              {
-                name: '出现次数',
-                type: 'bar',
-                data: barData.map(item => item.value),
-                itemStyle: {
-                  color: currentColor,
-                  borderRadius: [4, 4, 0, 0]
-                },
-                emphasis: {
-                  focus: 'series',
-                  itemStyle: {
-                    shadowBlur: 10,
-                    shadowOffsetX: 0,
-                    shadowColor: 'rgba(0, 0, 0, 0.2)'
-                  }
-                },
-                label: {
                   show: false
                 }
               }
-            ]
-          };
+            ],
+              series: [
+                {
+                  name: '出现次数',
+                  type: 'bar',
+                  data: barData.map(item => item.value),
+                  itemStyle: {
+                    color: currentColor,
+                    borderRadius: [4, 4, 0, 0]
+                  },
+                  emphasis: {
+                    focus: 'series',
+                    itemStyle: {
+                      shadowBlur: 10,
+                      shadowOffsetX: 0,
+                      shadowColor: 'rgba(0, 0, 0, 0.2)'
+                    }
+                  },
+                  label: {
+                    show: false
+                  }
+                }
+              ]
+            };
 
-          return (
-            <div 
-              key={positionData.position}
-              style={{ 
-                backgroundColor: 'transparent',
-                borderRadius: '6px',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
-                padding: '16px',
-                marginBottom: '20px',
-                width: '100%',
-                boxSizing: 'border-box'
-              }}
-            >
-              {/* 位置标题 */}
-              <div style={{
-                fontSize: '16px',
-                fontWeight: 'bold',
-                color: currentColor,
-                marginBottom: '12px',
-                textAlign: 'center'
-              }}>
-                {statisticType === 'red' ? `红球位置${positionData.position}` : '蓝球位置'}
-              </div>
-              
-              {/* 图表容器 */}
+            return (
               <div 
+                key={positionData.position}
                 style={{ 
-                  height: '400px',
-                  width: '100%',
-                  boxSizing: 'border-box'
+                  backgroundColor: 'transparent',
+                  borderRadius: '6px',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
+                  padding: '16px',
+                  width: statisticType === 'blue' ? '40%' : 'calc(33.33% - 13.33px)', // 蓝球居中显示，红球保持3个一行
+                  boxSizing: 'border-box',
+                  marginBottom: '20px'
                 }}
               >
-                <ReactECharts option={option} style={{ height: '100%', width: '100%', backgroundColor: 'transparent' }} />
+                {/* 位置标题 - 球形数字 */}
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  backgroundColor: currentColor,
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  margin: '0 auto 12px',
+                  boxShadow: `0 3px 8px rgba(${statisticType === 'red' ? '245, 34, 45' : '24, 144, 255'}, 0.4)`,
+                  color: '#fff',
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
+                }}>
+                  {positionData.position}
+                </div>
+              
+                {/* 图表容器 */}
+                <div 
+                  style={{ 
+                    height: '300px',
+                    width: '100%',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <ReactECharts option={option} style={{ height: '100%', width: '100%', backgroundColor: 'transparent' }} />
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     );
   };
@@ -3729,11 +3664,6 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           },
           splitLine: {
             show: false
-          },
-          name: isRed ? '红球号码' : '蓝球号码',
-          nameTextStyle: {
-            fontSize: 14,
-            fontWeight: 'bold'
           }
         }
       ],
@@ -3749,15 +3679,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             }
           },
           splitLine: {
-            show: true,
-            lineStyle: {
-              color: '#444'
-            }
-          },
-          name: '累计出现次数',
-          nameTextStyle: {
-            fontSize: 14,
-            fontWeight: 'bold'
+            show: false
           }
         }
       ],
@@ -4059,7 +3981,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       animation: false, // 关闭初始动画
       tooltip: {
         trigger: 'item',
-        formatter: '{b}: {c}次 ({d}%)'
+        formatter: '{b}\n{c}次'
       },
       legend: {
         orient: 'horizontal',
@@ -4086,23 +4008,29 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           center: ['50%', '55%'],
           avoidLabelOverlap: false,
           itemStyle: {
-            borderRadius: 10,
-            borderColor: '#fff',
-            borderWidth: 2
+            borderRadius: 10
           },
           label: {
             show: true,
             position: 'outside',
             formatter: '{b}\n{c}次',
             fontSize: 12,
-            fontWeight: 'normal'
+            fontWeight: 'normal',
+            color: '#fff',
+            textBorderColor: 'transparent',
+            textBorderWidth: 0,
+            textShadowBlur: 0
           },
           emphasis: {
             label: {
               show: true,
               fontSize: 20,
               fontWeight: 'bold',
-              formatter: '{b}: {c}次 ({d}%)'
+              formatter: '{b}\n{c}次',
+              color: '#fff',
+              textBorderColor: 'transparent',
+              textBorderWidth: 0,
+              textShadowBlur: 0
             }
           },
           labelLine: {
@@ -4203,67 +4131,28 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     );
   };
 
-  // 获取记录数据
+  // 当Context中的数据变化时，更新组件状态
   useEffect(() => {
     // 防止在StrictMode下运行两次
-    if (hasFetchedRef.current) return;
+    if (!contextAllRecords || contextAllRecords.length === 0) return;
     hasFetchedRef.current = true;
 
-    const fetchRecords = async () => {
-
-      try {
-        const data = await recordApi.getAllRecords();
-        
-        let recordsToUse: string[];
-        if (typeof data === 'string') {
-          // 接口返回的是字符串，通过换行符分割成数组
-          recordsToUse = data
-            .split('\n')
-            .map((line: string) => line.trim())
-            .filter((line: string) => line.length > 0);
-          message.success(`成功获取 ${recordsToUse.length} 条记录`);
-        } else if (Array.isArray(data) && data.length > 0) {
-          // 接口返回的是数组，直接使用
-          recordsToUse = data;
-          message.success(`成功获取 ${recordsToUse.length} 条记录`);
-        } else {
-          // 使用模拟数据
-          recordsToUse = [
-            '01020304050607',
-            '08091011121301',
-            '14151617181902',
-            '20212223242503',
-            '26272829303104',
-            '32330102030405',
-            '05060708091006',
-            '11121314151607',
-            '17181920212208',
-            '23242526272809',
-            '29303132330110',
-            '02030405060711',
-            '08091011121312',
-            '14151617181913',
-            '20212223242514',
-            '26272829303115',
-            '32330102030416',
-            '05060708091001',
-            '11121314151602',
-            '17181920212203'
-          ];
-          message.info(`使用模拟数据，共 ${recordsToUse.length} 条记录`);
-        }
-        
-        // 保存所有记录到状态
-        setAllRecords(recordsToUse);
-        // 设置滑块初始范围为全部记录
-        const initialRange: [number, number] = [0, Math.max(0, recordsToUse.length - 1)];
-        setSliderRange(initialRange);
-        // 解析所有记录
-        parseRecords(recordsToUse);
-      } catch (error) {
-        console.error('获取记录失败:', error);
-        // API请求失败时使用模拟数据
-        const recordsToUse = [
+    try {
+      let recordsToUse: string[];
+      if (typeof contextAllRecords === 'string') {
+        // 接口返回的是字符串，通过换行符分割成数组
+        recordsToUse = contextAllRecords
+          .split('\n')
+          .map((line: string) => line.trim())
+          .filter((line: string) => line.length > 0);
+        message.success(`成功获取 ${recordsToUse.length} 条记录`);
+      } else if (Array.isArray(contextAllRecords)) {
+        // 接口返回的是数组，直接使用
+        recordsToUse = contextAllRecords;
+        message.success(`成功获取 ${recordsToUse.length} 条记录`);
+      } else {
+        // 使用模拟数据
+        recordsToUse = [
           '01020304050607',
           '08091011121301',
           '14151617181902',
@@ -4285,16 +4174,48 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           '11121314151602',
           '17181920212203'
         ];
-        setAllRecords(recordsToUse);
-        const initialRange: [number, number] = [0, recordsToUse.length - 1];
-        setSliderRange(initialRange);
-        parseRecords(recordsToUse);
-        message.info(`API请求失败，使用模拟数据，共 ${recordsToUse.length} 条记录`);
+        message.info(`使用模拟数据，共 ${recordsToUse.length} 条记录`);
       }
-    };
-
-    fetchRecords();
-  }, []);
+      
+      // 保存所有记录到状态
+      setAllRecords(recordsToUse);
+      // 设置滑块初始范围为全部记录
+      const initialRange: [number, number] = [0, Math.max(0, recordsToUse.length - 1)];
+      setSliderRange(initialRange);
+      // 解析所有记录
+      parseRecords(recordsToUse);
+    } catch (error) {
+      console.error('处理记录失败:', error);
+      // 处理失败时使用模拟数据
+      const recordsToUse = [
+        '01020304050607',
+        '08091011121301',
+        '14151617181902',
+        '20212223242503',
+        '26272829303104',
+        '32330102030405',
+        '05060708091006',
+        '11121314151607',
+        '17181920212208',
+        '23242526272809',
+        '29303132330110',
+        '02030405060711',
+        '08091011121312',
+        '14151617181913',
+        '20212223242514',
+        '26272829303115',
+        '32330102030416',
+        '05060708091001',
+        '11121314151602',
+        '17181920212203'
+      ];
+      setAllRecords(recordsToUse);
+      const initialRange: [number, number] = [0, recordsToUse.length - 1];
+      setSliderRange(initialRange);
+      parseRecords(recordsToUse);
+      message.info(`处理记录失败，使用模拟数据，共 ${recordsToUse.length} 条记录`);
+    }
+  }, [contextAllRecords]);
 
   // 当统计类型切换时，立即清空相关状态，避免闪现旧数据
   useEffect(() => {
@@ -5387,15 +5308,17 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               label: (
                 <div style={{
                   display: 'inline-block',
-                  color: activeTabKey === '4' ? '#fff' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
-                  backgroundColor: activeTabKey === '4' ? (statisticType === 'red' ? '#f5222d' : '#1890ff') : '#f0f0f0',
+                  color: activeTabKey === '4' ? '#1890ff' : '#fff',
+                  backgroundColor: 'transparent',
                   padding: '6px 12px',
-                  borderRadius: '16px',
+                  borderRadius: '4px',
                   marginRight: '8px',
                   cursor: 'pointer',
-                  transition: 'all 0.3s ease',
+                  transition: 'color 0.3s ease',
                   textAlign: 'center',
-                  fontSize: '14px'
+                  fontSize: '14px',
+                  fontWeight: activeTabKey === '4' ? 'bold' : 'normal',
+                  userSelect: 'none'
                 }}>
                   太虚幻境
                 </div>
@@ -5407,15 +5330,17 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               label: (
                 <div style={{
                   display: 'inline-block',
-                  color: activeTabKey === '2' ? '#fff' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
-                  backgroundColor: activeTabKey === '2' ? (statisticType === 'red' ? '#f5222d' : '#1890ff') : '#f0f0f0',
+                  color: activeTabKey === '2' ? '#1890ff' : '#fff',
+                  backgroundColor: 'transparent',
                   padding: '6px 12px',
-                  borderRadius: '16px',
+                  borderRadius: '4px',
                   marginRight: '8px',
                   cursor: 'pointer',
-                  transition: 'all 0.3s ease',
+                  transition: 'color 0.3s ease',
                   textAlign: 'center',
-                  fontSize: '14px'
+                  fontSize: '14px',
+                  fontWeight: activeTabKey === '2' ? 'bold' : 'normal',
+                  userSelect: 'none'
                 }}>
                   星球
                 </div>
@@ -5427,15 +5352,17 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               label: (
                 <div style={{
                   display: 'inline-block',
-                  color: activeTabKey === '3' ? '#fff' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
-                  backgroundColor: activeTabKey === '3' ? (statisticType === 'red' ? '#f5222d' : '#1890ff') : '#f0f0f0',
+                  color: activeTabKey === '3' ? '#1890ff' : '#fff',
+                  backgroundColor: 'transparent',
                   padding: '6px 12px',
-                  borderRadius: '16px',
+                  borderRadius: '4px',
                   marginRight: '8px',
                   cursor: 'pointer',
-                  transition: 'all 0.3s ease',
+                  transition: 'color 0.3s ease',
                   textAlign: 'center',
-                  fontSize: '14px'
+                  fontSize: '14px',
+                  fontWeight: activeTabKey === '3' ? 'bold' : 'normal',
+                  userSelect: 'none'
                 }}>
                   能量分析
                 </div>
@@ -5447,15 +5374,17 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               label: (
                 <div style={{
                   display: 'inline-block',
-                  color: activeTabKey === '1' ? '#fff' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
-                  backgroundColor: activeTabKey === '1' ? (statisticType === 'red' ? '#f5222d' : '#1890ff') : '#f0f0f0',
+                  color: activeTabKey === '1' ? '#1890ff' : '#fff',
+                  backgroundColor: 'transparent',
                   padding: '6px 12px',
-                  borderRadius: '16px',
+                  borderRadius: '4px',
                   marginRight: '8px',
                   cursor: 'pointer',
-                  transition: 'all 0.3s ease',
+                  transition: 'color 0.3s ease',
                   textAlign: 'center',
-                  fontSize: '14px'
+                  fontSize: '14px',
+                  fontWeight: activeTabKey === '1' ? 'bold' : 'normal',
+                  userSelect: 'none'
                 }}>
                   累计分析
                 </div>
@@ -5467,15 +5396,17 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               label: (
                 <div style={{
                   display: 'inline-block',
-                  color: activeTabKey === '6' ? '#fff' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
-                  backgroundColor: activeTabKey === '6' ? (statisticType === 'red' ? '#f5222d' : '#1890ff') : '#f0f0f0',
+                  color: activeTabKey === '6' ? '#1890ff' : '#fff',
+                  backgroundColor: 'transparent',
                   padding: '6px 12px',
-                  borderRadius: '16px',
+                  borderRadius: '4px',
                   marginRight: '8px',
                   cursor: 'pointer',
-                  transition: 'all 0.3s ease',
+                  transition: 'color 0.3s ease',
                   textAlign: 'center',
-                  fontSize: '14px'
+                  fontSize: '14px',
+                  fontWeight: activeTabKey === '6' ? 'bold' : 'normal',
+                  userSelect: 'none'
                 }}>
                   位置
                 </div>
@@ -5487,14 +5418,16 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               label: (
                 <div style={{
                   display: 'inline-block',
-                  color: activeTabKey === '5' ? '#fff' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
-                  backgroundColor: activeTabKey === '5' ? (statisticType === 'red' ? '#f5222d' : '#1890ff') : '#f0f0f0',
+                  color: activeTabKey === '5' ? '#1890ff' : '#fff',
+                  backgroundColor: 'transparent',
                   padding: '6px 12px',
-                  borderRadius: '16px',
+                  borderRadius: '4px',
                   cursor: 'pointer',
-                  transition: 'all 0.3s ease',
+                  transition: 'color 0.3s ease',
                   textAlign: 'center',
-                  fontSize: '14px'
+                  fontSize: '14px',
+                  fontWeight: activeTabKey === '5' ? 'bold' : 'normal',
+                  userSelect: 'none'
                 }}>
                   预测
                 </div>
@@ -5530,7 +5463,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center',
-        backgroundColor: '#000',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
         zIndex: 1000,
         padding: '0 20px',
         boxSizing: 'border-box'
@@ -5545,97 +5478,121 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           display: 'flex', 
           justifyContent: 'center', 
           alignItems: 'center',
-          gap: '20px'
+          gap: '12px'
         }}>
           <div 
             style={{ 
               fontSize: '14px', 
-              color: '#fff', // 字体颜色改为白色
+              color: activeTabKey === '4' ? '#1890ff' : '#fff',
+              backgroundColor: 'transparent',
               cursor: 'pointer',
               fontWeight: activeTabKey === '4' ? 'bold' : 'normal',
               transition: 'color 0.3s ease',
               display: 'flex',
               alignItems: 'center',
-              gap: '5px'
+              gap: '5px',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              userSelect: 'none'
             }}
             onClick={() => setActiveTabKey('4')}
           >
-            <HarmonyOSOutlined /> 幻境
+            <HarmonyOSOutlined style={{ color: activeTabKey === '4' ? '#1890ff' : '#fff', transition: 'color 0.3s ease' }} /> 幻境
           </div>
           <div 
             style={{ 
               fontSize: '14px', 
-              color: '#fff', // 字体颜色改为白色
+              color: activeTabKey === '2' ? '#1890ff' : '#fff',
+              backgroundColor: 'transparent',
               cursor: 'pointer',
               fontWeight: activeTabKey === '2' ? 'bold' : 'normal',
               transition: 'color 0.3s ease',
               display: 'flex',
               alignItems: 'center',
-              gap: '5px'
+              gap: '5px',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              userSelect: 'none'
             }}
             onClick={() => setActiveTabKey('2')}
           >
-            <OpenAIOutlined /> 星球
+            <OpenAIOutlined style={{ color: activeTabKey === '2' ? '#1890ff' : '#fff', transition: 'color 0.3s ease' }} /> 星球
           </div>
           <div 
             style={{ 
               fontSize: '14px', 
-              color: '#fff', // 字体颜色改为白色
+              color: activeTabKey === '3' ? '#1890ff' : '#fff',
+              backgroundColor: 'transparent',
               cursor: 'pointer',
               fontWeight: activeTabKey === '3' ? 'bold' : 'normal',
               transition: 'color 0.3s ease',
               display: 'flex',
               alignItems: 'center',
-              gap: '5px'
+              gap: '5px',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              userSelect: 'none'
             }}
             onClick={() => setActiveTabKey('3')}
           >
-            <LinuxOutlined /> 能量
+            <LinuxOutlined style={{ color: activeTabKey === '3' ? '#1890ff' : '#fff', transition: 'color 0.3s ease' }} /> 能量
           </div>
           <div 
             style={{ 
               fontSize: '14px', 
-              color: '#fff', // 字体颜色改为白色
+              color: activeTabKey === '1' ? '#1890ff' : '#fff',
+              backgroundColor: 'transparent',
               cursor: 'pointer',
               fontWeight: activeTabKey === '1' ? 'bold' : 'normal',
               transition: 'color 0.3s ease',
               display: 'flex',
               alignItems: 'center',
-              gap: '5px'
+              gap: '5px',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              userSelect: 'none'
             }}
             onClick={() => setActiveTabKey('1')}
           >
-            <DribbbleOutlined /> 累计
+            <DribbbleOutlined style={{ color: activeTabKey === '1' ? '#1890ff' : '#fff', transition: 'color 0.3s ease' }} /> 累计
           </div>
           <div 
             style={{ 
               fontSize: '14px', 
-              color: '#fff', // 字体颜色改为白色
+              color: activeTabKey === '6' ? '#1890ff' : '#fff',
+              backgroundColor: 'transparent',
               cursor: 'pointer',
               fontWeight: activeTabKey === '6' ? 'bold' : 'normal',
               transition: 'color 0.3s ease',
               display: 'flex',
               alignItems: 'center',
-              gap: '5px'
+              gap: '5px',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              userSelect: 'none'
             }}
             onClick={() => setActiveTabKey('6')}
           >
-            <ExperimentOutlined /> 位置
+            <ExperimentOutlined style={{ color: activeTabKey === '6' ? '#1890ff' : '#fff', transition: 'color 0.3s ease' }} /> 位置
           </div>
           <div 
             style={{ 
               fontSize: '14px', 
-              color: '#fff', // 字体颜色改为白色
+              color: activeTabKey === '5' ? '#1890ff' : '#fff',
+              backgroundColor: 'transparent',
               cursor: 'pointer',
               fontWeight: activeTabKey === '5' ? 'bold' : 'normal',
               transition: 'color 0.3s ease',
               display: 'flex',
               alignItems: 'center',
-              gap: '5px'
+              gap: '5px',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              userSelect: 'none'
             }}
             onClick={() => setActiveTabKey('5')}
           >
-            <HeartOutlined /> 预测
+            <HeartOutlined style={{ color: activeTabKey === '5' ? '#1890ff' : '#fff', transition: 'color 0.3s ease' }} /> 预测
           </div>
         </div>
       </footer>

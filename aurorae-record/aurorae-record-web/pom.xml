@@ -19,6 +19,10 @@
             <groupId>com.aurorae</groupId>
             <artifactId>aurorae-record-model</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.aurorae</groupId>
+            <artifactId>aurorae-record-interface</artifactId>
+        </dependency>
 
         <!-- Open Feign -->
         <dependency>
@@ -36,5 +40,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>

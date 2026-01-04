@@ -1,14 +1,55 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Typography, Slider } from 'antd';
 import { CloudFilled, EyeInvisibleOutlined, EyeOutlined, FastBackwardOutlined, FastForwardOutlined, StepBackwardOutlined, StepForwardOutlined, ClearOutlined, SunOutlined, MoonOutlined } from '@ant-design/icons';
 import { HEXAGRAMS } from '../constants/hexagrams';
-import { recordApi } from '../services/api';
+import { useRecordContext } from '../contexts/RecordContext';
 // 导入 ECharts
 import ReactECharts from 'echarts-for-react';
 
 const { Text } = Typography;
 
+// 奇偶组合到原始组合的映射
+const combinationToOriginalMap: { [key: string]: string[] } = {
+  // 蓝球组合
+  '太阳': ['1奇0偶'], // 蓝球奇数
+  '月亮': ['0奇1偶'], // 蓝球偶数
+  // 红球组合
+  '地球': ['0奇6偶'], // 0奇6偶
+  '水星': ['1奇5偶'], // 1奇5偶
+  '金星': ['2奇4偶'], // 2奇4偶
+  '火星': ['3奇3偶'], // 3奇3偶
+  '木星': ['4奇2偶'], // 4奇2偶
+  '土星': ['5奇1偶'], // 5奇1偶
+  '天王星': ['6奇0偶'] // 6奇0偶
+};
+
+// 模拟数据，用于测试显示效果
+const mockRecords = [
+  '01020304050607',
+  '08091011121301',
+  '14151617181902',
+  '20212223242503',
+  '26272829303104',
+  '32330102030405',
+  '05060708091006',
+  '11121314151607',
+  '17181920212208',
+  '23242526272809',
+  '29303132330110',
+  '02030405060711',
+  '08091011121312',
+  '14151617181913',
+  '20212223242514',
+  '26272829303115',
+  '32330102030416',
+  '05060708091001',
+  '11121314151602',
+  '17181920212203'
+];
+
 const Taiji: React.FC = () => {
+  // 从Context获取数据
+  const { allRecords: contextAllRecords } = useRecordContext();
   // 状态管理
   const [records, setRecords] = useState<string[]>([]);
   const [allRecords, setAllRecords] = useState<string[]>([]);
@@ -28,45 +69,8 @@ const Taiji: React.FC = () => {
   const [activeMenu, setActiveMenu] = useState<string>('太极'); // 当前激活的菜单：太极或太空
   // 当前选中的奇偶组合 - 支持多选
   const [selectedCombinations, setSelectedCombinations] = useState<string[]>([]);
-  
-  // 奇偶组合到原始组合的映射
-  const combinationToOriginalMap: { [key: string]: string[] } = {
-    // 蓝球组合
-    '太阳': ['1奇0偶'], // 蓝球奇数
-    '月亮': ['0奇1偶'], // 蓝球偶数
-    // 红球组合
-    '地球': ['0奇6偶'], // 0奇6偶
-    '水星': ['1奇5偶'], // 1奇5偶
-    '金星': ['2奇4偶'], // 2奇4偶
-    '火星': ['3奇3偶'], // 3奇3偶
-    '木星': ['4奇2偶'], // 4奇2偶
-    '土星': ['5奇1偶'], // 5奇1偶
-    '天王星': ['6奇0偶'] // 6奇0偶
-  };
-
-  // 模拟数据，用于测试显示效果
-  const mockRecords = [
-    '01020304050607',
-    '08091011121301',
-    '14151617181902',
-    '20212223242503',
-    '26272829303104',
-    '32330102030405',
-    '05060708091006',
-    '11121314151607',
-    '17181920212208',
-    '23242526272809',
-    '29303132330110',
-    '02030405060711',
-    '08091011121312',
-    '14151617181913',
-    '20212223242514',
-    '26272829303115',
-    '32330102030416',
-    '05060708091001',
-    '11121314151602',
-    '17181920212203'
-  ];
+  // 卡片悬停状态管理
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
   // 解析记录数据
   const parseRecords = (recordsData: string[]) => {
@@ -120,7 +124,7 @@ const Taiji: React.FC = () => {
   };
   
   // 根据选中的组合过滤记录 - 支持多选
-  const filterRecordsByCombination = (records: string[], combinations: string[]): string[] => {
+  const filterRecordsByCombination = useCallback((records: string[], combinations: string[]): string[] => {
     if (!combinations || combinations.length === 0) {
       return records;
     }
@@ -161,7 +165,7 @@ const Taiji: React.FC = () => {
         }
       });
     });
-  };
+  }, []);
 
   // 悬浮滑块拖动事件处理
   const handleSliderMouseDown = (e: React.MouseEvent) => {
@@ -173,21 +177,21 @@ const Taiji: React.FC = () => {
     });
   };
 
-  const handleSliderMouseMove = (e: MouseEvent) => {
-    if (!isSliderDragging) return;
-    e.preventDefault(); // 防止默认行为，提高拖动流畅性
-    setSliderPosition({
-      x: e.clientX - sliderDragOffset.x,
-      y: e.clientY - sliderDragOffset.y
-    });
-  };
-
-  const handleSliderMouseUp = () => {
-    setIsSliderDragging(false);
-  };
-
   // 添加全局鼠标事件监听
   useEffect(() => {
+    const handleSliderMouseMove = (e: MouseEvent) => {
+      if (!isSliderDragging) return;
+      e.preventDefault(); // 防止默认行为，提高拖动流畅性
+      setSliderPosition({
+        x: e.clientX - sliderDragOffset.x,
+        y: e.clientY - sliderDragOffset.y
+      });
+    };
+
+    const handleSliderMouseUp = () => {
+      setIsSliderDragging(false);
+    };
+
     if (isSliderDragging) {
       window.addEventListener('mousemove', handleSliderMouseMove);
       window.addEventListener('mouseup', handleSliderMouseUp);
@@ -203,61 +207,57 @@ const Taiji: React.FC = () => {
     setIsSliderHidden(!isSliderHidden);
   };
 
-  // 获取记录数据
+  // 当Context中的数据变化时，更新组件状态
   useEffect(() => {
-    const fetchRecords = async () => {
-      try {
-        const data = await recordApi.getAllRecords();
-        let recordsToUse: string[];
-        
-        if (typeof data === 'string') {
-          // 接口返回的是字符串，通过换行符分割成数组
-          recordsToUse = data
-            .split('\n')
-            .map(line => line.trim())
-            .filter(line => line.length > 0);
-        } else if (Array.isArray(data) && data.length > 0) {
-          // 接口返回的是数组，直接使用
-          recordsToUse = data;
-        } else {
-          // 使用模拟数据
-          recordsToUse = mockRecords;
-        }
-        
-        // 保存所有记录到allRecords状态
-        setAllRecords(recordsToUse);
-        // 设置初始滑块范围为全部记录
-        const initialRange: [number, number] = [0, Math.max(0, recordsToUse.length - 1)];
-        setSliderRange(initialRange);
-        
-        // 应用组合过滤
-        let filteredRecords = recordsToUse;
-        if (selectedCombinations.length > 0) {
-          filteredRecords = filterRecordsByCombination(filteredRecords, selectedCombinations);
-        }
-        setRecords(filteredRecords);
-        parseRecords(filteredRecords);
-      } catch (error) {
-        console.error('获取记录失败:', error);
+    if (!contextAllRecords || contextAllRecords.length === 0) return;
+    
+    try {
+      let recordsToUse: string[];
+      if (typeof contextAllRecords === 'string') {
+        // 接口返回的是字符串，通过换行符分割成数组
+        recordsToUse = contextAllRecords
+          .split('\n')
+          .map(line => line.trim())
+          .filter(line => line.length > 0);
+      } else if (Array.isArray(contextAllRecords)) {
+        // 接口返回的是数组，直接使用
+        recordsToUse = contextAllRecords;
+      } else {
         // 使用模拟数据
-        // 保存模拟数据到allRecords状态
-        setAllRecords(mockRecords);
-        // 设置初始滑块范围为模拟数据范围
-        const initialRange: [number, number] = [0, Math.max(0, mockRecords.length - 1)];
-        setSliderRange(initialRange);
-        
-        // 应用组合过滤
-        let filteredRecords = mockRecords;
-        if (selectedCombinations.length > 0) {
-          filteredRecords = filterRecordsByCombination(filteredRecords, selectedCombinations);
-        }
-        setRecords(filteredRecords);
-        parseRecords(filteredRecords);
+        recordsToUse = mockRecords;
       }
-    };
-
-    fetchRecords();
-  }, [selectedCombinations]);
+      
+      // 保存所有记录到allRecords状态
+      setAllRecords(recordsToUse);
+      // 设置初始滑块范围为全部记录
+      const initialRange: [number, number] = [0, Math.max(0, recordsToUse.length - 1)];
+      setSliderRange(initialRange);
+      
+      // 应用组合过滤
+      let filteredRecords = recordsToUse;
+      if (selectedCombinations.length > 0) {
+        filteredRecords = filterRecordsByCombination(filteredRecords, selectedCombinations);
+      }
+      setRecords(filteredRecords);
+      parseRecords(filteredRecords);
+    } catch (error) {
+      console.error('处理记录失败:', error);
+      // 使用模拟数据
+      // 保存模拟数据到allRecords状态
+      setAllRecords(mockRecords);
+      // 设置初始滑块范围为模拟数据范围
+      const initialRange: [number, number] = [0, Math.max(0, mockRecords.length - 1)];
+      setSliderRange(initialRange);
+      
+      // 应用组合过滤
+      let filteredRecords = mockRecords;
+      if (selectedCombinations.length > 0) {
+        filteredRecords = filterRecordsByCombination(filteredRecords, selectedCombinations);
+      }
+      setRecords(filteredRecords);
+      parseRecords(filteredRecords);
+    }
+  }, [contextAllRecords, selectedCombinations, filterRecordsByCombination]);
 
   // 渲染太极图
   const renderTaiji = () => (
@@ -282,7 +282,7 @@ const Taiji: React.FC = () => {
           borderRadius: '50%',
           background: 'linear-gradient(to bottom, #ffffff 0%, #ffffff 50%, #000000 50%, #000000 100%)',
           position: 'relative',
-          boxShadow: '0 0 20px rgba(100, 100, 255, 0.2)'
+          boxShadow: '0 0 30px rgba(100, 100, 255, 0.6), 0 0 60px rgba(100, 100, 255, 0.3), inset 0 0 1px rgba(255, 255, 255, 0.5)'
         } as React.CSSProperties}
       >
         <div style={{
@@ -316,82 +316,32 @@ const Taiji: React.FC = () => {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', gap: '80px', margin: '30px 0' }}>
         <div 
+          key="阳"
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            transition: 'transform 0.3s ease',
+            transition: 'transform 0.3s ease, box-shadow 0.3s ease',
             background: 'radial-gradient(circle at center, rgba(60, 60, 100, 0.8) 0%, rgba(40, 40, 80, 0.8) 50%, rgba(30, 30, 60, 0.9) 100%)',
             padding: '20px',
             borderRadius: '12px',
-            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2), 0 0 30px rgba(100, 100, 255, 0.1)',
+            // 3d效果
+            transformStyle: 'preserve-3d',
+            transform: hoveredCard === '阳' 
+              ? 'perspective(1000px) translateZ(10px)' 
+              : 'perspective(1000px) translateZ(0)',
+            // 增强厚度视觉效果 - 多层阴影模拟真实厚度和光效
+            boxShadow: hoveredCard === '阳' 
+              ? '0 8px 16px rgba(255, 255, 255, 0.1), 0 24px 48px rgba(255, 255, 255, 0.15), 0 32px 64px rgba(255, 255, 255, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.05)' 
+              : '0 4px 8px rgba(255, 255, 255, 0.08), 0 12px 24px rgba(255, 255, 255, 0.12), 0 16px 32px rgba(255, 255, 255, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.05)',
             height: '240px',
             width: '180px',
             position: 'relative',
-            border: '1px solid rgba(79, 70, 229, 0.3)'
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            cursor: 'pointer'
           } as React.CSSProperties}
-        >
-          {/* 左上角文字 */}
-          <div style={{
-            position: 'absolute',
-            top: '8px',
-            left: '8px',
-            fontSize: '14px',
-            fontWeight: 'bold',
-            color: '#e2e8f0'
-          }}>
-            阴
-          </div>
-          
-          {/* 右下角文字 */}
-          <div style={{
-            position: 'absolute',
-            bottom: '8px',
-            right: '8px',
-            fontSize: '14px',
-            fontWeight: 'bold',
-            color: '#e2e8f0'
-          }}>
-            阴
-          </div>
-          
-          <div style={{
-            width: '120px',
-            height: '120px',
-            backgroundColor: '#000000',
-            borderRadius: '50%',
-            position: 'relative',
-            boxShadow: '0 0 20px rgba(100, 100, 255, 0.2)'
-          }}>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              backgroundColor: '#ffffff',
-              borderRadius: '50%',
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              boxShadow: '0 0 15px rgba(255, 255, 255, 0.4)'
-            }} />
-          </div>
-        </div>
-        
-        <div 
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'transform 0.3s ease',
-            background: 'radial-gradient(circle at center, rgba(60, 60, 100, 0.8) 0%, rgba(40, 40, 80, 0.8) 50%, rgba(30, 30, 60, 0.9) 100%)',
-            padding: '20px',
-            borderRadius: '12px',
-            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2), 0 0 30px rgba(100, 100, 255, 0.1)',
-            height: '240px',
-            width: '180px',
-            position: 'relative',
-            border: '1px solid rgba(79, 70, 229, 0.3)'
-          } as React.CSSProperties}
+          onMouseEnter={() => setHoveredCard('阳')}
+          onMouseLeave={() => setHoveredCard(null)}
         >
           {/* 左上角文字 */}
           <div style={{
@@ -412,7 +362,7 @@ const Taiji: React.FC = () => {
             right: '8px',
             fontSize: '14px',
             fontWeight: 'bold',
-            color: '#e2e8f0'
+            color: '#000000'
           }}>
             阳
           </div>
@@ -439,6 +389,80 @@ const Taiji: React.FC = () => {
             }} />
           </div>
         </div>
+        
+        <div 
+          key="阴"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+            background: 'radial-gradient(circle at center, rgba(60, 60, 100, 0.8) 0%, rgba(40, 40, 80, 0.8) 50%, rgba(30, 30, 60, 0.9) 100%)',
+            padding: '20px',
+            borderRadius: '12px',
+            // 3d效果
+            transformStyle: 'preserve-3d',
+            transform: hoveredCard === '阴' 
+              ? 'perspective(1000px) translateZ(10px)' 
+              : 'perspective(1000px) translateZ(0)',
+            // 增强厚度视觉效果 - 多层阴影模拟真实厚度和光效
+            boxShadow: hoveredCard === '阴' 
+              ? '0 8px 16px rgba(255, 255, 255, 0.1), 0 24px 48px rgba(255, 255, 255, 0.15), 0 32px 64px rgba(255, 255, 255, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.05)' 
+              : '0 4px 8px rgba(255, 255, 255, 0.08), 0 12px 24px rgba(255, 255, 255, 0.12), 0 16px 32px rgba(255, 255, 255, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+            height: '240px',
+            width: '180px',
+            position: 'relative',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            cursor: 'pointer'
+          } as React.CSSProperties}
+          onMouseEnter={() => setHoveredCard('阴')}
+          onMouseLeave={() => setHoveredCard(null)}
+        >
+          {/* 左上角文字 */}
+          <div style={{
+            position: 'absolute',
+            top: '8px',
+            left: '8px',
+            fontSize: '14px',
+            fontWeight: 'bold',
+            color: '#e2e8f0'
+          }}>
+            阴
+          </div>
+          
+          {/* 右下角文字 */}
+          <div style={{
+            position: 'absolute',
+            bottom: '8px',
+            right: '8px',
+            fontSize: '14px',
+            fontWeight: 'bold',
+            color: '#000000'
+          }}>
+            阴
+          </div>
+          
+          <div style={{
+            width: '120px',
+            height: '120px',
+            backgroundColor: '#000000',
+            borderRadius: '50%',
+            position: 'relative',
+            boxShadow: '0 0 20px rgba(100, 100, 255, 0.2)'
+          }}>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              backgroundColor: '#ffffff',
+              borderRadius: '50%',
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              boxShadow: '0 0 15px rgba(255, 255, 255, 0.4)'
+            }} />
+          </div>
+        </div>
       </div>
     );
   };
@@ -446,7 +470,7 @@ const Taiji: React.FC = () => {
 
 
   // 渲染卡片式卦象
-  const renderGuaCard = (name: string, yao: boolean[], size: 'small' | 'medium' | 'large' | 'xlarge' = 'medium', count?: number) => {
+  const renderGuaCard = (name: string, yao: boolean[], size: 'small' | 'medium' | 'large' | 'xlarge' = 'medium', count?: number, backgroundColor?: string, reverseYao = true, swapTexts = false) => {
     const cardSize = {
       small: { width: '120px', height: '80px', padding: '15px', fontSize: '12px' }, // 统一宽度为120px
       medium: { width: '120px', height: '100px', padding: '20px', fontSize: '14px' }, // 统一宽度为120px
@@ -459,25 +483,43 @@ const Taiji: React.FC = () => {
     const mainName = nameMatch ? nameMatch[1] : name;
     const bracketName = nameMatch ? nameMatch[2] : name;
     
+    // 生成卡片唯一标识
+    const cardId = `${name}-${yao.join('-')}-${size}`;
+    
+    // 根据swapTexts参数决定左上角和右下角显示的文字
+    const topLeftText = swapTexts ? bracketName : mainName;
+    const bottomRightText = swapTexts ? mainName : bracketName;
+    
     return (
       <div 
+        key={cardId}
         style={{
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
           padding: cardSize.padding,
-          border: '1px solid rgba(79, 70, 229, 0.3)',
-          borderRadius: '8px',
-          transition: 'all 0.3s ease',
-          background: 'radial-gradient(circle at center, rgba(60, 60, 100, 0.8) 0%, rgba(40, 40, 80, 0.8) 50%, rgba(30, 30, 60, 0.9) 100%)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '12px',
+          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+          background: backgroundColor || 'radial-gradient(circle at center, rgba(60, 60, 100, 0.8) 0%, rgba(40, 40, 80, 0.8) 50%, rgba(30, 30, 60, 0.9) 100%)',
           width: cardSize.width,
           height: cardSize.height,
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2), 0 0 20px rgba(100, 100, 255, 0.1)',
+          // 3d效果
+          transformStyle: 'preserve-3d',
+          transform: hoveredCard === cardId 
+            ? 'perspective(1000px) translateZ(10px)' 
+            : 'perspective(1000px) translateZ(0)',
+          // 增强厚度视觉效果 - 多层阴影模拟真实厚度和光效
+          boxShadow: hoveredCard === cardId 
+            ? '0 8px 16px rgba(255, 255, 255, 0.1), 0 24px 48px rgba(255, 255, 255, 0.15), 0 32px 64px rgba(255, 255, 255, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.05)' 
+            : '0 4px 8px rgba(255, 255, 255, 0.08), 0 12px 24px rgba(255, 255, 255, 0.12), 0 16px 32px rgba(255, 255, 255, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.05)',
           cursor: 'pointer',
           position: 'relative'
         } as React.CSSProperties}
+        onMouseEnter={() => setHoveredCard(cardId)}
+        onMouseLeave={() => setHoveredCard(null)}
       >
-        {/* 左上角卦名：不显示括号部分 */}
+        {/* 左上角卦名 */}
         <div style={{
           position: 'absolute',
           top: '8px',
@@ -486,26 +528,27 @@ const Taiji: React.FC = () => {
           fontWeight: 'bold',
           color: '#e2e8f0'
         }}>
-          {mainName}
+          {topLeftText}
         </div>
         
-        {/* 右下角卦名：只显示括号里的部分 */}
+        {/* 右下角卦名 */}
         <div style={{
           position: 'absolute',
           bottom: '8px',
           right: '8px',
           fontSize: cardSize.fontSize,
           fontWeight: 'bold',
-          color: '#e2e8f0'
+          color: '#000000'
         }}>
-          {bracketName}
+          {bottomRightText}
         </div>
         
         {/* 居中卦象 */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          {/* 反转数组后渲染，实现从下往上排列每一爻 */}
-          {/* 数组顺序：[下爻, 中爻, 上爻] → 反转后：[上爻, 中爻, 下爻] → 渲染顺序：下爻 → 中爻 → 上爻 */}
-          {yao.slice().reverse().map((isYang, index) => (
+          {/* 根据reverseYao参数决定是否反转数组 */}
+          {/* 反转：数组顺序[下爻, 上爻] → 反转后[上爻, 下爻] → 渲染顺序从上到下，视觉上：上爻在上，下爻在下 */}
+          {/* 不反转：直接渲染数组，顺序[下爻, 上爻] → 渲染顺序从上到下，视觉上：下爻在上，上爻在下 */}
+          {(reverseYao ? yao.slice().reverse() : yao).map((isYang, index) => (
             <div key={index} style={{ display: 'flex', justifyContent: 'center' }}>
               {renderYao(isYang, yao.length)}
             </div>
@@ -539,22 +582,22 @@ const Taiji: React.FC = () => {
   const renderSixiang = () => {
     // 四象由两爻组成：[下爻, 上爻]，true为阳，false为阴
     // 正确卦象：
-    // 太阴：☷ 下阴、上阴
-    // 少阴：☳ 下阴、上阳
-    // 少阳：☴ 下阳、上阴
     // 太阳：☰ 下阳、上阳
+    // 少阳：☴ 下阳、上阴
+    // 少阴：☳ 下阴、上阳
+    // 太阴：☷ 下阴、上阴
     const sixiangElements = [
-      { type: 'taiyin', name: '太阴', yao: [false, false] }, // 下阴、上阴
-      { type: 'shaoyin', name: '少阴', yao: [false, true] }, // 下阴、上阳
+      { type: 'taiyang', name: '太阳', yao: [true, true] },   // 下阳、上阳
       { type: 'shaoyang', name: '少阳', yao: [true, false] }, // 下阳、上阴
-      { type: 'taiyang', name: '太阳', yao: [true, true] }   // 下阳、上阳
+      { type: 'shaoyin', name: '少阴', yao: [false, true] }, // 下阴、上阳
+      { type: 'taiyin', name: '太阴', yao: [false, false] }   // 下阴、上阴
     ];
 
     return (
       <div style={{ display: 'flex', justifyContent: 'center', gap: '30px', margin: '30px 0' }}>
         {sixiangElements.map((element) => (
           <div key={element.type}>
-            {renderGuaCard(element.name, element.yao, 'large')}
+            {renderGuaCard(element.name, element.yao, 'large', undefined, undefined, false)}
           </div>
         ))}
       </div>
@@ -568,12 +611,12 @@ const Taiji: React.FC = () => {
     const margin = yaoCount === 6 ? '2px 0' : '3px 0';
     
     if (isYang) {
-      // 阳爻：整个黑色按钮，细长设计
+      // 阳爻：整个白色按钮，细长设计
       return (
         <div style={{
           width: '60px',
           height: '10px',
-          backgroundColor: '#000000',
+          backgroundColor: '#ffffff',
           borderRadius: '4px',
           margin: margin
         }} />
@@ -613,15 +656,15 @@ const Taiji: React.FC = () => {
 
   // 渲染八卦
   const renderBagua = () => {
-    // 按照要求的顺序：乾、兑、离、震、巽、坎、艮、坤
+    // 按照要求的顺序：乾、兑、离、巽、震、坎、艮、坤
     // 二进制表示：type字符串顺序：[上爻, 中爻, 下爻]，转换为yao数组时变为[下爻, 中爻, 上爻]
     // true为阳，false为阴
     const baguaElements = [
       { type: '111', name: '天 (乾)', yao: [true, true, true] }, // 天(乾)：下阳、中阳、上阳
       { type: '011', name: '泽 (兑)', yao: [true, true, false] }, // 泽(兑)：下阳、中阳、上阴
       { type: '101', name: '火 (离)', yao: [true, false, true] }, // 火(离)：下阳、中阴、上阳
-      { type: '001', name: '雷 (震)', yao: [true, false, false] }, // 雷(震)：下阳、中阴、上阴
       { type: '110', name: '风 (巽)', yao: [false, true, true] }, // 风(巽)：下阴、中阳、上阳
+      { type: '001', name: '雷 (震)', yao: [true, false, false] }, // 雷(震)：下阳、中阴、上阴
       { type: '010', name: '水 (坎)', yao: [false, true, false] }, // 水(坎)：下阴、中阳、上阴
       { type: '100', name: '山 (艮)', yao: [false, false, true] }, // 山(艮)：下阴、中阴、上阳
       { type: '000', name: '地 (坤)', yao: [false, false, false] }  // 地(坤)：下阴、中阴、上阴
@@ -631,7 +674,7 @@ const Taiji: React.FC = () => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: '30px', margin: '30px auto', maxWidth: '1200px' }}>
         {baguaElements.map((element) => (
           <div key={element.type}>
-            {renderGuaCard(element.name, element.yao, 'large')}
+            {renderGuaCard(element.name, element.yao, 'large', undefined, undefined, true, true)}
           </div>
         ))}
       </div>
@@ -675,7 +718,7 @@ const Taiji: React.FC = () => {
     }
 
     // 计算最后一期中奖号码对应的卦象
-    let lastHexagramName = '';
+    // let lastHexagramName = '';
     if (records.length > 0) {
       // 获取最后一条记录
       const lastRecord = records[records.length - 1];
@@ -687,12 +730,12 @@ const Taiji: React.FC = () => {
           lastRedBalls.push(parseInt(redBall));
         }
         
-        // 生成卦象编码
-        const hexagramCode = lastRedBalls.map(num => num % 2 === 1 ? '1' : '0').join('');
+        // // 生成卦象编码
+        // const hexagramCode = lastRedBalls.map(num => num % 2 === 1 ? '1' : '0').join('');
         
-        // 获取卦象对象
-        const hexagram = HEXAGRAMS[hexagramCode as keyof typeof HEXAGRAMS] || { name: '坤' };
-        lastHexagramName = hexagram.name;
+        // // 获取卦象对象
+        // const hexagram = HEXAGRAMS[hexagramCode as keyof typeof HEXAGRAMS] || { name: '坤' };
+        // lastHexagramName = hexagram.name;
       }
     }
 
@@ -711,7 +754,7 @@ const Taiji: React.FC = () => {
         formatter: function(params: Array<{ axisValue: string; marker: string; seriesName: string; value: number }>) {
           let result = `${params[0].axisValue}<br/>`;
           params.forEach((param) => {
-            result += `${param.marker}${param.seriesName}: ${param.value}次<br/>`;
+            result += `${param.marker}${param.value}次<br/>`;
           });
           return result;
         },
@@ -755,15 +798,7 @@ const Taiji: React.FC = () => {
           },
           splitLine: {
             show: false
-          },
-          name: '卦象',
-          nameTextStyle: {
-            fontSize: 12,
-            fontWeight: 'bold',
-            color: '#94a3b8'
-          },
-          nameLocation: 'middle',
-          nameGap: 25 // 调整名称与坐标轴的距离
+          }
         }
       ],
       yAxis: [
@@ -784,31 +819,74 @@ const Taiji: React.FC = () => {
             }
           },
           splitLine: {
-            show: true,
-            lineStyle: {
-              color: '#334155',
-              type: 'dashed'
-            }
-          },
-          name: '出现次数',
-          nameTextStyle: {
-            fontSize: 14,
-            fontWeight: 'bold',
-            color: '#94a3b8'
+            show: false
           }
         }
       ],
       series: [
         {
-          name: '出现次数',
+          name: '',
           type: 'bar',
           data: hexagramCountData.map(item => item.count),
           itemStyle: {
             borderRadius: 8,
             color: function(params: { dataIndex: number }) {
-              // 将最后一期中奖号码对应的卦象柱状图改为亮蓝色
-              const currentHexagram = hexagramCountData[params.dataIndex].hexagram;
-              return currentHexagram === lastHexagramName ? '#60a5fa' : '#8b5cf6';
+              // 卦名到二进制键的映射（从下到上，初爻到上爻）
+              const nameToKey: Record<string, string> = {
+                '乾': '111111', '姤': '011111', '同人': '101111', '遁': '001111',
+                '履': '110111', '讼': '010111', '无妄': '100111', '否': '000111',
+                '小畜': '111011', '巽': '011011', '家人': '101011', '渐': '001011',
+                '中孚': '110011', '涣': '010011', '益': '100011', '观': '000011',
+                '大有': '111101', '鼎': '011101', '离': '101101', '旅': '001101',
+                '睽': '110101', '未济': '010101', '噬嗑': '100101', '晋': '000101',
+                '大畜': '111001', '蛊': '011001', '贲': '101001', '艮': '001001',
+                '损': '110001', '蒙': '010001', '颐': '100001', '剥': '000001',
+                '夬': '111110', '大过': '011110', '革': '101110', '咸': '001110',
+                '兑': '110110', '困': '010110', '随': '100110', '萃': '000110',
+                '需': '111010', '井': '011010', '既济': '101010', '蹇': '001010',
+                '节': '110010', '坎': '010010', '屯': '100010', '比': '000010',
+                '大壮': '111100', '恒': '011100', '丰': '101100', '小过': '001100',
+                '归妹': '110100', '解': '010100', '震': '100100', '豫': '000100',
+                '泰': '111000', '升': '011000', '明夷': '101000', '谦': '001000',
+                '临': '110000', '师': '010000', '复': '100000', '坤': '000000'
+              };
+
+              // 计算卦象的阳爻数量和奇偶组合
+              const getHexagramCombination = (hexagramName: string): string => {
+                const key = nameToKey[hexagramName];
+                if (!key) return '0奇0偶';
+                const oddCount = (key.match(/1/g) || []).length;
+                const evenCount = 6 - oddCount;
+                return `${oddCount}奇${evenCount}偶`;
+              };
+
+              // 星球颜色映射
+              const planetColors: Record<string, string> = {
+                '地球': '#1890ff', // 蓝
+                '水星': '#52c41a', // 绿
+                '金星': '#faad14', // 黄
+                '火星': '#f5222d', // 红
+                '木星': '#13c2c2', // 青
+                '土星': '#fa8c16', // 橙
+                '天王星': '#722ed1'  // 紫
+              };
+
+              // 奇偶组合到星球的映射
+              const combinationToPlanet: { [key: string]: string } = {
+                '0奇6偶': '地球',
+                '1奇5偶': '水星',
+                '2奇4偶': '金星',
+                '3奇3偶': '火星',
+                '4奇2偶': '木星',
+                '5奇1偶': '土星',
+                '6奇0偶': '天王星'
+              };
+
+              // 根据卦象计算对应的星球颜色
+              const hexagramName = hexagramCountData[params.dataIndex].hexagram;
+              const combination = getHexagramCombination(hexagramName);
+              const planet = combinationToPlanet[combination];
+              return planet ? planetColors[planet] : '#8b5cf6';
             }
           },
           emphasis: {
@@ -816,8 +894,63 @@ const Taiji: React.FC = () => {
             itemStyle: {
               shadowBlur: 20,
               shadowColor: function(params: { dataIndex: number }) {
-                const currentHexagram = hexagramCountData[params.dataIndex].hexagram;
-                return currentHexagram === lastHexagramName ? 'rgba(96, 165, 250, 0.6)' : 'rgba(139, 92, 246, 0.6)';
+                // 卦名到二进制键的映射（从下到上，初爻到上爻）
+                const nameToKey: Record<string, string> = {
+                  '乾': '111111', '姤': '011111', '同人': '101111', '遁': '001111',
+                  '履': '110111', '讼': '010111', '无妄': '100111', '否': '000111',
+                  '小畜': '111011', '巽': '011011', '家人': '101011', '渐': '001011',
+                  '中孚': '110011', '涣': '010011', '益': '100011', '观': '000011',
+                  '大有': '111101', '鼎': '011101', '离': '101101', '旅': '001101',
+                  '睽': '110101', '未济': '010101', '噬嗑': '100101', '晋': '000101',
+                  '大畜': '111001', '蛊': '011001', '贲': '101001', '艮': '001001',
+                  '损': '110001', '蒙': '010001', '颐': '100001', '剥': '000001',
+                  '夬': '111110', '大过': '011110', '革': '101110', '咸': '001110',
+                  '兑': '110110', '困': '010110', '随': '100110', '萃': '000110',
+                  '需': '111010', '井': '011010', '既济': '101010', '蹇': '001010',
+                  '节': '110010', '坎': '010010', '屯': '100010', '比': '000010',
+                  '大壮': '111100', '恒': '011100', '丰': '101100', '小过': '001100',
+                  '归妹': '110100', '解': '010100', '震': '100100', '豫': '000100',
+                  '泰': '111000', '升': '011000', '明夷': '101000', '谦': '001000',
+                  '临': '110000', '师': '010000', '复': '100000', '坤': '000000'
+                };
+
+                // 计算卦象的阳爻数量和奇偶组合
+                const getHexagramCombination = (hexagramName: string): string => {
+                  const key = nameToKey[hexagramName];
+                  if (!key) return '0奇0偶';
+                  const oddCount = (key.match(/1/g) || []).length;
+                  const evenCount = 6 - oddCount;
+                  return `${oddCount}奇${evenCount}偶`;
+                };
+
+                // 星球颜色映射
+                const planetColors: Record<string, string> = {
+                  '地球': '#1890ff', // 蓝
+                  '水星': '#52c41a', // 绿
+                  '金星': '#faad14', // 黄
+                  '火星': '#f5222d', // 红
+                  '木星': '#13c2c2', // 青
+                  '土星': '#fa8c16', // 橙
+                  '天王星': '#722ed1'  // 紫
+                };
+
+                // 奇偶组合到星球的映射
+                const combinationToPlanet: { [key: string]: string } = {
+                  '0奇6偶': '地球',
+                  '1奇5偶': '水星',
+                  '2奇4偶': '金星',
+                  '3奇3偶': '火星',
+                  '4奇2偶': '木星',
+                  '5奇1偶': '土星',
+                  '6奇0偶': '天王星'
+                };
+
+                // 根据卦象计算对应的星球颜色阴影
+                const hexagramName = hexagramCountData[params.dataIndex].hexagram;
+                const combination = getHexagramCombination(hexagramName);
+                const planet = combinationToPlanet[combination];
+                const color = planet ? planetColors[planet] : '#8b5cf6';
+                return `${color}60`; // 添加透明度
               }
             }
           },
@@ -833,17 +966,28 @@ const Taiji: React.FC = () => {
 
     return (
       <div 
-        style={{ 
+        style={{
           backgroundColor: 'transparent',
           borderRadius: '16px',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.1)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
           padding: '20px',
           width: '100%',
           maxWidth: '100%',
           boxSizing: 'border-box',
-          marginTop: '10px',
-          marginBottom: '40px',
-          backdropFilter: 'blur(5px)'
+          backdropFilter: 'blur(5px)',
+          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+          transform: 'perspective(1000px) translateZ(0)',
+          cursor: 'pointer'
+        }}
+        onMouseEnter={(e) => {
+          const card = e.currentTarget;
+          card.style.transform = 'perspective(1000px) translateZ(10px)';
+          card.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.6), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+        }}
+        onMouseLeave={(e) => {
+          const card = e.currentTarget;
+          card.style.transform = 'perspective(1000px) translateZ(0)';
+          card.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
         }}
       >
         {/* 图表标题 */}
@@ -944,15 +1088,21 @@ const Taiji: React.FC = () => {
             formatter: '{b}\n{c}',
             fontSize: 14,
             fontWeight: 'bold',
-            color: '#cbd5e1'
+            color: '#cbd5e1',
+            textBorderColor: 'transparent',
+            textBorderWidth: 0,
+            textShadowBlur: 0
           },
           emphasis: {
             label: {
               show: true,
               fontSize: 18,
               fontWeight: 'bold',
-              formatter: '{b}: {c} ({d}%)',
-              color: '#e2e8f0'
+              formatter: '{b}: {c}',
+              color: '#e2e8f0',
+              textBorderColor: 'transparent',
+              textBorderWidth: 0,
+              textShadowBlur: 0
             },
             itemStyle: {
               shadowBlur: 30,
@@ -976,15 +1126,28 @@ const Taiji: React.FC = () => {
 
     return (
       <div 
-        style={{ 
+        style={{
           backgroundColor: 'transparent',
           borderRadius: '16px',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.1)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
           padding: '20px',
           width: '100%',
           maxWidth: '100%',
           boxSizing: 'border-box',
-          backdropFilter: 'blur(5px)'
+          backdropFilter: 'blur(5px)',
+          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+          transform: 'perspective(1000px) translateZ(0)',
+          cursor: 'pointer'
+        }}
+        onMouseEnter={(e) => {
+          const card = e.currentTarget;
+          card.style.transform = 'perspective(1000px) translateZ(10px)';
+          card.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.6), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+        }}
+        onMouseLeave={(e) => {
+          const card = e.currentTarget;
+          card.style.transform = 'perspective(1000px) translateZ(0)';
+          card.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
         }}
       >
         {/* 图表标题 */}
@@ -1086,13 +1249,125 @@ const Taiji: React.FC = () => {
             borderRadius: 15,
             borderColor: 'rgba(30, 30, 60, 0.8)',
             borderWidth: 3,
-            color: function(params: { dataIndex: number }) {
-              // 使用渐变紫色和蓝色系列
-              const colors = ['#8b5cf6', '#60a5fa', '#ec4899', '#10b981', '#f59e0b', '#3b82f6', '#14b8a6', '#f43f5e'];
-              return colors[params.dataIndex % colors.length];
+            color: function(params: { name: string }) {
+              // 卦名到二进制键的映射（从下到上，初爻到上爻）
+              const nameToKey: Record<string, string> = {
+                '乾': '111111', '姤': '011111', '同人': '101111', '遁': '001111',
+                '履': '110111', '讼': '010111', '无妄': '100111', '否': '000111',
+                '小畜': '111011', '巽': '011011', '家人': '101011', '渐': '001011',
+                '中孚': '110011', '涣': '010011', '益': '100011', '观': '000011',
+                '大有': '111101', '鼎': '011101', '离': '101101', '旅': '001101',
+                '睽': '110101', '未济': '010101', '噬嗑': '100101', '晋': '000101',
+                '大畜': '111001', '蛊': '011001', '贲': '101001', '艮': '001001',
+                '损': '110001', '蒙': '010001', '颐': '100001', '剥': '000001',
+                '夬': '111110', '大过': '011110', '革': '101110', '咸': '001110',
+                '兑': '110110', '困': '010110', '随': '100110', '萃': '000110',
+                '需': '111010', '井': '011010', '既济': '101010', '蹇': '001010',
+                '节': '110010', '坎': '010010', '屯': '100010', '比': '000010',
+                '大壮': '111100', '恒': '011100', '丰': '101100', '小过': '001100',
+                '归妹': '110100', '解': '010100', '震': '100100', '豫': '000100',
+                '泰': '111000', '升': '011000', '明夷': '101000', '谦': '001000',
+                '临': '110000', '师': '010000', '复': '100000', '坤': '000000'
+              };
+
+              // 计算卦象的阳爻数量和奇偶组合
+              const getHexagramCombination = (hexagramName: string): string => {
+                const key = nameToKey[hexagramName];
+                if (!key) return '0奇0偶';
+                const oddCount = (key.match(/1/g) || []).length;
+                const evenCount = 6 - oddCount;
+                return `${oddCount}奇${evenCount}偶`;
+              };
+
+              // 星球颜色映射
+              const planetColors: Record<string, string> = {
+                '地球': '#1890ff', // 蓝
+                '水星': '#52c41a', // 绿
+                '金星': '#faad14', // 黄
+                '火星': '#f5222d', // 红
+                '木星': '#13c2c2', // 青
+                '土星': '#fa8c16', // 橙
+                '天王星': '#722ed1'  // 紫
+              };
+
+              // 奇偶组合到星球的映射
+              const combinationToPlanet: { [key: string]: string } = {
+                '0奇6偶': '地球',
+                '1奇5偶': '水星',
+                '2奇4偶': '金星',
+                '3奇3偶': '火星',
+                '4奇2偶': '木星',
+                '5奇1偶': '土星',
+                '6奇0偶': '天王星'
+              };
+
+              // 根据卦象计算对应的星球颜色
+              const hexagramName = params.name;
+              const combination = getHexagramCombination(hexagramName);
+              const planet = combinationToPlanet[combination];
+              const baseColor = planet ? planetColors[planet] : '#8b5cf6';
+              return baseColor;
             },
             shadowBlur: 15,
-            shadowColor: 'rgba(139, 92, 246, 0.4)'
+            shadowColor: function(params: { name: string }) {
+              // 卦名到二进制键的映射（从下到上，初爻到上爻）
+              const nameToKey: Record<string, string> = {
+                '乾': '111111', '姤': '011111', '同人': '101111', '遁': '001111',
+                '履': '110111', '讼': '010111', '无妄': '100111', '否': '000111',
+                '小畜': '111011', '巽': '011011', '家人': '101011', '渐': '001011',
+                '中孚': '110011', '涣': '010011', '益': '100011', '观': '000011',
+                '大有': '111101', '鼎': '011101', '离': '101101', '旅': '001101',
+                '睽': '110101', '未济': '010101', '噬嗑': '100101', '晋': '000101',
+                '大畜': '111001', '蛊': '011001', '贲': '101001', '艮': '001001',
+                '损': '110001', '蒙': '010001', '颐': '100001', '剥': '000001',
+                '夬': '111110', '大过': '011110', '革': '101110', '咸': '001110',
+                '兑': '110110', '困': '010110', '随': '100110', '萃': '000110',
+                '需': '111010', '井': '011010', '既济': '101010', '蹇': '001010',
+                '节': '110010', '坎': '010010', '屯': '100010', '比': '000010',
+                '大壮': '111100', '恒': '011100', '丰': '101100', '小过': '001100',
+                '归妹': '110100', '解': '010100', '震': '100100', '豫': '000100',
+                '泰': '111000', '升': '011000', '明夷': '101000', '谦': '001000',
+                '临': '110000', '师': '010000', '复': '100000', '坤': '000000'
+              };
+
+              // 计算卦象的阳爻数量和奇偶组合
+              const getHexagramCombination = (hexagramName: string): string => {
+                const key = nameToKey[hexagramName];
+                if (!key) return '0奇0偶';
+                const oddCount = (key.match(/1/g) || []).length;
+                const evenCount = 6 - oddCount;
+                return `${oddCount}奇${evenCount}偶`;
+              };
+
+              // 星球颜色映射
+              const planetColors: Record<string, string> = {
+                '地球': '#1890ff', // 蓝
+                '水星': '#52c41a', // 绿
+                '金星': '#faad14', // 黄
+                '火星': '#f5222d', // 红
+                '木星': '#13c2c2', // 青
+                '土星': '#fa8c16', // 橙
+                '天王星': '#722ed1'  // 紫
+              };
+
+              // 奇偶组合到星球的映射
+              const combinationToPlanet: { [key: string]: string } = {
+                '0奇6偶': '地球',
+                '1奇5偶': '水星',
+                '2奇4偶': '金星',
+                '3奇3偶': '火星',
+                '4奇2偶': '木星',
+                '5奇1偶': '土星',
+                '6奇0偶': '天王星'
+              };
+
+              // 根据卦象计算对应的星球颜色阴影
+              const hexagramName = params.name;
+              const combination = getHexagramCombination(hexagramName);
+              const planet = combinationToPlanet[combination];
+              const color = planet ? planetColors[planet] : '#8b5cf6';
+              return `${color}40`; // 添加透明度
+            }
           },
           label: {
             show: true,
@@ -1100,19 +1375,83 @@ const Taiji: React.FC = () => {
             formatter: '{b}\n{c}',
             fontSize: 12,
             fontWeight: 'normal',
-            color: '#cbd5e1'
+            color: '#cbd5e1',
+            textBorderColor: 'transparent',
+            textBorderWidth: 0,
+            textShadowBlur: 0
           },
           emphasis: {
             label: {
               show: true,
               fontSize: 16,
               fontWeight: 'bold',
-              formatter: '{b}: {c} ({d}%)',
-              color: '#e2e8f0'
+              formatter: '{b}: {c}',
+              color: '#e2e8f0',
+              textBorderColor: 'transparent',
+              textBorderWidth: 0,
+              textShadowBlur: 0
             },
             itemStyle: {
               shadowBlur: 30,
-              shadowColor: 'rgba(139, 92, 246, 0.6)'
+              shadowColor: function(params: { name: string }) {
+                // 卦名到二进制键的映射（从下到上，初爻到上爻）
+                const nameToKey: Record<string, string> = {
+                  '乾': '111111', '姤': '011111', '同人': '101111', '遁': '001111',
+                  '履': '110111', '讼': '010111', '无妄': '100111', '否': '000111',
+                  '小畜': '111011', '巽': '011011', '家人': '101011', '渐': '001011',
+                  '中孚': '110011', '涣': '010011', '益': '100011', '观': '000011',
+                  '大有': '111101', '鼎': '011101', '离': '101101', '旅': '001101',
+                  '睽': '110101', '未济': '010101', '噬嗑': '100101', '晋': '000101',
+                  '大畜': '111001', '蛊': '011001', '贲': '101001', '艮': '001001',
+                  '损': '110001', '蒙': '010001', '颐': '100001', '剥': '000001',
+                  '夬': '111110', '大过': '011110', '革': '101110', '咸': '001110',
+                  '兑': '110110', '困': '010110', '随': '100110', '萃': '000110',
+                  '需': '111010', '井': '011010', '既济': '101010', '蹇': '001010',
+                  '节': '110010', '坎': '010010', '屯': '100010', '比': '000010',
+                  '大壮': '111100', '恒': '011100', '丰': '101100', '小过': '001100',
+                  '归妹': '110100', '解': '010100', '震': '100100', '豫': '000100',
+                  '泰': '111000', '升': '011000', '明夷': '101000', '谦': '001000',
+                  '临': '110000', '师': '010000', '复': '100000', '坤': '000000'
+                };
+
+                // 计算卦象的阳爻数量和奇偶组合
+                const getHexagramCombination = (hexagramName: string): string => {
+                  const key = nameToKey[hexagramName];
+                  if (!key) return '0奇0偶';
+                  const oddCount = (key.match(/1/g) || []).length;
+                  const evenCount = 6 - oddCount;
+                  return `${oddCount}奇${evenCount}偶`;
+                };
+
+                // 星球颜色映射
+                const planetColors: Record<string, string> = {
+                  '地球': '#1890ff', // 蓝
+                  '水星': '#52c41a', // 绿
+                  '金星': '#faad14', // 黄
+                  '火星': '#f5222d', // 红
+                  '木星': '#13c2c2', // 青
+                  '土星': '#fa8c16', // 橙
+                  '天王星': '#722ed1'  // 紫
+                };
+
+                // 奇偶组合到星球的映射
+                const combinationToPlanet: { [key: string]: string } = {
+                  '0奇6偶': '地球',
+                  '1奇5偶': '水星',
+                  '2奇4偶': '金星',
+                  '3奇3偶': '火星',
+                  '4奇2偶': '木星',
+                  '5奇1偶': '土星',
+                  '6奇0偶': '天王星'
+                };
+
+                // 根据卦象计算对应的星球颜色阴影
+                const hexagramName = params.name;
+                const combination = getHexagramCombination(hexagramName);
+                const planet = combinationToPlanet[combination];
+                const color = planet ? planetColors[planet] : '#8b5cf6';
+                return `${color}60`; // 添加透明度
+              }
             }
           },
           labelLine: {
@@ -1130,15 +1469,28 @@ const Taiji: React.FC = () => {
 
     return (
       <div 
-        style={{ 
+        style={{
           backgroundColor: 'transparent',
           borderRadius: '16px',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.1)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
           padding: '20px',
           width: '100%',
           maxWidth: '100%',
           boxSizing: 'border-box',
-          backdropFilter: 'blur(5px)'
+          backdropFilter: 'blur(5px)',
+          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+          transform: 'perspective(1000px) translateZ(0)',
+          cursor: 'pointer'
+        }}
+        onMouseEnter={(e) => {
+          const card = e.currentTarget;
+          card.style.transform = 'perspective(1000px) translateZ(10px)';
+          card.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.6), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+        }}
+        onMouseLeave={(e) => {
+          const card = e.currentTarget;
+          card.style.transform = 'perspective(1000px) translateZ(0)';
+          card.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
         }}
       >
         {/* 图表标题 */}
@@ -1183,6 +1535,7 @@ const Taiji: React.FC = () => {
     };
 
     // 按照六十四卦速查表的顺序（8x8矩阵，下卦为行，上卦为列）
+    // 第四行与第五行互换位置
     const hexagramOrder = [
       // 下卦为乾（第一行）
       '乾', '夬', '大有', '大壮', '小畜', '需', '大畜', '泰',
@@ -1190,10 +1543,10 @@ const Taiji: React.FC = () => {
       '履', '兑', '睽', '归妹', '中孚', '节', '损', '临',
       // 下卦为离（第三行）
       '同人', '革', '离', '丰', '家人', '既济', '贲', '明夷',
-      // 下卦为震（第四行）
-      '无妄', '随', '噬嗑', '震', '益', '屯', '颐', '复',
       // 下卦为巽（第五行）
       '姤', '大过', '鼎', '恒', '巽', '井', '蛊', '升',
+      // 下卦为震（第四行）
+      '无妄', '随', '噬嗑', '震', '益', '屯', '颐', '复',
       // 下卦为坎（第六行）
       '讼', '困', '未济', '解', '涣', '坎', '蒙', '师',
       // 下卦为艮（第七行）
@@ -1206,6 +1559,8 @@ const Taiji: React.FC = () => {
     const hexagramMatrix: string[][] = [];
     for (let i = 0; i < 8; i++) {
       hexagramMatrix[i] = hexagramOrder.slice(i * 8, (i + 1) * 8);
+      // 第四列与第五列互换位置
+      [hexagramMatrix[i][3], hexagramMatrix[i][4]] = [hexagramMatrix[i][4], hexagramMatrix[i][3]];
     }
 
     // 计算行总和和列总和
@@ -1263,6 +1618,24 @@ const Taiji: React.FC = () => {
       return `rgb(${r}, ${g}, ${b})`;
     };
 
+    // 创建奇偶组合到颜色的映射关系 - 科技梦幻风格
+    const combinationToColor: { [key: string]: string } = {
+      '0奇6偶': 'radial-gradient(circle at 30% 50%, rgba(24, 144, 255, 0.9) 0%, rgba(15, 118, 255, 0.7) 50%, rgba(5, 88, 200, 0.8) 100%)', // 地球 - 科技蓝渐变
+      '1奇5偶': 'radial-gradient(circle at 70% 30%, rgba(82, 196, 26, 0.9) 0%, rgba(64, 169, 20, 0.7) 50%, rgba(45, 130, 15, 0.8) 100%)',  // 水星 - 科技绿渐变
+      '2奇4偶': 'radial-gradient(circle at 40% 70%, rgba(250, 173, 20, 0.9) 0%, rgba(230, 156, 15, 0.7) 50%, rgba(200, 130, 10, 0.8) 100%)', // 金星 - 科技金渐变
+      '3奇3偶': 'radial-gradient(circle at 60% 60%, rgba(245, 34, 45, 0.9) 0%, rgba(220, 30, 40, 0.7) 50%, rgba(190, 25, 35, 0.8) 100%)',  // 火星 - 科技红渐变
+      '4奇2偶': 'radial-gradient(circle at 30% 70%, rgba(19, 194, 194, 0.9) 0%, rgba(15, 165, 165, 0.7) 50%, rgba(10, 130, 130, 0.8) 100%)', // 木星 - 科技青渐变
+      '5奇1偶': 'radial-gradient(circle at 70% 70%, rgba(250, 140, 22, 0.9) 0%, rgba(230, 126, 18, 0.7) 50%, rgba(200, 105, 15, 0.8) 100%)', // 土星 - 科技橙渐变
+      '6奇0偶': 'radial-gradient(circle at 60% 30%, rgba(114, 46, 209, 0.9) 0%, rgba(95, 38, 175, 0.7) 50%, rgba(75, 30, 140, 0.8) 100%)'  // 天王星 - 科技紫渐变
+    };
+
+    // 计算卦象的阳爻数量和奇偶组合
+    const getHexagramCombination = (key: string) => {
+      const oddCount = (key.match(/1/g) || []).length;
+      const evenCount = 6 - oddCount;
+      return `${oddCount}奇${evenCount}偶`;
+    };
+
     // 计算数值对应的发光效果
     const getGlowEffect = (count: number) => {
       if (count === 0) return 'none';
@@ -1272,6 +1645,27 @@ const Taiji: React.FC = () => {
     };
 
     return (
+      <div style={{
+        backgroundColor: 'transparent',
+        borderRadius: '16px',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+        backdropFilter: 'blur(10px)',
+        padding: '40px',
+        margin: '0 auto',
+        width: '100%',
+        boxSizing: 'border-box',
+        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+        transform: 'perspective(1000px) translateZ(0)',
+        cursor: 'pointer'
+      }} onMouseEnter={(e) => {
+        const card = e.currentTarget;
+        card.style.transform = 'perspective(1000px) translateZ(10px)';
+        card.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.6), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+      }} onMouseLeave={(e) => {
+        const card = e.currentTarget;
+        card.style.transform = 'perspective(1000px) translateZ(0)';
+        card.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+      }}>
         <div style={{
           overflowX: 'auto',
           width: '100%',
@@ -1285,27 +1679,51 @@ const Taiji: React.FC = () => {
             alignItems: 'center',
             marginBottom: '12px'
           }}>
-            {/* 左上角空白 */}
+            {/* 左上角总计卡片 */}
                 <div style={{
-                  width: '150px',
+                  width: '100px',
                   height: '60px',
                   marginRight: '10px',
+                  padding: '0 15px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxSizing: 'border-box'
-                }} />
+                  backgroundColor: 'rgba(139, 92, 246, 0.4)',
+                  borderRadius: '12px',
+                  transform: 'none',
+                  color: '#d8b4fe',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  boxShadow: '0 4px 12px rgba(139, 92, 246, 0.25)',
+                  border: '1px solid rgba(139, 92, 246, 0.6)',
+                  boxSizing: 'border-box',
+                  flexDirection: 'column'
+                }}>
+                  <div style={{
+                    fontSize: '12px',
+                    color: '#e2e8f0',
+                    marginBottom: '2px'
+                  }}>总计</div>
+                  <div style={{
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    color: '#d8b4fe',
+                    textShadow: '0 0 12px rgba(216, 180, 254, 0.6)'
+                  }}>{total}</div>
+                </div>
             
             {/* 上卦列标题 */}
-                {['乾', '兑', '离', '震', '巽', '坎', '艮', '坤'].map((baguaName) => (
+                {['乾', '兑', '离', '巽', '震', '坎', '艮', '坤'].map((baguaName, colIndex) => (
                   <div key={`col-header-${baguaName}`} style={{
                     width: '150px',
                     height: '60px',
                     marginRight: '10px',
-                    padding: '0 20px',
+                    padding: '0 35px',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
+                    justifyContent: 'space-between',
                     backgroundColor: 'rgba(79, 70, 229, 0.2)',
                     borderRadius: '12px',
                     transform: 'none',
@@ -1318,33 +1736,16 @@ const Taiji: React.FC = () => {
                     border: '1px solid rgba(79, 70, 229, 0.4)',
                     boxSizing: 'border-box'
                   }}>
-                    {baguaName}
+                    <div>{baguaName}</div>
+                    <div style={{
+                      fontSize: '12px',
+                      color: '#93c5fd',
+                      fontWeight: '700'
+                    }}>
+                      {colSums[colIndex]}
+                    </div>
                   </div>
                 ))}
-                
-                {/* 行小计标题 */}
-                <div style={{
-                  width: '150px',
-                  height: '60px',
-                  marginRight: '10px',
-                  padding: '0 20px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                  borderRadius: '12px',
-                  transform: 'none',
-                  color: '#93c5fd',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  boxShadow: '0 2px 8px rgba(59, 130, 246, 0.15)',
-                  border: '1px solid rgba(59, 130, 246, 0.4)',
-                  boxSizing: 'border-box'
-                }}>
-                  小计
-                </div>
           </div>
 
           {/* 六十四卦网格 */}
@@ -1357,15 +1758,15 @@ const Taiji: React.FC = () => {
                 marginBottom: '12px',
                 transition: 'all 0.3s ease'
               }}>
-                {/* 下卦行标题 */}
+                {/* 下卦行标题 - 包含行小计 */}
                 <div style={{
-                  width: '150px',
+                  width: '100px',
                   height: '60px',
                   marginRight: '10px',
-                  padding: '0 20px',
+                  padding: '0 15px',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
+                  justifyContent: 'space-between',
                   backgroundColor: 'rgba(139, 92, 246, 0.2)',
                   borderRadius: '12px',
                   color: '#d8b4fe',
@@ -1377,7 +1778,14 @@ const Taiji: React.FC = () => {
                   border: '1px solid rgba(139, 92, 246, 0.4)',
                   boxSizing: 'border-box'
                 }}>
-                  {baguaNames[rowIndex]}
+                  <div>{baguaNames[rowIndex]}</div>
+                  <div style={{
+                    fontSize: '12px',
+                    color: '#93c5fd',
+                    fontWeight: '700'
+                  }}>
+                    {rowSums[rowIndex]}
+                  </div>
                 </div>
 
                 {/* 卦象单元格 */}
@@ -1385,6 +1793,40 @@ const Taiji: React.FC = () => {
                   const key = nameToKey[hexagramName];
                   const count = hexagramStats[key] || 0;
                   const isLastHexagram = key === lastHexagramKey;
+                  
+                  // 获取卦象的奇偶组合和对应颜色
+                  const combination = getHexagramCombination(key);
+                  const originalCardColor = combinationToColor[combination];
+                  
+                  // 为每个卡片创建从左到右的渐变效果，深色占比与数据大小相关
+                  let cardColor;
+                  if (isLastHexagram) {
+                    cardColor = 'radial-gradient(circle at center, rgba(60, 60, 100, 0.8) 0%, rgba(40, 40, 80, 0.8) 50%, rgba(30, 30, 60, 0.9) 100%)';
+                  } else {
+                    // 计算当前数据占最大值的比例，用于控制深色占比
+                    const intensity = maxCount > 0 ? count / maxCount : 0;
+                    // 深色占比范围：30% - 100%
+                    const darkRatio = 0.3 + (intensity * 0.7);
+                    
+                    // 提取原始颜色值并转换为从左到右的线性渐变
+                    const colorMatch = originalCardColor.match(/rgba\((\d+, \d+, \d+), (\d+\.\d+)\)/);
+                    if (colorMatch) {
+                      const [, rgb] = colorMatch;
+                      // 转换为RGB数组
+                      const [r, g, b] = rgb.split(',').map(Number);
+                      // 生成更浅的颜色（增加亮度）
+                      const lightR = Math.min(255, r + 120);
+                      const lightG = Math.min(255, g + 120);
+                      const lightB = Math.min(255, b + 120);
+                      // 创建从左到右的线性渐变，深色占比与数据大小相关
+                      cardColor = `linear-gradient(to right, rgba(${r}, ${g}, ${b}, 0.8) ${darkRatio * 100}%, rgba(${lightR}, ${lightG}, ${lightB}, 0.2) ${darkRatio * 100}%)`;
+                    } else {
+                      // 如果无法提取颜色，则使用默认渐变
+                      cardColor = `linear-gradient(to right, rgba(60, 60, 100, 0.8) ${darkRatio * 100}%, rgba(120, 120, 160, 0.2) ${darkRatio * 100}%)`;
+                    }
+                  }
+                  
+                  const borderColor = cardColor.replace('0.8', '1');
                   
                   return (
                     <div key={`hex-${rowIndex}-${colIndex}`} style={{
@@ -1394,28 +1836,28 @@ const Taiji: React.FC = () => {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      backgroundColor: isLastHexagram ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.5), rgba(139, 92, 246, 0.5))' : 'rgba(30, 30, 60, 0.8)',
+                      background: cardColor,
                       borderRadius: '12px',
-                      transform: 'none',
+                      transformStyle: 'preserve-3d',
+                      transform: isLastHexagram ? 'perspective(1000px) translateZ(10px)' : 'none',
                       color: '#e2e8f0',
                       fontSize: '13px',
                       fontWeight: '500',
-                      transition: 'all 0.3s ease',
+                      transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                       cursor: 'pointer',
-                      border: isLastHexagram ? '2px solid #60a5fa' : '1px solid rgba(79, 70, 229, 0.3)',
+                      border: isLastHexagram ? '1px solid rgba(255, 255, 255, 0.1)' : `1px solid ${borderColor}`,
                       boxShadow: isLastHexagram ? 
-                        `0 0 30px rgba(96, 165, 250, 0.8), 0 4px 16px rgba(0, 0, 0, 0.3), ${getGlowEffect(count)}` : 
+                        `0 8px 16px rgba(255, 255, 255, 0.1), 0 24px 48px rgba(255, 255, 255, 0.15), 0 32px 64px rgba(255, 255, 255, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.05), ${getGlowEffect(count)}` : 
                         `0 2px 6px rgba(0, 0, 0, 0.15), ${getGlowEffect(count)}`,
                       position: 'relative',
-                      padding: '0 20px',
+                      padding: '0 35px',
                       textShadow: isLastHexagram ? '0 0 10px rgba(255, 255, 255, 0.5)' : 'none',
                       boxSizing: 'border-box'
                     }}>
-                      
                       {/* 卦名 - 左侧 */}
                       <div style={{
                         color: '#cbd5e1',
-                        fontSize: '16px',
+                        fontSize: '14px',
                         fontWeight: '600'
                       }}>
                         {hexagramName}
@@ -1423,8 +1865,8 @@ const Taiji: React.FC = () => {
                       
                       {/* 统计数字 - 右侧 */}
                       <div style={{
-                        fontSize: '24px',
-                        fontWeight: 'bold',
+                        fontSize: '12px',
+                        fontWeight: '700',
                         color: getCountColor(count),
                         textShadow: `0 0 8px ${getCountColor(count)}80`
                       }}>
@@ -1433,120 +1875,11 @@ const Taiji: React.FC = () => {
                     </div>
                   );
                 })}
-
-                {/* 行小计 */}
-                <div style={{ 
-                  width: '150px',
-                  height: '60px',
-                  marginRight: '10px',
-                  padding: '0 20px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                  borderRadius: '12px',
-                  transform: 'none',
-                  color: '#93c5fd',
-                  fontSize: '18px',
-                  fontWeight: '700',
-                  transition: 'all 0.3s ease',
-                  border: '1px solid rgba(59, 130, 246, 0.4)',
-                  borderTop: '2px solid rgba(59, 130, 246, 0.6)',
-                  boxShadow: '0 2px 8px rgba(59, 130, 246, 0.15)',
-                  textShadow: '0 0 8px rgba(147, 197, 253, 0.4)',
-                  boxSizing: 'border-box'
-                }}>
-                  {rowSums[rowIndex]}
-                </div>
               </div>
             );
           })}
-
-          {/* 列总和行 */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            marginBottom: '12px',
-            transition: 'all 0.3s ease',
-            flexWrap: 'nowrap'
-          }}>
-            {/* 列小计标题 */}
-            <div style={{
-              width: '150px',
-              height: '60px',
-              marginRight: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'rgba(139, 92, 246, 0.3)',
-              borderRadius: '12px',
-              transform: 'none',
-              color: '#d8b4fe',
-              fontSize: '12px',
-              fontWeight: '600',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              boxShadow: '0 2px 8px rgba(139, 92, 246, 0.2)',
-              border: '1px solid rgba(139, 92, 246, 0.5)',
-              borderLeft: '2px solid rgba(139, 92, 246, 0.6)',
-              boxSizing: 'border-box'
-            }}>
-              小计
-            </div>
-
-            {/* 列小计值 */}
-            {colSums.map((sum, index) => (
-              <div key={`col-sum-${index}`} style={{
-                width: '150px',
-                height: '60px',
-                marginRight: '10px',
-                padding: '0 20px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: 'rgba(139, 92, 246, 0.2)',
-                borderRadius: '12px',
-                transform: 'none',
-                color: '#a5b4fc',
-                fontSize: '18px',
-                fontWeight: '700',
-                transition: 'all 0.3s ease',
-                border: '1px solid rgba(139, 92, 246, 0.4)',
-                borderLeft: '2px solid rgba(139, 92, 246, 0.6)',
-                boxShadow: '0 2px 8px rgba(139, 92, 246, 0.15)',
-                textShadow: '0 0 8px rgba(165, 180, 252, 0.5)',
-                boxSizing: 'border-box'
-              }}>
-                {sum}
-              </div>
-            ))}
-
-            {/* 总计 */}
-            <div style={{
-              width: '150px',
-              height: '60px',
-              marginRight: '10px',
-              padding: '0 20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'rgba(139, 92, 246, 0.4)',
-              borderRadius: '12px',
-              transform: 'none',
-              color: '#d8b4fe',
-              fontSize: '22px',
-              fontWeight: 'bold',
-              transition: 'all 0.3s ease',
-              border: '1px solid rgba(139, 92, 246, 0.6)',
-              borderLeft: '2px solid rgba(139, 92, 246, 0.6)',
-              boxShadow: '0 4px 12px rgba(139, 92, 246, 0.25)',
-              textShadow: '0 0 12px rgba(216, 180, 254, 0.6)',
-              boxSizing: 'border-box'
-            }}>
-              {total}
-            </div>
-          </div>
         </div>
+      </div>
     );
   };
 
@@ -1573,25 +1906,44 @@ const Taiji: React.FC = () => {
       '临': '110000', '师': '010000', '复': '100000', '坤': '000000'
     };
 
+    // 奇偶组合到颜色的映射关系
+    const combinationToColor: { [key: string]: string } = {
+      '0奇6偶': 'rgba(24, 144, 255, 0.8)', // 地球颜色
+      '1奇5偶': 'rgba(82, 196, 26, 0.8)',  // 水星颜色
+      '2奇4偶': 'rgba(250, 173, 20, 0.8)', // 金星颜色
+      '3奇3偶': 'rgba(245, 34, 45, 0.8)',  // 火星颜色
+      '4奇2偶': 'rgba(19, 194, 194, 0.8)', // 木星颜色
+      '5奇1偶': 'rgba(250, 140, 22, 0.8)', // 土星颜色
+      '6奇0偶': 'rgba(114, 46, 209, 0.8)'  // 天王星颜色
+    };
+
+    // 计算卦象的阳爻数量和奇偶组合
+    const getHexagramCombination = (key: string) => {
+      const oddCount = (key.match(/1/g) || []).length;
+      const evenCount = 6 - oddCount;
+      return `${oddCount}奇${evenCount}偶`;
+    };
+
     // 按照六十四卦速查表的顺序（8x8矩阵，下卦为行，上卦为列）
+    // 第四行与第五行互换位置
     const hexagramOrder = [
       // 下卦为乾（第一行）
-      '乾', '夬', '大有', '大壮', '小畜', '需', '大畜', '泰',
+      '乾', '夬', '大有', '小畜', '大壮', '需', '大畜', '泰',
       // 下卦为兑（第二行）
-      '履', '兑', '睽', '归妹', '中孚', '节', '损', '临',
+      '履', '兑', '睽', '中孚', '归妹', '节', '损', '临',
       // 下卦为离（第三行）
-      '同人', '革', '离', '丰', '家人', '既济', '贲', '明夷',
-      // 下卦为震（第四行）
-      '无妄', '随', '噬嗑', '震', '益', '屯', '颐', '复',
+      '同人', '革', '离', '家人', '丰', '既济', '贲', '明夷',
       // 下卦为巽（第五行）
-      '姤', '大过', '鼎', '恒', '巽', '井', '蛊', '升',
+      '姤', '大过', '鼎', '巽', '恒', '井', '蛊', '升',
+      // 下卦为震（第四行）
+      '无妄', '随', '噬嗑', '益', '震', '屯', '颐', '复',
       // 下卦为坎（第六行）
-      '讼', '困', '未济', '解', '涣', '坎', '蒙', '师',
+      '讼', '困', '未济', '涣', '解', '坎', '蒙', '师',
       // 下卦为艮（第七行）
-      '遁', '咸', '旅', '小过', '渐', '蹇', '艮', '谦',
+      '遁', '咸', '旅', '渐', '小过', '蹇', '艮', '谦',
       // 下卦为坤（第八行）
-      '否', '萃', '晋', '豫', '观', '比', '剥', '坤'
-    ].map(name => nameToKey[name]); // 转换为二进制键
+      '否', '萃', '晋', '观', '豫', '比', '剥', '坤'
+    ];
 
     return (
       <div style={{
@@ -1599,21 +1951,25 @@ const Taiji: React.FC = () => {
         gridTemplateColumns: 'repeat(8, minmax(120px, 1fr))',
         gap: '20px',
         maxWidth: '1200px',
-        margin: '30px auto 0 auto',
+        margin: '10px auto 0 auto',
         overflowX: 'auto',
-        padding: '0 40px',
+        padding: '20px 40px',
         justifyItems: 'center',
         alignItems: 'center'
       }}>
-        {hexagramOrder.map((key) => {
+        {hexagramOrder.map((name) => {
+          const key = nameToKey[name];
           const hexagram = HEXAGRAMS[key];
           if (!hexagram) return null;
           
           const yaoArray = hexagramCodeToYaoArray(key);
+          // 计算奇偶组合和颜色
+          const combination = getHexagramCombination(key);
+          const cardColor = combinationToColor[combination];
           
           return (
             <div key={key}>
-              {renderGuaCard(hexagram.name, yaoArray, 'xlarge')}
+              {renderGuaCard(hexagram.name, yaoArray, 'xlarge', undefined, cardColor)}
             </div>
           );
         })}
@@ -1622,7 +1978,7 @@ const Taiji: React.FC = () => {
   };
 
   // 渲染演化层级
-  const renderEvolutionLevel = (_title: string, content: React.ReactNode, _level: number) => {
+  const renderEvolutionLevel = (_title: string, content: React.ReactNode) => {
     // 直接返回内容，移除容器和标题
     return content;
   };
@@ -1631,8 +1987,8 @@ const Taiji: React.FC = () => {
   const renderCloudCard = () => {
     // 计算卦象统计数据
     const totalHexagrams = Object.keys(hexagramStats).length;
-    const totalCount = Object.values(hexagramStats).reduce((sum, count) => sum + count, 0);
-    const avgCount = totalHexagrams > 0 ? (totalCount / totalHexagrams).toFixed(2) : '0';
+    // const totalCount = Object.values(hexagramStats).reduce((sum, count) => sum + count, 0);
+    // const avgCount = totalHexagrams > 0 ? (totalCount / totalHexagrams).toFixed(2) : '0';
     
     // 找出出现次数最多和最少的卦象
     let maxHexagram = { name: '', count: 0 };
@@ -1668,70 +2024,52 @@ const Taiji: React.FC = () => {
     
     // 卡片悬停效果
     // 卡片数据配置
+    const unappearedHexagrams = 64 - totalHexagrams;
+    
     const cardData = [
       {
-        title: '总卦象数',
+        title: '卦象总数',
         value: totalHexagrams,
+        subValue: `${unappearedHexagrams}`,
         color: '#667eea',
         glowColor: 'rgba(102, 126, 234, 0.4)'
       },
       {
-        title: '总出现次数',
-        value: totalCount,
-        color: '#f093fb',
-        glowColor: 'rgba(240, 147, 251, 0.4)'
-      },
-      {
-        title: '平均出现次数',
-        value: avgCount,
-        color: '#4facfe',
-        glowColor: 'rgba(79, 172, 254, 0.4)'
-      },
-      {
-        title: '出现最多的卦象',
+        title: '出现最多',
         value: maxHexagram.name,
-        subValue: `${maxHexagram.count}次`,
+        subValue: `${maxHexagram.count}`,
         color: '#fa709a',
         glowColor: 'rgba(250, 112, 154, 0.4)'
       },
       {
-        title: '出现最少的卦象',
+        title: '出现最少',
         value: minHexagram.name,
-        subValue: `${minHexagram.count}次`,
+        subValue: `${minHexagram.count}`,
         color: '#fee140',
         glowColor: 'rgba(254, 225, 64, 0.4)'
-      },
-      {
-        title: '未出现的卦象数',
-        value: 64 - totalHexagrams,
-        color: '#43e97b',
-        glowColor: 'rgba(67, 233, 123, 0.4)'
       }
     ];
     
     return (
       <div style={{
-        margin: '0 0 30px 0',
-        padding: '10px 0 0 0',
+        padding: '20px',
         borderRadius: '16px',
         backgroundColor: 'transparent',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.1)',
-        backdropFilter: 'blur(10px)'
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+        backdropFilter: 'blur(10px)',
+        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+        transform: 'perspective(1000px) translateZ(0)',
+        cursor: 'pointer'
+      }} onMouseEnter={(e) => {
+        const card = e.currentTarget;
+        card.style.transform = 'perspective(1000px) translateZ(10px)';
+        card.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.6), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+      }} onMouseLeave={(e) => {
+        const card = e.currentTarget;
+        card.style.transform = 'perspective(1000px) translateZ(0)';
+        card.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
       }}>
-        {/* 统计卡片网格标题 */}
-        <div style={{
-          textAlign: 'center',
-          marginBottom: '15px',
-          padding: '0 20px'
-        }}>
-          <Text style={{
-            fontSize: '18px',
-            fontWeight: 'bold',
-            color: '#e2e8f0',
-            textTransform: 'uppercase',
-            letterSpacing: '1px'
-          }}>六十四卦统计概览</Text>
-        </div>
+
         
         {/* 统计卡片网格 */}
         <div style={{
@@ -1741,7 +2079,6 @@ const Taiji: React.FC = () => {
           overflowX: 'auto',
           maxWidth: '100%',
           margin: '0 auto',
-          padding: '0 0 10px 0',
           flexWrap: 'nowrap'
         }}>
           {cardData.map((card, index) => (
@@ -1796,18 +2133,24 @@ const Taiji: React.FC = () => {
   // 渲染统计数据部分
   const renderStatsContent = () => {
     return (
-      <>
+      <div style={{ padding: '0 40px' }}>
         {/* 云形卡片 - 六十四卦统计概览 */}
-        {renderCloudCard()}
+        <div style={{ marginTop: '40px', marginBottom: '30px' }}>
+          {renderCloudCard()}
+        </div>
         
         {/* 卦象统计表格 */}
-        {renderStatsTable()}
+        <div style={{ marginBottom: '30px' }}>
+          {renderStatsTable()}
+        </div>
         
         {/* 卦象统计柱状图 */}
-        {renderHexagramChart()}
+        <div style={{ marginBottom: '30px' }}>
+          {renderHexagramChart()}
+        </div>
         
         {/* 并排显示卦象饼状图和阴阳饼状图 */}
-        <div style={{ display: 'flex', gap: '20px', marginTop: '10px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '30px', marginBottom: '30px', flexWrap: 'wrap' }}>
           {/* 卦象统计饼状图 */}
           <div style={{ flex: '1 1 45%', minWidth: '300px' }}>
             {renderHexagramPieChart()}
@@ -1817,7 +2160,7 @@ const Taiji: React.FC = () => {
             {renderYinYangPieChart()}
           </div>
         </div>
-      </>
+      </div>
     );
   };
 
@@ -1826,25 +2169,25 @@ const Taiji: React.FC = () => {
     return (
       <>
         {/* 六十四卦层级 - 红色球卦象统计 */}
-        {renderEvolutionLevel('', renderLiushisiCards(), 0)}
+        {renderEvolutionLevel('', renderLiushisiCards())}
         
         {/* 八卦层级 */}
-        {renderEvolutionLevel('', renderBagua(), 1)}
+        {renderEvolutionLevel('', renderBagua())}
         
         {/* 四象层级 */}
-        {renderEvolutionLevel('', renderSixiang(), 2)}
+        {renderEvolutionLevel('', renderSixiang())}
         
         {/* 两仪层级 - 蓝色球奇偶统计 */}
-        {renderEvolutionLevel('', renderLiangyiCards(), 3)}
+        {renderEvolutionLevel('', renderLiangyiCards())}
         
         {/* 太极层级 */}
-        {renderEvolutionLevel('', renderTaiji(), 4)}
+        {renderEvolutionLevel('', renderTaiji())}
       </>
     );
   };
 
   return (
-    <>
+    <div style={{ paddingBottom: '80px' }}>
       {/* 悬浮滑块控制 - 仅在太空菜单显示 */}
       {activeMenu === '太空' && !isSliderHidden && (
         <div
@@ -2483,21 +2826,21 @@ const Taiji: React.FC = () => {
             position: 'fixed',
             right: '20px',
             bottom: '80px',
-            width: '60px',
-            height: '60px',
+            width: '40px',
+            height: '40px',
             borderRadius: '50%',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
             cursor: 'pointer',
             backgroundColor: 'transparent',
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
             zIndex: 1000,
             transition: 'all 0.3s ease'
           }}
           onClick={toggleSliderVisibility}
         >
-          <EyeOutlined style={{ fontSize: '24px', color: '#666' }} />
+          <EyeOutlined style={{ fontSize: '18px', color: '#666' }} />
         </div>
       )}
       
@@ -2519,7 +2862,7 @@ const Taiji: React.FC = () => {
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center',
-        backgroundColor: '#000',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
         color: '#e2e8f0',
         zIndex: 1000,
         padding: '0 20px',
@@ -2534,41 +2877,49 @@ const Taiji: React.FC = () => {
           display: 'flex', 
           justifyContent: 'center', 
           alignItems: 'center',
-          gap: '20px'
+          gap: '12px'
         }}>
           <div 
             style={{ 
               fontSize: '14px', 
-              color: '#fff',
+              color: activeMenu === '太极' ? '#1890ff' : '#fff',
               cursor: 'pointer',
               fontWeight: activeMenu === '太极' ? 'bold' : 'normal',
               transition: 'color 0.3s ease',
               display: 'flex',
               alignItems: 'center',
-              gap: '5px'
+              gap: '5px',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              backgroundColor: 'transparent',
+              userSelect: 'none'
             }}
             onClick={() => setActiveMenu('太极')}
           >
-            <SunOutlined style={{ color: '#fff' }} /> 太极
+            <SunOutlined style={{ color: activeMenu === '太极' ? '#1890ff' : '#fff', transition: 'color 0.3s ease' }} /> 太极
           </div>
           <div 
             style={{ 
               fontSize: '14px', 
-              color: '#fff',
+              color: activeMenu === '太空' ? '#1890ff' : '#fff',
               cursor: 'pointer',
               fontWeight: activeMenu === '太空' ? 'bold' : 'normal',
               transition: 'color 0.3s ease',
               display: 'flex',
               alignItems: 'center',
-              gap: '5px'
+              gap: '5px',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              backgroundColor: 'transparent',
+              userSelect: 'none'
             }}
             onClick={() => setActiveMenu('太空')}
           >
-            <MoonOutlined style={{ color: '#fff' }} /> 太空
+            <MoonOutlined style={{ color: activeMenu === '太空' ? '#1890ff' : '#fff', transition: 'color 0.3s ease' }} /> 太空
           </div>
         </div>
       </footer>
-    </>
+    </div>
   );
 };
 

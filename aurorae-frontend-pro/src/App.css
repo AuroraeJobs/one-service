@@ -59,6 +59,8 @@ body {
   padding: 24px;
   border-top: none;
   margin-top: auto;
+  font-size: 12px;
+  font-weight: normal;
 }
 
 /* 响应式设计 */
@@ -77,6 +79,7 @@ body {
   
   .app-footer {
     padding: 16px;
+    font-size: 12px;
   }
 }
 
@@ -134,6 +137,8 @@ body {
   overflow: visible !important;
   text-overflow: clip !important;
   white-space: nowrap !important;
+  font-size: 12px !important;
+  font-weight: normal !important;
 }
 
 /* 选中项样式 */
@@ -170,4 +175,33 @@ body {
   text-decoration: none !important;
   outline: none !important;
   box-shadow: none !important;
+}
+
+/* 导航链接样式 */
+.nav-link {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  color: #fff !important;
+  text-decoration: none !important;
+  padding: 6px 8px !important;
+  border-radius: 4px !important;
+  transition: background-color 0.3s ease !important;
+  font-size: 14px !important;
+  font-weight: normal !important;
+}
+
+.nav-link:hover {
+  background-color: transparent !important;
+}
+
+/* 激活状态的导航链接样式 */
+.nav-link-active {
+  font-weight: bold !important;
+  color: #1890ff !important;
+  background-color: transparent !important;
+}
+
+.nav-link-active .anticon {
+  color: #1890ff !important;
 }

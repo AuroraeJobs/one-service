@@ -22,7 +22,7 @@ import {
   RubyOutlined
 } from '@ant-design/icons';
 
-import { recordApi } from '../services/api';
+import { useRecordContext } from '../contexts/RecordContext';
 // 导入 ECharts
 
 
@@ -78,8 +78,9 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
   const [endLineNumbers, setEndLineNumbers] = useState<string[]>([]);
   // 控制是否只显示最后一期中奖号码的状态
   const [showOnlyLastWinning, setShowOnlyLastWinning] = useState(true);
-  // 使用ref防止useEffect在StrictMode下运行两次
-  const hasFetchedRef = useRef(false);
+  // 从Context获取数据
+  const { allRecords: contextAllRecords, loading: contextLoading } = useRecordContext();
+  
   // 切换按钮拖拽状态
   const [isDragging, setIsDragging] = useState(false);
   // 滑块隐藏图标拖拽状态
@@ -730,120 +731,63 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     console.log('蓝球分组统计:', specialBlueStats);
   };
 
-  // 获取记录数据
+  // 当Context中的数据变化时，更新组件状态
   useEffect(() => {
     // 防止在StrictMode下运行两次
-    if (hasFetchedRef.current) return;
-    hasFetchedRef.current = true;
-
-    const fetchRecords = async () => {
-      setLoading(true);
-      try {
-        console.log('开始获取记录数据...');
-        console.log('API请求URL:', '/api/record/records');
-        const data = await recordApi.getAllRecords();
-        console.log('获取到的记录数据:', data);
-        console.log('数据类型:', typeof data);
-        
-        let recordsToUse: string[];
-        if (typeof data === 'string') {
-          // 接口返回的是字符串，通过换行符分割成数组
-          recordsToUse = data
-            .split('\n')
-            .map((line: string) => line.trim())
-            .filter((line: string) => line.length > 0);
-          console.log('字符串分割后记录数据长度:', recordsToUse.length);
-          if (recordsToUse.length > 0) {
-            console.log('第一条记录:', recordsToUse[0]);
-            console.log('记录长度:', recordsToUse[0].length);
-          }
-          message.success(`成功获取 ${recordsToUse.length} 条记录`);
-        } else if (Array.isArray(data) && data.length > 0) {
-          // 接口返回的是数组，直接使用
-          recordsToUse = data;
-          console.log('数组记录数据长度:', recordsToUse.length);
-          if (recordsToUse.length > 0) {
-            console.log('第一条记录:', recordsToUse[0]);
-            console.log('记录长度:', recordsToUse[0].length);
-          }
-          message.success(`成功获取 ${recordsToUse.length} 条记录`);
-        } else {
-          console.error('获取到的数据不是字符串或数组，使用模拟数据:', data);
-          recordsToUse = mockRecords;
-          message.info(`使用模拟数据，共 ${mockRecords.length} 条记录`);
-        }
-        
-        // 保存所有记录到状态
-        setAllRecords(recordsToUse);
-        // 设置滑块初始范围为全部记录
-        const initialRange: [number, number] = [0, Math.max(0, recordsToUse.length - 1)];
-        setSliderRange(initialRange);
-        // 解析所有记录
-        parseRecords(recordsToUse);
-        
-        // 初始化结束行中奖号码
-        if (recordsToUse.length > 0) {
-          const endIndex = initialRange[1];
-          const endRecord = recordsToUse[endIndex];
-          if (endRecord && endRecord.length >= 14) {
-            // 解析红球：前12位，每两位一个号码
-            const redBalls = [];
-            for (let i = 0; i < 12; i += 2) {
-              redBalls.push(endRecord.substring(i, i + 2));
-            }
-            // 解析蓝球：最后两位
-            const blueBall = endRecord.substring(12, 14);
-            // 合并红球和蓝球，根据当前统计类型设置显示的号码
-            if (statisticType === 'red') {
-              setEndLineNumbers(redBalls);
-            } else {
-              setEndLineNumbers([blueBall]);
-            }
-          }
-        }
-      } catch (error) {
-        console.error('获取记录失败:', error);
-        // 添加更详细的错误信息
-        if (error instanceof Error) {
-          console.error('错误名称:', error.name);
-          console.error('错误信息:', error.message);
-          console.error('错误堆栈:', error.stack);
-        }
-        // API请求失败时使用模拟数据
-        const recordsToUse = mockRecords;
-        setAllRecords(recordsToUse);
-        const initialRange: [number, number] = [0, recordsToUse.length - 1];
-        setSliderRange(initialRange);
-        parseRecords(recordsToUse);
-        
-        // 初始化结束行中奖号码（模拟数据）
-        if (recordsToUse.length > 0) {
-          const endIndex = initialRange[1];
-          const endRecord = recordsToUse[endIndex];
-          if (endRecord && endRecord.length >= 14) {
-            // 解析红球：前12位，每两位一个号码
-            const redBalls = [];
-            for (let i = 0; i < 12; i += 2) {
-              redBalls.push(endRecord.substring(i, i + 2));
-            }
-            // 解析蓝球：最后两位
-            const blueBall = endRecord.substring(12, 14);
-            // 合并红球和蓝球，根据当前统计类型设置显示的号码
-            if (statisticType === 'red') {
-              setEndLineNumbers(redBalls);
-            } else {
-              setEndLineNumbers([blueBall]);
-            }
-          }
-        }
-        message.info(`API请求失败，使用模拟数据，共 ${mockRecords.length} 条记录`);
-      } finally {
-        setLoading(false);
+    if (contextAllRecords && contextAllRecords.length > 0) {
+      setLoading(contextLoading);
+      
+      let recordsToUse: string[];
+      if (typeof contextAllRecords === 'string') {
+        // 接口返回的是字符串，通过换行符分割成数组
+        recordsToUse = contextAllRecords
+          .split('\n')
+          .map((line: string) => line.trim())
+          .filter((line: string) => line.length > 0);
+        console.log('字符串分割后记录数据长度:', recordsToUse.length);
+      } else if (Array.isArray(contextAllRecords)) {
+        // 接口返回的是数组，直接使用
+        recordsToUse = contextAllRecords;
+        console.log('数组记录数据长度:', recordsToUse.length);
+      } else {
+        // 如果数据格式不正确，使用模拟数据
+        console.error('获取到的数据不是字符串或数组，使用模拟数据:', contextAllRecords);
+        recordsToUse = mockRecords;
+        message.info(`使用模拟数据，共 ${mockRecords.length} 条记录`);
       }
-    };
-
-    fetchRecords();
-  }, []);
+      
+      // 保存所有记录到状态
+      setAllRecords(recordsToUse);
+      // 设置滑块初始范围为全部记录
+      const initialRange: [number, number] = [0, Math.max(0, recordsToUse.length - 1)];
+      setSliderRange(initialRange);
+      // 解析所有记录
+      parseRecords(recordsToUse);
+      
+      // 初始化结束行中奖号码
+      if (recordsToUse.length > 0) {
+        const endIndex = initialRange[1];
+        const endRecord = recordsToUse[endIndex];
+        if (endRecord && endRecord.length >= 14) {
+          // 解析红球：前12位，每两位一个号码
+          const redBalls = [];
+          for (let i = 0; i < 12; i += 2) {
+            redBalls.push(endRecord.substring(i, i + 2));
+          }
+          // 解析蓝球：最后两位
+          const blueBall = endRecord.substring(12, 14);
+          // 合并红球和蓝球，根据当前统计类型设置显示的号码
+          if (statisticType === 'red') {
+            setEndLineNumbers(redBalls);
+          } else {
+            setEndLineNumbers([blueBall]);
+          }
+        }
+      }
+      
+      setLoading(false);
+    }
+  }, [contextAllRecords, contextLoading, statisticType]);
 
   // 当统计类型切换时，更新结束行中奖号码
   useEffect(() => {
@@ -1068,8 +1012,8 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                         transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                         // 初始状态
                         transform: 'perspective(1000px) translateZ(0)',
-                        // 增强厚度视觉效果 - 多层阴影模拟真实厚度
-                        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+                        // 增强厚度视觉效果 - 多层阴影模拟真实厚度和发光效果
+                        boxShadow: `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}40, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)`,
                         // 增强边框效果，进一步提升厚度感
                         border: '1px solid rgba(0, 0, 0, 0.1)',
                         cursor: 'grab',
@@ -1079,13 +1023,13 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                 onMouseEnter={(e) => {
                   const card = e.currentTarget;
                   card.style.transform = 'perspective(1000px) translateZ(10px)';
-                  card.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+                  card.style.boxShadow = `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}60, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)`;
                   card.style.cursor = 'grabbing';
                 }}
                 onMouseLeave={(e) => {
                   const card = e.currentTarget;
                   card.style.transform = 'perspective(1000px) translateZ(0)';
-                  card.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+                  card.style.boxShadow = `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}40, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)`;
                   card.style.cursor = 'grab';
                 }}
               >
@@ -1242,8 +1186,8 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                     transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                     // 初始状态
                     transform: 'perspective(1000px) translateZ(0)',
-                    // 增强厚度视觉效果 - 多层阴影模拟真实厚度
-                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+                    // 增强厚度视觉效果 - 多层阴影模拟真实厚度和发光效果
+                    boxShadow: `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}40, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)`,
                     // 增强边框效果，进一步提升厚度感
                     border: '1px solid rgba(0, 0, 0, 0.1)',
                     cursor: 'grab',
@@ -1253,13 +1197,13 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                   onMouseEnter={(e) => {
                     const card = e.currentTarget;
                     card.style.transform = 'perspective(1000px) translateZ(10px)';
-                    card.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+                    card.style.boxShadow = `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}60, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)`;
                     card.style.cursor = 'grabbing';
                   }}
                   onMouseLeave={(e) => {
                     const card = e.currentTarget;
                     card.style.transform = 'perspective(1000px) translateZ(0)';
-                    card.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+                    card.style.boxShadow = `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}40, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)`;
                     card.style.cursor = 'grab';
                   }}
                 >
@@ -1541,8 +1485,8 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                     transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                     // 初始状态
                     transform: 'perspective(1000px) translateZ(0)',
-                    // 增强厚度视觉效果 - 多层阴影模拟真实厚度
-                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+                    // 增强厚度视觉效果 - 多层阴影模拟真实厚度和发光效果
+                    boxShadow: `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}40, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)`,
                     // 增强边框效果，进一步提升厚度感
                     border: '1px solid rgba(0, 0, 0, 0.1)',
                     cursor: item.type === 'number' ? 'pointer' : 'grab',
@@ -1552,13 +1496,13 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                   onMouseEnter={(e) => {
                     const card = e.currentTarget;
                     card.style.transform = 'perspective(1000px) translateZ(10px)';
-                    card.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+                    card.style.boxShadow = `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}60, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)`;
                     card.style.cursor = 'grabbing';
                   }}
                   onMouseLeave={(e) => {
                     const card = e.currentTarget;
                     card.style.transform = 'perspective(1000px) translateZ(0)';
-                    card.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+                    card.style.boxShadow = `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}40, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)`;
                     card.style.cursor = item.type === 'number' ? 'pointer' : 'grab';
                   }}
                 >
@@ -2680,7 +2624,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center',
-        backgroundColor: '#000',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
         zIndex: 1000,
         padding: '0 20px',
         boxSizing: 'border-box'
@@ -2695,55 +2639,67 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           display: 'flex', 
           justifyContent: 'center', 
           alignItems: 'center',
-          gap: '20px'
+          gap: '12px'
         }}>
           {/* 频率统计 */}
           <div 
             style={{ 
               fontSize: '14px', 
-              color: '#fff',
+              color: (statisticType === 'red' && activeTabKey === '1') || (statisticType === 'blue' && activeTabKey === '2') ? '#1890ff' : '#fff',
               cursor: 'pointer',
               fontWeight: (statisticType === 'red' && activeTabKey === '1') || (statisticType === 'blue' && activeTabKey === '2') ? 'bold' : 'normal',
               transition: 'color 0.3s ease',
               display: 'flex',
               alignItems: 'center',
-              gap: '5px'
+              gap: '5px',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              backgroundColor: 'transparent',
+              userSelect: 'none'
             }}
             onClick={() => setActiveTabKey(statisticType === 'red' ? '1' : '2')}
           >
-            <ChromeOutlined /> 频率
+            <ChromeOutlined style={{ color: (statisticType === 'red' && activeTabKey === '1') || (statisticType === 'blue' && activeTabKey === '2') ? '#1890ff' : '#fff', transition: 'color 0.3s ease' }} /> 频率
           </div>
           {/* 分组统计 */}
           <div 
             style={{ 
               fontSize: '14px', 
-              color: '#fff',
+              color: (statisticType === 'red' && activeTabKey === '5') || (statisticType === 'blue' && activeTabKey === '6') ? '#1890ff' : '#fff',
               cursor: 'pointer',
               fontWeight: (statisticType === 'red' && activeTabKey === '5') || (statisticType === 'blue' && activeTabKey === '6') ? 'bold' : 'normal',
               transition: 'color 0.3s ease',
               display: 'flex',
               alignItems: 'center',
-              gap: '5px'
+              gap: '5px',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              backgroundColor: 'transparent',
+              userSelect: 'none'
             }}
             onClick={() => setActiveTabKey(statisticType === 'red' ? '5' : '6')}
           >
-            <DockerOutlined /> 分组
+            <DockerOutlined style={{ color: (statisticType === 'red' && activeTabKey === '5') || (statisticType === 'blue' && activeTabKey === '6') ? '#1890ff' : '#fff', transition: 'color 0.3s ease' }} /> 分组
           </div>
           {/* 分布统计 */}
           <div 
             style={{ 
               fontSize: '14px', 
-              color: '#fff',
+              color: (statisticType === 'red' && activeTabKey === '3') || (statisticType === 'blue' && activeTabKey === '4') ? '#1890ff' : '#fff',
               cursor: 'pointer',
               fontWeight: (statisticType === 'red' && activeTabKey === '3') || (statisticType === 'blue' && activeTabKey === '4') ? 'bold' : 'normal',
               transition: 'color 0.3s ease',
               display: 'flex',
               alignItems: 'center',
-              gap: '5px'
+              gap: '5px',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              backgroundColor: 'transparent',
+              userSelect: 'none'
             }}
             onClick={() => setActiveTabKey(statisticType === 'red' ? '3' : '4')}
           >
-            <RubyOutlined /> 分布
+            <RubyOutlined style={{ color: (statisticType === 'red' && activeTabKey === '3') || (statisticType === 'blue' && activeTabKey === '4') ? '#1890ff' : '#fff', transition: 'color 0.3s ease' }} /> 分布
           </div>
         </div>
       </footer>

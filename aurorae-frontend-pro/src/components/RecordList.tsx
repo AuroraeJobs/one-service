@@ -23,6 +23,8 @@ interface QueryParams {
   dayEnd?: string;
   issueStart?: string;
   issueEnd?: string;
+  lineStart?: string;
+  lineEnd?: string;
 }
 
 // RecordList组件的props接口
@@ -154,15 +156,19 @@ const RecordList: React.FC<RecordListProps> = () => {
 
 
   // 获取记录数据
-  const fetchRecords = (start: string, end: string, isDateRange = false) => {
+  const fetchRecords = (start: string, end: string, isDateRange = false, isLineBased = false) => {
 
     // 构建请求体
     const requestBody: QueryParams = {
-      name: 'ssq', // 默认值
       ...(isDateRange
         ? {
             dayStart: start,
             dayEnd: end,
+          }
+        : isLineBased
+        ? {
+            lineStart: start,
+            lineEnd: end,
           }
         : {
             issueStart: start,
@@ -194,7 +200,7 @@ const RecordList: React.FC<RecordListProps> = () => {
   };
   
   // 防抖版本的fetchRecords函数，停止滑动后2秒执行
-  const debouncedFetchRecords = (start: string, end: string, isDateRange = false) => {
+  const debouncedFetchRecords = (start: string, end: string, isDateRange = false, isLineBased = false) => {
     // 清除之前的定时器
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
@@ -202,7 +208,7 @@ const RecordList: React.FC<RecordListProps> = () => {
     
     // 设置新的定时器，2秒后执行查询
     debounceTimerRef.current = setTimeout(() => {
-      fetchRecords(start, end, isDateRange);
+      fetchRecords(start, end, isDateRange, isLineBased);
       debounceTimerRef.current = null;
     }, 2000);
   };
@@ -226,7 +232,7 @@ const RecordList: React.FC<RecordListProps> = () => {
               
               // 计算结束期号：最新期号+1
               const endIssueNumber = issueNumber + 1;
-              // 计算开始期号：结束期号-21
+              // 计算开始期号：最新期号-21
               const startIssueNumber = Math.max(endIssueNumber - 21, 1); // 确保不小于1
               
               // 格式化为3位数字，不足补零
@@ -238,8 +244,17 @@ const RecordList: React.FC<RecordListProps> = () => {
               
               // 设置期号范围：起始期号到结束期号
               setIssueRange([startIssue, endIssue]);
-              // 自动查询
-              fetchRecords(startIssue, endIssue);
+              
+              // 自动查询：使用lineStart/lineEnd
+              if (data.line) {
+                const latestLine = parseInt(data.line);
+                const startLine = Math.max(latestLine - 12, 1);
+                const endLine = latestLine + 1;
+                fetchRecords(startLine.toString(), endLine.toString(), false, true);
+              } else {
+                // 如果没有line属性，使用期号查询
+                fetchRecords(startIssue, endIssue);
+              }
             }
           }
         })
@@ -539,12 +554,12 @@ const RecordList: React.FC<RecordListProps> = () => {
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center',
-        backgroundColor: '#000',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
         zIndex: 1000,
         padding: '0 20px'
       }}>
         {/* 所有元素统一居中容器 */}
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', gap: '20px', width: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', gap: '12px', width: '100%' }}>
           {/* 左侧：图标 */}
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <CloudFilled 
