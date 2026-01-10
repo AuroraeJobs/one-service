@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Statistic, Progress, Spin, Tabs, Slider, message, Tooltip } from 'antd';
 import {
   BarChartOutlined,
@@ -846,11 +846,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     }
   };
 
-  // 卡片拖拽状态
-  const [draggedCardIndex, setDraggedCardIndex] = useState<number | null>(null);
-  const [frequencyCardOrder, setFrequencyCardOrder] = useState<number[]>([]);
-  const [distributionCardOrder, setDistributionCardOrder] = useState<number[]>([]);
-  const [specialCardOrder, setSpecialCardOrder] = useState<number[]>([]);
+
   
   // 当前活动标签页
   const [activeTabKey, setActiveTabKey] = useState<string>(statisticType === 'red' ? '1' : '2');
@@ -873,10 +869,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       sortedData = sortedData.filter(item => endLineNumbers.includes(item.name));
     }
 
-    // 初始化卡片顺序
-    if (frequencyCardOrder.length !== sortedData.length) {
-      setFrequencyCardOrder(Array.from({ length: sortedData.length }, (_, i) => i));
-    }
+
 
     // 根据当前统计类型设置颜色和获取相关数据
     const currentColor = statisticType === 'red' ? '#f5222d' : '#1890ff';
@@ -887,36 +880,8 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     const totalCount = Object.values(data).reduce((sum, val) => sum + val.count, 0);
     const avgCount = isRed ? totalCount / 33 : totalCount / 16;
 
-    // 按照自定义顺序排列卡片
-    // 使用当前数据长度计算有效的卡片顺序，避免索引越界
-    const currentOrder = frequencyCardOrder.length === sortedData.length 
-      ? frequencyCardOrder 
-      : Array.from({ length: sortedData.length }, (_, i) => i);
-    const orderedData = currentOrder.map(index => sortedData[index]);
-
-    // 拖拽开始事件
-    const handleDragStart = (index: number) => {
-      setDraggedCardIndex(index);
-    };
-
-    // 拖拽悬停事件
-    const handleDragOver = (e: React.DragEvent) => {
-      e.preventDefault();
-    };
-
-    // 拖拽放置事件
-    const handleDrop = (targetIndex: number) => {
-      if (draggedCardIndex === null) return;
-      
-      // 创建新的顺序数组
-      const newOrder = [...frequencyCardOrder];
-      const [draggedItem] = newOrder.splice(draggedCardIndex, 1);
-      newOrder.splice(targetIndex, 0, draggedItem);
-      
-      // 更新顺序
-      setFrequencyCardOrder(newOrder);
-      setDraggedCardIndex(null);
-    };
+    // 直接使用原始排序，移除自定义拖拽排序
+    const orderedData = sortedData;
 
     return (
       <Row gutter={[16, 16]}>
@@ -935,8 +900,6 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               lg={6} 
               xl={4} 
               key={index}
-              onDragOver={handleDragOver}
-              onDrop={() => handleDrop(index)}
             >
               <Card 
                       title={
@@ -986,12 +949,6 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                       } 
                       variant="outlined"
                       size="small"
-                      draggable
-                      onDragStart={(e) => {
-                        handleDragStart(index);
-                        // 设置自定义拖动图像为空，避免默认的长方形背景
-                        e.dataTransfer.setDragImage(new Image(), 0, 0);
-                      }}
                       style={{
                         width: '100%',
                         marginBottom: '16px',
@@ -1016,7 +973,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                         boxShadow: `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}40, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)`,
                         // 增强边框效果，进一步提升厚度感
                         border: '1px solid rgba(0, 0, 0, 0.1)',
-                        cursor: 'grab',
+                        cursor: 'pointer',
                         // 确保背景样式能够覆盖组件默认样式
                         backgroundClip: 'padding-box'
                       }}
@@ -1024,13 +981,13 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                   const card = e.currentTarget;
                   card.style.transform = 'perspective(1000px) translateZ(10px)';
                   card.style.boxShadow = `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}60, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)`;
-                  card.style.cursor = 'grabbing';
+                  card.style.cursor = 'pointer';
                 }}
                 onMouseLeave={(e) => {
                   const card = e.currentTarget;
                   card.style.transform = 'perspective(1000px) translateZ(0)';
                   card.style.boxShadow = `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}40, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)`;
-                  card.style.cursor = 'grab';
+                  card.style.cursor = 'pointer';
                 }}
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -1091,53 +1048,19 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       originalKey: key
     }));
 
-    // 初始化卡片顺序
-    if (distributionCardOrder.length !== distributionData.length) {
-      setDistributionCardOrder(Array.from({ length: distributionData.length }, (_, i) => i));
-    }
+
 
     // 根据当前统计类型设置颜色
     const currentColor = statisticType === 'red' ? '#f5222d' : '#1890ff';
 
-    // 按照自定义顺序排列卡片
-    // 使用当前数据长度计算有效的卡片顺序，避免索引越界
-    const currentOrder = distributionCardOrder.length === distributionData.length 
-      ? distributionCardOrder 
-      : Array.from({ length: distributionData.length }, (_, i) => i);
-    const orderedData = currentOrder.map(index => distributionData[index]);
-
-    // 拖拽开始事件
-    const handleDragStart = (index: number) => {
-      setDraggedCardIndex(index);
-    };
-
-    // 拖拽悬停事件
-    const handleDragOver = (e: React.DragEvent) => {
-      e.preventDefault();
-    };
-
-    // 拖拽放置事件
-    const handleDrop = (targetIndex: number) => {
-      if (draggedCardIndex === null) return;
-      
-      // 创建新的顺序数组
-      const newOrder = [...distributionCardOrder];
-      const [draggedItem] = newOrder.splice(draggedCardIndex, 1);
-      newOrder.splice(targetIndex, 0, draggedItem);
-      
-      // 更新顺序
-      setDistributionCardOrder(newOrder);
-      setDraggedCardIndex(null);
-    };
+    // 直接使用原始排序，移除自定义拖拽排序
+    const orderedData = distributionData;
 
     return (
       <Row gutter={[16, 16]}>
         {orderedData.map((item, index) => {
           return (
-              <Col xs={24} sm={12} md={12} lg={12} xl={12} key={index}
-                onDragOver={handleDragOver}
-                onDrop={() => handleDrop(index)}
-              >
+              <Col xs={24} sm={12} md={12} lg={12} xl={12} key={index}>
                 <Card 
                   title={
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '16px', fontWeight: 'bold', color: currentColor }}>
@@ -1160,12 +1083,6 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                   } 
                   variant="outlined"
                   size="small"
-                  draggable
-                  onDragStart={(e) => {
-                    handleDragStart(index);
-                    // 设置自定义拖动图像为空，避免默认的长方形背景
-                    e.dataTransfer.setDragImage(new Image(), 0, 0);
-                  }}
                   style={{
                     width: '100%',
                     marginBottom: '16px',
@@ -1190,7 +1107,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                     boxShadow: `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}40, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)`,
                     // 增强边框效果，进一步提升厚度感
                     border: '1px solid rgba(0, 0, 0, 0.1)',
-                    cursor: 'grab',
+                    cursor: 'pointer',
                     // 确保背景样式能够覆盖组件默认样式
                     backgroundClip: 'padding-box'
                   }}
@@ -1198,13 +1115,13 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                     const card = e.currentTarget;
                     card.style.transform = 'perspective(1000px) translateZ(10px)';
                     card.style.boxShadow = `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}60, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)`;
-                    card.style.cursor = 'grabbing';
+                    card.style.cursor = 'pointer';
                   }}
                   onMouseLeave={(e) => {
                     const card = e.currentTarget;
                     card.style.transform = 'perspective(1000px) translateZ(0)';
                     card.style.boxShadow = `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}40, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)`;
-                    card.style.cursor = 'grab';
+                    card.style.cursor = 'pointer';
                   }}
                 >
                 <div style={{ 
@@ -1290,41 +1207,8 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       ]
     );
 
-    // 初始化卡片顺序
-    if (specialCardOrder.length !== allCards.length) {
-      setSpecialCardOrder(Array.from({ length: allCards.length }, (_, i) => i));
-    }
-
-    // 按照自定义顺序排列卡片
-    // 使用当前数据长度计算有效的卡片顺序，避免索引越界
-    const currentOrder = specialCardOrder.length === allCards.length 
-      ? specialCardOrder 
-      : Array.from({ length: allCards.length }, (_, i) => i);
-    const orderedCards = currentOrder.map(index => allCards[index]);
-
-    // 拖拽开始事件
-    const handleDragStart = (index: number) => {
-      setDraggedCardIndex(index);
-    };
-
-    // 拖拽悬停事件
-    const handleDragOver = (e: React.DragEvent) => {
-      e.preventDefault();
-    };
-
-    // 拖拽放置事件
-    const handleDrop = (targetIndex: number) => {
-      if (draggedCardIndex === null) return;
-      
-      // 创建新的顺序数组
-      const newOrder = [...specialCardOrder];
-      const [draggedItem] = newOrder.splice(draggedCardIndex, 1);
-      newOrder.splice(targetIndex, 0, draggedItem);
-      
-      // 更新顺序
-      setSpecialCardOrder(newOrder);
-      setDraggedCardIndex(null);
-    };
+    // 直接使用原始排序，移除自定义拖拽排序
+    const orderedCards = allCards;
     
     return (
       <div>
@@ -1399,8 +1283,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                     md={8} 
                     lg={4} 
                     xl={4}
-                    onDragOver={handleDragOver}
-                    onDrop={() => handleDrop(orderedCards.indexOf(item))}
+
                   >
                 <Card 
                   title={
@@ -1458,12 +1341,6 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                   } 
                   variant="outlined"
                   size="small"
-                  draggable
-                  onDragStart={(e) => {
-                    handleDragStart(index);
-                    // 设置自定义拖动图像为空，避免默认的长方形背景
-                    e.dataTransfer.setDragImage(new Image(), 0, 0);
-                  }}
 
                   style={{
                     width: '100%',
@@ -1489,7 +1366,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                     boxShadow: `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}40, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)`,
                     // 增强边框效果，进一步提升厚度感
                     border: '1px solid rgba(0, 0, 0, 0.1)',
-                    cursor: item.type === 'number' ? 'pointer' : 'grab',
+                    cursor: 'pointer',
                     // 确保背景样式能够覆盖组件默认样式
                     backgroundClip: 'padding-box'
                   }}
@@ -1497,13 +1374,13 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                     const card = e.currentTarget;
                     card.style.transform = 'perspective(1000px) translateZ(10px)';
                     card.style.boxShadow = `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}60, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)`;
-                    card.style.cursor = 'grabbing';
+                    card.style.cursor = 'pointer';
                   }}
                   onMouseLeave={(e) => {
                     const card = e.currentTarget;
                     card.style.transform = 'perspective(1000px) translateZ(0)';
                     card.style.boxShadow = `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}40, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)`;
-                    card.style.cursor = item.type === 'number' ? 'pointer' : 'grab';
+                    card.style.cursor = 'pointer';
                   }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -1713,7 +1590,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       </div>
       
       {/* 统计卡片 */}
-      <div style={{ marginTop: 32, marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+      <div style={{ marginTop: 32, marginBottom: 24, marginLeft: 24, marginRight: 24, display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
         {/* 总数据量卡片 */}
         <div style={{ flex: 1, minWidth: '160px' }}>
           <Card 

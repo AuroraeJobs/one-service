@@ -316,7 +316,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
         // 统计奇偶组合出现次数
         const originalCombination = `${oddCount}奇${evenCount}偶`;
         const combination = combinationToNameMap[originalCombination] || originalCombination;
-        if (combinationCount[combination] !== undefined) {
+        if (combination in combinationCount) {
           combinationCount[combination]++;
           // 更新累计计数
           accumulatedCount[combination]++;
@@ -686,7 +686,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       grid: {
         left: '3%',
         right: '4%',
-        bottom: '15%', // 增加底部空间，为缩略轴留出位置
+        bottom: '20%', // 增加底部空间，为缩略轴留出更多位置
         top: '8%',
         containLabel: true
       },
@@ -704,7 +704,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           end: 100,
           show: true,
           xAxisIndex: 0,
-          bottom: '3%', // 放置在底部
+          bottom: '5%', // 减小底部距离，让缩略轴更靠近图表
           height: 20, // 高度
           backgroundColor: 'rgba(0, 0, 0, 0.05)',
           borderColor: 'rgba(0, 0, 0, 0.1)',
@@ -770,12 +770,28 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       <div 
         style={{ 
           backgroundColor: 'transparent',
-          borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
-          padding: '16px',
+          borderRadius: '16px',
+          // 3d效果
+          transformStyle: 'preserve-3d',
+          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+          // 光标悬停时简单上浮效果
+          transform: 'perspective(1000px) translateZ(0)',
+          // 增强厚度视觉效果 - 多层阴影模拟真实厚度和发光效果
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+          padding: '20px',
           width: '100%',
           maxWidth: '100%',
-          boxSizing: 'border-box'
+          boxSizing: 'border-box',
+          backdropFilter: 'blur(5px)',
+          cursor: 'pointer'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'perspective(1000px) translateZ(10px)';
+          e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.6), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'perspective(1000px) translateZ(0)';
+          e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
         }}
       >
         {/* 图表容器 */}
@@ -959,7 +975,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       },
       legend: {
         data: allCombinations,
-        top: 0,
+        top: '5%', // 图例往下移一点，离图表更近，但不要太多
         textStyle: {
           fontSize: 12
         }
@@ -967,8 +983,8 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       grid: {
         left: '3%',
         right: '4%',
-        bottom: '15%', // 增加底部空间，为缩略轴留出位置
-        top: '8%',
+        bottom: '15%', // 减小底部空间，缩小与缩略轴的距离
+        top: '12%', // 调整顶部距离，让图表离图例更近
         containLabel: true
       },
       // 添加缩略轴
@@ -985,7 +1001,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           end: 100,
           show: true,
           xAxisIndex: 0,
-          bottom: '3%', // 放置在底部
+          bottom: '5%', // 减小底部距离，让缩略轴更靠近图表
           height: 20, // 高度
           backgroundColor: 'rgba(0, 0, 0, 0.05)',
           borderColor: 'rgba(0, 0, 0, 0.1)',
@@ -1052,12 +1068,28 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       <div 
         style={{ 
           backgroundColor: 'transparent',
-          borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
-          padding: '16px',
+          borderRadius: '16px',
+          // 3d效果
+          transformStyle: 'preserve-3d',
+          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+          // 光标悬停时简单上浮效果
+          transform: 'perspective(1000px) translateZ(0)',
+          // 增强厚度视觉效果 - 多层阴影模拟真实厚度和发光效果
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+          padding: '20px',
           width: '100%',
           maxWidth: '100%',
-          boxSizing: 'border-box'
+          boxSizing: 'border-box',
+          backdropFilter: 'blur(5px)',
+          cursor: 'pointer'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'perspective(1000px) translateZ(10px)';
+          e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.6), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'perspective(1000px) translateZ(0)';
+          e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
         }}
       >
         {/* 图表容器 */}
@@ -1144,7 +1176,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       grid: {
         left: '3%',
         right: '4%',
-        bottom: '15%', // 增加底部空间，为缩略轴留出位置
+        bottom: '20%', // 增加底部空间，为缩略轴留出更多位置
         top: '8%',
         containLabel: true
       },
@@ -1162,7 +1194,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           end: 100,
           show: true,
           xAxisIndex: 0,
-          bottom: '3%', // 放置在底部
+          bottom: '8%', // 增加底部距离
           height: 20, // 高度
           backgroundColor: 'rgba(0, 0, 0, 0.05)',
           borderColor: 'rgba(0, 0, 0, 0.1)',
@@ -1258,12 +1290,28 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       <div 
         style={{ 
           backgroundColor: 'transparent',
-          borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
-          padding: '16px',
+          borderRadius: '16px',
+          // 3d效果
+          transformStyle: 'preserve-3d',
+          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+          // 光标悬停时简单上浮效果
+          transform: 'perspective(1000px) translateZ(0)',
+          // 增强厚度视觉效果 - 多层阴影模拟真实厚度和发光效果
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+          padding: '20px',
           width: '100%',
           maxWidth: '100%',
-          boxSizing: 'border-box'
+          boxSizing: 'border-box',
+          backdropFilter: 'blur(5px)',
+          cursor: 'pointer'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'perspective(1000px) translateZ(10px)';
+          e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.6), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'perspective(1000px) translateZ(0)';
+          e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
         }}
       >
         {/* 图表容器 */}
@@ -1373,7 +1421,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       grid: {
         left: '3%',
         right: '4%',
-        bottom: '15%', // 增加底部空间，为缩略轴留出位置
+        bottom: '20%', // 增加底部空间，为缩略轴留出更多位置
         top: '15%',
         containLabel: true
       },
@@ -1391,7 +1439,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           end: 100,
           show: true,
           xAxisIndex: 0,
-          bottom: '3%', // 放置在底部
+          bottom: '8%', // 增加底部距离
           height: 20, // 高度
           backgroundColor: 'rgba(0, 0, 0, 0.05)',
           borderColor: 'rgba(0, 0, 0, 0.1)',
@@ -1516,13 +1564,28 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       <div 
         style={{ 
           backgroundColor: 'transparent',
-          borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
-          padding: '16px',
+          borderRadius: '16px',
+          // 3d效果
+          transformStyle: 'preserve-3d',
+          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+          // 光标悬停时简单上浮效果
+          transform: 'perspective(1000px) translateZ(0)',
+          // 增强厚度视觉效果 - 多层阴影模拟真实厚度和发光效果
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+          padding: '20px',
           width: '100%',
           maxWidth: '100%',
           boxSizing: 'border-box',
-          marginTop: '20px'
+          backdropFilter: 'blur(5px)',
+          cursor: 'pointer'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'perspective(1000px) translateZ(10px)';
+          e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.6), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'perspective(1000px) translateZ(0)';
+          e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
         }}
       >
         {/* 图表容器 */}
@@ -2134,8 +2197,8 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
         </div>
         
         {/* 分页组件 */}
-        <div style={{
-          marginTop: '24px',
+        <div style={{ 
+          marginTop: '60px',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center'
@@ -2354,41 +2417,33 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       <div 
         style={{ 
           backgroundColor: 'transparent',
-          borderRadius: '12px',
-          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.5)',
+          borderRadius: '16px',
+          // 3d效果
+          transformStyle: 'preserve-3d',
+          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+          // 光标悬停时简单上浮效果
+          transform: 'perspective(1000px) translateZ(0)',
+          // 增强厚度视觉效果 - 多层阴影模拟真实厚度和发光效果
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
           padding: '20px',
           maxWidth: '100%', // 移除固定宽度，适应页面宽度
           boxSizing: 'border-box',
-          marginTop: '80px',
-          marginBottom: '80px',
           marginLeft: 'auto',
           marginRight: 'auto',
           position: 'relative', // 用于定位右上角的所选个数
-          overflow: 'visible'
+          overflow: 'visible',
+          backdropFilter: 'blur(5px)',
+          cursor: 'pointer'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'perspective(1000px) translateZ(10px)';
+          e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.6), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'perspective(1000px) translateZ(0)';
+          e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
         }}
       >
-        {/* 底部居中显示所选个数 */}
-        <div style={{
-          position: 'absolute',
-          bottom: '-60px',
-          left: '20%',
-          transform: 'translateX(-50%)',
-          backgroundColor: statisticType === 'red' ? '#f5222d' : '#1890ff',
-          color: '#fff',
-          fontSize: '14px',
-          fontWeight: 'bold',
-          padding: '6px 16px',
-          borderRadius: '16px',
-          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-          minWidth: '50px', // 与下方显示号码个数的按钮长度一致
-          textAlign: 'center',
-          zIndex: 10
-        }}>
-          {selectedSums.length}
-        </div>
-        
-
-        
         {/* 根据模式显示对应范围的数据 */}
         <div style={{
           display: 'block',
@@ -2450,8 +2505,16 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           textAlign: 'center', 
           color: '#999',
           backgroundColor: 'transparent',
-          borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)' 
+          borderRadius: '12px',
+          // 3d效果
+          transformStyle: 'preserve-3d',
+          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+          // 光标悬停时简单上浮效果
+          transform: 'perspective(1000px) translateZ(0)',
+          // 增强厚度视觉效果 - 多层阴影模拟真实厚度
+          boxShadow: '0 4px 8px rgba(255, 255, 255, 0.08), 0 12px 24px rgba(255, 255, 255, 0.12), 0 16px 32px rgba(255, 255, 255, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+          // 增强边框效果，进一步提升厚度感
+          border: '1px solid rgba(255, 255, 255, 0.1)'
         }}>
           暂无总和分析数据
         </div>
@@ -2862,36 +2925,30 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     return (
         <div style={{ 
           backgroundColor: 'transparent',
-          borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
+          borderRadius: '16px',
+          // 3d效果
+          transformStyle: 'preserve-3d',
+          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+          // 光标悬停时简单上浮效果
+          transform: 'perspective(1000px) translateZ(0)',
+          // 增强厚度视觉效果 - 多层阴影模拟真实厚度和发光效果
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
           padding: '20px',
           width: '100%',
           maxWidth: '100%',
           boxSizing: 'border-box',
           overflow: 'visible',
           position: 'relative', // 添加相对定位，使气泡相对于容器定位
-          marginTop: '80px',
-          marginBottom: '80px'
+          marginBottom: '40px',
+          backdropFilter: 'blur(5px)',
+          cursor: 'pointer'
+        }} onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'perspective(1000px) translateZ(10px)';
+          e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.6), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+        }} onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'perspective(1000px) translateZ(0)';
+          e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
         }}>
-        {/* 顶部居中显示实际显示的六边形数量 */}
-        <div style={{
-          position: 'absolute',
-          top: '-60px',
-          left: '80%',
-          transform: 'translateX(-50%)',
-          backgroundColor: statisticType === 'red' ? '#f5222d' : '#1890ff',
-          color: '#fff',
-          fontSize: '14px',
-          fontWeight: 'bold',
-          padding: '4px 12px',
-          borderRadius: '12px',
-          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-          zIndex: 10
-        }}>
-          {displayedHexagonCount}
-        </div>
-        
-
         <div 
           style={{ 
             overflow: 'hidden',
@@ -3291,20 +3348,38 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     return (
       <div style={{ 
         backgroundColor: 'transparent',
-        borderRadius: '6px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
-        padding: '16px',
+        borderRadius: '16px',
+        // 3d效果
+        transformStyle: 'preserve-3d',
+        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+        // 光标悬停时简单上浮效果
+        transform: 'perspective(1000px) translateZ(0)',
+        // 增强厚度视觉效果 - 多层阴影模拟真实厚度和发光效果
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+        padding: '20px',
         width: '100%',
         maxWidth: '100%',
         boxSizing: 'border-box',
         overflow: 'hidden',
-        position: 'relative' // 添加相对定位，使气泡相对于容器定位
+        position: 'relative', // 添加相对定位，使气泡相对于容器定位
+        backdropFilter: 'blur(5px)',
+        cursor: 'pointer'
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'perspective(1000px) translateZ(10px)';
+        e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.6), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'perspective(1000px) translateZ(0)';
+        e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
       }}>
+
         {/* 组合切换按钮 - 移到六边形网格标题上方 */}
         <div style={{ 
           display: 'flex',
           flexWrap: 'wrap',
           gap: '10px',
+          marginTop: '30px', // 增加按钮离顶部的距离
           marginBottom: '20px',
           justifyContent: 'center',
           padding: '0 16px',
@@ -3415,12 +3490,24 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       );
     }
 
-    // 根据统计类型生成所有可能的号码列表
-    const generateAllNumbers = () => {
+    // 根据位置生成固定的数据范围
+    const generateFixedRangeNumbers = (position: number) => {
       if (statisticType === 'red') {
-        // 红球号码：01-33
-        return Array.from({ length: 33 }, (_, i) => {
-          const num = i + 1;
+        // 红球每个位置有固定的数据范围
+        const ranges = [
+          { start: 1, end: 28 },  // 位置1：1-28
+          { start: 2, end: 29 },  // 位置2：2-29
+          { start: 3, end: 30 },  // 位置3：3-30
+          { start: 4, end: 31 },  // 位置4：4-31
+          { start: 5, end: 32 },  // 位置5：5-32
+          { start: 6, end: 33 }   // 位置6：6-33
+        ];
+        
+        const range = ranges[position - 1];
+        const length = range.end - range.start + 1;
+        
+        return Array.from({ length }, (_, i) => {
+          const num = range.start + i;
           return num < 10 ? `0${num}` : `${num}`;
         });
       } else {
@@ -3431,8 +3518,6 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
         });
       }
     };
-
-    const allNumbers = generateAllNumbers();
     const currentColor = statisticType === 'red' ? '#f5222d' : '#1890ff';
 
     return (
@@ -3449,11 +3534,29 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           gap: '20px',
           width: '100%',
           boxSizing: 'border-box',
-          justifyContent: statisticType === 'blue' ? 'center' : 'flex-start'
+          justifyContent: statisticType === 'blue' ? 'center' : 'flex-start' // 蓝球居中，红球居左
         }}>
-          {positionAnalysisData.map((positionData) => {
-            // 准备柱状图数据，确保所有号码都有数据，未出现的号码次数为0
-            const barData = allNumbers.map(number => ({
+          {/* 根据当前统计类型过滤位置数据，确保只显示对应类型的数据 */}
+          {positionAnalysisData
+            // 首先检查数据是否属于当前统计类型：红球应该有6个位置，蓝球应该有1个位置
+            .filter(() => {
+              // 检查数据长度是否符合当前统计类型
+              return (statisticType === 'red' && positionAnalysisData.length === 6) || 
+                     (statisticType === 'blue' && positionAnalysisData.length === 1);
+            })
+            // 然后过滤位置
+            .filter(positionData => {
+              // 红球显示前6个位置，蓝球显示第1个位置
+              if (statisticType === 'red') {
+                return positionData.position <= 6;
+              } else {
+                return positionData.position === 1;
+              }
+            })
+            .map((positionData) => {
+            // 准备柱状图数据，根据当前位置生成固定范围的号码列表，确保所有号码都有数据，未出现的号码次数为0
+            const positionNumbers = generateFixedRangeNumbers(positionData.position);
+            const barData = positionNumbers.map(number => ({
               name: number,
               value: positionData.numberCounts[number] || 0
             }));
@@ -3478,14 +3581,14 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               grid: {
                 left: '3%',
                 right: '4%',
-                bottom: '15%',
+                bottom: '8%', // 进一步减小图表底部留白，拉近与司名的距离
                 top: '8%',
                 containLabel: true
               },
               xAxis: [
               {
                 type: 'category',
-                data: barData.map(item => item.name),
+                data: positionNumbers,
                 axisLabel: {
                   fontSize: 10,
                   rotate: 45,
@@ -3546,42 +3649,81 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                 key={positionData.position}
                 style={{ 
                   backgroundColor: 'transparent',
-                  borderRadius: '6px',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
-                  padding: '16px',
-                  width: statisticType === 'blue' ? '40%' : 'calc(33.33% - 13.33px)', // 蓝球居中显示，红球保持3个一行
+                  borderRadius: '16px',
+                  // 3d效果
+                  transformStyle: 'preserve-3d',
+                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                  // 光标悬停时简单上浮效果
+                  transform: 'perspective(1000px) translateZ(0)',
+                  // 增强厚度视觉效果 - 多层阴影模拟真实厚度和发光效果
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+                  padding: '20px',
+                  width: statisticType === 'blue' ? 'calc(33.33% - 13.33px)' : 'calc(33.33% - 13.33px)', // 红蓝模式下保持相同宽度
                   boxSizing: 'border-box',
-                  marginBottom: '20px'
+                  marginBottom: '20px',
+                  display: 'flex',
+                  flexDirection: 'column', // 纵向布局，让图表占满空间，司名在底部
+                  backdropFilter: 'blur(5px)',
+                  cursor: 'pointer'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'perspective(1000px) translateZ(10px)';
+                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.6), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'perspective(1000px) translateZ(0)';
+                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
                 }}
               >
-                {/* 位置标题 - 球形数字 */}
-                <div style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '50%',
-                  backgroundColor: currentColor,
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  margin: '0 auto 12px',
-                  boxShadow: `0 3px 8px rgba(${statisticType === 'red' ? '245, 34, 45' : '24, 144, 255'}, 0.4)`,
-                  color: '#fff',
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
-                }}>
-                  {positionData.position}
-                </div>
-              
-                {/* 图表容器 */}
+                {/* 图表容器 - 调整高度，为底部司名留出空间 */}
                 <div 
                   style={{ 
-                    height: '300px',
+                    height: '280px',
                     width: '100%',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    marginBottom: '0px' // 进一步减小与司名的间距
                   }}
                 >
                   <ReactECharts option={option} style={{ height: '100%', width: '100%', backgroundColor: 'transparent' }} />
+                </div>
+              
+                {/* 位置司名 - 底部居中显示，无背景 */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  color: currentColor,
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
+                  textAlign: 'center',
+                  padding: '2px 0', // 进一步减小司名的上下内边距
+                  marginTop: '2px', // 调整司名的上边距
+                  width: '100%'
+                }}>
+                  {/* 位置司名映射 */}
+                  {(() => {
+                    // 定义司名映射
+                    const departmentMap: { [key: string]: { [key: number]: string } } = {
+                      red: {
+                        1: '痴情司',
+                        2: '结怨司',
+                        3: '朝啼司',
+                        4: '夜哭司',
+                        5: '春感司',
+                        6: '秋悲司'
+                      },
+                      blue: {
+                        1: '薄命司'
+                      }
+                    };
+                    // 获取当前统计类型的映射
+                    const currentMap = departmentMap[statisticType];
+                    // 安全获取司名
+                    return currentMap && currentMap[positionData.position] !== undefined 
+                      ? currentMap[positionData.position] 
+                      : positionData.position;
+                  })()}
                 </div>
               </div>
             );
@@ -3599,9 +3741,16 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           padding: '40px', 
           textAlign: 'center', 
           color: '#999',
-          backgroundColor: '#fff',
-          borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)' 
+          backgroundColor: 'transparent',
+          borderRadius: '12px',
+          transformStyle: 'preserve-3d',
+          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+          transform: 'perspective(1000px) translateZ(0)',
+          boxShadow: '0 4px 8px rgba(255, 255, 255, 0.08), 0 12px 24px rgba(255, 255, 255, 0.12), 0 16px 32px rgba(255, 255, 255, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          width: '100%',
+          maxWidth: '100%',
+          boxSizing: 'border-box'
         }}>
           暂无号码累计次数数据
         </div>
@@ -3708,16 +3857,34 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     };
     
     return (
-      <div style={{ 
-        backgroundColor: 'transparent',
-        borderRadius: '6px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
-        padding: '16px',
-        marginBottom: '20px',
-        width: '100%',
-        maxWidth: '100%',
-        boxSizing: 'border-box'
-      }}>
+      <div 
+        style={{
+          backgroundColor: 'transparent',
+          borderRadius: '16px',
+          // 3d效果
+          transformStyle: 'preserve-3d',
+          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+          // 光标悬停时简单上浮效果
+          transform: 'perspective(1000px) translateZ(0)',
+          // 增强厚度视觉效果 - 多层阴影模拟真实厚度和发光效果
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+          padding: '20px',
+          marginBottom: '20px',
+          width: '100%',
+          maxWidth: '100%',
+          boxSizing: 'border-box',
+          backdropFilter: 'blur(5px)',
+          cursor: 'pointer'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'perspective(1000px) translateZ(10px)';
+          e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.6), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'perspective(1000px) translateZ(0)';
+          e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+        }}>
+
         {/* 图表容器 */}
         <div 
           style={{ 
@@ -3923,9 +4090,17 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           padding: '40px', 
           textAlign: 'center', 
           color: '#999',
-          backgroundColor: '#fff',
-          borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)' 
+          backgroundColor: 'transparent',
+          borderRadius: '12px',
+          // 3d效果
+          transformStyle: 'preserve-3d',
+          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+          // 光标悬停时简单上浮效果
+          transform: 'perspective(1000px) translateZ(0)',
+          // 增强厚度视觉效果 - 多层阴影模拟真实厚度
+          boxShadow: '0 4px 8px rgba(255, 255, 255, 0.08), 0 12px 24px rgba(255, 255, 255, 0.12), 0 16px 32px rgba(255, 255, 255, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+          // 增强边框效果，进一步提升厚度感
+          border: '1px solid rgba(255, 255, 255, 0.1)'
         }}>
           暂无奇偶组合统计数据
         </div>
@@ -3959,18 +4134,14 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     const pieData = desiredOrder
       .map(name => {
         const item = oddEvenCombinationData.find(item => item.combination === name);
-        if (item) {
-          return {
-            name: item.combination,
-            value: item.count,
-            itemStyle: {
-              color: nameToColorMap[item.combination as keyof typeof nameToColorMap] || '#999'
-            }
-          };
-        }
-        return null;
-      })
-      .filter(item => item !== null) as Array<{ name: string; value: number; itemStyle: { color: string } }>;
+        return {
+          name: name,
+          value: item ? item.count : 0,
+          itemStyle: {
+            color: nameToColorMap[name as keyof typeof nameToColorMap] || '#999'
+          }
+        };
+      });
     
     // ECharts配置项
     const option = {
@@ -4045,14 +4216,30 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
 
     return (
       <div 
-        style={{ 
+        style={{
           backgroundColor: 'transparent',
-          borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
-          padding: '16px',
+          borderRadius: '16px',
+          // 3d效果
+          transformStyle: 'preserve-3d',
+          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+          // 光标悬停时简单上浮效果
+          transform: 'perspective(1000px) translateZ(0)',
+          // 增强厚度视觉效果 - 多层阴影模拟真实厚度和发光效果
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+          padding: '20px',
           width: '100%',
           maxWidth: '100%',
-          boxSizing: 'border-box'
+          boxSizing: 'border-box',
+          backdropFilter: 'blur(5px)',
+          cursor: 'pointer'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'perspective(1000px) translateZ(10px)';
+          e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.6), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'perspective(1000px) translateZ(0)';
+          e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
         }}
       >
         <div 
@@ -4073,16 +4260,19 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     // 在统计类型切换时，确保数据符合当前模式，避免闪现旧图表
     // 检查奇偶组合数据是否为空或不属于当前模式
     if (oddEvenCombinationData.length > 0) {
-      const firstCombination = oddEvenCombinationData[0].combination;
-      const isBlueModeCombination = firstCombination === '太阳' || firstCombination === '月亮';
-      const isRedModeCombination = ['水星', '金星', '地球', '火星', '木星', '土星', '天王星'].includes(firstCombination);
+      // 检查数据是否包含当前模式的组合
+      const hasMatchingCombination = oddEvenCombinationData.some(item => {
+        if (statisticType === 'blue') {
+          // 蓝球模式：检查是否包含太阳或月亮
+          return item.combination === '太阳' || item.combination === '月亮';
+        } else {
+          // 红球模式：检查是否包含七大行星
+          return ['水星', '金星', '地球', '火星', '木星', '土星', '天王星'].includes(item.combination);
+        }
+      });
       
-      // 如果当前是蓝球模式，但数据是红球模式，返回空数组，避免渲染
-      if (statisticType === 'blue' && isRedModeCombination) {
-        return null;
-      }
-      // 如果当前是红球模式，但数据是蓝球模式，返回空数组，避免渲染
-      if (statisticType === 'red' && isBlueModeCombination) {
+      // 如果没有匹配当前模式的组合，返回null，避免渲染
+      if (!hasMatchingCombination) {
         return null;
       }
     }
@@ -4948,7 +5138,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                       <div style={{
                         cursor: sliderRange[0] <= 0 ? 'not-allowed' : 'pointer',
                         userSelect: 'none',
-                        border: '1px solid #ff0000',
+                        border: `1px solid ${sliderRange[0] <= 0 ? '#666' : (statisticType === 'red' ? '#f5222d' : '#1890ff')}`,
                         borderRadius: '50%',
                         width: '36px',
                         height: '36px',
@@ -4956,8 +5146,8 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                         justifyContent: 'center',
                         alignItems: 'center',
                         transition: 'all 0.3s',
-                        color: '#ff0000',
-                        borderColor: '#ff0000',
+                        color: sliderRange[0] <= 0 ? '#666' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
+                        borderColor: sliderRange[0] <= 0 ? '#666' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
                         padding: 0,
                         margin: 0,
                         opacity: sliderRange[0] <= 0 ? 0.3 : 1,
@@ -5166,7 +5356,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                         }}
                         trackStyle={[
                           {
-                            background: '#ff0000',
+                            background: statisticType === 'red' ? '#f5222d' : '#1890ff',
                             height: '2px',
                             borderRadius: '1px',
                             boxShadow: 'none'
@@ -5175,7 +5365,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                         handleStyle={[
                           {
                             borderWidth: 2,
-                            borderColor: '#0078d4',
+                            borderColor: statisticType === 'red' ? '#f5222d' : '#1890ff',
                             backgroundColor: 'transparent',
                             width: '16px',
                             height: '16px',
@@ -5187,7 +5377,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                           },
                           {
                             borderWidth: 2,
-                            borderColor: '#0078d4',
+                            borderColor: statisticType === 'red' ? '#f5222d' : '#1890ff',
                             backgroundColor: 'transparent',
                             width: '16px',
                             height: '16px',
@@ -5207,7 +5397,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       )}
       
       {/* 内容区域，给底部Tab留出空间 */}
-      <div style={{ marginBottom: '60px' }}>
+      <div style={{ marginBottom: '60px', paddingTop: '30px' }}>
         {/* Tab内容显示区域 */}
         {activeTabKey === '1' && renderChartStats()}
         {activeTabKey === '2' && renderOddEvenStats()}
