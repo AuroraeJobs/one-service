@@ -18,8 +18,8 @@ public class RedBox implements IBox {
 
     private Map<Integer, Box> bit;
 
-    public static IBox one() {
-        return new RedBox(RedBall.values());
+    public static void one() {
+        new RedBox(RedBall.values()).box();
     }
 
     public RedBox(IBall[] balls) {
@@ -40,7 +40,8 @@ public class RedBox implements IBox {
     }
 
     @Override
-    public void writeTo(String filename) {
+    public void writeTo() {
+        String filename = "red";
         this.box.writeTo(filename);
         this.bit.forEach((i, box) -> box.writeTo(filename + i));
     }

@@ -2,7 +2,6 @@ package org.aurorae.record.command;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.aurorae.record.ball.ColorBox;
 import org.aurorae.record.client.RecordCalendar;
 import org.aurorae.record.client.RecordClient;
 import org.aurorae.record.configuration.RecordProperties;
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Component
@@ -60,27 +58,22 @@ public class RecordUpdater implements CommandLineRunner {
             record.setLine(last.getLine() + i + 1);
             record.setDate(record.date());
         }
-        Optional.ofNullable(boxService.findById(last.getCode()))
-                .ifPresent(box -> save(box, records));
+        RecordFile.write(records);
+        recordService.saveAll(records);
+        // boxService.update(last.getCode(), records);
     }
 
     private void reset() {
         // 从数据库里获取记录进行计算
-        ColorBox box = ColorBox.one();
         List<Record> records = recordService.findAll();
-        box.save(records, boxService::save);
+        boxService.init(records);
     }
 
     private void init() {
         // 从2013年获取记录进行计算
-        ColorBox box = ColorBox.one();
         List<Record> records = RecordClient.year();
-        save(box, records);
-    }
-
-    private void save(ColorBox box, List<Record> records) {
         RecordFile.write(records);
         recordService.saveAll(records);
-        box.save(records, boxService::save);
+        boxService.init(records);
     }
 }

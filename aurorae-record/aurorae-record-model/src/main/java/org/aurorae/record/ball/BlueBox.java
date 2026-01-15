@@ -13,8 +13,8 @@ public class BlueBox implements IBox {
 
     private Box box;
 
-    public static IBox one() {
-        return new BlueBox(BlueBall.values());
+    public static void one() {
+        new BlueBox(BlueBall.values()).box();
     }
 
     public BlueBox(IBall[] balls) {
@@ -27,7 +27,8 @@ public class BlueBox implements IBox {
     }
 
     @Override
-    public void writeTo(String filename) {
+    public void writeTo() {
+        String filename = "blue";
         this.box.writeTo(filename);
     }
 }

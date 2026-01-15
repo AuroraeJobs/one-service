@@ -3,6 +3,7 @@ import { Card, message, DatePicker, Input } from 'antd';
 import { CaretLeftOutlined, CaretRightOutlined, StepBackwardOutlined, StepForwardOutlined, CloudFilled } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { recordApi } from '../services/api';
+import { periodToGanZhi } from '../constants/heavenlyStemsEarthlyBranches';
 
 // 记录类型定义
 interface RecordItem {
@@ -295,41 +296,44 @@ const RecordList: React.FC<RecordListProps> = () => {
       <Card variant="outlined" style={{ width: '100%', border: 'none', backgroundColor: 'transparent' }}>
         <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '16px', justifyContent: 'center', perspective: '1000px' }}>
           {records.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((record) => (
-            <Card 
-              key={record.code} 
-              variant="outlined" 
-              style={{ 
-                width: 'calc(25% - 12px)', 
-                minWidth: '240px', 
-                marginBottom: '16px',
-                // 透明背景
-                background: 'transparent',
-                // 确保边框颜色与深色主题协调
-                borderColor: 'rgba(255, 255, 255, 0.1)',
-                // 添加圆角
-                borderRadius: '12px',
-                // 3d效果
-                transformStyle: 'preserve-3d',
-                transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                // 光标悬停时简单上浮效果，去掉右下角翘起
-                transform: hoveredCard === record.code 
-                  ? 'perspective(1000px) translateZ(10px)' 
-                  : 'perspective(1000px) translateZ(0)',
-                // 增强厚度视觉效果 - 多层阴影模拟真实厚度
-                boxShadow: hoveredCard === record.code 
-                  ? '0 8px 16px rgba(255, 255, 255, 0.1), 0 24px 48px rgba(255, 255, 255, 0.15), 0 32px 64px rgba(255, 255, 255, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.05)' 
-                  : '0 4px 8px rgba(255, 255, 255, 0.08), 0 12px 24px rgba(255, 255, 255, 0.12), 0 16px 32px rgba(255, 255, 255, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.05)',
-                // 增强边框效果，进一步提升厚度感
-                border: '1px solid rgba(255, 255, 255, 0.1)'
-              }}
-              onMouseEnter={() => setHoveredCard(record.code)}
-              onMouseLeave={() => setHoveredCard(null)}>
+            <Card
+                key={record.code} 
+                variant="outlined" 
+                style={{ 
+                  width: 'calc(25% - 12px)', 
+                  minWidth: '240px', 
+                  marginBottom: '16px',
+                  // 深色主题背景和渐变
+                  backgroundColor: '#1A1A1A',
+                  backgroundImage: 'linear-gradient(145deg, #252525, #101010)',
+                  // 确保边框颜色与深色主题协调
+                  borderColor: 'rgba(255, 255, 255, 0.1)',
+                  // 添加圆角
+                  borderRadius: '20px',
+                  // 3d效果
+                  transformStyle: 'preserve-3d',
+                  perspective: '1000px',
+                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                  // 光标悬停时3D效果，包括translateZ和scale变换
+                  transform: hoveredCard === record.code 
+                    ? 'translateZ(10px) scale(1.02)' 
+                    : 'translateZ(0) scale(1)',
+                  // 增强厚度视觉效果 - 多层阴影模拟真实厚度，添加发光效果
+                  boxShadow: hoveredCard === record.code 
+                    ? '0 0 25px rgba(255, 255, 255, 0.15), 0 15px 40px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(255, 255, 255, 0.05), inset 0 6px 12px rgba(255, 255, 255, 0.08), inset 0 -6px 12px rgba(0, 0, 0, 0.4)' 
+                    : '0 0 20px rgba(255, 255, 255, 0.1), 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.03), inset 0 6px 12px rgba(255, 255, 255, 0.08), inset 0 -6px 12px rgba(0, 0, 0, 0.4)',
+                  // 增强边框效果，进一步提升厚度感
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}
+                onMouseEnter={() => setHoveredCard(record.code)}
+                onMouseLeave={() => setHoveredCard(null)}>
             
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {/* 期号和日期 */}
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px' }}>
-                  <span style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: '#333' }}>{record.code}</span>
-                  <span style={{ fontSize: '14px', color: '#666' }}>{record.date} {record.week}</span>
+                  <span style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: '#FFFFFF' }}>{record.code}</span>
+                  <span style={{ fontSize: '14px', color: '#888888' }}>{record.line ? periodToGanZhi(parseInt(record.line)) : ''}</span>
+                  <span style={{ fontSize: '14px', color: '#888888' }}>{record.date} {record.week}</span>
                 </div>
                 
                 {/* 红球和蓝球在一行显示 */}
@@ -427,7 +431,7 @@ const RecordList: React.FC<RecordListProps> = () => {
                         display: 'flex', 
                         justifyContent: 'space-between', 
                         fontSize: '12px',
-                        color: '#666'
+                        color: '#888888'
                       }}>
                         <span style={{ color: '#f5222d', fontWeight: 'bold' }}>{record.red.split(',').reduce((sum, ball) => sum + parseInt(ball), 0)}</span>
                         <span style={{ color: '#f5222d' }}>红球</span>
@@ -457,7 +461,7 @@ const RecordList: React.FC<RecordListProps> = () => {
                         display: 'flex', 
                         justifyContent: 'space-between', 
                         fontSize: '12px',
-                        color: '#666'
+                        color: '#888888'
                       }}>
                         <span style={{ color: '#1890ff', fontWeight: 'bold' }}>{record.red.split(',').reduce((sum, ball) => sum + parseInt(ball), 0) + parseInt(record.blue)}</span>
                         <span style={{ color: '#1890ff' }}>全部</span>
@@ -495,7 +499,7 @@ const RecordList: React.FC<RecordListProps> = () => {
                         display: 'flex', 
                         justifyContent: 'space-between', 
                         fontSize: '12px',
-                        color: '#666'
+                        color: '#888888'
                       }}>
                         <span style={{ color: '#722ed1', fontWeight: 'bold' }}>{[...record.red.split(','), record.blue].filter(ball => parseInt(ball) % 2 !== 0).length}</span>
                         <span style={{ color: '#722ed1' }}>奇数</span>
@@ -525,7 +529,7 @@ const RecordList: React.FC<RecordListProps> = () => {
                         display: 'flex', 
                         justifyContent: 'space-between', 
                         fontSize: '12px',
-                        color: '#666'
+                        color: '#888888'
                       }}>
                         <span style={{ color: '#52c41a', fontWeight: 'bold' }}>{[...record.red.split(','), record.blue].filter(ball => parseInt(ball) % 2 === 0).length}</span>
                         <span style={{ color: '#52c41a' }}>偶数</span>

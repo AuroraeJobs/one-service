@@ -1,4 +1,5 @@
-import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import type { ReactNode } from 'react';
 import { recordApi } from '../services/api';
 
 // 定义记录类型

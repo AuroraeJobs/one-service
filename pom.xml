@@ -22,6 +22,7 @@
 
     <modules>
         <module>aurorae-admin</module>
+        <module>aurorae-ai</module>
         <module>aurorae-tsdb</module>
         <module>aurorae-common</module>
         <module>aurorae-config</module>

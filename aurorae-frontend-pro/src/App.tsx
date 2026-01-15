@@ -1,12 +1,16 @@
 import { useState } from 'react';
 import { ConfigProvider, theme } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
-import { CloudFilled, SearchOutlined, BarChartOutlined, AreaChartOutlined, DotChartOutlined } from '@ant-design/icons';
+import { CloudFilled, SearchOutlined, BarChartOutlined, AreaChartOutlined, DotChartOutlined, HeartFilled } from '@ant-design/icons';
 import { BrowserRouter as Router, Route, Routes, Link, useLocation } from 'react-router-dom';
 import RecordList from './components/RecordList';
 import Statistics from './components/Statistics';
 import Analysis from './components/Analysis';
 import Taiji from './components/Taiji';
+import HealthMainPage from './components/HealthMainPage';
+import HealthThirdPage from './components/HealthThirdPage';
+import HealthFourthPage from './components/HealthFourthPage';
+import HexagramPage from './components/HexagramPage';
 import { RecordProvider } from './contexts/RecordContext';
 import './App.css';
 
@@ -15,7 +19,11 @@ const routeMap: Record<string, string> = {
   '/taiji': '宇宙',
   '/analysis': '时间',
   '/statistics': '空间',
-  '/record': '探索'
+  '/record': '探索',
+  '/health': '健康',
+  '/health/third': '健康',
+  '/health/fourth': '健康',
+  '/hexagram': '健康'
 };
 
 // 导航栏组件
@@ -25,8 +33,8 @@ const AppHeader = () => {
   // 确定当前选中的导航项
   const getCurrentNav = () => {
     const path = location.pathname;
-    // 对于根路径，默认选中第一个导航项
-    if (path === '/') return '宇宙';
+    // 对于根路径，默认选中健康导航项
+    if (path === '/') return '健康';
     return routeMap[path] || '';
   };
   
@@ -53,6 +61,10 @@ const AppHeader = () => {
         
         {/* 自定义导航菜单 */}
         <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+          <Link to="/health" className={`nav-link ${currentNav === '健康' ? 'nav-link-active' : ''}`}>
+            <HeartFilled />
+            健康
+          </Link>
           <Link to="/taiji" className={`nav-link ${currentNav === '宇宙' ? 'nav-link-active' : ''}`}>
             <DotChartOutlined />
             宇宙
@@ -96,11 +108,15 @@ function App() {
             <AppHeader />
             <main className="app-main" style={{ paddingTop: '64px', paddingBottom: '20px', backgroundColor: '#000' }}>
               <Routes>
-                <Route path="/" element={<Taiji />} />
+                <Route path="/" element={<HealthMainPage />} />
                 <Route path="/statistics" element={<Statistics isTabVisible={isTabVisible} />} />
                 <Route path="/analysis" element={<Analysis isTabVisible={isTabVisible} />} />
                 <Route path="/taiji" element={<Taiji />} />
                 <Route path="/record" element={<RecordList />} />
+                <Route path="/health" element={<HealthMainPage />} />
+                <Route path="/health/third" element={<HealthThirdPage />} />
+                <Route path="/health/fourth" element={<HealthFourthPage />} />
+                <Route path="/hexagram" element={<HexagramPage />} />
               </Routes>
             </main>
 

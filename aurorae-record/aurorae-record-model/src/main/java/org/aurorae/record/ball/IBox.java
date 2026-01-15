@@ -7,24 +7,20 @@ import java.io.BufferedReader;
 
 public interface IBox {
 
-    static void box(IBox box, String writeTo) {
-        box.box(writeTo);
-    }
-
     @SneakyThrows
-    default void box(String writeTo) {
+    default void box() {
         try (BufferedReader reader = RecordFile.reader(getReadFrom())) {
             String line;
             while ((line = reader.readLine()) != null) {
                 record(line);
             }
         }
-        writeTo(writeTo);
+        writeTo();
     }
 
     String getReadFrom();
 
     void record(String line);
 
-    void writeTo(String filename);
+    void writeTo();
 }

@@ -954,51 +954,49 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                         marginBottom: '16px',
                         // 增大内边距，让内容离边缘更远
                         padding: '20px',
-                        // 随切换按钮颜色变化的渐变背景，从左上角到右下角逐渐加深
-                        backgroundImage: currentColor === '#f5222d' 
-                          ? 'linear-gradient(135deg, rgba(245,34,45,0.2) 0%, rgba(245,34,45,0.4) 100%)' 
-                          : 'linear-gradient(135deg, rgba(24,144,255,0.2) 0%, rgba(24,144,255,0.4) 100%)',
-                        // 设置背景颜色为透明，确保渐变效果可以显示
-                        backgroundColor: 'transparent',
-                        // 确保边框颜色与渐变协调
-                        borderColor: currentColor === '#f5222d' ? 'rgba(245,34,45,0.4)' : 'rgba(24,144,255,0.4)',
+                        // 深色主题背景和渐变
+                        backgroundColor: '#1A1A1A',
+                        backgroundImage: 'linear-gradient(145deg, #252525, #101010)',
+                        // 确保边框颜色与深色主题协调
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
                         // 添加圆角
-                        borderRadius: '12px',
+                        borderRadius: '20px',
                         // 3d效果
                         transformStyle: 'preserve-3d',
+                        perspective: '1000px',
                         transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                         // 初始状态
-                        transform: 'perspective(1000px) translateZ(0)',
+                        transform: 'translateZ(0) scale(1)',
                         // 增强厚度视觉效果 - 多层阴影模拟真实厚度和发光效果
-                        boxShadow: `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}40, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)`,
+                        boxShadow: `0 0 20px ${currentColor}60, 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px ${currentColor}20, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`,
                         // 增强边框效果，进一步提升厚度感
-                        border: '1px solid rgba(0, 0, 0, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
                         cursor: 'pointer',
                         // 确保背景样式能够覆盖组件默认样式
                         backgroundClip: 'padding-box'
                       }}
                 onMouseEnter={(e) => {
                   const card = e.currentTarget;
-                  card.style.transform = 'perspective(1000px) translateZ(10px)';
-                  card.style.boxShadow = `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}60, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)`;
+                  card.style.transform = 'translateZ(10px) scale(1.02)';
+                  card.style.boxShadow = `0 0 25px ${currentColor}80, 0 15px 40px rgba(0, 0, 0, 0.6), inset 0 0 15px ${currentColor}30, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`;
                   card.style.cursor = 'pointer';
                 }}
                 onMouseLeave={(e) => {
                   const card = e.currentTarget;
-                  card.style.transform = 'perspective(1000px) translateZ(0)';
-                  card.style.boxShadow = `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}40, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)`;
+                  card.style.transform = 'translateZ(0) scale(1)';
+                  card.style.boxShadow = `0 0 20px ${currentColor}60, 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px ${currentColor}20, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`;
                   card.style.cursor = 'pointer';
                 }}
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '14px', color: '#666' }}>次数</span>
+                    <span style={{ fontSize: '14px', color: '#888888' }}>次数</span>
                     <span style={{ fontSize: '16px', fontWeight: 'bold', color: currentColor }}>
                       {item.count}
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '14px', color: '#666' }}>
+                    <span style={{ fontSize: '14px', color: '#888888' }}>
                       连续未出现
                     </span>
                     <span style={{ fontSize: '16px', fontWeight: 'bold', color: currentColor }}>
@@ -1006,7 +1004,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '14px', color: '#666' }}>
+                    <span style={{ fontSize: '14px', color: '#888888' }}>
                       与平均值差值
                     </span>
                     <span style={{ 
@@ -1088,39 +1086,37 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                     marginBottom: '16px',
                     // 增大内边距，让内容离边缘更远
                     padding: '20px',
-                    // 随切换按钮颜色变化的渐变背景，从左上角到右下角逐渐加深
-                    backgroundImage: currentColor === '#f5222d' 
-                      ? 'linear-gradient(135deg, rgba(245,34,45,0.2) 0%, rgba(245,34,45,0.4) 100%)' 
-                      : 'linear-gradient(135deg, rgba(24,144,255,0.2) 0%, rgba(24,144,255,0.4) 100%)',
-                    // 设置背景颜色为透明，确保渐变效果可以显示
-                    backgroundColor: 'transparent',
-                    // 确保边框颜色与渐变协调
-                    borderColor: currentColor === '#f5222d' ? 'rgba(245,34,45,0.4)' : 'rgba(24,144,255,0.4)',
+                    // 深色主题背景和渐变
+                    backgroundColor: '#1A1A1A',
+                    backgroundImage: 'linear-gradient(145deg, #252525, #101010)',
+                    // 确保边框颜色与深色主题协调
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
                     // 添加圆角
-                    borderRadius: '12px',
+                    borderRadius: '20px',
                     // 3d效果
                     transformStyle: 'preserve-3d',
+                    perspective: '1000px',
                     transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                     // 初始状态
-                    transform: 'perspective(1000px) translateZ(0)',
+                    transform: 'translateZ(0) scale(1)',
                     // 增强厚度视觉效果 - 多层阴影模拟真实厚度和发光效果
-                    boxShadow: `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}40, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)`,
+                    boxShadow: `0 0 20px ${currentColor}60, 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px ${currentColor}20, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`,
                     // 增强边框效果，进一步提升厚度感
-                    border: '1px solid rgba(0, 0, 0, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     cursor: 'pointer',
                     // 确保背景样式能够覆盖组件默认样式
                     backgroundClip: 'padding-box'
                   }}
                   onMouseEnter={(e) => {
                     const card = e.currentTarget;
-                    card.style.transform = 'perspective(1000px) translateZ(10px)';
-                    card.style.boxShadow = `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}60, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)`;
+                    card.style.transform = 'translateZ(10px) scale(1.02)';
+                    card.style.boxShadow = `0 0 25px ${currentColor}80, 0 15px 40px rgba(0, 0, 0, 0.6), inset 0 0 15px ${currentColor}30, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`;
                     card.style.cursor = 'pointer';
                   }}
                   onMouseLeave={(e) => {
                     const card = e.currentTarget;
-                    card.style.transform = 'perspective(1000px) translateZ(0)';
-                    card.style.boxShadow = `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}40, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)`;
+                    card.style.transform = 'translateZ(0) scale(1)';
+                    card.style.boxShadow = `0 0 20px ${currentColor}60, 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px ${currentColor}20, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`;
                     card.style.cursor = 'pointer';
                   }}
                 >
@@ -1136,7 +1132,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                     alignItems: 'center',
                     whiteSpace: 'nowrap' 
                   }}>
-                    <span style={{ fontSize: '14px', color: '#666' }}>次数</span>
+                    <span style={{ fontSize: '14px', color: '#888888' }}>次数</span>
                     <span style={{ fontSize: '16px', fontWeight: 'bold', color: currentColor }}>
                       {item.count}
                     </span>
@@ -1347,45 +1343,43 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                     marginBottom: '16px',
                     // 增大内边距，让内容离边缘更远
                     padding: '20px',
-                    // 随切换按钮颜色变化的渐变背景，从左上角到右下角逐渐加深
-                    backgroundImage: currentColor === '#f5222d' 
-                      ? 'linear-gradient(135deg, rgba(245,34,45,0.2) 0%, rgba(245,34,45,0.4) 100%)' 
-                      : 'linear-gradient(135deg, rgba(24,144,255,0.2) 0%, rgba(24,144,255,0.4) 100%)',
-                    // 设置背景颜色为透明，确保渐变效果可以显示
-                    backgroundColor: 'transparent',
-                    // 确保边框颜色与渐变协调
-                    borderColor: currentColor === '#f5222d' ? 'rgba(245,34,45,0.4)' : 'rgba(24,144,255,0.4)',
+                    // 深色主题背景和渐变
+                    backgroundColor: '#1A1A1A',
+                    backgroundImage: 'linear-gradient(145deg, #252525, #101010)',
+                    // 确保边框颜色与深色主题协调
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
                     // 添加圆角
-                    borderRadius: '12px',
+                    borderRadius: '20px',
                     // 3d效果
                     transformStyle: 'preserve-3d',
+                    perspective: '1000px',
                     transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                     // 初始状态
-                    transform: 'perspective(1000px) translateZ(0)',
+                    transform: 'translateZ(0) scale(1)',
                     // 增强厚度视觉效果 - 多层阴影模拟真实厚度和发光效果
-                    boxShadow: `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}40, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)`,
+                    boxShadow: `0 0 20px ${currentColor}60, 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px ${currentColor}20, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`,
                     // 增强边框效果，进一步提升厚度感
-                    border: '1px solid rgba(0, 0, 0, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     cursor: 'pointer',
                     // 确保背景样式能够覆盖组件默认样式
                     backgroundClip: 'padding-box'
                   }}
                   onMouseEnter={(e) => {
                     const card = e.currentTarget;
-                    card.style.transform = 'perspective(1000px) translateZ(10px)';
-                    card.style.boxShadow = `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}60, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)`;
+                    card.style.transform = 'translateZ(10px) scale(1.02)';
+                    card.style.boxShadow = `0 0 25px ${currentColor}80, 0 15px 40px rgba(0, 0, 0, 0.6), inset 0 0 15px ${currentColor}30, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`;
                     card.style.cursor = 'pointer';
                   }}
                   onMouseLeave={(e) => {
                     const card = e.currentTarget;
-                    card.style.transform = 'perspective(1000px) translateZ(0)';
-                    card.style.boxShadow = `0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px ${currentColor}40, inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)`;
+                    card.style.transform = 'translateZ(0) scale(1)';
+                    card.style.boxShadow = `0 0 20px ${currentColor}60, 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px ${currentColor}20, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`;
                     card.style.cursor = 'pointer';
                   }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '14px', color: '#666' }}>
+                      <span style={{ fontSize: '14px', color: '#888888' }}>
                         {item.type === 'group' ? '总次数' : '次数'}
                       </span>
                       <span style={{ fontSize: '16px', fontWeight: 'bold', color: currentColor }}>
@@ -1396,7 +1390,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                       <>
                         {/* 计算该组连续未出现次数的最大值 */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: '14px', color: '#666' }}>
+                          <span style={{ fontSize: '14px', color: '#888888' }}>
                             连续未出现最大值
                           </span>
                           <span style={{ fontSize: '16px', fontWeight: 'bold', color: currentColor }}>
@@ -1417,7 +1411,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                         </div>
                         {/* 计算与（平均数*每组球数）的差值 */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: '14px', color: '#666' }}>
+                          <span style={{ fontSize: '14px', color: '#888888' }}>
                             与平均总数差值
                           </span>
                           <span style={{ 
@@ -1458,7 +1452,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                     {item.type === 'number' && (
                       <>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: '14px', color: '#666' }}>
+                          <span style={{ fontSize: '14px', color: '#888888' }}>
                             连续未出现
                           </span>
                           <span style={{ fontSize: '16px', fontWeight: 'bold', color: currentColor }}>
@@ -1467,7 +1461,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                         </div>
                         {/* 计算出现次数与平均的差值 */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: '14px', color: '#666' }}>
+                          <span style={{ fontSize: '14px', color: '#888888' }}>
                             与平均值差值
                           </span>
                           <span style={{ 
@@ -1600,42 +1594,39 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               marginBottom: '16px',
               // 增大内边距，让内容离边缘更远
               padding: '20px',
-              // 随切换按钮颜色变化的渐变背景，从左上角到右下角逐渐加深
-              backgroundImage: statisticType === 'red' 
-                ? 'linear-gradient(135deg, rgba(245,34,45,0.2) 0%, rgba(245,34,45,0.4) 100%)' 
-                : 'linear-gradient(135deg, rgba(24,144,255,0.2) 0%, rgba(24,144,255,0.4) 100%)',
-              // 设置背景颜色为透明，确保渐变效果可以显示
-              backgroundColor: 'transparent',
-              // 确保边框颜色与渐变协调
-              borderColor: statisticType === 'red' ? 'rgba(245,34,45,0.4)' : 'rgba(24,144,255,0.4)',
+              // 深色主题背景和渐变
+              backgroundColor: '#1A1A1A',
+              backgroundImage: 'linear-gradient(145deg, #252525, #101010)',
+              // 确保边框颜色与深色主题协调
+              borderColor: 'rgba(255, 255, 255, 0.1)',
               // 添加圆角
-              borderRadius: '12px',
+              borderRadius: '20px',
               // 3d效果
               transformStyle: 'preserve-3d',
+              perspective: '1000px',
               transition: 'transform 0.3s ease, box-shadow 0.3s ease',
               // 初始状态
-              transform: 'perspective(1000px) translateZ(0)',
-              // 增强厚度视觉效果 - 多层阴影模拟真实厚度
-              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+              transform: 'translateZ(0) scale(1)',
+              // 增强厚度视觉效果 - 多层阴影模拟真实厚度和发光效果
+              boxShadow: `0 0 20px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}60, 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}20, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`,
               // 增强边框效果，进一步提升厚度感
-              border: '1px solid rgba(0, 0, 0, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               cursor: 'pointer',
               height: '100%',
               minHeight: '120px'
             }}
             onMouseEnter={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'perspective(1000px) translateZ(10px)';
-              card.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+              card.style.transform = 'translateZ(10px) scale(1.02)';
+              card.style.boxShadow = `0 0 25px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}80, 0 15px 40px rgba(0, 0, 0, 0.6), inset 0 0 15px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}30, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`;
               card.style.cursor = 'pointer';
             }}
             onMouseLeave={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'perspective(1000px) translateZ(0)';
-              card.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+              card.style.transform = 'translateZ(0) scale(1)';
+              card.style.boxShadow = `0 0 20px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}60, 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}20, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`;
               card.style.cursor = 'pointer';
-            }}
-          >
+            }}>
             <Statistic
               title={<div style={{ color: '#ffffff', fontWeight: 'bold', textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)' }}>总数据量</div>}
               value={totalRecords}
@@ -1654,39 +1645,37 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               marginBottom: '16px',
               // 增大内边距，让内容离边缘更远
               padding: '20px',
-              // 随切换按钮颜色变化的渐变背景，从左上角到右下角逐渐加深
-              backgroundImage: statisticType === 'red' 
-                ? 'linear-gradient(135deg, rgba(245,34,45,0.2) 0%, rgba(245,34,45,0.4) 100%)' 
-                : 'linear-gradient(135deg, rgba(24,144,255,0.2) 0%, rgba(24,144,255,0.4) 100%)',
-              // 设置背景颜色为透明，确保渐变效果可以显示
-              backgroundColor: 'transparent',
-              // 确保边框颜色与渐变协调
-              borderColor: statisticType === 'red' ? 'rgba(245,34,45,0.4)' : 'rgba(24,144,255,0.4)',
+              // 深色主题背景和渐变
+              backgroundColor: '#1A1A1A',
+              backgroundImage: 'linear-gradient(145deg, #252525, #101010)',
+              // 确保边框颜色与深色主题协调
+              borderColor: 'rgba(255, 255, 255, 0.1)',
               // 添加圆角
-              borderRadius: '12px',
+              borderRadius: '20px',
               // 3d效果
               transformStyle: 'preserve-3d',
+              perspective: '1000px',
               transition: 'transform 0.3s ease, box-shadow 0.3s ease',
               // 初始状态
-              transform: 'perspective(1000px) translateZ(0)',
-              // 增强厚度视觉效果 - 多层阴影模拟真实厚度
-              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+              transform: 'translateZ(0) scale(1)',
+              // 增强厚度视觉效果 - 多层阴影模拟真实厚度和发光效果
+              boxShadow: `0 0 20px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}60, 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}20, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`,
               // 增强边框效果，进一步提升厚度感
-              border: '1px solid rgba(0, 0, 0, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               cursor: 'pointer',
               height: '100%',
               minHeight: '120px'
             }}
             onMouseEnter={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'perspective(1000px) translateZ(10px)';
-              card.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+              card.style.transform = 'translateZ(10px) scale(1.02)';
+              card.style.boxShadow = `0 0 25px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}80, 0 15px 40px rgba(0, 0, 0, 0.6), inset 0 0 15px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}30, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`;
               card.style.cursor = 'pointer';
             }}
             onMouseLeave={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'perspective(1000px) translateZ(0)';
-              card.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+              card.style.transform = 'translateZ(0) scale(1)';
+              card.style.boxShadow = `0 0 20px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}60, 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}20, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`;
               card.style.cursor = 'pointer';
             }}
           >
@@ -1710,39 +1699,37 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               marginBottom: '16px',
               // 增大内边距，让内容离边缘更远
               padding: '20px',
-              // 随切换按钮颜色变化的渐变背景，从左上角到右下角逐渐加深
-              backgroundImage: statisticType === 'red' 
-                ? 'linear-gradient(135deg, rgba(245,34,45,0.2) 0%, rgba(245,34,45,0.4) 100%)' 
-                : 'linear-gradient(135deg, rgba(24,144,255,0.2) 0%, rgba(24,144,255,0.4) 100%)',
-              // 设置背景颜色为透明，确保渐变效果可以显示
-              backgroundColor: 'transparent',
-              // 确保边框颜色与渐变协调
-              borderColor: statisticType === 'red' ? 'rgba(245,34,45,0.4)' : 'rgba(24,144,255,0.4)',
+              // 深色主题背景和渐变
+              backgroundColor: '#1A1A1A',
+              backgroundImage: 'linear-gradient(145deg, #252525, #101010)',
+              // 确保边框颜色与深色主题协调
+              borderColor: 'rgba(255, 255, 255, 0.1)',
               // 添加圆角
-              borderRadius: '12px',
+              borderRadius: '20px',
               // 3d效果
               transformStyle: 'preserve-3d',
+              perspective: '1000px',
               transition: 'transform 0.3s ease, box-shadow 0.3s ease',
               // 初始状态
-              transform: 'perspective(1000px) translateZ(0)',
-              // 增强厚度视觉效果 - 多层阴影模拟真实厚度
-              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+              transform: 'translateZ(0) scale(1)',
+              // 增强厚度视觉效果 - 多层阴影模拟真实厚度和发光效果
+              boxShadow: `0 0 20px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}60, 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}20, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`,
               // 增强边框效果，进一步提升厚度感
-              border: '1px solid rgba(0, 0, 0, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               cursor: 'pointer',
               height: '100%',
               minHeight: '120px'
             }}
             onMouseEnter={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'perspective(1000px) translateZ(10px)';
-              card.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+              card.style.transform = 'translateZ(10px) scale(1.02)';
+              card.style.boxShadow = `0 0 25px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}80, 0 15px 40px rgba(0, 0, 0, 0.6), inset 0 0 15px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}30, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`;
               card.style.cursor = 'pointer';
             }}
             onMouseLeave={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'perspective(1000px) translateZ(0)';
-              card.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+              card.style.transform = 'translateZ(0) scale(1)';
+              card.style.boxShadow = `0 0 20px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}60, 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}20, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`;
               card.style.cursor = 'pointer';
             }}
           >
@@ -1766,39 +1753,37 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               marginBottom: '16px',
               // 增大内边距，让内容离边缘更远
               padding: '20px',
-              // 随切换按钮颜色变化的渐变背景，从左上角到右下角逐渐加深
-              backgroundImage: statisticType === 'red' 
-                ? 'linear-gradient(135deg, rgba(245,34,45,0.2) 0%, rgba(245,34,45,0.4) 100%)' 
-                : 'linear-gradient(135deg, rgba(24,144,255,0.2) 0%, rgba(24,144,255,0.4) 100%)',
-              // 设置背景颜色为透明，确保渐变效果可以显示
-              backgroundColor: 'transparent',
-              // 确保边框颜色与渐变协调
-              borderColor: statisticType === 'red' ? 'rgba(245,34,45,0.4)' : 'rgba(24,144,255,0.4)',
+              // 深色主题背景和渐变
+              backgroundColor: '#1A1A1A',
+              backgroundImage: 'linear-gradient(145deg, #252525, #101010)',
+              // 确保边框颜色与深色主题协调
+              borderColor: 'rgba(255, 255, 255, 0.1)',
               // 添加圆角
-              borderRadius: '12px',
+              borderRadius: '20px',
               // 3d效果
               transformStyle: 'preserve-3d',
+              perspective: '1000px',
               transition: 'transform 0.3s ease, box-shadow 0.3s ease',
               // 初始状态
-              transform: 'perspective(1000px) translateZ(0)',
-              // 增强厚度视觉效果 - 多层阴影模拟真实厚度
-              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+              transform: 'translateZ(0) scale(1)',
+              // 增强厚度视觉效果 - 多层阴影模拟真实厚度和发光效果
+              boxShadow: `0 0 20px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}60, 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}20, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`,
               // 增强边框效果，进一步提升厚度感
-              border: '1px solid rgba(0, 0, 0, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               cursor: 'pointer',
               height: '100%',
               minHeight: '120px'
             }}
             onMouseEnter={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'perspective(1000px) translateZ(10px)';
-              card.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+              card.style.transform = 'translateZ(10px) scale(1.02)';
+              card.style.boxShadow = `0 0 25px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}80, 0 15px 40px rgba(0, 0, 0, 0.6), inset 0 0 15px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}30, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`;
               card.style.cursor = 'pointer';
             }}
             onMouseLeave={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'perspective(1000px) translateZ(0)';
-              card.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+              card.style.transform = 'translateZ(0) scale(1)';
+              card.style.boxShadow = `0 0 20px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}60, 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}20, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`;
               card.style.cursor = 'pointer';
             }}
           >
@@ -1823,39 +1808,37 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               marginBottom: '16px',
               // 增大内边距，让内容离边缘更远
               padding: '20px',
-              // 随切换按钮颜色变化的渐变背景，从左上角到右下角逐渐加深
-              backgroundImage: statisticType === 'red' 
-                ? 'linear-gradient(135deg, rgba(245,34,45,0.2) 0%, rgba(245,34,45,0.4) 100%)' 
-                : 'linear-gradient(135deg, rgba(24,144,255,0.2) 0%, rgba(24,144,255,0.4) 100%)',
-              // 设置背景颜色为透明，确保渐变效果可以显示
-              backgroundColor: 'transparent',
-              // 确保边框颜色与渐变协调
-              borderColor: statisticType === 'red' ? 'rgba(245,34,45,0.4)' : 'rgba(24,144,255,0.4)',
+              // 深色主题背景和渐变
+              backgroundColor: '#1A1A1A',
+              backgroundImage: 'linear-gradient(145deg, #252525, #101010)',
+              // 确保边框颜色与深色主题协调
+              borderColor: 'rgba(255, 255, 255, 0.1)',
               // 添加圆角
-              borderRadius: '12px',
+              borderRadius: '20px',
               // 3d效果
               transformStyle: 'preserve-3d',
+              perspective: '1000px',
               transition: 'transform 0.3s ease, box-shadow 0.3s ease',
               // 初始状态
-              transform: 'perspective(1000px) translateZ(0)',
-              // 增强厚度视觉效果 - 多层阴影模拟真实厚度
-              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+              transform: 'translateZ(0) scale(1)',
+              // 增强厚度视觉效果 - 多层阴影模拟真实厚度和发光效果
+              boxShadow: `0 0 20px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}60, 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}20, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`,
               // 增强边框效果，进一步提升厚度感
-              border: '1px solid rgba(0, 0, 0, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               cursor: 'pointer',
               height: '100%',
               minHeight: '120px'
             }}
             onMouseEnter={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'perspective(1000px) translateZ(10px)';
-              card.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+              card.style.transform = 'translateZ(10px) scale(1.02)';
+              card.style.boxShadow = `0 0 25px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}80, 0 15px 40px rgba(0, 0, 0, 0.6), inset 0 0 15px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}30, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`;
               card.style.cursor = 'pointer';
             }}
             onMouseLeave={(e) => {
               const card = e.currentTarget;
-              card.style.transform = 'perspective(1000px) translateZ(0)';
-              card.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
+              card.style.transform = 'translateZ(0) scale(1)';
+              card.style.boxShadow = `0 0 20px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}60, 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}20, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`;
               card.style.cursor = 'pointer';
             }}
           >
@@ -2212,9 +2195,12 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               left: `${sliderPosition.x}px`,
               top: `${sliderPosition.y}px`,
               padding: '16px', 
-              backgroundColor: '#2a2a2a', 
-              borderRadius: 6, 
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
+              // 深色主题背景和渐变
+              backgroundColor: '#1A1A1A',
+              backgroundImage: 'linear-gradient(145deg, #252525, #101010)',
+              borderRadius: 20, 
+              // 增强厚度视觉效果 - 多层阴影模拟真实厚度和发光效果
+              boxShadow: `0 0 20px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}60, 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}20, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`,
               textAlign: 'center',
               cursor: isSliderDragging ? 'grabbing' : 'grab',
               userSelect: 'none',
@@ -2223,7 +2209,13 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               width: `${sliderSize.width}px`,
               height: `${sliderSize.height}px`,
               overflow: 'auto',
-              boxSizing: 'border-box'
+              boxSizing: 'border-box',
+              // 3d效果
+              transformStyle: 'preserve-3d',
+              perspective: '1000px',
+              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+              // 增强边框效果，进一步提升厚度感
+              border: '1px solid rgba(255, 255, 255, 0.1)'
             }}
             onMouseDown={handleSliderMouseDown}
             onDoubleClick={handleSliderDoubleClick}
@@ -2242,23 +2234,30 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: 12 }}>
                   {/* 快退图标 - 最左侧，带圆圈边框 */}
-                  <div style={{
+                  <div style={{ 
                     cursor: sliderRange[0] <= 0 ? 'not-allowed' : 'pointer',
                     userSelect: 'none',
-                    border: `1px solid ${statisticType === 'red' ? '#f5222d' : '#1890ff'}`,
+                    border: `1px solid ${sliderRange[0] <= 0 ? 'rgba(102, 102, 102, 0.5)' : `rgba(${statisticType === 'red' ? '245, 34, 45' : '24, 144, 255'}, 0.7)`}`,
                     borderRadius: '50%',
-                    width: '40px',
-                    height: '40px',
+                    width: '44px',
+                    height: '44px',
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    transition: 'all 0.3s',
-                    color: sliderRange[0] <= 0 ? '#d9d9d9' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
-                    borderColor: sliderRange[0] <= 0 ? '#d9d9d9' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
+                    transition: 'all 0.3s ease',
+                    color: sliderRange[0] <= 0 ? '#999999' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
+                    borderColor: sliderRange[0] <= 0 ? '#666666' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
                     padding: 0,
                     margin: 0,
-                    opacity: sliderRange[0] <= 0 ? 0.5 : 1,
-                    backgroundColor: 'transparent'
+                    opacity: sliderRange[0] <= 0 ? 0.6 : 1,
+                    backgroundColor: sliderRange[0] <= 0 ? '#222222' : '#1A1A1A',
+                    backgroundImage: sliderRange[0] <= 0 ? 'linear-gradient(145deg, #333333, #111111)' : 'linear-gradient(145deg, #252525, #101010)',
+                    boxShadow: sliderRange[0] <= 0 ? 
+                      `0 0 8px rgba(102, 102, 102, 0.3), 0 3px 8px rgba(0, 0, 0, 0.3), inset 0 0 3px rgba(102, 102, 102, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.05), inset 0 -2px 4px rgba(0, 0, 0, 0.3)` : 
+                      `0 0 20px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}60, 0 6px 20px rgba(0, 0, 0, 0.5), inset 0 0 8px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}20, inset 0 4px 8px rgba(255, 255, 255, 0.15), inset 0 -4px 8px rgba(0, 0, 0, 0.4)`,
+                    transformStyle: 'preserve-3d',
+                    perspective: '1000px',
+                    transform: sliderRange[0] <= 0 ? 'translateZ(0) scale(0.95)' : 'translateZ(0) scale(1)'
                   }}
                   onClick={() => {
                     if (sliderRange[0] > 0) {
@@ -2284,21 +2283,29 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                       onDoubleClick={(e) => e.stopPropagation()}
                       disabled={sliderRange[0] <= 0}
                       style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '50%',
-                        border: `1px solid ${sliderRange[0] <= 0 ? '#d9d9d9' : (statisticType === 'red' ? '#f5222d' : '#1890ff')}`,
-                        backgroundColor: 'transparent',
-                        color: sliderRange[0] <= 0 ? '#d9d9d9' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
-                        cursor: sliderRange[0] <= 0 ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        boxSizing: 'border-box',
-                        padding: 0,
-                        margin: 0,
-                        opacity: sliderRange[0] <= 0 ? 0.5 : 1
-                      }}
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '50%',
+                          border: `1px solid ${sliderRange[0] <= 0 ? 'rgba(102, 102, 102, 0.5)' : `rgba(${statisticType === 'red' ? '245, 34, 45' : '24, 144, 255'}, 0.7)`}`,
+                          backgroundColor: sliderRange[0] <= 0 ? '#222222' : '#1A1A1A',
+                          backgroundImage: sliderRange[0] <= 0 ? 'linear-gradient(145deg, #333333, #111111)' : 'linear-gradient(145deg, #252525, #101010)',
+                          color: sliderRange[0] <= 0 ? '#999999' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
+                          cursor: sliderRange[0] <= 0 ? 'not-allowed' : 'pointer',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          boxSizing: 'border-box',
+                          padding: 0,
+                          margin: 0,
+                          opacity: sliderRange[0] <= 0 ? 0.6 : 1,
+                          transition: 'all 0.3s ease',
+                          boxShadow: sliderRange[0] <= 0 ? 
+                            `0 0 6px rgba(102, 102, 102, 0.3), 0 2px 6px rgba(0, 0, 0, 0.3), inset 0 0 2px rgba(102, 102, 102, 0.2), inset 0 1px 3px rgba(255, 255, 255, 0.05), inset 0 -1px 3px rgba(0, 0, 0, 0.3)` : 
+                            `0 0 15px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}60, 0 4px 15px rgba(0, 0, 0, 0.5), inset 0 0 5px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}20, inset 0 2px 5px rgba(255, 255, 255, 0.15), inset 0 -2px 5px rgba(0, 0, 0, 0.4)`,
+                          transformStyle: 'preserve-3d',
+                          perspective: '1000px',
+                          transform: sliderRange[0] <= 0 ? 'translateZ(0) scale(0.9)' : 'translateZ(0) scale(1)'
+                        }}
                     >
                       <StepBackwardOutlined style={{ fontSize: '14px' }} />
                     </button>
@@ -2315,20 +2322,29 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                       onDoubleClick={(e) => e.stopPropagation()}
                       disabled={sliderRange[0] >= sliderRange[1]}
                       style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '50%',
-                        border: `1px solid ${statisticType === 'red' ? '#f5222d' : '#1890ff'}`,
-                        backgroundColor: 'transparent',
-                        color: statisticType === 'red' ? '#f5222d' : '#1890ff',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        boxSizing: 'border-box',
-                        padding: 0,
-                        margin: 0
-                      }}
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '50%',
+                          border: `1px solid ${sliderRange[0] >= sliderRange[1] ? 'rgba(102, 102, 102, 0.5)' : `rgba(${statisticType === 'red' ? '245, 34, 45' : '24, 144, 255'}, 0.7)`}`,
+                          backgroundColor: sliderRange[0] >= sliderRange[1] ? '#222222' : '#1A1A1A',
+                          backgroundImage: sliderRange[0] >= sliderRange[1] ? 'linear-gradient(145deg, #333333, #111111)' : 'linear-gradient(145deg, #252525, #101010)',
+                          color: sliderRange[0] >= sliderRange[1] ? '#999999' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
+                          cursor: sliderRange[0] >= sliderRange[1] ? 'not-allowed' : 'pointer',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          boxSizing: 'border-box',
+                          padding: 0,
+                          margin: 0,
+                          opacity: sliderRange[0] >= sliderRange[1] ? 0.6 : 1,
+                          transition: 'all 0.3s ease',
+                          boxShadow: sliderRange[0] >= sliderRange[1] ? 
+                            `0 0 6px rgba(102, 102, 102, 0.3), 0 2px 6px rgba(0, 0, 0, 0.3), inset 0 0 2px rgba(102, 102, 102, 0.2), inset 0 1px 3px rgba(255, 255, 255, 0.05), inset 0 -1px 3px rgba(0, 0, 0, 0.3)` : 
+                            `0 0 15px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}60, 0 4px 15px rgba(0, 0, 0, 0.5), inset 0 0 5px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}20, inset 0 2px 5px rgba(255, 255, 255, 0.15), inset 0 -2px 5px rgba(0, 0, 0, 0.4)`,
+                          transformStyle: 'preserve-3d',
+                          perspective: '1000px',
+                          transform: sliderRange[0] >= sliderRange[1] ? 'translateZ(0) scale(0.9)' : 'translateZ(0) scale(1)'
+                        }}
                     >
                       <StepForwardOutlined style={{ fontSize: '14px' }} />
                     </button>
@@ -2347,20 +2363,29 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                       onDoubleClick={(e) => e.stopPropagation()} // 阻止双击事件冒泡，防止隐藏滑块
                       disabled={sliderRange[1] <= sliderRange[0]}
                       style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '50%',
-                        border: `1px solid ${statisticType === 'red' ? '#f5222d' : '#1890ff'}`,
-                        backgroundColor: 'transparent',
-                        color: statisticType === 'red' ? '#f5222d' : '#1890ff',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        boxSizing: 'border-box',
-                        padding: 0,
-                        margin: 0
-                      }}
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '50%',
+                          border: `1px solid ${sliderRange[1] <= sliderRange[0] ? 'rgba(102, 102, 102, 0.5)' : `rgba(${statisticType === 'red' ? '245, 34, 45' : '24, 144, 255'}, 0.7)`}`,
+                          backgroundColor: sliderRange[1] <= sliderRange[0] ? '#222222' : '#1A1A1A',
+                          backgroundImage: sliderRange[1] <= sliderRange[0] ? 'linear-gradient(145deg, #333333, #111111)' : 'linear-gradient(145deg, #252525, #101010)',
+                          color: sliderRange[1] <= sliderRange[0] ? '#999999' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
+                          cursor: sliderRange[1] <= sliderRange[0] ? 'not-allowed' : 'pointer',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          boxSizing: 'border-box',
+                          padding: 0,
+                          margin: 0,
+                          opacity: sliderRange[1] <= sliderRange[0] ? 0.6 : 1,
+                          transition: 'all 0.3s ease',
+                          boxShadow: sliderRange[1] <= sliderRange[0] ? 
+                            `0 0 6px rgba(102, 102, 102, 0.3), 0 2px 6px rgba(0, 0, 0, 0.3), inset 0 0 2px rgba(102, 102, 102, 0.2), inset 0 1px 3px rgba(255, 255, 255, 0.05), inset 0 -1px 3px rgba(0, 0, 0, 0.3)` : 
+                            `0 0 15px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}60, 0 4px 15px rgba(0, 0, 0, 0.5), inset 0 0 5px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}20, inset 0 2px 5px rgba(255, 255, 255, 0.15), inset 0 -2px 5px rgba(0, 0, 0, 0.4)`,
+                          transformStyle: 'preserve-3d',
+                          perspective: '1000px',
+                          transform: sliderRange[1] <= sliderRange[0] ? 'translateZ(0) scale(0.9)' : 'translateZ(0) scale(1)'
+                        }}
                     >
                       <StepBackwardOutlined style={{ fontSize: '14px' }} />
                     </button>
@@ -2377,44 +2402,59 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                       onDoubleClick={(e) => e.stopPropagation()}
                       disabled={sliderRange[1] >= allRecords.length - 1}
                       style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '50%',
-                        border: `1px solid ${sliderRange[1] >= allRecords.length - 1 ? '#d9d9d9' : (statisticType === 'red' ? '#f5222d' : '#1890ff')}`,
-                        backgroundColor: 'transparent',
-                        color: sliderRange[1] >= allRecords.length - 1 ? '#d9d9d9' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
-                        cursor: sliderRange[1] >= allRecords.length - 1 ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        boxSizing: 'border-box',
-                        padding: 0,
-                        margin: 0,
-                        opacity: sliderRange[1] >= allRecords.length - 1 ? 0.5 : 1
-                      }}
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '50%',
+                          border: `1px solid ${sliderRange[1] >= allRecords.length - 1 ? 'rgba(102, 102, 102, 0.5)' : `rgba(${statisticType === 'red' ? '245, 34, 45' : '24, 144, 255'}, 0.7)`}`,
+                          backgroundColor: sliderRange[1] >= allRecords.length - 1 ? '#222222' : '#1A1A1A',
+                          backgroundImage: sliderRange[1] >= allRecords.length - 1 ? 'linear-gradient(145deg, #333333, #111111)' : 'linear-gradient(145deg, #252525, #101010)',
+                          color: sliderRange[1] >= allRecords.length - 1 ? '#999999' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
+                          cursor: sliderRange[1] >= allRecords.length - 1 ? 'not-allowed' : 'pointer',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          boxSizing: 'border-box',
+                          padding: 0,
+                          margin: 0,
+                          opacity: sliderRange[1] >= allRecords.length - 1 ? 0.6 : 1,
+                          transition: 'all 0.3s ease',
+                          boxShadow: sliderRange[1] >= allRecords.length - 1 ? 
+                            `0 0 6px rgba(102, 102, 102, 0.3), 0 2px 6px rgba(0, 0, 0, 0.3), inset 0 0 2px rgba(102, 102, 102, 0.2), inset 0 1px 3px rgba(255, 255, 255, 0.05), inset 0 -1px 3px rgba(0, 0, 0, 0.3)` : 
+                            `0 0 15px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}60, 0 4px 15px rgba(0, 0, 0, 0.5), inset 0 0 5px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}20, inset 0 2px 5px rgba(255, 255, 255, 0.15), inset 0 -2px 5px rgba(0, 0, 0, 0.4)`,
+                          transformStyle: 'preserve-3d',
+                          perspective: '1000px',
+                          transform: sliderRange[1] >= allRecords.length - 1 ? 'translateZ(0) scale(0.9)' : 'translateZ(0) scale(1)'
+                        }}
                     >
                       <StepForwardOutlined style={{ fontSize: '14px' }} />
                     </button>
                   </div>
                   
                   {/* 快进图标 */}
-                  <div style={{
+                  <div style={{ 
                     cursor: sliderRange[1] >= allRecords.length - 1 ? 'not-allowed' : 'pointer',
                     userSelect: 'none',
-                    border: `1px solid ${statisticType === 'red' ? '#f5222d' : '#1890ff'}`,
+                    border: `1px solid ${sliderRange[1] >= allRecords.length - 1 ? 'rgba(102, 102, 102, 0.5)' : `rgba(${statisticType === 'red' ? '245, 34, 45' : '24, 144, 255'}, 0.7)`}`,
                     borderRadius: '50%',
-                    width: '40px',
-                    height: '40px',
+                    width: '44px',
+                    height: '44px',
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    transition: 'all 0.3s',
-                    color: sliderRange[1] >= allRecords.length - 1 ? '#d9d9d9' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
-                    borderColor: sliderRange[1] >= allRecords.length - 1 ? '#d9d9d9' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
+                    transition: 'all 0.3s ease',
+                    color: sliderRange[1] >= allRecords.length - 1 ? '#999999' : (statisticType === 'red' ? '#f5222d' : '#1890ff'),
+                    borderColor: sliderRange[1] >= allRecords.length - 1 ? 'rgba(102, 102, 102, 0.5)' : `rgba(${statisticType === 'red' ? '245, 34, 45' : '24, 144, 255'}, 0.7)`,
                     padding: 0,
                     margin: 0,
-                    opacity: sliderRange[1] >= allRecords.length - 1 ? 0.5 : 1,
-                    backgroundColor: 'transparent'
+                    opacity: sliderRange[1] >= allRecords.length - 1 ? 0.6 : 1,
+                    backgroundColor: sliderRange[1] >= allRecords.length - 1 ? '#222222' : '#1A1A1A',
+                    backgroundImage: sliderRange[1] >= allRecords.length - 1 ? 'linear-gradient(145deg, #333333, #111111)' : 'linear-gradient(145deg, #252525, #101010)',
+                    boxShadow: sliderRange[1] >= allRecords.length - 1 ? 
+                      `0 0 8px rgba(102, 102, 102, 0.3), 0 3px 8px rgba(0, 0, 0, 0.3), inset 0 0 3px rgba(102, 102, 102, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.05), inset 0 -2px 4px rgba(0, 0, 0, 0.3)` : 
+                      `0 0 20px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}60, 0 6px 20px rgba(0, 0, 0, 0.5), inset 0 0 8px ${statisticType === 'red' ? '#f5222d' : '#1890ff'}20, inset 0 4px 8px rgba(255, 255, 255, 0.15), inset 0 -4px 8px rgba(0, 0, 0, 0.4)`,
+                    transformStyle: 'preserve-3d',
+                    perspective: '1000px',
+                    transform: sliderRange[1] >= allRecords.length - 1 ? 'translateZ(0) scale(0.95)' : 'translateZ(0) scale(1)'
                   }}
                   onClick={() => {
                     if (sliderRange[1] < allRecords.length - 1) {
