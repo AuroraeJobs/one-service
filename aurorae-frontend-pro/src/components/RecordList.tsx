@@ -552,18 +552,24 @@ const RecordList: React.FC<RecordListProps> = () => {
         textAlign: 'center', 
         position: 'fixed', 
         bottom: 0, 
-        left: 0, 
-        right: 0, 
+        left: '50%', 
+        transform: 'translateX(-50%)',
         height: '64px', 
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center',
         backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        backgroundImage: 'linear-gradient(145deg, rgba(30, 30, 30, 0.9), rgba(0, 0, 0, 0.9))',
         zIndex: 1000,
-        padding: '0 20px'
+        padding: '0 20px',
+        borderRadius: '12px',
+        boxSizing: 'border-box',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        borderBottom: '1px solid rgba(0, 0, 0, 0.3)'
       }}>
         {/* 所有元素统一居中容器 */}
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', gap: '12px', width: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
           {/* 左侧：图标 */}
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <CloudFilled 
@@ -572,7 +578,7 @@ const RecordList: React.FC<RecordListProps> = () => {
           </div>
           
           {/* 中间：筛选条件 */}
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap' }}>
             <div 
               className="query-container"
               style={{
@@ -580,21 +586,22 @@ const RecordList: React.FC<RecordListProps> = () => {
                 background: 'transparent',
                 // 去掉阴影效果
                 boxShadow: 'none',
-                padding: '12px 16px',
+                padding: '8px 12px',
                 borderRadius: '16px', // 添加圆角
                 zIndex: 10000, // 增加zIndex值，确保显示在最上层
                 display: 'flex',
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '16px', // 组件之间的间距
-                userSelect: 'none'
+                gap: '12px', // 组件之间的间距
+                userSelect: 'none',
+                whiteSpace: 'nowrap'
               }}
             >
                 {/* 日期筛选框 */}
-                <div style={{ textAlign: 'center', margin: '0' }}>
-                  <div style={{ display: 'flex', flexDirection: 'row', gap: '4px', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
-                    <div ref={startDatePickerRef} style={{ display: 'inline-block' }}>
+                <div style={{ textAlign: 'center', margin: '0', whiteSpace: 'nowrap' }}>
+                  <div style={{ display: 'flex', flexDirection: 'row', gap: '4px', alignItems: 'center', justifyContent: 'center', whiteSpace: 'nowrap' }}>
+                    <div ref={startDatePickerRef} style={{ display: 'inline-block', whiteSpace: 'nowrap' }}>
                       <DatePicker
                         style={{
                           width: '140px',
@@ -652,8 +659,8 @@ const RecordList: React.FC<RecordListProps> = () => {
                 </div>
                 
                 {/* 期号筛选框 */}
-                <div style={{ textAlign: 'center', margin: '0' }}>
-                  <div style={{ display: 'flex', flexDirection: 'row', gap: '4px', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <div style={{ textAlign: 'center', margin: '0', whiteSpace: 'nowrap' }}>
+                  <div style={{ display: 'flex', flexDirection: 'row', gap: '4px', alignItems: 'center', justifyContent: 'center', whiteSpace: 'nowrap' }}>
                     <Input
                       style={{
                         width: '100px',
@@ -696,11 +703,11 @@ const RecordList: React.FC<RecordListProps> = () => {
           </div>
           
           {/* 右侧：分页组件 */}
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap' }}>
             {/* 分页组件 - 只有多于一页的时候才显示 */}
             {records.length > pageSize && (
-              <div style={{ width: 'auto', textAlign: 'center', margin: '0' }}>
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', margin: '0 auto' }}>
+              <div style={{ width: 'auto', textAlign: 'center', margin: '0', whiteSpace: 'nowrap' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', margin: '0 auto', whiteSpace: 'nowrap' }}>
                   {/* 第一页按钮 */}
                   <button
                     onClick={() => setCurrentPage(1)}

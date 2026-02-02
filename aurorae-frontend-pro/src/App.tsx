@@ -10,6 +10,10 @@ import Taiji from './components/Taiji';
 import HealthMainPage from './components/HealthMainPage';
 import HealthThirdPage from './components/HealthThirdPage';
 import HealthFourthPage from './components/HealthFourthPage';
+import HealthSpringEquinoxPage from './components/HealthSpringEquinoxPage';
+import HealthSummerSolsticePage from './components/HealthSummerSolsticePage';
+import HealthAutumnEquinoxPage from './components/HealthAutumnEquinoxPage';
+import HealthWinterSolsticePage from './components/HealthWinterSolsticePage';
 import HexagramPage from './components/HexagramPage';
 import { RecordProvider } from './contexts/RecordContext';
 import './App.css';
@@ -23,6 +27,10 @@ const routeMap: Record<string, string> = {
   '/health': '健康',
   '/health/third': '健康',
   '/health/fourth': '健康',
+  '/health/spring-equinox': '健康',
+  '/health/summer-solstice': '健康',
+  '/health/autumn-equinox': '健康',
+  '/health/winter-solstice': '健康',
   '/hexagram': '健康'
 };
 
@@ -43,13 +51,17 @@ const AppHeader = () => {
   return (
     <header className="app-header" style={{ 
       backgroundColor: 'rgba(0, 0, 0, 0.8)', 
+      backgroundImage: 'linear-gradient(145deg, rgba(30, 30, 30, 0.9), rgba(0, 0, 0, 0.9))',
       position: 'fixed', 
       top: 0, 
-      left: 0, 
-      right: 0, 
-      width: '100%', 
+      left: '50%', 
+      transform: 'translateX(-50%)',
       zIndex: 1000,
-      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)',
+      borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+      borderRadius: '12px',
+      padding: '0 20px',
+      boxSizing: 'border-box'
     }}>
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', height: '64px' }}>
         {/* 苹果白实心图标 - 放在查询按钮左侧，与菜单一起居中，点击回到首页 */}
@@ -116,6 +128,10 @@ function App() {
                 <Route path="/health" element={<HealthMainPage />} />
                 <Route path="/health/third" element={<HealthThirdPage />} />
                 <Route path="/health/fourth" element={<HealthFourthPage />} />
+                <Route path="/health/spring-equinox" element={<HealthSpringEquinoxPage />} />
+                <Route path="/health/summer-solstice" element={<HealthSummerSolsticePage />} />
+                <Route path="/health/autumn-equinox" element={<HealthAutumnEquinoxPage />} />
+                <Route path="/health/winter-solstice" element={<HealthWinterSolsticePage />} />
                 <Route path="/hexagram" element={<HexagramPage />} />
               </Routes>
             </main>

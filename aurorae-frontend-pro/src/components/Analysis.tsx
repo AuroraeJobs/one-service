@@ -1316,7 +1316,10 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             }
           },
           label: {
-            show: false
+            show: true,
+            position: 'top',
+            color: '#fff',
+            fontSize: 12
           }
         }
       ]
@@ -1568,7 +1571,10 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             }
           },
           label: {
-            show: false
+            show: true,
+            position: 'top',
+            color: '#fff',
+            fontSize: 12
           }
         },
         {
@@ -1590,7 +1596,10 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             }
           },
           label: {
-            show: false
+            show: true,
+            position: 'top',
+            color: '#fff',
+            fontSize: 12
           }
         }
       ]
@@ -1972,156 +1981,102 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               width: '250px',
               height: '250px',
               borderRadius: '50%',
-              boxShadow: `0 4px 8px rgba(255, 255, 255, 0.08), 0 12px 24px rgba(255, 255, 255, 0.12), 0 16px 32px rgba(255, 255, 255, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.05)`,
+              boxShadow: `0 0 25px ${centerColor}80, 0 15px 40px rgba(0, 0, 0, 0.6), 0 5px 15px ${centerColor}40, inset 0 0 15px ${centerColor}40, inset 0 8px 16px rgba(255, 255, 255, 0.2), inset 0 -8px 16px rgba(0, 0, 0, 0.5)`,
               boxSizing: 'border-box',
               position: 'relative',
               opacity: 0.95,
               overflow: 'hidden',
-              background: `radial-gradient(circle at 50% 50%, ${centerColor} 0%, #f0f0f0 65%, #ffffff 100%)`,
-              transition: 'all 0.3s ease',
+              backgroundColor: '#1A1A1A',
+              backgroundImage: 'linear-gradient(135deg, #282828, #121212, #1A1A1A)',
+              transition: 'all 0.4s ease, box-shadow 0.4s ease, background-position 0.4s ease',
               cursor: 'pointer',
               transformStyle: 'preserve-3d',
-              transform: 'perspective(1000px) translateZ(0)'
+              perspective: '1000px',
+              transform: 'translateZ(0)'
             }} onMouseEnter={(e) => {
               const target = e.currentTarget as HTMLElement;
-              target.style.transform = 'perspective(1000px) translateZ(10px) scale(1.05)';
-              target.style.boxShadow = `0 8px 16px rgba(255, 255, 255, 0.1), 0 24px 48px rgba(255, 255, 255, 0.15), 0 32px 64px rgba(255, 255, 255, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.05)`;
+              target.style.transform = 'translateZ(8px) scale(1.02)';
+              target.style.boxShadow = `0 0 35px ${centerColor}90, 0 20px 50px rgba(0, 0, 0, 0.7), 0 8px 20px ${centerColor}60, inset 0 0 20px ${centerColor}60, inset 0 10px 20px rgba(255, 255, 255, 0.3), inset 0 -10px 20px rgba(0, 0, 0, 0.6)`;
               target.style.opacity = '1';
             }} onMouseLeave={(e) => {
               const target = e.currentTarget as HTMLElement;
-              target.style.transform = 'perspective(1000px) translateZ(0) scale(1) rotate(0deg)';
-              target.style.boxShadow = `0 4px 8px rgba(255, 255, 255, 0.08), 0 12px 24px rgba(255, 255, 255, 0.12), 0 16px 32px rgba(255, 255, 255, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.05)`;
+              target.style.transform = 'translateZ(0) scale(1)';
+              target.style.boxShadow = `0 0 25px ${centerColor}80, 0 15px 40px rgba(0, 0, 0, 0.6), 0 5px 15px ${centerColor}40, inset 0 0 15px ${centerColor}40, inset 0 8px 16px rgba(255, 255, 255, 0.2), inset 0 -8px 16px rgba(0, 0, 0, 0.5)`;
               target.style.opacity = '0.95';
             }}>
-              {/* 定义扩散动画 */}
-              <style scoped>
-                {`
-                  @keyframes initialSpreadOut-0 {
-                    0% {
-                      transform: translate(-50%, -50%) translate(0, 0) scale(0.5);
-                      opacity: 0;
-                    }
-                    100% {
-                      transform: translate(-50%, -50%) translate(${Math.cos(0 * Math.PI / 6) * 75}px, ${Math.sin(0 * Math.PI / 6) * 75}px) scale(1);
-                      opacity: 1;
-                    }
-                  }
-                  @keyframes initialSpreadOut-1 {
-                    0% {
-                      transform: translate(-50%, -50%) translate(0, 0) scale(0.5);
-                      opacity: 0;
-                    }
-                    100% {
-                      transform: translate(-50%, -50%) translate(${Math.cos(1 * Math.PI / 6) * 75}px, ${Math.sin(1 * Math.PI / 6) * 75}px) scale(1);
-                      opacity: 1;
-                    }
-                  }
-                  @keyframes initialSpreadOut-2 {
-                    0% {
-                      transform: translate(-50%, -50%) translate(0, 0) scale(0.5);
-                      opacity: 0;
-                    }
-                    100% {
-                      transform: translate(-50%, -50%) translate(${Math.cos(2 * Math.PI / 6) * 75}px, ${Math.sin(2 * Math.PI / 6) * 75}px) scale(1);
-                      opacity: 1;
-                    }
-                  }
-                  @keyframes initialSpreadOut-3 {
-                    0% {
-                      transform: translate(-50%, -50%) translate(0, 0) scale(0.5);
-                      opacity: 0;
-                    }
-                    100% {
-                      transform: translate(-50%, -50%) translate(${Math.cos(3 * Math.PI / 6) * 75}px, ${Math.sin(3 * Math.PI / 6) * 75}px) scale(1);
-                      opacity: 1;
-                    }
-                  }
-                  @keyframes initialSpreadOut-4 {
-                    0% {
-                      transform: translate(-50%, -50%) translate(0, 0) scale(0.5);
-                      opacity: 0;
-                    }
-                    100% {
-                      transform: translate(-50%, -50%) translate(${Math.cos(4 * Math.PI / 6) * 75}px, ${Math.sin(4 * Math.PI / 6) * 75}px) scale(1);
-                      opacity: 1;
-                    }
-                  }
-                  @keyframes initialSpreadOut-5 {
-                    0% {
-                      transform: translate(-50%, -50%) translate(0, 0) scale(0.5);
-                      opacity: 0;
-                    }
-                    100% {
-                      transform: translate(-50%, -50%) translate(${Math.cos(5 * Math.PI / 6) * 75}px, ${Math.sin(5 * Math.PI / 6) * 75}px) scale(1);
-                      opacity: 1;
-                    }
-                  }
-                  @keyframes initialSpreadOut-blue {
-                    0% {
-                      transform: translate(-50%, -50%) scale(0.5);
-                      opacity: 0;
-                    }
-                    100% {
-                      transform: translateX(-50%) scale(1);
-                      opacity: 1;
-                    }
-                  }
-                `}
-              </style>
+
               
-              {/* 圆心文字显示 - 整体上移 */}
+              {/* 红球模式：圆心显示星球名和卦名 */}
+              {statisticType === 'red' ? (
+                <div style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  width: '150px',
+                  height: '150px',
+                  borderRadius: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  zIndex: 2
+                }}>
+                  {/* 显示奇偶组合名称（主要显示内容） */}
+                  <div style={{
+                    color: centerColor,
+                    fontSize: '20px',
+                    fontWeight: 'bold',
+                    marginBottom: '4px'
+                  }}>
+                    {combination}
+                  </div>
+                  {/* 显示卦名 */}
+                  <div style={{
+                    color: centerColor,
+                    fontSize: '18px',
+                    fontWeight: 'bold',
+                    marginTop: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    flexDirection: 'row'
+                  }}>
+                    <span>{record.hexagram}</span>
+                  </div>
+                </div>
+              ) : (
+                /* 蓝球模式：顶部显示星球名，中心显示中奖号码 */
+                <>
+                  {/* 显示奇偶组合名称（顶部） */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '15%',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    color: centerColor,
+                    fontSize: '20px',
+                    fontWeight: 'bold',
+                    zIndex: 2
+                  }}>
+                    {combination}
+                  </div>
+                </>
+              )}
+              
+              {/* 期号放在卡片底部 */}
               <div style={{
                 position: 'absolute',
-                top: '45%',
+                bottom: '5%',
                 left: '50%',
-                width: '150px',
-                height: '150px',
-                borderRadius: '50%',
-                transform: 'translate(-50%, -50%)',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                zIndex: 2
+                transform: 'translateX(-50%)',
+                color: centerColor,
+                fontSize: '12px',
+                fontWeight: 'bold',
+                zIndex: 4
               }}>
-                {/* 号码总和显示在中心名称上方，只显示数字 */}
-                <div style={{
-                  color: '#000',
-                  fontSize: '12px',
-                  fontWeight: 'bold',
-
-                  marginBottom: '4px'
-                }}>
-                  {record.totalSum}
-                </div>
-                {/* 显示奇偶组合名称（主要显示内容） */}
-                <div style={{
-                  color: '#000',
-                  fontSize: '24px',
-                  fontWeight: 'bold',
-                  marginBottom: '4px'
-                }}>
-                  {combination}
-                </div>
-                {/* 卦象或阴阳（次要显示内容） */}
-                <div style={{
-                  color: '#000',
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  marginTop: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  flexDirection: 'row'
-                }}>
-                  {/* 红球显示卦名，蓝球显示阴阳 */}
-                  {statisticType === 'red' ? (
-                    <span>{record.hexagram}</span>
-                  ) : (
-                    <span>{record.blueYinYang}</span>
-                  )}
-                </div>
+                {record.period}
               </div>
               
               {/* 红球号码围绕在边缘 */}
@@ -2129,10 +2084,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                 record.redNumbers.map((number: string, index: number) => {
                   const num = parseInt(number, 10);
                   const isOdd = num % 2 === 1;
-                  // 生成更强烈的球体径向渐变，增强光影效果
-                  const backgroundColor = isOdd 
-                    ? `radial-gradient(circle at 25% 25%, #ffffff 0%, #ffb3d9 20%, #ff69b4 50%, #ff3d99 100%)` 
-                    : `radial-gradient(circle at 25% 25%, #ffffff 0%, #fff2b3 20%, #f0e68c 50%, #e6c249 100%)`;
+                  const ballColor = isOdd ? '#FF3333' : '#FF8888';
                   
                   // 计算每个号码的位置，均匀分布在圆形边缘，离中心更近
                   const angle = (index / 6) * 2 * Math.PI;
@@ -2156,79 +2108,66 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                       justifyContent: 'center',
                       textAlign: 'center',
                       fontWeight: 'bold',
-                      background: backgroundColor,
-                      color: '#333',
-                      boxShadow: `0 10px 25px rgba(0, 0, 0, 0.25), inset 0 0 15px rgba(255, 255, 255, 0.4), inset 0 -10px 15px rgba(0, 0, 0, 0.1)`,
+                      backgroundColor: '#1A1A1A',
+                      backgroundImage: 'linear-gradient(135deg, #282828, #121212, #1A1A1A)',
+                      color: ballColor,
+                      boxShadow: `0 0 12px ${ballColor}80, inset 0 2px 4px rgba(255, 255, 255, 0.2), inset 0 -2px 4px rgba(0, 0, 0, 0.3)`,
+                      border: `1px solid ${ballColor}50`,
                       zIndex: 3,
-                      transition: 'all 0.2s ease',
-                      cursor: 'pointer',
-                      animation: `initialSpreadOut-${index} 1s ease-out forwards`
+                      transition: 'all 0.3s ease',
+                      cursor: 'pointer'
                     }} onMouseEnter={(e) => {
                       const target = e.currentTarget as HTMLElement;
                       target.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px) scale(1.2) rotate(-5deg)`;
-                      target.style.boxShadow = `0 15px 35px rgba(0, 0, 0, 0.35), inset 0 0 20px rgba(255, 255, 255, 0.5), inset 0 -15px 20px rgba(0, 0, 0, 0.15)`;
+                      target.style.boxShadow = `0 0 16px ${ballColor}90, inset 0 3px 6px rgba(255, 255, 255, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.4)`;
                     }} onMouseLeave={(e) => {
                       const target = e.currentTarget as HTMLElement;
                       target.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px) scale(1) rotate(0deg)`;
-                      target.style.boxShadow = `0 10px 25px rgba(0, 0, 0, 0.25), inset 0 0 15px rgba(255, 255, 255, 0.4), inset 0 -10px 15px rgba(0, 0, 0, 0.1)`;
+                      target.style.boxShadow = `0 0 12px ${ballColor}80, inset 0 2px 4px rgba(255, 255, 255, 0.2), inset 0 -2px 4px rgba(0, 0, 0, 0.3)`;
                     }}>
                       {redBallCharacterMap[number] || number}
                     </div>
                   );
                 })
               ) : (
-                // 蓝球模式，号码放在卡片底部
+                // 蓝球模式，号码放在卡片中心
                 <div style={{
                   position: 'absolute',
-                  bottom: '10%',
+                  top: '50%',
                   left: '50%',
-                  transform: 'translateX(-50%)',
+                  transform: 'translate(-50%, -50%)',
                   borderRadius: '50%',
-                  width: '60px',
-                  height: '60px',
+                  width: '80px',
+                  height: '80px',
                   padding: '0',
-                  fontSize: '14px',
+                  fontSize: '18px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   textAlign: 'center',
                   fontWeight: 'bold',
-                  background: parseInt(record.blueNumber, 10) % 2 === 1 
-                    ? `radial-gradient(circle at 25% 25%, #ffffff 0%, #ffb3d9 20%, #ff69b4 50%, #ff3d99 100%)` 
-                    : `radial-gradient(circle at 25% 25%, #ffffff 0%, #fff2b3 20%, #f0e68c 50%, #e6c249 100%)`,
-                  color: '#333',
-                  boxShadow: `0 10px 25px rgba(0, 0, 0, 0.25), inset 0 0 15px rgba(255, 255, 255, 0.4), inset 0 -10px 15px rgba(0, 0, 0, 0.1)`,
+                  backgroundColor: '#1A1A1A',
+                  backgroundImage: 'linear-gradient(135deg, #282828, #121212, #1A1A1A)',
+                  color: parseInt(record.blueNumber, 10) % 2 === 1 ? 'rgba(255, 0, 0, 0.8)' : 'rgba(156, 39, 176, 0.8)',
+                  boxShadow: `0 0 16px ${parseInt(record.blueNumber, 10) % 2 === 1 ? 'rgba(255, 0, 0, 0.6)' : 'rgba(156, 39, 176, 0.6)'}, inset 0 3px 6px rgba(255, 255, 255, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.4)`,
+                  border: `1px solid ${parseInt(record.blueNumber, 10) % 2 === 1 ? 'rgba(255, 0, 0, 0.3)' : 'rgba(156, 39, 176, 0.3)'}`,
                   zIndex: 3,
-                  transition: 'all 0.2s ease',
-                  cursor: 'pointer',
-                  animation: `initialSpreadOut-blue 1s ease-out forwards`
+                  transition: 'all 0.3s ease',
+                  cursor: 'pointer'
                 }} onMouseEnter={(e) => {
                   const target = e.currentTarget as HTMLElement;
-                  target.style.transform = 'translateX(-50%) scale(1.2) rotate(-5deg)';
-                  target.style.boxShadow = `0 15px 35px rgba(0, 0, 0, 0.35), inset 0 0 20px rgba(255, 255, 255, 0.5), inset 0 -15px 20px rgba(0, 0, 0, 0.15)`;
+                  target.style.transform = 'translate(-50%, -50%) scale(1.2) rotate(-5deg)';
+                  target.style.boxShadow = `0 0 20px ${parseInt(record.blueNumber, 10) % 2 === 1 ? 'rgba(255, 0, 0, 0.7)' : 'rgba(156, 39, 176, 0.7)'}, inset 0 4px 8px rgba(255, 255, 255, 0.4), inset 0 -4px 8px rgba(0, 0, 0, 0.5)`;
                 }} onMouseLeave={(e) => {
                   const target = e.currentTarget as HTMLElement;
-                  target.style.transform = 'translateX(-50%) scale(1) rotate(0deg)';
-                  target.style.boxShadow = `0 10px 25px rgba(0, 0, 0, 0.25), inset 0 0 15px rgba(255, 255, 255, 0.4), inset 0 -10px 15px rgba(0, 0, 0, 0.1)`;
+                  target.style.transform = 'translate(-50%, -50%) scale(1) rotate(0deg)';
+                  target.style.boxShadow = `0 0 16px ${parseInt(record.blueNumber, 10) % 2 === 1 ? 'rgba(255, 0, 0, 0.6)' : 'rgba(156, 39, 176, 0.6)'}, inset 0 3px 6px rgba(255, 255, 255, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.4)`;
                 }}>
                   {blueBallCharacterMap[record.blueNumber] || record.blueNumber}
                 </div>
               )}
               
-              {/* 期号放在卡片顶部 */}
-              <div style={{
-                position: 'absolute',
-                top: '10%',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                color: '#000',
-                fontSize: '12px',
-                fontWeight: 'bold',
-                
-                zIndex: 4
-              }}>
-                {record.period}
-              </div>
+
             </div>
             );
           })}
@@ -2736,90 +2675,19 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               width: '200px',
               height: '200px',
               borderRadius: '50%',
-              boxShadow: `0 12px 35px rgba(0, 0, 0, 0.5), inset 0 0 40px rgba(255, 255, 255, 0.1)`,
+              boxShadow: `0 0 25px ${centerColor}80, 0 15px 40px rgba(0, 0, 0, 0.6), 0 5px 15px ${centerColor}40, inset 0 0 15px ${centerColor}40, inset 0 8px 16px rgba(255, 255, 255, 0.2), inset 0 -8px 16px rgba(0, 0, 0, 0.5)`,
               boxSizing: 'border-box',
               position: 'relative',
               opacity: 0.95,
               overflow: 'hidden',
-              background: `radial-gradient(circle at 50% 50%, ${centerColor} 0%, #f0f0f0 65%, #ffffff 100%)`,
-              transition: 'all 0.3s ease'
+              backgroundColor: '#1A1A1A',
+              backgroundImage: 'linear-gradient(135deg, #282828, #121212, #1A1A1A)',
+              transition: 'all 0.4s ease, box-shadow 0.4s ease, background-position 0.4s ease',
+              transformStyle: 'preserve-3d',
+              perspective: '1000px',
+              transform: 'translateZ(0)'
             }}
           >
-            {/* 定义扩散动画 */}
-            <style>
-              {`
-                @keyframes spreadOut-0 {
-                  0% {
-                    transform: translate(-50%, -50%) translate(0, 0) scale(0.5);
-                    opacity: 0;
-                  }
-                  100% {
-                    transform: translate(-50%, -50%) translate(${Math.cos(0 * Math.PI / 3) * 60}px, ${Math.sin(0 * Math.PI / 3) * 60}px) scale(1);
-                    opacity: 1;
-                  }
-                }
-                @keyframes spreadOut-1 {
-                  0% {
-                    transform: translate(-50%, -50%) translate(0, 0) scale(0.5);
-                    opacity: 0;
-                  }
-                  100% {
-                    transform: translate(-50%, -50%) translate(${Math.cos(1 * Math.PI / 3) * 60}px, ${Math.sin(1 * Math.PI / 3) * 60}px) scale(1);
-                    opacity: 1;
-                  }
-                }
-                @keyframes spreadOut-2 {
-                  0% {
-                    transform: translate(-50%, -50%) translate(0, 0) scale(0.5);
-                    opacity: 0;
-                  }
-                  100% {
-                    transform: translate(-50%, -50%) translate(${Math.cos(2 * Math.PI / 3) * 60}px, ${Math.sin(2 * Math.PI / 3) * 60}px) scale(1);
-                    opacity: 1;
-                  }
-                }
-                @keyframes spreadOut-3 {
-                  0% {
-                    transform: translate(-50%, -50%) translate(0, 0) scale(0.5);
-                    opacity: 0;
-                  }
-                  100% {
-                    transform: translate(-50%, -50%) translate(${Math.cos(3 * Math.PI / 3) * 60}px, ${Math.sin(3 * Math.PI / 3) * 60}px) scale(1);
-                    opacity: 1;
-                  }
-                }
-                @keyframes spreadOut-4 {
-                  0% {
-                    transform: translate(-50%, -50%) translate(0, 0) scale(0.5);
-                    opacity: 0;
-                  }
-                  100% {
-                    transform: translate(-50%, -50%) translate(${Math.cos(4 * Math.PI / 3) * 60}px, ${Math.sin(4 * Math.PI / 3) * 60}px) scale(1);
-                    opacity: 1;
-                  }
-                }
-                @keyframes spreadOut-5 {
-                  0% {
-                    transform: translate(-50%, -50%) translate(0, 0) scale(0.5);
-                    opacity: 0;
-                  }
-                  100% {
-                    transform: translate(-50%, -50%) translate(${Math.cos(5 * Math.PI / 3) * 60}px, ${Math.sin(5 * Math.PI / 3) * 60}px) scale(1);
-                    opacity: 1;
-                  }
-                }
-                @keyframes spreadOut-blue {
-                  0% {
-                    transform: translateY(-50%) scale(0.5);
-                    opacity: 0;
-                  }
-                  100% {
-                    transform: translateY(-50%) scale(1);
-                    opacity: 1;
-                  }
-                }
-              `}
-            </style>
             {/* 中心显示总和值和卦象 */}
             <div style={{
               position: 'absolute',
@@ -2834,7 +2702,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             }}>
               {/* 总和值显示在中间 */}
               <div style={{
-                color: '#000',
+                color: centerColor,
                 fontSize: '14px',
                 fontWeight: 'bold',
                 marginBottom: '4px'
@@ -2843,7 +2711,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               </div>
               {/* 卦象显示在下方 */}
               <div style={{
-                color: '#000',
+                color: centerColor,
                 fontSize: '14px',
                 fontWeight: 'bold'
               }}>
@@ -3201,6 +3069,8 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       const originalCombination = `${oddEvenItem.oddCount}奇${oddEvenItem.evenCount}偶`;
       const combination = combinationToNameMap[originalCombination] || originalCombination;
       const baseColor = nameToColorMap[combination as keyof typeof nameToColorMap] || '#999';
+      // 添加centerColor变量定义
+      const centerColor = baseColor;
       
       // 计算卦象
       const calculateHexagram = (redNumbers: string[]) => {
@@ -3261,43 +3131,19 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               width: '200px',
               height: '200px',
               borderRadius: '50%',
-              boxShadow: `0 12px 35px rgba(0, 0, 0, 0.25), inset 0 0 40px rgba(255, 255, 255, 0.25)`,
+              boxShadow: `0 0 25px ${baseColor}80, 0 15px 40px rgba(0, 0, 0, 0.6), 0 5px 15px ${baseColor}40, inset 0 0 15px ${baseColor}40, inset 0 8px 16px rgba(255, 255, 255, 0.2), inset 0 -8px 16px rgba(0, 0, 0, 0.5)`,
               boxSizing: 'border-box',
               position: 'relative',
               opacity: 0.95,
               overflow: 'hidden',
-              background: `radial-gradient(circle at 50% 50%, ${baseColor} 0%, #f5f5f5 65%, #e5e5e5 100%)`,
-              transition: 'all 0.3s ease'
+              backgroundColor: '#1A1A1A',
+              backgroundImage: 'linear-gradient(135deg, #282828, #121212, #1A1A1A)',
+              transition: 'all 0.4s ease, box-shadow 0.4s ease, background-position 0.4s ease',
+              transformStyle: 'preserve-3d',
+              perspective: '1000px',
+              transform: 'translateZ(0)'
             }}
           >
-            {/* 定义扩散动画 */}
-            <style scoped>
-              {`
-                ${numbers.map((_, index) => `
-                  @keyframes spreadOutRed-${selectedPeriod}-${index} {
-                    0% {
-                      transform: translate(-50%, -50%) translate(0, 0) scale(0.5);
-                      opacity: 0;
-                    }
-                    100% {
-                      transform: translate(-50%, -50%) translate(${Math.cos(index / 6 * 2 * Math.PI) * 60}px, ${Math.sin(index / 6 * 2 * Math.PI) * 60}px) scale(1);
-                      opacity: 1;
-                    }
-                  }
-                `).join('')}
-                
-                @keyframes spreadOutBlue-${selectedPeriod} {
-                  0% {
-                    transform: translateY(-50%) scale(0.5);
-                    opacity: 0;
-                  }
-                  100% {
-                    transform: translateY(-50%) scale(1);
-                    opacity: 1;
-                  }
-                }
-              `}
-            </style>
             
             {/* 中心显示总和值和卦象 */}
             <div style={{
@@ -3313,7 +3159,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             }}>
               {/* 总和值显示在中间 */}
               <div style={{
-                color: '#000',
+                color: centerColor,
                 fontSize: '14px',
                 fontWeight: 'bold',
                 marginBottom: '4px'
@@ -3322,7 +3168,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               </div>
               {/* 卦象显示在下方 */}
               <div style={{
-                color: '#000',
+                color: centerColor,
                 fontSize: '14px',
                 fontWeight: 'bold'
               }}>
@@ -3336,32 +3182,36 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               numbers.map((number, index) => {
                 const num = parseInt(number);
                 const isOdd = num % 2 === 1;
-                const numberColor = isOdd 
-                  ? `radial-gradient(circle at 25% 25%, #ffffff 0%, #ffb3d9 20%, #ff69b4 50%, #ff3d99 100%)` 
-                  : `radial-gradient(circle at 25% 25%, #ffffff 0%, #fff2b3 20%, #f0e68c 50%, #e6c249 100%)`;
-                const shadowColor = isOdd ? '255, 105, 180' : '240, 230, 140';
+                const ballColor = isOdd ? '#FF3333' : '#FF8888';
+                
+                // 计算每个号码的位置，均匀分布在圆形边缘，更靠近中心
+                const angle = (index / 6) * 2 * Math.PI;
+                const radius = 70; // 减小半径，使号码更靠近球体中心
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
                 
                 return (
                   <div key={number} style={{
                     position: 'absolute',
                     top: '50%',
                     left: '50%',
-                    transform: `translate(-50%, -50%) translate(0, 0) scale(0.5)`,
-                    opacity: 0,
-                    animation: `spreadOutRed-${selectedPeriod}-${index} 0.5s ease-out ${index * 0.05}s forwards`,
+                    transform: `translate(-50%, -50%) translate(${x}px, ${y}px)`,
+                    opacity: 1,
                     borderRadius: '50%',
-                    width: '40px',
-                    height: '40px',
+                    width: '50px', // 增大号码球大小
+                    height: '50px', // 增大号码球大小
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    fontSize: '14px',
+                    fontSize: '16px', // 增大字体大小
                     fontWeight: 'bold',
-                    background: numberColor,
-                    color: '#000',
-                    boxShadow: `0 10px 25px rgba(${shadowColor}, 0.4), inset 0 0 15px rgba(255, 255, 255, 0.4), inset 0 -10px 15px rgba(0, 0, 0, 0.1)`,
+                    backgroundColor: '#1A1A1A',
+                    backgroundImage: 'linear-gradient(135deg, #282828, #121212, #1A1A1A)',
+                    color: ballColor,
+                    boxShadow: `0 0 12px ${ballColor}80, inset 0 2px 4px rgba(255, 255, 255, 0.2), inset 0 -2px 4px rgba(0, 0, 0, 0.3)`,
+                    border: `1px solid ${ballColor}50`,
                     zIndex: 3,
-                    transition: 'all 0.2s ease'
+                    transition: 'all 0.3s ease'
                   }}>
                     {number}
                   </div>
@@ -3372,9 +3222,8 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
               <div style={{
                 position: 'absolute',
                 top: '50%',
-                right: '10%',
+                right: '15%', // 调整位置，更靠近中心
                 transform: 'translateY(-50%)',
-                animation: `spreadOutBlue-${selectedPeriod} 0.5s ease-out forwards`,
                 borderRadius: '50%',
                 width: '50px',
                 height: '50px',
@@ -3383,11 +3232,13 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                 alignItems: 'center',
                 fontSize: '16px',
                 fontWeight: 'bold',
-                background: `radial-gradient(circle at 25% 25%, #ffffff 0%, #91d5ff 20%, #40a9ff 50%, #1890ff 100%)`,
-                color: '#000',
-                boxShadow: `0 10px 25px rgba(64, 169, 255, 0.4), inset 0 0 15px rgba(255, 255, 255, 0.4), inset 0 -10px 15px rgba(0, 0, 0, 0.1)`,
+                backgroundColor: '#1A1A1A',
+                backgroundImage: 'linear-gradient(135deg, #282828, #121212, #1A1A1A)',
+                color: parseInt(numbers[0], 10) % 2 === 1 ? 'rgba(255, 0, 0, 0.8)' : 'rgba(156, 39, 176, 0.8)',
+                boxShadow: `0 0 12px ${parseInt(numbers[0], 10) % 2 === 1 ? 'rgba(255, 0, 0, 0.5)' : 'rgba(156, 39, 176, 0.5)'}, inset 0 2px 4px rgba(255, 255, 255, 0.2), inset 0 -2px 4px rgba(0, 0, 0, 0.3)`,
+                border: `1px solid ${parseInt(numbers[0], 10) % 2 === 1 ? 'rgba(255, 0, 0, 0.3)' : 'rgba(156, 39, 176, 0.3)'}`,
                 zIndex: 3,
-                transition: 'all 0.2s ease'
+                transition: 'all 0.3s ease'
               }}>
                 {numbers[0]}
               </div>
@@ -3741,7 +3592,10 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
                     }
                   },
                   label: {
-                    show: false
+                    show: true,
+                    position: 'top',
+                    color: '#fff',
+                    fontSize: 12
                   }
                 }
               ]
@@ -3953,7 +3807,10 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             }
           },
           label: {
-            show: false
+            show: true,
+            position: 'top',
+            color: '#fff',
+            fontSize: 12
           }
         }
       ]
@@ -4910,7 +4767,10 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             }
           },
           label: {
-            show: false
+            show: true,
+            position: 'top',
+            color: '#fff',
+            fontSize: 12
           }
         }
       ]
@@ -6381,16 +6241,21 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
         textAlign: 'center', 
         position: 'fixed', 
         bottom: 0, 
-        left: 0, 
-        right: 0, 
+        left: '50%', 
+        transform: 'translateX(-50%)',
         height: '64px', 
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center',
         backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        backgroundImage: 'linear-gradient(145deg, rgba(30, 30, 30, 0.9), rgba(0, 0, 0, 0.9))',
         zIndex: 1000,
         padding: '0 20px',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        borderRadius: '12px',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        borderBottom: '1px solid rgba(0, 0, 0, 0.3)'
       }}>
         {/* 图标 - 点击回到幻境页面 */}
         <CloudFilled 

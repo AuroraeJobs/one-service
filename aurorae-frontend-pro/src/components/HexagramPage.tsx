@@ -1,12 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, Progress } from 'antd';
+import ReactECharts from 'echarts-for-react';
+import { CloudFilled, HeartFilled, FireFilled, CalendarOutlined, ClockCircleOutlined, MessageOutlined } from '@ant-design/icons';
 import { HEXAGRAMS } from '../constants/hexagrams';
 import { useRecordContext } from '../contexts/RecordContext';
-import LeftMenu from './LeftMenu';
 
 const HexagramPage: React.FC = () => {
   const { allRecords } = useRecordContext();
-  const [hexagramStats, setHexagramStats] = useState<Record<string, number>>({});
+  const navigate = useNavigate();
+  
+  // 状态管理：控制是否显示放大的图表和存储点击的图表类型
+  const [showZoomedCharts, setShowZoomedCharts] = React.useState(false);
+  const [clickedChartType, setClickedChartType] = React.useState<'row' | 'column' | null>(null);
 
   // 从记录中提取红球号码并计算卦象
   const extractHexagramFromRecord = (record: string) => {
@@ -154,13 +160,369 @@ const HexagramPage: React.FC = () => {
     return matrix.flat();
   };
 
-  // 当RecordContext中的数据变化时，重新计算统计数据
-  useEffect(() => {
-    const stats = calculateHexagramStats();
-    setHexagramStats(stats);
-  }, [allRecords]);
+  // 使用useMemo缓存统计数据计算结果
+  // 注意：在开发模式下，React StrictMode会导致组件渲染两次
+  const hexagramStats = useMemo(() => calculateHexagramStats(), [allRecords]);
 
   const totalHexagramCount = Object.values(hexagramStats).reduce((sum, count) => sum + count, 0);
+
+  // 计算每行八个卦象的合计数据
+  const rowTotals = useMemo(() => {
+    const adjustedOrder = getAdjustedHexagramOrder();
+    const rows: number[] = [];
+    
+    // 将卦象分成8行，每行8个
+    for (let i = 0; i < 8; i++) {
+      const start = i * 8;
+      const rowHexagrams = adjustedOrder.slice(start, start + 8);
+      // 计算每行的合计
+      const rowTotal = rowHexagrams.reduce((sum, hexagramName) => {
+        const key = nameToKey[hexagramName];
+        return sum + (hexagramStats[key] || 0);
+      }, 0);
+      rows.push(rowTotal);
+    }
+    
+    return rows;
+  }, [hexagramStats]);
+
+  // 计算每列八个卦象的合计数据
+  const columnTotals = useMemo(() => {
+    const adjustedOrder = getAdjustedHexagramOrder();
+    const columns: number[] = [];
+    
+    // 计算每列的合计
+    for (let j = 0; j < 8; j++) {
+      let columnTotal = 0;
+      for (let i = 0; i < 8; i++) {
+        const index = i * 8 + j;
+        const hexagramName = adjustedOrder[index];
+        const key = nameToKey[hexagramName];
+        columnTotal += hexagramStats[key] || 0;
+      }
+      columns.push(columnTotal);
+    }
+    
+    return columns;
+  }, [hexagramStats]);
+
+  // 直接使用useMemo创建图表配置，确保数据更新时重新创建配置对象
+  const rowChartOption = useMemo(() => {
+    return {
+      backgroundColor: 'transparent',
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'shadow'
+        },
+        formatter: function(params: any) {
+          return `行 ${params[0].name}: ${params[0].value}`;
+        }
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        top: '5%',
+        bottom: '3%',
+        containLabel: true
+      },
+      xAxis: {
+        type: 'category',
+        data: ['乾', '兑', '离', '巽', '震', '坎', '艮', '坤'],
+        axisLabel: {
+          color: '#CCCCCC',
+          fontSize: 10
+        },
+        axisLine: {
+          lineStyle: {
+            color: '#444444'
+          }
+        }
+      },
+      yAxis: {
+        type: 'value',
+        axisLabel: {
+          color: '#CCCCCC',
+          fontSize: 10
+        },
+        axisLine: {
+          lineStyle: {
+            color: '#444444'
+          }
+        },
+        splitLine: {
+          lineStyle: {
+            color: '#333333'
+          }
+        }
+      },
+      series: [
+        {
+          data: rowTotals,
+          type: 'line',
+          smooth: true,
+          itemStyle: {
+            color: '#FF3333'
+          },
+          lineStyle: {
+            width: 4,
+            color: '#FF3333'
+          },
+          symbol: 'circle',
+          symbolSize: 8,
+          label: {
+            show: true,
+            position: 'top',
+            color: '#FFFFFF',
+            fontSize: 10
+          }
+        }
+      ]
+    };
+  }, [rowTotals]);
+
+  const columnChartOption = useMemo(() => {
+    return {
+      backgroundColor: 'transparent',
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'shadow'
+        },
+        formatter: function(params: any) {
+          return `列 ${params[0].name}: ${params[0].value}`;
+        }
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        top: '5%',
+        bottom: '3%',
+        containLabel: true
+      },
+      xAxis: {
+        type: 'category',
+        data: ['乾', '兑', '离', '巽', '震', '坎', '艮', '坤'],
+        axisLabel: {
+          color: '#CCCCCC',
+          fontSize: 10
+        },
+        axisLine: {
+          lineStyle: {
+            color: '#444444'
+          }
+        }
+      },
+      yAxis: {
+        type: 'value',
+        axisLabel: {
+          color: '#CCCCCC',
+          fontSize: 10
+        },
+        axisLine: {
+          lineStyle: {
+            color: '#444444'
+          }
+        },
+        splitLine: {
+          lineStyle: {
+            color: '#333333'
+          }
+        }
+      },
+      series: [
+        {
+          data: columnTotals,
+          type: 'line',
+          smooth: true,
+          itemStyle: {
+            color: '#3399FF'
+          },
+          lineStyle: {
+            width: 4,
+            color: '#3399FF'
+          },
+          symbol: 'circle',
+          symbolSize: 8,
+          label: {
+            show: true,
+            position: 'top',
+            color: '#FFFFFF',
+            fontSize: 10
+          }
+        }
+      ]
+    };
+  }, [columnTotals]);
+
+  // 处理图表点击事件
+  const handleRowChartClick = () => {
+    console.log('Row chart clicked');
+    setClickedChartType('row');
+    setShowZoomedCharts(true);
+  };
+
+  const handleColumnChartClick = () => {
+    console.log('Column chart clicked');
+    setClickedChartType('column');
+    setShowZoomedCharts(true);
+  };
+
+  // 计算每行的详细数据（每行八个卦象的具体数据）
+  const calculateRowDetails = useMemo(() => {
+    const adjustedOrder = getAdjustedHexagramOrder();
+    const rowDetails: number[][] = [];
+    
+    // 将卦象分成8行，每行8个
+    for (let i = 0; i < 8; i++) {
+      const start = i * 8;
+      const rowHexagrams = adjustedOrder.slice(start, start + 8);
+      // 计算每行中每个卦象的具体数据
+      const rowData = rowHexagrams.map(hexagramName => {
+        const key = nameToKey[hexagramName];
+        return hexagramStats[key] || 0;
+      });
+      rowDetails.push(rowData);
+    }
+    
+    return rowDetails;
+  }, [hexagramStats]);
+
+  // 计算每列的详细数据（每列八个卦象的具体数据）
+  const calculateColumnDetails = useMemo(() => {
+    const adjustedOrder = getAdjustedHexagramOrder();
+    const columnDetails: number[][] = [];
+    
+    // 计算每列中每个卦象的具体数据
+    for (let j = 0; j < 8; j++) {
+      const columnData: number[] = [];
+      for (let i = 0; i < 8; i++) {
+        const index = i * 8 + j;
+        const hexagramName = adjustedOrder[index];
+        const key = nameToKey[hexagramName];
+        columnData.push(hexagramStats[key] || 0);
+      }
+      columnDetails.push(columnData);
+    }
+    
+    return columnDetails;
+  }, [hexagramStats]);
+
+  // 关闭放大视图
+  const handleCloseZoomedCharts = () => {
+    setShowZoomedCharts(false);
+    setClickedChartType(null);
+  };
+
+  // 获取放大显示的图表配置
+  const getZoomedChartOption = (data: number[], title: string, color: string, type: 'row' | 'column', index: number) => {
+    // 获取调整后的卦象顺序
+    const adjustedOrder = getAdjustedHexagramOrder();
+    let labels: string[] = [];
+    
+    if (type === 'row') {
+      // 行图表：获取该行对应的8个卦名
+      const start = index * 8;
+      labels = adjustedOrder.slice(start, start + 8);
+    } else {
+      // 列图表：获取该列对应的8个卦名
+      for (let i = 0; i < 8; i++) {
+        const hexagramIndex = i * 8 + index;
+        labels.push(adjustedOrder[hexagramIndex]);
+      }
+    }
+    
+    // 计算数据总和
+    const sum = data.reduce((acc, val) => acc + val, 0);
+    
+    return {
+      backgroundColor: 'transparent',
+      title: {
+        text: title,
+        subtext: `${sum}`,
+        textStyle: {
+          color: '#FFFFFF',
+          fontSize: 12,
+          fontWeight: 'normal'
+        },
+        subtextStyle: {
+          color: '#FFFFFF',
+          fontSize: 12,
+          fontWeight: 'normal'
+        },
+        left: 'left',
+        top: 'center',
+        textVerticalAlign: 'middle'
+      },
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'shadow'
+        },
+        formatter: function(params: any) {
+          return `${labels[params[0].dataIndex]}: ${params[0].value}`;
+        }
+      },
+      grid: {
+        left: '12%',
+        right: '4%',
+        top: '10%',
+        bottom: '10%',
+        containLabel: true
+      },
+      xAxis: {
+        type: 'category',
+        data: labels,
+        axisLabel: {
+          color: '#CCCCCC',
+          fontSize: 10
+        },
+        axisLine: {
+          lineStyle: {
+            color: '#444444'
+          }
+        }
+      },
+      yAxis: {
+        type: 'value',
+        axisLabel: {
+          color: '#CCCCCC',
+          fontSize: 10
+        },
+        axisLine: {
+          lineStyle: {
+            color: '#444444'
+          }
+        },
+        splitLine: {
+          lineStyle: {
+            color: '#333333'
+          }
+        }
+      },
+      series: [
+        {
+          data: data,
+          type: 'line',
+          smooth: true,
+          itemStyle: {
+            color: color
+          },
+          lineStyle: {
+            width: 4
+          },
+          symbol: 'circle',
+          symbolSize: 8,
+          label: {
+            show: true,
+            position: 'top',
+            color: '#FFFFFF',
+            fontSize: 10
+          }
+        }
+      ]
+    };
+  };
 
   // 渲染六十四卦卡片，按照调整后的顺序排列
   const renderHexagramCards = () => {
@@ -175,7 +537,7 @@ const HexagramPage: React.FC = () => {
       const percentage = totalHexagramCount > 0 ? Math.round((count / totalHexagramCount) * 100) : 0;
       
       return (
-        <Card
+        <div
             key={key}
             style={{
               borderRadius: '20px',
@@ -185,7 +547,7 @@ const HexagramPage: React.FC = () => {
               backgroundImage: `linear-gradient(145deg, #252525, #101010)`,
               padding: '16px',
               display: 'flex',
-              flexDirection: 'column',
+              flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'center',
               transformStyle: 'preserve-3d',
@@ -194,9 +556,10 @@ const HexagramPage: React.FC = () => {
               transition: 'transform 0.3s ease, box-shadow 0.3s ease',
               overflow: 'visible',
               cursor: 'pointer',
-              minHeight: '120px'
+              minHeight: '80px',
+              width: '100%',
+              boxSizing: 'border-box'
             }}
-            hoverable
             onMouseEnter={(e) => {
               const card = e.currentTarget;
               card.style.transform = 'translateZ(10px) scale(1.02)';
@@ -208,18 +571,18 @@ const HexagramPage: React.FC = () => {
               card.style.boxShadow = `0 0 20px ${color}60, 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px ${color}20, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`;
             }}
           >
-            {/* 卦名 - 圆形背景效果，类似星球名 */}
+            {/* 左侧：卦名 - 圆形背景效果，类似星球名 */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              marginBottom: '12px'
+              flex: 2
             }}>
               <div style={{
                 width: '50px',
                 height: '50px',
                 borderRadius: '50%',
-                backgroundColor: `${color}22`,
+                backgroundColor: 'transparent',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -234,68 +597,367 @@ const HexagramPage: React.FC = () => {
               </div>
             </div>
             
-            {/* 统计数据 - 次数和百分比在同一行 */}
+            {/* 右侧：统计数据 */}
             <div style={{
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '8px',
-              width: '100%'
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              justifyContent: 'center',
+              flex: 1,
+              marginLeft: '16px',
+              minWidth: 0
             }}>
-              {/* 左侧：次数 */}
+              {/* 统计数据 - 次数和百分比上下排布 */}
               <div style={{
-                fontSize: '12px',
-                fontWeight: 'bold',
-                color: '#FFFFFF'
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                width: '100%'
               }}>
-                {count}
-              </div>
-              
-              {/* 右侧：百分比 */}
-              <div style={{
-                fontSize: '10px',
-                fontWeight: 'bold',
-                color: '#888888'
-              }}>
-                {percentage}%
+                {/* 上方：次数 */}
+                <div style={{
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  color: '#FFFFFF',
+                  marginBottom: '4px'
+                }}>
+                  {count}
+                </div>
+                
+                {/* 下方：百分比 */}
+                <div style={{
+                  fontSize: '10px',
+                  fontWeight: 'bold',
+                  color: '#888888'
+                }}>
+                  {percentage}%
+                </div>
               </div>
             </div>
-            
-            {/* 统计数据 - 进度条 */}
-            <div style={{ width: '100%' }}>
-              <Progress
-                percent={percentage}
-                strokeColor={color}
-                size="default"
-                strokeLinecap="round"
-                showInfo={false}
-                style={{ width: '100%', margin: 0 }}
-              />
-            </div>
-          </Card>
+          </div>
       );
     });
   };
 
   return (
-    <div className="hexagram-page" style={{ 
+    <div style={{ 
       minHeight: 'calc(100vh - 64px)', 
       backgroundColor: '#000000',
       color: '#FFFFFF',
       display: 'flex'
     }}>
-      {/* 左侧菜单Docker栏 */}
-      <LeftMenu />
-
+      {/* 放大显示的图表模态框 */}
+      {showZoomedCharts && clickedChartType && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.95)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            zIndex: 10000,
+            padding: '60px 20px 20px'
+          }}
+          onClick={handleCloseZoomedCharts}
+        >
+          {/* 八个平滑曲线图 */}
+          <div 
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gridTemplateRows: 'repeat(4, 1fr)',
+              rowGap: '5px',
+              columnGap: '30px',
+              width: '100%',
+              maxWidth: '1200px',
+              height: '80vh',
+              marginLeft: '-15px'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 颜色数组 */}
+            {(() => {
+              const colors = ['#FF3333', '#FF6633', '#FFCC33', '#33CC33', '#3399FF', '#6666FF', '#9933FF', '#FF33CC'];
+              const labels = ['乾', '兑', '离', '巽', '震', '坎', '艮', '坤'];
+              const details = clickedChartType === 'row' ? calculateRowDetails : calculateColumnDetails;
+              
+              return details.map((data, index) => (
+                <Card 
+                  key={index}
+                  style={{ 
+                    borderRadius: '12px', 
+                    boxShadow: `0 0 15px ${colors[index]}30, 0 8px 20px rgba(0, 0, 0, 0.4), inset 0 0 8px ${colors[index]}10, inset 0 4px 8px rgba(255, 255, 255, 0.1), inset 0 -4px 8px rgba(0, 0, 0, 0.3)`,
+                    border: `1px solid ${colors[index]}40`,
+                    backgroundColor: '#2D2D2D',
+                    backgroundImage: 'linear-gradient(145deg, #2A2A2A, #1D1D1D)',
+                    padding: '12px'
+                  }}
+                  title={null}
+                >
+                  <ReactECharts 
+                    option={getZoomedChartOption(
+                      data, 
+                      labels[index],
+                      colors[index],
+                      clickedChartType,
+                      index
+                    )}
+                    style={{ height: '110px', width: '100%' }}
+                  />
+                </Card>
+              ));
+            })()}
+          </div>
+        </div>
+      )}
       {/* 主要内容区域 */}
-      <div style={{ flex: 1, marginLeft: '80px', padding: '20px' }}>
+      <div style={{ flex: 1, padding: '20px' }}>
+        {/* 行和列合计数据柱状图 */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '24px' }}>
+          {/* 行合计数据柱状图 */}
+          <Card 
+            style={{ 
+              borderRadius: '20px', 
+              boxShadow: '0 0 20px rgba(255, 51, 51, 0.3), 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(255, 51, 51, 0.1), inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)',
+              border: 'none',
+              backgroundColor: '#2D2D2D',
+              backgroundImage: 'linear-gradient(145deg, #2A2A2A, #1D1D1D)',
+              height: '320px',
+              padding: '16px'
+            }}
+            title={null}
+          >
+            <div onClick={handleRowChartClick} style={{ cursor: 'pointer' }}>
+              <ReactECharts 
+                option={rowChartOption}
+                style={{ height: '240px', width: '100%' }}
+              />
+            </div>
+          </Card>
+
+          {/* 列合计数据柱状图 */}
+          <Card 
+            style={{ 
+              borderRadius: '20px', 
+              boxShadow: '0 0 20px rgba(24, 144, 255, 0.3), 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(24, 144, 255, 0.1), inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)',
+              border: 'none',
+              backgroundColor: '#2D2D2D',
+              backgroundImage: 'linear-gradient(145deg, #2A2A2A, #1D1D1D)',
+              height: '320px',
+              padding: '16px'
+            }}
+            title={null}
+          >
+            <div onClick={handleColumnChartClick} style={{ cursor: 'pointer' }}>
+              <ReactECharts 
+                option={columnChartOption}
+                style={{ height: '240px', width: '100%' }}
+              />
+            </div>
+          </Card>
+        </div>
+
         {/* 六十四卦卡片 */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: '16px', marginBottom: '24px', overflow: 'visible' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: '16px', marginBottom: '60px', overflow: 'visible' }}>
           {renderHexagramCards()}
         </div>
       </div>
+      
+      {/* 页脚 */}
+      <footer className="app-footer" style={{ 
+        textAlign: 'center', 
+        position: 'fixed', 
+        bottom: 0, 
+        left: '50%', 
+        transform: 'translateX(-50%)',
+        height: '64px', 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        backgroundImage: 'linear-gradient(145deg, rgba(30, 30, 30, 0.9), rgba(0, 0, 0, 0.9))',
+        color: '#e2e8f0',
+        zIndex: 1000,
+        padding: '0 20px',
+        boxSizing: 'border-box',
+        borderRadius: '12px',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        borderBottom: '1px solid rgba(0, 0, 0, 0.3)'
+      }}>
+        {/* 图标 - 点击回到首页 */}
+        <CloudFilled 
+          style={{ fontSize: '24px', color: '#e2e8f0', cursor: 'pointer', marginRight: '20px' }} 
+        />
+        {/* 功能菜单 */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          <div 
+            style={{ 
+              fontSize: '14px', 
+              color: '#fff',
+              cursor: 'pointer',
+              fontWeight: 'normal',
+              transition: 'color 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              backgroundColor: 'transparent',
+              userSelect: 'none'
+            }}
+            onClick={() => navigate('/health')}
+          >
+            <HeartFilled style={{ color: '#4CAF50', transition: 'color 0.3s ease' }} /> 立春
+          </div>
+          <div 
+            style={{ 
+              fontSize: '14px', 
+              color: '#1890ff',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              transition: 'color 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              backgroundColor: 'transparent',
+              userSelect: 'none'
+            }}
+            onClick={() => navigate('/hexagram')}
+          >
+            <FireFilled style={{ color: '#FF0000', transition: 'color 0.3s ease' }} /> 立夏
+          </div>
+          <div 
+            style={{ 
+              fontSize: '14px', 
+              color: '#fff',
+              cursor: 'pointer',
+              fontWeight: 'normal',
+              transition: 'color 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              backgroundColor: 'transparent',
+              userSelect: 'none'
+            }}
+            onClick={() => navigate('/health/third')}
+          >
+            <CalendarOutlined style={{ color: '#9C27B0', transition: 'color 0.3s ease' }} /> 立秋
+          </div>
+          <div 
+            style={{ 
+              fontSize: '14px', 
+              color: '#fff',
+              cursor: 'pointer',
+              fontWeight: 'normal',
+              transition: 'color 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              backgroundColor: 'transparent',
+              userSelect: 'none'
+            }}
+            onClick={() => navigate('/health/fourth')}
+          >
+            <ClockCircleOutlined style={{ color: '#FFEB3B', transition: 'color 0.3s ease' }} /> 立冬
+          </div>
+          <div 
+            style={{ 
+              fontSize: '14px', 
+              color: '#fff',
+              cursor: 'pointer',
+              fontWeight: 'normal',
+              transition: 'color 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              backgroundColor: 'transparent',
+              userSelect: 'none'
+            }}
+            onClick={() => navigate('/health/spring-equinox')}
+          >
+            <MessageOutlined style={{ color: '#4CAF50', transition: 'color 0.3s ease' }} /> 春分
+          </div>
+          <div 
+            style={{ 
+              fontSize: '14px', 
+              color: '#fff',
+              cursor: 'pointer',
+              fontWeight: 'normal',
+              transition: 'color 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              backgroundColor: 'transparent',
+              userSelect: 'none'
+            }}
+            onClick={() => navigate('/health/summer-solstice')}
+          >
+            <FireFilled style={{ color: '#FF9800', transition: 'color 0.3s ease' }} /> 夏至
+          </div>
+          <div 
+            style={{ 
+              fontSize: '14px', 
+              color: '#fff',
+              cursor: 'pointer',
+              fontWeight: 'normal',
+              transition: 'color 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              backgroundColor: 'transparent',
+              userSelect: 'none'
+            }}
+            onClick={() => navigate('/health/autumn-equinox')}
+          >
+            <CalendarOutlined style={{ color: '#FF5722', transition: 'color 0.3s ease' }} /> 秋分
+          </div>
+          <div 
+            style={{ 
+              fontSize: '14px', 
+              color: '#fff',
+              cursor: 'pointer',
+              fontWeight: 'normal',
+              transition: 'color 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              backgroundColor: 'transparent',
+              userSelect: 'none'
+            }}
+            onClick={() => navigate('/health/winter-solstice')}
+          >
+            <ClockCircleOutlined style={{ color: '#2196F3', transition: 'color 0.3s ease' }} /> 冬至
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
 
-export default HexagramPage;
+// 使用React.memo避免不必要的重复渲染
+export default React.memo(HexagramPage);

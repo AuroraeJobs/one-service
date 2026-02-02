@@ -2535,16 +2535,21 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
         textAlign: 'center', 
         position: 'fixed', 
         bottom: 0, 
-        left: 0, 
-        right: 0, 
+        left: '50%', 
+        transform: 'translateX(-50%)',
         height: '64px', 
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center',
         backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        backgroundImage: 'linear-gradient(145deg, rgba(30, 30, 30, 0.9), rgba(0, 0, 0, 0.9))',
         zIndex: 1000,
         padding: '0 20px',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        borderRadius: '12px',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        borderBottom: '1px solid rgba(0, 0, 0, 0.3)'
       }}>
         {/* 图标 - 点击回到频率页面 */}
         <CloudFilled 
