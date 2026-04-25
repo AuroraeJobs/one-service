@@ -864,7 +864,57 @@ const HealthMainPage: React.FC = () => {
           </div>
 
         {/* 今日锻炼结果卡片 */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr 0.4fr', gap: '16px', marginBottom: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '0.4fr 1.8fr 1fr', gap: '16px', marginBottom: '24px' }}>
+          {/* 步数卡片 */}
+  <Card 
+    style={{ 
+      borderRadius: '20px', 
+      boxShadow: '0 0 20px rgba(76, 175, 80, 0.3), 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(76, 175, 80, 0.1), inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)',
+      border: 'none',
+      backgroundColor: '#2D2D2D',
+      backgroundImage: 'linear-gradient(145deg, #2A2A2A, #1D1D1D)',
+      height: '320px',
+      padding: '16px'
+    }}
+    title={
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <span style={{ 
+          fontSize: '12px', 
+          color: '#4CAF50',
+          padding: 0
+        }}>
+          Total Periods
+        </span>
+      </div>
+    }
+  >
+    <div style={{ 
+      height: '220px', 
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'flex-start'
+    }}>
+      <div style={{ textAlign: 'center', marginTop: '20px' }}>
+        <div style={{ 
+          fontSize: '48px', 
+          fontWeight: 'bold', 
+          color: '#4CAF50',
+          marginBottom: '48px'
+        }}>
+          {totalPeriods}
+        </div>
+        <div style={{ 
+          fontSize: '14px', 
+          fontWeight: 'bold', 
+          color: '#4CAF50',
+          marginBottom: '8px'
+        }}>
+          1107568
+        </div>
+      </div>
+    </div>
+  </Card>
+
           {/* 红球33个号码累计出现次数柱状图 */}
           <Card 
             style={{ 
@@ -1077,56 +1127,6 @@ const HealthMainPage: React.FC = () => {
               />
             )}
           </Card>
-
-          {/* 步数卡片 */}
-  <Card 
-    style={{ 
-      borderRadius: '20px', 
-      boxShadow: '0 0 20px rgba(76, 175, 80, 0.3), 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(76, 175, 80, 0.1), inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)',
-      border: 'none',
-      backgroundColor: '#2D2D2D',
-      backgroundImage: 'linear-gradient(145deg, #2A2A2A, #1D1D1D)',
-      height: '320px',
-      padding: '16px'
-    }}
-    title={
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <span style={{ 
-          fontSize: '12px', 
-          color: '#4CAF50',
-          padding: 0
-        }}>
-          Total Periods
-        </span>
-      </div>
-    }
-  >
-    <div style={{ 
-      height: '220px', 
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'flex-start'
-    }}>
-      <div style={{ textAlign: 'center', marginTop: '20px' }}>
-        <div style={{ 
-          fontSize: '48px', 
-          fontWeight: 'bold', 
-          color: '#4CAF50',
-          marginBottom: '48px'
-        }}>
-          {totalPeriods}
-        </div>
-        <div style={{ 
-          fontSize: '14px', 
-          fontWeight: 'bold', 
-          color: '#4CAF50',
-          marginBottom: '8px'
-        }}>
-          1107568
-        </div>
-      </div>
-    </div>
-  </Card>
         </div>
 
 

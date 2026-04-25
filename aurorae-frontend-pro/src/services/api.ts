@@ -77,6 +77,10 @@ export const recordApi = {
   getAllRecords: (): Promise<string | string[]> => {
     return apiClient.get('/record/records');
   },
+  // 更新记录
+  update: (): Promise<void> => {
+    return apiClient.get('/record/update');
+  },
 };
 
 // AI聊天相关API

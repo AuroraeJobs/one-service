@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Card, message, DatePicker, Input } from 'antd';
-import { CaretLeftOutlined, CaretRightOutlined, StepBackwardOutlined, StepForwardOutlined, CloudFilled } from '@ant-design/icons';
+import { CaretLeftOutlined, CaretRightOutlined, StepBackwardOutlined, StepForwardOutlined, CloudFilled, CloudSyncOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { recordApi } from '../services/api';
 import { periodToGanZhi } from '../constants/heavenlyStemsEarthlyBranches';
@@ -702,8 +702,8 @@ const RecordList: React.FC<RecordListProps> = () => {
             </div>
           </div>
           
-          {/* 右侧：分页组件 */}
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap' }}>
+          {/* 右侧：分页组件和同步按钮 */}
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap', gap: '16px' }}>
             {/* 分页组件 - 只有多于一页的时候才显示 */}
             {records.length > pageSize && (
               <div style={{ width: 'auto', textAlign: 'center', margin: '0', whiteSpace: 'nowrap' }}>
@@ -815,6 +815,83 @@ const RecordList: React.FC<RecordListProps> = () => {
                 </div>
               </div>
             )}
+            
+            {/* 同步按钮 */}
+            <button
+              onClick={async () => {
+                try {
+                  message.loading('正在同步数据...');
+                  await recordApi.update();
+                  message.success('数据同步成功');
+                  // 重新获取最新数据
+                  recordApi.getLast()
+                    .then((data) => {
+                      if (data && data.code) {
+                        // 解析最新期号
+                        const latestIssue = data.code;
+                        if (latestIssue.length === 7) {
+                          // 期号格式：YYYYNNN（YYYY为年份，NNN为期数）
+                          const year = latestIssue.slice(0, 4);
+                          const issueNumber = parseInt(latestIssue.slice(4));
+                          
+                          // 计算结束期号：最新期号+1
+                          const endIssueNumber = issueNumber + 1;
+                          // 计算开始期号：最新期号-21
+                          const startIssueNumber = Math.max(endIssueNumber - 21, 1); // 确保不小于1
+                          
+                          // 格式化为3位数字，不足补零
+                          const formattedStartIssueNumber = startIssueNumber.toString().padStart(3, '0');
+                          const formattedEndIssueNumber = endIssueNumber.toString().padStart(3, '0');
+                          
+                          const startIssue = `${year}${formattedStartIssueNumber}`;
+                          const endIssue = `${year}${formattedEndIssueNumber}`;
+                          
+                          // 设置期号范围：起始期号到结束期号
+                          setIssueRange([startIssue, endIssue]);
+                          
+                          // 自动查询：使用lineStart/lineEnd
+                          if (data.line) {
+                            const latestLine = parseInt(data.line);
+                            const startLine = Math.max(latestLine - 12, 1);
+                            const endLine = latestLine + 1;
+                            fetchRecords(startLine.toString(), endLine.toString(), false, true);
+                          } else {
+                            // 如果没有line属性，使用期号查询
+                            fetchRecords(startIssue, endIssue);
+                          }
+                        }
+                      }
+                    })
+                    .catch((error) => {
+                      console.error('获取最新记录失败:', error);
+                      message.error('获取最新记录失败，请稍后重试');
+                    });
+                } catch (error) {
+                  console.error('同步数据失败:', error);
+                  message.error('同步数据失败，请稍后重试');
+                }
+              }}
+              style={{ 
+                padding: '4px 8px',
+                // 透明背景
+                background: 'transparent',
+                color: '#fff',
+                border: '1px solid transparent',
+                borderRadius: '50%', // 将方形改为圆形
+                cursor: 'pointer',
+                fontSize: '24px',
+                width: '40px',
+                height: '40px',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                boxShadow: 'none',
+                transition: 'all 0.3s ease'
+              }}
+              title="同步数据"
+            >
+              <CloudSyncOutlined />
+            </button>
           </div>
         </div>
       </footer>

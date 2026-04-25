@@ -9,6 +9,7 @@ import org.aurorae.record.file.RecordFile;
 import org.aurorae.record.response.Record;
 import org.aurorae.record.service.IBoxService;
 import org.aurorae.record.service.IRecordService;
+import org.aurorae.record.service.IRecordUpdate;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -18,7 +19,7 @@ import java.util.List;
 @Slf4j
 @Component
 @AllArgsConstructor
-public class RecordUpdater implements CommandLineRunner {
+public class RecordUpdater implements CommandLineRunner, IRecordUpdate {
 
     private final IRecordService recordService;
 
@@ -42,6 +43,7 @@ public class RecordUpdater implements CommandLineRunner {
         }
     }
 
+    @Override
     public void update() {
         Record last = recordService.findLast();
         if (last == null) {

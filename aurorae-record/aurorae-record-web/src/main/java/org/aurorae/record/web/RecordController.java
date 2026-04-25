@@ -8,6 +8,7 @@ import org.aurorae.record.file.RecordFile;
 import org.aurorae.record.request.RecordRequest;
 import org.aurorae.record.response.Record;
 import org.aurorae.record.service.IRecordService;
+import org.aurorae.record.service.IRecordUpdate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +20,13 @@ import java.util.List;
 public class RecordController {
 
     private final IRecordService service;
+
+    private final IRecordUpdate recordUpdate;
+
+    @GetMapping("update")
+    public void update() {
+        recordUpdate.update();
+    }
 
     @GetMapping("last")
     @Operation(summary = "末期数据查询", description = "从数据库获取数据")
