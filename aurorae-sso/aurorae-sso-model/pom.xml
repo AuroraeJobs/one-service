@@ -7,19 +7,7 @@
         <groupId>com.aurorae</groupId>
         <version>1.0</version>
     </parent>
-    <dependencies>
-        <dependency>
-            <groupId>com.aurorae</groupId>
-            <artifactId>aurorae-database</artifactId>
-        </dependency>
-    </dependencies>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>aurorae-sso-model</artifactId>
-
-    <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
-    </properties>
-
 </project>

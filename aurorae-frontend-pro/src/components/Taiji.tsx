@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Typography, Slider } from 'antd';
 import { CloudFilled, EyeInvisibleOutlined, EyeOutlined, FastBackwardOutlined, FastForwardOutlined, StepBackwardOutlined, StepForwardOutlined, ClearOutlined, SunOutlined, MoonOutlined } from '@ant-design/icons';
 import { HEXAGRAMS } from '../constants/hexagrams';
@@ -48,6 +49,8 @@ const mockRecords = [
 ];
 
 const Taiji: React.FC = () => {
+  const location = useLocation();
+  const isFitnessMenu = location.pathname.includes('/fitness');
   // 从Context获取数据
   const { allRecords: contextAllRecords } = useRecordContext();
   // 状态管理
@@ -3084,6 +3087,7 @@ const Taiji: React.FC = () => {
           gap: '12px'
         }}>
           <div 
+            className="footer-menu-item"
             style={{ 
               fontSize: '14px', 
               color: activeMenu === '太极' ? '#1890ff' : '#fff',
@@ -3103,6 +3107,7 @@ const Taiji: React.FC = () => {
             <SunOutlined style={{ color: activeMenu === '太极' ? '#1890ff' : '#fff', transition: 'color 0.3s ease' }} /> 太极
           </div>
           <div 
+            className="footer-menu-item"
             style={{ 
               fontSize: '14px', 
               color: activeMenu === '太空' ? '#1890ff' : '#fff',

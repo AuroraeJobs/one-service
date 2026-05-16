@@ -17,6 +17,7 @@
     "@ant-design/pro-table": "^3.21.0",
     "antd": "^5.29.1",
     "axios": "^1.13.2",
+    "crypto-js": "^4.2.0",
     "dayjs": "^1.11.19",
     "echarts": "^6.0.0",
     "echarts-for-react": "^3.0.5",

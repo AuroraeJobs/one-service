@@ -11,16 +11,10 @@
 
     <artifactId>aurorae-sso-interface</artifactId>
 
-    <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>com.aurorae</groupId>
             <artifactId>aurorae-sso-model</artifactId>
         </dependency>
     </dependencies>
-
 </project>

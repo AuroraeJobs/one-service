@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Card, Row, Col, Statistic, Progress, Spin, Tabs, Slider, message, Tooltip } from 'antd';
 import {
   BarChartOutlined,
@@ -41,6 +42,8 @@ interface AnalysisResult {
 
 
 const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
+  const location = useLocation();
+  const isFitnessMenu = location.pathname.includes('/fitness');
   // 状态管理
   const [loading, setLoading] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
@@ -2565,6 +2568,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
         }}>
           {/* 频率统计 */}
           <div 
+            className="footer-menu-item"
             style={{ 
               fontSize: '14px', 
               color: (statisticType === 'red' && activeTabKey === '1') || (statisticType === 'blue' && activeTabKey === '2') ? '#1890ff' : '#fff',
@@ -2585,6 +2589,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           </div>
           {/* 分组统计 */}
           <div 
+            className="footer-menu-item"
             style={{ 
               fontSize: '14px', 
               color: (statisticType === 'red' && activeTabKey === '5') || (statisticType === 'blue' && activeTabKey === '6') ? '#1890ff' : '#fff',
@@ -2605,6 +2610,7 @@ const Statistics: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           </div>
           {/* 分布统计 */}
           <div 
+            className="footer-menu-item"
             style={{ 
               fontSize: '14px', 
               color: (statisticType === 'red' && activeTabKey === '3') || (statisticType === 'blue' && activeTabKey === '4') ? '#1890ff' : '#fff',

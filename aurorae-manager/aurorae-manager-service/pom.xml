@@ -33,10 +33,6 @@
         </dependency>
         <dependency>
             <groupId>com.aurorae</groupId>
-            <artifactId>aurorae-sso-client</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.aurorae</groupId>
             <artifactId>aurorae-config</artifactId>
         </dependency>
         <dependency>

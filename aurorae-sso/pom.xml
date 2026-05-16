@@ -16,6 +16,7 @@
         <module>aurorae-sso-service</module>
         <module>aurorae-sso-model</module>
         <module>aurorae-sso-client</module>
+        <module>aurorae-sso-repository</module>
     </modules>
 
     <properties>

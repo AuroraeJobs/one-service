@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, Progress, Input, Button, message as antMessage } from 'antd';
 import { FastForwardOutlined, StepForwardOutlined, StepBackwardOutlined, FastBackwardOutlined, CloudFilled, HeartFilled, FireFilled, CalendarOutlined, ClockCircleOutlined, MessageOutlined, SendOutlined, CloseOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
@@ -164,6 +164,10 @@ const HealthMainPage: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<any>(null);
   const [showFullPage, setShowFullPage] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // 检查当前路径是否为健身菜单
+  const isFitnessMenu = location.pathname.startsWith('/fitness');
   
   // 聊天功能相关状态
   const [showChat, setShowChat] = useState(false);
@@ -512,13 +516,13 @@ const HealthMainPage: React.FC = () => {
   
   return (
     <div className="health-main-page" style={{ 
-        minHeight: 'calc(100vh - 64px)', 
+        minHeight: '100vh', 
         backgroundColor: '#000000',
         color: '#FFFFFF',
         display: 'flex'
       }}>
         {/* 主要内容区域 */}
-        <div style={{ flex: 1, padding: '20px', position: 'relative' }}>
+        <div style={{ flex: 1, padding: '20px 30px', position: 'relative' }}>
           {/* 聊天按钮 - 固定在右下角 */}
           <div 
             style={{
@@ -864,77 +868,95 @@ const HealthMainPage: React.FC = () => {
           </div>
 
         {/* 今日锻炼结果卡片 */}
-        <div style={{ display: 'grid', gridTemplateColumns: '0.4fr 1.8fr 1fr', gap: '16px', marginBottom: '24px' }}>
-          {/* 步数卡片 */}
-  <Card 
-    style={{ 
-      borderRadius: '20px', 
-      boxShadow: '0 0 20px rgba(76, 175, 80, 0.3), 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(76, 175, 80, 0.1), inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)',
-      border: 'none',
-      backgroundColor: '#2D2D2D',
-      backgroundImage: 'linear-gradient(145deg, #2A2A2A, #1D1D1D)',
-      height: '320px',
-      padding: '16px'
-    }}
-    title={
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <span style={{ 
-          fontSize: '12px', 
-          color: '#4CAF50',
-          padding: 0
-        }}>
-          Total Periods
-        </span>
-      </div>
-    }
-  >
-    <div style={{ 
-      height: '220px', 
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'flex-start'
-    }}>
-      <div style={{ textAlign: 'center', marginTop: '20px' }}>
-        <div style={{ 
-          fontSize: '48px', 
-          fontWeight: 'bold', 
-          color: '#4CAF50',
-          marginBottom: '48px'
-        }}>
-          {totalPeriods}
-        </div>
-        <div style={{ 
-          fontSize: '14px', 
-          fontWeight: 'bold', 
-          color: '#4CAF50',
-          marginBottom: '8px'
-        }}>
-          1107568
-        </div>
-      </div>
-    </div>
-  </Card>
-
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px', marginBottom: '24px' }}>
           {/* 红球33个号码累计出现次数柱状图 */}
-          <Card 
-            style={{ 
-              borderRadius: '20px', 
-              boxShadow: '0 0 20px rgba(255, 51, 51, 0.3), 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(255, 51, 51, 0.1), inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)',
-              border: 'none',
-              backgroundColor: '#2D2D2D',
-              backgroundImage: 'linear-gradient(145deg, #2A2A2A, #1D1D1D)',
-              height: '320px',
-              padding: '16px'
-            }}
-            title={null}
-          >
+          <div style={{ 
+            position: 'relative',
+            padding: '20px',
+            borderRadius: '24px',
+            background: 'linear-gradient(135deg, rgba(255, 51, 51, 0.15) 0%, rgba(139, 0, 0, 0.15) 50%, rgba(75, 0, 0, 0.15) 100%)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 51, 51, 0.3)',
+            boxShadow: '0 8px 32px rgba(255, 51, 51, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)',
+            height: '320px',
+            overflow: 'hidden'
+          }}>
+            {/* 科技感网格背景 */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundImage: `
+                linear-gradient(rgba(255, 51, 51, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 51, 51, 0.05) 1px, transparent 1px)
+              `,
+              backgroundSize: '20px 20px',
+              pointerEvents: 'none',
+              opacity: 0.5
+            }} />
+            
+            {/* 顶部装饰线 */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: '20px',
+              right: '20px',
+              height: '2px',
+              background: 'linear-gradient(90deg, transparent, rgba(255, 51, 51, 0.8), transparent)',
+              boxShadow: '0 0 20px rgba(255, 51, 51, 0.5)'
+            }} />
+            
+            {/* 顶部打光效果 */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '60%',
+              height: '60px',
+              background: 'linear-gradient(to bottom, rgba(255, 100, 100, 0.3), transparent)',
+              pointerEvents: 'none',
+              filter: 'blur(15px)'
+            }} />
+            
+            {/* 底部打光效果 */}
+            <div style={{
+              position: 'absolute',
+              bottom: 0,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '60%',
+              height: '60px',
+              background: 'linear-gradient(to top, rgba(255, 100, 100, 0.3), transparent)',
+              pointerEvents: 'none',
+              filter: 'blur(15px)'
+            }} />
+            
+            {/* 标题 */}
+            <div style={{
+              position: 'relative',
+              zIndex: 1,
+              marginBottom: '8px',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              color: '#FF3333',
+              textShadow: '0 0 20px rgba(255, 51, 51, 0.5)',
+              letterSpacing: '2px',
+              textTransform: 'uppercase',
+              textAlign: 'center'
+            }}>
+              大观园热力图
+            </div>
+            
             {loading ? (
               <div style={{ 
                 height: '240px', 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center',
-                color: '#CCCCCC'
+                color: '#FF3333'
               }}>
                 加载中...
               </div>
@@ -944,104 +966,187 @@ const HealthMainPage: React.FC = () => {
                   backgroundColor: 'transparent',
                   tooltip: {
                     trigger: 'axis',
+                    backgroundColor: 'rgba(30, 30, 30, 0.95)',
+                    borderColor: 'rgba(255, 51, 51, 0.5)',
+                    borderWidth: 1,
+                    textStyle: { color: '#fff' },
                     axisPointer: {
-                      type: 'shadow'
+                      type: 'shadow',
+                      shadowStyle: {
+                        color: 'rgba(255, 51, 51, 0.1)'
+                      }
                     },
                     formatter: function(params: any) {
                       const ballName = RED_BALL_CHARACTER_MAP[params[0].name] || params[0].name;
-                      return `<div style="width: 80px;">
-                              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <div>${ballName}</div>
-                                <div>${params[0].name}</div>
+                      return `<div style="padding: 8px;">
+                              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <div style="color: #FF3333; font-weight: bold;">${ballName}</div>
+                                <div style="color: #AAAAAA;">${params[0].name}</div>
                               </div>
-                              <div style="text-align: center;">${params[0].value}</div>
+                              <div style="text-align: center; font-size: 16px; color: #FF3333; font-weight: bold;">${params[0].value}次</div>
                             </div>`;
                     }
                   },
                   grid: {
                     left: '3%',
                     right: '4%',
-                    top: '5%',
-                    bottom: '3%',
+                    top: '10%',
+                    bottom: '8%',
                     containLabel: true
                   },
                   xAxis: {
                     type: 'category',
-                    data: Object.keys(redBallCounts).sort((a, b) => parseInt(a) - parseInt(b)),
+                    data: Object.entries(redBallCounts).sort((a, b) => b[1] - a[1]).map(([key]) => key),
                     axisLabel: {
-                      color: '#CCCCCC',
-                      fontSize: 10,
-                      rotate: 45
+                      color: 'rgba(255, 80, 80, 0.9)',
+                      fontSize: 9,
+                      rotate: 45,
+                      fontWeight: 'bold'
                     },
                     axisLine: {
                       lineStyle: {
-                        color: '#444444'
+                        color: 'rgba(255, 60, 60, 0.5)'
                       }
+                    },
+                    splitLine: {
+                      show: false
                     }
                   },
                   yAxis: {
                     type: 'value',
                     axisLabel: {
-                      color: '#CCCCCC',
-                      fontSize: 10
+                      color: 'rgba(255, 80, 80, 0.9)',
+                      fontSize: 10,
+                      fontWeight: 'bold'
                     },
                     axisLine: {
                       lineStyle: {
-                        color: '#444444'
+                        color: 'rgba(255, 60, 60, 0.5)'
                       }
                     },
                     splitLine: {
                       lineStyle: {
-                        color: '#333333'
+                        color: 'rgba(255, 60, 60, 0.15)'
                       }
                     }
                   },
                   series: [
                     {
-                      data: Object.keys(redBallCounts).sort((a, b) => parseInt(a) - parseInt(b)).map(key => redBallCounts[key]),
+                      data: Object.entries(redBallCounts).sort((a, b) => b[1] - a[1]).map(([, value]) => value),
                       type: 'bar',
                       itemStyle: {
                         color: function(params: any) {
                           const ballNum = parseInt(params.name);
-                          return ballNum % 2 === 1 ? '#FF3333' : '#FF8888';
+                          return ballNum % 2 === 1 ? '#FF3333' : '#FF6B6B';
                         },
-                        barBorderRadius: [15, 15, 15, 15]
+                        barBorderRadius: [6, 6, 0, 0],
+                        shadowBlur: 10,
+                        shadowColor: 'rgba(255, 51, 51, 0.5)'
                       },
-                      barWidth: '60%',
-                      label: {
-                        show: true,
-                        position: 'top',
-                        color: '#FFFFFF',
-                        fontSize: 10
+                      barWidth: '70%',
+                      emphasis: {
+                        itemStyle: {
+                          color: '#FF0000',
+                          shadowBlur: 20,
+                          shadowColor: 'rgba(255, 0, 0, 0.8)'
+                        }
                       }
                     }
                   ]
                 }}
-                style={{ height: '240px', width: '100%' }}
+                style={{ height: '240px', width: '100%', position: 'relative', zIndex: 1 }}
               />
             )}
-          </Card>
+          </div>
 
           {/* 蓝球16个号码累计出现次数柱状图 */}
-          <Card 
-            style={{ 
-              borderRadius: '20px', 
-              boxShadow: '0 0 20px rgba(24, 144, 255, 0.3), 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(24, 144, 255, 0.1), inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)',
-              border: 'none',
-              backgroundColor: '#2D2D2D',
-              backgroundImage: 'linear-gradient(145deg, #2A2A2A, #1D1D1D)',
-              height: '320px',
-              padding: '16px'
-            }}
-            title={null}
-          >
+          <div style={{ 
+            position: 'relative',
+            padding: '20px',
+            borderRadius: '24px',
+            background: 'linear-gradient(135deg, rgba(24, 144, 255, 0.15) 0%, rgba(0, 82, 180, 0.15) 50%, rgba(0, 40, 100, 0.15) 100%)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(24, 144, 255, 0.3)',
+            boxShadow: '0 8px 32px rgba(24, 144, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)',
+            height: '320px',
+            overflow: 'hidden'
+          }}>
+            {/* 科技感网格背景 */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundImage: `
+                linear-gradient(rgba(24, 144, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(24, 144, 255, 0.05) 1px, transparent 1px)
+              `,
+              backgroundSize: '20px 20px',
+              pointerEvents: 'none',
+              opacity: 0.5
+            }} />
+            
+            {/* 顶部装饰线 */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: '20px',
+              right: '20px',
+              height: '2px',
+              background: 'linear-gradient(90deg, transparent, rgba(24, 144, 255, 0.8), transparent)',
+              boxShadow: '0 0 20px rgba(24, 144, 255, 0.5)'
+            }} />
+            
+            {/* 顶部打光效果 */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '60%',
+              height: '60px',
+              background: 'linear-gradient(to bottom, rgba(100, 180, 255, 0.3), transparent)',
+              pointerEvents: 'none',
+              filter: 'blur(15px)'
+            }} />
+            
+            {/* 底部打光效果 */}
+            <div style={{
+              position: 'absolute',
+              bottom: 0,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '60%',
+              height: '60px',
+              background: 'linear-gradient(to top, rgba(100, 180, 255, 0.3), transparent)',
+              pointerEvents: 'none',
+              filter: 'blur(15px)'
+            }} />
+            
+            {/* 标题 */}
+            <div style={{
+              position: 'relative',
+              zIndex: 1,
+              marginBottom: '8px',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              color: '#1890FF',
+              textShadow: '0 0 20px rgba(24, 144, 255, 0.5)',
+              letterSpacing: '2px',
+              textTransform: 'uppercase',
+              textAlign: 'center'
+            }}>
+              四季热力图
+            </div>
+            
             {loading ? (
               <div style={{ 
                 height: '240px', 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center',
-                color: '#CCCCCC'
+                color: '#1890FF'
               }}>
                 加载中...
               </div>
@@ -1051,121 +1156,136 @@ const HealthMainPage: React.FC = () => {
                   backgroundColor: 'transparent',
                   tooltip: {
                     trigger: 'axis',
+                    backgroundColor: 'rgba(30, 30, 30, 0.95)',
+                    borderColor: 'rgba(24, 144, 255, 0.5)',
+                    borderWidth: 1,
+                    textStyle: { color: '#fff' },
                     axisPointer: {
-                      type: 'shadow'
+                      type: 'shadow',
+                      shadowStyle: {
+                        color: 'rgba(24, 144, 255, 0.1)'
+                      }
                     },
                     formatter: function(params: any) {
                       const solarTerm = BLUE_BALL_SOLAR_TERM_MAP[params[0].name] || params[0].name;
-                      return `<div style="width: 80px;">
-                              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <div>${solarTerm}</div>
-                                <div>${params[0].name}</div>
+                      return `<div style="padding: 8px;">
+                              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <div style="color: #1890FF; font-weight: bold;">${solarTerm}</div>
+                                <div style="color: #AAAAAA;">${params[0].name}</div>
                               </div>
-                              <div style="text-align: center;">${params[0].value}</div>
+                              <div style="text-align: center; font-size: 16px; color: #1890FF; font-weight: bold;">${params[0].value}次</div>
                             </div>`;
                     }
                   },
                   grid: {
                     left: '3%',
                     right: '4%',
-                    top: '5%',
-                    bottom: '5%',
+                    top: '10%',
+                    bottom: '8%',
                     containLabel: true
                   },
                   xAxis: {
                     type: 'category',
-                    data: Object.keys(blueBallCounts).sort((a, b) => parseInt(a) - parseInt(b)),
+                    data: Object.entries(blueBallCounts).sort((a, b) => b[1] - a[1]).map(([key]) => key),
                     axisLabel: {
-                      color: '#CCCCCC',
-                      fontSize: 10
+                      color: 'rgba(80, 180, 255, 0.9)',
+                      fontSize: 10,
+                      fontWeight: 'bold'
                     },
                     axisLine: {
                       lineStyle: {
-                        color: '#444444'
+                        color: 'rgba(60, 160, 255, 0.5)'
                       }
+                    },
+                    splitLine: {
+                      show: false
                     }
                   },
                   yAxis: {
                     type: 'value',
                     axisLabel: {
-                      color: '#CCCCCC',
-                      fontSize: 10
+                      color: 'rgba(80, 180, 255, 0.9)',
+                      fontSize: 10,
+                      fontWeight: 'bold'
                     },
                     axisLine: {
                       lineStyle: {
-                        color: '#444444'
+                        color: 'rgba(60, 160, 255, 0.5)'
                       }
                     },
                     splitLine: {
                       lineStyle: {
-                        color: '#333333'
+                        color: 'rgba(60, 160, 255, 0.15)'
                       }
                     }
                   },
                   series: [
                     {
-                      data: Object.keys(blueBallCounts).sort((a, b) => parseInt(a) - parseInt(b)).map(key => blueBallCounts[key]),
+                      data: Object.entries(blueBallCounts).sort((a, b) => b[1] - a[1]).map(([, value]) => value),
                       type: 'bar',
                       itemStyle: {
                         color: function(params: any) {
                           const ballNum = parseInt(params.name);
-                          return ballNum % 2 === 1 ? '#1890FF' : '#87CEFA';
+                          return ballNum % 2 === 1 ? '#1890FF' : '#69C0FF';
                         },
-                        barBorderRadius: [15, 15, 15, 15]
+                        barBorderRadius: [6, 6, 0, 0],
+                        shadowBlur: 10,
+                        shadowColor: 'rgba(24, 144, 255, 0.5)'
                       },
-                      barWidth: '60%',
-                      label: {
-                        show: true,
-                        position: 'top',
-                        color: '#FFFFFF',
-                        fontSize: 10
+                      barWidth: '70%',
+                      emphasis: {
+                        itemStyle: {
+                          color: '#0052CC',
+                          shadowBlur: 20,
+                          shadowColor: 'rgba(24, 144, 255, 0.8)'
+                        }
                       }
                     }
                   ]
                 }}
-                style={{ height: '240px', width: '100%' }}
+                style={{ height: '240px', width: '100%', position: 'relative', zIndex: 1 }}
               />
             )}
-          </Card>
+          </div>
         </div>
 
 
 
         {/* 主要内容区域 */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '24px', transformStyle: 'preserve-3d', perspective: '1200px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px', transformStyle: 'preserve-3d', perspective: '1200px' }}>
             {/* 最后八期记录 - 每行四期记录，每一期一个窄卡片 */}
             {lastEightPeriods.length > 0 ? (
               lastEightPeriods.map((period) => (
-                <Card
+                <div
                   key={period.period}
                   style={{
-                    borderRadius: '16px',
-                    boxShadow: `0 0 25px ${period.blueBall % 2 !== 0 ? 'rgba(255, 0, 0, 0.35)' : 'rgba(156, 39, 176, 0.35)'}, 0 15px 40px rgba(0, 0, 0, 0.6), 0 5px 15px ${period.blueBall % 2 !== 0 ? 'rgba(255, 0, 0, 0.15)' : 'rgba(156, 39, 176, 0.15)'}, inset 0 0 15px ${period.blueBall % 2 !== 0 ? 'rgba(255, 0, 0, 0.15)' : 'rgba(156, 39, 176, 0.15)'}, inset 0 8px 16px rgba(255, 255, 255, 0.2), inset 0 -8px 16px rgba(0, 0, 0, 0.5)`,
-                    border: 'none',
-                    backgroundColor: '#1A1A1A',
-                    backgroundImage: 'linear-gradient(135deg, #282828, #121212, #1A1A1A)',
-                    padding: '16px',
-                    width: 'calc(33.333% - 10px)',
-                    minWidth: '220px',
+                    position: 'relative',
+                    borderRadius: '20px',
+                    padding: '40px 20px',
+                    backdropFilter: 'blur(16px)',
+                    background: `linear-gradient(135deg, ${period.blueBall % 2 !== 0 ? 'rgba(255, 0, 0, 0.12)' : 'rgba(156, 39, 176, 0.12)'} 0%, ${period.blueBall % 2 !== 0 ? 'rgba(139, 0, 0, 0.08)' : 'rgba(90, 0, 120, 0.08)'} 100%)`,
+                    border: `1px solid ${period.blueBall % 2 !== 0 ? 'rgba(255, 0, 0, 0.4)' : 'rgba(156, 39, 176, 0.4)'}`,
+                    boxShadow: `0 0 30px ${period.blueBall % 2 !== 0 ? 'rgba(255, 0, 0, 0.3)' : 'rgba(156, 39, 176, 0.3)'}, 0 8px 32px ${period.blueBall % 2 !== 0 ? 'rgba(255, 0, 0, 0.25)' : 'rgba(156, 39, 176, 0.25)'}, inset 0 1px 0 rgba(255, 255, 255, 0.1)`,
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    marginBottom: '16px',
                     transformStyle: 'preserve-3d',
                     perspective: '1000px',
                     transform: 'translateZ(0)',
-                    transition: 'transform 0.4s ease, box-shadow 0.4s ease, background-position 0.4s ease',
-                    cursor: 'pointer'
+                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                    cursor: 'pointer',
+                    overflow: 'hidden',
+                    minHeight: '280px'
                   }}
                   onMouseEnter={(e) => {
                     const card = e.currentTarget;
-                    card.style.transform = 'translateZ(8px) scale(1.02)';
-                    card.style.boxShadow = `0 0 35px ${period.blueBall % 2 !== 0 ? 'rgba(255, 0, 0, 0.45)' : 'rgba(156, 39, 176, 0.45)'}, 0 20px 50px rgba(0, 0, 0, 0.7), 0 8px 20px ${period.blueBall % 2 !== 0 ? 'rgba(255, 0, 0, 0.3)' : 'rgba(156, 39, 176, 0.3)'}, inset 0 0 20px ${period.blueBall % 2 !== 0 ? 'rgba(255, 0, 0, 0.25)' : 'rgba(156, 39, 176, 0.25)'}, inset 0 10px 20px rgba(255, 255, 255, 0.3), inset 0 -10px 20px rgba(0, 0, 0, 0.6)`;
+                    card.style.transform = 'translateZ(12px) scale(1.02)';
+                    card.style.boxShadow = `0 0 40px ${period.blueBall % 2 !== 0 ? 'rgba(255, 0, 0, 0.5)' : 'rgba(156, 39, 176, 0.5)'}, 0 12px 40px ${period.blueBall % 2 !== 0 ? 'rgba(255, 0, 0, 0.4)' : 'rgba(156, 39, 176, 0.4)'}, inset 0 2px 0 rgba(255, 255, 255, 0.15)`;
                   }}
                   onMouseLeave={(e) => {
                     const card = e.currentTarget;
                     card.style.transform = 'translateZ(0) scale(1)';
-                    card.style.boxShadow = `0 0 25px ${period.blueBall % 2 !== 0 ? 'rgba(255, 0, 0, 0.35)' : 'rgba(156, 39, 176, 0.35)'}, 0 15px 40px rgba(0, 0, 0, 0.6), 0 5px 15px ${period.blueBall % 2 !== 0 ? 'rgba(255, 0, 0, 0.15)' : 'rgba(156, 39, 176, 0.15)'}, inset 0 0 15px ${period.blueBall % 2 !== 0 ? 'rgba(255, 0, 0, 0.15)' : 'rgba(156, 39, 176, 0.15)'}, inset 0 8px 16px rgba(255, 255, 255, 0.2), inset 0 -8px 16px rgba(0, 0, 0, 0.5)`;
+                    card.style.boxShadow = `0 0 30px ${period.blueBall % 2 !== 0 ? 'rgba(255, 0, 0, 0.3)' : 'rgba(156, 39, 176, 0.3)'}, 0 8px 32px ${period.blueBall % 2 !== 0 ? 'rgba(255, 0, 0, 0.25)' : 'rgba(156, 39, 176, 0.25)'}, inset 0 1px 0 rgba(255, 255, 255, 0.1)`;
                   }}
                   onClick={() => {
                     setSelectedPeriod(period);
@@ -1173,66 +1293,229 @@ const HealthMainPage: React.FC = () => {
                   }}
 
                 >
-                  {/* 期号和天干地支放在卡片的左上角和右上角 */}
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'flex-start', 
-                    width: '100%',
-                    marginBottom: '16px'
-                  }}>
-                    {/* 期号 - 卡片左上角 */}
+                  {/* 顶部打光效果 */}
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: '60%',
+                    height: '60px',
+                    background: `linear-gradient(to bottom, ${period.blueBall % 2 !== 0 ? 'rgba(255, 100, 100, 0.3)' : 'rgba(180, 100, 200, 0.3)'}, transparent)`,
+                    pointerEvents: 'none',
+                    filter: 'blur(15px)'
+                  }} />
+                  
+                  {/* 底部打光效果 */}
+                  <div style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: '60%',
+                    height: '60px',
+                    background: `linear-gradient(to top, ${period.blueBall % 2 !== 0 ? 'rgba(255, 100, 100, 0.3)' : 'rgba(180, 100, 200, 0.3)'}, transparent)`,
+                    pointerEvents: 'none',
+                    filter: 'blur(15px)'
+                  }} />
+                  
+                  {/* 红球和蓝球中奖号码 */}
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', gap: '20px', marginBottom: '20px', width: '100%', position: 'relative', zIndex: 1 }}>
+                    {/* 红球部分 - 两行三列 */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                      {/* 第一行红球 */}
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', width: '100%' }}>
+                        {period.balls.slice(0, 3).map((ballObj, ballIndex) => {
+                          const { number } = ballObj;
+                          const ballStr = number.toString().padStart(2, '0');
+                          const characterName = RED_BALL_CHARACTER_MAP[ballStr] || ballStr;
+                          const cardColor = number % 2 !== 0 ? '#FF3333' : '#FF8888';
+                          const bgColor = number % 2 !== 0 ? '#333333' : '#2D2D2D';
+                          const borderColor = number % 2 !== 0 ? '#FF333340' : '#FF888840';
+                          
+                          return (
+                            <div 
+                              key={ballIndex}
+                              style={{
+                                padding: '8px 10px',
+                                borderRadius: '16px',
+                                backgroundColor: bgColor,
+                                backgroundImage: `linear-gradient(135deg, ${bgColor === '#333333' ? '#3F3F3F' : '#373737'}, ${bgColor === '#333333' ? '#333333' : '#2D2D2D'}, ${bgColor === '#333333' ? '#2A2A2A' : '#252525'}), radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.2), transparent 50%)`,
+                                color: cardColor,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '12px',
+                                fontWeight: 'bold',
+                                border: `1px solid ${borderColor}`,
+                                boxShadow: `0 0 12px ${cardColor}80, 0 6px 18px rgba(0, 0, 0, 0.6), 0 3px 9px ${cardColor}40, inset 0 3px 6px rgba(255, 255, 255, 0.2), inset 0 -3px 6px rgba(0, 0, 0, 0.5), 0 2px 0 rgba(255, 255, 255, 0.1)`,
+                                whiteSpace: 'nowrap',
+                                width: '100px',
+                                height: '80px',
+                                textAlign: 'center',
+                                transformStyle: 'preserve-3d',
+                                perspective: '1000px',
+                                transform: 'translateZ(0)',
+                                transition: 'transform 0.4s ease, box-shadow 0.4s ease',
+                                cursor: 'pointer',
+                                overflow: 'visible',
+                                position: 'relative'
+                              }}
+                              onMouseEnter={(e) => {
+                                const card = e.currentTarget;
+                                card.style.transform = 'translateZ(6px) scale(1.05)';
+                                card.style.boxShadow = `0 0 16px ${cardColor}80, 0 8px 20px rgba(0, 0, 0, 0.6), 0 4px 10px ${cardColor}40, inset 0 3px 6px rgba(255, 255, 255, 0.2), inset 0 -3px 6px rgba(0, 0, 0, 0.5), 0 2px 0 rgba(255, 255, 255, 0.15)`;
+                              }}
+                              onMouseLeave={(e) => {
+                                const card = e.currentTarget;
+                                card.style.transform = 'translateZ(0) scale(1)';
+                                card.style.boxShadow = `0 0 12px ${cardColor}80, 0 6px 18px rgba(0, 0, 0, 0.6), 0 3px 9px ${cardColor}40, inset 0 3px 6px rgba(255, 255, 255, 0.2), inset 0 -3px 6px rgba(0, 0, 0, 0.5), 0 2px 0 rgba(255, 255, 255, 0.1)`;
+                              }}
+                            >
+                              <div style={{ fontSize: '12px', marginBottom: '4px', opacity: 0.8 }}>{ballStr}</div>
+                              <div style={{ fontSize: '13px' }}>{characterName}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      
+                      {/* 第二行红球 */}
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', width: '100%' }}>
+                        {period.balls.slice(3, 6).map((ballObj, ballIndex) => {
+                          const { number } = ballObj;
+                          const ballStr = number.toString().padStart(2, '0');
+                          const characterName = RED_BALL_CHARACTER_MAP[ballStr] || ballStr;
+                          const cardColor = number % 2 !== 0 ? '#FF3333' : '#FF8888';
+                          const bgColor = number % 2 !== 0 ? '#333333' : '#2D2D2D';
+                          const borderColor = number % 2 !== 0 ? '#FF333340' : '#FF888840';
+                          
+                          return (
+                            <div 
+                              key={ballIndex}
+                              style={{
+                                padding: '8px 10px',
+                                borderRadius: '16px',
+                                backgroundColor: bgColor,
+                                backgroundImage: `linear-gradient(135deg, ${bgColor === '#333333' ? '#3F3F3F' : '#373737'}, ${bgColor === '#333333' ? '#333333' : '#2D2D2D'}, ${bgColor === '#333333' ? '#2A2A2A' : '#252525'}), radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.2), transparent 50%)`,
+                                color: cardColor,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '12px',
+                                fontWeight: 'bold',
+                                border: `1px solid ${borderColor}`,
+                                boxShadow: `0 0 12px ${cardColor}80, 0 6px 18px rgba(0, 0, 0, 0.6), 0 3px 9px ${cardColor}40, inset 0 3px 6px rgba(255, 255, 255, 0.2), inset 0 -3px 6px rgba(0, 0, 0, 0.5), 0 2px 0 rgba(255, 255, 255, 0.1)`,
+                                whiteSpace: 'nowrap',
+                                width: '100px',
+                                height: '80px',
+                                textAlign: 'center',
+                                transformStyle: 'preserve-3d',
+                                perspective: '1000px',
+                                transform: 'translateZ(0)',
+                                transition: 'transform 0.4s ease, box-shadow 0.4s ease',
+                                cursor: 'pointer',
+                                overflow: 'visible',
+                                position: 'relative'
+                              }}
+                              onMouseEnter={(e) => {
+                                const card = e.currentTarget;
+                                card.style.transform = 'translateZ(6px) scale(1.05)';
+                                card.style.boxShadow = `0 0 16px ${cardColor}80, 0 8px 20px rgba(0, 0, 0, 0.6), 0 4px 10px ${cardColor}40, inset 0 3px 6px rgba(255, 255, 255, 0.2), inset 0 -3px 6px rgba(0, 0, 0, 0.5), 0 2px 0 rgba(255, 255, 255, 0.15)`;
+                              }}
+                              onMouseLeave={(e) => {
+                                const card = e.currentTarget;
+                                card.style.transform = 'translateZ(0) scale(1)';
+                                card.style.boxShadow = `0 0 12px ${cardColor}80, 0 6px 18px rgba(0, 0, 0, 0.6), 0 3px 9px ${cardColor}40, inset 0 3px 6px rgba(255, 255, 255, 0.2), inset 0 -3px 6px rgba(0, 0, 0, 0.5), 0 2px 0 rgba(255, 255, 255, 0.1)`;
+                              }}
+                            >
+                              <div style={{ fontSize: '12px', marginBottom: '4px', opacity: 0.8 }}>{ballStr}</div>
+                              <div style={{ fontSize: '13px' }}>{characterName}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    
+                    {/* 蓝球中奖号码 */}
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'stretch' }}>
+                      <div 
+                        style={{
+                        padding: '8px 20px',
+                        borderRadius: '16px',
+                        backgroundColor: '#2D2D2D',
+                        backgroundImage: 'linear-gradient(145deg, #323232, #252525)',
+                        color: period.blueBall % 2 === 0 ? '#87CEFA' : '#1890ff',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        border: `1px solid ${period.blueBall % 2 === 0 ? '#87CEFA40' : '#1890ff40'}`,
+                        boxShadow: `0 0 8px ${period.blueBall % 2 === 0 ? 'rgba(135, 206, 250, 0.6)' : 'rgba(24, 144, 255, 0.6)'}, 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.15), inset 0 -2px 4px rgba(0, 0, 0, 0.4), 0 2px 0 rgba(255, 255, 255, 0.05)`,
+                        whiteSpace: 'nowrap',
+                        minWidth: '80px',
+                        height: '178px',
+                        textAlign: 'center',
+                        transformStyle: 'preserve-3d',
+                        perspective: '1000px',
+                        transform: 'translateZ(0)',
+                        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                        cursor: 'pointer',
+                        overflow: 'visible'
+                      }}
+                        onMouseEnter={(e) => {
+                          const card = e.currentTarget;
+                          const cardColor = period.blueBall % 2 === 0 ? 'rgba(135, 206, 250, 0.9)' : 'rgba(24, 144, 255, 0.9)';
+                          card.style.transform = 'translateZ(10px) scale(1.05)';
+                          card.style.boxShadow = `0 0 20px ${cardColor}, 0 12px 30px rgba(0, 0, 0, 0.7), inset 0 3px 6px rgba(255, 255, 255, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.5), 0 3px 0 rgba(255, 255, 255, 0.15)`;
+                        }}
+                        onMouseLeave={(e) => {
+                          const card = e.currentTarget;
+                          const cardColor = period.blueBall % 2 === 0 ? 'rgba(135, 206, 250, 0.6)' : 'rgba(24, 144, 255, 0.6)';
+                          card.style.transform = 'translateZ(0) scale(1)';
+                          card.style.boxShadow = `0 0 8px ${cardColor}, 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.15), inset 0 -2px 4px rgba(0, 0, 0, 0.4), 0 2px 0 rgba(255, 255, 255, 0.05)`;
+                        }}
+                      >
+                        <div style={{ fontSize: '16px', marginBottom: '10px', opacity: 0.9 }}>{period.blueBallStr}</div>
+                        <div style={{ fontSize: '15px' }}>{BLUE_BALL_SOLAR_TERM_MAP[period.blueBallStr]}</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* 底部区域：期号、三个Avatar、天干地支 */}
+                  <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', width: '100%', paddingTop: '12px', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                    {/* 期号 - 左下角 */}
                     <div
                       style={{
-                      fontSize: '12px',
+                      fontSize: '13px',
                       fontWeight: 'bold',
                       color: '#FF9800',
-                      padding: '1px 4px 4px 1px',
-                      borderRadius: '4px',
-                      backgroundColor: 'transparent',
-                      boxShadow: 'none',
-                      border: 'none',
-                      borderBottom: '2px solid #FF980040',
-                      marginLeft: '-20px',
-                      marginTop: '-12px'
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      backgroundColor: 'rgba(255, 152, 0, 0.15)',
+                      border: '1px solid rgba(255, 152, 0, 0.3)',
+                      boxShadow: '0 0 10px rgba(255, 152, 0, 0.2)',
+                      textShadow: '0 0 8px rgba(255, 152, 0, 0.5)'
                     }}>
                       {period.period}
                     </div>
                     
-                    {/* 天干地支 - 卡片右上角 */}
-                    <div
-                      style={{
-                      fontSize: '12px',
-                      fontWeight: 'bold',
-                      color: '#4CAF50',
-                      padding: '1px 1px 4px 4px',
-                      borderRadius: '4px',
-                      backgroundColor: 'transparent',
-                      boxShadow: 'none',
-                      border: 'none',
-                      borderBottom: '2px solid #4CAF5040',
-                      marginRight: '-20px',
-                      marginTop: '-12px'
-                    }}>
-                      {period.ganzhi}
-                    </div>
-                  </div>
-                  
-                  {/* 第三行：红球中奖号码每三个一行，每行第一个是avatar */}
-                  <div style={{ marginBottom: '16px' }}>
-                    {/* 第一组红球 */}
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '28px', marginBottom: '16px', width: '100%' }}>
+                    {/* 三个Avatar - 中间 */}
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '24px' }}>
                       {/* 卦象Avatar */}
                       <div
                         style={{
-                        width: '60px',
-                        height: '60px',
+                        width: '56px',
+                        height: '56px',
                         borderRadius: '50%',
                         backgroundColor: 'transparent',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: '12px',
+                        fontSize: '11px',
                         fontWeight: 'bold',
                         color: period.color,
                         flexShrink: 0,
@@ -1241,77 +1524,17 @@ const HealthMainPage: React.FC = () => {
                       }}>
                         {period.hexagramName}
                       </div>
-                      {period.balls.slice(0, 3).map((ballObj, ballIndex) => {
-                        const { number } = ballObj;
-                        // 将球号转换为两位数字符串
-                        const ballStr = number.toString().padStart(2, '0');
-                        // 获取对应的人名
-                        const characterName = RED_BALL_CHARACTER_MAP[ballStr] || ballStr;
-                        
-                        // 确定卡片颜色
-                        const cardColor = number % 2 !== 0 ? '#FF3333' : '#FF8888';
-                        const bgColor = number % 2 !== 0 ? '#333333' : '#2D2D2D';
-                        const borderColor = number % 2 !== 0 ? '#FF333340' : '#FF888840';
-                        
-                        return (
-                          <div 
-                            key={ballIndex}
-                            style={{
-                              padding: '8px 6px',
-                              borderRadius: '8px',
-                              backgroundColor: bgColor,
-                              backgroundImage: `linear-gradient(135deg, ${bgColor === '#333333' ? '#3F3F3F' : '#373737'}, ${bgColor === '#333333' ? '#333333' : '#2D2D2D'}, ${bgColor === '#333333' ? '#2A2A2A' : '#252525'}), radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.2), transparent 50%)`,
-                              color: cardColor,
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '12px',
-                              fontWeight: 'bold',
-                              border: `1px solid ${borderColor}`,
-                              boxShadow: `0 0 12px ${cardColor}80, 0 6px 18px rgba(0, 0, 0, 0.6), 0 3px 9px ${cardColor}40, inset 0 3px 6px rgba(255, 255, 255, 0.2), inset 0 -3px 6px rgba(0, 0, 0, 0.5), 0 2px 0 rgba(255, 255, 255, 0.1)`,
-                              whiteSpace: 'nowrap',
-                              width: '60px',
-                              height: '60px',
-                              textAlign: 'center',
-                              transformStyle: 'preserve-3d',
-                              perspective: '1000px',
-                              transform: 'translateZ(0)',
-                              transition: 'transform 0.4s ease, box-shadow 0.4s ease',
-                              cursor: 'pointer',
-                              overflow: 'visible',
-                              position: 'relative'
-                            }}
-                            onMouseEnter={(e) => {
-                              const card = e.currentTarget;
-                              card.style.transform = 'translateZ(6px) scale(1.05)';
-                              card.style.boxShadow = `0 0 16px ${cardColor}80, 0 8px 20px rgba(0, 0, 0, 0.6), 0 4px 10px ${cardColor}40, inset 0 3px 6px rgba(255, 255, 255, 0.2), inset 0 -3px 6px rgba(0, 0, 0, 0.5), 0 2px 0 rgba(255, 255, 255, 0.15)`;
-                            }}
-                            onMouseLeave={(e) => {
-                              const card = e.currentTarget;
-                              card.style.transform = 'translateZ(0) scale(1)';
-                              card.style.boxShadow = `0 0 12px ${cardColor}80, 0 6px 18px rgba(0, 0, 0, 0.6), 0 3px 9px ${cardColor}40, inset 0 3px 6px rgba(255, 255, 255, 0.2), inset 0 -3px 6px rgba(0, 0, 0, 0.5), 0 2px 0 rgba(255, 255, 255, 0.1)`;
-                            }}
-                          >
-                            <div>{characterName}</div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    
-                    {/* 第二组红球 */}
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '28px', width: '100%' }}>
                       {/* 星球Avatar */}
                       <div
                         style={{
-                        width: '60px',
-                        height: '60px',
+                        width: '56px',
+                        height: '56px',
                         borderRadius: '50%',
                         backgroundColor: 'transparent',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: '12px',
+                        fontSize: '11px',
                         fontWeight: 'bold',
                         color: period.color,
                         flexShrink: 0,
@@ -1320,130 +1543,44 @@ const HealthMainPage: React.FC = () => {
                       }}>
                         {period.planetName}
                       </div>
-                      {period.balls.slice(3, 6).map((ballObj, ballIndex) => {
-                        const { number } = ballObj;
-                        // 将球号转换为两位数字符串
-                        const ballStr = number.toString().padStart(2, '0');
-                        // 获取对应的人名
-                        const characterName = RED_BALL_CHARACTER_MAP[ballStr] || ballStr;
-                        
-                        // 确定卡片颜色
-                        const cardColor = number % 2 !== 0 ? '#FF3333' : '#FF8888';
-                        const bgColor = number % 2 !== 0 ? '#333333' : '#2D2D2D';
-                        const borderColor = number % 2 !== 0 ? '#FF333340' : '#FF888840';
-                        
-                        return (
-                          <div 
-                            key={ballIndex}
-                            style={{
-                              padding: '8px 6px',
-                              borderRadius: '8px',
-                              backgroundColor: bgColor,
-                              backgroundImage: `linear-gradient(135deg, ${bgColor === '#333333' ? '#3F3F3F' : '#373737'}, ${bgColor === '#333333' ? '#333333' : '#2D2D2D'}, ${bgColor === '#333333' ? '#2A2A2A' : '#252525'}), radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.2), transparent 50%)`,
-                              color: cardColor,
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '12px',
-                              fontWeight: 'bold',
-                              border: `1px solid ${borderColor}`,
-                              boxShadow: `0 0 12px ${cardColor}80, 0 6px 18px rgba(0, 0, 0, 0.6), 0 3px 9px ${cardColor}40, inset 0 3px 6px rgba(255, 255, 255, 0.2), inset 0 -3px 6px rgba(0, 0, 0, 0.5), 0 2px 0 rgba(255, 255, 255, 0.1)`,
-                              whiteSpace: 'nowrap',
-                              width: '60px',
-                              height: '60px',
-                              textAlign: 'center',
-                              transformStyle: 'preserve-3d',
-                              perspective: '1000px',
-                              transform: 'translateZ(0)',
-                              transition: 'transform 0.4s ease, box-shadow 0.4s ease',
-                              cursor: 'pointer',
-                              overflow: 'visible',
-                              position: 'relative'
-                            }}
-                            onMouseEnter={(e) => {
-                              const card = e.currentTarget;
-                              card.style.transform = 'translateZ(6px) scale(1.05)';
-                              card.style.boxShadow = `0 0 16px ${cardColor}80, 0 8px 20px rgba(0, 0, 0, 0.6), 0 4px 10px ${cardColor}40, inset 0 3px 6px rgba(255, 255, 255, 0.2), inset 0 -3px 6px rgba(0, 0, 0, 0.5), 0 2px 0 rgba(255, 255, 255, 0.15)`;
-                            }}
-                            onMouseLeave={(e) => {
-                              const card = e.currentTarget;
-                              card.style.transform = 'translateZ(0) scale(1)';
-                              card.style.boxShadow = `0 0 12px ${cardColor}80, 0 6px 18px rgba(0, 0, 0, 0.6), 0 3px 9px ${cardColor}40, inset 0 3px 6px rgba(255, 255, 255, 0.2), inset 0 -3px 6px rgba(0, 0, 0, 0.5), 0 2px 0 rgba(255, 255, 255, 0.1)`;
-                            }}
-                          >
-                            <div>{characterName}</div>
-                          </div>
-                        );
-                      })}
+                      {/* 太阳/月亮Avatar */}
+                      <div
+                        style={{
+                        width: '56px',
+                        height: '56px',
+                        borderRadius: '50%',
+                        backgroundColor: 'transparent',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        color: period.blueBall % 2 !== 0 ? '#f5222d' : '#722ed1',
+                        flexShrink: 0,
+                        boxShadow: `0 0 12px ${period.blueBall % 2 !== 0 ? '#f5222d80' : '#722ed180'}, inset 0 2px 4px rgba(255, 255, 255, 0.2), inset 0 -2px 4px rgba(0, 0, 0, 0.3)`,
+                        border: `1px solid ${period.blueBall % 2 !== 0 ? '#f5222d50' : '#722ed150'}`
+                      }}>
+                        {period.blueBall % 2 !== 0 ? '太阳' : '月亮'}
+                      </div>
                     </div>
-                  </div>
-                  
-                  {/* 第五行：蓝球中奖号码单独一行，左侧显示星球avatar */}
-                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '28px', width: '100%' }}>
-                    {/* 蓝球星球Avatar */}
+                    
+                    {/* 天干地支 - 右下角 */}
                     <div
                       style={{
-                      width: '60px',
-                      height: '60px',
-                      borderRadius: '50%',
-                      backgroundColor: 'transparent',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '12px',
+                      fontSize: '13px',
                       fontWeight: 'bold',
-                      color: period.blueBall % 2 !== 0 ? '#f5222d' : '#722ed1',
-                      flexShrink: 0,
-                      boxShadow: `0 0 12px ${period.blueBall % 2 !== 0 ? '#f5222d80' : '#722ed180'}, inset 0 2px 4px rgba(255, 255, 255, 0.2), inset 0 -2px 4px rgba(0, 0, 0, 0.3)`,
-                      border: `1px solid ${period.blueBall % 2 !== 0 ? '#f5222d50' : '#722ed150'}`
+                      color: '#4CAF50',
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      backgroundColor: 'rgba(76, 175, 80, 0.15)',
+                      border: '1px solid rgba(76, 175, 80, 0.3)',
+                      boxShadow: '0 0 10px rgba(76, 175, 80, 0.2)',
+                      textShadow: '0 0 8px rgba(76, 175, 80, 0.5)'
                     }}>
-                      {period.blueBall % 2 !== 0 ? '太阳' : '月亮'}
-                    </div>
-                    {/* 蓝球信息 */}
-                    <div 
-                      style={{
-                      padding: '8px 6px',
-                      borderRadius: '8px',
-                      backgroundColor: '#2D2D2D',
-                      backgroundImage: 'linear-gradient(145deg, #323232, #252525)',
-                      color: period.blueBall % 2 === 0 ? '#87CEFA' : '#1890ff',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '12px',
-                      fontWeight: 'bold',
-                      border: `1px solid ${period.blueBall % 2 === 0 ? '#87CEFA40' : '#1890ff40'}`,
-                      boxShadow: `0 0 8px ${period.blueBall % 2 === 0 ? 'rgba(135, 206, 250, 0.6)' : 'rgba(24, 144, 255, 0.6)'}, 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.15), inset 0 -2px 4px rgba(0, 0, 0, 0.4), 0 2px 0 rgba(255, 255, 255, 0.05)`,
-                      whiteSpace: 'nowrap',
-                      width: '236px',
-                      height: '60px',
-                      textAlign: 'center',
-                      transformStyle: 'preserve-3d',
-                      perspective: '1000px',
-                      transform: 'translateZ(0)',
-                      transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                      cursor: 'pointer',
-                      overflow: 'visible'
-                    }}
-                      onMouseEnter={(e) => {
-                        const card = e.currentTarget;
-                        const cardColor = period.blueBall % 2 === 0 ? 'rgba(135, 206, 250, 0.9)' : 'rgba(24, 144, 255, 0.9)';
-                        card.style.transform = 'translateZ(10px) scale(1.08)';
-                        card.style.boxShadow = `0 0 20px ${cardColor}, 0 12px 30px rgba(0, 0, 0, 0.7), inset 0 3px 6px rgba(255, 255, 255, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.5), 0 3px 0 rgba(255, 255, 255, 0.15)`;
-                      }}
-                      onMouseLeave={(e) => {
-                        const card = e.currentTarget;
-                        const cardColor = period.blueBall % 2 === 0 ? 'rgba(135, 206, 250, 0.6)' : 'rgba(24, 144, 255, 0.6)';
-                        card.style.transform = 'translateZ(0) scale(1)';
-                        card.style.boxShadow = `0 0 8px ${cardColor}, 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.15), inset 0 -2px 4px rgba(0, 0, 0, 0.4), 0 2px 0 rgba(255, 255, 255, 0.05)`;
-                      }}
-                    >
-                      <div>{BLUE_BALL_SOLAR_TERM_MAP[period.blueBallStr]}</div>
+                      {period.ganzhi}
                     </div>
                   </div>
-                </Card>
+                </div>
               ))
             ) : (
               <div style={{ 
@@ -1465,6 +1602,7 @@ const HealthMainPage: React.FC = () => {
               gap: '20px',
               marginBottom: '24px',
               width: '100%',
+              gridColumn: '1 / -1', // 跨越所有列
               order: 9999 // 确保分页组件在所有卡片之后显示
             }}>
               <div style={{
@@ -1909,291 +2047,255 @@ const HealthMainPage: React.FC = () => {
           <div style={{
             width: '100%',
             maxWidth: '800px',
-            backgroundColor: '#1A1A1A',
-            backgroundImage: 'linear-gradient(135deg, #282828, #121212, #1A1A1A)',
+            position: 'relative',
+            padding: '48px',
             borderRadius: '24px',
-            boxShadow: `0 0 40px ${selectedPeriod.blueBall % 2 !== 0 ? 'rgba(255, 0, 0, 0.4)' : 'rgba(156, 39, 176, 0.4)'}, 0 20px 60px rgba(0, 0, 0, 0.7), inset 0 0 20px ${selectedPeriod.blueBall % 2 !== 0 ? 'rgba(255, 0, 0, 0.2)' : 'rgba(156, 39, 176, 0.2)'}, inset 0 10px 20px rgba(255, 255, 255, 0.2), inset 0 -10px 20px rgba(0, 0, 0, 0.6)`,
-            border: `1px solid ${selectedPeriod.blueBall % 2 !== 0 ? 'rgba(255, 0, 0, 0.3)' : 'rgba(156, 39, 176, 0.3)'}`,
-            padding: '40px',
+            backdropFilter: 'blur(20px)',
+            background: `linear-gradient(135deg, ${selectedPeriod.blueBall % 2 !== 0 ? 'rgba(255, 0, 0, 0.12)' : 'rgba(156, 39, 176, 0.12)'} 0%, ${selectedPeriod.blueBall % 2 !== 0 ? 'rgba(139, 0, 0, 0.08)' : 'rgba(90, 0, 120, 0.08)'} 100%)`,
+            border: `1px solid ${selectedPeriod.blueBall % 2 !== 0 ? 'rgba(255, 0, 0, 0.4)' : 'rgba(156, 39, 176, 0.4)'}`,
+            boxShadow: `0 0 40px ${selectedPeriod.blueBall % 2 !== 0 ? 'rgba(255, 0, 0, 0.4)' : 'rgba(156, 39, 176, 0.4)'}, 0 12px 48px ${selectedPeriod.blueBall % 2 !== 0 ? 'rgba(255, 0, 0, 0.3)' : 'rgba(156, 39, 176, 0.3)'}, inset 0 1px 0 rgba(255, 255, 255, 0.1)`,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            position: 'relative'
+            overflow: 'hidden'
           }}
           onClick={(e) => {
             e.stopPropagation();
           }}>
-
             
-            {/* 期号和天干地支 */}
+            {/* 顶部打光效果 */}
             <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              width: '100%',
-              marginBottom: '40px'
-            }}>
-              <div style={{
-                fontSize: '24px',
-                fontWeight: 'bold',
-                color: '#FF9800',
-                padding: '10px 20px',
-                borderRadius: '8px',
-                backgroundColor: 'transparent',
-                border: 'none',
-                borderBottom: '2px solid #FF980040'
-              }}>
-                {selectedPeriod.period}
-              </div>
-              <div style={{
-                fontSize: '24px',
-                fontWeight: 'bold',
-                color: '#4CAF50',
-                padding: '10px 20px',
-                borderRadius: '8px',
-                backgroundColor: 'transparent',
-                border: 'none',
-                borderBottom: '2px solid #4CAF5040'
-              }}>
-                {selectedPeriod.ganzhi}
-              </div>
-            </div>
+              position: 'absolute',
+              top: 0,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '60%',
+              height: '60px',
+              background: `linear-gradient(to bottom, ${selectedPeriod.blueBall % 2 !== 0 ? 'rgba(255, 100, 100, 0.3)' : 'rgba(180, 100, 200, 0.3)'}, transparent)`,
+              pointerEvents: 'none',
+              filter: 'blur(15px)'
+            }} />
             
-            {/* 红球号码 - 第一行 */}
+            {/* 底部打光效果 */}
             <div style={{
-              width: '100%',
-              marginBottom: '60px'
-            }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '30px',
-                justifyContent: 'center'
-              }}>
-                {/* 卦象Avatar */}
-                <div style={{
-                  width: '120px',
-                  height: '120px',
-                  borderRadius: '50%',
-                  backgroundColor: 'transparent',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '24px',
-                  fontWeight: 'bold',
-                  color: selectedPeriod.color,
-                  boxShadow: `0 0 24px ${selectedPeriod.color}80, inset 0 4px 8px rgba(255, 255, 255, 0.2), inset 0 -4px 8px rgba(0, 0, 0, 0.3)`,
-                  border: `2px solid ${selectedPeriod.color}50`
-                }}>
-                  {selectedPeriod.hexagramName}
-                </div>
-                
-                {/* 第一行红球号码 */}
-                <div style={{
-                  display: 'flex',
-                  gap: '40px'
-                }}>
+              position: 'absolute',
+              bottom: 0,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '60%',
+              height: '60px',
+              background: `linear-gradient(to top, ${selectedPeriod.blueBall % 2 !== 0 ? 'rgba(255, 100, 100, 0.3)' : 'rgba(180, 100, 200, 0.3)'}, transparent)`,
+              pointerEvents: 'none',
+              filter: 'blur(15px)'
+            }} />
+            
+            {/* 红球和蓝球中奖号码 */}
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', gap: '32px', marginBottom: '40px', width: '100%', position: 'relative', zIndex: 1 }}>
+              {/* 红球部分 - 两行三列 */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                {/* 第一行红球 */}
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', width: '100%' }}>
                   {selectedPeriod.balls.slice(0, 3).map((ballObj: any, ballIndex: number) => {
                     const { number } = ballObj;
                     const ballStr = number.toString().padStart(2, '0');
                     const characterName = RED_BALL_CHARACTER_MAP[ballStr] || ballStr;
                     const cardColor = number % 2 !== 0 ? '#FF3333' : '#FF8888';
                     const bgColor = number % 2 !== 0 ? '#333333' : '#2D2D2D';
+                    const borderColor = number % 2 !== 0 ? '#FF333340' : '#FF888840';
                     
                     return (
-                      <div
+                      <div 
                         key={ballIndex}
                         style={{
-                          padding: '24px 20px',
-                          borderRadius: '16px',
+                          padding: '12px 14px',
+                          borderRadius: '18px',
                           backgroundColor: bgColor,
-                          backgroundImage: `linear-gradient(135deg, ${bgColor === '#333333' ? '#3F3F3F' : '#373737'}, ${bgColor === '#333333' ? '#333333' : '#2D2D2D'}, ${bgColor === '#333333' ? '#2A2A2A' : '#252525'})`,
+                          backgroundImage: `linear-gradient(135deg, ${bgColor === '#333333' ? '#3F3F3F' : '#373737'}, ${bgColor === '#333333' ? '#333333' : '#2D2D2D'}, ${bgColor === '#333333' ? '#2A2A2A' : '#252525'}), radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.2), transparent 50%)`,
                           color: cardColor,
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '20px',
+                          fontSize: '14px',
                           fontWeight: 'bold',
-                          border: `1px solid ${cardColor}40`,
-                          boxShadow: `0 0 20px ${cardColor}80, 0 10px 24px rgba(0, 0, 0, 0.6), 0 4px 10px ${cardColor}40, inset 0 3px 6px rgba(255, 255, 255, 0.2), inset 0 -3px 6px rgba(0, 0, 0, 0.5)`,
+                          border: `1px solid ${borderColor}`,
+                          boxShadow: `0 0 14px ${cardColor}80, 0 8px 20px rgba(0, 0, 0, 0.6), 0 4px 10px ${cardColor}40, inset 0 3px 6px rgba(255, 255, 255, 0.2), inset 0 -3px 6px rgba(0, 0, 0, 0.5), 0 2px 0 rgba(255, 255, 255, 0.1)`,
+                          whiteSpace: 'nowrap',
                           width: '120px',
-                          height: '120px',
+                          height: '96px',
                           textAlign: 'center'
                         }}
                       >
-                        <div style={{
-                          fontSize: '14px',
-                          color: '#FFFFFF',
-                          marginBottom: '4px'
-                        }}>
-                          {ballStr}
-                        </div>
-                        <div>{characterName}</div>
-                        <div style={{
-                          fontSize: '12px',
-                          color: '#888888',
-                          marginTop: '4px'
-                        }}>
-                          {ballObj.cumulativeCount}
-                        </div>
+                        <div style={{ fontSize: '14px', marginBottom: '6px', opacity: 0.9 }}>{ballStr}</div>
+                        <div style={{ fontSize: '15px' }}>{characterName}</div>
                       </div>
                     );
                   })}
                 </div>
-              </div>
-            </div>
-            
-            {/* 红球号码 - 第二行 */}
-            <div style={{
-              width: '100%',
-              marginBottom: '60px'
-            }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '30px',
-                justifyContent: 'center'
-              }}>
-                {/* 星球Avatar */}
-                <div style={{
-                  width: '120px',
-                  height: '120px',
-                  borderRadius: '50%',
-                  backgroundColor: 'transparent',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '24px',
-                  fontWeight: 'bold',
-                  color: selectedPeriod.color,
-                  boxShadow: `0 0 24px ${selectedPeriod.color}80, inset 0 4px 8px rgba(255, 255, 255, 0.2), inset 0 -4px 8px rgba(0, 0, 0, 0.3)`,
-                  border: `2px solid ${selectedPeriod.color}50`
-                }}>
-                  {selectedPeriod.planetName}
-                </div>
                 
-                {/* 第二行红球号码 */}
-                <div style={{
-                  display: 'flex',
-                  gap: '40px'
-                }}>
+                {/* 第二行红球 */}
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', width: '100%' }}>
                   {selectedPeriod.balls.slice(3, 6).map((ballObj: any, ballIndex: number) => {
                     const { number } = ballObj;
                     const ballStr = number.toString().padStart(2, '0');
                     const characterName = RED_BALL_CHARACTER_MAP[ballStr] || ballStr;
                     const cardColor = number % 2 !== 0 ? '#FF3333' : '#FF8888';
                     const bgColor = number % 2 !== 0 ? '#333333' : '#2D2D2D';
+                    const borderColor = number % 2 !== 0 ? '#FF333340' : '#FF888840';
                     
                     return (
-                      <div
+                      <div 
                         key={ballIndex}
                         style={{
-                          padding: '24px 20px',
-                          borderRadius: '16px',
+                          padding: '12px 14px',
+                          borderRadius: '18px',
                           backgroundColor: bgColor,
-                          backgroundImage: `linear-gradient(135deg, ${bgColor === '#333333' ? '#3F3F3F' : '#373737'}, ${bgColor === '#333333' ? '#333333' : '#2D2D2D'}, ${bgColor === '#333333' ? '#2A2A2A' : '#252525'})`,
+                          backgroundImage: `linear-gradient(135deg, ${bgColor === '#333333' ? '#3F3F3F' : '#373737'}, ${bgColor === '#333333' ? '#333333' : '#2D2D2D'}, ${bgColor === '#333333' ? '#2A2A2A' : '#252525'}), radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.2), transparent 50%)`,
                           color: cardColor,
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '20px',
+                          fontSize: '14px',
                           fontWeight: 'bold',
-                          border: `1px solid ${cardColor}40`,
-                          boxShadow: `0 0 20px ${cardColor}80, 0 10px 24px rgba(0, 0, 0, 0.6), 0 4px 10px ${cardColor}40, inset 0 3px 6px rgba(255, 255, 255, 0.2), inset 0 -3px 6px rgba(0, 0, 0, 0.5)`,
+                          border: `1px solid ${borderColor}`,
+                          boxShadow: `0 0 14px ${cardColor}80, 0 8px 20px rgba(0, 0, 0, 0.6), 0 4px 10px ${cardColor}40, inset 0 3px 6px rgba(255, 255, 255, 0.2), inset 0 -3px 6px rgba(0, 0, 0, 0.5), 0 2px 0 rgba(255, 255, 255, 0.1)`,
+                          whiteSpace: 'nowrap',
                           width: '120px',
-                          height: '120px',
+                          height: '96px',
                           textAlign: 'center'
                         }}
                       >
-                        <div style={{
-                          fontSize: '14px',
-                          color: '#FFFFFF',
-                          marginBottom: '4px'
-                        }}>
-                          {ballStr}
-                        </div>
-                        <div>{characterName}</div>
-                        <div style={{
-                          fontSize: '12px',
-                          color: '#888888',
-                          marginTop: '4px'
-                        }}>
-                          {ballObj.cumulativeCount}
-                        </div>
+                        <div style={{ fontSize: '14px', marginBottom: '6px', opacity: 0.9 }}>{ballStr}</div>
+                        <div style={{ fontSize: '15px' }}>{characterName}</div>
                       </div>
                     );
                   })}
                 </div>
               </div>
+              
+              {/* 蓝球中奖号码 */}
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'stretch' }}>
+                <div 
+                  style={{
+                  padding: '12px 24px',
+                  borderRadius: '18px',
+                  backgroundColor: '#2D2D2D',
+                  backgroundImage: 'linear-gradient(145deg, #323232, #252525)',
+                  color: selectedPeriod.blueBall % 2 === 0 ? '#87CEFA' : '#1890ff',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  border: `1px solid ${selectedPeriod.blueBall % 2 === 0 ? '#87CEFA40' : '#1890ff40'}`,
+                  boxShadow: `0 0 12px ${selectedPeriod.blueBall % 2 === 0 ? 'rgba(135, 206, 250, 0.6)' : 'rgba(24, 144, 255, 0.6)'}, 0 6px 16px rgba(0, 0, 0, 0.5), inset 0 3px 6px rgba(255, 255, 255, 0.15), inset 0 -3px 6px rgba(0, 0, 0, 0.4), 0 2px 0 rgba(255, 255, 255, 0.05)`,
+                  whiteSpace: 'nowrap',
+                  minWidth: '100px',
+                  height: '216px',
+                  textAlign: 'center'
+                }}
+                >
+                  <div style={{ fontSize: '18px', marginBottom: '12px', opacity: 0.9 }}>{selectedPeriod.blueBallStr}</div>
+                  <div style={{ fontSize: '16px' }}>{BLUE_BALL_SOLAR_TERM_MAP[selectedPeriod.blueBallStr]}</div>
+                </div>
+              </div>
             </div>
             
-            {/* 蓝球号码 */}
-            <div style={{
-              width: '100%',
-              marginBottom: '40px'
-            }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '30px',
-                justifyContent: 'center'
+            {/* 底部区域：期号、三个Avatar、天干地支 */}
+            <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', width: '100%', paddingTop: '20px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+              {/* 期号 - 左下角 */}
+              <div
+                style={{
+                fontSize: '16px',
+                fontWeight: 'bold',
+                color: '#FF9800',
+                padding: '8px 14px',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(255, 152, 0, 0.15)',
+                border: '1px solid rgba(255, 152, 0, 0.3)',
+                boxShadow: '0 0 12px rgba(255, 152, 0, 0.2)',
+                textShadow: '0 0 10px rgba(255, 152, 0, 0.5)'
               }}>
-                {/* 太阳/月亮Avatar */}
-                <div style={{
-                  width: '120px',
-                  height: '120px',
+                {selectedPeriod.period}
+              </div>
+              
+              {/* 三个Avatar - 中间 */}
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '32px' }}>
+                {/* 卦象Avatar */}
+                <div
+                  style={{
+                  width: '72px',
+                  height: '72px',
                   borderRadius: '50%',
                   backgroundColor: 'transparent',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '24px',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  color: selectedPeriod.color,
+                  flexShrink: 0,
+                  boxShadow: `0 0 16px ${selectedPeriod.color}80, inset 0 3px 6px rgba(255, 255, 255, 0.2), inset 0 -3px 6px rgba(0, 0, 0, 0.3)`,
+                  border: `2px solid ${selectedPeriod.color}50`
+                }}>
+                  {selectedPeriod.hexagramName}
+                </div>
+                {/* 星球Avatar */}
+                <div
+                  style={{
+                  width: '72px',
+                  height: '72px',
+                  borderRadius: '50%',
+                  backgroundColor: 'transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  color: selectedPeriod.color,
+                  flexShrink: 0,
+                  boxShadow: `0 0 16px ${selectedPeriod.color}80, inset 0 3px 6px rgba(255, 255, 255, 0.2), inset 0 -3px 6px rgba(0, 0, 0, 0.3)`,
+                  border: `2px solid ${selectedPeriod.color}50`
+                }}>
+                  {selectedPeriod.planetName}
+                </div>
+                {/* 太阳/月亮Avatar */}
+                <div
+                  style={{
+                  width: '72px',
+                  height: '72px',
+                  borderRadius: '50%',
+                  backgroundColor: 'transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '14px',
                   fontWeight: 'bold',
                   color: selectedPeriod.blueBall % 2 !== 0 ? '#f5222d' : '#722ed1',
-                  boxShadow: `0 0 24px ${selectedPeriod.blueBall % 2 !== 0 ? '#f5222d80' : '#722ed180'}, inset 0 4px 8px rgba(255, 255, 255, 0.2), inset 0 -4px 8px rgba(0, 0, 0, 0.3)`,
+                  flexShrink: 0,
+                  boxShadow: `0 0 16px ${selectedPeriod.blueBall % 2 !== 0 ? '#f5222d80' : '#722ed180'}, inset 0 3px 6px rgba(255, 255, 255, 0.2), inset 0 -3px 6px rgba(0, 0, 0, 0.3)`,
                   border: `2px solid ${selectedPeriod.blueBall % 2 !== 0 ? '#f5222d50' : '#722ed150'}`
                 }}>
                   {selectedPeriod.blueBall % 2 !== 0 ? '太阳' : '月亮'}
                 </div>
-                
-                {/* 蓝球号码 */}
-                <div
-                  style={{
-                    padding: '24px 20px',
-                    borderRadius: '16px',
-                    backgroundColor: '#2D2D2D',
-                    backgroundImage: 'linear-gradient(145deg, #323232, #252525)',
-                    color: selectedPeriod.blueBall % 2 === 0 ? '#87CEFA' : '#1890ff',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '20px',
-                    fontWeight: 'bold',
-                    border: `1px solid ${selectedPeriod.blueBall % 2 === 0 ? '#87CEFA40' : '#1890ff40'}`,
-                    boxShadow: `0 0 20px ${selectedPeriod.blueBall % 2 === 0 ? 'rgba(135, 206, 250, 0.6)' : 'rgba(24, 144, 255, 0.6)'}, 0 10px 24px rgba(0, 0, 0, 0.6), inset 0 3px 6px rgba(255, 255, 255, 0.2), inset 0 -3px 6px rgba(0, 0, 0, 0.5)`,
-                    width: '440px',
-                    height: '120px',
-                    textAlign: 'center'
-                  }}
-                >
-                  <div style={{
-                    fontSize: '14px',
-                    color: '#FFFFFF',
-                    marginBottom: '4px'
-                  }}>
-                    {selectedPeriod.blueBallStr}
-                  </div>
-                  <div>{BLUE_BALL_SOLAR_TERM_MAP[selectedPeriod.blueBallStr]}</div>
-                  <div style={{
-                    fontSize: '12px',
-                    color: '#888888',
-                    marginTop: '4px'
-                  }}>
-                    {selectedPeriod.blueCumulativeCount}
-                  </div>
-                </div>
+              </div>
+              
+              {/* 天干地支 - 右下角 */}
+              <div
+                style={{
+                fontSize: '16px',
+                fontWeight: 'bold',
+                color: '#4CAF50',
+                padding: '8px 14px',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(76, 175, 80, 0.15)',
+                border: '1px solid rgba(76, 175, 80, 0.3)',
+                boxShadow: '0 0 12px rgba(76, 175, 80, 0.2)',
+                textShadow: '0 0 10px rgba(76, 175, 80, 0.5)'
+              }}>
+                {selectedPeriod.ganzhi}
               </div>
             </div>
           </div>
@@ -2233,158 +2335,173 @@ const HealthMainPage: React.FC = () => {
           alignItems: 'center',
           gap: '12px'
         }}>
-          <div 
-            style={{ 
-              fontSize: '14px', 
-              color: '#1890ff',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              transition: 'color 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              backgroundColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onClick={() => navigate('/health')}
-          >
-            <HeartFilled style={{ color: '#4CAF50', transition: 'color 0.3s ease' }} /> 立春
-          </div>
-          <div 
-            style={{ 
-              fontSize: '14px', 
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 'normal',
-              transition: 'color 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              backgroundColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onClick={() => navigate('/hexagram')}
-          >
-            <FireFilled style={{ color: '#FF0000', transition: 'color 0.3s ease' }} /> 立夏
-          </div>
-          <div 
-            style={{ 
-              fontSize: '14px', 
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 'normal',
-              transition: 'color 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              backgroundColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onClick={() => navigate('/health/third')}
-          >
-            <CalendarOutlined style={{ color: '#9C27B0', transition: 'color 0.3s ease' }} /> 立秋
-          </div>
-          <div 
-            style={{ 
-              fontSize: '14px', 
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 'normal',
-              transition: 'color 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              backgroundColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onClick={() => navigate('/health/fourth')}
-          >
-            <ClockCircleOutlined style={{ color: '#FFEB3B', transition: 'color 0.3s ease' }} /> 立冬
-          </div>
-          <div 
-            style={{ 
-              fontSize: '14px', 
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 'normal',
-              transition: 'color 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              backgroundColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onClick={() => navigate('/health/spring-equinox')}
-          >
-            <MessageOutlined style={{ color: '#4CAF50', transition: 'color 0.3s ease' }} /> 春分
-          </div>
-          <div 
-            style={{ 
-              fontSize: '14px', 
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 'normal',
-              transition: 'color 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              backgroundColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onClick={() => navigate('/health/summer-solstice')}
-          >
-            <FireFilled style={{ color: '#FF9800', transition: 'color 0.3s ease' }} /> 夏至
-          </div>
-          <div 
-            style={{ 
-              fontSize: '14px', 
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 'normal',
-              transition: 'color 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              backgroundColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onClick={() => navigate('/health/autumn-equinox')}
-          >
-            <CalendarOutlined style={{ color: '#FF5722', transition: 'color 0.3s ease' }} /> 秋分
-          </div>
-          <div 
-            style={{ 
-              fontSize: '14px', 
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 'normal',
-              transition: 'color 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              backgroundColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onClick={() => navigate('/health/winter-solstice')}
-          >
-            <ClockCircleOutlined style={{ color: '#2196F3', transition: 'color 0.3s ease' }} /> 冬至
-          </div>
+          {!isFitnessMenu ? (
+            <>
+              <div 
+                className="footer-menu-item"
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#1890ff',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  transition: 'color 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: 'transparent',
+                  userSelect: 'none'
+                }}
+                onClick={() => navigate('/health')}
+              >
+                <HeartFilled style={{ color: '#4CAF50', transition: 'color 0.3s ease' }} /> 立春
+              </div>
+              <div 
+                className="footer-menu-item"
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: 'normal',
+                  transition: 'color 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: 'transparent',
+                  userSelect: 'none'
+                }}
+                onClick={() => navigate('/hexagram')}
+              >
+                <FireFilled style={{ color: '#FF0000', transition: 'color 0.3s ease' }} /> 立夏
+              </div>
+              <div 
+                className="footer-menu-item"
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: 'normal',
+                  transition: 'color 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: 'transparent',
+                  userSelect: 'none'
+                }}
+                onClick={() => navigate('/health/third')}
+              >
+                <CalendarOutlined style={{ color: '#9C27B0', transition: 'color 0.3s ease' }} /> 立秋
+              </div>
+              <div 
+                className="footer-menu-item"
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: 'normal',
+                  transition: 'color 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: 'transparent',
+                  userSelect: 'none'
+                }}
+                onClick={() => navigate('/health/fourth')}
+              >
+                <ClockCircleOutlined style={{ color: '#FFEB3B', transition: 'color 0.3s ease' }} /> 立冬
+              </div>
+            </>
+          ) : (
+            <>
+              <div 
+                className="footer-menu-item"
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#1890ff',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  transition: 'color 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: 'transparent',
+                  userSelect: 'none'
+                }}
+                onClick={() => navigate('/fitness/spring-equinox')}
+              >
+                <MessageOutlined style={{ color: '#4CAF50', transition: 'color 0.3s ease' }} /> 春分
+              </div>
+              <div 
+                className="footer-menu-item"
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: 'normal',
+                  transition: 'color 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: 'transparent',
+                  userSelect: 'none'
+                }}
+                onClick={() => navigate('/fitness/summer-solstice')}
+              >
+                <FireFilled style={{ color: '#FF9800', transition: 'color 0.3s ease' }} /> 夏至
+              </div>
+              <div 
+                className="footer-menu-item"
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: 'normal',
+                  transition: 'color 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: 'transparent',
+                  userSelect: 'none'
+                }}
+                onClick={() => navigate('/fitness/autumn-equinox')}
+              >
+                <CalendarOutlined style={{ color: '#FF5722', transition: 'color 0.3s ease' }} /> 秋分
+              </div>
+              <div 
+                className="footer-menu-item"
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: 'normal',
+                  transition: 'color 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: 'transparent',
+                  userSelect: 'none'
+                }}
+                onClick={() => navigate('/fitness/winter-solstice')}
+              >
+                <ClockCircleOutlined style={{ color: '#2196F3', transition: 'color 0.3s ease' }} /> 冬至
+              </div>
+            </>
+          )}
         </div>
       </footer>
     </div>

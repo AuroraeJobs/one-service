@@ -38,6 +38,7 @@
         <module>aurorae-sso</module>
         <module>aurorae-test</module>
         <module>aurorae-web</module>
+        <module>aurorae-starter</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -283,6 +284,11 @@
             </dependency>
             <dependency>
                 <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-sso-repository</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.aurorae</groupId>
                 <artifactId>aurorae-sso-service</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -326,6 +332,11 @@
             <dependency>
                 <groupId>com.aurorae</groupId>
                 <artifactId>aurorae-record-interface</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.aurorae</groupId>
+                <artifactId>aurorae-record-service</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

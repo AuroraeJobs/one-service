@@ -62,10 +62,6 @@
             <groupId>com.aurorae</groupId>
             <artifactId>aurorae-profiles</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.aurorae</groupId>
-            <artifactId>aurorae-sso-client</artifactId>
-        </dependency>
     </dependencies>
 
     <build>

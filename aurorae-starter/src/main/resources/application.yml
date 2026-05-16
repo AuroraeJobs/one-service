@@ -1,0 +1,39 @@
+server:
+  port: ${ServerPort:8888}
+  servlet:
+    context-path: /
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/test
+      auto-index-creation: true
+
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
+    timeout: 3000ms
+    lettuce:
+      pool:
+        max-active: 200
+        max-idle: 10
+        min-idle: 0
+        max-wait: -1ms
+
+  session:
+    store-type: redis
+    redis:
+      namespace: aurorae:session
+    timeout: 7200s
+
+logging:
+  level:
+    org.aurorae.sso: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.data.mongodb: DEBUG
+
+hello:
+  record:
+    init: false
+    update: false
+    reset: false

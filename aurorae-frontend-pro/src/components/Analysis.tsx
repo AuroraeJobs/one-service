@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Tabs, Slider, message, Pagination } from 'antd';
 import {
   FastBackwardOutlined,
@@ -41,6 +42,8 @@ interface ChartDataItem {
 const globalCombinationColors = GLOBAL_COMBINATION_COLORS;
 
 const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
+  const location = useLocation();
+  const isFitnessMenu = location.pathname.includes('/fitness');
   // 状态管理
   // 滑块相关状态
   const [allRecords, setAllRecords] = useState<string[]>([]);
@@ -6270,6 +6273,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           gap: '12px'
         }}>
           <div 
+            className="footer-menu-item"
             style={{ 
               fontSize: '14px', 
               color: activeTabKey === '4' ? '#1890ff' : '#fff',
@@ -6289,6 +6293,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             <HarmonyOSOutlined style={{ color: activeTabKey === '4' ? '#1890ff' : '#fff', transition: 'color 0.3s ease' }} /> 幻境
           </div>
           <div 
+            className="footer-menu-item"
             style={{ 
               fontSize: '14px', 
               color: activeTabKey === '2' ? '#1890ff' : '#fff',
@@ -6308,6 +6313,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             <OpenAIOutlined style={{ color: activeTabKey === '2' ? '#1890ff' : '#fff', transition: 'color 0.3s ease' }} /> 星球
           </div>
           <div 
+            className="footer-menu-item"
             style={{ 
               fontSize: '14px', 
               color: activeTabKey === '3' ? '#1890ff' : '#fff',
@@ -6327,6 +6333,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             <LinuxOutlined style={{ color: activeTabKey === '3' ? '#1890ff' : '#fff', transition: 'color 0.3s ease' }} /> 能量
           </div>
           <div 
+            className="footer-menu-item"
             style={{ 
               fontSize: '14px', 
               color: activeTabKey === '1' ? '#1890ff' : '#fff',
@@ -6346,6 +6353,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             <DribbbleOutlined style={{ color: activeTabKey === '1' ? '#1890ff' : '#fff', transition: 'color 0.3s ease' }} /> 累计
           </div>
           <div 
+            className="footer-menu-item"
             style={{ 
               fontSize: '14px', 
               color: activeTabKey === '7' ? '#1890ff' : '#fff',
@@ -6365,6 +6373,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             <DingdingOutlined style={{ color: activeTabKey === '7' ? '#1890ff' : '#fff', transition: 'color 0.3s ease' }} /> 集齐
           </div>
           <div 
+            className="footer-menu-item"
             style={{ 
               fontSize: '14px', 
               color: activeTabKey === '6' ? '#1890ff' : '#fff',
@@ -6384,6 +6393,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             <ExperimentOutlined style={{ color: activeTabKey === '6' ? '#1890ff' : '#fff', transition: 'color 0.3s ease' }} /> 位置
           </div>
           <div 
+            className="footer-menu-item"
             style={{ 
               fontSize: '14px', 
               color: activeTabKey === '5' ? '#1890ff' : '#fff',

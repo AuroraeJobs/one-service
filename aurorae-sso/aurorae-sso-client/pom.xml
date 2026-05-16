@@ -11,17 +11,7 @@
 
     <artifactId>aurorae-sso-client</artifactId>
 
-    <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
-    </properties>
-
     <dependencies>
-        <!-- Open Feign -->
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-openfeign</artifactId>
-        </dependency>
         <dependency>
             <groupId>com.aurorae</groupId>
             <artifactId>aurorae-sso-model</artifactId>

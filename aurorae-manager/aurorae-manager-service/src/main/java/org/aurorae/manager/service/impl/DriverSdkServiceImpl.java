@@ -13,17 +13,14 @@
 
 package org.aurorae.manager.service.impl;
 
-import org.aurorae.manager.driver.DriverRegister;
-import org.aurorae.manager.service.*;
-import org.aurorae.common.util.Result;
+import lombok.extern.slf4j.Slf4j;
 import org.aurorae.common.exception.NotFoundException;
 import org.aurorae.common.exception.ServiceException;
+import org.aurorae.manager.driver.DriverRegister;
 import org.aurorae.manager.model.Driver;
 import org.aurorae.manager.model.DriverAttribute;
 import org.aurorae.manager.model.PointAttribute;
-import lombok.extern.slf4j.Slf4j;
-import org.aurorae.sso.client.TenantClient;
-import org.aurorae.sso.model.Tenant;
+import org.aurorae.manager.service.*;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -41,9 +38,6 @@ import java.util.Map;
 public class DriverSdkServiceImpl implements DriverSdkService {
 
     @Resource
-    private TenantClient tenantClient;
-
-    @Resource
     private DriverService driverService;
     @Resource
     private DriverAttributeService driverAttributeService;
@@ -56,14 +50,8 @@ public class DriverSdkServiceImpl implements DriverSdkService {
 
     @Override
     public void driverRegister(DriverRegister driverRegister) {
-        // check tenant
-        Result<Tenant> tenantR = tenantClient.selectByName(driverRegister.getTenant());
-        if (!tenantR.isOk()) {
-            throw new ServiceException("Invalid {}, {}", driverRegister.getTenant(), tenantR.getMessage());
-        }
-
         // register driver
-        Driver driver = driverRegister.getDriver().setTenantId(tenantR.getData().getId());
+        Driver driver = driverRegister.getDriver().setTenantId(null);
         log.info("Register driver {}", driver);
         try {
             Driver byServiceName = driverService.selectByServiceName(driver.getServiceName());

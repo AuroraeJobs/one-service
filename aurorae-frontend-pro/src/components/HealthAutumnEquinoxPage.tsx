@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, Progress } from 'antd';
 import { CloudFilled, HeartFilled, FireFilled, CalendarOutlined, ClockCircleOutlined, MessageOutlined } from '@ant-design/icons';
 import { useRecordContext } from '../contexts/RecordContext';
@@ -7,6 +7,8 @@ import { useRecordContext } from '../contexts/RecordContext';
 const HealthAutumnEquinoxPage: React.FC = () => {
   const { allRecords, loading } = useRecordContext();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isFitnessMenu = location.pathname.startsWith('/fitness');
   const [currentRightPage, setCurrentRightPage] = useState(1);
   const [selectedPeriod, setSelectedPeriod] = useState<any>(null);
   const [showFullPage, setShowFullPage] = useState(false);
@@ -461,158 +463,173 @@ const HealthAutumnEquinoxPage: React.FC = () => {
           alignItems: 'center',
           gap: '12px'
         }}>
-          <div 
-            style={{ 
-              fontSize: '14px', 
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 'normal',
-              transition: 'color 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              backgroundColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onClick={() => navigate('/health')}
-          >
-            <HeartFilled style={{ color: '#4CAF50', transition: 'color 0.3s ease' }} /> 立春
-          </div>
-          <div 
-            style={{ 
-              fontSize: '14px', 
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 'normal',
-              transition: 'color 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              backgroundColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onClick={() => navigate('/hexagram')}
-          >
-            <FireFilled style={{ color: '#FF0000', transition: 'color 0.3s ease' }} /> 立夏
-          </div>
-          <div 
-            style={{ 
-              fontSize: '14px', 
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 'normal',
-              transition: 'color 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              backgroundColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onClick={() => navigate('/health/third')}
-          >
-            <CalendarOutlined style={{ color: '#9C27B0', transition: 'color 0.3s ease' }} /> 立秋
-          </div>
-          <div 
-            style={{ 
-              fontSize: '14px', 
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 'normal',
-              transition: 'color 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              backgroundColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onClick={() => navigate('/health/fourth')}
-          >
-            <ClockCircleOutlined style={{ color: '#FFEB3B', transition: 'color 0.3s ease' }} /> 立冬
-          </div>
-          <div 
-            style={{ 
-              fontSize: '14px', 
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 'normal',
-              transition: 'color 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              backgroundColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onClick={() => navigate('/health/spring-equinox')}
-          >
-            <MessageOutlined style={{ color: '#4CAF50', transition: 'color 0.3s ease' }} /> 春分
-          </div>
-          <div 
-            style={{ 
-              fontSize: '14px', 
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 'normal',
-              transition: 'color 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              backgroundColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onClick={() => navigate('/health/summer-solstice')}
-          >
-            <FireFilled style={{ color: '#FF9800', transition: 'color 0.3s ease' }} /> 夏至
-          </div>
-          <div 
-            style={{ 
-              fontSize: '14px', 
-              color: '#1890ff',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              transition: 'color 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              backgroundColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onClick={() => navigate('/health/autumn-equinox')}
-          >
-            <CalendarOutlined style={{ color: '#FF5722', transition: 'color 0.3s ease' }} /> 秋分
-          </div>
-          <div 
-            style={{ 
-              fontSize: '14px', 
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 'normal',
-              transition: 'color 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              backgroundColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onClick={() => navigate('/health/winter-solstice')}
-          >
-            <ClockCircleOutlined style={{ color: '#2196F3', transition: 'color 0.3s ease' }} /> 冬至
-          </div>
+          {!isFitnessMenu ? (
+            <>
+              <div 
+                className="footer-menu-item"
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: 'normal',
+                  transition: 'color 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: 'transparent',
+                  userSelect: 'none'
+                }}
+                onClick={() => navigate('/health')}
+              >
+                <HeartFilled style={{ color: '#4CAF50', transition: 'color 0.3s ease' }} /> 立春
+              </div>
+              <div 
+                className="footer-menu-item"
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: 'normal',
+                  transition: 'color 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: 'transparent',
+                  userSelect: 'none'
+                }}
+                onClick={() => navigate('/hexagram')}
+              >
+                <FireFilled style={{ color: '#FF0000', transition: 'color 0.3s ease' }} /> 立夏
+              </div>
+              <div 
+                className="footer-menu-item"
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#1890ff',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  transition: 'color 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: 'transparent',
+                  userSelect: 'none'
+                }}
+                onClick={() => navigate('/health/third')}
+              >
+                <CalendarOutlined style={{ color: '#9C27B0', transition: 'color 0.3s ease' }} /> 立秋
+              </div>
+              <div 
+                className="footer-menu-item"
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: 'normal',
+                  transition: 'color 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: 'transparent',
+                  userSelect: 'none'
+                }}
+                onClick={() => navigate('/health/fourth')}
+              >
+                <ClockCircleOutlined style={{ color: '#FFEB3B', transition: 'color 0.3s ease' }} /> 立冬
+              </div>
+            </>
+          ) : (
+            <>
+              <div 
+                className="footer-menu-item"
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: 'normal',
+                  transition: 'color 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: 'transparent',
+                  userSelect: 'none'
+                }}
+                onClick={() => navigate('/fitness/spring-equinox')}
+              >
+                <MessageOutlined style={{ color: '#4CAF50', transition: 'color 0.3s ease' }} /> 春分
+              </div>
+              <div 
+                className="footer-menu-item"
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: 'normal',
+                  transition: 'color 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: 'transparent',
+                  userSelect: 'none'
+                }}
+                onClick={() => navigate('/fitness/summer-solstice')}
+              >
+                <FireFilled style={{ color: '#FF9800', transition: 'color 0.3s ease' }} /> 夏至
+              </div>
+              <div 
+                className="footer-menu-item"
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#1890ff',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  transition: 'color 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: 'transparent',
+                  userSelect: 'none'
+                }}
+                onClick={() => navigate('/fitness/autumn-equinox')}
+              >
+                <CalendarOutlined style={{ color: '#1890ff', transition: 'color 0.3s ease' }} /> 秋分
+              </div>
+              <div 
+                className="footer-menu-item"
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: 'normal',
+                  transition: 'color 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: 'transparent',
+                  userSelect: 'none'
+                }}
+                onClick={() => navigate('/fitness/winter-solstice')}
+              >
+                <ClockCircleOutlined style={{ color: '#2196F3', transition: 'color 0.3s ease' }} /> 冬至
+              </div>
+            </>
+          )}
         </div>
       </footer>
     </div>

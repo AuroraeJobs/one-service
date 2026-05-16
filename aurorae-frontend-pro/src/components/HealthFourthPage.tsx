@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Card } from 'antd';
 import { CloudFilled, HeartFilled, FireFilled, CalendarOutlined, ClockCircleOutlined, MessageOutlined } from '@ant-design/icons';
+import ReactECharts from 'echarts-for-react';
 import { useRecordContext } from '../contexts/RecordContext';
 
 const HealthFourthPage: React.FC = () => {
@@ -9,6 +10,8 @@ const HealthFourthPage: React.FC = () => {
   const [visiblePeriods, setVisiblePeriods] = useState(10);
   const [selectedCard, setSelectedCard] = useState<number | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const isFitnessMenu = location.pathname.startsWith('/fitness');
   const listRef = React.useRef<HTMLDivElement>(null);
   
   // 计算总期数
@@ -225,7 +228,7 @@ const HealthFourthPage: React.FC = () => {
 
   return (
     <div className="health-fourth-page" style={{ 
-      minHeight: 'calc(100vh - 64px)', 
+      minHeight: '100vh', 
       backgroundColor: '#000000',
       color: '#FFFFFF',
       display: 'flex'
@@ -412,7 +415,7 @@ const HealthFourthPage: React.FC = () => {
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '12px' }}>
                           {/* 红球号码 */}
                           {getSelectedPeriodNumbers.redNumbers.map((num: number, index: number) => {
-                            const color = '#ff4d4f'; // 固定使用红色
+                            const color = num % 2 === 0 ? '#FFC107' : '#ff4d4f';
                             
                             return (
                               <div key={index} 
@@ -450,7 +453,7 @@ const HealthFourthPage: React.FC = () => {
                                   left: '-50%',
                                   width: '200%',
                                   height: '200%',
-                                  backgroundColor: 'rgba(255, 51, 51, 0.1)',
+                                  backgroundColor: num % 2 === 0 ? 'rgba(255, 193, 7, 0.1)' : 'rgba(255, 51, 51, 0.1)',
                                   transform: 'rotate(45deg)',
                                   animation: 'glow 3s ease-in-out infinite',
                                   opacity: 0
@@ -562,6 +565,142 @@ const HealthFourthPage: React.FC = () => {
                           )}
                         </div>
                       </div>
+
+                      {/* 柱状图展示区域 */}
+                      <div style={{ 
+                        padding: '20px', 
+                        borderRadius: '16px',
+                        backgroundColor: '#1A1A1A',
+                        border: '1px solid rgba(255, 255, 255, 0.05)',
+                        borderBottom: '1px solid rgba(0, 0, 0, 0.3)'
+                      }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                          {/* 红球柱状图 */}
+                          <div style={{ backgroundColor: '#151515', borderRadius: '12px', padding: '16px', position: 'relative' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                              <div style={{ fontSize: '14px', color: '#ff4d4f', textAlign: 'center', flex: 1 }}>
+                                红球号码统计
+                              </div>
+                              <div style={{ 
+                                fontSize: '12px', 
+                                color: '#999',
+                                position: 'absolute',
+                                top: '16px',
+                                right: '16px'
+                              }}>
+                                出现次数: {getSelectedPeriodNumbers.redNumbers.reduce((sum: number, num: number) => sum + (redBallCounts.get(num) || 0), 0)}
+                              </div>
+                            </div>
+                            <ReactECharts
+                              option={{
+                                backgroundColor: 'transparent',
+                                grid: {
+                                  left: '3%',
+                                  right: '4%',
+                                  bottom: '3%',
+                                  top: '10%',
+                                  containLabel: true
+                                },
+                                xAxis: {
+                                  type: 'category',
+                                  data: getSelectedPeriodNumbers.redNumbers.map((n: number) => `R${n}`),
+                                  axisLine: { lineStyle: { color: '#444' } },
+                                  axisLabel: { color: '#999', fontSize: 10 }
+                                },
+                                yAxis: {
+                                  type: 'value',
+                                  axisLine: { lineStyle: { color: '#444' } },
+                                  axisLabel: { color: '#999', fontSize: 10 },
+                                  splitLine: { lineStyle: { color: '#333' } }
+                                },
+                                series: [{
+                                  type: 'bar',
+                                  barWidth: '40%',
+                                  data: getSelectedPeriodNumbers.redNumbers.map((num: number) => redBallCounts.get(num) || 0),
+                                  itemStyle: {
+                                    color: (params: { name: string }) => {
+                                      const num = parseInt(params.name.replace('R', ''));
+                                      return num % 2 === 0 ? '#FFC107' : '#ff4d4f';
+                                    },
+                                    borderRadius: [4, 4, 0, 0]
+                                  },
+                                  emphasis: {
+                                    itemStyle: {
+                                      color: (params: { name: string }) => {
+                                        const num = parseInt(params.name.replace('R', ''));
+                                        return num % 2 === 0 ? '#FFD700' : '#ff7875';
+                                      }
+                                    }
+                                  }
+                                }]
+                              }}
+                              style={{ height: '280px' }}
+                            />
+                          </div>
+                          {/* 红球号码大小分布图 */}
+                          <div style={{ backgroundColor: '#151515', borderRadius: '12px', padding: '16px', position: 'relative' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                              <div style={{ fontSize: '14px', color: '#FFC107', textAlign: 'center', flex: 1 }}>
+                                红球奇偶分布
+                              </div>
+                              <div style={{ 
+                                fontSize: '12px', 
+                                color: '#999',
+                                position: 'absolute',
+                                top: '16px',
+                                right: '16px'
+                              }}>
+                                号码总和: {getSelectedPeriodNumbers.redNumbers.reduce((sum: number, num: number) => sum + num, 0)}
+                              </div>
+                            </div>
+                            <ReactECharts
+                              option={{
+                                backgroundColor: 'transparent',
+                                grid: {
+                                  left: '3%',
+                                  right: '4%',
+                                  bottom: '3%',
+                                  top: '10%',
+                                  containLabel: true
+                                },
+                                xAxis: {
+                                  type: 'category',
+                                  data: getSelectedPeriodNumbers.redNumbers.map((n: number) => `R${n}`),
+                                  axisLine: { lineStyle: { color: '#444' } },
+                                  axisLabel: { color: '#999', fontSize: 10 }
+                                },
+                                yAxis: {
+                                  type: 'value',
+                                  min: 0,
+                                  max: 33,
+                                  axisLine: { lineStyle: { color: '#444' } },
+                                  axisLabel: { color: '#999', fontSize: 10 },
+                                  splitLine: { lineStyle: { color: '#333' } }
+                                },
+                                series: [{
+                                  type: 'bar',
+                                  barWidth: '40%',
+                                  data: getSelectedPeriodNumbers.redNumbers,
+                                  itemStyle: {
+                                    color: (params: { data: number }) => {
+                                      return params.data % 2 === 0 ? '#FFC107' : '#ff4d4f';
+                                    },
+                                    borderRadius: [4, 4, 0, 0]
+                                  },
+                                  emphasis: {
+                                    itemStyle: {
+                                      color: (params: { data: number }) => {
+                                        return params.data % 2 === 0 ? '#FFD700' : '#ff7875';
+                                      }
+                                    }
+                                  }
+                                }]
+                              }}
+                              style={{ height: '280px' }}
+                            />
+                          </div>
+                        </div>
+                      </div>
                     </>
                   ) : (
                     <div style={{ 
@@ -617,158 +756,172 @@ const HealthFourthPage: React.FC = () => {
           alignItems: 'center',
           gap: '12px'
         }}>
-          <div 
-            style={{ 
-              fontSize: '14px', 
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 'normal',
-              transition: 'color 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              backgroundColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onClick={() => navigate('/health')}
-          >
-            <HeartFilled style={{ color: '#4CAF50', transition: 'color 0.3s ease' }} /> 立春
-          </div>
-          <div 
-            style={{ 
-              fontSize: '14px', 
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 'normal',
-              transition: 'color 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              backgroundColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onClick={() => navigate('/hexagram')}
-          >
-            <FireFilled style={{ color: '#FF0000', transition: 'color 0.3s ease' }} /> 立夏
-          </div>
-          <div 
-            style={{ 
-              fontSize: '14px', 
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 'normal',
-              transition: 'color 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              backgroundColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onClick={() => navigate('/health/third')}
-          >
-            <CalendarOutlined style={{ color: '#9C27B0', transition: 'color 0.3s ease' }} /> 立秋
-          </div>
-          <div 
-            style={{ 
-              fontSize: '14px', 
-              color: '#1890ff',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              transition: 'color 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              backgroundColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onClick={() => navigate('/health/fourth')}
-          >
-            <ClockCircleOutlined style={{ color: '#FFEB3B', transition: 'color 0.3s ease' }} /> 立冬
-          </div>
-          <div 
-            style={{ 
-              fontSize: '14px', 
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 'normal',
-              transition: 'color 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              backgroundColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onClick={() => navigate('/health/spring-equinox')}
-          >
-            <MessageOutlined style={{ color: '#4CAF50', transition: 'color 0.3s ease' }} /> 春分
-          </div>
-          <div 
-            style={{ 
-              fontSize: '14px', 
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 'normal',
-              transition: 'color 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              backgroundColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onClick={() => navigate('/health/summer-solstice')}
-          >
-            <FireFilled style={{ color: '#FF9800', transition: 'color 0.3s ease' }} /> 夏至
-          </div>
-          <div 
-            style={{ 
-              fontSize: '14px', 
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 'normal',
-              transition: 'color 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              backgroundColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onClick={() => navigate('/health/autumn-equinox')}
-          >
-            <CalendarOutlined style={{ color: '#FF5722', transition: 'color 0.3s ease' }} /> 秋分
-          </div>
-          <div 
-            style={{ 
-              fontSize: '14px', 
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 'normal',
-              transition: 'color 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              backgroundColor: 'transparent',
-              userSelect: 'none'
-            }}
-            onClick={() => navigate('/health/winter-solstice')}
-          >
-            <ClockCircleOutlined style={{ color: '#2196F3', transition: 'color 0.3s ease' }} /> 冬至
-          </div>
+          {!isFitnessMenu ? (
+            <>
+              <div 
+                className="footer-menu-item"
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: 'normal',
+                  transition: 'color 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: 'transparent',
+                  userSelect: 'none'
+                }}
+                onClick={() => navigate('/health')}
+              >
+                <HeartFilled style={{ color: '#4CAF50', transition: 'color 0.3s ease' }} /> 立春
+              </div>
+              <div 
+                className="footer-menu-item"
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: 'normal',
+                  transition: 'color 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: 'transparent',
+                  userSelect: 'none'
+                }}
+                onClick={() => navigate('/hexagram')}
+              >
+                <FireFilled style={{ color: '#FF0000', transition: 'color 0.3s ease' }} /> 立夏
+              </div>
+              <div 
+                className="footer-menu-item"
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: 'normal',
+                  transition: 'color 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: 'transparent',
+                  userSelect: 'none'
+                }}
+                onClick={() => navigate('/health/third')}
+              >
+                <CalendarOutlined style={{ color: '#9C27B0', transition: 'color 0.3s ease' }} /> 立秋
+              </div>
+              <div 
+                className="footer-menu-item"
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#1890ff',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  transition: 'color 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: 'transparent',
+                  userSelect: 'none'
+                }}
+                onClick={() => navigate('/health/fourth')}
+              >
+                <ClockCircleOutlined style={{ color: '#FFEB3B', transition: 'color 0.3s ease' }} /> 立冬
+              </div>
+            </>
+          ) : (
+            <>
+              <div 
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: 'normal',
+                  transition: 'color 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: 'transparent',
+                  userSelect: 'none'
+                }}
+                onClick={() => navigate('/fitness/spring-equinox')}
+              >
+                <MessageOutlined style={{ color: '#4CAF50', transition: 'color 0.3s ease' }} /> 春分
+              </div>
+              <div 
+                className="footer-menu-item"
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: 'normal',
+                  transition: 'color 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: 'transparent',
+                  userSelect: 'none'
+                }}
+                onClick={() => navigate('/fitness/summer-solstice')}
+              >
+                <FireFilled style={{ color: '#FF9800', transition: 'color 0.3s ease' }} /> 夏至
+              </div>
+              <div 
+                className="footer-menu-item"
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: 'normal',
+                  transition: 'color 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: 'transparent',
+                  userSelect: 'none'
+                }}
+                onClick={() => navigate('/fitness/autumn-equinox')}
+              >
+                <CalendarOutlined style={{ color: '#FF5722', transition: 'color 0.3s ease' }} /> 秋分
+              </div>
+              <div 
+                className="footer-menu-item"
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: 'normal',
+                  transition: 'color 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  backgroundColor: 'transparent',
+                  userSelect: 'none'
+                }}
+                onClick={() => navigate('/fitness/winter-solstice')}
+              >
+                <ClockCircleOutlined style={{ color: '#2196F3', transition: 'color 0.3s ease' }} /> 冬至
+              </div>
+            </>
+          )}
         </div>
       </footer>
     </div>

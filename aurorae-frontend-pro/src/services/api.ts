@@ -128,5 +128,185 @@ export const aiApi = {
   }
 };
 
+// 认证相关API
+export const authApi = {
+  // 登录
+  login: async (username: string, password: string): Promise<{ success: boolean; message?: string; user?: any }> => {
+    try {
+      const response = await apiClient.post('/auth/login', {
+        username,
+        password
+      }) as any;
+      
+      if (response.code === 200) {
+        return {
+          success: true,
+          user: response.data,
+          message: response.message
+        };
+      } else {
+        return {
+          success: false,
+          message: response.message || '登录失败'
+        };
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message || '登录失败'
+      };
+    }
+  },
+
+  // 注册
+  register: async (userData: { username: string; password: string; email?: string; phone?: string }): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const response = await apiClient.post('/auth/register', userData) as any;
+      
+      if (response.code === 200) {
+        return {
+          success: true,
+          message: response.message
+        };
+      } else {
+        return {
+          success: false,
+          message: response.message || '注册失败'
+        };
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message || '注册失败'
+      };
+    }
+  },
+
+  // 获取当前用户信息
+  getCurrentUser: async (): Promise<any> => {
+    try {
+      const response = await apiClient.get('/auth/me') as any;
+      if (response.code === 200) {
+        return response.data;
+      }
+      throw new Error(response.message);
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // 登出
+  logout: async (): Promise<void> => {
+    try {
+      await apiClient.post('/auth/logout');
+    } catch (error) {
+      console.error('登出失败:', error);
+    }
+  }
+};
+
+// 充电记录相关API
+export interface ChargeRecord {
+  id?: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  chargerType: string;
+  chargeDuration: number;
+  chargeAmount: number;
+  electricityCost: number;
+  serviceCost: number;
+  discountAmount?: number;
+  notes?: string;
+  batteryCapacity?: number;
+  provider?: string;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
+export interface ChargeLocationOption {
+  label: string;
+  value: string;
+  provider?: string;
+}
+
+export interface ChargeProviderOption {
+  label: string;
+  value: string;
+}
+
+export interface ChargeStatistics {
+  totalCharges: number;
+  totalEnergy: number;
+  totalCost: number;
+  totalElectricityCost: number;
+  totalServiceCost: number;
+  avgDuration: number;
+}
+
+export const chargeRecordApi = {
+  // 添加充电记录
+  save: (record: Omit<ChargeRecord, 'id' | 'createdAt' | 'updatedAt'>): Promise<ChargeRecord> => {
+    return apiClient.post('/charge-record', record);
+  },
+
+  // 更新充电记录
+  update: (record: ChargeRecord): Promise<ChargeRecord> => {
+    return apiClient.put('/charge-record', record);
+  },
+
+  // 删除充电记录
+  delete: (id: string): Promise<void> => {
+    return apiClient.delete(`/charge-record/${id}`);
+  },
+
+  // 根据ID查询
+  findById: (id: string): Promise<ChargeRecord> => {
+    return apiClient.get(`/charge-record/${id}`);
+  },
+
+  // 查询所有记录
+  findAll: (): Promise<ChargeRecord[]> => {
+    return apiClient.get('/charge-record');
+  },
+
+  // 按日期范围查询
+  findByDateRange: (startDate: string, endDate: string): Promise<ChargeRecord[]> => {
+    return apiClient.get('/charge-record/date-range', {
+      params: { startDate, endDate }
+    });
+  },
+
+  // 按充电方式查询
+  findByChargerType: (chargerType: string): Promise<ChargeRecord[]> => {
+    return apiClient.get('/charge-record/charger-type', {
+      params: { chargerType }
+    });
+  },
+
+  // 按地点查询
+  findByLocation: (location: string): Promise<ChargeRecord[]> => {
+    return apiClient.get('/charge-record/location', {
+      params: { location }
+    });
+  },
+
+  // 获取统计数据
+  getStatistics: (): Promise<ChargeStatistics> => {
+    return apiClient.get('/charge-record/statistics');
+  },
+  
+  // 获取充电地点列表
+  getLocations: (): Promise<ChargeLocationOption[]> => {
+    return apiClient.get('/charge-record/locations');
+  },
+
+  // 获取充电提供方列表
+  getProviders: (): Promise<ChargeProviderOption[]> => {
+    return apiClient.get('/charge-record/providers');
+  }
+};
+
 // 导出axios实例，方便其他地方使用
 export default apiClient;
