@@ -1,0 +1,996 @@
+// API服务配置
+import axios from 'axios';
+
+// 类型定义
+interface LastRecordResponse {
+  code: string;
+  date: string;
+  week: string;
+  red: string;
+  blue: string;
+  sales: string;
+  poolmoney: string;
+  line: string;
+}
+
+interface RecordListResponse {
+  code: string;
+  date: string;
+  week: string;
+  red: string;
+  blue: string;
+  sales: string;
+  poolmoney: string;
+  line: string;
+}
+
+export interface RecordYearCount {
+  year: string;
+  count: number;
+}
+
+interface ChatResponse {
+  response: string;
+}
+
+// 创建axios实例
+const apiClient = axios.create({
+  baseURL: '/api',
+  timeout: 180000, // 3分钟
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// 请求拦截器
+apiClient.interceptors.request.use(
+  (config) => {
+    // 可以在这里添加认证信息等
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// 响应拦截器
+apiClient.interceptors.response.use(
+  (response) => {
+    return response.data;
+  },
+  (error) => {
+    console.error('API请求失败:', error);
+    console.error('错误响应状态:', error.response?.status);
+    console.error('错误响应数据:', error.response?.data);
+    // 如果后端返回了错误信息，将其附加到 error 对象上
+    if (error.response?.data?.message) {
+      error.message = error.response.data.message;
+    } else if (error.response?.data?.error) {
+      error.message = error.response.data.error;
+    }
+    return Promise.reject(error);
+  }
+);
+
+// 记录相关API
+export const recordApi = {
+  // 查询记录列表
+  find: (params: { issueStart?: string; issueEnd?: string; lineStart?: string; lineEnd?: string; dayStart?: string; dayEnd?: string; name?: string }): Promise<RecordListResponse[]> => {
+    return apiClient.post('/record/find', params);
+  },
+  // 获取最新记录
+  getLast: (): Promise<LastRecordResponse> => {
+    return apiClient.get('/record/last');
+  },
+  // 获取第一条记录
+  getFirst: (): Promise<LastRecordResponse> => {
+    return apiClient.get('/record/first');
+  },
+  // 获取所有记录（用于统计分析）
+  getAllRecords: (): Promise<string | string[]> => {
+    return apiClient.get('/record/records');
+  },
+  // 获取每年的开奖记录数量
+  getYearlyCounts: (): Promise<RecordYearCount[]> => {
+    return apiClient.get('/record/yearly-counts');
+  },
+  // 重新统计每年的开奖记录数量并保存到Redis
+  refreshYearlyCounts: (): Promise<RecordYearCount[]> => {
+    return apiClient.post('/record/yearly-counts/statistics');
+  },
+  // 更新记录
+  update: (): Promise<void> => {
+    return apiClient.get('/record/update');
+  },
+};
+
+// AI聊天相关API
+export const aiApi = {
+  // 调用本地AI模型聊天
+  chat: async (content: string, model: string = 'qwen3:8b'): Promise<string> => {
+    try {
+      const data = await apiClient.post('/chat/local/completions', {
+        prompt: content,
+        model: model
+      }) as { response?: string };
+      
+      if (data && data.response) {
+        return data.response;
+      }
+      return 'AI模型未返回有效响应';
+    } catch (error) {
+      console.error('AI聊天请求失败:', error);
+      return 'AI模型请求失败，请稍后重试';
+    }
+  },
+  
+  // 通过我们的后端服务调用AI模型（备选方案）
+  chatThroughBackend: async (content: string): Promise<string> => {
+    try {
+      const data = await apiClient.post('/chat/local/completions', {
+        prompt: content
+      }) as ChatResponse;
+      return data.response;
+    } catch (error) {
+      console.error('后端AI聊天请求失败:', error);
+      return '后端服务请求失败，请稍后重试';
+    }
+  },
+  
+  // 获取本地可调用的模型列表
+  getModelList: async (): Promise<any[]> => {
+    try {
+      const data = await apiClient.get('/chat/local/models') as { models?: any[] };
+      return data.models || [];
+    } catch (error) {
+      console.error('获取模型列表失败:', error);
+      return [];
+    }
+  }
+};
+
+// 认证相关API
+export const authApi = {
+  // 登录
+  login: async (username: string, password: string): Promise<{ success: boolean; message?: string; user?: any }> => {
+    try {
+      const response = await apiClient.post('/auth/login', {
+        username,
+        password
+      }) as any;
+      
+      if (response.code === 200) {
+        return {
+          success: true,
+          user: response.data,
+          message: response.message
+        };
+      } else {
+        return {
+          success: false,
+          message: response.message || '登录失败'
+        };
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message || '登录失败'
+      };
+    }
+  },
+
+  // 注册
+  register: async (userData: { username: string; password: string; email?: string; phone?: string }): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const response = await apiClient.post('/auth/register', userData) as any;
+      
+      if (response.code === 200) {
+        return {
+          success: true,
+          message: response.message
+        };
+      } else {
+        return {
+          success: false,
+          message: response.message || '注册失败'
+        };
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message || '注册失败'
+      };
+    }
+  },
+
+  // 获取当前用户信息
+  getCurrentUser: async (): Promise<any> => {
+    try {
+      const response = await apiClient.get('/auth/me') as any;
+      if (response.code === 200) {
+        return response.data;
+      }
+      throw new Error(response.message);
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // 登出
+  logout: async (): Promise<void> => {
+    try {
+      await apiClient.post('/auth/logout');
+    } catch (error) {
+      console.error('登出失败:', error);
+    }
+  }
+};
+
+// 充电记录相关API
+export interface ChargeRecord {
+  id?: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  chargerType: string;
+  chargeDuration: number;
+  chargeAmount: number;
+  electricityCost: number;
+  serviceCost: number;
+  discountAmount?: number;
+  notes?: string;
+  batteryCapacity?: number;
+  provider?: string;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
+export interface ChargeLocationOption {
+  label: string;
+  value: string;
+  provider?: string;
+}
+
+export interface ChargeProviderOption {
+  label: string;
+  value: string;
+}
+
+export interface ChargeStation {
+  id?: string;
+  provider: string;
+  location: string;
+  stationCode: string;
+  stationName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ChargeStatistics {
+  totalCharges: number;
+  totalEnergy: number;
+  totalCost: number;
+  totalElectricityCost: number;
+  totalServiceCost: number;
+  avgDuration: number;
+}
+
+export const chargeRecordApi = {
+  // 添加充电记录
+  save: (record: Omit<ChargeRecord, 'id' | 'createdAt' | 'updatedAt'>): Promise<ChargeRecord> => {
+    return apiClient.post('/charge-record', record);
+  },
+
+  // 更新充电记录
+  update: (record: ChargeRecord): Promise<ChargeRecord> => {
+    return apiClient.put('/charge-record', record);
+  },
+
+  // 删除充电记录
+  delete: (id: string): Promise<void> => {
+    return apiClient.delete(`/charge-record/${id}`);
+  },
+
+  // 根据ID查询
+  findById: (id: string): Promise<ChargeRecord> => {
+    return apiClient.get(`/charge-record/${id}`);
+  },
+
+  // 查询所有记录
+  findAll: (): Promise<ChargeRecord[]> => {
+    return apiClient.get('/charge-record');
+  },
+
+  // 按日期范围查询
+  findByDateRange: (startDate: string, endDate: string): Promise<ChargeRecord[]> => {
+    return apiClient.get('/charge-record/date-range', {
+      params: { startDate, endDate }
+    });
+  },
+
+  // 按充电方式查询
+  findByChargerType: (chargerType: string): Promise<ChargeRecord[]> => {
+    return apiClient.get('/charge-record/charger-type', {
+      params: { chargerType }
+    });
+  },
+
+  // 按地点查询
+  findByLocation: (location: string): Promise<ChargeRecord[]> => {
+    return apiClient.get('/charge-record/location', {
+      params: { location }
+    });
+  },
+
+  // 获取统计数据
+  getStatistics: (): Promise<ChargeStatistics> => {
+    return apiClient.get('/charge-record/statistics');
+  },
+  
+  // 获取充电地点列表
+  getLocations: (): Promise<ChargeLocationOption[]> => {
+    return apiClient.get('/charge-record/locations');
+  },
+
+  // 获取充电提供方列表
+  getProviders: (): Promise<ChargeProviderOption[]> => {
+    return apiClient.get('/charge-record/providers');
+  }
+};
+
+export interface TeslaVehicle {
+  id?: number;
+  vehicle_id?: number;
+  vin?: string;
+  display_name?: string;
+  state?: string;
+  access_type?: string;
+  in_service?: boolean;
+  option_codes?: string;
+  color?: string | null;
+  tokens?: string[];
+  calendar_enabled?: boolean;
+  api_version?: number;
+  backseat_token?: string | null;
+  backseat_token_updated_at?: string | null;
+}
+
+export interface TeslaVehicleListResponse {
+  response?: TeslaVehicle[];
+  count?: number;
+  [key: string]: unknown;
+}
+
+export interface TeslaFleetTokenRequest {
+  code?: string;
+  refreshToken?: string;
+  scope?: string;
+  redirectUri?: string;
+}
+
+export interface TeslaFleetTokenResponse {
+  access_token?: string;
+  refresh_token?: string;
+  id_token?: string;
+  token_type?: string;
+  expires_in?: number;
+  scope?: string;
+}
+
+export interface TeslaFleetTokenStatus {
+  accountKey: string;
+  hasAccessToken: boolean;
+  hasRefreshToken: boolean;
+  expiresAt?: number;
+  updatedAt?: number;
+  tokenType?: string;
+  scope?: string;
+}
+
+export interface TeslaFleetTokenCache {
+  token?: TeslaFleetTokenResponse;
+  expiresAt?: number;
+  updatedAt?: number;
+}
+
+export interface TeslaFleetVehicleCache {
+  vehicles?: TeslaVehicleListResponse;
+  updatedAt?: number;
+}
+
+export interface TeslaFleetChargingHistoryCache {
+  chargingHistory?: Record<string, unknown>;
+  updatedAt?: number;
+}
+
+export interface TeslaFleetApiCache {
+  type?: string;
+  key?: string;
+  data?: Record<string, unknown>;
+  updatedAt?: number;
+}
+
+export interface TeslaFleetTelemetryCache {
+  vin?: string;
+  recordType?: string;
+  channel?: string;
+  data?: Record<string, unknown>;
+  updatedAt?: number;
+}
+
+export type ThirdPartyProvider = 'Tesla' | 'GitHub';
+
+export interface ThirdPartyUserBinding {
+  id?: string;
+  provider: ThirdPartyProvider;
+  thirdPartyUserId: string;
+  localUserId?: string;
+  localUsername?: string;
+  username?: string;
+  nickname?: string;
+  avatarUrl?: string;
+  email?: string;
+  accountKey?: string;
+  unionId?: string;
+  rawProfile?: Record<string, unknown>;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export const thirdPartyUserBindingApi = {
+  saveOrUpdate: (binding: ThirdPartyUserBinding): Promise<ThirdPartyUserBinding> => {
+    return apiClient.post('/third-party/user-binding', binding);
+  },
+
+  findAll: (): Promise<ThirdPartyUserBinding[]> => {
+    return apiClient.get('/third-party/user-binding');
+  },
+
+  findByProvider: (provider: ThirdPartyProvider): Promise<ThirdPartyUserBinding[]> => {
+    return apiClient.get(`/third-party/user-binding/provider/${provider}`);
+  },
+
+  findByAccountKey: (accountKey: string): Promise<ThirdPartyUserBinding[]> => {
+    return apiClient.get(`/third-party/user-binding/account/${accountKey}`);
+  },
+
+  findByLocalUserId: (localUserId: string): Promise<ThirdPartyUserBinding[]> => {
+    return apiClient.get(`/third-party/user-binding/local-user/${localUserId}`);
+  },
+
+  delete: (id: string): Promise<void> => {
+    return apiClient.delete(`/third-party/user-binding/${id}`);
+  }
+};
+
+export const teslaFleetApi = {
+  authorizeUrl: (params: {
+    state?: string;
+    nonce?: string;
+    scope?: string;
+    redirectUri?: string;
+  }): Promise<string> => {
+    return apiClient.get('/tesla/fleet/oauth/authorize-url', { params });
+  },
+
+  exchangeAuthorizationCode: (request: TeslaFleetTokenRequest): Promise<TeslaFleetTokenResponse> => {
+    return apiClient.post('/tesla/fleet/oauth/token', request);
+  },
+
+  exchangeAuthorizationCodeAndStore: (
+    accountKey: string,
+    request: TeslaFleetTokenRequest
+  ): Promise<TeslaFleetTokenResponse> => {
+    return apiClient.post('/tesla/fleet/oauth/token/store', request, {
+      params: accountKey ? { accountKey } : undefined
+    });
+  },
+
+  saveToken: (
+    accountKey: string,
+    token: TeslaFleetTokenResponse
+  ): Promise<TeslaFleetTokenResponse> => {
+    return apiClient.post('/tesla/fleet/oauth/token/save', token, {
+      params: accountKey ? { accountKey } : undefined
+    });
+  },
+
+  refreshStoredToken: (accountKey: string): Promise<TeslaFleetTokenResponse> => {
+    return apiClient.post('/tesla/fleet/oauth/refresh/store', null, {
+      params: accountKey ? { accountKey } : undefined
+    });
+  },
+
+  tokenStatus: (accountKey: string): Promise<TeslaFleetTokenStatus> => {
+    return apiClient.get('/tesla/fleet/oauth/token/status', {
+      params: accountKey ? { accountKey } : undefined
+    });
+  },
+
+  getStoredToken: (accountKey: string): Promise<TeslaFleetTokenCache | null> => {
+    return apiClient.get('/tesla/fleet/oauth/token/store', {
+      params: accountKey ? { accountKey } : undefined
+    });
+  },
+
+  partnerToken: (scope?: string): Promise<TeslaFleetTokenResponse> => {
+    return apiClient.post('/tesla/fleet/partner/token', null, {
+      params: scope ? { scope } : undefined
+    });
+  },
+
+  registerPartnerAccount: (partnerToken: string, domain: string): Promise<Record<string, unknown>> => {
+    const token = partnerToken.trim().replace(/^Bearer\s+/i, '');
+    return apiClient.post('/tesla/fleet/partner/register', null, {
+      params: { domain },
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  },
+
+  getPartnerPublicKey: (partnerToken: string, domain: string): Promise<Record<string, unknown>> => {
+    const token = partnerToken.trim().replace(/^Bearer\s+/i, '');
+    return apiClient.get('/tesla/fleet/partner/public-key', {
+      params: { domain },
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  },
+
+  getCachedVehicles: (accountKey: string): Promise<TeslaFleetVehicleCache | null> => {
+    return apiClient.get('/tesla/fleet/vehicles/cache', {
+      params: accountKey ? { accountKey } : undefined
+    });
+  },
+
+  refreshCachedVehicles: (accountKey: string): Promise<TeslaFleetVehicleCache> => {
+    return apiClient.post('/tesla/fleet/vehicles/cache/refresh', null, {
+      params: accountKey ? { accountKey } : undefined
+    });
+  },
+
+  getCachedChargingHistory: (accountKey: string): Promise<TeslaFleetChargingHistoryCache | null> => {
+    return apiClient.get('/tesla/fleet/charging/history/cache', {
+      params: accountKey ? { accountKey } : undefined
+    });
+  },
+
+  refreshCachedChargingHistory: (
+    accountKey: string,
+    params: Record<string, string>
+  ): Promise<TeslaFleetChargingHistoryCache> => {
+    return apiClient.post('/tesla/fleet/charging/history/cache/refresh', null, {
+      params: {
+        ...params,
+        ...(accountKey ? { accountKey } : {})
+      }
+    });
+  },
+
+  refreshUserMeCache: (accountKey: string): Promise<TeslaFleetApiCache> => {
+    return apiClient.post('/tesla/fleet/users/me/cache/refresh', null, {
+      params: accountKey ? { accountKey } : undefined
+    });
+  },
+
+  userMeWithStoredToken: (accountKey: string): Promise<Record<string, unknown>> => {
+    return apiClient.post('/tesla/fleet/users/me', null, {
+      params: accountKey ? { accountKey } : undefined
+    });
+  },
+
+  refreshUserRegionCache: (accountKey: string): Promise<TeslaFleetApiCache> => {
+    return apiClient.post('/tesla/fleet/users/region/cache/refresh', null, {
+      params: accountKey ? { accountKey } : undefined
+    });
+  },
+
+  getApiCache: (accountKey: string, type: string, key: string): Promise<TeslaFleetApiCache | null> => {
+    return apiClient.get('/tesla/fleet/api/cache', {
+      params: {
+        type,
+        key,
+        ...(accountKey ? { accountKey } : {})
+      }
+    });
+  },
+
+  refreshVehicleCache: (accountKey: string, vin: string): Promise<TeslaFleetApiCache> => {
+    return apiClient.post(`/tesla/fleet/vehicles/${vin}/cache/refresh`, null, {
+      params: accountKey ? { accountKey } : undefined
+    });
+  },
+
+  refreshVehicleDataCache: (accountKey: string, vin: string): Promise<TeslaFleetApiCache> => {
+    return apiClient.post(`/tesla/fleet/vehicles/${vin}/vehicle-data/cache/refresh`, null, {
+      params: accountKey ? { accountKey } : undefined
+    });
+  },
+
+  refreshNearbyChargingSitesCache: (accountKey: string, vin: string): Promise<TeslaFleetApiCache> => {
+    return apiClient.post(`/tesla/fleet/vehicles/${vin}/nearby-charging-sites/cache/refresh`, null, {
+      params: accountKey ? { accountKey } : undefined
+    });
+  },
+
+  refreshChargingInvoiceCache: (accountKey: string, invoiceId: string): Promise<TeslaFleetApiCache> => {
+    return apiClient.post(`/tesla/fleet/charging/invoice/${invoiceId}/cache/refresh`, null, {
+      params: accountKey ? { accountKey } : undefined
+    });
+  },
+
+  vehicleCommand: (
+    accountKey: string,
+    vin: string,
+    command: string,
+    body: Record<string, unknown> = {}
+  ): Promise<Record<string, unknown>> => {
+    return apiClient.post(`/tesla/fleet/vehicles/${vin}/command/${command}`, body, {
+      params: accountKey ? { accountKey } : undefined
+    });
+  },
+
+  createFleetTelemetryConfig: (
+    accountKey: string,
+    body: Record<string, unknown>
+  ): Promise<Record<string, unknown>> => {
+    return apiClient.post('/tesla/fleet/telemetry/config', body, {
+      params: accountKey ? { accountKey } : undefined
+    });
+  },
+
+  getFleetTelemetryConfig: (accountKey: string, vin: string): Promise<Record<string, unknown>> => {
+    return apiClient.get(`/tesla/fleet/vehicles/${vin}/telemetry/config`, {
+      params: accountKey ? { accountKey } : undefined
+    });
+  },
+
+  deleteFleetTelemetryConfig: (accountKey: string, vin: string): Promise<Record<string, unknown>> => {
+    return apiClient.delete(`/tesla/fleet/vehicles/${vin}/telemetry/config`, {
+      params: accountKey ? { accountKey } : undefined
+    });
+  },
+
+  fleetTelemetryErrors: (accountKey: string, vin: string): Promise<Record<string, unknown>> => {
+    return apiClient.get(`/tesla/fleet/vehicles/${vin}/telemetry/errors`, {
+      params: accountKey ? { accountKey } : undefined
+    });
+  },
+
+  getFleetTelemetryCache: (vin: string, recordType = 'V'): Promise<TeslaFleetTelemetryCache | null> => {
+    return apiClient.get(`/tesla/fleet/vehicles/${vin}/telemetry/cache`, {
+      params: { recordType }
+    });
+  },
+
+  listVehicles: (accessToken: string): Promise<TeslaVehicleListResponse> => {
+    const token = accessToken.trim().replace(/^Bearer\s+/i, '');
+    return apiClient.get('/tesla/fleet/vehicles', {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
+};
+
+export interface SalaryRecord {
+  id?: string;
+  year: number;
+  month: number;
+  monthlyIncome: number;
+  standardDeduction: number;
+  endowmentInsurance: number;
+  medicalInsurance: number;
+  unemploymentInsurance: number;
+  housingFund: number;
+  specialDeduction?: number;
+  monthlyTaxableIncome?: number;
+  cumulativeTaxableIncome?: number;
+  cumulativeTaxPayable?: number;
+  currentTaxDeclaration?: number;
+  cumulativeTaxPaid?: number;
+  actualIncome?: number;
+  notes?: string;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
+export interface SalaryStatistics {
+  totalRecords: number;
+  totalMonthlyIncome: number;
+  totalActualIncome: number;
+  totalTaxPaid: number;
+  avgActualIncome: number;
+}
+
+export const salaryRecordApi = {
+  save: (record: Omit<SalaryRecord, 'id' | 'createdAt' | 'updatedAt'>): Promise<SalaryRecord> => {
+    return apiClient.post('/salary-record', record);
+  },
+
+  update: (record: SalaryRecord): Promise<SalaryRecord> => {
+    return apiClient.put('/salary-record', record);
+  },
+
+  delete: (id: string): Promise<void> => {
+    return apiClient.delete(`/salary-record/${id}`);
+  },
+
+  findById: (id: string): Promise<SalaryRecord> => {
+    return apiClient.get(`/salary-record/${id}`);
+  },
+
+  findAll: (): Promise<SalaryRecord[]> => {
+    return apiClient.get('/salary-record');
+  },
+
+  findByMonth: (month: string): Promise<SalaryRecord> => {
+    return apiClient.get('/salary-record/month', {
+      params: { month }
+    });
+  },
+
+  findByMonthRange: (startMonth: string, endMonth: string): Promise<SalaryRecord[]> => {
+    return apiClient.get('/salary-record/month-range', {
+      params: { startMonth, endMonth }
+    });
+  },
+
+  getStatistics: (): Promise<SalaryStatistics> => {
+    return apiClient.get('/salary-record/statistics');
+  }
+};
+
+export interface PredictionRuleConfig {
+  id: string;
+  name: string;
+  recentWindow: number;
+  activeWeight: number;
+  omissionWeight: number;
+  balancedWeight: number;
+  blueOmissionWeight: number;
+  averageDiffWeight: number;
+  squaredDiffWeight: number;
+  oddEvenProbabilityWeight: number;
+  targetOddCount: number;
+  targetBigCount: number;
+  requireZoneCoverage: boolean;
+  avoidLastDraw: boolean;
+}
+
+export interface LotteryTrainingSummary {
+  total: number;
+  averageScore: number;
+  bestScore: number;
+  averageRedHits: number;
+  blueHitRate: number;
+  prizeDistribution: Record<string, number>;
+  bestStrategy?: string;
+  improvementTips: string[];
+}
+
+export interface LotteryTrainingResult {
+  config: PredictionRuleConfig;
+  summary: LotteryTrainingSummary;
+  rankScore: number;
+}
+
+export interface LotteryLatestPrediction {
+  title: string;
+  redNumbers: string[];
+  blueNumber: string;
+  score: number;
+  ruleId: string;
+  ruleName: string;
+  basedOnPeriod: number;
+  targetPeriod: number;
+  reason: string;
+  actualRecord?: LotteryActualRecord;
+  result?: LotteryPredictionResult;
+  candidates: LotteryPredictionCandidate[];
+}
+
+export interface LotteryPredictionCandidate {
+  title: string;
+  redNumbers: string[];
+  blueNumber: string;
+  score: number;
+  result?: LotteryPredictionResult;
+}
+
+export interface LotteryActualRecord {
+  period: number;
+  redNumbers: string[];
+  blueNumber: string;
+}
+
+export interface LotteryPredictionResult {
+  redHits: number;
+  blueHit: boolean;
+  prizeName: string;
+  score: number;
+}
+
+export interface LotteryTrainingTimelineItem {
+  period: number;
+  predictedRedNumbers: string[];
+  predictedBlueNumber: string;
+  actualRedNumbers: string[];
+  actualBlueNumber: string;
+  redHits: number;
+  blueHit: boolean;
+  prizeName: string;
+  score: number;
+  strategy: string;
+  beforeRuleName: string;
+  afterRuleName: string;
+  adjustment: string;
+}
+
+export interface LotteryTrainingReport {
+  replayCount: number;
+  generation: number;
+  best?: LotteryTrainingResult;
+  learnedRule?: PredictionRuleConfig;
+  latestPrediction?: LotteryLatestPrediction;
+  candidates: LotteryTrainingResult[];
+  timeline: LotteryTrainingTimelineItem[];
+}
+
+export interface LotteryTrainingStatus {
+  running: boolean;
+  failed: boolean;
+  percent: number;
+  stage: string;
+  processed: number;
+  total: number;
+  message: string;
+  report?: LotteryTrainingReport;
+}
+
+export const lotteryTrainingApi = {
+  run: (params: { replayCount?: number; scale?: 'fast' | 'standard' | 'deep' }): Promise<LotteryTrainingReport> => {
+    return apiClient.post('/lottery/training/run', params);
+  },
+  start: (params: { replayCount?: number; scale?: 'fast' | 'standard' | 'deep' }): Promise<LotteryTrainingStatus> => {
+    return apiClient.post('/lottery/training/start', params);
+  },
+  status: (): Promise<LotteryTrainingStatus> => {
+    return apiClient.get('/lottery/training/status');
+  },
+  best: (): Promise<PredictionRuleConfig> => {
+    return apiClient.get('/lottery/training/best');
+  },
+  latestPrediction: (): Promise<LotteryLatestPrediction> => {
+    return apiClient.get('/lottery/training/prediction/latest');
+  },
+  latestActualRecord: (): Promise<LotteryActualRecord> => {
+    return apiClient.get('/lottery/training/actual/latest');
+  },
+  saveLatestActualRecord: (record: LotteryActualRecord): Promise<LotteryActualRecord> => {
+    return apiClient.post('/lottery/training/actual/latest', record);
+  }
+};
+
+export interface LotteryAstronaut {
+  id?: string;
+  camp: 'RED' | 'BLUE';
+  number: string;
+  name: string;
+  gender?: string;
+  source?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface LotteryAstronautVoyageRecord {
+  id: string;
+  period: number;
+  raw: string;
+  redNumbers: string[];
+  blueNumber: string;
+  planetName: string;
+  redSum: number;
+  oddCount: number;
+  evenCount: number;
+  hexagramName: string;
+}
+
+export interface LotteryAstronautVoyage {
+  astronaut?: LotteryAstronaut;
+  records: LotteryAstronautVoyageRecord[];
+}
+
+export interface LotteryAstronautVoyageStatMember {
+  number: string;
+  count: number;
+}
+
+export interface LotteryAstronautVoyageStat {
+  camp: 'RED' | 'BLUE';
+  totalRecords: number;
+  members: LotteryAstronautVoyageStatMember[];
+}
+
+export const lotteryAstronautApi = {
+  findAll: (): Promise<LotteryAstronaut[]> => {
+    return apiClient.get('/lottery/astronauts');
+  },
+  getVoyageStats: (): Promise<LotteryAstronautVoyageStat[]> => {
+    return apiClient.get('/lottery/astronauts/voyage-counts');
+  },
+  calculateVoyageStats: (): Promise<LotteryAstronautVoyageStat[]> => {
+    return apiClient.post('/lottery/astronauts/voyage-counts/statistics');
+  },
+  findByCamp: (camp: 'RED' | 'BLUE'): Promise<LotteryAstronaut[]> => {
+    return apiClient.get(`/lottery/astronauts/${camp}`);
+  },
+  voyage: (camp: 'RED' | 'BLUE', number: string): Promise<LotteryAstronautVoyage> => {
+    return apiClient.get(`/lottery/astronauts/${camp}/${number}/voyage`);
+  },
+  update: (astronaut: LotteryAstronaut): Promise<LotteryAstronaut> => {
+    return apiClient.put('/lottery/astronauts', astronaut);
+  },
+  saveAll: (astronauts: LotteryAstronaut[]): Promise<LotteryAstronaut[]> => {
+    return apiClient.post('/lottery/astronauts/batch', astronauts);
+  },
+  resetDefaults: (): Promise<LotteryAstronaut[]> => {
+    return apiClient.post('/lottery/astronauts/reset');
+  }
+};
+
+// 充电站管理API
+export const chargeStationApi = {
+  // 添加充电站
+  save: (station: Omit<ChargeStation, 'id' | 'createdAt' | 'updatedAt'>): Promise<ChargeStation> => {
+    return apiClient.post('/charge-station', station);
+  },
+
+  // 更新充电站
+  update: (station: ChargeStation): Promise<ChargeStation> => {
+    return apiClient.put('/charge-station', station);
+  },
+
+  // 删除充电站
+  delete: (id: string): Promise<void> => {
+    return apiClient.delete(`/charge-station/${id}`);
+  },
+
+  // 根据ID查询
+  findById: (id: string): Promise<ChargeStation> => {
+    return apiClient.get(`/charge-station/${id}`);
+  },
+
+  // 查询所有充电站
+  findAll: (): Promise<ChargeStation[]> => {
+    return apiClient.get('/charge-station');
+  },
+
+  // 按充电提供方查询
+  findByProvider: (provider: string): Promise<ChargeStation[]> => {
+    return apiClient.get(`/charge-station/provider/${provider}`);
+  },
+
+  // 按地点查询
+  findByLocation: (location: string): Promise<ChargeStation[]> => {
+    return apiClient.get(`/charge-station/location/${location}`);
+  },
+
+  // 按提供方和地点查询
+  findByProviderAndLocation: (provider: string, location: string): Promise<ChargeStation[]> => {
+    return apiClient.get('/charge-station/search', {
+      params: { provider, location }
+    });
+  },
+
+  // 根据站点编码查询
+  findByStationCode: (stationCode: string): Promise<ChargeStation> => {
+    return apiClient.get(`/charge-station/code/${stationCode}`);
+  }
+};
+
+// 导出axios实例，方便其他地方使用
+export default apiClient;

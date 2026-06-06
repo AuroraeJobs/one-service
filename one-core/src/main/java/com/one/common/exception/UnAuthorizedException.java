@@ -1,0 +1,14 @@
+package com.one.common.exception;
+
+import cn.hutool.core.util.StrUtil;
+
+/**
+ * 自定义 未授权 异常
+ *
+ * @author aurorae
+ */
+public class UnAuthorizedException extends RuntimeException {
+    public UnAuthorizedException(CharSequence template, Object... params) {
+        super(StrUtil.format(template, params));
+    }
+}

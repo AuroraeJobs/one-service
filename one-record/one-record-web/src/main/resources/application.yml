@@ -1,0 +1,46 @@
+server:
+  port: ${ServerPort:8888}
+  servlet:
+    context-path: /
+
+tesla:
+  fleet:
+    auth-base-url: ${TESLA_FLEET_AUTH_BASE_URL:https://auth.tesla.cn/oauth2/v3}
+    api-base-url: ${TESLA_FLEET_API_BASE_URL:https://fleet-api.prd.cn.vn.cloud.tesla.cn}
+    command-proxy-base-url: ${TESLA_FLEET_COMMAND_PROXY_BASE_URL:}
+    command-sdk-enabled: ${TESLA_FLEET_COMMAND_SDK_ENABLED:false}
+    command-sdk-binary: ${TESLA_FLEET_COMMAND_SDK_BINARY:tesla-http-proxy}
+    command-sdk-tls-cert: ${TESLA_FLEET_COMMAND_SDK_TLS_CERT:}
+    command-sdk-tls-key: ${TESLA_FLEET_COMMAND_SDK_TLS_KEY:}
+    command-sdk-private-key: ${TESLA_FLEET_COMMAND_SDK_PRIVATE_KEY:}
+    command-sdk-host: ${TESLA_FLEET_COMMAND_SDK_HOST:127.0.0.1}
+    command-sdk-client-host: ${TESLA_FLEET_COMMAND_SDK_CLIENT_HOST:127.0.0.1}
+    command-sdk-port: ${TESLA_FLEET_COMMAND_SDK_PORT:4443}
+    command-sdk-cache-file: ${TESLA_FLEET_COMMAND_SDK_CACHE_FILE:}
+    command-sdk-verbose: ${TESLA_FLEET_COMMAND_SDK_VERBOSE:false}
+    telemetry-enabled: ${TESLA_FLEET_TELEMETRY_ENABLED:false}
+    telemetry-binary: ${TESLA_FLEET_TELEMETRY_BINARY:fleet-telemetry}
+    telemetry-config-file: ${TESLA_FLEET_TELEMETRY_CONFIG_FILE:}
+    telemetry-host: ${TESLA_FLEET_TELEMETRY_HOST:0.0.0.0}
+    telemetry-port: ${TESLA_FLEET_TELEMETRY_PORT:443}
+    telemetry-status-port: ${TESLA_FLEET_TELEMETRY_STATUS_PORT:8080}
+    telemetry-log-level: ${TESLA_FLEET_TELEMETRY_LOG_LEVEL:info}
+    telemetry-namespace: ${TESLA_FLEET_TELEMETRY_NAMESPACE:tesla_telemetry}
+    telemetry-json-log-enabled: ${TESLA_FLEET_TELEMETRY_JSON_LOG_ENABLED:true}
+    telemetry-transmit-decoded-records: ${TESLA_FLEET_TELEMETRY_TRANSMIT_DECODED_RECORDS:true}
+    telemetry-reliable-ack: ${TESLA_FLEET_TELEMETRY_RELIABLE_ACK:false}
+    telemetry-tls-cert: ${TESLA_FLEET_TELEMETRY_TLS_CERT:}
+    telemetry-tls-key: ${TESLA_FLEET_TELEMETRY_TLS_KEY:}
+    telemetry-tls-ca-file: ${TESLA_FLEET_TELEMETRY_TLS_CA_FILE:}
+    telemetry-redis-addrs: ${TESLA_FLEET_TELEMETRY_REDIS_ADDRS:127.0.0.1:6379}
+    telemetry-redis-username: ${TESLA_FLEET_TELEMETRY_REDIS_USERNAME:}
+    telemetry-redis-password: ${TESLA_FLEET_TELEMETRY_REDIS_PASSWORD:}
+    telemetry-redis-db: ${TESLA_FLEET_TELEMETRY_REDIS_DB:0}
+    telemetry-redis-publish-vin-topics: ${TESLA_FLEET_TELEMETRY_REDIS_PUBLISH_VIN_TOPICS:true}
+    telemetry-redis-subscriber-set-prefix: ${TESLA_FLEET_TELEMETRY_REDIS_SUBSCRIBER_SET_PREFIX:}
+    client-id: ${TESLA_FLEET_CLIENT_ID:}
+    client-secret: ${TESLA_FLEET_CLIENT_SECRET:}
+    redirect-uri: ${TESLA_FLEET_REDIRECT_URI:}
+    scope: ${TESLA_FLEET_SCOPE:openid offline_access user_data vehicle_device_data vehicle_location vehicle_cmds vehicle_charging_cmds}
+    partner-scope: ${TESLA_FLEET_PARTNER_SCOPE:openid user_data vehicle_device_data vehicle_cmds vehicle_charging_cmds}
+    public-key: ${TESLA_FLEET_PUBLIC_KEY:}

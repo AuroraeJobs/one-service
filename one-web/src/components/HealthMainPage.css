@@ -1,0 +1,180 @@
+.health-spring-page {
+  background: #f5f5f7 !important;
+  color: #1d1d1f !important;
+}
+
+.app-theme-dark .health-spring-page {
+  background: #000 !important;
+  color: rgba(255, 255, 255, 0.87) !important;
+}
+
+.health-spring-content {
+  width: 100%;
+  max-width: var(--app-page-max-width);
+  margin: 0 auto;
+  padding: 24px var(--app-page-inline-padding) 112px !important;
+}
+
+.health-spring-chart-grid {
+  grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.9fr) !important;
+  gap: 18px !important;
+}
+
+.health-spring-panel,
+.health-spring-period-card {
+  background: var(--app-surface) !important;
+  background-image: none !important;
+  border: 1px solid var(--app-border) !important;
+  border-radius: var(--app-card-radius) !important;
+  box-shadow: var(--app-card-shadow) !important;
+  backdrop-filter: none !important;
+  overflow: hidden !important;
+  background-clip: padding-box !important;
+}
+
+.app-theme-dark .health-spring-panel,
+.app-theme-dark .health-spring-period-card {
+  background: var(--app-surface) !important;
+  border-color: var(--app-border) !important;
+  box-shadow: var(--app-card-shadow) !important;
+}
+
+.health-spring-chart-panel {
+  height: 316px !important;
+  padding: 22px !important;
+  overflow: hidden;
+}
+
+.health-spring-decor {
+  display: none !important;
+}
+
+.health-spring-chart-panel > div:not(.echarts-for-react) {
+  color: #1d1d1f !important;
+  text-shadow: none !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+.app-theme-dark .health-spring-chart-panel > div:not(.echarts-for-react) {
+  color: #f5f5f7 !important;
+}
+
+.health-spring-period-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 18px !important;
+  transform-style: flat !important;
+  perspective: none !important;
+}
+
+.health-spring-period-card {
+  min-height: 0 !important;
+  padding: 22px !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.health-spring-period-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 22px 52px rgba(0, 0, 0, 0.11) !important;
+}
+
+.health-spring-period-card div {
+  text-shadow: none !important;
+}
+
+.health-spring-period-card [style*="box-shadow"] {
+  box-shadow: none !important;
+}
+
+.health-spring-period-card [style*="width: 100px"] {
+  width: 86px !important;
+  height: 66px !important;
+  border-radius: 12px !important;
+  background: #f5f5f7 !important;
+}
+
+.health-spring-period-card [style*="min-width: 80px"] {
+  min-width: 74px !important;
+  height: 150px !important;
+  border-radius: 12px !important;
+  background: #f5f5f7 !important;
+}
+
+.health-spring-period-card [style*="width: 56px"] {
+  width: 48px !important;
+  height: 48px !important;
+  background: #f5f5f7 !important;
+}
+
+.app-theme-dark .health-spring-period-card [style*="width: 100px"],
+.app-theme-dark .health-spring-period-card [style*="min-width: 80px"],
+.app-theme-dark .health-spring-period-card [style*="width: 56px"] {
+  background: #2c2c2e !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.health-spring-period-card [style*="padding-top: 12px"] {
+  border-top-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+.app-theme-dark .health-spring-period-card [style*="padding-top: 12px"] {
+  border-top-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.health-spring-period-grid button {
+  background: #fff !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: none !important;
+  color: #1d1d1f !important;
+}
+
+.app-theme-dark .health-spring-period-grid button {
+  background: #1d1d1f !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #f5f5f7 !important;
+}
+
+.health-spring-period-grid button:disabled {
+  color: #c7c7cc !important;
+}
+
+.health-spring-period-grid span {
+  color: #6e6e73 !important;
+}
+
+.health-spring-page .ant-card {
+  background: var(--app-surface) !important;
+  border-color: var(--app-border) !important;
+  border-radius: var(--app-card-radius) !important;
+  box-shadow: var(--app-card-shadow) !important;
+  overflow: hidden !important;
+  background-clip: padding-box !important;
+}
+
+.app-theme-dark .health-spring-page .ant-card {
+  background: var(--app-surface) !important;
+  border-color: var(--app-border) !important;
+}
+
+@media (max-width: 1100px) {
+  .health-spring-chart-grid,
+  .health-spring-period-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .health-spring-content {
+    padding: 24px var(--app-page-inline-padding) 112px !important;
+  }
+
+  .health-spring-period-card {
+    padding: 16px !important;
+    overflow-x: auto !important;
+  }
+
+  .health-spring-page .app-footer {
+    max-width: calc(100vw - 16px);
+    overflow-x: auto;
+  }
+}

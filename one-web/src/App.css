@@ -1,0 +1,2537 @@
+/* 全局样式重置 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --header-height: 64px;
+  --page-padding: 20px;
+  --app-page-inline-padding: 24px;
+  --app-page-max-width: 1180px;
+  --app-bg: #000;
+  --app-surface: #1d1d1f;
+  --app-surface-elevated: #2c2c2e;
+  --app-text: rgba(255, 255, 255, 0.87);
+  --app-text-muted: rgba(255, 255, 255, 0.58);
+  --app-border: rgba(255, 255, 255, 0.1);
+  --app-nav-bg: #000;
+  --app-nav-shadow: none;
+  --app-card-radius: 20px;
+  --app-card-shadow: none;
+}
+
+:root[data-theme='light'] {
+  --app-bg: #f5f5f7;
+  --app-surface: #fff;
+  --app-surface-elevated: #fbfbfd;
+  --app-text: #1d1d1f;
+  --app-text-muted: #6e6e73;
+  --app-border: rgba(0, 0, 0, 0.1);
+  --app-nav-bg: #f5f5f7;
+  --app-nav-shadow: none;
+  --app-card-shadow: 0 18px 45px rgba(0, 0, 0, 0.08);
+}
+
+:root[data-theme='dark'] {
+  --app-bg: #000;
+  --app-surface: #1d1d1f;
+  --app-surface-elevated: #2c2c2e;
+  --app-text: rgba(255, 255, 255, 0.87);
+  --app-text-muted: rgba(255, 255, 255, 0.58);
+  --app-border: rgba(255, 255, 255, 0.1);
+  --app-nav-bg: #000;
+  --app-nav-shadow: none;
+  --app-card-shadow: none;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--app-bg);
+  color: var(--app-text);
+}
+
+/* 应用容器 */
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+/* 应用主体 - 所有页面的统一容器 */
+.app-main {
+  flex: 1;
+  width: 100%;
+  background-color: var(--app-bg);
+  padding-top: var(--header-height);
+  padding-bottom: var(--header-height);
+}
+
+.life-module-overview {
+  --module-accent: #0071e3;
+}
+
+.life-module-vehicle {
+  --module-accent: #0071e3;
+}
+
+.life-module-finance {
+  --module-accent: #34c759;
+}
+
+.life-module-investment {
+  --module-accent: #5856d6;
+}
+
+.life-module-lottery {
+  --module-accent: #ff3b30;
+}
+
+.lottery-astronaut-card-layout {
+  display: grid;
+  gap: 20px;
+}
+
+.lottery-astronaut-card-section {
+  min-width: 0;
+}
+
+.lottery-astronaut-card-section-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.lottery-astronaut-card-section-header h2 {
+  margin: 4px 0 0;
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.lottery-astronaut-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 22px;
+}
+
+.lottery-astronaut-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  min-height: 132px;
+  padding: 18px 10px 16px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  overflow: hidden;
+}
+
+.lottery-astronaut-card::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  width: 34px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.lottery-astronaut-card::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 6px;
+  background: #cf1322;
+}
+
+.lottery-astronaut-card:hover,
+.lottery-astronaut-card:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.1);
+  outline: none;
+}
+
+.lottery-astronaut-card-section-red .lottery-astronaut-card {
+  border-color: rgba(245, 34, 45, 0.2);
+  background: linear-gradient(180deg, rgba(255, 241, 240, 0.92), rgba(255, 255, 255, 0.9));
+}
+
+.lottery-astronaut-card-section-blue .lottery-astronaut-card {
+  border-color: rgba(22, 119, 255, 0.22);
+  background: linear-gradient(180deg, rgba(230, 244, 255, 0.92), rgba(255, 255, 255, 0.9));
+}
+
+.lottery-astronaut-card-section-blue .lottery-astronaut-card::after {
+  background: #0958d9;
+}
+
+.lottery-astronaut-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 12px 0 16px;
+}
+
+.lottery-astronaut-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.16);
+}
+
+.lottery-astronaut-voyage-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
+  min-height: 24px;
+  margin-top: 10px;
+  color: var(--app-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.lottery-astronaut-number-red {
+  background: #cf1322;
+}
+
+.lottery-astronaut-number-blue {
+  background: #0958d9;
+}
+
+.lottery-astronaut-card-name {
+  min-height: 32px;
+  overflow: hidden;
+  color: var(--app-text);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 32px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-voyage-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.lottery-voyage-summary .ant-card {
+  margin-bottom: 0;
+}
+
+.lottery-voyage-summary .ant-card-body {
+  display: flex;
+  min-height: 88px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+
+.lottery-voyage-summary strong {
+  color: var(--app-text);
+  font-size: 26px;
+  line-height: 1;
+}
+
+.lottery-voyage-hexagram-summary {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lottery-voyage-hexagram-summary span {
+  color: var(--app-text-muted);
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.lottery-voyage-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.lottery-voyage-item {
+  --voyage-planet-color: var(--module-accent, #1890ff);
+  display: flex;
+  min-height: 190px;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--voyage-planet-color) 42%, var(--app-border));
+  border-radius: 8px;
+  background: var(--app-surface);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--voyage-planet-color) 10%, transparent);
+}
+
+.lottery-voyage-planet {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--voyage-planet-color);
+}
+
+.lottery-voyage-planet .anticon {
+  flex: 0 0 auto;
+  font-size: 20px;
+}
+
+.lottery-voyage-planet strong {
+  min-width: 0;
+  font-size: 30px;
+  line-height: 1.1;
+  text-align: right;
+  text-shadow: 0 0 14px color-mix(in srgb, var(--voyage-planet-color) 36%, transparent);
+  overflow-wrap: anywhere;
+}
+
+.lottery-voyage-item-main {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 14px;
+}
+
+.lottery-voyage-period {
+  color: var(--app-text);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.lottery-voyage-balls {
+  margin-top: 4px;
+  color: var(--app-text-muted);
+  font-size: 13px;
+}
+
+.lottery-voyage-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 6px;
+}
+
+.app-theme-dark .lottery-astronaut-card {
+  box-shadow: none;
+}
+
+.app-theme-dark .lottery-astronaut-card:hover,
+.app-theme-dark .lottery-astronaut-card:focus-visible {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.app-theme-dark .lottery-astronaut-card-section-red .lottery-astronaut-card {
+  border-color: rgba(255, 120, 117, 0.28);
+  background: linear-gradient(180deg, rgba(74, 18, 22, 0.72), rgba(29, 29, 31, 0.92));
+}
+
+.app-theme-dark .lottery-astronaut-card-section-blue .lottery-astronaut-card {
+  border-color: rgba(105, 177, 255, 0.28);
+  background: linear-gradient(180deg, rgba(15, 45, 82, 0.74), rgba(29, 29, 31, 0.92));
+}
+
+.app-theme-dark .lottery-astronaut-card::before {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.app-theme-dark .lottery-astronaut-card .ant-input {
+  color: var(--app-text);
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.28);
+}
+
+@media (max-width: 720px) {
+  .lottery-astronaut-card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .lottery-voyage-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lottery-voyage-item {
+    min-height: 172px;
+  }
+
+  .lottery-voyage-planet strong {
+    font-size: 26px;
+  }
+}
+
+.life-module-connectors {
+  --module-accent: #00c7be;
+}
+
+/* 卡片样式 */
+.ant-card {
+  margin-bottom: 24px;
+  border-radius: var(--app-card-radius) !important;
+  overflow: hidden;
+  background-clip: padding-box;
+  box-shadow: var(--app-card-shadow);
+}
+
+.ant-card > .ant-card-body {
+  border-radius: inherit;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* 表格样式 */
+.ant-table {
+  margin-bottom: 24px;
+}
+
+/* 表单样式 */
+.ant-form-item {
+  margin-bottom: 16px;
+}
+
+/* 按钮样式 */
+.ant-btn {
+  border-radius: 6px;
+}
+
+/* 输入框样式 */
+.ant-input,
+.ant-picker {
+  border-radius: 6px;
+}
+
+/* 调整查询区域行样式，避免影响嵌套Row */
+.query-container .ant-row {
+  margin-bottom: 16px;
+}
+
+/* 调整查询区域列样式，避免影响嵌套Col */
+.query-container .ant-col {
+  margin-bottom: 16px;
+}
+
+/* 调整菜单容器样式 */
+.custom-menu {
+  border-bottom: none !important;
+  width: auto !important;
+  overflow: visible !important;
+}
+
+/* 自定义菜单项样式 */
+.custom-menu .ant-menu-item {
+  color: #fff !important;
+  background-color: transparent !important;
+  border-bottom: none !important;
+  outline: none !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+  font-size: 12px !important;
+  font-weight: normal !important;
+}
+
+/* 选中项样式 */
+.custom-menu .ant-menu-item-selected {
+  background-color: transparent !important;
+  color: #fff !important;
+  border-bottom: none !important;
+}
+
+/* 悬停样式 */
+.custom-menu .ant-menu-item:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-bottom: none !important;
+  color: #fff !important;
+}
+
+/* 去掉所有焦点和激活状态的边框和阴影 */
+.custom-menu .ant-menu-item:focus,
+.custom-menu .ant-menu-item:active,
+.custom-menu .ant-menu-item:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* 调整Link样式，去掉默认的下划线和焦点样式 */
+.custom-menu a {
+  color: inherit !important;
+  text-decoration: none !important;
+}
+
+.custom-menu a:hover,
+.custom-menu a:focus {
+  text-decoration: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* 导航链接样式 */
+.nav-link {
+  position: relative;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  color: var(--app-text) !important;
+  text-decoration: none !important;
+  padding: 7px 10px !important;
+  border-radius: 8px !important;
+  transition: background-color 0.2s ease, color 0.2s ease !important;
+  font-size: 13px !important;
+  font-weight: normal !important;
+  overflow: hidden;
+}
+
+.nav-link:hover {
+  background-color: rgba(127, 127, 127, 0.12) !important;
+  text-shadow: none !important;
+  color: #0071e3 !important;
+}
+
+.nav-link:hover .anticon {
+  filter: none !important;
+}
+
+/* 底部菜单项样式 */
+.footer-menu-item {
+  transition: all 0.3s ease !important;
+}
+
+.footer-menu-item:hover {
+  text-shadow: none !important;
+}
+
+.footer-menu-item:hover .anticon {
+  filter: none !important;
+}
+
+.lottery-statistic-menu:hover .lottery-statistic-submenu {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* 激活状态的导航链接样式 */
+.nav-link-active {
+  font-weight: bold !important;
+  color: var(--module-accent, #1890ff) !important;
+  background: transparent !important;
+  text-shadow: 0 0 10px color-mix(in srgb, var(--module-accent, #1890ff) 34%, transparent) !important;
+}
+
+.nav-link-active .anticon {
+  color: var(--module-accent, #1890ff) !important;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--module-accent, #1890ff) 44%, transparent));
+}
+
+.nav-link-active::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--module-accent, #1890ff), transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--module-accent, #1890ff) 56%, transparent);
+}
+
+.app-theme-light .app-main {
+  background-color: #f5f5f7;
+}
+
+/* Shared themed chrome */
+.app-header,
+.app-footer {
+  background-color: var(--app-nav-bg) !important;
+  background-image: none !important;
+  border: 1px solid var(--app-border) !important;
+  box-shadow: var(--app-nav-shadow) !important;
+  color: var(--app-text) !important;
+  backdrop-filter: saturate(180%) blur(18px);
+}
+
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  min-height: var(--header-height);
+  border-top: 0 !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+.app-theme-dark .app-header,
+.app-theme-dark .app-footer {
+  border-color: #000 !important;
+  backdrop-filter: none;
+}
+
+.app-theme-light .app-header,
+.app-theme-light .app-footer {
+  border-color: #f5f5f7 !important;
+  backdrop-filter: none;
+}
+
+.app-header-inner {
+  width: 100%;
+  max-width: 1180px;
+  min-height: var(--header-height);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.app-header-left,
+.app-header-nav,
+.app-header-brand {
+  display: flex;
+  align-items: center;
+}
+
+.app-header-left {
+  min-width: 0;
+  gap: 16px;
+}
+
+.app-header-brand {
+  flex: 0 0 auto;
+  color: var(--app-text);
+  font-size: 22px;
+  text-decoration: none;
+}
+
+.app-header-nav {
+  gap: 4px;
+  overflow-x: auto;
+}
+
+.app-theme-light .app-header .anticon,
+.app-theme-light .app-footer > .anticon {
+  color: #1d1d1f !important;
+}
+
+.app-theme-dark .app-header .anticon,
+.app-theme-dark .app-footer > .anticon {
+  color: #f5f5f7 !important;
+}
+
+.app-theme-light .nav-link {
+  color: #1d1d1f !important;
+}
+
+.app-theme-dark .nav-link {
+  color: #f5f5f7 !important;
+}
+
+.app-theme-light .nav-link:hover,
+.app-theme-light .footer-menu-item:hover {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+  color: #0071e3 !important;
+  text-shadow: none !important;
+}
+
+.app-theme-light .nav-link:hover .anticon,
+.app-theme-light .footer-menu-item:hover .anticon {
+  filter: none !important;
+}
+
+.app-theme-light .nav-link-active,
+.app-theme-light .nav-link-active .anticon,
+.app-theme-light .app-footer .footer-menu-item[style*="font-weight: bold"],
+.app-theme-light .app-footer .footer-menu-item[style*="font-weight:bold"] {
+  color: var(--module-accent, #0071e3) !important;
+}
+
+.app-theme-light .app-footer .footer-menu-item {
+  color: #1d1d1f !important;
+  text-shadow: none !important;
+}
+
+.app-theme-dark .app-footer .footer-menu-item {
+  color: #f5f5f7 !important;
+}
+
+.app-theme-dark .app-footer .footer-menu-item[style*="font-weight: bold"],
+.app-theme-dark .app-footer .footer-menu-item[style*="font-weight:bold"] {
+  color: var(--module-accent, #1890ff) !important;
+}
+
+.season-footer-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  transform: none;
+  min-height: 64px;
+  z-index: 1000;
+  padding: 0 20px;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  border-bottom: 0 !important;
+  border-radius: 0 !important;
+  box-sizing: border-box;
+}
+
+.season-footer-inner {
+  width: 100%;
+  max-width: 1180px;
+  min-height: 64px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.season-footer-home {
+  flex: 0 0 auto;
+  font-size: 22px;
+  color: var(--app-text);
+  cursor: pointer;
+}
+
+.season-footer-items {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  white-space: nowrap;
+}
+
+.season-footer-item {
+  flex: 0 0 auto;
+  position: relative;
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--app-text);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: 13px;
+  user-select: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  overflow: hidden;
+}
+
+.season-footer-item:hover {
+  background: rgba(127, 127, 127, 0.12);
+  text-shadow: none !important;
+}
+
+.season-footer-item:hover .anticon {
+  filter: none !important;
+}
+
+.season-footer-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.season-footer-dropdown-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.season-footer-dropdown-item-active {
+  color: var(--module-accent, #1890ff);
+  font-weight: 700;
+}
+
+.season-footer-item-active {
+  color: var(--module-accent, #1890ff);
+  font-weight: 700;
+  background: transparent;
+  box-shadow: none;
+  text-shadow: 0 0 10px color-mix(in srgb, var(--module-accent, #1890ff) 34%, transparent);
+}
+
+.app-theme-light .season-footer-item-active {
+  color: var(--module-accent, #0071e3);
+}
+
+.season-footer-item-active .anticon {
+  color: var(--module-accent, #1890ff) !important;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--module-accent, #1890ff) 44%, transparent));
+}
+
+.season-footer-item-active::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--module-accent, #1890ff), transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--module-accent, #1890ff) 56%, transparent);
+}
+
+@media (max-width: 720px) {
+  .season-footer-nav {
+    max-width: none;
+    justify-content: flex-start;
+    padding: 0 12px;
+  }
+
+  .season-footer-inner {
+    gap: 10px;
+  }
+
+  .season-footer-items {
+    gap: 4px;
+  }
+}
+
+.metric-card {
+  margin-bottom: 0 !important;
+  border-radius: var(--app-card-radius) !important;
+  overflow: hidden !important;
+  background: var(--app-surface) !important;
+  background-image: none !important;
+  border: 1px solid var(--app-border) !important;
+  box-shadow: var(--app-card-shadow) !important;
+  background-clip: padding-box !important;
+}
+
+.metric-card-title {
+  color: var(--app-text-muted);
+}
+
+.metric-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--metric-grid-min, 180px), 1fr));
+  gap: var(--metric-grid-gap, 16px);
+  margin-bottom: 24px;
+}
+
+.life-page-shell {
+  min-height: 100vh;
+  padding: 24px var(--app-page-inline-padding) 96px;
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+.life-page-shell > *,
+.legacy-page-shell > * {
+  width: min(var(--app-page-max-width), 100%);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.legacy-page-shell {
+  min-height: 100vh;
+  padding: 24px var(--app-page-inline-padding) 152px;
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+.themed-route-page.health-fitness-page {
+  padding: 24px var(--app-page-inline-padding) 152px !important;
+  background: var(--app-bg) !important;
+  color: var(--app-text) !important;
+}
+
+.themed-route-page.health-fitness-page > div:first-of-type {
+  width: min(var(--app-page-max-width), 100%) !important;
+  max-width: var(--app-page-max-width) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.life-overview-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.life-overview-hero p {
+  margin: 0 0 6px;
+  color: var(--app-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.life-overview-hero h1 {
+  max-width: 780px;
+  margin: 0;
+  color: var(--app-text);
+  font-size: 32px;
+  line-height: 1.18;
+  font-weight: 750;
+}
+
+.life-section-grid,
+.life-principle-grid,
+.life-roadmap-grid {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.life-section-grid {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.life-section-grid-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.life-principle-grid {
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.life-roadmap-grid {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.life-module-card,
+.life-panel-card,
+.life-principle-card,
+.life-roadmap-card {
+  border-radius: var(--app-card-radius) !important;
+  overflow: hidden !important;
+  background: var(--app-surface) !important;
+  border: 1px solid var(--app-border) !important;
+  box-shadow: var(--app-card-shadow) !important;
+  background-clip: padding-box !important;
+}
+
+.life-module-card {
+  margin-bottom: 0 !important;
+  cursor: pointer;
+}
+
+.life-module-card .ant-card-body,
+.life-panel-card .ant-card-body,
+.life-principle-card .ant-card-body,
+.life-roadmap-card .ant-card-body {
+  border-radius: inherit !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.life-module-card-head,
+.life-roadmap-card-head,
+.life-panel-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.life-module-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: rgba(127, 127, 127, 0.1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.life-module-card h2,
+.life-panel-card h2,
+.life-principle-card h2,
+.life-roadmap-card h2 {
+  margin: 0 0 10px;
+  color: var(--app-text);
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.life-module-card p,
+.life-principle-card p {
+  min-height: 46px;
+  margin: 0 0 18px;
+  color: var(--app-text-muted);
+  line-height: 1.6;
+}
+
+.life-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.life-chip-row span,
+.life-data-model-grid span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(127, 127, 127, 0.12);
+  color: var(--app-text);
+  font-size: 12px;
+}
+
+.life-two-column {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.life-timeline,
+.life-priority-list,
+.life-connection-list,
+.life-privacy-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.life-timeline div {
+  padding-left: 14px;
+  border-left: 2px solid rgba(0, 113, 227, 0.5);
+}
+
+.life-timeline strong,
+.life-timeline span,
+.life-privacy-stack span {
+  display: block;
+}
+
+.life-timeline strong {
+  color: var(--app-text);
+  margin-bottom: 4px;
+}
+
+.life-timeline span,
+.life-connection-list small {
+  color: var(--app-text-muted);
+  line-height: 1.55;
+}
+
+.life-priority-list button,
+.life-connection-list button {
+  width: 100%;
+  border: 1px solid var(--app-border);
+  background: var(--app-surface-elevated);
+  color: var(--app-text);
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.life-priority-list button {
+  min-height: 44px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.life-priority-list button span {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #0071e3;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.life-connection-list button {
+  min-height: 64px;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.life-priority-list button:hover,
+.life-connection-list button:hover {
+  border-color: #0071e3;
+  transform: translateY(-1px);
+}
+
+.life-principle-card span {
+  display: inline-flex;
+  margin-bottom: 14px;
+  color: #0071e3;
+  font-size: 22px;
+}
+
+.life-privacy-stack div {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--app-text);
+}
+
+.life-privacy-stack .anticon {
+  color: #34c759;
+  margin-top: 3px;
+}
+
+.life-data-model-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tesla-fleet-test-panel {
+  margin-bottom: 24px;
+}
+
+.tesla-fleet-partner-panel {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: rgba(127, 127, 127, 0.08);
+}
+
+.tesla-fleet-partner-panel .ant-input,
+.tesla-fleet-partner-panel .ant-input-affix-wrapper {
+  min-height: 40px;
+  border-radius: 8px;
+}
+
+.tesla-fleet-partner-panel .ant-btn {
+  min-height: 36px;
+  border-radius: 8px;
+}
+
+.tesla-fleet-auth-grid,
+.tesla-fleet-token-grid,
+.tesla-fleet-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.tesla-fleet-auth-grid,
+.tesla-fleet-token-grid {
+  margin-bottom: 14px;
+}
+
+.tesla-fleet-field {
+  display: grid;
+  gap: 6px;
+}
+
+.tesla-fleet-field span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tesla-fleet-auth-link {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: rgba(127, 127, 127, 0.08);
+}
+
+.tesla-fleet-form .ant-input-affix-wrapper {
+  min-height: 40px;
+  border-radius: 8px;
+}
+
+.tesla-fleet-auth-grid .ant-input,
+.tesla-fleet-token-grid .ant-input,
+.tesla-fleet-form .ant-btn {
+  min-width: 116px;
+  min-height: 40px;
+  border-radius: 8px;
+}
+
+.tesla-fleet-alert {
+  margin-top: 14px;
+  margin-bottom: 14px;
+}
+
+.tesla-fleet-result {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.tesla-fleet-summary,
+.tesla-fleet-vehicle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tesla-fleet-summary strong {
+  color: var(--app-text);
+}
+
+.tesla-vehicle-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.tesla-fleet-vehicle-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.tesla-fleet-vehicle {
+  appearance: none;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 76px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface-elevated);
+  color: var(--app-text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tesla-fleet-vehicle:hover {
+  border-color: transparent;
+  box-shadow: 0 0 14px color-mix(in srgb, var(--app-primary) 24%, transparent);
+}
+
+.tesla-fleet-vehicle-selected {
+  border-color: transparent;
+  box-shadow:
+    0 0 0 1px rgba(139, 92, 246, 0.26),
+    0 0 18px rgba(139, 92, 246, 0.32);
+}
+
+.tesla-vehicle-detail-panel {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface-elevated);
+}
+
+.tesla-fleet-vehicle div {
+  min-width: 0;
+}
+
+.tesla-vehicle-card-top,
+.tesla-vehicle-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.tesla-vehicle-icon {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(22, 119, 255, 0.12);
+  color: #1677ff;
+  font-size: 18px;
+}
+
+.tesla-vehicle-icon-online {
+  background: rgba(34, 197, 94, 0.14);
+  color: #16a34a;
+}
+
+.tesla-vehicle-card-main strong,
+.tesla-vehicle-card-main span,
+.tesla-vehicle-card-meta span {
+  display: block;
+}
+
+.tesla-vehicle-card-main strong {
+  color: var(--app-text);
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.tesla-vehicle-card-main span {
+  margin-top: 5px;
+  color: var(--app-text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.tesla-vehicle-card-meta {
+  align-items: flex-start;
+  flex-direction: column;
+  padding-top: 4px;
+  border-top: 1px solid var(--app-border);
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.tesla-vehicle-card-actions {
+  align-self: end;
+  padding-top: 2px;
+}
+
+.tesla-vehicle-card-actions .ant-btn {
+  border-radius: 8px;
+}
+
+.tesla-vehicle-card-json pre {
+  max-height: 260px;
+}
+
+.tesla-friendly-panel {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--app-border);
+}
+
+.tesla-friendly-title {
+  color: var(--app-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tesla-friendly-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.tesla-vehicle-tabs {
+  min-width: 0;
+}
+
+.tesla-vehicle-tabs .ant-tabs-nav {
+  margin-bottom: 10px;
+}
+
+.tesla-site-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.tesla-site-groups,
+.tesla-site-group,
+.tesla-vehicle-data-modules,
+.tesla-vehicle-data-module {
+  display: grid;
+  gap: 12px;
+}
+
+.tesla-vehicle-data-module + .tesla-vehicle-data-module {
+  padding-top: 12px;
+  border-top: 1px solid var(--app-border);
+}
+
+.tesla-site-group-title {
+  color: var(--app-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tesla-site-item {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: rgba(127, 127, 127, 0.08);
+}
+
+.tesla-site-item strong {
+  grid-column: 1 / -1;
+  color: var(--app-text);
+  overflow-wrap: anywhere;
+}
+
+.tesla-site-item span,
+.tesla-empty-hint {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.tesla-charging-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.tesla-charging-summary div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface-elevated);
+}
+
+.tesla-charging-summary span,
+.tesla-cache-footnote {
+  display: block;
+  color: var(--app-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tesla-charging-summary strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--app-text);
+  overflow-wrap: anywhere;
+}
+
+.tesla-cache-footnote {
+  font-weight: 500;
+}
+
+.tesla-charging-history-list {
+  display: grid;
+  gap: 10px;
+}
+
+.tesla-charging-history-item {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) repeat(3, minmax(110px, 0.45fr));
+  gap: 6px 12px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: rgba(127, 127, 127, 0.08);
+}
+
+.tesla-charging-history-item strong {
+  color: var(--app-text);
+  overflow-wrap: anywhere;
+}
+
+.tesla-charging-history-item span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.tesla-command-groups,
+.tesla-command-group {
+  display: grid;
+  gap: 12px;
+}
+
+.tesla-command-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px;
+}
+
+.tesla-command-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: rgba(127, 127, 127, 0.08);
+}
+
+.tesla-command-main {
+  min-width: 0;
+}
+
+.tesla-command-main strong,
+.tesla-command-main span {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.tesla-command-main strong {
+  color: var(--app-text);
+}
+
+.tesla-command-main span {
+  margin-top: 4px;
+  color: var(--app-text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  font-size: 11px;
+}
+
+.tesla-command-params {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+}
+
+.tesla-command-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 24px;
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.tesla-command-response {
+  margin-top: 4px;
+}
+
+.tesla-telemetry-panel {
+  gap: 12px;
+}
+
+.tesla-telemetry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.tesla-telemetry-config-input textarea,
+.tesla-telemetry-config-input {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  font-size: 12px;
+}
+
+.tesla-telemetry-cache-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px;
+}
+
+.tesla-telemetry-cache-card {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: rgba(127, 127, 127, 0.08);
+}
+
+.tesla-telemetry-cache-card > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.tesla-telemetry-cache-card strong {
+  color: var(--app-text);
+}
+
+.tesla-telemetry-cache-card span,
+.tesla-telemetry-cache-card p {
+  margin: 0;
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.tesla-telemetry-cache-card pre {
+  max-height: 260px;
+  margin: 0;
+  padding: 10px;
+  overflow: auto;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: rgba(127, 127, 127, 0.1);
+  color: var(--app-text);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.tesla-fleet-json {
+  color: var(--app-text);
+}
+
+.tesla-fleet-token-detail {
+  margin-top: 12px;
+  color: var(--app-text);
+}
+
+.tesla-fleet-json summary {
+  cursor: pointer;
+  color: var(--app-text-muted);
+  font-size: 13px;
+}
+
+.tesla-fleet-token-detail summary {
+  cursor: pointer;
+  color: var(--app-text-muted);
+  font-size: 13px;
+}
+
+.tesla-fleet-json pre {
+  max-height: 360px;
+  margin: 10px 0 0;
+  padding: 12px;
+  overflow: auto;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: rgba(127, 127, 127, 0.1);
+  color: var(--app-text);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.tesla-fleet-token-detail pre {
+  max-height: 120px;
+  margin: 10px 0 0;
+  padding: 12px;
+  overflow: auto;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: rgba(127, 127, 127, 0.1);
+  color: var(--app-text);
+  font-size: 12px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.tesla-manager-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.tesla-manager-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.tesla-manager-stack .ant-btn {
+  min-height: 40px;
+  border-radius: 8px;
+}
+
+.tesla-manager-manual-token {
+  display: grid;
+  gap: 12px;
+  margin-top: 4px;
+  padding-top: 14px;
+  border-top: 1px solid var(--app-border);
+}
+
+.tesla-manager-status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.tesla-manager-status-grid div,
+.tesla-manager-vehicle-head > div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface-elevated);
+}
+
+.tesla-manager-status-grid span,
+.tesla-manager-vehicle-head span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--app-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tesla-manager-status-grid span small {
+  display: block;
+  margin-top: 2px;
+  color: var(--app-text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.tesla-manager-status-grid strong,
+.tesla-manager-vehicle-head strong {
+  display: block;
+  color: var(--app-text);
+  overflow-wrap: anywhere;
+}
+
+.tesla-token-edit-card {
+  cursor: text;
+}
+
+.tesla-token-edit-card:hover {
+  border-color: var(--app-primary);
+}
+
+.tesla-manager-vehicle-card {
+  margin-bottom: 24px;
+}
+
+.tesla-manager-vehicle-head {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.4fr) minmax(220px, 1fr) auto;
+  gap: 12px;
+  align-items: stretch;
+  margin-bottom: 14px;
+}
+
+.tesla-manager-inline-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.personal-settings-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.personal-user-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.personal-user-card strong,
+.personal-user-card span {
+  display: block;
+}
+
+.personal-user-card strong {
+  color: var(--app-text);
+  font-size: 16px;
+}
+
+.personal-user-card span {
+  margin-top: 4px;
+  color: var(--app-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.third-party-binding-list {
+  display: grid;
+  gap: 12px;
+}
+
+.third-party-binding-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  min-height: 82px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface-elevated);
+}
+
+.third-party-binding-main {
+  min-width: 0;
+}
+
+.third-party-binding-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.third-party-binding-title-main {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+}
+
+.third-party-binding-main > .tesla-manager-status-grid,
+.third-party-binding-main > .third-party-token-panel {
+  margin-top: 12px;
+}
+
+.third-party-binding-title strong,
+.third-party-binding-title-main strong {
+  color: var(--app-text);
+  overflow-wrap: anywhere;
+}
+
+.third-party-binding-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 12px;
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.third-party-binding-meta span {
+  overflow-wrap: anywhere;
+}
+
+.third-party-binding-empty {
+  opacity: 0.92;
+}
+
+.third-party-binding-actions,
+.third-party-rebind-link {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.third-party-binding-actions .ant-btn {
+  min-height: 36px;
+  border-radius: 8px;
+}
+
+.third-party-rebind-link {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: rgba(127, 127, 127, 0.08);
+}
+
+.third-party-token-panel {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: rgba(127, 127, 127, 0.08);
+}
+
+@media (max-width: 900px) {
+  .life-overview-hero,
+  .life-two-column {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .life-overview-hero {
+    align-items: start;
+  }
+
+  .life-section-grid-three {
+    grid-template-columns: 1fr;
+  }
+
+  .life-overview-hero h1 {
+    font-size: 28px;
+  }
+
+  .tesla-fleet-auth-grid,
+  .tesla-fleet-token-grid,
+  .tesla-fleet-form,
+  .tesla-manager-layout,
+  .tesla-manager-vehicle-head,
+  .tesla-manager-inline-fields,
+  .tesla-charging-summary,
+  .tesla-charging-history-item,
+  .personal-settings-layout,
+  .third-party-binding-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .third-party-binding-item {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .third-party-binding-item > .ant-btn {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .third-party-binding-title {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .third-party-binding-actions {
+    width: auto;
+  }
+
+  .tesla-vehicle-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .tesla-fleet-auth-grid .ant-btn,
+  .tesla-fleet-token-grid .ant-btn,
+  .tesla-fleet-form .ant-btn {
+    width: 100%;
+  }
+
+  .tesla-manager-status-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  :root {
+    --app-page-inline-padding: 16px;
+  }
+}
+
+.record-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.lottery-records-page {
+  min-height: 100vh;
+  padding: 24px var(--app-page-inline-padding) 152px;
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+.lottery-records-list-card {
+  width: min(var(--app-page-max-width), 100%);
+  margin: 0 auto;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  overflow: visible;
+}
+
+.lottery-record-card {
+  overflow: hidden !important;
+  border-radius: var(--app-card-radius) !important;
+  background-clip: padding-box !important;
+}
+
+.lottery-record-card > .ant-card-body {
+  border-radius: inherit !important;
+  background: transparent !important;
+  overflow: hidden !important;
+}
+
+.lottery-record-filter-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: var(--header-height);
+  min-height: 64px;
+  z-index: 1001;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 20px;
+  box-sizing: border-box;
+  overflow-x: auto;
+  background: var(--app-bg);
+  border-top: 1px solid var(--app-border);
+  color: var(--app-text);
+}
+
+.lottery-record-filter-bar .ant-input,
+.lottery-record-filter-bar .ant-picker {
+  background: var(--app-surface) !important;
+  border-color: var(--app-border) !important;
+  color: var(--app-text) !important;
+}
+
+.lottery-record-filter-bar .ant-picker-input input,
+.lottery-record-filter-bar .ant-input::placeholder,
+.lottery-record-filter-bar .ant-picker-input input::placeholder {
+  color: var(--app-text-muted) !important;
+}
+
+.lottery-record-filter-bar button {
+  color: var(--app-text) !important;
+}
+
+.lottery-record-filter-bar button:disabled {
+  color: var(--app-text-muted) !important;
+}
+
+.record-tile {
+  --record-soft: rgba(24, 144, 255, 0.08);
+  --record-soft-hover: rgba(24, 144, 255, 0.12);
+  --record-border: rgba(24, 144, 255, 0.2);
+  --record-border-hover: rgba(24, 144, 255, 0.4);
+  background: var(--record-soft) !important;
+  border: 1px solid var(--record-border) !important;
+  border-radius: var(--app-card-radius) !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.record-tile:hover {
+  background: var(--record-soft-hover) !important;
+  border-color: var(--record-border-hover) !important;
+  transform: translateY(-1px);
+}
+
+.record-tile.ant-card {
+  margin-bottom: 0 !important;
+}
+
+.record-tile.ant-card .ant-card-body {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.charge-record-tile {
+  --record-soft: rgba(24, 144, 255, 0.08);
+  --record-soft-hover: rgba(24, 144, 255, 0.12);
+  --record-border: rgba(24, 144, 255, 0.2);
+  --record-border-hover: rgba(24, 144, 255, 0.4);
+}
+
+.salary-record-tile {
+  --record-soft: rgba(255, 152, 0, 0.08);
+  --record-soft-hover: rgba(255, 152, 0, 0.12);
+  --record-border: rgba(255, 152, 0, 0.2);
+  --record-border-hover: rgba(255, 152, 0, 0.4);
+}
+
+.app-theme-light .record-tile {
+  background: var(--app-surface) !important;
+  border-color: var(--app-border) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Shared themed cards and Ant Design surfaces */
+.app-theme-light .ant-card,
+.app-theme-light .ant-drawer-content,
+.app-theme-light .ant-modal-content,
+.app-theme-light .ant-popover-inner,
+.app-theme-light .ant-select-dropdown,
+.app-theme-light .ant-picker-dropdown .ant-picker-panel-container {
+  background: var(--app-surface) !important;
+  background-image: none !important;
+  border-color: var(--app-border) !important;
+  box-shadow: var(--app-card-shadow) !important;
+  color: var(--app-text) !important;
+}
+
+.app-theme-dark .ant-card,
+.app-theme-dark .ant-drawer-content,
+.app-theme-dark .ant-modal-content,
+.app-theme-dark .ant-popover-inner,
+.app-theme-dark .ant-select-dropdown,
+.app-theme-dark .ant-picker-dropdown .ant-picker-panel-container {
+  background: var(--app-surface) !important;
+  background-image: none !important;
+  border-color: var(--app-border) !important;
+  color: var(--app-text) !important;
+}
+
+.app-theme-light .ant-card,
+.app-theme-dark .ant-card {
+  border-radius: var(--app-card-radius) !important;
+  overflow: hidden !important;
+  background-clip: padding-box !important;
+}
+
+.app-theme-light .ant-card > .ant-card-body,
+.app-theme-dark .ant-card > .ant-card-body {
+  border-radius: inherit !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.app-theme-light .ant-card-head,
+.app-theme-light .ant-drawer-header,
+.app-theme-light .ant-modal-header {
+  background: var(--app-surface) !important;
+  border-color: var(--app-border) !important;
+  color: var(--app-text) !important;
+}
+
+.app-theme-light .ant-card-body,
+.app-theme-light .ant-card-meta-title,
+.app-theme-light .ant-card-meta-description,
+.app-theme-light .ant-statistic-title,
+.app-theme-light .ant-statistic-content,
+.app-theme-light .ant-drawer-title,
+.app-theme-light .ant-modal-title {
+  color: var(--app-text) !important;
+}
+
+.app-theme-light .ant-card * {
+  text-shadow: none !important;
+}
+
+.app-theme-light .ant-card [style*="color: rgb(255, 255, 255)"],
+.app-theme-light .ant-card [style*="color: #fff"],
+.app-theme-light .ant-card [style*="color: #FFF"],
+.app-theme-light .ant-card [style*="color: #FFFFFF"],
+.app-theme-light .ant-drawer [style*="color: rgb(255, 255, 255)"],
+.app-theme-light .ant-drawer [style*="color: #fff"],
+.app-theme-light .ant-drawer [style*="color: #FFF"],
+.app-theme-light .ant-drawer [style*="color: #FFFFFF"] {
+  color: var(--app-text) !important;
+}
+
+.app-theme-light .ant-card [style*="color: rgb(153, 153, 153)"],
+.app-theme-light .ant-card [style*="color: #999"],
+.app-theme-light .ant-card [style*="color: #aaa"],
+.app-theme-light .ant-card [style*="color: #AAA"],
+.app-theme-light .ant-card [style*="color: #CCCCCC"],
+.app-theme-light .ant-card [style*="color: #ccc"] {
+  color: var(--app-text-muted) !important;
+}
+
+.app-theme-light .ant-input,
+.app-theme-light .ant-input-number,
+.app-theme-light .ant-input-number-input,
+.app-theme-light .ant-picker,
+.app-theme-light .ant-select-selector,
+.app-theme-light .ant-table,
+.app-theme-light .ant-table-container,
+.app-theme-light .ant-table-thead > tr > th,
+.app-theme-light .ant-table-tbody > tr > td {
+  background: var(--app-surface) !important;
+  border-color: var(--app-border) !important;
+  color: var(--app-text) !important;
+}
+
+.app-theme-light .ant-table-thead > tr > th {
+  background: var(--app-surface-elevated) !important;
+}
+
+/* Common custom card-like blocks with old inline dark backgrounds */
+.app-theme-light .app-container [style*="background-color: rgb(26, 26, 26)"],
+.app-theme-light .app-container [style*="background-color: rgb(29, 29, 29)"],
+.app-theme-light .app-container [style*="background-color: rgb(42, 42, 42)"],
+.app-theme-light .app-container [style*="background-color: rgb(45, 45, 45)"],
+.app-theme-light .app-container [style*="background-color: rgb(51, 51, 51)"] {
+  background-color: var(--app-surface) !important;
+  background-image: none !important;
+  border-color: var(--app-border) !important;
+  color: var(--app-text) !important;
+  box-shadow: var(--app-card-shadow) !important;
+}
+
+.app-theme-light .app-container [style*="background-image: linear-gradient(145deg"],
+.app-theme-light .app-container [style*="background: linear-gradient(145deg"] {
+  background-image: none !important;
+}
+
+.app-theme-light .app-container [style*="min-height: 100vh"][style*="background-color: rgb(0, 0, 0)"],
+.app-theme-light .app-container [style*="min-height: 100vh"][style*="background-color: #000"],
+.app-theme-light .app-container [style*="min-height: 100vh"][style*="background-color: #000000"] {
+  background-color: var(--app-bg) !important;
+  color: var(--app-text) !important;
+}
+
+.app-theme-light .app-container [style*="background-color: rgb(26, 26, 26)"] [style*="color: rgb(255, 255, 255)"],
+.app-theme-light .app-container [style*="background-color: rgb(29, 29, 29)"] [style*="color: rgb(255, 255, 255)"],
+.app-theme-light .app-container [style*="background-color: rgb(42, 42, 42)"] [style*="color: rgb(255, 255, 255)"],
+.app-theme-light .app-container [style*="background-color: rgb(45, 45, 45)"] [style*="color: rgb(255, 255, 255)"],
+.app-theme-light .app-container [style*="background-color: rgb(51, 51, 51)"] [style*="color: rgb(255, 255, 255)"],
+.app-theme-light .app-container [style*="background-color: rgb(26, 26, 26)"][style*="color: rgb(255, 255, 255)"],
+.app-theme-light .app-container [style*="background-color: rgb(29, 29, 29)"][style*="color: rgb(255, 255, 255)"],
+.app-theme-light .app-container [style*="background-color: rgb(42, 42, 42)"][style*="color: rgb(255, 255, 255)"],
+.app-theme-light .app-container [style*="background-color: rgb(45, 45, 45)"][style*="color: rgb(255, 255, 255)"],
+.app-theme-light .app-container [style*="background-color: rgb(51, 51, 51)"][style*="color: rgb(255, 255, 255)"] {
+  color: var(--app-text) !important;
+}
+
+/* Health and fitness pages have many inline dark styles; these route shells make switching reliable. */
+.app-theme-light .themed-route-page {
+  background-color: var(--app-bg) !important;
+  color: var(--app-text) !important;
+}
+
+.app-theme-dark .themed-route-page {
+  background-color: #000 !important;
+  color: rgba(255, 255, 255, 0.87) !important;
+}
+
+.app-theme-light .themed-route-page .ant-card,
+.app-theme-light .themed-route-page .ant-card-bordered {
+  background: var(--app-surface) !important;
+  background-image: none !important;
+  border-color: var(--app-border) !important;
+  color: var(--app-text) !important;
+  box-shadow: var(--app-card-shadow) !important;
+  border-radius: var(--app-card-radius) !important;
+  overflow: hidden !important;
+  background-clip: padding-box !important;
+}
+
+.app-theme-dark .themed-route-page .ant-card,
+.app-theme-dark .themed-route-page .ant-card-bordered {
+  background: var(--app-surface) !important;
+  background-image: none !important;
+  border-color: var(--app-border) !important;
+  color: var(--app-text) !important;
+  box-shadow: var(--app-card-shadow) !important;
+  border-radius: var(--app-card-radius) !important;
+  overflow: hidden !important;
+  background-clip: padding-box !important;
+}
+
+.app-theme-light .themed-route-page .ant-card > .ant-card-body,
+.app-theme-dark .themed-route-page .ant-card > .ant-card-body {
+  background: transparent !important;
+  background-image: none !important;
+  border-radius: inherit !important;
+  color: var(--app-text) !important;
+  box-shadow: none !important;
+}
+
+.app-theme-light .themed-route-page.health-fourth-page .health-fourth-container-card,
+.app-theme-dark .themed-route-page.health-fourth-page .health-fourth-container-card,
+.app-theme-light .themed-route-page.health-fourth-page .health-fourth-container-card > .ant-card-body,
+.app-theme-dark .themed-route-page.health-fourth-page .health-fourth-container-card > .ant-card-body {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.app-theme-light .themed-route-page [style*="background-color: rgb(0, 0, 0)"],
+.app-theme-light .themed-route-page [style*="background-color: rgb(26, 26, 26)"],
+.app-theme-light .themed-route-page [style*="background-color: rgb(29, 29, 29)"],
+.app-theme-light .themed-route-page [style*="background-color: rgb(42, 42, 42)"],
+.app-theme-light .themed-route-page [style*="background-color: rgb(45, 45, 45)"],
+.app-theme-light .themed-route-page [style*="background-color: rgb(51, 51, 51)"],
+.app-theme-light .themed-route-page [style*="background-color: #1A1A1A"],
+.app-theme-light .themed-route-page [style*="background-color: #1a1a1a"],
+.app-theme-light .themed-route-page [style*="background-color: #2a2a2a"],
+.app-theme-light .themed-route-page [style*="background-color: #2D2D2D"],
+.app-theme-light .themed-route-page [style*="background-color: #2d2d2d"] {
+  background-color: var(--app-surface) !important;
+  background-image: none !important;
+  border-color: var(--app-border) !important;
+  color: var(--app-text) !important;
+  box-shadow: var(--app-card-shadow) !important;
+}
+
+.app-theme-light .themed-route-page > [style*="background-color: rgb(0, 0, 0)"],
+.app-theme-light .themed-route-page[style*="background-color: rgb(0, 0, 0)"] {
+  background-color: var(--app-bg) !important;
+  box-shadow: none !important;
+}
+
+.app-theme-light .themed-route-page [style*="background-image: linear-gradient"],
+.app-theme-light .themed-route-page [style*="background: linear-gradient"] {
+  background-image: none !important;
+}
+
+.app-theme-light .themed-route-page [style*="color: rgb(255, 255, 255)"],
+.app-theme-light .themed-route-page [style*="color: #fff"],
+.app-theme-light .themed-route-page [style*="color: #FFF"],
+.app-theme-light .themed-route-page [style*="color: #FFFFFF"],
+.app-theme-light .themed-route-page [style*="color: #ffffff"] {
+  color: var(--app-text) !important;
+}
+
+.app-theme-light .themed-route-page [style*="color: rgb(204, 204, 204)"],
+.app-theme-light .themed-route-page [style*="color: rgb(170, 170, 170)"],
+.app-theme-light .themed-route-page [style*="color: rgb(153, 153, 153)"],
+.app-theme-light .themed-route-page [style*="color: #CCCCCC"],
+.app-theme-light .themed-route-page [style*="color: #ccc"],
+.app-theme-light .themed-route-page [style*="color: #aaa"],
+.app-theme-light .themed-route-page [style*="color: #999"] {
+  color: var(--app-text-muted) !important;
+}
+
+.app-theme-light .themed-route-page [style*="text-shadow"] {
+  text-shadow: none !important;
+}
+
+.app-theme-light .lottery-analysis-page [style*="border-radius: 16px"][style*="box-shadow"],
+.app-theme-light .lottery-analysis-page [style*="border-radius: 20px"][style*="background-color: rgb(26, 26, 26)"],
+.app-theme-light .lottery-analysis-page [style*="border-radius: 20px"][style*="background-color: #1A1A1A"],
+.app-theme-light .lottery-analysis-page [style*="border-radius: 20px"][style*="background-color: #1a1a1a"] {
+  background-color: var(--app-surface) !important;
+  background-image: none !important;
+  border: 1px solid var(--app-border) !important;
+  box-shadow: var(--app-card-shadow) !important;
+  color: var(--app-text) !important;
+}
+
+.app-theme-light .lottery-analysis-page [style*="border-radius: 16px"][style*="box-shadow"] [style*="color: #fff"],
+.app-theme-light .lottery-analysis-page [style*="border-radius: 16px"][style*="box-shadow"] [style*="color: #ffffff"],
+.app-theme-light .lottery-analysis-page [style*="border-radius: 16px"][style*="box-shadow"] [style*="color: rgb(255, 255, 255)"] {
+  color: var(--app-text) !important;
+}
+
+.app-theme-light .themed-route-page .ant-drawer-content,
+.app-theme-light .themed-route-page .ant-drawer-header,
+.app-theme-light .themed-route-page .ant-drawer-body {
+  background: var(--app-surface) !important;
+  background-image: none !important;
+  color: var(--app-text) !important;
+  border-color: var(--app-border) !important;
+}
+
+/* Ant Design popups render outside app-container, so key off the root theme attribute. */
+:root[data-theme='light'] .ant-drawer-content,
+:root[data-theme='light'] .ant-drawer-header,
+:root[data-theme='light'] .ant-drawer-body,
+:root[data-theme='light'] .ant-modal-content,
+:root[data-theme='light'] .ant-modal-header,
+:root[data-theme='light'] .ant-popover-inner,
+:root[data-theme='light'] .ant-dropdown-menu,
+:root[data-theme='light'] .ant-select-dropdown,
+:root[data-theme='light'] .ant-picker-dropdown .ant-picker-panel-container {
+  background: var(--app-surface) !important;
+  background-image: none !important;
+  color: var(--app-text) !important;
+  border-color: var(--app-border) !important;
+}
+
+:root[data-theme='light'] .ant-drawer [style*="background-color: rgb(0, 0, 0)"],
+:root[data-theme='light'] .ant-modal [style*="background-color: rgb(0, 0, 0)"],
+:root[data-theme='light'] .ant-popover [style*="background-color: rgb(0, 0, 0)"],
+:root[data-theme='light'] .ant-dropdown [style*="background-color: rgb(0, 0, 0)"] {
+  background-color: var(--app-surface) !important;
+  background-image: none !important;
+  color: var(--app-text) !important;
+}
+
+:root[data-theme='light'] .ant-drawer [style*="color: rgb(255, 255, 255)"],
+:root[data-theme='light'] .ant-modal [style*="color: rgb(255, 255, 255)"],
+:root[data-theme='light'] .ant-popover [style*="color: rgb(255, 255, 255)"],
+:root[data-theme='light'] .ant-dropdown [style*="color: rgb(255, 255, 255)"] {
+  color: var(--app-text) !important;
+}
+
+:root[data-theme='light'] .ant-drawer-title,
+:root[data-theme='light'] .ant-modal-title,
+:root[data-theme='light'] .ant-dropdown-menu-title-content {
+  color: var(--app-text) !important;
+}
+
+.themed-route-page .record-tile,
+.themed-route-page .record-tile.ant-card {
+  background: var(--record-soft) !important;
+  border-color: var(--record-border) !important;
+}
+
+.themed-route-page .record-tile:hover,
+.themed-route-page .record-tile.ant-card:hover {
+  background: var(--record-soft-hover) !important;
+  border-color: var(--record-border-hover) !important;
+}
+
+.app-theme-light .themed-route-page .record-tile,
+.app-theme-light .themed-route-page .record-tile.ant-card {
+  background: var(--app-surface) !important;
+  border-color: var(--app-border) !important;
+}
+
+.themed-route-page .record-tile.ant-card .ant-card-body {
+  background: transparent !important;
+  border-radius: inherit !important;
+  box-shadow: none !important;
+}
+
+.themed-route-page .vehicle-charge-container-card.ant-card {
+  margin-bottom: 0;
+  overflow: visible !important;
+}
+
+.themed-route-page .vehicle-charge-container-card.ant-card,
+.themed-route-page .vehicle-charge-container-card.ant-card > .ant-card-head,
+.themed-route-page .vehicle-charge-container-card.ant-card > .ant-card-body {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.themed-route-page .vehicle-charge-container-card.ant-card > .ant-card-head {
+  min-height: 0;
+  border-bottom: 0 !important;
+}
+
+.themed-route-page .vehicle-charge-container-card.ant-card > .ant-card-body {
+  padding-right: 0 !important;
+  padding-left: 0 !important;
+}
+
+.themed-route-page .finance-salary-container-card.ant-card {
+  margin-bottom: 0;
+  overflow: visible !important;
+}
+
+.themed-route-page .finance-salary-container-card.ant-card,
+.themed-route-page .finance-salary-container-card.ant-card > .ant-card-head,
+.themed-route-page .finance-salary-container-card.ant-card > .ant-card-body {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.themed-route-page .finance-salary-container-card.ant-card > .ant-card-head {
+  min-height: 0;
+  border-bottom: 0 !important;
+}
+
+.themed-route-page .finance-salary-container-card.ant-card > .ant-card-body {
+  padding-right: 0 !important;
+  padding-left: 0 !important;
+}
+
+.themed-route-page .lottery-records-list-card {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.themed-route-page .lottery-record-card > .ant-card-body {
+  background: transparent !important;
+  border-radius: inherit !important;
+}
+
+.themed-route-page .lottery-record-card {
+  overflow: hidden !important;
+  border-radius: var(--app-card-radius) !important;
+}
+
+.lottery-statistics-page .ant-card,
+.lottery-statistics-page .ant-card-body {
+  min-width: 0;
+}
+
+.lottery-statistics-page .lottery-stat-container-card.ant-card {
+  margin-bottom: 0;
+  overflow: visible !important;
+}
+
+.lottery-statistics-page .lottery-stat-container-card.ant-card,
+.lottery-statistics-page .lottery-stat-container-card.ant-card > .ant-card-head,
+.lottery-statistics-page .lottery-stat-container-card.ant-card > .ant-card-body {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.lottery-statistics-page .lottery-stat-container-card.ant-card > .ant-card-head {
+  min-height: 0;
+  border-bottom: 0 !important;
+}
+
+.lottery-statistics-page .lottery-stat-container-card.ant-card > .ant-card-body {
+  padding-right: 0 !important;
+  padding-left: 0 !important;
+}
+
+.lottery-statistics-page .ant-card-head-title,
+.lottery-statistics-page .ant-statistic-title,
+.lottery-statistics-page .ant-statistic-content,
+.lottery-statistics-page .ant-card span {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.lottery-statistics-page .ant-card-head-title,
+.lottery-statistics-page .ant-statistic-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lottery-statistics-page .ant-card-head-title div {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.lottery-statistics-page .ant-card-head-title div:not([style*="position: absolute"]) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lottery-statistics-page .ant-card-body div[style*="justify-content: space-between"] {
+  gap: 10px;
+  min-width: 0;
+}
+
+.lottery-statistics-page .ant-card-body div[style*="justify-content: space-between"] > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lottery-statistics-page .ant-card-body div[style*="justify-content: space-between"] > span:last-child {
+  flex: 0 0 auto;
+}

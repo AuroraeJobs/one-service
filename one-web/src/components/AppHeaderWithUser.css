@@ -1,0 +1,73 @@
+/* 用户头像容器 */
+.avatar-container {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.avatar-glow {
+  display: none;
+}
+
+.avatar-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid var(--app-border);
+  opacity: 0.8;
+  transition: border-color 0.2s ease, opacity 0.2s ease;
+}
+
+.avatar-main {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.avatar-container:hover .avatar-ring {
+  border-color: #0071e3;
+  opacity: 1;
+}
+
+.avatar-container:hover .avatar-main {
+  transform: scale(1.04);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+}
+
+.avatar-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  user-select: none;
+  letter-spacing: 0;
+}
+
+.avatar-mini {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.14);
+}
+
+.avatar-mini-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  user-select: none;
+  letter-spacing: 0;
+}

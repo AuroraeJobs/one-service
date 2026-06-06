@@ -1,0 +1,57 @@
+package com.one.record.file;
+
+import cn.hutool.core.io.FileUtil;
+import lombok.SneakyThrows;
+import com.one.common.util.StreamUtil;
+import com.one.record.response.Record;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.List;
+
+public class RecordFile {
+
+    public static final String PATH = "/Users/aurorae/Program/Hello/aurorae-service/aurorae-record/aurorae-record-service/src/main/resources/";
+    public static final String RECORD = "record/record.txt";
+    public static final String RECORDS = "record/records.txt";
+    public static final String BALL_RED = "record/ball_red.txt";
+    public static final String BALL_BLUE = "record/ball_blue.txt";
+
+    public static String[] split(String record) {
+        // 把字符串按每两位进行分割
+        int bit = 2;
+        // 分割之后的数组长度
+        int lit = record.length() / bit;
+        String[] records = new String[lit];
+        int idx;
+        for (int i = 0; i < lit; i++) {
+            idx = i * bit;
+            records[i] = record.substring(idx, idx + bit);
+        }
+        return records;
+    }
+
+    public static String read(String fileName) {
+        return FileUtil.readUtf8String(fileName);
+    }
+
+    @SneakyThrows
+    public static BufferedReader reader(String fileName) {
+        return new BufferedReader(new FileReader(fileName));
+    }
+
+    public static void write(List<Record> records) {
+        append(StreamUtil.joining(records, Record::record), RECORD);
+        append(StreamUtil.toList(records, Record::record), RECORDS);
+        append(StreamUtil.toList(records, Record::getRed), BALL_RED);
+        append(StreamUtil.toList(records, Record::getBlue), BALL_BLUE);
+    }
+
+    public static void append(String string, String fileName) {
+        FileUtil.appendUtf8String(string, PATH + fileName);
+    }
+
+    public static void append(List<String> strings, String fileName) {
+        FileUtil.appendUtf8Lines(strings, PATH + fileName);
+    }
+}

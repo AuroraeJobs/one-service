@@ -1,9 +1,0 @@
-spring:
-  activemq:
-    broker-url: tcp://vpn166:61616
-    user: admin
-    password: admin
-    pool:
-      enabled: true
-      max-connections: 18
-

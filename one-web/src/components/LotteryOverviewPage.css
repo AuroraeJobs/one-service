@@ -1,0 +1,2619 @@
+.lottery-status-grid,
+.lottery-chart-grid {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.lottery-status-grid {
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+}
+
+.lottery-chart-grid {
+  grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.8fr);
+}
+
+.lottery-yearly-card {
+  margin-bottom: 24px;
+}
+
+.lottery-yearly-card-compact {
+  margin-bottom: 0;
+}
+
+.lottery-yearly-content {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.9fr) minmax(320px, 1.1fr);
+  align-items: center;
+  gap: 24px;
+}
+
+.lottery-yearly-card-compact .lottery-yearly-content {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.lottery-yearly-chart-shell {
+  position: relative;
+  min-height: 310px;
+}
+
+.lottery-yearly-card-compact .lottery-yearly-chart-shell {
+  min-height: 220px;
+}
+
+.lottery-yearly-chart {
+  width: 100%;
+  min-height: 310px;
+}
+
+.lottery-yearly-card-compact .lottery-yearly-chart {
+  min-height: 220px;
+}
+
+.lottery-yearly-center {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  gap: 2px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.lottery-yearly-center strong {
+  color: var(--app-text);
+  font-size: 30px;
+  line-height: 1;
+}
+
+.lottery-yearly-center span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.lottery-prediction-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.lottery-simple-page-grid,
+.lottery-simple-support-grid {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.lottery-simple-page-grid {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+.lottery-simple-support-grid {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+.lottery-prediction-page {
+  --lottery-clean-radius: 12px;
+}
+
+.lottery-prediction-page .life-overview-hero {
+  margin-bottom: 18px;
+}
+
+.lottery-prediction-page .ant-btn {
+  height: 36px;
+  padding: 4px 14px;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.lottery-clean-panel {
+  min-width: 0;
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid var(--app-border);
+  border-radius: var(--lottery-clean-radius);
+  background: var(--app-surface);
+}
+
+.lottery-prediction-page .lottery-card-title-row {
+  margin-bottom: 0;
+}
+
+.lottery-prediction-page .lottery-card-title-row h2 {
+  font-size: 17px;
+}
+
+.lottery-prediction-page .lottery-card-title-row p {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.lottery-candidate-panel {
+  grid-column: 1 / -1;
+}
+
+.lottery-number-prediction-panel {
+  grid-column: 1 / -1;
+}
+
+.lottery-health-panel {
+  grid-column: 1 / -1;
+}
+
+.lottery-team-panel {
+  grid-column: 1 / -1;
+}
+
+.lottery-card-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.lottery-card-title-row h2 {
+  margin: 0 0 6px;
+  color: var(--app-text);
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.lottery-card-title-row p {
+  margin: 0;
+  color: var(--app-text-muted);
+  line-height: 1.6;
+}
+
+.lottery-latest-content {
+  display: grid;
+  gap: 18px;
+}
+
+.lottery-latest-draw-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.lottery-latest-draw-card {
+  min-height: 0;
+  gap: 10px;
+  padding: 12px;
+}
+
+.lottery-latest-draw-card .lottery-balls {
+  gap: 5px;
+}
+
+.lottery-latest-draw-card .lottery-ball {
+  width: 30px;
+  height: 30px;
+  font-size: 12px;
+}
+
+.lottery-latest-content > div:first-child > span {
+  display: block;
+  margin-bottom: 12px;
+  color: var(--app-text-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.lottery-latest-meta,
+.lottery-draw-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lottery-latest-meta span,
+.lottery-draw-meta span {
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(127, 127, 127, 0.12);
+  color: var(--app-text);
+  font-size: 12px;
+}
+
+.lottery-balls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lottery-ball {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.lottery-ball-red {
+  background: #ff3b30;
+}
+
+.lottery-ball-blue {
+  background: #0071e3;
+}
+
+.lottery-universe-page {
+  --universe-bg: #080b10;
+  --universe-panel: rgba(18, 24, 33, 0.92);
+  --universe-panel-soft: rgba(23, 31, 42, 0.78);
+  --universe-line: rgba(255, 255, 255, 0.1);
+  --universe-text: #f5f7fb;
+  --universe-muted: rgba(245, 247, 251, 0.62);
+  --universe-red: #ff3b30;
+  --universe-blue: #0a84ff;
+  --universe-green: #34c759;
+  min-height: calc(100vh - 72px);
+  padding: 18px var(--app-page-inline-padding) 28px;
+  background:
+    linear-gradient(180deg, rgba(255, 59, 48, 0.08), transparent 280px),
+    radial-gradient(circle at 72% 12%, rgba(10, 132, 255, 0.16), transparent 30%),
+    var(--universe-bg);
+  color: var(--universe-text);
+}
+
+.lottery-universe-shell {
+  display: grid;
+  gap: 14px;
+  max-width: 1680px;
+  margin: 0 auto;
+}
+
+.lottery-universe-header,
+.lottery-universe-kpis,
+.lottery-universe-panel {
+  border: 1px solid var(--universe-line);
+  border-radius: 8px;
+  background: var(--universe-panel);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.22);
+}
+
+.lottery-universe-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px 18px;
+}
+
+.lottery-universe-header h1 {
+  margin: 0 0 4px;
+  color: var(--universe-text);
+  font-size: 24px;
+  line-height: 1.1;
+}
+
+.lottery-universe-header span,
+.lottery-universe-panel-title span,
+.lottery-universe-kpis span,
+.lottery-universe-rank-item span,
+.lottery-universe-bar-row span,
+.lottery-universe-bar-row em,
+.lottery-universe-trace-card strong {
+  color: var(--universe-muted);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.lottery-universe-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.lottery-universe-header-actions span {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--universe-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--universe-text);
+}
+
+.lottery-universe-kpis {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  background: var(--universe-line);
+}
+
+.lottery-universe-kpis > div {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  padding: 14px;
+  background: var(--universe-panel);
+}
+
+.lottery-universe-kpis strong {
+  color: var(--universe-text);
+  font-size: 24px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.lottery-universe-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.74fr) minmax(420px, 1.34fr) minmax(270px, 0.78fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.lottery-universe-panel {
+  min-width: 0;
+  padding: 16px;
+}
+
+.lottery-universe-panel h2,
+.lottery-universe-panel-title h2 {
+  margin: 0;
+  color: var(--universe-text);
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.lottery-universe-side-panel,
+.lottery-universe-rank-panel,
+.lottery-universe-matrix-panel,
+.lottery-universe-trace-panel {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.lottery-universe-panel-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lottery-universe-matrix {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(42px, 1fr));
+  grid-auto-rows: minmax(56px, 1fr);
+  gap: 8px;
+}
+
+.lottery-universe-cell {
+  min-width: 0;
+  display: grid;
+  align-content: space-between;
+  padding: 8px;
+  border: 1px solid var(--universe-line);
+  border-radius: 7px;
+  background: rgba(52, 199, 89, var(--cell-alpha));
+}
+
+.lottery-universe-cell-red {
+  box-shadow: inset 3px 0 0 rgba(255, 59, 48, 0.78);
+}
+
+.lottery-universe-cell-blue {
+  box-shadow: inset 3px 0 0 rgba(10, 132, 255, 0.84);
+}
+
+.lottery-universe-cell strong {
+  color: #fff;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.lottery-universe-cell span {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 11px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.lottery-universe-bar-list {
+  display: grid;
+  gap: 8px;
+}
+
+.lottery-universe-bar-row {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 9px;
+}
+
+.lottery-universe-bar-row i {
+  position: relative;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.lottery-universe-bar-row b {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--universe-red), var(--universe-green));
+}
+
+.lottery-universe-bar-row em {
+  text-align: right;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.lottery-universe-blue-bars,
+.lottery-universe-mobile-bars {
+  height: 96px;
+  display: grid;
+  grid-template-columns: repeat(16, minmax(0, 1fr));
+  gap: 5px;
+  align-items: end;
+}
+
+.lottery-universe-blue-bars span,
+.lottery-universe-mobile-bars span {
+  min-width: 0;
+  height: 100%;
+  display: grid;
+  align-items: end;
+  gap: 3px;
+}
+
+.lottery-universe-blue-bars b,
+.lottery-universe-mobile-bars b {
+  min-height: 8px;
+  border-radius: 999px 999px 2px 2px;
+  background: var(--universe-blue);
+}
+
+.lottery-universe-blue-bars em,
+.lottery-universe-mobile-bars em {
+  color: var(--universe-muted);
+  font-size: 9px;
+  font-style: normal;
+  line-height: 1;
+  text-align: center;
+}
+
+.lottery-universe-rank-list {
+  display: grid;
+  gap: 10px;
+}
+
+.lottery-universe-rank-item {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 24px 42px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 9px;
+  border: 1px solid var(--universe-line);
+  border-radius: 8px;
+  background: var(--universe-panel-soft);
+}
+
+.lottery-universe-rank-list-compact .lottery-universe-rank-item {
+  grid-template-columns: 24px minmax(0, 1fr);
+}
+
+.lottery-universe-rank-index {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 59, 48, 0.18);
+  color: #fff !important;
+  font-size: 11px !important;
+  font-weight: 800;
+}
+
+.lottery-universe-rank-item strong {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--universe-text);
+  font-size: 14px;
+}
+
+.lottery-universe-mini-pattern {
+  display: grid;
+  grid-template-columns: repeat(7, 4px);
+  grid-auto-rows: 4px;
+  gap: 1px;
+}
+
+.lottery-universe-mini-pattern span {
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.lottery-universe-mini-pattern .lottery-universe-mini-dot-hit {
+  background: var(--universe-green);
+}
+
+.lottery-universe-mobile-stack {
+  display: none;
+  gap: 14px;
+}
+
+.lottery-universe-mobile-bars {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.lottery-universe-mobile-bars b {
+  background: var(--universe-red);
+}
+
+.lottery-universe-trace-list {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(82px, 1fr));
+  gap: 8px;
+}
+
+.lottery-universe-trace-card {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+  padding: 8px;
+  border: 1px solid var(--universe-line);
+  border-radius: 8px;
+  background: var(--universe-panel-soft);
+}
+
+.lottery-universe-trace-card-active {
+  border-color: rgba(52, 199, 89, 0.56);
+}
+
+.lottery-universe-trace-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 7px);
+  grid-auto-rows: 7px;
+  gap: 2px;
+}
+
+.lottery-universe-trace-grid span {
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.lottery-universe-trace-grid .is-red {
+  background: var(--universe-red);
+}
+
+.lottery-universe-trace-grid .is-blue {
+  background: var(--universe-blue);
+}
+
+.lottery-pixel-card-page {
+  padding-right: var(--app-page-inline-padding);
+  padding-left: var(--app-page-inline-padding);
+}
+
+.lottery-pixel-stats-page {
+  padding-right: var(--app-page-inline-padding);
+  padding-left: var(--app-page-inline-padding);
+}
+
+.lottery-pixel-mode-switch {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.lottery-pixel-mode-switch .ant-segmented {
+  border-radius: 999px;
+  padding: 3px;
+}
+
+.lottery-pixel-mode-switch .ant-segmented-item {
+  border-radius: 999px;
+}
+
+.lottery-pixel-card {
+  --lottery-pixel-dot: 15px;
+  --lottery-pixel-gap: 3px;
+  --lottery-pixel-padding: 8px;
+  --lottery-pixel-font: 6px;
+  min-width: 0;
+  display: grid;
+  padding: var(--lottery-pixel-padding);
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-pixel-grid {
+  display: grid;
+  grid-template-columns: repeat(7, var(--lottery-pixel-dot));
+  grid-auto-rows: var(--lottery-pixel-dot);
+  gap: var(--lottery-pixel-gap);
+  width: max-content;
+  max-width: 100%;
+}
+
+.lottery-pixel-dot {
+  width: var(--lottery-pixel-dot);
+  height: var(--lottery-pixel-dot);
+  border: 1px solid var(--app-border);
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+  font-size: var(--lottery-pixel-font);
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  background: rgba(127, 127, 127, 0.1);
+}
+
+.lottery-pixel-dot-empty {
+  border-color: transparent;
+  background: transparent;
+  pointer-events: none;
+}
+
+.lottery-pixel-dot-red.lottery-pixel-dot-hit {
+  border-color: rgba(255, 59, 48, 0.74);
+  background: #ff3b30;
+  color: #fff;
+  box-shadow: 0 0 0 2px rgba(255, 59, 48, 0.12);
+}
+
+.lottery-pixel-dot-blue.lottery-pixel-dot-hit {
+  border-color: rgba(0, 113, 227, 0.76);
+  background: #0071e3;
+  color: #fff;
+  box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.12);
+}
+
+.lottery-pixel-page-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, max-content));
+  gap: 10px;
+  align-items: start;
+  justify-content: center;
+}
+
+.lottery-pixel-page-grid-red {
+  grid-template-columns: repeat(auto-fill, minmax(122px, max-content));
+}
+
+.lottery-pixel-page-grid-45 {
+  grid-template-columns: repeat(auto-fill, minmax(122px, max-content));
+  gap: 10px;
+}
+
+.lottery-pixel-page-grid-blue {
+  grid-template-columns: repeat(12, max-content);
+}
+
+.lottery-pixel-page-grid-80 {
+  grid-template-columns: repeat(auto-fill, minmax(112px, max-content));
+  gap: 8px;
+}
+
+.lottery-pixel-page-grid-80 .lottery-pixel-card {
+  --lottery-pixel-dot: 12px;
+  --lottery-pixel-gap: 2px;
+  --lottery-pixel-padding: 7px;
+  --lottery-pixel-font: 5px;
+}
+
+.lottery-pixel-page-grid-84 {
+  grid-template-columns: repeat(auto-fill, minmax(66px, max-content));
+  gap: 8px;
+}
+
+.lottery-pixel-page-grid-84 .lottery-pixel-card {
+  --lottery-pixel-dot: 12px;
+  --lottery-pixel-gap: 2px;
+  --lottery-pixel-padding: 7px;
+  --lottery-pixel-font: 5px;
+}
+
+.lottery-pixel-page-grid-84.lottery-pixel-page-grid-blue {
+  grid-template-columns: repeat(12, max-content);
+}
+
+.lottery-pixel-page-grid-90 {
+  grid-template-columns: repeat(auto-fill, minmax(94px, max-content));
+  gap: 8px;
+}
+
+.lottery-pixel-page-grid-90 .lottery-pixel-card {
+  --lottery-pixel-dot: 12px;
+  --lottery-pixel-gap: 2px;
+  --lottery-pixel-padding: 7px;
+  --lottery-pixel-font: 5px;
+}
+
+.lottery-pixel-page-grid-80.lottery-pixel-page-grid-red {
+  grid-template-columns: repeat(auto-fill, minmax(94px, max-content));
+}
+
+.lottery-pixel-page-grid-90.lottery-pixel-page-grid-red {
+  grid-template-columns: repeat(auto-fill, minmax(94px, max-content));
+}
+
+.lottery-pixel-page-grid-80.lottery-pixel-page-grid-blue {
+  grid-template-columns: repeat(12, max-content);
+}
+
+.lottery-pixel-page-grid-120 {
+  grid-template-columns: repeat(auto-fill, minmax(94px, max-content));
+  gap: 7px;
+}
+
+.lottery-pixel-page-grid-120 .lottery-pixel-card {
+  --lottery-pixel-dot: 10px;
+  --lottery-pixel-gap: 2px;
+  --lottery-pixel-padding: 6px;
+  --lottery-pixel-font: 4px;
+}
+
+.lottery-pixel-page-grid-135 {
+  grid-template-columns: repeat(auto-fill, minmax(80px, max-content));
+  gap: 7px;
+}
+
+.lottery-pixel-page-grid-135 .lottery-pixel-card {
+  --lottery-pixel-dot: 10px;
+  --lottery-pixel-gap: 2px;
+  --lottery-pixel-padding: 6px;
+  --lottery-pixel-font: 4px;
+}
+
+.lottery-pixel-page-grid-120.lottery-pixel-page-grid-red {
+  grid-template-columns: repeat(auto-fill, minmax(80px, max-content));
+}
+
+.lottery-pixel-page-grid-135.lottery-pixel-page-grid-red {
+  grid-template-columns: repeat(auto-fill, minmax(80px, max-content));
+}
+
+.lottery-pixel-page-grid-120.lottery-pixel-page-grid-blue {
+  grid-template-columns: repeat(auto-fill, minmax(56px, max-content));
+}
+
+.lottery-pixel-page-grid-160 {
+  grid-template-columns: repeat(auto-fill, minmax(72px, max-content));
+  gap: 6px;
+}
+
+.lottery-pixel-page-grid-160 .lottery-pixel-card {
+  --lottery-pixel-dot: 8px;
+  --lottery-pixel-gap: 1px;
+  --lottery-pixel-padding: 5px;
+  --lottery-pixel-font: 0;
+}
+
+.lottery-pixel-page-grid-168 {
+  grid-template-columns: repeat(auto-fill, minmax(44px, max-content));
+  gap: 6px;
+}
+
+.lottery-pixel-page-grid-168 .lottery-pixel-card {
+  --lottery-pixel-dot: 8px;
+  --lottery-pixel-gap: 1px;
+  --lottery-pixel-padding: 5px;
+  --lottery-pixel-font: 0;
+}
+
+.lottery-pixel-page-grid-168.lottery-pixel-page-grid-blue {
+  grid-template-columns: repeat(12, max-content);
+}
+
+.lottery-pixel-page-grid-180 {
+  grid-template-columns: repeat(auto-fill, minmax(62px, max-content));
+  gap: 6px;
+}
+
+.lottery-pixel-page-grid-180 .lottery-pixel-card {
+  --lottery-pixel-dot: 8px;
+  --lottery-pixel-gap: 1px;
+  --lottery-pixel-padding: 5px;
+  --lottery-pixel-font: 0;
+}
+
+.lottery-pixel-page-grid-160.lottery-pixel-page-grid-red {
+  grid-template-columns: repeat(auto-fill, minmax(62px, max-content));
+}
+
+.lottery-pixel-page-grid-180.lottery-pixel-page-grid-red {
+  grid-template-columns: repeat(auto-fill, minmax(62px, max-content));
+}
+
+.lottery-pixel-page-grid-160.lottery-pixel-page-grid-blue {
+  grid-template-columns: repeat(12, max-content);
+}
+
+.lottery-pixel-page-grid-320 {
+  grid-template-columns: repeat(auto-fill, minmax(52px, max-content));
+  gap: 5px;
+}
+
+.lottery-pixel-page-grid-320 .lottery-pixel-card {
+  --lottery-pixel-dot: 6px;
+  --lottery-pixel-gap: 1px;
+  --lottery-pixel-padding: 4px;
+  --lottery-pixel-font: 0;
+}
+
+.lottery-pixel-page-grid-252,
+.lottery-pixel-page-grid-336 {
+  grid-template-columns: repeat(auto-fill, minmax(32px, max-content));
+  gap: 5px;
+}
+
+.lottery-pixel-page-grid-252 .lottery-pixel-card,
+.lottery-pixel-page-grid-336 .lottery-pixel-card {
+  --lottery-pixel-dot: 6px;
+  --lottery-pixel-gap: 1px;
+  --lottery-pixel-padding: 4px;
+  --lottery-pixel-font: 0;
+}
+
+.lottery-pixel-page-grid-252.lottery-pixel-page-grid-blue,
+.lottery-pixel-page-grid-336.lottery-pixel-page-grid-blue {
+  grid-template-columns: repeat(12, max-content);
+}
+
+.lottery-pixel-page-grid-360 {
+  grid-template-columns: repeat(auto-fill, minmax(45px, max-content));
+  gap: 5px;
+}
+
+.lottery-pixel-page-grid-360 .lottery-pixel-card {
+  --lottery-pixel-dot: 6px;
+  --lottery-pixel-gap: 1px;
+  --lottery-pixel-padding: 4px;
+  --lottery-pixel-font: 0;
+}
+
+.lottery-pixel-page-grid-320.lottery-pixel-page-grid-red {
+  grid-template-columns: repeat(auto-fill, minmax(45px, max-content));
+}
+
+.lottery-pixel-page-grid-360.lottery-pixel-page-grid-red {
+  grid-template-columns: repeat(auto-fill, minmax(45px, max-content));
+}
+
+.lottery-pixel-page-grid-320.lottery-pixel-page-grid-blue {
+  grid-template-columns: repeat(12, max-content);
+}
+
+.lottery-pixel-page-grid-640 {
+  grid-template-columns: repeat(auto-fill, minmax(38px, max-content));
+  gap: 4px;
+}
+
+.lottery-pixel-page-grid-640 .lottery-pixel-card {
+  --lottery-pixel-dot: 4px;
+  --lottery-pixel-gap: 1px;
+  --lottery-pixel-padding: 3px;
+  --lottery-pixel-font: 0;
+}
+
+.lottery-pixel-page-grid-672 {
+  grid-template-columns: repeat(auto-fill, minmax(24px, max-content));
+  gap: 4px;
+}
+
+.lottery-pixel-page-grid-672 .lottery-pixel-card {
+  --lottery-pixel-dot: 4px;
+  --lottery-pixel-gap: 1px;
+  --lottery-pixel-padding: 3px;
+  --lottery-pixel-font: 0;
+}
+
+.lottery-pixel-page-grid-672.lottery-pixel-page-grid-blue {
+  grid-template-columns: repeat(12, max-content);
+}
+
+.lottery-pixel-page-grid-720 {
+  grid-template-columns: repeat(auto-fill, minmax(32px, max-content));
+  gap: 4px;
+}
+
+.lottery-pixel-page-grid-720 .lottery-pixel-card {
+  --lottery-pixel-dot: 4px;
+  --lottery-pixel-gap: 1px;
+  --lottery-pixel-padding: 3px;
+  --lottery-pixel-font: 0;
+}
+
+.lottery-pixel-page-grid-640.lottery-pixel-page-grid-red {
+  grid-template-columns: repeat(auto-fill, minmax(32px, max-content));
+}
+
+.lottery-pixel-page-grid-720.lottery-pixel-page-grid-red {
+  grid-template-columns: repeat(auto-fill, minmax(32px, max-content));
+}
+
+.lottery-pixel-page-grid-640.lottery-pixel-page-grid-blue {
+  grid-template-columns: repeat(12, max-content);
+}
+
+.lottery-pixel-pagination-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.lottery-pixel-pagination {
+  display: flex;
+  justify-content: center;
+}
+
+.lottery-pixel-page-size-select {
+  width: 76px;
+  flex: 0 0 76px;
+}
+
+.lottery-pixel-stat-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.lottery-pixel-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 12px;
+}
+
+.lottery-pixel-section-title h2 {
+  margin: 0;
+  color: var(--app-text);
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.lottery-pixel-shape-card {
+  margin-bottom: 24px;
+}
+
+.lottery-pixel-shape-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.lottery-pixel-shape-item {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) 42px;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-pixel-shape-item strong {
+  color: var(--app-text);
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.lottery-pixel-shape-item em {
+  color: var(--app-text-muted);
+  font-size: 13px;
+  font-style: normal;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.lottery-pixel-stat-list {
+  display: grid;
+  gap: 10px;
+}
+
+.lottery-pixel-stat-row {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 52px;
+  align-items: center;
+  gap: 10px;
+}
+
+.lottery-pixel-stat-row strong {
+  color: var(--app-text);
+  font-size: 13px;
+}
+
+.lottery-pixel-stat-row em {
+  color: var(--app-text-muted);
+  font-size: 13px;
+  font-style: normal;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.lottery-pixel-stat-track {
+  position: relative;
+  height: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(127, 127, 127, 0.14);
+}
+
+.lottery-pixel-stat-track span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: #34c759;
+}
+
+.lottery-pixel-stat-layout-red .lottery-pixel-stat-track span,
+.lottery-pixel-stat-track-red span {
+  background: #ff3b30;
+}
+
+.lottery-pixel-heat-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(42px, 1fr));
+  gap: 8px;
+}
+
+.lottery-pixel-heat-cell {
+  min-height: 42px;
+  border: 1px solid rgba(52, 199, 89, 0.32);
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  background: #34c759;
+}
+
+.lottery-hot-number-card > .ant-card-body {
+  min-height: 132px;
+  display: grid;
+  align-content: space-between;
+  gap: 14px;
+}
+
+.lottery-hot-number-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--app-text-muted);
+  font-size: 14px;
+}
+
+.lottery-hot-number-content {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.lottery-hot-number-ball {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  flex: 0 0 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.lottery-hot-number-ball-red {
+  background: #ff3b30;
+}
+
+.lottery-hot-number-ball-blue {
+  background: #0071e3;
+}
+
+.lottery-hot-number-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.lottery-hot-number-copy strong {
+  color: var(--app-text);
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.lottery-hot-number-copy span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lottery-prediction-panel {
+  margin-bottom: 0 !important;
+}
+
+.lottery-prediction-panel .lottery-card-title-row > svg,
+.lottery-prediction-panel .lottery-card-title-row > span {
+  color: var(--module-accent, #ff3b30);
+  font-size: 20px;
+}
+
+.lottery-omission-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(220px, 0.75fr);
+  gap: 18px;
+}
+
+.lottery-prediction-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.lottery-prediction-section-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 16px 0 10px;
+}
+
+.lottery-prediction-section-title:first-of-type {
+  margin-top: 0;
+}
+
+.lottery-prediction-section-title strong {
+  color: var(--app-text);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.lottery-prediction-section-title span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: right;
+}
+
+.lottery-trained-prediction-list {
+  grid-template-columns: 1fr;
+}
+
+.lottery-trained-prediction-card {
+  border-color: rgba(218, 165, 32, 0.45);
+  background: rgba(218, 165, 32, 0.08);
+}
+
+.lottery-trained-candidate-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 10px 0 16px;
+}
+
+.lottery-trained-candidate-card {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(218, 165, 32, 0.28);
+  border-radius: 12px;
+  background: rgba(218, 165, 32, 0.05);
+}
+
+.lottery-simple-prediction-card {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-simple-prediction-card-gold {
+  border-color: rgba(218, 165, 32, 0.42);
+  background: rgba(218, 165, 32, 0.07);
+}
+
+.lottery-latest-vs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+}
+
+.lottery-latest-vs-card {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  background: var(--app-surface-elevated);
+}
+
+button.lottery-latest-vs-card {
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+button.lottery-latest-vs-card:hover {
+  border-color: var(--module-accent, #ff3b30);
+}
+
+.lottery-latest-record-card {
+  border-color: rgba(127, 127, 127, 0.22);
+}
+
+.lottery-latest-record-empty {
+  margin: 0;
+  color: var(--app-text-muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.lottery-simple-candidate-strip,
+.lottery-simple-secondary-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.lottery-simple-secondary-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.lottery-prediction-structure {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-prediction-structure-good {
+  border-color: rgba(52, 199, 89, 0.36);
+  background: rgba(52, 199, 89, 0.07);
+}
+
+.lottery-prediction-structure-steady {
+  border-color: rgba(0, 113, 227, 0.32);
+  background: rgba(0, 113, 227, 0.06);
+}
+
+.lottery-prediction-structure-warn {
+  border-color: rgba(255, 149, 0, 0.34);
+  background: rgba(255, 149, 0, 0.07);
+}
+
+.lottery-prediction-structure-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.lottery-prediction-structure-head strong {
+  color: var(--app-text);
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.lottery-prediction-structure-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.lottery-prediction-structure-grid > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding: 10px;
+  border: 1px solid rgba(127, 127, 127, 0.14);
+  border-radius: 8px;
+  background: rgba(127, 127, 127, 0.08);
+}
+
+.lottery-prediction-structure-grid strong {
+  color: var(--app-text);
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.lottery-prediction-structure-grid span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.lottery-simple-reference-grid,
+.lottery-simple-training-summary {
+  display: grid;
+  gap: 12px;
+}
+
+.lottery-simple-reference-grid > div {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-simple-reference-grid strong {
+  color: var(--app-text);
+  font-size: 14px;
+}
+
+.lottery-simple-reference-grid span {
+  color: var(--app-text-muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.lottery-probability-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.lottery-probability-summary > div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-probability-summary strong {
+  color: var(--app-text);
+  font-size: 15px;
+}
+
+.lottery-probability-summary span,
+.lottery-probability-block-head span,
+.lottery-probability-detail p,
+.lottery-probability-detail-meta span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lottery-probability-block {
+  display: grid;
+  gap: 10px;
+}
+
+.lottery-probability-block-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lottery-probability-block-head strong,
+.lottery-probability-top-list > div > strong {
+  color: var(--app-text);
+  font-size: 14px;
+}
+
+.lottery-probability-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+  gap: 8px;
+}
+
+.lottery-probability-cell {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  padding: 8px 6px;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-probability-cell strong {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 12px;
+}
+
+.lottery-probability-cell-red strong {
+  background: #ff3b30;
+}
+
+.lottery-probability-cell-blue strong {
+  background: #0071e3;
+}
+
+.lottery-probability-cell span {
+  color: var(--app-text);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.lottery-probability-top-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.lottery-probability-top-list > div {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.lottery-probability-detail {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-probability-detail > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.lottery-probability-detail > div:first-child strong {
+  color: var(--app-text);
+  font-size: 16px;
+}
+
+.lottery-probability-detail > div:first-child span {
+  color: var(--module-accent, #ff3b30);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.lottery-probability-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lottery-probability-detail-meta span {
+  padding: 2px 7px;
+  border-radius: 8px;
+  background: rgba(127, 127, 127, 0.12);
+}
+
+.lottery-probability-detail p {
+  margin: 0;
+}
+
+.lottery-simple-stat-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.lottery-simple-stat-row .ant-statistic {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-prediction-page .lottery-prediction-card-head {
+  align-items: center;
+}
+
+.lottery-prediction-page .lottery-prediction-card-head strong {
+  font-size: 14px;
+}
+
+.lottery-prediction-page .lottery-prediction-tags span {
+  min-height: 22px;
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+
+.lottery-prediction-page .lottery-balls {
+  gap: 6px;
+}
+
+.lottery-prediction-page .lottery-ball {
+  width: 32px;
+  height: 32px;
+  font-size: 12px;
+}
+
+.lottery-prediction-page .lottery-actual-record-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.lottery-prediction-page .lottery-actual-form {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  max-width: 520px;
+}
+
+.lottery-prediction-page .lottery-actual-form .ant-form-item {
+  margin-bottom: 8px;
+}
+
+.lottery-prediction-page .lottery-actual-summary {
+  min-height: auto;
+  padding: 12px;
+  border-radius: 10px;
+}
+
+.lottery-prediction-card {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-prediction-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.lottery-prediction-card-head > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.lottery-prediction-card-head strong {
+  color: var(--app-text);
+  font-size: 15px;
+  line-height: 1.3;
+}
+
+.lottery-prediction-card-head span,
+.lottery-prediction-card p {
+  margin: 0;
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.lottery-prediction-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lottery-prediction-tags span {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: var(--app-text);
+  background: rgba(127, 127, 127, 0.14);
+  font-size: 12px;
+}
+
+.lottery-omission-grid h3,
+.lottery-candidate-pool strong {
+  margin: 0;
+  color: var(--app-text);
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.lottery-insight-number-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.lottery-insight-number-row {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.lottery-insight-ball {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  flex: 0 0 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.lottery-insight-ball-red {
+  background: #ff3b30;
+}
+
+.lottery-insight-ball-blue {
+  background: #0071e3;
+}
+
+.lottery-structure-list {
+  display: grid;
+  gap: 10px;
+}
+
+.lottery-structure-row {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--app-border);
+}
+
+.lottery-structure-row:last-child {
+  border-bottom: 0;
+}
+
+.lottery-structure-row > div:first-child,
+.lottery-candidate-pool > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.lottery-structure-row strong {
+  color: var(--app-text);
+  font-size: 15px;
+}
+
+.lottery-structure-row span,
+.lottery-candidate-pool span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lottery-structure-values {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  text-align: right;
+}
+
+.lottery-health-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.lottery-health-card {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-health-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lottery-health-card-head > div:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.lottery-health-card-head strong {
+  color: var(--app-text);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.lottery-health-card-head span,
+.lottery-health-values span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lottery-health-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lottery-health-values span {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  border-radius: 8px;
+  background: rgba(127, 127, 127, 0.12);
+}
+
+.lottery-team-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.lottery-team-card {
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-team-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lottery-team-card-head > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.lottery-team-card-head strong,
+.lottery-team-group-row strong {
+  color: var(--app-text);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.lottery-team-card-head span,
+.lottery-team-summary span,
+.lottery-team-extremes span,
+.lottery-team-group-row span,
+.lottery-team-member-list span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lottery-team-summary,
+.lottery-team-extremes,
+.lottery-team-member-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.lottery-team-summary span,
+.lottery-team-extremes span {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  border-radius: 8px;
+  background: rgba(127, 127, 127, 0.12);
+}
+
+.lottery-team-groups {
+  display: grid;
+  gap: 8px;
+}
+
+.lottery-team-group-row {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--app-border);
+}
+
+.lottery-team-group-row:last-child {
+  border-bottom: 0;
+}
+
+.lottery-team-group-row > div:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.lottery-team-member-list > span {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 6px 3px 8px;
+  border-radius: 999px;
+  background: rgba(127, 127, 127, 0.12);
+}
+
+.lottery-candidate-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.lottery-candidate-pool {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-guidance-panel {
+  grid-column: 1 / -1;
+}
+
+.lottery-guidance-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.lottery-guidance-list span {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border: 1px solid var(--app-border);
+  border-radius: 999px;
+  color: var(--app-text);
+  background: var(--app-surface-elevated);
+  font-size: 12px;
+}
+
+.lottery-replay-panel {
+  margin-bottom: 0 !important;
+}
+
+.lottery-replay-toolbar {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 18px;
+}
+
+.lottery-replay-select {
+  width: 100%;
+}
+
+.lottery-replay-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.lottery-replay-summary .ant-statistic {
+  min-height: 72px;
+  padding: 10px 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-replay-tips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.lottery-prize-distribution {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.lottery-replay-tips span {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: var(--app-text);
+  background: rgba(127, 127, 127, 0.14);
+  font-size: 12px;
+}
+
+.lottery-replay-list {
+  display: grid;
+  gap: 12px;
+}
+
+.lottery-replay-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 0.7fr) minmax(0, 2fr) minmax(180px, 0.9fr);
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-replay-period,
+.lottery-replay-comparison > div,
+.lottery-replay-score {
+  display: grid;
+  gap: 8px;
+}
+
+.lottery-replay-period strong {
+  color: var(--app-text);
+  font-size: 14px;
+}
+
+.lottery-replay-period span,
+.lottery-replay-comparison span,
+.lottery-replay-score span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lottery-replay-comparison {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.lottery-replay-score {
+  justify-items: start;
+}
+
+.lottery-rule-trainer-panel {
+  margin-bottom: 24px !important;
+}
+
+.lottery-actual-record-panel {
+  margin-bottom: 24px !important;
+}
+
+.lottery-actual-record-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.lottery-actual-form {
+  display: grid;
+  grid-template-columns: minmax(100px, 140px) minmax(220px, 1fr) minmax(100px, 140px) minmax(120px, auto);
+  gap: 12px;
+  align-items: end;
+}
+
+.lottery-actual-form .ant-form-item {
+  margin-bottom: 0;
+}
+
+.lottery-actual-summary {
+  min-height: 96px;
+  display: grid;
+  align-content: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-actual-summary strong {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--app-text);
+  font-size: 14px;
+}
+
+.lottery-actual-summary span,
+.lottery-actual-score span,
+.lottery-trained-score span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lottery-actual-score,
+.lottery-trained-score {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lottery-actual-score span,
+.lottery-trained-score span {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(127, 127, 127, 0.12);
+}
+
+.lottery-trainer-toolbar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(160px, 220px)) minmax(120px, 160px);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.lottery-trainer-summary {
+  display: grid;
+  grid-template-columns: minmax(240px, 1.5fr) repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.lottery-trainer-summary .ant-statistic {
+  min-height: 72px;
+  padding: 10px 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-training-progress {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(22, 119, 255, 0.28);
+  border-radius: 12px;
+  background: rgba(22, 119, 255, 0.06);
+}
+
+.lottery-training-progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lottery-training-progress-head strong {
+  color: var(--app-text);
+  font-size: 15px;
+}
+
+.lottery-training-progress-head span {
+  color: var(--app-text-muted);
+  font-size: 13px;
+}
+
+.lottery-training-stage-list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.lottery-training-stage-list span {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: rgba(127, 127, 127, 0.12);
+  color: var(--app-text-muted);
+  font-size: 12px;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.lottery-training-stage-list span.is-active {
+  background: rgba(22, 119, 255, 0.16);
+  color: var(--app-text);
+}
+
+.lottery-training-status-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--app-text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.lottery-training-status-line strong {
+  flex: 0 0 auto;
+  color: var(--app-text);
+  font-size: 13px;
+}
+
+.lottery-trained-latest {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border: 1px solid rgba(218, 165, 32, 0.35);
+  border-radius: 10px;
+  background: rgba(218, 165, 32, 0.08);
+  color: var(--app-text);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.lottery-trained-rule-list {
+  display: grid;
+  gap: 12px;
+}
+
+.lottery-training-timeline {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.lottery-training-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lottery-training-section-head strong {
+  color: var(--app-text);
+  font-size: 15px;
+}
+
+.lottery-training-section-head span,
+.lottery-training-comparison > div > span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.lottery-training-timeline-card {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-training-comparison {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.lottery-training-comparison > div {
+  display: grid;
+  gap: 8px;
+}
+
+.lottery-trained-rule-card {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-trained-rule-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lottery-trained-rule-head > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.lottery-trained-rule-head strong {
+  color: var(--app-text);
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.lottery-trained-rule-head span,
+.lottery-trained-rule-metrics span,
+.lottery-trained-rule-params span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lottery-trained-rule-metrics,
+.lottery-trained-rule-params,
+.lottery-trained-rule-prizes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lottery-trained-rule-metrics span,
+.lottery-trained-rule-params span {
+  min-height: 26px;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(127, 127, 127, 0.14);
+}
+
+.lottery-chart-card {
+  margin-bottom: 0 !important;
+}
+
+.lottery-chart {
+  width: 100%;
+  height: 300px !important;
+}
+
+.lottery-draw-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.lottery-draw-card {
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-card-radius);
+  background: var(--app-surface-elevated);
+  color: var(--app-text);
+  padding: 14px;
+  text-align: left;
+  cursor: pointer;
+  display: grid;
+  gap: 12px;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.lottery-draw-card:hover {
+  border-color: var(--module-accent, #ff3b30);
+  transform: translateY(-1px);
+}
+
+.lottery-draw-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lottery-draw-card-head strong {
+  color: var(--app-text);
+}
+
+.lottery-draw-card-head span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.lottery-detail-panel {
+  display: grid;
+  gap: 22px;
+}
+
+.lottery-ai-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.lottery-ai-response {
+  white-space: pre-wrap;
+  line-height: 1.7;
+  color: var(--app-text);
+  background: var(--app-surface-elevated);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-card-radius);
+  padding: 14px;
+}
+
+@media (max-width: 900px) {
+  .lottery-universe-page {
+    padding: 12px var(--app-page-inline-padding) 22px;
+  }
+
+  .lottery-universe-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .lottery-universe-header-actions {
+    justify-content: flex-start;
+  }
+
+  .lottery-universe-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lottery-universe-kpis > div:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .lottery-universe-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lottery-universe-matrix-panel {
+    order: -1;
+  }
+
+  .lottery-universe-matrix {
+    grid-template-columns: repeat(7, minmax(36px, 1fr));
+    grid-auto-rows: 48px;
+    gap: 6px;
+  }
+
+  .lottery-universe-cell {
+    padding: 6px;
+    border-radius: 6px;
+  }
+
+  .lottery-universe-side-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .lottery-universe-rank-panel {
+    display: none;
+  }
+
+  .lottery-universe-mobile-stack {
+    display: grid;
+  }
+
+  .lottery-universe-trace-list {
+    grid-template-columns: repeat(12, 82px);
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .lottery-prediction-structure-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lottery-latest-draw-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lottery-status-grid,
+  .lottery-chart-grid,
+  .lottery-pixel-stat-layout,
+  .lottery-prediction-grid,
+  .lottery-simple-page-grid,
+  .lottery-simple-support-grid,
+  .lottery-simple-candidate-strip,
+  .lottery-simple-secondary-list,
+  .lottery-prediction-structure,
+  .lottery-simple-stat-row,
+  .lottery-latest-vs-grid,
+  .lottery-probability-summary,
+  .lottery-probability-top-list,
+  .lottery-omission-grid,
+  .lottery-candidate-grid,
+  .lottery-health-grid,
+  .lottery-team-grid,
+  .lottery-prediction-list,
+  .lottery-trained-candidate-grid,
+  .lottery-replay-toolbar,
+  .lottery-replay-summary,
+  .lottery-replay-row,
+  .lottery-replay-comparison,
+  .lottery-yearly-content,
+  .lottery-trainer-toolbar,
+  .lottery-trainer-summary,
+  .lottery-actual-record-grid,
+  .lottery-actual-form {
+    grid-template-columns: 1fr;
+  }
+
+  .lottery-pixel-page-grid {
+    grid-template-columns: repeat(auto-fill, minmax(128px, max-content));
+    gap: 8px;
+  }
+
+  .lottery-pixel-page-grid-red {
+    grid-template-columns: repeat(auto-fill, minmax(112px, max-content));
+  }
+
+  .lottery-pixel-page-grid-45 {
+    grid-template-columns: repeat(auto-fill, minmax(112px, max-content));
+  }
+
+  .lottery-pixel-page-grid-blue {
+    grid-template-columns: repeat(12, max-content);
+  }
+
+  .lottery-pixel-page-grid-80 {
+    grid-template-columns: repeat(auto-fill, minmax(106px, max-content));
+  }
+
+  .lottery-pixel-page-grid-84 {
+    grid-template-columns: repeat(auto-fill, minmax(66px, max-content));
+  }
+
+  .lottery-pixel-page-grid-84.lottery-pixel-page-grid-blue {
+    grid-template-columns: repeat(12, max-content);
+  }
+
+  .lottery-pixel-page-grid-90 {
+    grid-template-columns: repeat(auto-fill, minmax(94px, max-content));
+  }
+
+  .lottery-pixel-page-grid-80.lottery-pixel-page-grid-red {
+    grid-template-columns: repeat(auto-fill, minmax(94px, max-content));
+  }
+
+  .lottery-pixel-page-grid-80.lottery-pixel-page-grid-blue {
+    grid-template-columns: repeat(12, max-content);
+  }
+
+  .lottery-pixel-page-grid-120 {
+    grid-template-columns: repeat(auto-fill, minmax(90px, max-content));
+  }
+
+  .lottery-pixel-page-grid-135 {
+    grid-template-columns: repeat(auto-fill, minmax(80px, max-content));
+  }
+
+  .lottery-pixel-page-grid-120.lottery-pixel-page-grid-red {
+    grid-template-columns: repeat(auto-fill, minmax(80px, max-content));
+  }
+
+  .lottery-pixel-page-grid-120.lottery-pixel-page-grid-blue {
+    grid-template-columns: repeat(auto-fill, minmax(56px, max-content));
+  }
+
+  .lottery-pixel-page-grid-160 {
+    grid-template-columns: repeat(auto-fill, minmax(70px, max-content));
+  }
+
+  .lottery-pixel-page-grid-168 {
+    grid-template-columns: repeat(auto-fill, minmax(44px, max-content));
+  }
+
+  .lottery-pixel-page-grid-168.lottery-pixel-page-grid-blue {
+    grid-template-columns: repeat(12, max-content);
+  }
+
+  .lottery-pixel-page-grid-180 {
+    grid-template-columns: repeat(auto-fill, minmax(62px, max-content));
+  }
+
+  .lottery-pixel-page-grid-160.lottery-pixel-page-grid-red {
+    grid-template-columns: repeat(auto-fill, minmax(62px, max-content));
+  }
+
+  .lottery-pixel-page-grid-160.lottery-pixel-page-grid-blue {
+    grid-template-columns: repeat(12, max-content);
+  }
+
+  .lottery-pixel-page-grid-320 {
+    grid-template-columns: repeat(auto-fill, minmax(52px, max-content));
+  }
+
+  .lottery-pixel-page-grid-252,
+  .lottery-pixel-page-grid-336 {
+    grid-template-columns: repeat(auto-fill, minmax(32px, max-content));
+  }
+
+  .lottery-pixel-page-grid-252.lottery-pixel-page-grid-blue,
+  .lottery-pixel-page-grid-336.lottery-pixel-page-grid-blue {
+    grid-template-columns: repeat(12, max-content);
+  }
+
+  .lottery-pixel-page-grid-360 {
+    grid-template-columns: repeat(auto-fill, minmax(45px, max-content));
+  }
+
+  .lottery-pixel-page-grid-320.lottery-pixel-page-grid-red {
+    grid-template-columns: repeat(auto-fill, minmax(45px, max-content));
+  }
+
+  .lottery-pixel-page-grid-320.lottery-pixel-page-grid-blue {
+    grid-template-columns: repeat(12, max-content);
+  }
+
+  .lottery-pixel-page-grid-640 {
+    grid-template-columns: repeat(auto-fill, minmax(38px, max-content));
+  }
+
+  .lottery-pixel-page-grid-672 {
+    grid-template-columns: repeat(auto-fill, minmax(24px, max-content));
+  }
+
+  .lottery-pixel-page-grid-672.lottery-pixel-page-grid-blue {
+    grid-template-columns: repeat(12, max-content);
+  }
+
+  .lottery-pixel-page-grid-720 {
+    grid-template-columns: repeat(auto-fill, minmax(32px, max-content));
+  }
+
+  .lottery-pixel-page-grid-640.lottery-pixel-page-grid-red {
+    grid-template-columns: repeat(auto-fill, minmax(32px, max-content));
+  }
+
+  .lottery-pixel-page-grid-640.lottery-pixel-page-grid-blue {
+    grid-template-columns: repeat(12, max-content);
+  }
+
+  .lottery-pixel-heat-grid {
+    grid-template-columns: repeat(7, minmax(28px, 1fr));
+    gap: 6px;
+  }
+
+  .lottery-pixel-heat-cell {
+    min-height: 32px;
+    border-radius: 6px;
+    font-size: 10px;
+  }
+}

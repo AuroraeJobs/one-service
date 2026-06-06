@@ -1,0 +1,226 @@
+import { useEffect, useMemo, useState } from 'react';
+import { Button, Card, Empty, Space, Spin, Tag } from 'antd';
+import { DatabaseOutlined, PieChartOutlined, ReloadOutlined } from '@ant-design/icons';
+import type { EChartsOption } from 'echarts';
+import ReactECharts from 'echarts-for-react';
+import { useNavigate } from 'react-router-dom';
+import LifePageShell from './LifePageShell';
+import LotteryAiPanel from './lottery/LotteryAiPanel';
+import LotteryBalls from './lottery/LotteryBalls';
+import LotteryFrequencyCharts from './lottery/LotteryFrequencyCharts';
+import LotteryPeriodDetail from './lottery/LotteryPeriodDetail';
+import LotterySummaryCards from './lottery/LotterySummaryCards';
+import { useRecordContext } from '../contexts/RecordContext';
+import { recordApi, type RecordYearCount } from '../services/api';
+import { buildLotteryStats, getRecentDraws, type LotteryDraw } from '../utils/lotteryStats';
+import './LotteryOverviewPage.css';
+
+const YEARLY_PIE_COLORS = [
+  '#ff4d4f',
+  '#1677ff',
+  '#52c41a',
+  '#faad14',
+  '#722ed1',
+  '#13c2c2',
+  '#eb2f96',
+  '#2f54eb',
+  '#a0d911',
+  '#fa8c16'
+];
+
+const createYearlyPieOption = (yearlyCounts: RecordYearCount[]): EChartsOption => ({
+  backgroundColor: 'transparent',
+  color: YEARLY_PIE_COLORS,
+  tooltip: {
+    trigger: 'item',
+    formatter: params => {
+      const item = params as { name: string; value: number; percent: number };
+      return `${item.name} 年<br/>${item.value} 条，占比 ${item.percent}%`;
+    }
+  },
+  series: [
+    {
+      name: '年度记录数',
+      type: 'pie',
+      radius: ['58%', '78%'],
+      center: ['50%', '50%'],
+      avoidLabelOverlap: true,
+      padAngle: 1,
+      itemStyle: { borderWidth: 0 },
+      label: { show: false },
+      labelLine: { show: false },
+      emphasis: {
+        scaleSize: 6,
+        itemStyle: {
+          shadowBlur: 16,
+          shadowColor: 'rgba(0, 0, 0, 0.2)'
+        }
+      },
+      data: yearlyCounts.map(item => ({
+        name: item.year,
+        value: item.count
+      }))
+    }
+  ]
+});
+
+const LotteryOverviewPage = () => {
+  const navigate = useNavigate();
+  const { allRecords, loading, refreshRecords } = useRecordContext();
+  const [selectedDraw, setSelectedDraw] = useState<LotteryDraw | undefined>();
+  const [yearlyCounts, setYearlyCounts] = useState<RecordYearCount[]>([]);
+  const [yearlyCountsLoading, setYearlyCountsLoading] = useState(false);
+  const [yearlyCountsRefreshing, setYearlyCountsRefreshing] = useState(false);
+  const stats = useMemo(() => buildLotteryStats(allRecords), [allRecords]);
+  const recentDraws = useMemo(() => getRecentDraws(stats.draws, 10), [stats.draws]);
+  const recentTopDraws = useMemo(() => recentDraws.slice(0, 4), [recentDraws]);
+  const totalYearlyRecords = useMemo(
+    () => yearlyCounts.reduce((sum, item) => sum + item.count, 0),
+    [yearlyCounts]
+  );
+  const sortedYearlyCounts = useMemo(
+    () => [...yearlyCounts].sort((left, right) => right.year.localeCompare(left.year)),
+    [yearlyCounts]
+  );
+  const yearlyPieOption = useMemo(
+    () => createYearlyPieOption(sortedYearlyCounts),
+    [sortedYearlyCounts]
+  );
+
+  const fetchYearlyCounts = async () => {
+    setYearlyCountsLoading(true);
+    try {
+      const data = await recordApi.getYearlyCounts();
+      setYearlyCounts(data);
+    } catch (error) {
+      console.error('获取年度记录统计失败:', error);
+      setYearlyCounts([]);
+    } finally {
+      setYearlyCountsLoading(false);
+    }
+  };
+
+  const handleRefreshRecords = async () => {
+    await refreshRecords();
+    await fetchYearlyCounts();
+  };
+
+  const handleRefreshYearlyCounts = async () => {
+    setYearlyCountsRefreshing(true);
+    try {
+      const data = await recordApi.refreshYearlyCounts();
+      setYearlyCounts(data);
+    } catch (error) {
+      console.error('手动统计年度记录失败:', error);
+    } finally {
+      setYearlyCountsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchYearlyCounts();
+  }, []);
+
+  return (
+    <LifePageShell
+      className="lottery-overview-page"
+      eyebrow="彩票数据"
+      title="双色球数据概览"
+      actions={
+        <Space wrap>
+          <LotteryAiPanel stats={stats} recentDraws={recentDraws} />
+          <Button icon={<ReloadOutlined />} loading={loading || yearlyCountsLoading} onClick={handleRefreshRecords}>
+            更新数据
+          </Button>
+          <Button type="primary" icon={<DatabaseOutlined />} onClick={() => navigate('/lottery/records')}>
+            开奖记录
+          </Button>
+        </Space>
+      }
+    >
+      <section className="lottery-status-grid">
+        <Card className="life-panel-card lottery-latest-card">
+          <div className="lottery-card-title-row">
+            <div>
+              <h2>最近开奖</h2>
+              <p>最近四期开奖记录，点击查看完整结构。</p>
+            </div>
+            <Tag color={recentTopDraws.length ? 'success' : 'default'}>{recentTopDraws.length ? '已同步' : '暂无数据'}</Tag>
+          </div>
+
+          {recentTopDraws.length > 0 ? (
+            <div className="lottery-latest-draw-grid">
+              {recentTopDraws.map(draw => (
+                <button key={draw.id} type="button" className="lottery-draw-card lottery-latest-draw-card" onClick={() => setSelectedDraw(draw)}>
+                  <div className="lottery-draw-card-head">
+                    <strong>第 {draw.period} 期</strong>
+                    <span>{draw.combination}</span>
+                  </div>
+                  <LotteryBalls redNumbers={draw.redNumbers} blueNumber={draw.blueNumber} />
+                  <div className="lottery-draw-meta">
+                    <span>和值 {draw.redSum}</span>
+                    <span>{draw.hexagramName}</span>
+                    <span>{draw.planetName}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <Empty description="暂无开奖数据" />
+          )}
+        </Card>
+
+        <Card className="life-panel-card lottery-yearly-card lottery-yearly-card-compact">
+          <div className="lottery-card-title-row">
+            <div>
+              <h2>年度记录占比</h2>
+              <p>按开奖年份拆分历史样本。</p>
+            </div>
+            <Space wrap>
+              <Tag icon={<PieChartOutlined />} color={yearlyCounts.length ? 'processing' : 'default'}>
+                {totalYearlyRecords ? `${totalYearlyRecords} 条` : '暂无统计'}
+              </Tag>
+              <Button
+                size="small"
+                icon={<ReloadOutlined />}
+                loading={yearlyCountsRefreshing}
+                onClick={handleRefreshYearlyCounts}
+              >
+                手动统计
+              </Button>
+            </Space>
+          </div>
+          <Spin spinning={yearlyCountsLoading || yearlyCountsRefreshing}>
+            {yearlyCounts.length > 0 ? (
+              <div className="lottery-yearly-content">
+                <div className="lottery-yearly-chart-shell">
+                  <ReactECharts option={yearlyPieOption} className="lottery-yearly-chart" />
+                  <div className="lottery-yearly-center" aria-hidden="true">
+                    <strong>{totalYearlyRecords.toLocaleString()}</strong>
+                    <span>总记录</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Empty description="暂无年度统计数据" />
+            )}
+          </Spin>
+        </Card>
+      </section>
+
+      <LotterySummaryCards stats={stats} />
+
+      {stats.draws.length > 0 && (
+        <LotteryFrequencyCharts redFrequency={stats.redFrequency} blueFrequency={stats.blueFrequency} />
+      )}
+
+      <LotteryPeriodDetail
+        draw={selectedDraw}
+        open={Boolean(selectedDraw)}
+        onClose={() => setSelectedDraw(undefined)}
+      />
+    </LifePageShell>
+  );
+};
+
+export default LotteryOverviewPage;

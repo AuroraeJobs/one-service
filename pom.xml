@@ -4,41 +4,15 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.aurorae</groupId>
-    <artifactId>aurorae-service</artifactId>
-    <version>1.0</version>
-    <name>${project.artifactId}</name>
-    <inceptionYear>2020 - now</inceptionYear>
-
-    <url>https://aurorae.org</url>
-    <developers>
-        <developer>
-            <name>aurorae</name>
-            <url>https://aurorae.com</url>
-            <email>aurorae_jobs@hotmail.com</email>
-        </developer>
-    </developers>
-    <description>Aurorae for Spring Boot</description>
+    <groupId>com.one</groupId>
+    <artifactId>one-service</artifactId>
+    <version>26.0.0-SNAPSHOT</version>
 
     <modules>
-        <module>aurorae-admin</module>
-        <module>aurorae-ai</module>
-        <module>aurorae-tsdb</module>
-        <module>aurorae-common</module>
-        <module>aurorae-config</module>
-        <module>aurorae-core</module>
-        <module>aurorae-record</module>
-        <module>aurorae-database</module>
-        <module>aurorae-flink</module>
-        <module>aurorae-gateway</module>
-        <module>aurorae-manager</module>
-        <module>aurorae-mq</module>
-        <module>aurorae-profiles</module>
-        <module>aurorae-register</module>
-        <module>aurorae-sso</module>
-        <module>aurorae-test</module>
-        <module>aurorae-web</module>
-        <module>aurorae-starter</module>
+        <module>one-core</module>
+        <module>one-record</module>
+        <module>one-security</module>
+        <module>one-starter</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -52,13 +26,11 @@
         <guava.version>31.0.1-jre</guava.version>
         <hutool.version>5.7.16</hutool.version>
         <fastjson.version>1.2.76</fastjson.version>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
-        <maven.compiler.plugin>3.8.1</maven.compiler.plugin>
-        <maven.jar.plugin>3.2.0</maven.jar.plugin>
-        <maven.resource.plugin>3.1.0</maven.resource.plugin>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <java.version>17</java.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
     </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -92,10 +64,18 @@
             <artifactId>swagger-annotations</artifactId>
         </dependency>
 
-        <!-- lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.one</groupId>
+            <artifactId>one-core</artifactId>
         </dependency>
     </dependencies>
 
@@ -203,155 +183,66 @@
             </dependency>
 
             <!-- Aurore -->
-            <!-- base -->
             <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-tsdb</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-tsdb-interface</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-tsdb-service</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-common</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-config</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-profiles</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-admin</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-web</artifactId>
-                <version>${project.version}</version>
-                <type>pom</type>
-            </dependency>
-            <!-- core -->
-            <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-core-model</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-core-interface</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-core-repository</artifactId>
+                <groupId>com.one</groupId>
+                <artifactId>one-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <!-- sso -->
             <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-sso</artifactId>
+                <groupId>com.one</groupId>
+                <artifactId>one-security</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-sso-client</artifactId>
+                <groupId>com.one</groupId>
+                <artifactId>one-security-interface</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-sso-interface</artifactId>
+                <groupId>com.one</groupId>
+                <artifactId>one-security-model</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-sso-model</artifactId>
+                <groupId>com.one</groupId>
+                <artifactId>one-security-repository</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-sso-repository</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-sso-service</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <!-- manager -->
-            <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-manager-model</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-manager-interface</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-manager-repository</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-manager-client</artifactId>
+                <groupId>com.one</groupId>
+                <artifactId>one-security-service</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <!-- record -->
             <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-record</artifactId>
+                <groupId>com.one</groupId>
+                <artifactId>one-record</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-record-model</artifactId>
+                <groupId>com.one</groupId>
+                <artifactId>one-record-model</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-record-repository</artifactId>
+                <groupId>com.one</groupId>
+                <artifactId>one-record-repository</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-record-interface</artifactId>
+                <groupId>com.one</groupId>
+                <artifactId>one-record-interface</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-record-service</artifactId>
+                <groupId>com.one</groupId>
+                <artifactId>one-record-service</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-record-web</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-mq-interface</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.aurorae</groupId>
-                <artifactId>aurorae-database</artifactId>
+                <groupId>com.one</groupId>
+                <artifactId>one-record-web</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>

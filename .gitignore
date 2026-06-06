@@ -6,3 +6,6 @@ tmp
 db
 ticai
 taiji
+.env
+dump.rdb
+response.json

@@ -1,0 +1,2 @@
+#org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+#  autoconfig.com.one.common.HttpClientAutoConfiguration
