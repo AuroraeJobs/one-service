@@ -12,6 +12,10 @@
         <!-- Aurorae -->
         <dependency>
             <groupId>com.one</groupId>
+            <artifactId>one-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.one</groupId>
             <artifactId>one-record-model</artifactId>
         </dependency>
         <dependency>

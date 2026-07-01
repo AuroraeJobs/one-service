@@ -67,6 +67,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
   const [statisticType, setStatisticType] = useState<'red' | 'blue'>('red');
   // 使用ref防止useEffect在StrictMode下运行两次
   const hasFetchedRef = useRef(false);
+  const collectRulerRef = useRef<HTMLDivElement>(null);
   // 从Context获取数据
   const { allRecords: contextAllRecords } = useRecordContext();
   
@@ -4454,32 +4455,10 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
     );
   };
 
-  // 触控板滑动事件处理
-  const handleWheel = (e: React.WheelEvent) => {
-    // 只有在"集齐"页面时才处理滑动事件
-    if (activeTabKey !== '7') return;
-    
-    // 阻止默认滚动行为
-    e.preventDefault();
-    
-    // 根据滑动方向调整当前期数
-    const delta = e.deltaX;
-    let newPeriod = currentPeriod;
-    
-    if (delta > 0 && currentPeriod < allRecords.length - 1) {
-      // 向右滑动，增加期数
-      newPeriod = currentPeriod + 1;
-    } else if (delta < 0 && currentPeriod > 0) {
-      // 向左滑动，减少期数
-      newPeriod = currentPeriod - 1;
-    }
-    
-    setCurrentPeriod(newPeriod);
-  };
-
   const renderRuler = () => {
     return (
       <div 
+        ref={collectRulerRef}
         style={{ 
           width: '60%', 
           height: '35px', 
@@ -4493,9 +4472,11 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           transform: 'translateX(-50%)',
           zIndex: 999,
           overflow: 'hidden',
-          maxWidth: '600px'
+          maxWidth: '600px',
+          overscrollBehavior: 'contain',
+          overscrollBehaviorX: 'none',
+          touchAction: 'none'
         }}
-        onWheel={handleWheel}
       >
         {/* 刻度尺容器 */}
         <div style={{ 
@@ -4628,6 +4609,50 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             {currentPeriod + 1}
           </div>
         </div>
+        <button
+          type="button"
+          aria-label="上一期"
+          title="上一期"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            setCurrentPeriod(previousPeriod => Math.max(0, previousPeriod - 1));
+          }}
+          style={{
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            width: '50%',
+            border: 0,
+            padding: 0,
+            backgroundColor: 'transparent',
+            cursor: currentPeriod > 0 ? 'pointer' : 'default',
+            zIndex: 2
+          }}
+        />
+        <button
+          type="button"
+          aria-label="下一期"
+          title="下一期"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            setCurrentPeriod(previousPeriod => Math.min(allRecords.length - 1, previousPeriod + 1));
+          }}
+          style={{
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            right: 0,
+            width: '50%',
+            border: 0,
+            padding: 0,
+            backgroundColor: 'transparent',
+            cursor: currentPeriod < allRecords.length - 1 ? 'pointer' : 'default',
+            zIndex: 2
+          }}
+        />
       </div>
     );
   };
@@ -4635,12 +4660,13 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
   const renderCollectStats = () => {
     // 计算集齐周期范围
     const calculateCollectRange = () => {
-      if (!allRecords.length || currentPeriod >= allRecords.length) return { start: -1, end: -1, numbers: {}, count: 0 };
+      if (!allRecords.length || currentPeriod >= allRecords.length) return { start: -1, end: -1, numbers: {}, count: 0, recentNumbers: [] };
       
       const isRed = statisticType === 'red';
       const totalNumbers = isRed ? 33 : 16;
       const numberSet = new Set<string>();
       const numberCounts: { [key: string]: number } = {};
+      const periodNumbers: Array<{ period: number; numbers: string[] }> = [];
       
       // 初始化所有号码计数为0
       for (let i = 1; i <= totalNumbers; i++) {
@@ -4648,14 +4674,14 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
         numberCounts[num] = 0;
       }
       
-      // 从当前期开始向后遍历
+      // 从当前期开始向历史期回溯，当前期是最近端
       let startPeriod = currentPeriod;
-      let endPeriod = currentPeriod;
+      const endPeriod = currentPeriod;
       
-      while (endPeriod < allRecords.length && numberSet.size < totalNumbers) {
-        const record = allRecords[endPeriod];
+      while (startPeriod >= 0 && numberSet.size < totalNumbers) {
+        const record = allRecords[startPeriod];
         if (record) {
-          let numbers: string[] = [];
+          const numbers: string[] = [];
           
           if (isRed) {
             // 红球：前12位，每2位一个号码
@@ -4666,6 +4692,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             // 蓝球：最后两位
             numbers.push(record.substring(12, 14));
           }
+          periodNumbers.push({ period: startPeriod, numbers });
           
           // 统计号码出现次数并添加到集合
           numbers.forEach(number => {
@@ -4675,15 +4702,18 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
         }
         
         if (numberSet.size < totalNumbers) {
-          endPeriod++;
+          startPeriod--;
         }
       }
       
+      const actualStartPeriod = Math.max(0, startPeriod);
+      
       return {
-        start: startPeriod,
+        start: actualStartPeriod,
         end: endPeriod,
         numbers: numberCounts,
-        count: endPeriod - startPeriod + 1
+        count: endPeriod - actualStartPeriod + 1,
+        recentNumbers: Array.from(new Set(periodNumbers.flatMap(item => item.numbers)))
       };
     };
     
@@ -4837,51 +4867,30 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
             </div>
           </div>
           
-          {/* 本期号码展示 - 移动到上方 */}
+          {/* 集齐号码展示 - 越接近当前期出现的号码越靠前 */}
           <div style={{ 
             display: 'flex', 
             justifyContent: 'center', 
+            flexWrap: 'wrap',
             gap: '10px',
             margin: '0 0 10px 0'
           }}>
-            {allRecords.length > 0 && currentPeriod < allRecords.length && (
-              <>
-                {/* 红球 */}
-                {statisticType === 'red' && allRecords[currentPeriod].substring(0, 12).match(/.{2}/g)?.map((num, index) => (
-                  <div key={index} style={{ 
-                    width: '50px', 
-                    height: '50px', 
-                    borderRadius: '50%', 
-                    backgroundColor: '#ff4d4f',
-                    color: '#fff',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    fontSize: '20px',
-                    fontWeight: 'bold'
-                  }}>
-                    {parseInt(num)}
-                  </div>
-                ))}
-                {/* 蓝球 */}
-                {statisticType === 'blue' && (
-                  <div style={{ 
-                    width: '50px', 
-                    height: '50px', 
-                    borderRadius: '50%', 
-                    backgroundColor: '#1890ff',
-                    color: '#fff',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    fontSize: '20px',
-                    fontWeight: 'bold'
-                  }}>
-                    {parseInt(allRecords[currentPeriod].substring(12, 14))}
-                  </div>
-                )}
-              </>
-            )}
+            {collectRange.recentNumbers.map((num, index) => (
+              <div key={index} style={{ 
+                width: '50px', 
+                height: '50px', 
+                borderRadius: '50%', 
+                backgroundColor: statisticType === 'red' ? '#f5222d' : '#1890ff',
+                color: '#fff',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                fontSize: '20px',
+                fontWeight: 'bold'
+              }}>
+                {parseInt(num)}
+              </div>
+            ))}
           </div>
           
           {/* 集齐统计信息 */}
@@ -5296,6 +5305,36 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
   
   // 集齐页面当前显示期数状态
   const [currentPeriod, setCurrentPeriod] = useState<number>(0);
+
+  useEffect(() => {
+    if (activeTabKey !== '7') return;
+    
+    const rulerElement = collectRulerRef.current;
+    if (!rulerElement) return;
+    
+    const handleCollectRulerWheel = (event: WheelEvent) => {
+      if (Math.abs(event.deltaX) < Math.abs(event.deltaY)) return;
+      
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      
+      setCurrentPeriod(previousPeriod => {
+        if (event.deltaX > 0 && previousPeriod < allRecords.length - 1) {
+          return previousPeriod + 1;
+        }
+        if (event.deltaX < 0 && previousPeriod > 0) {
+          return previousPeriod - 1;
+        }
+        return previousPeriod;
+      });
+    };
+    
+    rulerElement.addEventListener('wheel', handleCollectRulerWheel, { passive: false });
+    return () => {
+      rulerElement.removeEventListener('wheel', handleCollectRulerWheel);
+    };
+  }, [activeTabKey, allRecords.length]);
 
   // 当切换到不同tab时，处理相关状态
   useEffect(() => {

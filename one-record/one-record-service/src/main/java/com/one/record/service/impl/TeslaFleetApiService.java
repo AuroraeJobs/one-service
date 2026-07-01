@@ -55,7 +55,7 @@ public class TeslaFleetApiService implements ITeslaFleetApiService {
     public String buildAuthorizeUrl(String state, String nonce, String scope, String redirectUri) {
         requireClientId();
         UriComponentsBuilder builder = UriComponentsBuilder
-                .fromHttpUrl(properties.getAuthBaseUrl() + "/authorize")
+                .fromUriString(properties.getAuthBaseUrl() + "/authorize")
                 .queryParam("response_type", "code")
                 .queryParam("client_id", properties.getClientId())
                 .queryParam("redirect_uri", valueOrDefault(redirectUri, properties.getRedirectUri()))

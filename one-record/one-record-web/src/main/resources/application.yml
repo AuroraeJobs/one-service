@@ -44,3 +44,12 @@ tesla:
     scope: ${TESLA_FLEET_SCOPE:openid offline_access user_data vehicle_device_data vehicle_location vehicle_cmds vehicle_charging_cmds}
     partner-scope: ${TESLA_FLEET_PARTNER_SCOPE:openid user_data vehicle_device_data vehicle_cmds vehicle_charging_cmds}
     public-key: ${TESLA_FLEET_PUBLIC_KEY:}
+
+github:
+  oauth:
+    auth-base-url: ${GITHUB_OAUTH_AUTH_BASE_URL:https://github.com/login/oauth}
+    api-base-url: ${GITHUB_OAUTH_API_BASE_URL:https://api.github.com}
+    client-id: ${GITHUB_OAUTH_CLIENT_ID:}
+    client-secret: ${GITHUB_OAUTH_CLIENT_SECRET:}
+    redirect-uri: ${GITHUB_OAUTH_REDIRECT_URI:}
+    scope: ${GITHUB_OAUTH_SCOPE:read:user user:email}

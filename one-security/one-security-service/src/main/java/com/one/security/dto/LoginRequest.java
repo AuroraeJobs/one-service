@@ -2,9 +2,9 @@ package com.one.security.dto;
 
 import lombok.Data;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 /**
  * Login Request DTO
@@ -14,13 +14,12 @@ import javax.validation.constraints.Size;
 @Data
 public class LoginRequest {
 
-    @NotBlank(message = "用户名不能为空")
-    @Size(min = 3, max = 16, message = "用户名长度必须在3-16位之间")
-    @Pattern(regexp = "^[a-zA-Z]\\w{2,15}$", message = "用户名必须以字母开头")
+    @NotBlank(message = "账号不能为空")
+    @Size(max = 64, message = "账号长度不能超过64位")
     private String username;
 
     @NotBlank(message = "密码不能为空")
-    @Size(min = 8, max = 16, message = "密码长度必须在8-16位之间")
-    @Pattern(regexp = "^[a-zA-Z]\\w{7,15}$", message = "密码必须以字母开头")
+    @Size(min = 8, max = 30, message = "密码长度必须在8-30位之间")
+    @Pattern(regexp = "^[a-zA-Z][\\w-]{7,29}$", message = "密码必须以字母开头，仅支持字母、数字、下划线和短横线")
     private String password;
 }

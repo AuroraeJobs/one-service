@@ -31,12 +31,72 @@ export interface RecordYearCount {
 
 interface ChatResponse {
   response: string;
+  model?: string;
 }
+
+export interface AiModel {
+  id: string;
+  name: string;
+  provider: 'local' | 'deepseek' | 'openai' | string;
+  model: string;
+  available?: boolean;
+  details?: Record<string, unknown>;
+}
+
+export type AiProvider = 'local' | 'deepseek' | 'openai';
+export const DEFAULT_LOCAL_AI_MODEL_KEYWORD = 'llama';
+
+export interface AuthUserProfile {
+  id: string;
+  username: string;
+  avatar?: string;
+  avatarUrl?: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+}
+
+export interface UpdateUserProfileRequest {
+  username: string;
+  avatar?: string;
+  email?: string;
+  phone?: string;
+}
+
+export interface UpdatePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+interface ApiResponse<T> {
+  code: number | string;
+  message?: string;
+  data: T;
+}
+
+interface AuthActionResult {
+  success: boolean;
+  message?: string;
+  user?: AuthUserProfile;
+}
+
+const isSuccessCode = (code: number | string) => Number(code) === 200;
+
+const getApiErrorMessage = (error: unknown, fallback: string) => {
+  if (axios.isAxiosError<{ message?: string; error?: string }>(error)) {
+    return error.response?.data?.message || error.response?.data?.error || error.message || fallback;
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return fallback;
+};
 
 // 创建axios实例
 const apiClient = axios.create({
   baseURL: '/api',
   timeout: 180000, // 3分钟
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -104,15 +164,55 @@ export const recordApi = {
   },
 };
 
+export interface StockQuote {
+  symbol: string;
+  market?: string;
+  code?: string;
+  name?: string;
+  price?: number;
+  changeAmount?: number;
+  changePercent?: number;
+  open?: number;
+  previousClose?: number;
+  high?: number;
+  low?: number;
+  volume?: number;
+  amount?: number;
+  tradeDateTime?: string;
+  source?: string;
+  sourceSymbol?: string;
+  fetchedAt?: string;
+  available?: boolean;
+  message?: string;
+}
+
+export const stockApi = {
+  quote: (symbol: string): Promise<StockQuote> => {
+    return apiClient.get('/stock/quote', {
+      params: { symbol }
+    });
+  },
+
+  quotes: (symbols?: string[]): Promise<StockQuote[]> => {
+    return apiClient.get('/stock/quotes', {
+      params: { symbols },
+      paramsSerializer: {
+        indexes: null
+      }
+    });
+  }
+};
+
 // AI聊天相关API
 export const aiApi = {
-  // 调用本地AI模型聊天
-  chat: async (content: string, model: string = 'qwen3:8b'): Promise<string> => {
+  // 调用统一AI聊天入口，model支持 local:xxx / deepseek:xxx
+  chat: async (content: string, model: string = `local:${DEFAULT_LOCAL_AI_MODEL_KEYWORD}`, sessionId?: string): Promise<string> => {
     try {
-      const data = await apiClient.post('/chat/local/completions', {
+      const url = sessionId ? `/chat/ai/completions/${sessionId}` : '/chat/ai/completions';
+      const data = await apiClient.post(url, {
         prompt: content,
         model: model
-      }) as { response?: string };
+      }) as ChatResponse;
       
       if (data && data.response) {
         return data.response;
@@ -137,29 +237,48 @@ export const aiApi = {
     }
   },
   
-  // 获取本地可调用的模型列表
-  getModelList: async (): Promise<any[]> => {
+  // 从后端缓存获取可调用模型列表；传 provider 时只获取该提供商模型
+  getModelList: async (provider?: AiProvider): Promise<AiModel[]> => {
     try {
-      const data = await apiClient.get('/chat/local/models') as { models?: any[] };
+      const url = provider ? `/chat/ai/models/${provider}` : '/chat/ai/models';
+      const data = await apiClient.get(url) as { models?: AiModel[] };
       return data.models || [];
     } catch (error) {
       console.error('获取模型列表失败:', error);
       return [];
     }
+  },
+
+  // 手动刷新模型列表，并由后端写入 Redis 缓存
+  refreshModelList: async (provider?: AiProvider): Promise<AiModel[]> => {
+    try {
+      const url = provider ? `/chat/ai/models/${provider}/refresh` : '/chat/ai/models/refresh';
+      const data = await apiClient.post(url) as { models?: AiModel[] };
+      return data.models || [];
+    } catch (error) {
+      console.error('刷新模型列表失败:', error);
+      return [];
+    }
+  },
+
+  clearSession: async (sessionId: string): Promise<void> => {
+    await apiClient.delete(`/chat/ai/sessions/${sessionId}`);
   }
 };
 
 // 认证相关API
 export const authApi = {
   // 登录
-  login: async (username: string, password: string): Promise<{ success: boolean; message?: string; user?: any }> => {
+  login: async (account: string, password: string): Promise<AuthActionResult> => {
     try {
-      const response = await apiClient.post('/auth/login', {
-        username,
+      const { data: response } = await axios.post<ApiResponse<AuthUserProfile>>('/auth/login', {
+        username: account.trim(),
         password
-      }) as any;
+      }, {
+        withCredentials: true
+      });
       
-      if (response.code === 200) {
+      if (isSuccessCode(response.code)) {
         return {
           success: true,
           user: response.data,
@@ -171,20 +290,22 @@ export const authApi = {
           message: response.message || '登录失败'
         };
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        message: error.response?.data?.message || error.message || '登录失败'
+        message: getApiErrorMessage(error, '登录失败')
       };
     }
   },
 
   // 注册
-  register: async (userData: { username: string; password: string; email?: string; phone?: string }): Promise<{ success: boolean; message?: string }> => {
+  register: async (userData: { username: string; password: string; avatar?: string; email?: string; phone?: string }): Promise<{ success: boolean; message?: string }> => {
     try {
-      const response = await apiClient.post('/auth/register', userData) as any;
+      const { data: response } = await axios.post<ApiResponse<string>>('/auth/register', userData, {
+        withCredentials: true
+      });
       
-      if (response.code === 200) {
+      if (isSuccessCode(response.code)) {
         return {
           success: true,
           message: response.message
@@ -195,31 +316,65 @@ export const authApi = {
           message: response.message || '注册失败'
         };
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        message: error.response?.data?.message || error.message || '注册失败'
+        message: getApiErrorMessage(error, '注册失败')
       };
     }
   },
 
   // 获取当前用户信息
-  getCurrentUser: async (): Promise<any> => {
+  getCurrentUser: async (): Promise<AuthUserProfile> => {
     try {
-      const response = await apiClient.get('/auth/me') as any;
-      if (response.code === 200) {
+      const { data: response } = await axios.get<ApiResponse<AuthUserProfile>>('/auth/me', {
+        withCredentials: true
+      });
+      if (isSuccessCode(response.code)) {
         return response.data;
       }
-      throw new Error(response.message);
-    } catch (error) {
-      throw error;
+      throw new Error(response.message || '获取用户信息失败');
+    } catch (error: unknown) {
+      throw new Error(getApiErrorMessage(error, '获取用户信息失败'));
+    }
+  },
+
+  // 更新当前用户资料
+  updateCurrentUser: async (profile: UpdateUserProfileRequest): Promise<AuthUserProfile> => {
+    try {
+      const { data: response } = await axios.put<ApiResponse<AuthUserProfile>>('/auth/me', profile, {
+        withCredentials: true
+      });
+      if (isSuccessCode(response.code)) {
+        return response.data;
+      }
+      throw new Error(response.message || '用户信息更新失败');
+    } catch (error: unknown) {
+      throw new Error(getApiErrorMessage(error, '用户信息更新失败'));
+    }
+  },
+
+  // 更新当前用户密码
+  updateCurrentPassword: async (passwordData: UpdatePasswordRequest): Promise<void> => {
+    try {
+      const { data: response } = await axios.put<ApiResponse<string>>('/auth/me/password', passwordData, {
+        withCredentials: true
+      });
+      if (isSuccessCode(response.code)) {
+        return;
+      }
+      throw new Error(response.message || '密码更新失败');
+    } catch (error: unknown) {
+      throw new Error(getApiErrorMessage(error, '密码更新失败'));
     }
   },
 
   // 登出
   logout: async (): Promise<void> => {
     try {
-      await apiClient.post('/auth/logout');
+      await axios.post('/auth/logout', {}, {
+        withCredentials: true
+      });
     } catch (error) {
       console.error('登出失败:', error);
     }
@@ -438,9 +593,29 @@ export interface ThirdPartyUserBinding {
   updatedAt?: string;
 }
 
+export interface GitHubOAuthBindRequest {
+  code: string;
+  state?: string;
+  redirectUri?: string;
+  localUserId?: string;
+  localUsername?: string;
+}
+
 export const thirdPartyUserBindingApi = {
   saveOrUpdate: (binding: ThirdPartyUserBinding): Promise<ThirdPartyUserBinding> => {
     return apiClient.post('/third-party/user-binding', binding);
+  },
+
+  gitHubAuthorizeUrl: (params: {
+    state?: string;
+    scope?: string;
+    redirectUri?: string;
+  }): Promise<string> => {
+    return apiClient.get('/third-party/user-binding/github/oauth/authorize-url', { params });
+  },
+
+  bindGitHubUser: (request: GitHubOAuthBindRequest): Promise<ThirdPartyUserBinding> => {
+    return apiClient.post('/third-party/user-binding/github/oauth/bind', request);
   },
 
   findAll: (): Promise<ThirdPartyUserBinding[]> => {

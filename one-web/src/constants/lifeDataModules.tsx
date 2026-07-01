@@ -14,6 +14,7 @@ import {
   ExperimentOutlined,
   GlobalOutlined,
   LineChartOutlined,
+  MessageOutlined,
   MoneyCollectOutlined,
   SafetyCertificateOutlined,
   StockOutlined,
@@ -25,7 +26,7 @@ import {
 import type { ReactNode } from 'react';
 
 export type LifeModuleStatus = 'live' | 'partial' | 'planned';
-export type LifeModuleKey = 'overview' | 'vehicle' | 'finance' | 'investment' | 'lottery' | 'connectors';
+export type LifeModuleKey = 'overview' | 'vehicle' | 'finance' | 'investment' | 'lottery' | 'ai' | 'connectors';
 
 export interface LifeDataModule {
   id: string;
@@ -112,6 +113,19 @@ export const lifeDataModules: LifeDataModule[] = [
     dataSources: ['开奖记录接口', '手动下注记录', '中奖核验数据']
   },
   {
+    id: 'ai',
+    title: '模型对话',
+    shortTitle: '模型',
+    description: '统一管理本地模型与在线模型的对话入口。',
+    path: '/ai/chat',
+    status: 'partial',
+    accent: '#00c7be',
+    icon: <MessageOutlined />,
+    liveCapabilities: ['模型切换', '上下文对话', '本地模型接入'],
+    plannedCapabilities: ['Spring AI 深度编排', '工具调用', '对话复盘'],
+    dataSources: ['LocalAI/Ollama', 'DeepSeek', 'Spring AI OpenAI 兼容配置']
+  },
+  {
     id: 'accounts',
     title: '账户与账单',
     shortTitle: '账单',
@@ -144,7 +158,8 @@ export const lifeNavItems: LifeNavItem[] = [
   { path: '/lottery', key: 'lottery', label: '彩票', icon: <TrophyOutlined /> },
   { path: '/investments', key: 'investment', label: '股票', icon: <StockOutlined /> },
   { path: '/finance/salary', key: 'finance', label: '钞票', icon: <MoneyCollectOutlined /> },
-  { path: '/vehicle/charging', key: 'vehicle', label: '能源', icon: <CarOutlined /> }
+  { path: '/vehicle/charging', key: 'vehicle', label: '能源', icon: <CarOutlined /> },
+  { path: '/ai/chat', key: 'ai', label: '模型', icon: <MessageOutlined /> }
 ];
 
 export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
@@ -229,6 +244,9 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
         { id: 'lottery-space', moduleKey: 'lottery', path: '/lottery/space', label: '太空', icon: <ExperimentOutlined />, accent: '#5856d6' }
       ]
     }
+  ],
+  ai: [
+    { id: 'ai-chat', moduleKey: 'ai', path: '/ai/chat', label: '对话', icon: <MessageOutlined />, accent: '#00c7be' }
   ]
 };
 
@@ -272,6 +290,7 @@ export const getLifeModuleKeyByPath = (pathname: string): LifeModuleKey | '' => 
   if (canonicalPath.startsWith('/finance')) return 'finance';
   if (canonicalPath.startsWith('/investments')) return 'investment';
   if (canonicalPath.startsWith('/connections')) return 'connectors';
+  if (canonicalPath.startsWith('/ai')) return 'ai';
   if (canonicalPath.startsWith('/lottery')) return 'lottery';
 
   return '';
@@ -298,6 +317,7 @@ export const getLifeSubNavAriaLabel = (pathname: string) => {
     finance: '财务数据导航',
     investment: '投资数据导航',
     lottery: '彩票数据导航',
+    ai: 'AI 对话导航',
     connectors: '数据接入导航'
   };
 

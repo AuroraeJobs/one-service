@@ -29,7 +29,7 @@ public class LocalAIController {
      * 带会话的聊天接口，保存历史记录（Local AI）
      */
     @PostMapping("/local/completions/{sessionId}")
-    public ChatResponse localChatWithHistory(@PathVariable String sessionId, @RequestBody ChatRequest request) {
+    public ChatResponse localChatWithHistory(@PathVariable("sessionId") String sessionId, @RequestBody ChatRequest request) {
         String model = request.getModel() != null ? request.getModel() : "qwen3:8b"; // 默认模型
         String response = localAIService.chatWithHistory(sessionId, request.getPrompt(), model);
         return new ChatResponse(response);
@@ -39,7 +39,7 @@ public class LocalAIController {
      * 清空会话历史（Local AI）
      */
     @DeleteMapping("/local/sessions/{sessionId}")
-    public void clearLocalHistory(@PathVariable String sessionId) {
+    public void clearLocalHistory(@PathVariable("sessionId") String sessionId) {
         localAIService.clearHistory(sessionId);
     }
 

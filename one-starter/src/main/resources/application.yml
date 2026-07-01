@@ -3,6 +3,25 @@ server:
   servlet:
     context-path: /
 spring:
+  ai:
+    model:
+      chat: deepseek
+    deepseek:
+      api-key: ${DEEPSEEK_API_KEY:your-api-key}
+      base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
+      chat:
+        model: ${DEEPSEEK_MODEL:deepseek-chat}
+        temperature: ${DEEPSEEK_TEMPERATURE:0.7}
+        max-tokens: ${DEEPSEEK_MAX_TOKENS:1000}
+    openai:
+      api-key: ${OPENAI_API_KEY:your-api-key}
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+      chat:
+        options:
+          model: ${OPENAI_MODEL:gpt-4o-mini}
+          temperature: ${OPENAI_TEMPERATURE:0.7}
+          max-tokens: ${OPENAI_MAX_TOKENS:1000}
+
   data:
     mongodb:
       uri: mongodb://localhost:27017/test
@@ -23,8 +42,32 @@ spring:
   session:
     store-type: redis
     redis:
-      namespace: aurorae:session
+      namespace: one:session
     timeout: 7200s
+
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: ${GITHUB_OAUTH_CLIENT_ID:github-client-id}
+            client-secret: ${GITHUB_OAUTH_CLIENT_SECRET:github-client-secret}
+            redirect-uri: ${OAUTH2_GITHUB_REDIRECT_URI:http://localhost:5173/login/oauth2/code/github}
+            scope:
+              - read:user
+              - user:email
+        provider:
+          github:
+            user-name-attribute: id
+
+one:
+  security:
+    oauth2:
+      success-redirect-uri: ${OAUTH2_LOGIN_SUCCESS_REDIRECT_URI:http://localhost:5173/login?oauth=success}
+      failure-redirect-uri: ${OAUTH2_LOGIN_FAILURE_REDIRECT_URI:http://localhost:5173/login?oauth=error}
+      bind-success-redirect-uri: ${OAUTH2_GITHUB_BIND_SUCCESS_REDIRECT_URI:http://localhost:5173/settings?githubBind=success}
+      bind-failure-redirect-uri: ${OAUTH2_GITHUB_BIND_FAILURE_REDIRECT_URI:http://localhost:5173/settings?githubBind=error}
+      bind-login-redirect-uri: ${OAUTH2_GITHUB_BIND_LOGIN_REDIRECT_URI:http://localhost:5173/login?oauthBind=github}
 
 logging:
   level:
@@ -37,7 +80,25 @@ hello:
     update: false
     reset: false
 
-deepseek:
-  api-key: ${DEEPSEEK_API_KEY:your-api-key}
-  base-url: https://api.deepseek.com/v1
-  model: deepseek-chat
+github:
+  oauth:
+    auth-base-url: ${GITHUB_OAUTH_AUTH_BASE_URL:https://github.com/login/oauth}
+    api-base-url: ${GITHUB_OAUTH_API_BASE_URL:https://api.github.com}
+    client-id: ${GITHUB_OAUTH_CLIENT_ID:}
+    client-secret: ${GITHUB_OAUTH_CLIENT_SECRET:}
+    redirect-uri: ${GITHUB_OAUTH_REDIRECT_URI:}
+    scope: ${GITHUB_OAUTH_SCOPE:read:user user:email}
+
+stock:
+  market:
+    source: ${STOCK_MARKET_SOURCE:sina}
+    sina-quote-url: ${STOCK_MARKET_SINA_QUOTE_URL:https://hq.sinajs.cn/list=}
+    referer: ${STOCK_MARKET_REFERER:https://finance.sina.com.cn}
+    user-agent: ${STOCK_MARKET_USER_AGENT:Mozilla/5.0}
+    charset: ${STOCK_MARKET_CHARSET:GBK}
+    connect-timeout-seconds: ${STOCK_MARKET_CONNECT_TIMEOUT_SECONDS:5}
+    read-timeout-seconds: ${STOCK_MARKET_READ_TIMEOUT_SECONDS:10}
+    default-symbols:
+      - sh000001
+      - sz399001
+      - sz399006

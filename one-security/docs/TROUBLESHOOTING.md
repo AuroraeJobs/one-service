@@ -27,7 +27,7 @@
 brew services start mongodb-community
 
 # 运行测试脚本
-mongo aurorae_sso < aurorae-sso/docs/test-login.js
+mongo aurorae_sso < one-security/docs/test-login.js
 ```
 
 ### 步骤2: 验证用户数据
@@ -61,7 +61,7 @@ db.users.find({}, {password: 0}).pretty()
 ### 步骤3: 重启后端服务
 
 ```bash
-cd aurorae-sso/aurorae-sso-service
+cd one-security/one-security-service
 mvn spring-boot:run
 ```
 

@@ -1,4 +1,4 @@
-# Aurorae SSO Service - Spring Security + Spring Session + MongoDB
+# One Security Service - Spring Security + Spring Session + MongoDB
 
 ## 📋 功能特性
 
@@ -23,9 +23,9 @@
 ## 📦 项目结构
 
 ```
-aurorae-sso/
-├── aurorae-sso-service/
-│   ├── src/main/java/org/aurorae/sso/
+one-security/
+├── one-security-service/
+│   ├── src/main/java/com/one/security/
 │   │   ├── config/
 │   │   │   └── SecurityConfig.java          # Spring Security配置
 │   │   ├── controller/
@@ -44,11 +44,11 @@ aurorae-sso/
 │   │       └── DataInitializationService.java # 数据初始化服务
 │   └── src/main/resources/
 │       └── application.yml                   # 应用配置
-├── aurorae-sso-repository/
-│   └── src/main/java/org/aurorae/sso/repository/
+├── one-security-repository/
+│   └── src/main/java/com/one/security/repository/
 │       └── UserRepository.java               # MongoDB Repository
-├── aurorae-sso-model/
-│   └── src/main/java/org/aurorae/sso/model/
+├── one-security-model/
+│   └── src/main/java/com/one/security/model/
 │       └── User.java                        # 用户实体类
 └── docs/
     └── init-mongodb.js                       # MongoDB初始化脚本
@@ -79,18 +79,18 @@ mongod --dbpath /usr/local/var/mongodb
 数据初始化会在应用启动时自动完成，也可以手动执行脚本：
 
 ```bash
-mongo < aurorae-sso/docs/init-mongodb.js
+mongo < one-security/docs/init-mongodb.js
 ```
 
 ### 4. 修改配置文件
 
-编辑 `aurorae-sso-service/src/main/resources/application.yml`:
+编辑 `one-security-service/src/main/resources/application.yml`:
 
 ```yaml
 spring:
   data:
     mongodb:
-      uri: mongodb://localhost:27017/aurorae_sso
+      uri: mongodb://localhost:27017/test
       auto-index-creation: true
   
   redis:
@@ -101,7 +101,7 @@ spring:
 ### 5. 启动服务
 
 ```bash
-cd aurorae-sso/aurorae-sso-service
+cd one-security/one-security-service
 mvn spring-boot:run
 ```
 

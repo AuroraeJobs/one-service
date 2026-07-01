@@ -171,7 +171,7 @@ const HealthMainPage: React.FC = () => {
   const [expandedMessages, setExpandedMessages] = useState<Set<number>>(new Set());
   const [models, setModels] = useState<any[]>([]);
   const [modelsLoading, setModelsLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<string>('qwen3:8b');
+  const [selectedModel, setSelectedModel] = useState<string>('local:qwen3:8b');
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   
   // 拖动功能相关状态
@@ -618,9 +618,9 @@ const HealthMainPage: React.FC = () => {
                           ) : (
                             models.map((model) => (
                               <div
-                                key={model.name}
+                                key={model.id || model.name}
                                 onClick={() => {
-                                  setSelectedModel(model.name);
+                                  setSelectedModel(model.id || model.name);
                                   setShowModelDropdown(false);
                                 }}
                                 style={{
@@ -628,14 +628,14 @@ const HealthMainPage: React.FC = () => {
                                   cursor: 'pointer',
                                   borderBottom: '1px solid rgba(24, 144, 255, 0.1)',
                                   fontSize: '12px',
-                                  color: model.name === selectedModel ? '#1890ff' : '#FFFFFF',
-                                  backgroundColor: model.name === selectedModel ? 'rgba(24, 144, 255, 0.1)' : 'transparent'
+                                  color: (model.id || model.name) === selectedModel ? '#1890ff' : '#FFFFFF',
+                                  backgroundColor: (model.id || model.name) === selectedModel ? 'rgba(24, 144, 255, 0.1)' : 'transparent'
                                 }}
                                 onMouseEnter={(e) => {
                                   e.currentTarget.style.backgroundColor = 'rgba(24, 144, 255, 0.1)';
                                 }}
                                 onMouseLeave={(e) => {
-                                  e.currentTarget.style.backgroundColor = model.name === selectedModel ? 'rgba(24, 144, 255, 0.1)' : 'transparent';
+                                  e.currentTarget.style.backgroundColor = (model.id || model.name) === selectedModel ? 'rgba(24, 144, 255, 0.1)' : 'transparent';
                                 }}
                               >
                                 <div style={{ fontWeight: 'bold' }}>{model.name}</div>

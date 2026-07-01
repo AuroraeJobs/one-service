@@ -2,6 +2,7 @@ package com.one.record.web;
 
 import com.one.record.service.IChatService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 public class ChatController {
 
     @Autowired
+    @Qualifier("deepSeekChatService")
     private IChatService deepSeekChatService;
 
     /**
@@ -24,7 +26,7 @@ public class ChatController {
      * 带会话的聊天接口，保存历史记录
      */
     @PostMapping("/completions/{sessionId}")
-    public ChatResponse chatWithHistory(@PathVariable String sessionId, @RequestBody ChatRequest request) {
+    public ChatResponse chatWithHistory(@PathVariable("sessionId") String sessionId, @RequestBody ChatRequest request) {
         String response = deepSeekChatService.chatWithHistory(sessionId, request.getPrompt());
         return new ChatResponse(response);
     }
@@ -33,7 +35,7 @@ public class ChatController {
      * 清空会话历史
      */
     @DeleteMapping("/sessions/{sessionId}")
-    public void clearHistory(@PathVariable String sessionId) {
+    public void clearHistory(@PathVariable("sessionId") String sessionId) {
         deepSeekChatService.clearHistory(sessionId);
     }
 

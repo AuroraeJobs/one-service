@@ -205,6 +205,23 @@
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
+.github-login-button {
+  height: 46px;
+  border-radius: 8px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  font-weight: 600;
+}
+
+.github-login-button:not(:disabled):not(.ant-btn-disabled):hover,
+.github-login-button:not(:disabled):not(.ant-btn-disabled):focus,
+.github-login-button:not(:disabled):not(.ant-btn-disabled):focus-visible {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
 .login-footer {
   text-align: center;
   margin-top: 20px;

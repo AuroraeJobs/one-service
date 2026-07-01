@@ -2,9 +2,11 @@ import React, { createContext, useContext, useState, type ReactNode } from 'reac
 import { message } from 'antd';
 import axios from 'axios';
 
-interface AuthUser {
+export interface AuthUser {
   id: string;
   username: string;
+  avatar?: string;
+  avatarUrl?: string;
   email?: string;
   phone?: string;
   role?: string;
@@ -14,6 +16,7 @@ interface AuthContextType {
   user: AuthUser | null;
   isAuthenticated: boolean;
   login: (user: AuthUser) => void;
+  updateUser: (user: AuthUser) => void;
   logout: () => Promise<void>;
 }
 
@@ -44,6 +47,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     message.success(`欢迎回来，${userData.username}！`);
   };
 
+  const updateUser = (userData: AuthUser) => {
+    setUser(userData);
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
+  };
+
   const logout = async () => {
     try {
       await axios.post('/auth/logout', {}, {
@@ -62,12 +70,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     user,
     isAuthenticated: !!user,
     login,
+    updateUser,
     logout
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {

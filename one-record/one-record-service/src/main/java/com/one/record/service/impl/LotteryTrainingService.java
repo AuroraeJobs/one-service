@@ -726,6 +726,7 @@ public class LotteryTrainingService implements ILotteryTrainingService {
                 .sum()
                 + combinationHealthScore(redNumbers, draws, targetAverage, config)
                 + structureFitnessScore(redNumbers, config, draws)
+                + recentCoverageScore(redNumbers, draws, config)
                 + blueScore(blueNumber, pools, config));
     }
 
@@ -735,7 +736,8 @@ public class LotteryTrainingService implements ILotteryTrainingService {
                 .mapToDouble(number -> numberScore(number, pools.getRedFrequency(), pools.getRedOmissions(), targetAverage, config))
                 .sum()
                 + combinationHealthScore(redNumbers, draws, targetAverage, config)
-                + structureFitnessScore(redNumbers, config, draws);
+                + structureFitnessScore(redNumbers, config, draws)
+                + recentCoverageScore(redNumbers, draws, config);
     }
 
     private double structureFitnessScore(List<String> redNumbers, PredictionRuleConfig config, List<Draw> draws) {
@@ -751,7 +753,67 @@ public class LotteryTrainingService implements ILotteryTrainingService {
                 - Math.abs(profile.getBigCount() - config.getTargetBigCount()) * 5
                 - Math.max(0, recentOverlap - 2) * 8
                 - Math.max(0, consecutivePairs - 1) * 5
-                + zoneScore;
+                + zoneScore
+                + recentStructureScore(redNumbers, draws, config);
+    }
+
+    private double recentStructureScore(List<String> redNumbers, List<Draw> draws, PredictionRuleConfig config) {
+        if (draws.isEmpty()) {
+            return 0;
+        }
+        int window = Math.min(config.getRecentWindow(), draws.size());
+        List<Draw> recentDraws = draws.subList(draws.size() - window, draws.size());
+        Profile profile = profile(redNumbers);
+        int[] zones = zoneCounts(redNumbers);
+        int redSum = sum(redNumbers);
+        int span = span(redNumbers);
+
+        double averageSum = recentDraws.stream().mapToInt(Draw::getRedSum).average().orElse(redSum);
+        double averageOddCount = recentDraws.stream().mapToInt(Draw::getOddCount).average().orElse(profile.getOddCount());
+        double averageBigCount = recentDraws.stream().mapToInt(Draw::getBigCount).average().orElse(profile.getBigCount());
+        double averageSpan = recentDraws.stream()
+                .mapToInt(draw -> span(draw.getRedNumbers()))
+                .average()
+                .orElse(span);
+        double[] averageZones = averageZoneCounts(recentDraws);
+
+        double zonePenalty = 0;
+        for (int index = 0; index < zones.length; index++) {
+            zonePenalty += Math.abs(zones[index] - averageZones[index]);
+        }
+
+        return 18
+                - Math.abs(redSum - averageSum) / 8 * config.getAverageDiffWeight()
+                - Math.abs(profile.getOddCount() - averageOddCount) * 3 * config.getOddEvenProbabilityWeight()
+                - Math.abs(profile.getBigCount() - averageBigCount) * 2.5
+                - Math.abs(span - averageSpan) / 3
+                - zonePenalty * 2;
+    }
+
+    private double recentCoverageScore(List<String> redNumbers, List<Draw> draws, PredictionRuleConfig config) {
+        if (draws.isEmpty()) {
+            return 0;
+        }
+        int window = Math.min(config.getRecentWindow(), draws.size());
+        List<Draw> recentDraws = draws.subList(draws.size() - window, draws.size());
+        Map<String, Long> recentHits = recentDraws.stream()
+                .flatMap(draw -> draw.getRedNumbers().stream())
+                .collect(Collectors.groupingBy(number -> number, Collectors.counting()));
+        double averageRecentHits = recentHits.values().stream()
+                .mapToLong(Long::longValue)
+                .average()
+                .orElse(0);
+        Set<String> latestNumbers = new LinkedHashSet<>(draws.get(draws.size() - 1).getRedNumbers());
+        int latestOverlap = overlap(redNumbers, draws.get(draws.size() - 1).getRedNumbers());
+        double coverage = redNumbers.stream()
+                .mapToDouble(number -> {
+                    long count = recentHits.getOrDefault(number, 0L);
+                    double normalized = averageRecentHits <= 0 ? 0 : count / averageRecentHits;
+                    double repeatPenalty = latestNumbers.contains(number) ? 0.55 : 1.0;
+                    return Math.min(normalized, 2.0) * repeatPenalty;
+                })
+                .sum();
+        return coverage * 2.2 - Math.max(0, latestOverlap - 2) * 4;
     }
 
     private boolean validPredictionProfile(List<String> redNumbers, PredictionRuleConfig config) {
@@ -1164,6 +1226,14 @@ public class LotteryTrainingService implements ILotteryTrainingService {
         return count;
     }
 
+    private int span(List<String> numbers) {
+        if (numbers.isEmpty()) {
+            return 0;
+        }
+        List<Integer> sorted = numbers.stream().map(Integer::parseInt).sorted().collect(Collectors.toList());
+        return sorted.get(sorted.size() - 1) - sorted.get(0);
+    }
+
     private int[] zoneCounts(List<String> numbers) {
         int[] zones = new int[]{0, 0, 0};
         for (String number : numbers) {
@@ -1175,6 +1245,23 @@ public class LotteryTrainingService implements ILotteryTrainingService {
             } else {
                 zones[2]++;
             }
+        }
+        return zones;
+    }
+
+    private double[] averageZoneCounts(List<Draw> draws) {
+        double[] zones = new double[]{0, 0, 0};
+        if (draws.isEmpty()) {
+            return zones;
+        }
+        for (Draw draw : draws) {
+            int[] drawZones = zoneCounts(draw.getRedNumbers());
+            for (int index = 0; index < zones.length; index++) {
+                zones[index] += drawZones[index];
+            }
+        }
+        for (int index = 0; index < zones.length; index++) {
+            zones[index] = zones[index] / draws.size();
         }
         return zones;
     }

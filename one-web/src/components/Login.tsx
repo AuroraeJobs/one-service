@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { Form, Input, Button, Card, message, Space, Typography } from 'antd';
-import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import { useNavigate, Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Form, Input, Button, Card, message, Typography } from 'antd';
+import { GithubOutlined, LockOutlined, UserOutlined } from '@ant-design/icons';
+import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import './Login.css';
@@ -15,9 +15,45 @@ interface LoginFormData {
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
+  const [githubLoading, setGithubLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const [form] = Form.useForm();
   const { login } = useAuth();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const oauth = params.get('oauth');
+    const oauthBind = params.get('oauthBind');
+    if (oauth === 'success') {
+      setGithubLoading(true);
+      axios.get('/auth/me', { withCredentials: true })
+        .then(response => {
+          if (response.data.code === 200) {
+            login(response.data.data);
+            navigate('/', { replace: true });
+          } else {
+            message.error(response.data.message || 'GitHub 登录状态获取失败');
+            navigate('/login', { replace: true });
+          }
+        })
+        .catch(error => {
+          if (axios.isAxiosError(error) && error.response?.data?.message) {
+            message.error(error.response.data.message);
+          } else {
+            message.error('GitHub 登录状态获取失败');
+          }
+          navigate('/login', { replace: true });
+        })
+        .finally(() => setGithubLoading(false));
+    } else if (oauth === 'error') {
+      message.error('GitHub 登录失败');
+      navigate('/login', { replace: true });
+    } else if (oauthBind === 'github') {
+      message.info('请登录本系统账号，登录成功后将自动绑定 GitHub');
+      navigate('/login', { replace: true });
+    }
+  }, [location.search, login, navigate]);
 
   const submitWhenUsernameReady = () => {
     const username = form.getFieldValue('username');
@@ -29,9 +65,10 @@ const Login = () => {
 
   const handleLogin = async (values: LoginFormData) => {
     setLoading(true);
+    const account = values.username.trim();
     try {
       const response = await axios.post('/auth/login', {
-        username: values.username,
+        username: account,
         password: values.password
       }, {
         withCredentials: true
@@ -39,16 +76,16 @@ const Login = () => {
 
       if (response.data.code === 200) {
         login(response.data.data);
-        message.success('登录成功');
+        message.success(response.data.message || '登录成功');
         navigate('/');
       } else {
-        message.error(response.data.message || '登录失败，请检查用户名和密码');
+        message.error(response.data.message || '登录失败，请检查账号和密码');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('登录错误:', error);
-      if (error.response?.data?.message) {
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
         message.error(error.response.data.message);
-      } else if (error.message) {
+      } else if (error instanceof Error) {
         message.error(error.message);
       } else {
         message.error('登录失败，请稍后重试');
@@ -56,6 +93,11 @@ const Login = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGitHubLogin = () => {
+    setGithubLoading(true);
+    window.location.assign('/oauth2/authorization/github');
   };
 
   return (
@@ -92,11 +134,11 @@ const Login = () => {
         >
           <Form.Item
             name="username"
-            rules={[{ required: true, message: '请输入用户名' }]}
+            rules={[{ required: true, message: '请输入用户名、邮箱或电话' }]}
           >
             <Input
               prefix={<UserOutlined />}
-              placeholder="用户名"
+              placeholder="用户名 / 邮箱 / 电话"
               className="login-input"
             />
           </Form.Item>
@@ -125,6 +167,16 @@ const Login = () => {
             </Button>
           </Form.Item>
         </Form>
+
+        <Button
+          icon={<GithubOutlined />}
+          loading={githubLoading}
+          block
+          className="github-login-button"
+          onClick={handleGitHubLogin}
+        >
+          GitHub 认证登录
+        </Button>
       </Card>
     </div>
   );

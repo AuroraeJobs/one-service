@@ -1,0 +1,29 @@
+package com.one.record.configuration;
+
+import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+
+@Data
+@Component
+@ConfigurationProperties(prefix = "stock.market")
+public class StockMarketProperties {
+
+    private String source = "sina";
+
+    private String sinaQuoteUrl = "https://hq.sinajs.cn/list=";
+
+    private String referer = "https://finance.sina.com.cn";
+
+    private String userAgent = "Mozilla/5.0";
+
+    private String charset = "GBK";
+
+    private Integer connectTimeoutSeconds = 5;
+
+    private Integer readTimeoutSeconds = 10;
+
+    private List<String> defaultSymbols = List.of("sh000001", "sz399001", "sz399006");
+}

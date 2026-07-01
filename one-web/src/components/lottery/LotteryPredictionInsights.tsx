@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Empty, Form, Input, InputNumber, Modal, Tag, message } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
+import { Button, Empty, Form, Input, InputNumber, Modal, Tag, message } from 'antd';
 import { EditOutlined, FieldTimeOutlined, TrophyOutlined } from '@ant-design/icons';
 import LotteryBalls from './LotteryBalls';
 import type { LotteryNumberProbability, LotteryPrediction, LotteryStats } from '../../utils/lotteryStats';
@@ -25,6 +25,7 @@ interface SimplePredictionCardProps {
   tag: string;
   tone?: 'gold' | 'red' | 'blue';
   meta?: string[];
+  actualRecord?: LotteryActualRecord;
 }
 
 interface PredictionStructure {
@@ -34,6 +35,36 @@ interface PredictionStructure {
   zoneCounts: number[];
   consecutivePairs: number;
   span: number;
+}
+
+interface PredictionConsensusItem {
+  number: string;
+  count: number;
+}
+
+interface PredictionConsensus {
+  red: PredictionConsensusItem[];
+  blue: PredictionConsensusItem[];
+}
+
+interface PredictionCandidateLike {
+  title?: string;
+  redNumbers: string[];
+  blueNumber: string;
+  score?: number;
+}
+
+interface PredictionReviewItem extends PredictionCandidateLike {
+  title: string;
+  source: string;
+  score?: number;
+}
+
+interface PredictionReviewResult extends PredictionReviewItem {
+  redHits: number;
+  blueHit: boolean;
+  prizeName: string;
+  reviewScore: number;
 }
 
 const getPredictionStructure = (redNumbers: string[]): PredictionStructure => {
@@ -64,6 +95,66 @@ const getStructureTone = (structure: PredictionStructure) => {
   if (score >= 4) return { label: '结构均衡', tone: 'good' };
   if (score >= 3) return { label: '结构可用', tone: 'steady' };
   return { label: '结构偏态', tone: 'warn' };
+};
+
+const buildPredictionConsensus = (candidates: PredictionCandidateLike[]): PredictionConsensus => {
+  const redCounts = new Map<string, number>();
+  const blueCounts = new Map<string, number>();
+
+  candidates.forEach(candidate => {
+    candidate.redNumbers.forEach(number => {
+      redCounts.set(number, (redCounts.get(number) || 0) + 1);
+    });
+    blueCounts.set(candidate.blueNumber, (blueCounts.get(candidate.blueNumber) || 0) + 1);
+  });
+
+  const toSortedItems = (counts: Map<string, number>) => Array.from(counts.entries())
+    .map(([number, count]) => ({ number, count }))
+    .sort((a, b) => b.count - a.count || Number(a.number) - Number(b.number));
+
+  return {
+    red: toSortedItems(redCounts).slice(0, 10),
+    blue: toSortedItems(blueCounts).slice(0, 6)
+  };
+};
+
+const buildConsensusTicket = (consensus: PredictionConsensus): PredictionCandidateLike | undefined => {
+  const redNumbers = consensus.red
+    .slice(0, 6)
+    .map(item => item.number)
+    .sort((a, b) => Number(a) - Number(b));
+  const blueNumber = consensus.blue[0]?.number;
+
+  if (redNumbers.length !== 6 || !blueNumber) {
+    return undefined;
+  }
+
+  return { redNumbers, blueNumber };
+};
+
+const getPrizeName = (redHits: number, blueHit: boolean) => {
+  if (redHits === 6 && blueHit) return '一等奖';
+  if (redHits === 6) return '二等奖';
+  if (redHits === 5 && blueHit) return '三等奖';
+  if (redHits === 5 || (redHits === 4 && blueHit)) return '四等奖';
+  if (redHits === 4 || (redHits === 3 && blueHit)) return '五等奖';
+  if (blueHit) return '六等奖';
+  return '未中奖';
+};
+
+const reviewPrediction = (
+  prediction: PredictionReviewItem,
+  actualRecord: LotteryActualRecord
+): PredictionReviewResult => {
+  const redHits = prediction.redNumbers.filter(number => actualRecord.redNumbers.includes(number)).length;
+  const blueHit = prediction.blueNumber === actualRecord.blueNumber;
+  return {
+    ...prediction,
+    redHits,
+    blueHit,
+    prizeName: getPrizeName(redHits, blueHit),
+    reviewScore: redHits * 12 + (blueHit ? 10 : 0)
+  };
 };
 
 const PredictionStructureCheck = ({
@@ -125,7 +216,8 @@ const SimplePredictionCard = ({
   score,
   tag,
   tone = 'red',
-  meta = []
+  meta = [],
+  actualRecord
 }: SimplePredictionCardProps) => (
   <div className={`lottery-simple-prediction-card lottery-simple-prediction-card-${tone}`}>
     <div className="lottery-prediction-card-head">
@@ -135,7 +227,12 @@ const SimplePredictionCard = ({
       </div>
       <Tag color={tone === 'gold' ? 'gold' : tone}>{tag}</Tag>
     </div>
-    <LotteryBalls redNumbers={redNumbers} blueNumber={blueNumber} />
+    <LotteryBalls
+      redNumbers={redNumbers}
+      blueNumber={blueNumber}
+      hitRedNumbers={actualRecord?.redNumbers}
+      hitBlueNumber={actualRecord?.blueNumber}
+    />
     {meta.length > 0 && (
       <div className="lottery-prediction-tags">
         {meta.filter(Boolean).map(item => (
@@ -146,7 +243,13 @@ const SimplePredictionCard = ({
   </div>
 );
 
-const RulePredictionList = ({ predictions }: { predictions: LotteryPrediction[] }) => (
+const RulePredictionList = ({
+  predictions,
+  actualRecord
+}: {
+  predictions: LotteryPrediction[];
+  actualRecord?: LotteryActualRecord;
+}) => (
   <div className="lottery-simple-secondary-list">
     {predictions.slice(0, 2).map(prediction => (
       <SimplePredictionCard
@@ -158,10 +261,227 @@ const RulePredictionList = ({ predictions }: { predictions: LotteryPrediction[] 
         tag="规则"
         tone="red"
         meta={prediction.tags.slice(0, 2)}
+        actualRecord={actualRecord}
       />
     ))}
   </div>
 );
+
+const PredictionConsensusPanel = ({
+  consensus,
+  candidateCount,
+  actualRecord
+}: {
+  consensus: PredictionConsensus;
+  candidateCount: number;
+  actualRecord?: LotteryActualRecord;
+}) => {
+  if (candidateCount < 2 || consensus.red.length === 0) {
+    return null;
+  }
+
+  const consensusTicket = buildConsensusTicket(consensus);
+  const consensusRedTotal = consensus.red.slice(0, 6).reduce((total, item) => total + item.count, 0);
+  const consensusBlueCount = consensus.blue[0]?.count || 0;
+
+  return (
+    <div className="lottery-prediction-consensus">
+      <div className="lottery-prediction-consensus-head">
+        <strong>候选共识</strong>
+        <span>来自 {candidateCount} 组候选</span>
+      </div>
+      {consensusTicket && (
+        <div className="lottery-prediction-consensus-ticket">
+          <div>
+            <strong>共识组合</strong>
+            <span>红球累计 {consensusRedTotal} 票 · 蓝球 {consensusBlueCount} 票</span>
+          </div>
+          <LotteryBalls
+            redNumbers={consensusTicket.redNumbers}
+            blueNumber={consensusTicket.blueNumber}
+            hitRedNumbers={actualRecord?.redNumbers}
+            hitBlueNumber={actualRecord?.blueNumber}
+          />
+        </div>
+      )}
+      <div className="lottery-prediction-consensus-group lottery-prediction-consensus-group-red">
+        {consensus.red.map(item => {
+          const isHit = actualRecord?.redNumbers?.includes(item.number);
+          return (
+            <span key={item.number} className={isHit ? 'lottery-prediction-consensus-hit' : undefined}>
+              <strong>{item.number}</strong>
+              <small>{item.count}</small>
+            </span>
+          );
+        })}
+      </div>
+      <div className="lottery-prediction-consensus-group lottery-prediction-consensus-group-blue">
+        {consensus.blue.map(item => {
+          const isHit = actualRecord?.blueNumber === item.number;
+          return (
+            <span key={item.number} className={isHit ? 'lottery-prediction-consensus-hit' : undefined}>
+              <strong>{item.number}</strong>
+              <small>{item.count}</small>
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+const PredictionHitReviewPanel = ({
+  actualRecord,
+  items,
+  onEditActualRecord
+}: {
+  actualRecord?: LotteryActualRecord;
+  items: PredictionReviewItem[];
+  onEditActualRecord: () => void;
+}) => {
+  const reviewItems = useMemo(() => {
+    if (!actualRecord || items.length === 0) {
+      return [];
+    }
+
+    return items
+      .map(item => reviewPrediction(item, actualRecord))
+      .sort((a, b) => b.reviewScore - a.reviewScore || b.redHits - a.redHits || Number(a.blueNumber) - Number(b.blueNumber));
+  }, [actualRecord, items]);
+
+  if (!actualRecord) {
+    return (
+      <div className="lottery-prediction-hit-review">
+        <div className="lottery-prediction-hit-review-head">
+          <div>
+            <strong>命中复盘</strong>
+            <span>录入最新开奖号后自动对照预测结果。</span>
+          </div>
+          <Button size="small" type="primary" onClick={onEditActualRecord}>
+            录入开奖号
+          </Button>
+        </div>
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无最新开奖号，暂不能复盘命中情况" />
+      </div>
+    );
+  }
+
+  if (reviewItems.length === 0) {
+    return null;
+  }
+
+  const bestRedHits = reviewItems[0].redHits;
+  const blueHitCount = reviewItems.filter(item => item.blueHit).length;
+  const averageRedHits = (reviewItems.reduce((total, item) => total + item.redHits, 0) / reviewItems.length).toFixed(1);
+  const sourceSummary = Array.from(
+    reviewItems.reduce((summary, item) => {
+      const current = summary.get(item.source) || { source: item.source, count: 0, redHits: 0, bestRedHits: 0, blueHits: 0 };
+      current.count += 1;
+      current.redHits += item.redHits;
+      current.bestRedHits = Math.max(current.bestRedHits, item.redHits);
+      current.blueHits += item.blueHit ? 1 : 0;
+      summary.set(item.source, current);
+      return summary;
+    }, new Map<string, { source: string; count: number; redHits: number; bestRedHits: number; blueHits: number }>())
+  ).map(([, item]) => ({
+    ...item,
+    averageRedHits: (item.redHits / item.count).toFixed(1)
+  }));
+  const actualCoverage = actualRecord.redNumbers.map(number => ({
+    number,
+    count: reviewItems.filter(item => item.redNumbers.includes(number)).length
+  }));
+  const missedActualRedNumbers = actualCoverage.filter(item => item.count === 0).map(item => item.number);
+  const actualBlueCoverage = reviewItems.filter(item => item.blueHit).length;
+
+  return (
+    <div className="lottery-prediction-hit-review">
+      <div className="lottery-prediction-hit-review-head">
+        <div>
+          <strong>命中复盘</strong>
+          <span>对照第 {actualRecord.period} 期最新开奖号</span>
+        </div>
+        <Tag color={reviewItems[0].prizeName === '未中奖' ? 'default' : 'gold'}>
+          最佳 {reviewItems[0].prizeName} · 红球 {reviewItems[0].redHits}/6
+        </Tag>
+      </div>
+      <div className="lottery-prediction-hit-review-summary">
+        <div>
+          <strong>{reviewItems.length}</strong>
+          <span>复盘组数</span>
+        </div>
+        <div>
+          <strong>{bestRedHits}/6</strong>
+          <span>最佳红球</span>
+        </div>
+        <div>
+          <strong>{blueHitCount}</strong>
+          <span>蓝球命中</span>
+        </div>
+        <div>
+          <strong>{averageRedHits}</strong>
+          <span>平均红球</span>
+        </div>
+      </div>
+      <div className="lottery-prediction-hit-review-source">
+        {sourceSummary.map(item => (
+          <div key={item.source}>
+            <strong>{item.source}</strong>
+            <span>{item.count} 组</span>
+            <span>最佳红 {item.bestRedHits}/6</span>
+            <span>均红 {item.averageRedHits}</span>
+            <span>蓝中 {item.blueHits}</span>
+          </div>
+        ))}
+      </div>
+      <div className="lottery-prediction-hit-review-coverage">
+        <div className="lottery-prediction-hit-review-coverage-head">
+          <strong>开奖号覆盖</strong>
+          <span>蓝球 {actualRecord.blueNumber} · {actualBlueCoverage} 组命中</span>
+        </div>
+        <div className="lottery-prediction-hit-review-coverage-balls">
+          {actualCoverage.map(item => (
+            <span
+              key={item.number}
+              className={item.count === 0 ? 'lottery-prediction-hit-review-coverage-missed' : undefined}
+            >
+              <strong>{item.number}</strong>
+              <small>{item.count}</small>
+            </span>
+          ))}
+        </div>
+        <div className={`lottery-prediction-hit-review-blindspot${missedActualRedNumbers.length === 0 ? ' lottery-prediction-hit-review-blindspot-clear' : ''}`}>
+          <strong>{missedActualRedNumbers.length > 0 ? '未覆盖红球' : '红球全覆盖'}</strong>
+          <span>{missedActualRedNumbers.length > 0 ? missedActualRedNumbers.join(' ') : '当前复盘预测集覆盖了本期开奖的全部红球'}</span>
+        </div>
+      </div>
+      <div className="lottery-prediction-hit-review-list">
+        {reviewItems.map(item => (
+          <div className="lottery-prediction-hit-review-row" key={`${item.source}-${item.title}`}>
+            <div className="lottery-prediction-hit-review-meta">
+              <strong>{item.title}</strong>
+              <span>{item.source}</span>
+            </div>
+            <LotteryBalls
+              redNumbers={item.redNumbers}
+              blueNumber={item.blueNumber}
+              hitRedNumbers={actualRecord.redNumbers}
+              hitBlueNumber={actualRecord.blueNumber}
+            />
+            <div className="lottery-prediction-hit-review-result">
+              <Tag color={item.prizeName === '未中奖' ? 'default' : 'blue'}>{item.prizeName}</Tag>
+              <span>红 {item.redHits}/6</span>
+              <span title={`未覆盖红球：${actualRecord.redNumbers.filter(number => !item.redNumbers.includes(number)).join(' ') || '无'}`}>
+                差红 {6 - item.redHits}
+              </span>
+              <span>{item.blueHit ? '蓝中' : '蓝未中'}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 const splitNumbers = (value?: string) =>
   (value || '')
@@ -169,6 +489,11 @@ const splitNumbers = (value?: string) =>
     .map(item => item.trim())
     .filter(Boolean)
     .map(item => item.padStart(2, '0'));
+
+const isNumberInRange = (value: string, min: number, max: number) => {
+  const numberValue = Number(value);
+  return Number.isInteger(numberValue) && numberValue >= min && numberValue <= max;
+};
 
 const LatestRecordCard = ({
   record,
@@ -249,9 +574,25 @@ const LotteryPredictionInsights = ({
   const topRed = probability.red.slice(0, 6);
   const topBlue = probability.blue.slice(0, 4);
   const primaryRulePrediction = stats.predictions[0];
-  const trainedCandidates = trainedPrediction?.candidates ?? [];
-  const primaryPrediction = trainedPrediction?.redNumbers?.length
-    ? {
+  const trainedCandidates = useMemo(
+    () => trainedPrediction?.candidates ?? [],
+    [trainedPrediction?.candidates]
+  );
+  const consensusCandidates = useMemo<PredictionCandidateLike[]>(
+    () => (trainedCandidates.length > 0 ? trainedCandidates : stats.predictions),
+    [stats.predictions, trainedCandidates]
+  );
+  const predictionConsensus = useMemo(
+    () => buildPredictionConsensus(consensusCandidates),
+    [consensusCandidates]
+  );
+  const consensusTicket = useMemo(
+    () => buildConsensusTicket(predictionConsensus),
+    [predictionConsensus]
+  );
+  const primaryPrediction = useMemo(() => {
+    if (trainedPrediction?.redNumbers?.length) {
+      return {
         title: trainedPrediction.title || '训练后预测',
         redNumbers: trainedPrediction.redNumbers,
         blueNumber: trainedPrediction.blueNumber,
@@ -264,18 +605,60 @@ const LotteryPredictionInsights = ({
           `预测第${trainedPrediction.targetPeriod}期`,
           trainedPrediction.result ? `${trainedPrediction.result.prizeName} · 红球${trainedPrediction.result.redHits}/6` : ''
         ]
+      };
+    }
+    if (primaryRulePrediction) {
+      return {
+        title: primaryRulePrediction.title,
+        redNumbers: primaryRulePrediction.redNumbers,
+        blueNumber: primaryRulePrediction.blueNumber,
+        score: primaryRulePrediction.score,
+        tag: '规则预测',
+        tone: 'red' as const,
+        meta: primaryRulePrediction.tags.slice(0, 2)
+      };
+    }
+    return undefined;
+  }, [primaryRulePrediction, trainedPrediction]);
+  const hitReviewItems = useMemo<PredictionReviewItem[]>(() => {
+    const items: PredictionReviewItem[] = [];
+    if (primaryPrediction) {
+      items.push({
+        title: primaryPrediction.title,
+        source: primaryPrediction.tag,
+        redNumbers: primaryPrediction.redNumbers,
+        blueNumber: primaryPrediction.blueNumber,
+        score: primaryPrediction.score
+      });
+    }
+    if (consensusTicket) {
+      items.push({
+        title: '共识组合',
+        source: '候选共识',
+        redNumbers: consensusTicket.redNumbers,
+        blueNumber: consensusTicket.blueNumber
+      });
+    }
+    consensusCandidates.slice(0, 5).forEach((candidate, index) => {
+      items.push({
+        title: candidate.title || `候选 ${index + 1}`,
+        source: trainedCandidates.length > 0 ? '训练候选' : '规则候选',
+        redNumbers: candidate.redNumbers,
+        blueNumber: candidate.blueNumber,
+        score: candidate.score
+      });
+    });
+
+    const seen = new Set<string>();
+    return items.filter(item => {
+      const key = `${item.redNumbers.join(',')}+${item.blueNumber}`;
+      if (seen.has(key)) {
+        return false;
       }
-    : primaryRulePrediction
-      ? {
-          title: primaryRulePrediction.title,
-          redNumbers: primaryRulePrediction.redNumbers,
-          blueNumber: primaryRulePrediction.blueNumber,
-          score: primaryRulePrediction.score,
-          tag: '规则预测',
-          tone: 'red' as const,
-          meta: primaryRulePrediction.tags.slice(0, 2)
-        }
-      : undefined;
+      seen.add(key);
+      return true;
+    });
+  }, [consensusCandidates, consensusTicket, primaryPrediction, trainedCandidates.length]);
 
   useEffect(() => {
     if (!editingActualRecord) {
@@ -295,12 +678,25 @@ const LotteryPredictionInsights = ({
       message.error('请输入 6 个红球号码');
       return;
     }
+    if (new Set(redNumbers).size !== 6) {
+      message.error('红球号码不能重复');
+      return;
+    }
+    if (redNumbers.some(number => !isNumberInRange(number, 1, 33))) {
+      message.error('红球号码范围是 01-33');
+      return;
+    }
+    const blueNumber = String(values.blueNumber).padStart(2, '0');
+    if (!isNumberInRange(blueNumber, 1, 16)) {
+      message.error('蓝球号码范围是 01-16');
+      return;
+    }
     setSavingActualRecord(true);
     try {
       const saved = await lotteryTrainingApi.saveLatestActualRecord({
         period: values.period || trainedPrediction?.targetPeriod || 0,
         redNumbers,
-        blueNumber: String(values.blueNumber).padStart(2, '0')
+        blueNumber
       });
       onActualRecordUpdated?.(saved);
       const latestPrediction = await lotteryTrainingApi.latestPrediction();
@@ -345,6 +741,7 @@ const LotteryPredictionInsights = ({
               tag={primaryPrediction.tag}
               tone={primaryPrediction.tone}
               meta={primaryPrediction.meta}
+              actualRecord={actualRecord}
             />
           )}
         </div>
@@ -355,6 +752,18 @@ const LotteryPredictionInsights = ({
             blueNumber={primaryPrediction.blueNumber}
           />
         )}
+
+        <PredictionConsensusPanel
+          consensus={predictionConsensus}
+          candidateCount={consensusCandidates.length}
+          actualRecord={actualRecord}
+        />
+
+        <PredictionHitReviewPanel
+          actualRecord={actualRecord}
+          items={hitReviewItems}
+          onEditActualRecord={() => setEditingActualRecord(true)}
+        />
 
         {trainedCandidates.length > 1 ? (
           <div className="lottery-simple-candidate-strip">
@@ -367,6 +776,7 @@ const LotteryPredictionInsights = ({
                 score={candidate.score}
                 tag="备选"
                 tone="blue"
+                actualRecord={actualRecord}
                 meta={[
                   candidate.result ? `${candidate.result.prizeName} · 红球${candidate.result.redHits}/6` : '',
                   candidate.result?.blueHit ? '蓝球命中' : ''
@@ -375,7 +785,7 @@ const LotteryPredictionInsights = ({
             ))}
           </div>
         ) : (
-          <RulePredictionList predictions={stats.predictions.slice(1)} />
+          <RulePredictionList predictions={stats.predictions.slice(1)} actualRecord={actualRecord} />
         )}
       </section>
 

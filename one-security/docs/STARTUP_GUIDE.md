@@ -19,21 +19,21 @@ brew services list
 
 ```bash
 # 进入项目目录
-cd /Users/aurorae/Program/Hello/aurorae-service
+cd /Users/aurorae/Program/Hello/one-service
 
 # 初始化测试数据
-mongo test < aurorae-sso/docs/init-mongodb.js
+mongo test < one-security/docs/init-mongodb.js
 ```
 
 ### 3. 启动后端服务
 
 ```bash
 # 编译项目
-cd aurorae-sso
+cd one-security
 mvn clean install
 
-# 启动应用（通过aurorae-starter）
-cd ../aurorae-starter
+# 启动应用（通过one-starter）
+cd ../one-starter
 mvn spring-boot:run
 ```
 
@@ -42,7 +42,7 @@ mvn spring-boot:run
 ### 4. 启动前端
 
 ```bash
-cd aurorae-frontend-pro
+cd one-web
 npm install
 npm run dev
 ```
@@ -54,7 +54,7 @@ npm run dev
 ### MongoDB配置
 - **数据库名**: `test`
 - **连接地址**: `mongodb://localhost:27017/test`
-- **配置位置**: [aurorae-starter/src/main/resources/application.yml](aurorae-starter/src/main/resources/application.yml)
+- **配置位置**: [one-starter/src/main/resources/application.yml](aurorae-starter/src/main/resources/application.yml)
 
 ### Redis配置
 - **地址**: `localhost:6379`
@@ -138,17 +138,17 @@ Login successful: admin
 ## 📁 项目结构
 
 ```
-aurorae-service/
-├── aurorae-starter/                 # 启动入口
+one-service/
+├── one-starter/                 # 启动入口
 │   └── src/main/java/
-│       └── com/aurorae/
+│       └── com/one/
 │           └── ApplicationStarter.java
 │   └── src/main/resources/
 │       └── application.yml         # 主配置
 │
-├── aurorae-sso/                    # SSO模块
-│   ├── aurorae-sso-service/        # 服务层
-│   │   └── src/main/java/org/aurorae/sso/
+├── one-security/                    # Security模块
+│   ├── one-security-service/        # 服务层
+│   │   └── src/main/java/com/one/security/
 │   │       ├── config/
 │   │       │   └── SecurityConfig.java
 │   │       ├── controller/
@@ -157,19 +157,19 @@ aurorae-service/
 │   │           ├── CustomUserDetailsService.java
 │   │           └── DataInitializationService.java
 │   │
-│   ├── aurorae-sso-repository/     # Repository层
-│   │   └── src/main/java/org/aurorae/sso/repository/
+│   ├── one-security-repository/     # Repository层
+│   │   └── src/main/java/com/one/security/repository/
 │   │       └── UserRepository.java
 │   │
-│   ├── aurorae-sso-model/          # 模型层
-│   │   └── src/main/java/org/aurorae/sso/model/
+│   ├── one-security-model/          # 模型层
+│   │   └── src/main/java/com/one/security/model/
 │   │       └── User.java
 │   │
 │   └── docs/
 │       ├── init-mongodb.js         # MongoDB初始化脚本
 │       └── TROUBLESHOOTING.md      # 排查指南
 │
-└── aurorae-frontend-pro/          # 前端
+└── one-web/          # 前端
     └── src/
         ├── components/
         │   ├── Login.tsx
@@ -182,8 +182,8 @@ aurorae-service/
 
 1. **端口**: 后端默认8888，不是8080
 2. **数据库**: MongoDB数据库名是 `test`
-3. **配置**: 所有配置在 `aurorae-starter/application.yml`
-4. **启动**: 必须通过 `aurorae-starter` 启动
+3. **配置**: 所有配置在 `one-starter/application.yml`
+4. **启动**: 必须通过 `one-starter` 启动
 
 ## 🆘 常见问题
 
@@ -208,7 +208,7 @@ brew services start redis
 ### 问题3: 用户不存在
 ```bash
 # 重启应用，会自动创建默认用户
-cd aurorae-starter
+cd one-starter
 mvn spring-boot:run
 ```
 
@@ -216,7 +216,7 @@ mvn spring-boot:run
 1. 检查MongoDB中是否有用户
 2. 检查用户密码是否正确
 3. 查看后端日志
-4. 参考 [TROUBLESHOOTING.md](aurorae-sso/docs/TROUBLESHOOTING.md)
+4. 参考 [TROUBLESHOOTING.md](one-security/docs/TROUBLESHOOTING.md)
 
 ## 📞 获取帮助
 

@@ -2,10 +2,10 @@ package com.one.security.dto;
 
 import lombok.Data;
 
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 /**
  * Register Request DTO
@@ -21,8 +21,8 @@ public class RegisterRequest {
     private String username;
 
     @NotBlank(message = "密码不能为空")
-    @Size(min = 8, max = 16, message = "密码长度必须在8-16位之间")
-    @Pattern(regexp = "^[a-zA-Z]\\w{7,15}$", message = "密码必须以字母开头")
+    @Size(min = 8, max = 30, message = "密码长度必须在8-30位之间")
+    @Pattern(regexp = "^[a-zA-Z][\\w-]{7,29}$", message = "密码必须以字母开头，仅支持字母、数字、下划线和短横线")
     private String password;
 
     @Email(message = "邮箱格式不正确")
@@ -30,4 +30,6 @@ public class RegisterRequest {
 
     @Pattern(regexp = "^[1]([3-9])[0-9]{9}$", message = "手机号格式不正确")
     private String phone;
+
+    private String avatar;
 }

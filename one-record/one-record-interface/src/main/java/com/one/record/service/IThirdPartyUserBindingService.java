@@ -1,6 +1,7 @@
 package com.one.record.service;
 
 import com.one.record.enums.ThirdPartyProvider;
+import com.one.record.github.GitHubOAuthRequest;
 import com.one.record.model.ThirdPartyUserBinding;
 
 import java.util.List;
@@ -8,6 +9,10 @@ import java.util.List;
 public interface IThirdPartyUserBindingService {
 
     ThirdPartyUserBinding saveOrUpdate(ThirdPartyUserBinding binding);
+
+    String buildGitHubAuthorizeUrl(String state, String scope, String redirectUri);
+
+    ThirdPartyUserBinding bindGitHubUser(GitHubOAuthRequest request);
 
     ThirdPartyUserBinding update(ThirdPartyUserBinding binding);
 

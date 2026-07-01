@@ -7,6 +7,7 @@
 
 :root {
   --header-height: 64px;
+  --app-footer-height: 64px;
   --page-padding: 20px;
   --app-page-inline-padding: 24px;
   --app-page-max-width: 1180px;
@@ -71,7 +72,7 @@ body {
   width: 100%;
   background-color: var(--app-bg);
   padding-top: var(--header-height);
-  padding-bottom: var(--header-height);
+  padding-bottom: var(--app-footer-height);
 }
 
 .life-module-overview {
@@ -92,6 +93,17 @@ body {
 
 .life-module-lottery {
   --module-accent: #ff3b30;
+}
+
+.life-module-ai {
+  --module-accent: #00c7be;
+}
+
+.app-main.life-module-ai {
+  height: 100vh;
+  padding-top: var(--header-height);
+  padding-bottom: var(--app-footer-height);
+  overflow: hidden;
 }
 
 .lottery-astronaut-card-layout {
@@ -700,7 +712,7 @@ body {
   left: 0;
   right: 0;
   transform: none;
-  min-height: 64px;
+  height: var(--app-footer-height);
   z-index: 1000;
   padding: 0 20px;
   border-left: 0 !important;
@@ -708,12 +720,13 @@ body {
   border-bottom: 0 !important;
   border-radius: 0 !important;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .season-footer-inner {
   width: 100%;
   max-width: 1180px;
-  min-height: 64px;
+  height: 100%;
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -1002,6 +1015,50 @@ body {
   margin: 0 0 18px;
   color: var(--app-text-muted);
   line-height: 1.6;
+}
+
+.stock-market-panel {
+  margin-bottom: 24px;
+}
+
+.stock-market-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.stock-market-toolbar p {
+  max-width: 620px;
+  margin: 0;
+  color: var(--app-text-muted);
+  line-height: 1.6;
+}
+
+.stock-symbol-search {
+  width: min(440px, 100%);
+  flex-shrink: 0;
+}
+
+.stock-market-alert {
+  margin-bottom: 14px;
+}
+
+.stock-quote-code {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+@media (max-width: 720px) {
+  .stock-market-toolbar {
+    flex-direction: column;
+  }
+
+  .stock-symbol-search {
+    width: 100%;
+  }
 }
 
 .life-chip-row {
@@ -1760,39 +1817,100 @@ body {
   gap: 16px;
 }
 
-.personal-user-card {
-  display: flex;
-  align-items: center;
+.personal-profile-editor {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.personal-profile-avatar-preview {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.personal-profile-avatar-preview .ant-avatar {
+  box-shadow: 0 10px 24px rgba(20, 20, 20, 0.12);
+}
+
+.personal-profile-form {
+  min-width: 0;
+}
+
+.personal-profile-form .ant-form-item {
+  margin-bottom: 12px;
+}
+
+.personal-profile-view {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
-.personal-user-card strong,
-.personal-user-card span {
-  display: block;
+.personal-profile-view > div {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface-elevated);
 }
 
-.personal-user-card strong {
-  color: var(--app-text);
-  font-size: 16px;
-}
-
-.personal-user-card span {
-  margin-top: 4px;
+.personal-profile-view span {
   color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.personal-profile-view strong {
+  color: var(--app-text);
+  font-size: 15px;
   overflow-wrap: anywhere;
+}
+
+.personal-profile-field-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.personal-profile-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.personal-password-section {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--app-border);
+}
+
+.personal-password-title-row {
+  margin-bottom: 12px;
+}
+
+.personal-password-form .ant-form-item {
+  margin-bottom: 12px;
 }
 
 .third-party-binding-list {
   display: grid;
-  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 16px;
 }
 
 .third-party-binding-item {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 12px;
-  align-items: center;
-  min-height: 82px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  min-height: 136px;
   padding: 12px;
   border: 1px solid var(--app-border);
   border-radius: 8px;
@@ -1803,12 +1921,21 @@ body {
   min-width: 0;
 }
 
+.third-party-binding-item > .third-party-binding-main {
+  align-self: start;
+}
+
 .third-party-binding-title {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
   margin-bottom: 12px;
+}
+
+.third-party-binding-title > .ant-tag {
+  flex: 0 0 auto;
+  margin-inline-end: 0;
 }
 
 .third-party-binding-title-main {
@@ -1816,6 +1943,7 @@ body {
   align-items: center;
   min-width: 0;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .third-party-binding-main > .tesla-manager-status-grid,
@@ -1826,6 +1954,12 @@ body {
 .third-party-binding-title strong,
 .third-party-binding-title-main strong {
   color: var(--app-text);
+  overflow-wrap: anywhere;
+}
+
+.third-party-binding-email {
+  color: var(--app-text-muted);
+  font-size: 12px;
   overflow-wrap: anywhere;
 }
 
@@ -1845,16 +1979,34 @@ body {
   opacity: 0.92;
 }
 
+.third-party-binding-item > .ant-btn {
+  grid-column: 1 / -1;
+  align-self: end;
+  width: 100%;
+}
+
 .third-party-binding-actions,
 .third-party-rebind-link {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
   gap: 8px;
   flex-wrap: wrap;
 }
 
+.third-party-binding-actions {
+  grid-column: 1 / -1;
+  align-self: end;
+  justify-content: flex-end;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.third-party-rebind-link {
+  justify-content: flex-end;
+}
+
 .third-party-binding-actions .ant-btn {
+  flex: 1 1 116px;
   min-height: 36px;
   border-radius: 8px;
 }
@@ -1905,17 +2057,24 @@ body {
   .tesla-charging-summary,
   .tesla-charging-history-item,
   .personal-settings-layout,
+  .personal-profile-editor,
+  .personal-profile-view,
+  .personal-profile-field-grid,
+  .third-party-binding-list,
   .third-party-binding-meta {
     grid-template-columns: 1fr;
   }
 
-  .third-party-binding-item {
-    grid-template-columns: auto minmax(0, 1fr);
+  .personal-profile-actions {
+    justify-content: stretch;
   }
 
-  .third-party-binding-item > .ant-btn {
-    grid-column: 1 / -1;
+  .personal-profile-actions .ant-btn {
     width: 100%;
+  }
+
+  .third-party-binding-item {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .third-party-binding-title {

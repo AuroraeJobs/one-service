@@ -5,7 +5,7 @@ import com.one.security.repository.UserRepository;
 import com.one.security.service.UserService;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 /**
  * 用户服务接口实现类

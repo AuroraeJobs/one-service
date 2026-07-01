@@ -1,19 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Avatar, Button, Card, Input, Popconfirm, Space, Tag } from 'antd';
+import { Alert, Avatar, Button, Card, Form, Input, Popconfirm, Space, Tag } from 'antd';
 import {
-  ApiOutlined,
+  EditOutlined,
   DeleteOutlined,
   EnvironmentOutlined,
   GithubOutlined,
   LinkOutlined,
   ReloadOutlined,
-  SettingOutlined,
   UserOutlined
 } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import { useAuth } from '../contexts/AuthContext';
 import {
+  authApi,
   teslaFleetApi,
   thirdPartyUserBindingApi,
   type TeslaFleetApiCache,
@@ -47,12 +47,23 @@ const providerColor: Record<string, string> = {
   GitHub: '#24292f'
 };
 
-const providerIcon = (provider: string) => {
-  if (provider.toLowerCase() === 'github') return <GithubOutlined />;
-  return <ApiOutlined />;
-};
+const passwordPattern = /^[a-zA-Z][\w-]{7,29}$/;
+const passwordRuleMessage = '密码必须以字母开头，长度8-30位，仅支持字母、数字、下划线和短横线';
 
 type EditableTokenField = 'access_token' | 'refresh_token';
+
+interface UserProfileFormValues {
+  username: string;
+  avatar?: string;
+  email?: string;
+  phone?: string;
+}
+
+interface PasswordFormValues {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
 
 const formatTimestamp = (value?: number) => {
   if (!value) return '未记录';
@@ -65,6 +76,7 @@ const buildThirdPartyAccountKey = (provider: string, userId?: string, username?:
 };
 
 const isTeslaAccountKey = (value: string | null) => Boolean(value?.startsWith('Tesla:'));
+const isGitHubAccountKey = (value: string | null) => Boolean(value?.startsWith('GitHub:'));
 
 const valueAsString = (data: Record<string, unknown> | undefined, keys: string[]) => {
   if (!data) return undefined;
@@ -101,12 +113,19 @@ const extractTeslaRegionInfo = (cache: TeslaFleetApiCache | null) => {
 const PersonalSettingsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const teslaAccountKey = buildThirdPartyAccountKey('Tesla', user?.id, user?.username);
   const teslaCallbackRedirectUri = typeof window === 'undefined' ? '' : `${window.location.origin}/settings`;
   const handledTeslaCallbackRef = useRef('');
+  const [profileForm] = Form.useForm<UserProfileFormValues>();
+  const [passwordForm] = Form.useForm<PasswordFormValues>();
+  const avatarPreview = Form.useWatch('avatar', profileForm);
   const [bindings, setBindings] = useState<ThirdPartyUserBinding[]>([]);
   const [loading, setLoading] = useState(false);
+  const [profileEditing, setProfileEditing] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [passwordEditing, setPasswordEditing] = useState(false);
+  const [passwordSaving, setPasswordSaving] = useState(false);
   const [rebindLoading, setRebindLoading] = useState('');
   const [rebindUrls, setRebindUrls] = useState<Record<string, string>>({});
   const [visibleTokenPanels, setVisibleTokenPanels] = useState<Record<string, boolean>>({});
@@ -120,6 +139,111 @@ const PersonalSettingsPage = () => {
   const [profileLoading, setProfileLoading] = useState('');
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const savedProfileAvatar = user?.avatar?.trim() || user?.avatarUrl?.trim();
+  const profileAvatar = profileEditing ? avatarPreview?.trim() || savedProfileAvatar : savedProfileAvatar;
+
+  useEffect(() => {
+    profileForm.setFieldsValue({
+      username: user?.username || '',
+      avatar: user?.avatar || user?.avatarUrl || '',
+      email: user?.email || '',
+      phone: user?.phone || ''
+    });
+  }, [profileForm, user?.avatar, user?.avatarUrl, user?.email, user?.phone, user?.username]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    authApi.getCurrentUser()
+      .then(currentUser => {
+        updateUser(currentUser);
+      })
+      .catch(() => {
+        setError('登录状态已失效，请重新登录');
+        setProfileEditing(false);
+        setPasswordEditing(false);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  const resetProfileForm = () => {
+    profileForm.setFieldsValue({
+      username: user?.username || '',
+      avatar: user?.avatar || user?.avatarUrl || '',
+      email: user?.email || '',
+      phone: user?.phone || ''
+    });
+  };
+
+  const startProfileEdit = () => {
+    resetProfileForm();
+    setError('');
+    setSuccess('');
+    setProfileEditing(true);
+  };
+
+  const cancelProfileEdit = () => {
+    resetProfileForm();
+    setProfileEditing(false);
+  };
+
+  const startPasswordEdit = () => {
+    passwordForm.resetFields();
+    setError('');
+    setSuccess('');
+    setPasswordEditing(true);
+  };
+
+  const cancelPasswordEdit = () => {
+    passwordForm.resetFields();
+    setPasswordEditing(false);
+  };
+
+  const saveUserProfile = async (values: UserProfileFormValues) => {
+    setProfileSaving(true);
+    setError('');
+    setSuccess('');
+    try {
+      const updatedUser = await authApi.updateCurrentUser({
+        username: values.username.trim(),
+        avatar: values.avatar?.trim() || undefined,
+        email: values.email?.trim() || undefined,
+        phone: values.phone?.trim() || undefined
+      });
+      updateUser(updatedUser);
+      profileForm.setFieldsValue({
+        username: updatedUser.username,
+        avatar: updatedUser.avatar || updatedUser.avatarUrl || '',
+        email: updatedUser.email || '',
+        phone: updatedUser.phone || ''
+      });
+      setProfileEditing(false);
+      setSuccess('用户信息已更新');
+    } catch (caught: unknown) {
+      setError(caught instanceof Error ? caught.message : '用户信息更新失败');
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
+  const savePassword = async (values: PasswordFormValues) => {
+    setPasswordSaving(true);
+    setError('');
+    setSuccess('');
+    try {
+      await authApi.updateCurrentPassword({
+        currentPassword: values.currentPassword,
+        newPassword: values.newPassword
+      });
+      passwordForm.resetFields();
+      setPasswordEditing(false);
+      setSuccess('密码已更新');
+    } catch (caught: unknown) {
+      setError(caught instanceof Error ? caught.message : '密码更新失败');
+    } finally {
+      setPasswordSaving(false);
+    }
+  };
 
   const loadBindings = async () => {
     if (!user?.id) return;
@@ -143,7 +267,8 @@ const PersonalSettingsPage = () => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const code = params.get('code');
-    if (code) {
+    const state = params.get('state');
+    if (code && !isGitHubAccountKey(state)) {
       setTeslaAuthCode(code);
       setVisibleTokenPanels(prev => ({ ...prev, Tesla: true }));
     }
@@ -197,8 +322,13 @@ const PersonalSettingsPage = () => {
   };
 
   const generateRebindUrl = async (binding: ThirdPartyUserBinding) => {
-    if (binding.provider !== 'Tesla') {
-      setError(`${binding.provider} 重新绑定暂未接入`);
+    if (binding.provider === 'GitHub') {
+      if (visibleTokenPanels.GitHub) {
+        setVisibleTokenPanels(prev => ({ ...prev, GitHub: false }));
+        return;
+      }
+      setRebindUrls(prev => ({ ...prev, GitHub: '/auth/oauth2/github/bind' }));
+      setVisibleTokenPanels(prev => ({ ...prev, GitHub: true }));
       return;
     }
     if (visibleTokenPanels[binding.provider]) {
@@ -208,8 +338,9 @@ const PersonalSettingsPage = () => {
     setRebindLoading(binding.provider);
     setError('');
     try {
+      const state = binding.accountKey || `${binding.provider}:${user?.id || user?.username || 'anonymous'}`;
       const url = await teslaFleetApi.authorizeUrl({
-        state: binding.accountKey || `${binding.provider}:${user?.id || user?.username || 'anonymous'}`,
+        state,
         redirectUri: teslaCallbackRedirectUri
       });
       setRebindUrls(prev => ({ ...prev, [binding.provider]: url }));
@@ -219,6 +350,10 @@ const PersonalSettingsPage = () => {
     } finally {
       setRebindLoading('');
     }
+  };
+
+  const generateGitHubAuthUrl = async () => {
+    window.location.assign('/auth/oauth2/github/bind');
   };
 
   const generateTeslaAuthUrl = async () => {
@@ -232,7 +367,7 @@ const PersonalSettingsPage = () => {
       });
       setRebindUrls(prev => ({ ...prev, Tesla: url }));
       setVisibleTokenPanels(prev => ({ ...prev, Tesla: true }));
-      setSuccess('Tesla 认证链接已生成');
+      window.location.assign(url);
     } catch (caught: unknown) {
       setError(caught instanceof Error ? caught.message : 'Tesla 认证链接生成失败');
     } finally {
@@ -341,10 +476,12 @@ const PersonalSettingsPage = () => {
     const code = params.get('code');
     if (!code || !teslaCallbackRedirectUri) return;
 
+    const state = params.get('state');
+    if (isGitHubAccountKey(state)) return;
+
     const callbackKey = `${code}:${params.get('state') || ''}`;
     if (handledTeslaCallbackRef.current === callbackKey) return;
 
-    const state = params.get('state');
     const callbackAccountKey = isTeslaAccountKey(state) ? state! : teslaAccountKey;
     if (!callbackAccountKey || callbackAccountKey.endsWith(':anonymous')) return;
 
@@ -379,6 +516,21 @@ const PersonalSettingsPage = () => {
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search, teslaAccountKey, teslaCallbackRedirectUri]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const githubBind = params.get('githubBind');
+    if (!githubBind) return;
+
+    if (githubBind === 'success') {
+      setSuccess('GitHub 账户已绑定');
+      loadBindings();
+    } else {
+      setError('GitHub 账户绑定失败');
+    }
+    navigate(location.pathname, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
 
   const refreshTeslaUserProfile = async () => {
     setProfileLoading('user-me');
@@ -531,11 +683,29 @@ const PersonalSettingsPage = () => {
     </div>
   );
 
+  const renderGitHubAuthPanel = () => (
+    <div className="third-party-token-panel">
+      {rebindUrls.GitHub && (
+        <div className="third-party-rebind-link">
+          <Input.TextArea value={rebindUrls.GitHub} autoSize readOnly />
+          <Space wrap>
+            <Button href={rebindUrls.GitHub} target="_blank" icon={<LinkOutlined />}>
+              打开链接
+            </Button>
+            <Button onClick={() => navigator.clipboard.writeText(rebindUrls.GitHub)}>
+              复制链接
+            </Button>
+          </Space>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <LifePageShell
       className="personal-settings-page"
       eyebrow="个人设置"
-      title="管理当前用户资料与第三方账户绑定。"
+      title="管理第三方账户绑定。"
       actions={
         <Button icon={<ReloadOutlined />} loading={loading} onClick={loadBindings}>
           刷新
@@ -546,18 +716,163 @@ const PersonalSettingsPage = () => {
       {success && <Alert className="tesla-fleet-alert" type="success" showIcon message={success} />}
 
       <section className="personal-settings-layout">
-        <Card className="life-panel-card">
+        <Card className="life-panel-card personal-profile-card">
           <div className="life-panel-title-row">
-            <h2>当前用户</h2>
-            <SettingOutlined />
+            <h2>用户资料</h2>
+            <Space size={8}>
+              <Tag color={profileEditing ? 'processing' : profileAvatar ? 'success' : 'default'}>
+                {profileEditing ? '资料修改中' : '资料'}
+              </Tag>
+              {passwordEditing && <Tag color="processing">密码修改中</Tag>}
+              {!profileEditing && (
+                <Button icon={<EditOutlined />} onClick={startProfileEdit}>
+                  修改资料
+                </Button>
+              )}
+              {!passwordEditing && (
+                <Button icon={<EditOutlined />} onClick={startPasswordEdit}>
+                  修改密码
+                </Button>
+              )}
+            </Space>
           </div>
-          <div className="personal-user-card">
-            <Avatar size={48}>{user?.username?.charAt(0)?.toUpperCase() || '?'}</Avatar>
-            <div>
-              <strong>{user?.username || '未登录'}</strong>
-              <span>{user?.email || user?.phone || user?.id}</span>
+
+          <div className="personal-profile-editor">
+            <div className="personal-profile-avatar-preview">
+              <Avatar size={64} src={profileAvatar} icon={<UserOutlined />} />
             </div>
+
+            {profileEditing ? (
+              <Form
+                form={profileForm}
+                layout="vertical"
+                className="personal-profile-form"
+                onFinish={saveUserProfile}
+              >
+                <Form.Item label="头像" name="avatar">
+                  <Input placeholder="头像图片 URL" allowClear />
+                </Form.Item>
+                <div className="personal-profile-field-grid">
+                  <Form.Item
+                    label="用户名"
+                    name="username"
+                    rules={[
+                      { required: true, message: '请输入用户名' },
+                      { min: 3, max: 16, message: '用户名长度必须在3-16位之间' },
+                      { pattern: /^[a-zA-Z]\w{2,15}$/, message: '用户名必须以字母开头' }
+                    ]}
+                  >
+                    <Input placeholder="用户名" />
+                  </Form.Item>
+                  <Form.Item
+                    label="邮箱"
+                    name="email"
+                    rules={[{ type: 'email', message: '邮箱格式不正确' }]}
+                  >
+                    <Input placeholder="邮箱" allowClear />
+                  </Form.Item>
+                  <Form.Item
+                    label="电话"
+                    name="phone"
+                    rules={[
+                      {
+                        validator: (_, value?: string) => (
+                          !value || /^1[3-9]\d{9}$/.test(value)
+                            ? Promise.resolve()
+                            : Promise.reject(new Error('手机号格式不正确'))
+                        )
+                      }
+                    ]}
+                  >
+                    <Input placeholder="电话" allowClear />
+                  </Form.Item>
+                </div>
+                <div className="personal-profile-actions">
+                  <Button onClick={cancelProfileEdit} disabled={profileSaving}>
+                    取消
+                  </Button>
+                  <Button type="primary" htmlType="submit" loading={profileSaving}>
+                    保存资料
+                  </Button>
+                </div>
+              </Form>
+            ) : (
+              <div className="personal-profile-view">
+                <div>
+                  <span>用户名</span>
+                  <strong>{user?.username || '未设置'}</strong>
+                </div>
+                <div>
+                  <span>邮箱</span>
+                  <strong>{user?.email || '未设置'}</strong>
+                </div>
+                <div>
+                  <span>电话</span>
+                  <strong>{user?.phone || '未设置'}</strong>
+                </div>
+              </div>
+            )}
           </div>
+
+          {passwordEditing && (
+            <div className="personal-password-section">
+              <div className="life-panel-title-row personal-password-title-row">
+                <h2>修改密码</h2>
+              </div>
+              <Form
+                form={passwordForm}
+                layout="vertical"
+                className="personal-password-form"
+                onFinish={savePassword}
+              >
+                <div className="personal-profile-field-grid">
+                  <Form.Item
+                    label="当前密码"
+                    name="currentPassword"
+                    rules={[{ required: true, message: '请输入当前密码' }]}
+                  >
+                    <Input.Password placeholder="当前密码" autoComplete="current-password" />
+                  </Form.Item>
+                  <Form.Item
+                    label="新密码"
+                    name="newPassword"
+                    rules={[
+                      { required: true, message: '请输入新密码' },
+                      { min: 8, max: 30, message: '密码长度必须在8-30位之间' },
+                      { pattern: passwordPattern, message: passwordRuleMessage }
+                    ]}
+                  >
+                    <Input.Password placeholder="新密码" autoComplete="new-password" />
+                  </Form.Item>
+                  <Form.Item
+                    label="确认新密码"
+                    name="confirmPassword"
+                    dependencies={['newPassword']}
+                    rules={[
+                      { required: true, message: '请再次输入新密码' },
+                      ({ getFieldValue }) => ({
+                        validator: (_, value?: string) => (
+                          !value || getFieldValue('newPassword') === value
+                            ? Promise.resolve()
+                            : Promise.reject(new Error('两次输入的新密码不一致'))
+                        )
+                      })
+                    ]}
+                  >
+                    <Input.Password placeholder="确认新密码" autoComplete="new-password" />
+                  </Form.Item>
+                </div>
+                <div className="personal-profile-actions">
+                  <Button onClick={cancelPasswordEdit} disabled={passwordSaving}>
+                    取消
+                  </Button>
+                  <Button type="primary" htmlType="submit" loading={passwordSaving}>
+                    保存密码
+                  </Button>
+                </div>
+              </Form>
+            </div>
+          )}
         </Card>
 
         <Card className="life-panel-card">
@@ -572,11 +887,6 @@ const PersonalSettingsPage = () => {
               if (!binding) {
                 return (
                   <div key={item.provider} className="third-party-binding-item third-party-binding-empty">
-                    <Avatar
-                      size={44}
-                      style={{ backgroundColor: providerColor[item.provider] || '#1677ff' }}
-                      icon={providerIcon(item.provider)}
-                    />
                     <div className="third-party-binding-main">
                       <div className="third-party-binding-title">
                         <strong>{item.title}</strong>
@@ -587,6 +897,7 @@ const PersonalSettingsPage = () => {
                       </div>
                       {item.provider === 'Tesla' && visibleTokenPanels.Tesla && renderTeslaTokenPanel(true)}
                       {item.provider === 'Tesla' && teslaProfileResultPanel}
+                      {item.provider === 'GitHub' && visibleTokenPanels.GitHub && renderGitHubAuthPanel()}
                     </div>
                     {item.provider === 'Tesla' ? (
                       <Button
@@ -594,6 +905,15 @@ const PersonalSettingsPage = () => {
                         type="primary"
                         loading={rebindLoading === 'Tesla'}
                         onClick={generateTeslaAuthUrl}
+                      >
+                        去绑定
+                      </Button>
+                    ) : item.provider === 'GitHub' ? (
+                      <Button
+                        icon={<GithubOutlined />}
+                        type="primary"
+                        loading={rebindLoading === 'GitHub'}
+                        onClick={generateGitHubAuthUrl}
                       >
                         去绑定
                       </Button>
@@ -614,61 +934,42 @@ const PersonalSettingsPage = () => {
 
               return (
                 <div key={binding.id || `${binding.provider}-${binding.thirdPartyUserId}`} className="third-party-binding-item">
-                  <Avatar
-                    size={44}
-                    style={{ backgroundColor: providerColor[binding.provider] || '#1677ff' }}
-                    icon={providerIcon(binding.provider)}
-                  />
                   <div className="third-party-binding-main">
                     <div className="third-party-binding-title">
                       <div className="third-party-binding-title-main">
                         {binding.avatarUrl && <Avatar size={24} src={binding.avatarUrl} />}
                         <strong>{bindingTitle}</strong>
-                        <Tag color={providerColor[binding.provider] || 'processing'}>{binding.provider}</Tag>
+                        {binding.email && <span className="third-party-binding-email">{binding.email}</span>}
                       </div>
-                      <div className="third-party-binding-actions">
-                        {binding.provider === 'Tesla' && (
-                          <>
-                            <Button icon={<UserOutlined />} loading={profileLoading === 'user-me'} onClick={refreshTeslaUserProfile}>
-                              用户信息
-                            </Button>
-                            <Button icon={<EnvironmentOutlined />} loading={profileLoading === 'user-region'} onClick={refreshTeslaUserRegion}>
-                              用户区域
-                            </Button>
-                          </>
-                        )}
-                        <Button
-                          icon={<LinkOutlined />}
-                          loading={rebindLoading === binding.provider}
-                          onClick={() => generateRebindUrl(binding)}
-                        >
-                          重新绑定
-                        </Button>
-                        <Popconfirm title="解除这个绑定？" onConfirm={() => unbindAccount(binding.id)}>
-                          <Button icon={<DeleteOutlined />} danger>
-                            解除绑定
-                          </Button>
-                        </Popconfirm>
-                      </div>
-                    </div>
-                    <div className="tesla-manager-status-grid">
-                      <div>
-                        <span>第三方 ID</span>
-                        <strong>{binding.thirdPartyUserId}</strong>
-                      </div>
-                      {binding.username && binding.username !== bindingTitle && (
-                        <div>
-                          <span>用户名</span>
-                          <strong>{binding.username}</strong>
-                        </div>
-                      )}
-                      <div>
-                        <span>邮箱</span>
-                        <strong>{binding.email || '未返回'}</strong>
-                      </div>
+                      <Tag color={providerColor[binding.provider] || 'processing'}>{binding.provider}</Tag>
                     </div>
                     {binding.provider === 'Tesla' && visibleTokenPanels.Tesla && renderTeslaTokenPanel(false)}
                     {binding.provider === 'Tesla' && teslaProfileResultPanel}
+                    {binding.provider === 'GitHub' && visibleTokenPanels.GitHub && renderGitHubAuthPanel()}
+                  </div>
+                  <div className="third-party-binding-actions">
+                    {binding.provider === 'Tesla' && (
+                      <>
+                        <Button icon={<UserOutlined />} loading={profileLoading === 'user-me'} onClick={refreshTeslaUserProfile}>
+                          用户信息
+                        </Button>
+                        <Button icon={<EnvironmentOutlined />} loading={profileLoading === 'user-region'} onClick={refreshTeslaUserRegion}>
+                          用户区域
+                        </Button>
+                      </>
+                    )}
+                    <Button
+                      icon={<LinkOutlined />}
+                      loading={rebindLoading === binding.provider}
+                      onClick={() => generateRebindUrl(binding)}
+                    >
+                      重新绑定
+                    </Button>
+                    <Popconfirm title="解除这个绑定？" onConfirm={() => unbindAccount(binding.id)}>
+                      <Button icon={<DeleteOutlined />} danger>
+                        解除绑定
+                      </Button>
+                    </Popconfirm>
                   </div>
                 </div>
               );

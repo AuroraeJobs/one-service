@@ -250,6 +250,16 @@
   background: #0071e3;
 }
 
+.lottery-ball-hit {
+  outline: 2px solid #ffd666;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(255, 214, 102, 0.18), 0 8px 18px rgba(0, 0, 0, 0.16);
+}
+
+.lottery-ball-miss {
+  opacity: 0.52;
+}
+
 .lottery-universe-page {
   --universe-bg: #080b10;
   --universe-panel: rgba(18, 24, 33, 0.92);
@@ -1362,6 +1372,338 @@ button.lottery-latest-vs-card:hover {
   color: var(--app-text-muted);
   font-size: 12px;
   line-height: 1.25;
+}
+
+.lottery-prediction-consensus {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(0, 113, 227, 0.18);
+  border-radius: 10px;
+  background: rgba(0, 113, 227, 0.06);
+}
+
+.lottery-prediction-consensus-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.lottery-prediction-consensus-head strong {
+  color: var(--app-text);
+  font-size: 14px;
+}
+
+.lottery-prediction-consensus-head span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.lottery-prediction-consensus-ticket {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(218, 165, 32, 0.24);
+  border-radius: 8px;
+  background: rgba(218, 165, 32, 0.08);
+}
+
+.lottery-prediction-consensus-ticket > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.lottery-prediction-consensus-ticket strong {
+  color: var(--app-text);
+  font-size: 14px;
+}
+
+.lottery-prediction-consensus-ticket span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.lottery-prediction-consensus-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lottery-prediction-consensus-group span {
+  min-width: 52px;
+  min-height: 28px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.lottery-prediction-consensus-group-red span {
+  background: rgba(245, 34, 45, 0.88);
+}
+
+.lottery-prediction-consensus-group-blue span {
+  background: rgba(24, 144, 255, 0.88);
+}
+
+.lottery-prediction-consensus-group small {
+  min-width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.24);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.lottery-prediction-consensus-group .lottery-prediction-consensus-hit {
+  outline: 2px solid #ffd666;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(255, 214, 102, 0.16);
+}
+
+.lottery-prediction-hit-review {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(52, 199, 89, 0.22);
+  border-radius: 10px;
+  background: rgba(52, 199, 89, 0.06);
+}
+
+.lottery-prediction-hit-review-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.lottery-prediction-hit-review-head > div {
+  display: grid;
+  gap: 3px;
+}
+
+.lottery-prediction-hit-review-head strong {
+  color: var(--app-text);
+  font-size: 14px;
+}
+
+.lottery-prediction-hit-review-head span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.lottery-prediction-hit-review-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.lottery-prediction-hit-review-summary > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding: 10px;
+  border: 1px solid rgba(127, 127, 127, 0.14);
+  border-radius: 8px;
+  background: rgba(127, 127, 127, 0.08);
+}
+
+.lottery-prediction-hit-review-summary strong {
+  color: var(--app-text);
+  font-size: 16px;
+  line-height: 1.15;
+}
+
+.lottery-prediction-hit-review-summary span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.lottery-prediction-hit-review-source {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.lottery-prediction-hit-review-source > div {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 9px;
+  border: 1px solid rgba(52, 199, 89, 0.16);
+  border-radius: 8px;
+  background: rgba(52, 199, 89, 0.07);
+}
+
+.lottery-prediction-hit-review-source strong {
+  width: 100%;
+  overflow: hidden;
+  color: var(--app-text);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-prediction-hit-review-source span {
+  min-height: 21px;
+  padding: 2px 7px;
+  border-radius: 7px;
+  background: rgba(127, 127, 127, 0.12);
+  color: var(--app-text-muted);
+  font-size: 11px;
+}
+
+.lottery-prediction-hit-review-coverage {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(245, 34, 45, 0.16);
+  border-radius: 8px;
+  background: rgba(245, 34, 45, 0.05);
+}
+
+.lottery-prediction-hit-review-coverage-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.lottery-prediction-hit-review-coverage-head strong {
+  color: var(--app-text);
+  font-size: 13px;
+}
+
+.lottery-prediction-hit-review-coverage-head span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.lottery-prediction-hit-review-coverage-balls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lottery-prediction-hit-review-coverage-balls span {
+  min-width: 50px;
+  min-height: 28px;
+  border: 1px solid rgba(245, 34, 45, 0.18);
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: rgba(245, 34, 45, 0.86);
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.lottery-prediction-hit-review-coverage-balls small {
+  min-width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.24);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.lottery-prediction-hit-review-coverage-balls .lottery-prediction-hit-review-coverage-missed {
+  border-style: dashed;
+  background: rgba(127, 127, 127, 0.18);
+  color: var(--app-text-muted);
+}
+
+.lottery-prediction-hit-review-blindspot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 149, 0, 0.2);
+  border-radius: 8px;
+  background: rgba(255, 149, 0, 0.08);
+}
+
+.lottery-prediction-hit-review-blindspot strong {
+  color: var(--app-text);
+  font-size: 13px;
+}
+
+.lottery-prediction-hit-review-blindspot span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.lottery-prediction-hit-review-blindspot-clear {
+  border-color: rgba(52, 199, 89, 0.2);
+  background: rgba(52, 199, 89, 0.08);
+}
+
+.lottery-prediction-hit-review-list {
+  display: grid;
+  gap: 8px;
+}
+
+.lottery-prediction-hit-review-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(120px, 0.8fr) minmax(220px, 1.4fr) minmax(150px, 0.8fr);
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid rgba(127, 127, 127, 0.14);
+  border-radius: 8px;
+  background: rgba(127, 127, 127, 0.07);
+}
+
+.lottery-prediction-hit-review-meta {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.lottery-prediction-hit-review-meta strong {
+  overflow: hidden;
+  color: var(--app-text);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-prediction-hit-review-meta span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.lottery-prediction-hit-review-result {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.lottery-prediction-hit-review-result span {
+  min-height: 22px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: rgba(127, 127, 127, 0.12);
+  color: var(--app-text-muted);
+  font-size: 12px;
 }
 
 .lottery-simple-reference-grid,

@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Form, Input, Button, Card, message, Space, Typography } from 'antd';
+import { Form, Input, Button, Card, message, Typography } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Login.css';
 
 const { Title, Text } = Typography;
+const passwordPattern = /^[a-zA-Z][\w-]{7,29}$/;
+const passwordRuleMessage = '密码必须以字母开头，长度8-30位，仅支持字母、数字、下划线和短横线';
 
 interface RegisterFormData {
   username: string;
@@ -26,8 +28,13 @@ const Register = () => {
       return;
     }
 
-    if (values.password.length < 8 || values.password.length > 16) {
-      message.error('密码长度必须在8-16位之间');
+    if (values.password.length < 8 || values.password.length > 30) {
+      message.error('密码长度必须在8-30位之间');
+      return;
+    }
+
+    if (!passwordPattern.test(values.password)) {
+      message.error(passwordRuleMessage);
       return;
     }
 
@@ -48,9 +55,9 @@ const Register = () => {
       } else {
         message.error(response.data.message || '注册失败，请稍后重试');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('注册错误:', error);
-      if (error.response?.data?.message) {
+      if (axios.isAxiosError<{ message?: string }>(error) && error.response?.data?.message) {
         message.error(error.response.data.message);
       } else {
         message.error('注册失败，请稍后重试');
@@ -122,7 +129,7 @@ const Register = () => {
             name="password"
             rules={[
               { required: true, message: '请输入密码' },
-              { pattern: /^[a-zA-Z]\w{7,15}$/, message: '密码必须以字母开头，长度8-16位' }
+              { pattern: passwordPattern, message: passwordRuleMessage }
             ]}
           >
             <Input.Password

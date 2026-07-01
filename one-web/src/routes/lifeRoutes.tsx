@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import Analysis from '../components/Analysis';
+import AiChatPage from '../components/AiChatPage';
 import HealthAutumnEquinoxPage from '../components/HealthAutumnEquinoxPage';
 import HealthChargeStationPage from '../components/HealthChargeStationPage';
 import HealthFourthPage from '../components/HealthFourthPage';
@@ -35,6 +36,7 @@ export const createProtectedRoutes = (isTabVisible: boolean): ProtectedRouteConf
   { path: '/overview', element: <LifeOverviewPage /> },
   { path: '/settings', element: <PersonalSettingsPage /> },
   { path: '/connections', element: <LifeDataConnectionsPage /> },
+  { path: '/ai/chat', element: <AiChatPage /> },
   { path: '/investments', element: <LifeInvestmentPage /> },
   { path: '/vehicle', element: <HealthSpringEquinoxPage /> },
   { path: '/vehicle/tesla', element: <TeslaFleetManagerPage /> },
