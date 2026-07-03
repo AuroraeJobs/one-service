@@ -176,6 +176,8 @@ updatedAt
 
 `POST /lottery/tickets/check-prizes` accepts an actual draw, finds tickets for that draw period, calculates prize results, and writes the checked status back to each ticket. `GET /lottery/tickets/summary` aggregates counts, cost, prize amount, status distribution, and prize distribution.
 
+The frontend ticket list page at `/lottery/tickets` reads ticket list and summary APIs together, shows issue filtering, status/prize tags, generated numbers, cost, and prize outcome.
+
 Suggested statuses:
 
 ```text

@@ -1567,6 +1567,47 @@ export interface LotteryPredictionResult {
   score: number;
 }
 
+export interface LotteryPrizeResult {
+  redHits?: number;
+  blueHit?: boolean;
+  prizeGrade?: string;
+  prizeName?: string;
+  prizeLevel?: number;
+  prizeAmount?: number;
+  winning?: boolean;
+}
+
+export interface LotteryTicket {
+  id?: string;
+  userId?: string;
+  issue?: string;
+  period?: number;
+  redNumbers: string[];
+  blueNumber: string;
+  quantity?: number;
+  cost?: number;
+  source?: string;
+  status?: string;
+  prizeGrade?: string;
+  prizeResult?: LotteryPrizeResult;
+  predictionSnapshotId?: string;
+  note?: string;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
+export interface LotteryTicketSummary {
+  ticketCount?: number;
+  checkedTicketCount?: number;
+  pendingTicketCount?: number;
+  winningTicketCount?: number;
+  totalCost?: number;
+  totalPrizeAmount?: number;
+  statusDistribution: Record<string, number>;
+  prizeDistribution: Record<string, number>;
+  generatedAt?: number;
+}
+
 export interface LotteryTrainingTimelineItem {
   period: number;
   predictedRedNumbers: string[];
@@ -1669,6 +1710,27 @@ export const lotteryPredictionApi = {
   },
   train: (params: { replayCount?: number; scale?: 'fast' | 'standard' | 'deep' }): Promise<LotteryTrainingStatus> => {
     return apiClient.post('/lottery/predictions/train', params);
+  }
+};
+
+export const lotteryTicketApi = {
+  tickets: (params?: { issue?: string }): Promise<LotteryTicket[]> => {
+    return apiClient.get('/lottery/tickets', { params });
+  },
+  summary: (): Promise<LotteryTicketSummary> => {
+    return apiClient.get('/lottery/tickets/summary');
+  },
+  saveTicket: (ticket: Partial<LotteryTicket>): Promise<LotteryTicket> => {
+    return apiClient.post('/lottery/tickets', ticket);
+  },
+  updateTicket: (id: string, ticket: Partial<LotteryTicket>): Promise<LotteryTicket> => {
+    return apiClient.put(`/lottery/tickets/${id}`, ticket);
+  },
+  deleteTicket: (id: string): Promise<void> => {
+    return apiClient.delete(`/lottery/tickets/${id}`);
+  },
+  checkPrizes: (actualRecord: LotteryActualRecord): Promise<LotteryTicket[]> => {
+    return apiClient.post('/lottery/tickets/check-prizes', actualRecord);
   }
 };
 
