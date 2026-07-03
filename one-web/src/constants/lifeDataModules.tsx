@@ -13,6 +13,7 @@ import {
   DollarOutlined,
   ExperimentOutlined,
   GlobalOutlined,
+  HistoryOutlined,
   LineChartOutlined,
   MessageOutlined,
   MoneyCollectOutlined,
@@ -204,7 +205,11 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
       path: '/lottery/prediction',
       label: '预测',
       icon: <ThunderboltOutlined />,
-      accent: '#ff9500'
+      accent: '#ff9500',
+      children: [
+        { id: 'lottery-prediction-current', moduleKey: 'lottery', path: '/lottery/prediction', label: '当前', icon: <ThunderboltOutlined />, accent: '#ff9500' },
+        { id: 'lottery-prediction-history', moduleKey: 'lottery', path: '/lottery/predictions/history', label: '历史', icon: <HistoryOutlined />, accent: '#5856d6' }
+      ]
     },
     {
       id: 'lottery-statistics',

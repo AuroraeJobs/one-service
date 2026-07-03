@@ -88,6 +88,7 @@ Goal: make statistics consistent across overview and detailed tabs.
 Goal: make predictions auditable instead of ephemeral.
 
 - Persist prediction snapshots and training reports.
+- Add prediction history page at `/lottery/predictions/history` for recent saved snapshots.
 - Add prediction history and detail pages.
 - Add rule comparison and replay metrics.
 - Attach actual draw result to predictions.

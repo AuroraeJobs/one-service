@@ -97,6 +97,56 @@
   align-items: start;
 }
 
+.lottery-history-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.lottery-history-summary-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lottery-history-summary-item > span,
+.lottery-history-summary-item > svg {
+  color: var(--module-accent, #ff3b30);
+  font-size: 22px;
+}
+
+.lottery-history-summary-item div {
+  display: grid;
+  gap: 2px;
+}
+
+.lottery-history-summary-item strong {
+  color: var(--app-text);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.lottery-history-summary-item span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.lottery-history-list {
+  display: grid;
+  gap: 12px;
+}
+
+.lottery-history-card {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  background: var(--app-surface-elevated);
+}
+
 .lottery-prediction-page {
   --lottery-clean-radius: 12px;
 }
