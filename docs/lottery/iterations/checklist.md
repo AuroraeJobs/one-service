@@ -37,10 +37,10 @@ Use this file as the durable task board for the lottery module. When a task is f
 
 ## Iteration 02: Statistics Cockpit
 
-- [ ] Define `LotteryStatisticsSummary` DTO.
-- [ ] Add frequency statistics endpoint.
-- [ ] Add distribution statistics endpoint.
-- [ ] Add yearly counts endpoint under lottery namespace or document continued `record/yearly-counts` use.
+- [x] Define `LotteryStatisticsSummary` DTO. Includes draw count, first/latest draw metadata, red/blue frequency, and structural distributions.
+- [x] Add frequency statistics endpoint. Added `GET /lottery/statistics/frequency`.
+- [x] Add distribution statistics endpoint. Added `GET /lottery/statistics/distribution`.
+- [x] Add yearly counts endpoint under lottery namespace or document continued `record/yearly-counts` use. Existing `GET /lottery/records/yearly-counts` and `POST /lottery/records/yearly-counts/statistics` are the lottery namespace entry points.
 - [ ] Add recalculation endpoint for derived statistics.
 - [ ] Cache derived statistics in Redis.
 - [ ] Invalidate or refresh statistics after record sync.

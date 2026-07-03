@@ -75,6 +75,35 @@ export interface LotteryDraw {
   updatedAt?: number;
 }
 
+export interface LotteryNumberFrequency {
+  number: string;
+  count: number;
+  percent: number;
+}
+
+export interface LotteryDistributionItem {
+  value: string;
+  count: number;
+  percent: number;
+}
+
+export interface LotteryStatisticsSummary {
+  totalDraws: number;
+  firstIssue?: string;
+  latestIssue?: string;
+  firstDrawDate?: string;
+  latestDrawDate?: string;
+  firstDraw?: LotteryDraw;
+  latestDraw?: LotteryDraw;
+  redFrequency: LotteryNumberFrequency[];
+  blueFrequency: LotteryNumberFrequency[];
+  redSumDistribution: LotteryDistributionItem[];
+  oddCountDistribution: LotteryDistributionItem[];
+  bigCountDistribution: LotteryDistributionItem[];
+  spanDistribution: LotteryDistributionItem[];
+  generatedAt?: number;
+}
+
 interface ChatResponse {
   response: string;
   model?: string;
@@ -241,6 +270,23 @@ export const lotteryRecordApi = {
   },
   syncLogs: (params?: { status?: string; limit?: number }): Promise<LotteryRecordSyncLog[]> => {
     return apiClient.get('/lottery/records/sync-logs', { params });
+  },
+};
+
+export const lotteryStatisticsApi = {
+  summary: (): Promise<LotteryStatisticsSummary> => {
+    return apiClient.get('/lottery/statistics/summary');
+  },
+  frequency: (): Promise<{ red: LotteryNumberFrequency[]; blue: LotteryNumberFrequency[] }> => {
+    return apiClient.get('/lottery/statistics/frequency');
+  },
+  distribution: (): Promise<{
+    redSum: LotteryDistributionItem[];
+    oddCount: LotteryDistributionItem[];
+    bigCount: LotteryDistributionItem[];
+    span: LotteryDistributionItem[];
+  }> => {
+    return apiClient.get('/lottery/statistics/distribution');
   },
 };
 

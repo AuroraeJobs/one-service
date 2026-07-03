@@ -122,6 +122,12 @@ Training reports should include:
 - Generation/version.
 - Failure message when applicable.
 
+## Statistics Contract
+
+`LotteryStatisticsSummary` is the first public statistics DTO for the lottery cockpit. `GET /lottery/statistics/summary` returns record count, first/latest draw metadata, red/blue frequency, and structural distributions for red sum, odd count, big count, and span. `GET /lottery/statistics/frequency` and `GET /lottery/statistics/distribution` expose the same data in smaller endpoint-specific shapes for pages that do not need the full summary.
+
+Near-term implementation reads normalized `LotteryDraw` pages from `IRecordService`. A later iteration should cache the derived summary in Redis and refresh or invalidate it after record sync.
+
 ## Personal Ticket Contract
 
 Personal tickets should support both manually entered picks and prediction-derived picks:
