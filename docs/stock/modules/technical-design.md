@@ -343,6 +343,8 @@ Rules:
 Frontend stock detail:
 
 - `/investments` owns the watchlist table and navigates rows to `/investments/stocks/:symbol`.
+- `/investments` dashboard consumes only internal APIs: `GET /stock/portfolio/summary`, `GET /stock/analysis/summary`, `GET /stock/alerts/history`, `GET /stock/providers/health`, `GET /stock/watchlist`, and `GET /stock/quotes`.
+- The overview dashboard shows portfolio metrics, holdings highlights, recent alert history, analysis summaries, and provider health without provider-specific branching.
 - `/investments/stocks/:symbol` consumes only internal APIs: `GET /stock/quote`, `GET /stock/{symbol}/klines`, `GET /stock/portfolio/summary`, `GET /stock/trades`, and `GET /stock/alerts/rules`.
 - The detail page renders quote metrics from `StockQuote` and chart series from normalized `StockKLine`; it does not know the concrete market data provider.
 - K-line visualization uses `echarts-for-react` with candlestick, volume, MA5, MA10, and MA20 series.

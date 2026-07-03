@@ -130,11 +130,11 @@ Documentation:
 - [x] Add recent trades widget to symbol detail.
 - [x] Add active alert rules widget to symbol detail.
 - [x] Add symbol-aware shortcuts from detail to trades, alerts, K-lines, and sync.
-- [ ] Upgrade overview dashboard with portfolio summary and holdings highlights.
-- [ ] Add recent alert history widget to overview.
-- [ ] Add analysis widgets to overview.
-- [ ] Add provider health mini status to overview.
-- [ ] Link overview and analysis items to symbol detail.
+- [x] Upgrade overview dashboard with portfolio summary and holdings highlights.
+- [x] Add recent alert history widget to overview.
+- [x] Add analysis widgets to overview.
+- [x] Add provider health mini status to overview.
+- [x] Link overview and analysis items to symbol detail.
 - [ ] Verify empty, loading, and error states.
 - [x] Verify frontend lint and build.
 - [x] Update docs and commit/push after the milestone.
@@ -152,3 +152,9 @@ Documentation:
 - Enriched `/investments/stocks/:symbol` with holding summary, recent trades, and active alert rules.
 - Added symbol-aware detail shortcuts for creating a trade, creating an alert, querying K-lines, and opening K-line sync.
 - Verified with changed-file ESLint and full frontend build.
+
+### 2026-07-03 Overview Cockpit
+
+- Upgraded `/investments` with analysis summary, recent alert history, and provider health widgets.
+- Replaced early static planning cards with live dashboard data from internal stock APIs.
+- Linked overview alert and analysis items back to symbol detail or full management pages.

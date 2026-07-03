@@ -103,6 +103,7 @@ Implemented baseline:
 - Iteration 05 Track B first provider-backed sync slice is complete. K-line provider interface/router and Sina daily K-line provider are implemented; manual sync can fetch provider data with an empty request body, scheduled sync fetches configured symbols, and tests cover provider parsing plus sync upsert/logging.
 - Iteration 06 is planned in `docs/stock/iterations/06-dashboard-detail-linkage.md`. The next focus is linking overview, symbol detail, alerts, analysis, holdings, trades, K-lines, and sync into a daily-use cockpit.
 - Iteration 06 first detail-linkage slice is implemented. Linked stock pages read route query context, and symbol detail now shows holding summary, recent trades, active alerts, plus symbol-aware shortcuts.
+- Iteration 06 overview cockpit slice is implemented. `/investments` now shows live portfolio, holdings, alert history, analysis, and provider health widgets from internal stock APIs.
 
 Architecture rule to preserve:
 

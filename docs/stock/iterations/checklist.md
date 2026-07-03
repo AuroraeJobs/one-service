@@ -143,11 +143,11 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Add recent trades widget to symbol detail.
 - [x] Add active alert rules widget to symbol detail.
 - [x] Add symbol-aware shortcuts from detail to trades, alerts, K-lines, and sync.
-- [ ] Upgrade overview dashboard with portfolio summary and holdings highlights.
-- [ ] Add recent alert history widget to overview.
-- [ ] Add analysis widgets to overview.
-- [ ] Add provider health mini status to overview.
-- [ ] Link overview and analysis items to symbol detail.
+- [x] Upgrade overview dashboard with portfolio summary and holdings highlights.
+- [x] Add recent alert history widget to overview.
+- [x] Add analysis widgets to overview.
+- [x] Add provider health mini status to overview.
+- [x] Link overview and analysis items to symbol detail.
 - [ ] Verify empty, loading, and error states.
 - [x] Verify frontend lint and build.
 - [x] Update docs and commit/push after the milestone.

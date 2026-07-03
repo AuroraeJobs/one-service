@@ -6,28 +6,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import MetricCard from './MetricCard';
 import MetricGrid from './MetricGrid';
 import LifePageShell from './LifePageShell';
-import { stockApi, type StockHoldingSummary, type StockPortfolioSummary, type StockQuote, type StockWatchlistItem } from '../services/api';
-
-const investmentTracks = [
-  {
-    title: '账户持仓',
-    description: '券商、基金、现金类资产进入统一资产表。',
-    icon: <PieChartOutlined />,
-    accent: '#5856d6'
-  },
-  {
-    title: '行情数据',
-    description: '股票、指数、基金净值统一沉淀为时间序列。',
-    icon: <LineChartOutlined />,
-    accent: '#0071e3'
-  },
-  {
-    title: '收益归因',
-    description: '区分市场收益、交易收益、分红和汇率变化。',
-    icon: <BarChartOutlined />,
-    accent: '#34c759'
-  }
-];
+import { stockApi, type StockAlertHistory, type StockAnalysisItem, type StockAnalysisSummary, type StockHoldingSummary, type StockPortfolioSummary, type StockProviderHealth, type StockQuote, type StockWatchlistItem } from '../services/api';
 
 const LifeInvestmentPage = () => {
   const navigate = useNavigate();
@@ -36,9 +15,13 @@ const LifeInvestmentPage = () => {
   const [watchlist, setWatchlist] = useState<StockWatchlistItem[]>([]);
   const [quotes, setQuotes] = useState<StockQuote[]>([]);
   const [portfolioSummary, setPortfolioSummary] = useState<StockPortfolioSummary>();
+  const [analysisSummary, setAnalysisSummary] = useState<StockAnalysisSummary>();
+  const [alertHistories, setAlertHistories] = useState<StockAlertHistory[]>([]);
+  const [providerHealth, setProviderHealth] = useState<StockProviderHealth[]>([]);
   const [loading, setLoading] = useState(false);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
   const [portfolioLoading, setPortfolioLoading] = useState(false);
+  const [dashboardLoading, setDashboardLoading] = useState(false);
   const [addLoading, setAddLoading] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -120,10 +103,31 @@ const LifeInvestmentPage = () => {
     }
   }, []);
 
+  const fetchDashboardInsights = useCallback(async () => {
+    setDashboardLoading(true);
+    setError(undefined);
+    try {
+      const [analysis, histories, health] = await Promise.all([
+        stockApi.analysisSummary(),
+        stockApi.alertHistory(),
+        stockApi.providerHealth()
+      ]);
+      setAnalysisSummary(analysis);
+      setAlertHistories(histories.slice(0, 5));
+      setProviderHealth(health);
+    } catch (requestError) {
+      console.error('获取股票总览洞察失败:', requestError);
+      setError(requestError instanceof Error ? requestError.message : '获取股票总览洞察失败');
+    } finally {
+      setDashboardLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchWatchlist();
     fetchPortfolioSummary();
-  }, [fetchPortfolioSummary, fetchWatchlist]);
+    fetchDashboardInsights();
+  }, [fetchDashboardInsights, fetchPortfolioSummary, fetchWatchlist]);
 
   const addWatchlist = useCallback(async () => {
     if (symbols.length === 0) {
@@ -313,6 +317,38 @@ const LifeInvestmentPage = () => {
     }
   ];
 
+  const alertColumns: ColumnsType<StockAlertHistory> = [
+    {
+      title: '标的',
+      dataIndex: 'symbol',
+      key: 'symbol',
+      render: value => value ? (
+        <Button type="link" onClick={() => navigate(`/investments/stocks/${value}`)}>
+          {value}
+        </Button>
+      ) : '-'
+    },
+    {
+      title: '类型',
+      dataIndex: 'ruleType',
+      key: 'ruleType',
+      render: value => <Tag color="blue">{ruleTypeLabel(value)}</Tag>
+    },
+    {
+      title: '触发值',
+      dataIndex: 'triggerValue',
+      key: 'triggerValue',
+      align: 'right',
+      render: value => formatQuantity(value)
+    },
+    {
+      title: '时间',
+      dataIndex: 'triggeredAt',
+      key: 'triggeredAt',
+      render: value => formatTime(value)
+    }
+  ];
+
   return (
     <LifePageShell
       className="life-investment-page"
@@ -345,8 +381,11 @@ const LifeInvestmentPage = () => {
           <div className="stock-market-actions">
             <Space wrap>
               <Tag color="blue">计算时间 {portfolioCalculatedAt}</Tag>
-              <Button icon={<SyncOutlined spin={portfolioLoading} />} loading={portfolioLoading} onClick={fetchPortfolioSummary}>
-                刷新组合
+              <Button icon={<SyncOutlined spin={portfolioLoading || dashboardLoading} />} loading={portfolioLoading || dashboardLoading} onClick={() => {
+                fetchPortfolioSummary();
+                fetchDashboardInsights();
+              }}>
+                刷新总览
               </Button>
             </Space>
           </div>
@@ -365,6 +404,71 @@ const LifeInvestmentPage = () => {
           })}
         />
       </Card> : null}
+
+      {isOverview ? <section className="life-section-grid life-section-grid-three">
+        <Card className="life-panel-card stock-dashboard-widget">
+          <div className="life-panel-title-row">
+            <h2>分析摘要</h2>
+            <Button type="link" icon={<PieChartOutlined />} onClick={() => navigate('/investments/analysis')}>
+              分析页
+            </Button>
+          </div>
+          <MetricGrid gap={12} minColumnWidth={140}>
+            <MetricCard title="集中度" value={formatPercentValue(analysisSummary?.concentrationPercent)} accent="#5856d6" />
+            <MetricCard title="集中标的" value={analysisSummary?.concentrationSymbol || '-'} accent="#0071e3" valueStyle={{ fontSize: 18 }} />
+          </MetricGrid>
+          <AnalysisList title="涨幅靠前" items={analysisSummary?.topGainers} navigate={navigate} />
+          <AnalysisList title="回撤风险" items={analysisSummary?.drawdown} navigate={navigate} />
+        </Card>
+
+        <Card className="life-panel-card stock-dashboard-widget">
+          <div className="life-panel-title-row">
+            <h2>最近告警</h2>
+            <Button type="link" icon={<BarChartOutlined />} onClick={() => navigate('/investments/alerts')}>
+              告警页
+            </Button>
+          </div>
+          <Table
+            rowKey={record => record.id || `${record.ruleId}-${record.triggeredAt}`}
+            columns={alertColumns}
+            dataSource={alertHistories}
+            loading={dashboardLoading}
+            pagination={false}
+            size="small"
+            locale={{ emptyText: '暂无告警触发历史。' }}
+            rowClassName="stock-quote-row"
+          />
+        </Card>
+
+        <Card className="life-panel-card stock-dashboard-widget">
+          <div className="life-panel-title-row">
+            <h2>数据源健康</h2>
+            <Button type="link" icon={<LineChartOutlined />} onClick={() => navigate('/investments/providers')}>
+              数据源
+            </Button>
+          </div>
+          <div className="stock-provider-health-list">
+            {providerHealth.length > 0 ? providerHealth.map(provider => (
+              <button
+                key={`${provider.provider}-${provider.fallback ? 'fallback' : 'primary'}`}
+                type="button"
+                className="stock-provider-health-row"
+                onClick={() => navigate('/investments/providers')}
+              >
+                <span>
+                  <strong>{provider.provider || '-'}</strong>
+                  <small>{provider.active ? '当前启用' : provider.fallback ? '备用' : '已注册'}</small>
+                </span>
+                <Tag color={provider.status === 'UP' || provider.registered ? 'green' : 'orange'}>
+                  {provider.status || (provider.registered ? 'READY' : 'UNKNOWN')}
+                </Tag>
+              </button>
+            )) : (
+              <div className="stock-empty-dashboard">暂无数据源健康信息。</div>
+            )}
+          </div>
+        </Card>
+      </section> : null}
 
       {(isOverview || isWatchlist || isMarket) ? <Card className="life-panel-card stock-market-panel">
         <div className="stock-market-toolbar">
@@ -410,28 +514,6 @@ const LifeInvestmentPage = () => {
         />
       </Card> : null}
 
-      {isOverview ? <section className="life-section-grid life-section-grid-three">
-        {investmentTracks.map(track => (
-          <Card key={track.title} className="life-module-card">
-            <div className="life-module-card-head">
-              <span className="life-module-icon" style={{ color: track.accent }}>
-                {track.icon}
-              </span>
-            </div>
-            <h2>{track.title}</h2>
-            <p>{track.description}</p>
-          </Card>
-        ))}
-      </section> : null}
-
-      {isOverview ? <Card className="life-panel-card">
-        <h2>建议的数据模型</h2>
-        <div className="life-data-model-grid">
-          {['账户 Account', '资产 Asset', '持仓 Position', '交易 Trade', '行情 Quote', '收益 Return'].map(item => (
-            <span key={item}>{item}</span>
-          ))}
-        </div>
-      </Card> : null}
     </LifePageShell>
   );
 };
@@ -502,6 +584,20 @@ const formatPercentSuffix = (value?: number) => {
   return ` / ${sign}${value.toFixed(2)}%`;
 };
 
+const formatPercentValue = (value?: number) => {
+  if (typeof value !== 'number') {
+    return '-';
+  }
+  return `${value.toFixed(2)}%`;
+};
+
+const formatTime = (value?: number) => {
+  if (typeof value !== 'number') {
+    return '-';
+  }
+  return new Date(value).toLocaleString();
+};
+
 const pnlAccent = (value?: number) => {
   if (typeof value !== 'number') {
     return '#0071e3';
@@ -524,6 +620,41 @@ const PnlText = ({ value, percent }: { value?: number; percent?: number }) => {
       {formatSignedMoney(value)}{formatPercentSuffix(percent)}
     </span>
   );
+};
+
+const ruleTypeLabel = (value?: string) => {
+  const labels: Record<string, string> = {
+    PRICE: '价格',
+    PERCENT_CHANGE: '涨跌幅',
+    VOLUME_ABNORMAL: '成交量异常'
+  };
+  return value ? labels[value] || value : '-';
+};
+
+const AnalysisList = ({ title, items, navigate }: { title: string; items?: StockAnalysisItem[]; navigate: (path: string) => void }) => (
+  <div className="stock-analysis-mini-list">
+    <h3>{title}</h3>
+    {(items || []).slice(0, 4).map(item => (
+      <button key={`${title}-${item.symbol}`} type="button" onClick={() => item.symbol ? navigate(`/investments/stocks/${item.symbol}`) : undefined}>
+        <span>
+          <strong>{item.name || item.symbol || '-'}</strong>
+          <small>{item.symbol || '-'}</small>
+        </span>
+        <span>{formatAnalysisValue(item)}</span>
+      </button>
+    ))}
+    {(items || []).length === 0 ? <div className="stock-empty-dashboard">暂无{title}数据。</div> : null}
+  </div>
+);
+
+const formatAnalysisValue = (item: StockAnalysisItem) => {
+  if (typeof item.percent === 'number') {
+    return `${item.percent.toFixed(2)}%`;
+  }
+  if (typeof item.value === 'number') {
+    return item.value.toFixed(2);
+  }
+  return item.message || '-';
 };
 
 const QuoteChange = ({ quote }: { quote: StockQuote }) => {
