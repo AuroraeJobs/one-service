@@ -2,6 +2,8 @@ package com.one.record.web;
 
 import com.one.record.model.LotteryTicket;
 import com.one.record.service.ILotteryTicketService;
+import com.one.record.lottery.LotteryTicketSummary;
+import com.one.record.training.LotteryActualRecord;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +35,12 @@ public class LotteryTicketController {
         return service.tickets(issue);
     }
 
+    @GetMapping("summary")
+    @Operation(summary = "查询彩票票据汇总", description = "汇总个人彩票票据成本、兑奖状态和中奖分布")
+    public LotteryTicketSummary summary() {
+        return service.summary();
+    }
+
     @PostMapping
     @Operation(summary = "新增彩票票据", description = "新增一条个人彩票票据")
     public LotteryTicket saveTicket(@RequestBody LotteryTicket ticket) {
@@ -52,5 +60,12 @@ public class LotteryTicketController {
     public void deleteTicket(@PathVariable("id") String id) {
         log.info("Deleting lottery ticket: {}", id);
         service.deleteTicket(id);
+    }
+
+    @PostMapping("check-prizes")
+    @Operation(summary = "检查彩票票据中奖结果", description = "按实际开奖结果检查同一期个人票据并写回中奖结果")
+    public List<LotteryTicket> checkPrizes(@RequestBody LotteryActualRecord actualRecord) {
+        log.info("Checking lottery ticket prizes: {}", actualRecord);
+        return service.checkPrizes(actualRecord);
     }
 }

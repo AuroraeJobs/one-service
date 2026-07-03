@@ -2,6 +2,7 @@ package com.one.record.web;
 
 import com.one.record.model.LotteryTicket;
 import com.one.record.service.ILotteryTicketService;
+import com.one.record.lottery.LotteryTicketSummary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MockMvc;
@@ -81,5 +82,42 @@ class LotteryTicketControllerTest {
                 .andExpect(status().isOk());
 
         verify(service).deleteTicket("ticket-1");
+    }
+
+    @Test
+    void summaryDelegatesToService() throws Exception {
+        when(service.summary()).thenReturn(LotteryTicketSummary.builder()
+                .ticketCount(2)
+                .winningTicketCount(1)
+                .totalPrizeAmount(1000L)
+                .build());
+
+        mockMvc.perform(get("/lottery/tickets/summary"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ticketCount").value(2))
+                .andExpect(jsonPath("$.winningTicketCount").value(1))
+                .andExpect(jsonPath("$.totalPrizeAmount").value(1000));
+
+        verify(service).summary();
+    }
+
+    @Test
+    void checkPrizesDelegatesToService() throws Exception {
+        when(service.checkPrizes(org.mockito.ArgumentMatchers.any()))
+                .thenReturn(List.of(LotteryTicket.builder()
+                        .id("ticket-1")
+                        .prizeGrade("FIFTH")
+                        .status("CHECKED")
+                        .build()));
+
+        mockMvc.perform(post("/lottery/tickets/check-prizes")
+                        .contentType("application/json")
+                        .content("{\"period\":2026001,\"redNumbers\":[\"01\",\"02\",\"03\",\"04\",\"05\",\"06\"],\"blueNumber\":\"07\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value("ticket-1"))
+                .andExpect(jsonPath("$[0].prizeGrade").value("FIFTH"))
+                .andExpect(jsonPath("$[0].status").value("CHECKED"));
+
+        verify(service).checkPrizes(org.mockito.ArgumentMatchers.any());
     }
 }

@@ -73,8 +73,8 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add `POST /lottery/tickets`. Creates normalized personal tickets.
 - [x] Add `PUT /lottery/tickets/{id}`. Updates existing personal tickets.
 - [x] Add `DELETE /lottery/tickets/{id}`. Deletes an existing personal ticket by ID.
-- [ ] Add `POST /lottery/tickets/check-prizes`.
-- [ ] Add `GET /lottery/tickets/summary`.
+- [x] Add `POST /lottery/tickets/check-prizes`. Checks tickets for the actual draw period and writes prize result, grade, and checked status.
+- [x] Add `GET /lottery/tickets/summary`. Aggregates ticket count, checked/pending counts, winning count, cost, prize amount, and distributions.
 - [x] Add prize grade calculation utility. Added `LotteryPrizeCalculator` with validation-backed hit counting and prize grade mapping tests.
 - [ ] Add ticket list page.
 - [ ] Add ticket create/edit modal.

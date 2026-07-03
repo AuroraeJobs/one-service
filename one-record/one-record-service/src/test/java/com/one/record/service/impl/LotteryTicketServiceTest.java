@@ -1,8 +1,11 @@
 package com.one.record.service.impl;
 
 import com.one.common.exception.NotFoundException;
+import com.one.record.lottery.LotteryPrizeResult;
+import com.one.record.lottery.LotteryTicketSummary;
 import com.one.record.model.LotteryTicket;
 import com.one.record.repository.LotteryTicketRepository;
+import com.one.record.training.LotteryActualRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -97,5 +100,62 @@ class LotteryTicketServiceTest {
         assertThatThrownBy(() -> service.deleteTicket("missing"))
                 .isInstanceOf(NotFoundException.class)
                 .hasMessageContaining("彩票票据不存在");
+    }
+
+    @Test
+    void checkPrizesUpdatesTicketsForActualPeriod() {
+        LotteryTicket ticket = LotteryTicket.builder()
+                .id("ticket-1")
+                .issue("2026001")
+                .redNumbers(List.of("01", "02", "03", "04", "05", "06"))
+                .blueNumber("07")
+                .build();
+        when(repository.findByUserIdAndIssueOrderByCreatedAtDesc("default", "2026001"))
+                .thenReturn(List.of(ticket));
+        when(repository.saveAll(org.mockito.ArgumentMatchers.anyList()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        LotteryActualRecord actual = new LotteryActualRecord();
+        actual.setPeriod(2026001);
+        actual.setRedNumbers(List.of("01", "02", "03", "08", "09", "10"));
+        actual.setBlueNumber("07");
+
+        List<LotteryTicket> checked = service.checkPrizes(actual);
+
+        assertThat(checked).hasSize(1);
+        assertThat(checked.get(0).getPrizeGrade()).isEqualTo("FIFTH");
+        assertThat(checked.get(0).getPrizeResult().getPrizeName()).isEqualTo("五等奖");
+        assertThat(checked.get(0).getStatus()).isEqualTo("CHECKED");
+        assertThat(checked.get(0).getUpdatedAt()).isNotNull();
+    }
+
+    @Test
+    void summaryAggregatesTickets() {
+        when(repository.findByUserIdOrderByPeriodDescCreatedAtDesc("default")).thenReturn(List.of(
+                LotteryTicket.builder()
+                        .status("CHECKED")
+                        .cost(new BigDecimal("4"))
+                        .prizeResult(LotteryPrizeResult.builder()
+                                .prizeGrade("FIFTH")
+                                .prizeAmount(1000L)
+                                .winning(true)
+                                .build())
+                        .build(),
+                LotteryTicket.builder()
+                        .status("DRAFT")
+                        .cost(new BigDecimal("2"))
+                        .build()
+        ));
+
+        LotteryTicketSummary summary = service.summary();
+
+        assertThat(summary.getTicketCount()).isEqualTo(2);
+        assertThat(summary.getCheckedTicketCount()).isEqualTo(1);
+        assertThat(summary.getPendingTicketCount()).isEqualTo(1);
+        assertThat(summary.getWinningTicketCount()).isEqualTo(1);
+        assertThat(summary.getTotalCost()).isEqualByComparingTo("6");
+        assertThat(summary.getTotalPrizeAmount()).isEqualTo(1000L);
+        assertThat(summary.getStatusDistribution()).containsEntry("CHECKED", 1).containsEntry("DRAFT", 1);
+        assertThat(summary.getPrizeDistribution()).containsEntry("FIFTH", 1);
+        assertThat(summary.getGeneratedAt()).isNotNull();
     }
 }

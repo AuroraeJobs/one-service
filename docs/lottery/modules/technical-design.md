@@ -174,6 +174,8 @@ updatedAt
 
 `LotteryTicketService` is the first ticket service boundary. It uses default user scoping, normalizes red and blue numbers, defaults quantity/cost/source/status, and exposes list/create/update/delete through `/lottery/tickets`.
 
+`POST /lottery/tickets/check-prizes` accepts an actual draw, finds tickets for that draw period, calculates prize results, and writes the checked status back to each ticket. `GET /lottery/tickets/summary` aggregates counts, cost, prize amount, status distribution, and prize distribution.
+
 Suggested statuses:
 
 ```text
