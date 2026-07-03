@@ -172,6 +172,18 @@
   line-height: 1.6;
 }
 
+.lottery-overview-status-alert {
+  margin-bottom: 16px;
+  border-radius: 8px;
+}
+
+.lottery-statistics-cache-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
 .lottery-latest-content {
   display: grid;
   gap: 18px;

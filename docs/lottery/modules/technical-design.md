@@ -130,6 +130,8 @@ The implementation reads normalized `LotteryDraw` pages from `IRecordService` an
 
 The frontend overview page consumes `LotteryStatisticsSummary` for red/blue frequency charts and summary count display. Local `lotteryStats.ts` remains in use for recent draw interaction, prediction helpers, omissions, and other analysis pages until those contracts are migrated incrementally.
 
+The overview page treats backend statistics as the preferred source and local parsing as a fallback. It shows explicit status alerts when statistics are loading, recalculating, unavailable, stale against the current local draw count, or when no records are available and a sync is needed.
+
 ## Personal Ticket Contract
 
 Personal tickets should support both manually entered picks and prediction-derived picks:
