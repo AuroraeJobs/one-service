@@ -7,7 +7,7 @@ import { RED_BALL_COMBINATION_COLORS, BLUE_BALL_COMBINATION_COLORS } from '../co
 const PAGE_SIZE = 49;
 
 const HealthThirdPage: React.FC = () => {
-  const { allRecords, loading } = useRecordContext();
+  const { allRecords } = useRecordContext();
   const [currentPage, setCurrentPage] = useState(1);
   
   // 计算总期数
@@ -657,7 +657,6 @@ const HealthThirdPage: React.FC = () => {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '12px',
-                    justifyContent: 'flex-end',
                     flex: '1 1 280px',
                     flexWrap: 'wrap',
                     marginRight: '10px',

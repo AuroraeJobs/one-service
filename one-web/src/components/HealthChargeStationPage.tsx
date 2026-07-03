@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, Form, Input, Select, Button, Popconfirm, message, Drawer } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { chargeStationApi, chargeRecordApi } from '../services/api';
+import type { ChargeRecord } from '../services/api';
 
 interface ChargeProviderOption {
   label: string;
@@ -17,15 +18,6 @@ interface ChargeStation {
   stationName?: string;
   createdAt?: number;
   updatedAt?: number;
-}
-
-interface ChargeRecord {
-  id: string;
-  provider?: string;
-  chargeAmount: number;
-  electricityCost: number;
-  serviceCost: number;
-  discountAmount: number;
 }
 
 interface ProviderStats {

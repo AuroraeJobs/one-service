@@ -1,14 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, Progress } from 'antd';
 import { ClockCircleOutlined } from '@ant-design/icons';
-import { useRecordContext } from '../contexts/RecordContext';
 
 const HealthWinterSolsticePage: React.FC = () => {
-  const { allRecords, loading } = useRecordContext();
-  const [currentRightPage, setCurrentRightPage] = useState(1);
-  const [selectedPeriod, setSelectedPeriod] = useState<any>(null);
-  const [showFullPage, setShowFullPage] = useState(false);
-
   return (
     <div className="themed-route-page health-fitness-page" style={{
       padding: '20px', 

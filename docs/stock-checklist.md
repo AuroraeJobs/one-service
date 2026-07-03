@@ -106,7 +106,7 @@ Use this file as the durable task board for the stock module. When a task is fin
 
 - [x] Backend compiles with JDK 21.
 - [x] Frontend changed files pass ESLint.
-- [ ] Full frontend build passes after unrelated TypeScript errors are fixed.
+- [x] Full frontend build passes after unrelated TypeScript errors are fixed. Fixed existing strict TypeScript errors in health/hexagram pages and verified `npm run build`.
 - [x] Quote provider failure path is verified. Unit test covers provider error fallback to `stock:quote:last-success:{symbol}`.
 - [x] Quote cache uses millisecond timestamps for time fields such as `fetchedAt`.
 - [x] Stock watchlist uses millisecond timestamps for `createdAt` and `updatedAt`.

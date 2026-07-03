@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useMemo } from 'react';
-import { Card, Progress } from 'antd';
+import React, { useMemo } from 'react';
+import { Card } from 'antd';
 import ReactECharts from 'echarts-for-react';
 import { HEXAGRAMS } from '../constants/hexagrams';
 import { useRecordContext } from '../contexts/RecordContext';
