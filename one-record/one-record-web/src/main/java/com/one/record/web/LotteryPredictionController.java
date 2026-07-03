@@ -1,8 +1,10 @@
 package com.one.record.web;
 
+import com.one.record.model.LotteryPredictionRuleRecord;
 import com.one.record.model.LotteryPredictionSnapshot;
 import com.one.record.service.ILotteryTrainingService;
 import com.one.record.training.LotteryActualRecord;
+import com.one.record.training.LotteryRuleComparison;
 import com.one.record.training.LotteryTrainingRequest;
 import com.one.record.training.LotteryTrainingStatus;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,6 +30,18 @@ public class LotteryPredictionController {
     @Operation(summary = "查询彩票预测历史", description = "查询最近保存的彩票预测快照")
     public List<LotteryPredictionSnapshot> history(@RequestParam(value = "limit", required = false, defaultValue = "20") Integer limit) {
         return service.predictionHistory(limit);
+    }
+
+    @GetMapping("rules")
+    @Operation(summary = "查询彩票预测规则版本", description = "查询最近保存的彩票预测规则版本")
+    public List<LotteryPredictionRuleRecord> rules(@RequestParam(value = "limit", required = false, defaultValue = "20") Integer limit) {
+        return service.predictionRules(limit);
+    }
+
+    @GetMapping("rules/compare")
+    @Operation(summary = "比较彩票预测规则", description = "查询最近规则版本并返回当前排名最高的规则")
+    public LotteryRuleComparison compareRules(@RequestParam(value = "limit", required = false, defaultValue = "20") Integer limit) {
+        return service.comparePredictionRules(limit);
     }
 
     @GetMapping("{id}")

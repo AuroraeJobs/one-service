@@ -1512,6 +1512,27 @@ export interface LotteryPredictionSnapshot extends LotteryLatestPrediction {
   updatedAt?: number;
 }
 
+export interface LotteryPredictionRuleRecord {
+  id?: string;
+  ruleId?: string;
+  ruleName?: string;
+  generation?: number;
+  replayCount?: number;
+  rankScore?: number;
+  config?: PredictionRuleConfig;
+  summary?: LotteryTrainingSummary;
+  learned?: boolean;
+  createdAt?: number;
+}
+
+export interface LotteryRuleComparison {
+  rules: LotteryPredictionRuleRecord[];
+  bestRuleId?: string;
+  bestRuleName?: string;
+  bestRankScore?: number;
+  generatedAt?: number;
+}
+
 export interface LotteryPredictionCandidate {
   title: string;
   redNumbers: string[];
@@ -1603,6 +1624,12 @@ export const lotteryPredictionApi = {
   },
   attachActual: (id: string, record: LotteryActualRecord): Promise<LotteryPredictionSnapshot> => {
     return apiClient.post(`/lottery/predictions/${id}/actual`, record);
+  },
+  rules: (params?: { limit?: number }): Promise<LotteryPredictionRuleRecord[]> => {
+    return apiClient.get('/lottery/predictions/rules', { params });
+  },
+  compareRules: (params?: { limit?: number }): Promise<LotteryRuleComparison> => {
+    return apiClient.get('/lottery/predictions/rules/compare', { params });
   },
   train: (params: { replayCount?: number; scale?: 'fast' | 'standard' | 'deep' }): Promise<LotteryTrainingStatus> => {
     return apiClient.post('/lottery/predictions/train', params);

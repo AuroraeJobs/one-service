@@ -1,7 +1,9 @@
 package com.one.record.service;
 
 import com.one.record.model.LotteryPredictionSnapshot;
+import com.one.record.model.LotteryPredictionRuleRecord;
 import com.one.record.training.LotteryActualRecord;
+import com.one.record.training.LotteryRuleComparison;
 import com.one.record.training.LotteryTrainingReport;
 import com.one.record.training.LotteryLatestPrediction;
 import com.one.record.training.LotteryTrainingStatus;
@@ -30,4 +32,8 @@ public interface ILotteryTrainingService {
     LotteryPredictionSnapshot predictionDetail(String id);
 
     LotteryPredictionSnapshot attachPredictionActual(String id, LotteryActualRecord record);
+
+    List<LotteryPredictionRuleRecord> predictionRules(Integer limit);
+
+    LotteryRuleComparison comparePredictionRules(Integer limit);
 }

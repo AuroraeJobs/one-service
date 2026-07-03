@@ -1,8 +1,10 @@
 package com.one.record.web;
 
+import com.one.record.model.LotteryPredictionRuleRecord;
 import com.one.record.model.LotteryPredictionSnapshot;
 import com.one.record.service.ILotteryTrainingService;
 import com.one.record.training.LotteryTrainingStatus;
+import com.one.record.training.LotteryRuleComparison;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MockMvc;
@@ -77,6 +79,38 @@ class LotteryPredictionControllerTest {
                 .andExpect(jsonPath("$.blueNumber").value("07"));
 
         verify(service).attachPredictionActual(org.mockito.ArgumentMatchers.eq("snapshot-1"), org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void rulesBindsLimit() throws Exception {
+        when(service.predictionRules(5)).thenReturn(List.of(LotteryPredictionRuleRecord.builder()
+                .ruleId("rule-1")
+                .ruleName("规则一")
+                .rankScore(99)
+                .build()));
+
+        mockMvc.perform(get("/lottery/predictions/rules").param("limit", "5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].ruleId").value("rule-1"))
+                .andExpect(jsonPath("$[0].rankScore").value(99));
+
+        verify(service).predictionRules(5);
+    }
+
+    @Test
+    void compareRulesReturnsBestRule() throws Exception {
+        when(service.comparePredictionRules(5)).thenReturn(LotteryRuleComparison.builder()
+                .bestRuleId("rule-1")
+                .bestRuleName("规则一")
+                .bestRankScore(99)
+                .build());
+
+        mockMvc.perform(get("/lottery/predictions/rules/compare").param("limit", "5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.bestRuleId").value("rule-1"))
+                .andExpect(jsonPath("$.bestRankScore").value(99));
+
+        verify(service).comparePredictionRules(5);
     }
 
     @Test

@@ -52,13 +52,13 @@ Use this file as the durable task board for the lottery module. When a task is f
 
 - [x] Add durable prediction snapshot model. Added `LotteryPredictionSnapshot` stored in `lottery_prediction_snapshots`.
 - [x] Add durable training report model. Added `LotteryTrainingReportRecord` stored in `lottery_training_reports` and persisted when training completes.
-- [ ] Add prediction rule model or persist rule versions explicitly.
+- [x] Add prediction rule model or persist rule versions explicitly. Added `LotteryPredictionRuleRecord` stored in `lottery_prediction_rules` when training produces a learned rule.
 - [x] Add prediction history endpoint. Added `GET /lottery/predictions`.
 - [x] Add prediction detail endpoint. Added `GET /lottery/predictions/{id}`.
 - [x] Add training start endpoint under `/lottery/predictions/train` or document continued `/lottery/training/start` use. Added `POST /lottery/predictions/train` delegating to the existing async training service.
 - [x] Add actual-result attachment endpoint. Added `POST /lottery/predictions/{id}/actual` to attach actual draw results and rescore the snapshot and candidates.
 - [ ] Add replay metrics by historical window.
-- [ ] Add rule comparison endpoint.
+- [x] Add rule comparison endpoint. Added `GET /lottery/predictions/rules/compare` with recent rule records and best rank score metadata.
 - [ ] Add cancel/retry/status behavior for training.
 - [ ] Add prediction history page.
 - [ ] Add prediction detail page with candidates, score, rule, and actual result.

@@ -5,7 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import com.one.common.util.JsonUtil;
 import com.one.record.file.RecordFile;
 import com.one.record.model.LotteryPredictionSnapshot;
+import com.one.record.model.LotteryPredictionRuleRecord;
 import com.one.record.model.LotteryTrainingReportRecord;
+import com.one.record.repository.LotteryPredictionRuleRepository;
 import com.one.record.repository.LotteryPredictionSnapshotRepository;
 import com.one.record.repository.LotteryTrainingReportRepository;
 import com.one.record.service.ILotteryTrainingService;
@@ -13,6 +15,7 @@ import com.one.record.training.LotteryActualRecord;
 import com.one.record.training.LotteryLatestPrediction;
 import com.one.record.training.LotteryPredictionCandidate;
 import com.one.record.training.LotteryPredictionResult;
+import com.one.record.training.LotteryRuleComparison;
 import com.one.record.training.LotteryTrainingReport;
 import com.one.record.training.LotteryTrainingStatus;
 import com.one.record.training.PredictionRuleConfig;
@@ -66,16 +69,20 @@ public class LotteryTrainingService implements ILotteryTrainingService {
 
     private final LotteryTrainingReportRepository trainingReportRepository;
 
+    private final LotteryPredictionRuleRepository predictionRuleRepository;
+
     private final AtomicBoolean trainingRunning = new AtomicBoolean(false);
 
     private final AtomicReference<LotteryTrainingStatus> trainingStatus = new AtomicReference<>(idleStatus());
 
     public LotteryTrainingService(StringRedisTemplate redisTemplate,
                                   LotteryPredictionSnapshotRepository predictionSnapshotRepository,
-                                  LotteryTrainingReportRepository trainingReportRepository) {
+                                  LotteryTrainingReportRepository trainingReportRepository,
+                                  LotteryPredictionRuleRepository predictionRuleRepository) {
         this.redisTemplate = redisTemplate;
         this.predictionSnapshotRepository = predictionSnapshotRepository;
         this.trainingReportRepository = trainingReportRepository;
+        this.predictionRuleRepository = predictionRuleRepository;
     }
 
     @Override
@@ -154,6 +161,7 @@ public class LotteryTrainingService implements ILotteryTrainingService {
             report.setLearnedRule(learnedRule);
             report.setTimeline(rolling.getTimeline());
             saveJson(BEST_RULE_KEY, learnedRule);
+            savePredictionRuleRecord(learnedRule, best, generation, safeReplayCount, true);
             saveJson(TRAINING_TIMELINE_KEY, rolling.getTimeline());
             progressUpdater.accept(buildStatus(true, false, 96, "生成最新预测",
                     safeReplayCount, safeReplayCount, "正在生成下一期预测", null));
@@ -230,6 +238,27 @@ public class LotteryTrainingService implements ILotteryTrainingService {
         return predictionSnapshotRepository.save(snapshot);
     }
 
+    @Override
+    public List<LotteryPredictionRuleRecord> predictionRules(Integer limit) {
+        return predictionRuleRepository.findByOrderByCreatedAtDesc(PageRequest.of(0, normalizePredictionHistoryLimit(limit)));
+    }
+
+    @Override
+    public LotteryRuleComparison comparePredictionRules(Integer limit) {
+        List<LotteryPredictionRuleRecord> rules = predictionRules(limit);
+        LotteryPredictionRuleRecord best = rules.stream()
+                .filter(rule -> rule.getRankScore() != null)
+                .max(Comparator.comparingInt(LotteryPredictionRuleRecord::getRankScore))
+                .orElse(null);
+        return LotteryRuleComparison.builder()
+                .rules(rules)
+                .bestRuleId(best == null ? null : best.getRuleId())
+                .bestRuleName(best == null ? null : best.getRuleName())
+                .bestRankScore(best == null ? null : best.getRankScore())
+                .generatedAt(System.currentTimeMillis())
+                .build();
+    }
+
     LotteryPredictionSnapshot savePredictionSnapshot(LotteryLatestPrediction prediction) {
         if (prediction == null) {
             return null;
@@ -272,6 +301,28 @@ public class LotteryTrainingService implements ILotteryTrainingService {
                 .updatedAt(now)
                 .build();
         return trainingReportRepository.save(record);
+    }
+
+    LotteryPredictionRuleRecord savePredictionRuleRecord(PredictionRuleConfig config,
+                                                         LotteryTrainingReport.TrainingResult result,
+                                                         int generation,
+                                                         int replayCount,
+                                                         boolean learned) {
+        if (config == null) {
+            return null;
+        }
+        LotteryPredictionRuleRecord record = LotteryPredictionRuleRecord.builder()
+                .ruleId(config.getId())
+                .ruleName(config.getName())
+                .generation(generation)
+                .replayCount(replayCount)
+                .rankScore(result == null ? null : result.getRankScore())
+                .config(config)
+                .summary(result == null ? null : result.getSummary())
+                .learned(learned)
+                .createdAt(System.currentTimeMillis())
+                .build();
+        return predictionRuleRepository.save(record);
     }
 
     private LotteryLatestPrediction buildLatestPrediction(List<Draw> draws, PredictionRuleConfig config) {

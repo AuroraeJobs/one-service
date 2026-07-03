@@ -1,13 +1,16 @@
 package com.one.record.service.impl;
 
 import com.one.record.model.LotteryPredictionSnapshot;
+import com.one.record.model.LotteryPredictionRuleRecord;
 import com.one.record.model.LotteryTrainingReportRecord;
+import com.one.record.repository.LotteryPredictionRuleRepository;
 import com.one.record.repository.LotteryPredictionSnapshotRepository;
 import com.one.record.repository.LotteryTrainingReportRepository;
 import com.one.record.training.LotteryActualRecord;
 import com.one.record.training.LotteryLatestPrediction;
 import com.one.record.training.LotteryPredictionCandidate;
 import com.one.record.training.LotteryTrainingReport;
+import com.one.record.training.PredictionRuleConfig;
 import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,13 +31,17 @@ class LotteryTrainingServiceTest {
 
     private LotteryTrainingReportRepository trainingReportRepository;
 
+    private LotteryPredictionRuleRepository predictionRuleRepository;
+
     private LotteryTrainingService service;
 
     @BeforeEach
     void setUp() {
         predictionSnapshotRepository = mock(LotteryPredictionSnapshotRepository.class);
         trainingReportRepository = mock(LotteryTrainingReportRepository.class);
-        service = new LotteryTrainingService(mock(StringRedisTemplate.class), predictionSnapshotRepository, trainingReportRepository);
+        predictionRuleRepository = mock(LotteryPredictionRuleRepository.class);
+        service = new LotteryTrainingService(mock(StringRedisTemplate.class), predictionSnapshotRepository,
+                trainingReportRepository, predictionRuleRepository);
     }
 
     @Test
@@ -143,5 +150,45 @@ class LotteryTrainingServiceTest {
         assertThat(record.getTimeline()).hasSize(1);
         assertThat(record.getCreatedAt()).isNotNull();
         assertThat(record.getUpdatedAt()).isEqualTo(record.getCreatedAt());
+    }
+
+    @Test
+    void savePredictionRuleRecordMapsLearnedRule() {
+        PredictionRuleConfig config = PredictionRuleConfig.defaultConfig();
+        LotteryTrainingReport.TrainingSummary summary = new LotteryTrainingReport.TrainingSummary();
+        summary.setAverageScore(88.8);
+        LotteryTrainingReport.TrainingResult result = new LotteryTrainingReport.TrainingResult();
+        result.setSummary(summary);
+        result.setRankScore(900);
+        when(predictionRuleRepository.save(org.mockito.ArgumentMatchers.any(LotteryPredictionRuleRecord.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        LotteryPredictionRuleRecord record = service.savePredictionRuleRecord(config, result, 3, 30, true);
+
+        assertThat(record.getRuleId()).isEqualTo("default");
+        assertThat(record.getRuleName()).isEqualTo("默认综合规则");
+        assertThat(record.getGeneration()).isEqualTo(3);
+        assertThat(record.getReplayCount()).isEqualTo(30);
+        assertThat(record.getRankScore()).isEqualTo(900);
+        assertThat(record.getSummary().getAverageScore()).isEqualTo(88.8);
+        assertThat(record.getLearned()).isTrue();
+        assertThat(record.getCreatedAt()).isNotNull();
+    }
+
+    @Test
+    void comparePredictionRulesReturnsBestByRankScore() {
+        when(predictionRuleRepository.findByOrderByCreatedAtDesc(org.mockito.ArgumentMatchers.any(Pageable.class)))
+                .thenReturn(List.of(
+                        LotteryPredictionRuleRecord.builder().ruleId("a").ruleName("A").rankScore(10).build(),
+                        LotteryPredictionRuleRecord.builder().ruleId("b").ruleName("B").rankScore(20).build()
+                ));
+
+        var comparison = service.comparePredictionRules(20);
+
+        assertThat(comparison.getRules()).hasSize(2);
+        assertThat(comparison.getBestRuleId()).isEqualTo("b");
+        assertThat(comparison.getBestRuleName()).isEqualTo("B");
+        assertThat(comparison.getBestRankScore()).isEqualTo(20);
+        assertThat(comparison.getGeneratedAt()).isNotNull();
     }
 }
