@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button, Card, Empty, Space, Spin, Tag } from 'antd';
-import { DatabaseOutlined, PieChartOutlined, ReloadOutlined } from '@ant-design/icons';
+import { BarChartOutlined, DatabaseOutlined, PieChartOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { EChartsOption } from 'echarts';
 import ReactECharts from 'echarts-for-react';
 import { useNavigate } from 'react-router-dom';
@@ -11,7 +11,7 @@ import LotteryFrequencyCharts from './lottery/LotteryFrequencyCharts';
 import LotteryPeriodDetail from './lottery/LotteryPeriodDetail';
 import LotterySummaryCards from './lottery/LotterySummaryCards';
 import { useRecordContext } from '../contexts/RecordContext';
-import { recordApi, type RecordYearCount } from '../services/api';
+import { lotteryRecordApi, lotteryStatisticsApi, type LotteryStatisticsSummary, type RecordYearCount } from '../services/api';
 import { buildLotteryStats, getRecentDraws, type LotteryDraw } from '../utils/lotteryStats';
 import './LotteryOverviewPage.css';
 
@@ -68,10 +68,15 @@ const LotteryOverviewPage = () => {
   const navigate = useNavigate();
   const { allRecords, loading, refreshRecords } = useRecordContext();
   const [selectedDraw, setSelectedDraw] = useState<LotteryDraw | undefined>();
+  const [statisticsSummary, setStatisticsSummary] = useState<LotteryStatisticsSummary>();
+  const [statisticsLoading, setStatisticsLoading] = useState(false);
+  const [statisticsRefreshing, setStatisticsRefreshing] = useState(false);
   const [yearlyCounts, setYearlyCounts] = useState<RecordYearCount[]>([]);
   const [yearlyCountsLoading, setYearlyCountsLoading] = useState(false);
   const [yearlyCountsRefreshing, setYearlyCountsRefreshing] = useState(false);
   const stats = useMemo(() => buildLotteryStats(allRecords), [allRecords]);
+  const redFrequency = statisticsSummary?.redFrequency ?? stats.redFrequency;
+  const blueFrequency = statisticsSummary?.blueFrequency ?? stats.blueFrequency;
   const recentDraws = useMemo(() => getRecentDraws(stats.draws, 10), [stats.draws]);
   const recentTopDraws = useMemo(() => recentDraws.slice(0, 4), [recentDraws]);
   const totalYearlyRecords = useMemo(
@@ -90,7 +95,7 @@ const LotteryOverviewPage = () => {
   const fetchYearlyCounts = async () => {
     setYearlyCountsLoading(true);
     try {
-      const data = await recordApi.getYearlyCounts();
+      const data = await lotteryRecordApi.getYearlyCounts();
       setYearlyCounts(data);
     } catch (error) {
       console.error('获取年度记录统计失败:', error);
@@ -100,15 +105,28 @@ const LotteryOverviewPage = () => {
     }
   };
 
+  const fetchStatisticsSummary = async () => {
+    setStatisticsLoading(true);
+    try {
+      const data = await lotteryStatisticsApi.summary();
+      setStatisticsSummary(data);
+    } catch (error) {
+      console.error('获取彩票统计汇总失败:', error);
+      setStatisticsSummary(undefined);
+    } finally {
+      setStatisticsLoading(false);
+    }
+  };
+
   const handleRefreshRecords = async () => {
     await refreshRecords();
-    await fetchYearlyCounts();
+    await Promise.all([fetchYearlyCounts(), fetchStatisticsSummary()]);
   };
 
   const handleRefreshYearlyCounts = async () => {
     setYearlyCountsRefreshing(true);
     try {
-      const data = await recordApi.refreshYearlyCounts();
+      const data = await lotteryRecordApi.refreshYearlyCounts();
       setYearlyCounts(data);
     } catch (error) {
       console.error('手动统计年度记录失败:', error);
@@ -117,8 +135,21 @@ const LotteryOverviewPage = () => {
     }
   };
 
+  const handleRefreshStatistics = async () => {
+    setStatisticsRefreshing(true);
+    try {
+      const data = await lotteryStatisticsApi.refreshSummary();
+      setStatisticsSummary(data);
+    } catch (error) {
+      console.error('手动重算彩票统计失败:', error);
+    } finally {
+      setStatisticsRefreshing(false);
+    }
+  };
+
   useEffect(() => {
     fetchYearlyCounts();
+    fetchStatisticsSummary();
   }, []);
 
   return (
@@ -131,6 +162,16 @@ const LotteryOverviewPage = () => {
           <LotteryAiPanel stats={stats} recentDraws={recentDraws} />
           <Button icon={<ReloadOutlined />} loading={loading || yearlyCountsLoading} onClick={handleRefreshRecords}>
             更新数据
+          </Button>
+          <Button
+            icon={<BarChartOutlined />}
+            loading={statisticsLoading || statisticsRefreshing}
+            onClick={handleRefreshStatistics}
+          >
+            重算统计
+          </Button>
+          <Button icon={<PieChartOutlined />} onClick={() => navigate('/lottery/statistics?tab=frequency')}>
+            统计分析
           </Button>
           <Button type="primary" icon={<DatabaseOutlined />} onClick={() => navigate('/lottery/records')}>
             开奖记录
@@ -145,7 +186,9 @@ const LotteryOverviewPage = () => {
               <h2>最近开奖</h2>
               <p>最近四期开奖记录，点击查看完整结构。</p>
             </div>
-            <Tag color={recentTopDraws.length ? 'success' : 'default'}>{recentTopDraws.length ? '已同步' : '暂无数据'}</Tag>
+            <Tag color={recentTopDraws.length ? 'success' : 'default'}>
+              {recentTopDraws.length ? `${statisticsSummary?.totalDraws ?? stats.draws.length} 期` : '暂无数据'}
+            </Tag>
           </div>
 
           {recentTopDraws.length > 0 ? (
@@ -188,9 +231,12 @@ const LotteryOverviewPage = () => {
               >
                 手动统计
               </Button>
+              <Button size="small" icon={<BarChartOutlined />} onClick={() => navigate('/lottery/statistics?tab=distribution')}>
+                分布
+              </Button>
             </Space>
           </div>
-          <Spin spinning={yearlyCountsLoading || yearlyCountsRefreshing}>
+          <Spin spinning={yearlyCountsLoading || yearlyCountsRefreshing || statisticsLoading}>
             {yearlyCounts.length > 0 ? (
               <div className="lottery-yearly-content">
                 <div className="lottery-yearly-chart-shell">
@@ -211,7 +257,11 @@ const LotteryOverviewPage = () => {
       <LotterySummaryCards stats={stats} />
 
       {stats.draws.length > 0 && (
-        <LotteryFrequencyCharts redFrequency={stats.redFrequency} blueFrequency={stats.blueFrequency} />
+        <LotteryFrequencyCharts
+          redFrequency={redFrequency}
+          blueFrequency={blueFrequency}
+          onOpenStatistics={() => navigate('/lottery/statistics?tab=frequency')}
+        />
       )}
 
       <LotteryPeriodDetail

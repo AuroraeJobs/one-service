@@ -1,4 +1,5 @@
-import { Card } from 'antd';
+import { BarChartOutlined } from '@ant-design/icons';
+import { Button, Card } from 'antd';
 import type { EChartsOption } from 'echarts';
 import ReactECharts from 'echarts-for-react';
 import { BLUE_BALL_CHARACTER_MAP, RED_BALL_CHARACTER_MAP } from '../../constants/colors';
@@ -7,6 +8,7 @@ import type { FrequencyItem } from '../../utils/lotteryStats';
 interface LotteryFrequencyChartsProps {
   redFrequency: FrequencyItem[];
   blueFrequency: FrequencyItem[];
+  onOpenStatistics?: () => void;
 }
 
 const createBarOption = (
@@ -59,7 +61,7 @@ const createBarOption = (
   ]
 });
 
-const LotteryFrequencyCharts = ({ redFrequency, blueFrequency }: LotteryFrequencyChartsProps) => (
+const LotteryFrequencyCharts = ({ redFrequency, blueFrequency, onOpenStatistics }: LotteryFrequencyChartsProps) => (
   <section className="lottery-chart-grid">
     <Card className="life-panel-card lottery-chart-card">
       <div className="lottery-card-title-row">
@@ -67,6 +69,11 @@ const LotteryFrequencyCharts = ({ redFrequency, blueFrequency }: LotteryFrequenc
           <h2>红球频次</h2>
           <p>按出现次数从高到低排列，帮助快速观察冷热分布。</p>
         </div>
+        {onOpenStatistics && (
+          <Button size="small" icon={<BarChartOutlined />} onClick={onOpenStatistics}>
+            详情
+          </Button>
+        )}
       </div>
       <ReactECharts
         option={createBarOption('红球频次', redFrequency, '#ff3b30', RED_BALL_CHARACTER_MAP)}
@@ -80,6 +87,11 @@ const LotteryFrequencyCharts = ({ redFrequency, blueFrequency }: LotteryFrequenc
           <h2>蓝球频次</h2>
           <p>蓝球样本更小，适合结合遗漏和区间一起看。</p>
         </div>
+        {onOpenStatistics && (
+          <Button size="small" icon={<BarChartOutlined />} onClick={onOpenStatistics}>
+            详情
+          </Button>
+        )}
       </div>
       <ReactECharts
         option={createBarOption('蓝球频次', blueFrequency, '#0071e3', BLUE_BALL_CHARACTER_MAP)}

@@ -44,8 +44,8 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add recalculation endpoint for derived statistics. Added `POST /lottery/statistics/summary/refresh`.
 - [x] Cache derived statistics in Redis. `LotteryStatisticsService.summary()` reads/writes `lottery:statistics:summary`.
 - [x] Invalidate or refresh statistics after record sync. `LotteryRecordSyncService` invalidates the statistics summary cache when sync saves new records.
-- [ ] Align frontend `lotteryStats.ts` with backend DTO semantics.
-- [ ] Add overview drill-through links to statistics tabs.
+- [x] Align frontend `lotteryStats.ts` with backend DTO semantics. `LotteryOverviewPage` now reads `LotteryStatisticsSummary`, uses backend red/blue frequency for charts, and keeps local `buildLotteryStats` for prediction/recent-draw details until remaining pages migrate.
+- [x] Add overview drill-through links to statistics tabs. Overview actions and frequency/yearly cards now link to frequency and distribution tabs.
 - [ ] Verify empty, loading, stale-cache, and sync-needed states.
 
 ## Iteration 03: Prediction Replay And Rule Operations
