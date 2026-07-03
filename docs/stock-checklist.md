@@ -36,18 +36,18 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Store latest quote and fallback quote snapshots in Redis.
 - [x] Add unit tests for symbol normalization. Covered by `StockMarketServiceTest`.
 - [x] Add unit tests for Sina quote parsing. Covered by `StockMarketServiceTest`.
-- [ ] Add controller test or manual verification for repeated `symbols` params.
+- [x] Add controller test or manual verification for repeated `symbols` params. Covered by `StockMarketControllerTest`.
 - [x] Ensure watchlist and quote UI depend only on normalized project DTOs, not Sina-specific fields.
 
 ## Week 2: Historical Data And Charts
 
-- [ ] Add `StockKLine` model.
-- [ ] Add MongoDB-backed K-line repository.
-- [ ] Add K-line query request/response DTOs if needed.
-- [ ] Add endpoint `GET /stock/{symbol}/klines`.
-- [ ] Add endpoint `POST /stock/{symbol}/klines/sync`.
-- [ ] Add endpoint `POST /stock/klines/sync`.
-- [ ] Persist daily OHLCV data.
+- [x] Add `StockKLine` model.
+- [x] Add MongoDB-backed K-line repository.
+- [x] Add K-line query request/response DTOs if needed. Reused normalized `StockKLine` DTO for the first backend iteration.
+- [x] Add endpoint `GET /stock/{symbol}/klines`.
+- [x] Add endpoint `POST /stock/{symbol}/klines/sync`.
+- [x] Add endpoint `POST /stock/klines/sync`.
+- [x] Persist daily OHLCV data. Initial implementation supports manual K-line import/upsert.
 - [ ] Store K-line sync logs in MongoDB.
 - [ ] Use Redis locks to prevent duplicate sync jobs.
 - [ ] Add scheduled daily sync after market close.

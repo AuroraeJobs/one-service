@@ -281,6 +281,44 @@ Watchlist flow:
 7. Frontend requests quotes for watchlist symbols.
 ```
 
+## K-Line Logic
+
+Initial K-line storage:
+
+```text
+collection: stock_klines
+unique key: symbol + period + tradeDate
+```
+
+Current fields:
+
+```text
+symbol
+market
+code
+period
+tradeDate
+open
+close
+high
+low
+volume
+amount
+changeAmount
+changePercent
+source
+createdAt
+updatedAt
+```
+
+Rules:
+
+- `tradeDate` is a trading-day identifier such as `2026-07-03`, not a timezone-bound timestamp.
+- `createdAt` and `updatedAt` are millisecond timestamps.
+- The service normalizes `symbol`, `market`, and `code` before persistence.
+- The first backend iteration supports manual sync/upsert through internal APIs.
+- Historical third-party provider fetching should be added behind provider/router abstractions, not directly in controllers.
+
 Ordering:
 
 ```text

@@ -200,6 +200,26 @@ export interface StockWatchlistItem {
   updatedAt?: number;
 }
 
+export interface StockKLine {
+  id?: string;
+  symbol: string;
+  market?: string;
+  code?: string;
+  period?: string;
+  tradeDate: string;
+  open?: number;
+  close?: number;
+  high?: number;
+  low?: number;
+  volume?: number;
+  amount?: number;
+  changeAmount?: number;
+  changePercent?: number;
+  source?: string;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
 export const stockApi = {
   quote: (symbol: string): Promise<StockQuote> => {
     return apiClient.get('/stock/quote', {
@@ -232,6 +252,18 @@ export const stockApi = {
 
   updateWatchlistOrder: (symbols: string[]): Promise<StockWatchlistItem[]> => {
     return apiClient.put('/stock/watchlist/order', symbols);
+  },
+
+  klines: (symbol: string, params?: { period?: string; startDate?: string; endDate?: string }): Promise<StockKLine[]> => {
+    return apiClient.get(`/stock/${symbol}/klines`, { params });
+  },
+
+  syncKlines: (symbol: string, klines: StockKLine[]): Promise<StockKLine[]> => {
+    return apiClient.post(`/stock/${symbol}/klines/sync`, klines);
+  },
+
+  syncAllKlines: (klines: StockKLine[]): Promise<StockKLine[]> => {
+    return apiClient.post('/stock/klines/sync', klines);
   }
 };
 
