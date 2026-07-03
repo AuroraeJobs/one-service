@@ -574,6 +574,27 @@ Acceptance:
 - Alert history is visible.
 - Alert logic continues to depend on normalized quote DTOs.
 
+Progress:
+
+- Completed first UX slice on 2026-07-03.
+- Added route:
+
+```text
+/investments/alerts
+```
+
+- Added stock subnav item for 告警.
+- Added alert rule table with enabled filter, delete action, and symbol detail link.
+- Added create-rule modal for `PRICE`, `PERCENT_CHANGE`, and `VOLUME_ABNORMAL` rules.
+- Added manual evaluation action and trigger history table.
+- Verified changed files with ESLint and full frontend build.
+
+Follow-up:
+
+- Add edit-rule modal by reusing the create form.
+- Surface recent triggered alerts on 总览.
+- Show active symbol alerts on 个股 detail.
+
 ### V5: Analysis Cockpit
 
 Goal:

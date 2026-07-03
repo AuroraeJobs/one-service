@@ -132,7 +132,7 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] V1: Add stock navigation shell for 总览、自选、行情、个股. Added stock subnav routes and reused the existing investment page by route mode.
 - [x] V2: Add portfolio ledger UX for 持仓 and 交易. Added positions/trades routes, tables, trade creation/deletion, filters, and manual recalculation.
 - [x] V3: Add historical data operations for K线 and 同步. Added K-line query page, JSON sync/import page, sync logs view, and stock subnav entries.
-- [ ] V4: Add alerts UX for 告警 and overview/detail alert widgets.
+- [x] V4: Add alerts UX for 告警 and overview/detail alert widgets. Added first alert management page with rule CRUD create/delete, manual evaluation, and history view; overview/detail widgets remain follow-up.
 - [ ] V5: Add analysis cockpit for 分析 and overview analysis widgets.
 - [ ] V6: Add provider and settings operations for 数据源 and 设置.
 

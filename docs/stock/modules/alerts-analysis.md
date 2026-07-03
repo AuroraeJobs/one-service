@@ -71,6 +71,20 @@ GET /stock/alerts/history
 POST /stock/alerts/evaluate
 ```
 
+## Frontend Routes
+
+```text
+/investments/alerts
+```
+
+Current UX:
+
+- Alert page lists rules with enabled filtering.
+- Alert page can create and delete rules.
+- Alert page can manually evaluate enabled rules.
+- Alert page shows recent trigger history and supports symbol filtering.
+- Edit rule, overview widgets, and symbol-detail alert sections remain follow-up UX work.
+
 ## Analysis Summary
 
 Endpoint:

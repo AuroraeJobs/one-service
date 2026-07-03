@@ -315,6 +315,37 @@ export interface StockTrade {
   updatedAt?: number;
 }
 
+export interface StockAlertRule {
+  id?: string;
+  userId?: string;
+  symbol: string;
+  market?: string;
+  code?: string;
+  name?: string;
+  ruleType: string;
+  direction: string;
+  targetValue?: number;
+  enabled?: boolean;
+  throttleSeconds?: number;
+  lastTriggeredAt?: number;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
+export interface StockAlertHistory {
+  id?: string;
+  userId?: string;
+  ruleId?: string;
+  symbol?: string;
+  ruleType?: string;
+  direction?: string;
+  targetValue?: number;
+  triggerValue?: number;
+  message?: string;
+  triggeredAt?: number;
+  createdAt?: number;
+}
+
 export const stockApi = {
   quote: (symbol: string): Promise<StockQuote> => {
     return apiClient.get('/stock/quote', {
@@ -407,6 +438,34 @@ export const stockApi = {
 
   deleteTrade: (id: string): Promise<void> => {
     return apiClient.delete(`/stock/trades/${id}`);
+  },
+
+  alertRules: (enabled?: boolean): Promise<StockAlertRule[]> => {
+    return apiClient.get('/stock/alerts/rules', {
+      params: { enabled }
+    });
+  },
+
+  saveAlertRule: (rule: StockAlertRule): Promise<StockAlertRule> => {
+    return apiClient.post('/stock/alerts/rules', rule);
+  },
+
+  updateAlertRule: (id: string, rule: StockAlertRule): Promise<StockAlertRule> => {
+    return apiClient.put(`/stock/alerts/rules/${id}`, rule);
+  },
+
+  deleteAlertRule: (id: string): Promise<void> => {
+    return apiClient.delete(`/stock/alerts/rules/${id}`);
+  },
+
+  alertHistory: (symbol?: string): Promise<StockAlertHistory[]> => {
+    return apiClient.get('/stock/alerts/history', {
+      params: { symbol }
+    });
+  },
+
+  evaluateAlerts: (): Promise<StockAlertHistory[]> => {
+    return apiClient.post('/stock/alerts/evaluate');
   }
 };
 
