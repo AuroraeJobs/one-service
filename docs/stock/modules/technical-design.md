@@ -676,9 +676,11 @@ Provider health rules:
 
 - `GET /stock/providers/health` reports configured and registered quote and K-line providers.
 - `GET /stock/providers/probe` probes quote or K-line provider routes through backend routers and returns a normalized result.
+- `GET /stock/providers/probe/latest` reads the latest Redis-backed probe result by category.
 - Quote provider health is sourced from `StockMarketProviderRouter`.
 - K-line provider health is sourced from `StockKLineProviderRouter`.
 - Provider probe results use millisecond `checkedAt` and `durationMs`.
+- Latest provider probe Redis keys use `stock:provider:probe:last:{category}` and are controlled by `stock.market.provider-probe-ttl-seconds`.
 - The frontend displays provider categories but still does not call provider-specific endpoints.
 - availability or stale-state messages
 

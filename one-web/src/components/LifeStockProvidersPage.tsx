@@ -11,6 +11,7 @@ const LifeStockProvidersPage = () => {
   const [providers, setProviders] = useState<StockProviderHealth[]>([]);
   const [loading, setLoading] = useState(false);
   const [probing, setProbing] = useState(false);
+  const [latestLoading, setLatestLoading] = useState(false);
   const [probeCategory, setProbeCategory] = useState('quote');
   const [probeSymbol, setProbeSymbol] = useState('');
   const [probeResult, setProbeResult] = useState<StockProviderProbeResult>();
@@ -34,6 +35,24 @@ const LifeStockProvidersPage = () => {
   useEffect(() => {
     loadProviders();
   }, [loadProviders]);
+
+  const loadLatestProbe = useCallback(async (category: string) => {
+    setLatestLoading(true);
+    setProbeError(undefined);
+    try {
+      const result = await stockApi.latestProviderProbe(category);
+      setProbeResult(result || undefined);
+    } catch (requestError) {
+      console.error('获取最近股票数据源探测失败:', requestError);
+      setProbeError(requestError instanceof Error ? requestError.message : '获取最近股票数据源探测失败');
+    } finally {
+      setLatestLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadLatestProbe(probeCategory);
+  }, [loadLatestProbe, probeCategory]);
 
   const probeProvider = async () => {
     setProbing(true);
@@ -146,6 +165,7 @@ const LifeStockProvidersPage = () => {
                 { label: 'K线', value: 'kline' }
               ]}
               style={{ width: 120 }}
+              loading={latestLoading}
               onChange={setProbeCategory}
             />
             <Input
@@ -178,7 +198,7 @@ const LifeStockProvidersPage = () => {
             className="stock-market-alert"
           />
         ) : (
-          <Statistic title="最近探测" value="-" />
+          <Statistic title="最近探测" value={latestLoading ? '加载中' : '-'} />
         )}
       </Card>
 

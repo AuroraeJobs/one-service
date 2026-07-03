@@ -17,4 +17,6 @@ public interface IStockMarketService {
     List<StockProviderHealth> providerHealth();
 
     StockProviderProbeResult providerProbe(String category, String symbol);
+
+    StockProviderProbeResult latestProviderProbe(String category);
 }

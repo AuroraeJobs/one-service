@@ -539,6 +539,12 @@ export const stockApi = {
     return apiClient.get('/stock/providers/probe', { params });
   },
 
+  latestProviderProbe: (category?: string): Promise<StockProviderProbeResult | null> => {
+    return apiClient.get('/stock/providers/probe/latest', {
+      params: { category }
+    });
+  },
+
   preferences: (): Promise<StockPreference> => {
     return apiClient.get('/stock/preferences');
   },

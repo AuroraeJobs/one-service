@@ -107,6 +107,7 @@ GET /stock/quote?symbol=600519
 GET /stock/quotes?symbols=sh000001&symbols=sz399001
 GET /stock/providers/health
 GET /stock/providers/probe?category=quote&symbol=600519
+GET /stock/providers/probe/latest?category=quote
 ```
 
 ## Frontend Routes
@@ -120,6 +121,7 @@ Current UX:
 
 - Provider page reads `GET /stock/providers/health` and shows active, fallback, registered, missing, status, and checked time.
 - Provider page can call `GET /stock/providers/probe` to verify the configured quote or K-line provider route with a sample symbol.
+- Provider page reads `GET /stock/providers/probe/latest` to restore the latest Redis-backed probe result after reload or category changes.
 - Settings page documents current backend configuration boundaries and planned user preferences.
 - Provider switching remains backend configuration-driven.
 
@@ -132,6 +134,7 @@ Current UX:
 4. Quote probes call StockMarketProviderRouter directly.
 5. K-line probes call StockKLineProviderRouter directly.
 6. Backend returns StockProviderProbeResult with success, availability, sample count, durationMs, checkedAt, and message.
+7. Backend stores the latest result in Redis key `stock:provider:probe:last:{category}`.
 ```
 
 Rules:
@@ -139,7 +142,8 @@ Rules:
 - Probe result timestamps are millisecond values.
 - Probe failures return a normalized result with `success=false`.
 - Controllers and frontend pages do not branch on concrete providers.
-- Probe calls are operational checks and do not write MongoDB or Redis state.
+- Probe calls are operational checks and do not write MongoDB.
+- Latest probe snapshots are short-lived Redis state controlled by `stock.market.provider-probe-ttl-seconds`.
 
 ## Verification
 
@@ -150,4 +154,6 @@ Rules:
 - `StockMarketServiceTest.providerProbeChecksQuoteProviderThroughRouter`
 - `StockMarketServiceTest.providerProbeChecksKLineProviderThroughRouter`
 - `StockMarketServiceTest.providerProbeReturnsFailureResultWhenProviderFails`
+- `StockMarketServiceTest.providerProbeWritesLatestResultToRedis`
+- `StockMarketServiceTest.latestProviderProbeReadsResultFromRedis`
 - `StockMarketControllerTest` for repeated `symbols` query params.

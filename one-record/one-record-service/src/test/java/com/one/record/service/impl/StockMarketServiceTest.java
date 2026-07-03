@@ -25,6 +25,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.mock;
@@ -218,6 +219,45 @@ class StockMarketServiceTest {
         assertThat(result.getAvailable()).isFalse();
         assertThat(result.getSampleCount()).isZero();
         assertThat(result.getMessage()).contains("provider down");
+    }
+
+    @Test
+    void providerProbeWritesLatestResultToRedis() {
+        properties.setProviderProbeTtlSeconds(60);
+        StockMarketService probeService = probeService(
+                symbols -> List.of(StockQuote.builder()
+                        .symbol(symbols.get(0))
+                        .available(true)
+                        .build()),
+                (symbol, startDate, endDate) -> List.of());
+
+        probeService.providerProbe("quote", "600519");
+
+        ArgumentCaptor<String> valueCaptor = ArgumentCaptor.forClass(String.class);
+        verify(valueOperations).set(eq("stock:provider:probe:last:quote"), valueCaptor.capture(), eq(Duration.ofSeconds(60)));
+        assertThat(JsonUtil.toJsonNode(valueCaptor.getValue()).get("checkedAt").isNumber()).isTrue();
+        assertThat(JsonUtil.toObject(valueCaptor.getValue(), StockProviderProbeResult.class).getSymbol()).isEqualTo("sh600519");
+    }
+
+    @Test
+    void latestProviderProbeReadsResultFromRedis() {
+        StockProviderProbeResult cached = StockProviderProbeResult.builder()
+                .category("kline")
+                .symbol("sh000001")
+                .success(true)
+                .available(true)
+                .sampleCount(2)
+                .durationMs(12L)
+                .checkedAt(1783065600000L)
+                .message("Provider 探测成功")
+                .build();
+        when(valueOperations.get("stock:provider:probe:last:kline")).thenReturn(JsonUtil.toJson(cached));
+
+        StockProviderProbeResult result = service.latestProviderProbe("kline");
+
+        assertThat(result.getCategory()).isEqualTo("kline");
+        assertThat(result.getSymbol()).isEqualTo("sh000001");
+        assertThat(result.getCheckedAt()).isEqualTo(1783065600000L);
     }
 
     private MockRestServiceServer bindMockServer() {

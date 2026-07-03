@@ -15,6 +15,7 @@ Deliverables:
 - Add an internal provider probe API.
 - Probe quote and K-line provider routes through backend provider routers.
 - Return a normalized probe DTO with millisecond timestamps and duration.
+- Store the latest probe result in Redis as short-lived operational state.
 - Add a probe action to `/investments/providers`.
 
 Acceptance:
@@ -29,7 +30,10 @@ Acceptance:
 - [x] Add `GET /stock/providers/probe`.
 - [x] Probe quote provider route through `StockMarketProviderRouter`.
 - [x] Probe K-line provider route through `StockKLineProviderRouter`.
+- [x] Cache latest probe result in Redis by provider category.
+- [x] Add `GET /stock/providers/probe/latest`.
 - [x] Wire `/investments/providers` probe controls and result display.
+- [x] Load latest probe result when the data source page opens or category changes.
 - [x] Verify frontend lint and build.
 - [x] Verify backend tests.
 - [x] Update docs and commit/push after the milestone.
@@ -41,3 +45,4 @@ Acceptance:
 - Added provider probing through internal provider routers.
 - Added provider probe UI on the data source page.
 - Kept provider switching backend-owned and upper layers provider-neutral.
+- Added Redis-backed latest probe result lookup for quote and K-line categories.

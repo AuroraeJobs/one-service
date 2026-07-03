@@ -250,6 +250,7 @@ public class StockMarketService implements IStockMarketService {
         String probeCategory = normalizeProbeCategory(category);
         String probeSymbol = probeSymbol(probeCategory, symbol);
         Long startedAt = System.currentTimeMillis();
+        StockProviderProbeResult result;
         try {
             int sampleCount;
             boolean available;
@@ -261,11 +262,28 @@ public class StockMarketService implements IStockMarketService {
                 sampleCount = quotes.size();
                 available = quotes.stream().anyMatch(quote -> Boolean.TRUE.equals(quote.getAvailable()));
             }
-            return probeResult(probeCategory, probeSymbol, true, available, sampleCount, startedAt,
+            result = probeResult(probeCategory, probeSymbol, true, available, sampleCount, startedAt,
                     available ? "Provider 探测成功" : "Provider 已响应但未返回可用样本");
         } catch (RuntimeException ex) {
             log.warn("Stock provider probe failed, category={}, symbol={}", probeCategory, probeSymbol, ex);
-            return probeResult(probeCategory, probeSymbol, false, false, 0, startedAt, ex.getMessage());
+            result = probeResult(probeCategory, probeSymbol, false, false, 0, startedAt, ex.getMessage());
+        }
+        writeProviderProbeCache(result);
+        return result;
+    }
+
+    @Override
+    public StockProviderProbeResult latestProviderProbe(String category) {
+        String probeCategory = normalizeProbeCategory(category);
+        try {
+            String value = redisTemplate.opsForValue().get(providerProbeKey(probeCategory));
+            if (value == null || value.isBlank()) {
+                return null;
+            }
+            return JsonUtil.toObject(value, StockProviderProbeResult.class);
+        } catch (RuntimeException ex) {
+            log.warn("Failed to read stock provider probe cache, category={}", probeCategory, ex);
+            return null;
         }
     }
 
@@ -308,12 +326,31 @@ public class StockMarketService implements IStockMarketService {
         return normalizeSymbol(configuredSymbols.get(0));
     }
 
+    private void writeProviderProbeCache(StockProviderProbeResult result) {
+        try {
+            Integer ttlSeconds = properties.getProviderProbeTtlSeconds();
+            String value = JsonUtil.toJson(result);
+            String key = providerProbeKey(result.getCategory());
+            if (ttlSeconds == null || ttlSeconds <= 0) {
+                redisTemplate.opsForValue().set(key, value);
+            } else {
+                redisTemplate.opsForValue().set(key, value, Duration.ofSeconds(ttlSeconds));
+            }
+        } catch (RuntimeException ex) {
+            log.warn("Failed to write stock provider probe cache, category={}", result.getCategory(), ex);
+        }
+    }
+
     private String quoteKey(String symbol) {
         return "stock:quote:" + symbol;
     }
 
     private String lastSuccessQuoteKey(String symbol) {
         return "stock:quote:last-success:" + symbol;
+    }
+
+    private String providerProbeKey(String category) {
+        return "stock:provider:probe:last:" + category;
     }
 
 }

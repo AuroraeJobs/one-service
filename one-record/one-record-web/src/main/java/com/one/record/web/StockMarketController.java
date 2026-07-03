@@ -51,4 +51,10 @@ public class StockMarketController {
         log.info("Probing stock provider: category={}, symbol={}", category, symbol);
         return service.providerProbe(category, symbol);
     }
+
+    @GetMapping("providers/probe/latest")
+    @Operation(summary = "查询最近一次股票数据源探测", description = "从 Redis 查询最近一次 Provider 探测结果")
+    public StockProviderProbeResult latestProviderProbe(@RequestParam(name = "category", required = false) String category) {
+        return service.latestProviderProbe(category);
+    }
 }
