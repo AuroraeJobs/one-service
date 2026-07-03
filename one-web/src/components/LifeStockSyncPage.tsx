@@ -35,6 +35,7 @@ const LifeStockSyncPage = () => {
   const [payload, setPayload] = useState(sampleKLines);
   const [logs, setLogs] = useState<StockKLineSyncLog[]>([]);
   const [syncing, setSyncing] = useState(false);
+  const [retryingLogKey, setRetryingLogKey] = useState<string>();
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [error, setError] = useState<string>();
   const [success, setSuccess] = useState<string>();
@@ -76,6 +77,37 @@ const LifeStockSyncPage = () => {
     }
   };
 
+  const retrySyncLog = async (record: StockKLineSyncLog) => {
+    if (!record.symbol) {
+      setError('批量同步日志暂不支持按单条重试');
+      return;
+    }
+    const logKey = syncLogKey(record);
+    setRetryingLogKey(logKey);
+    setError(undefined);
+    setSuccess(undefined);
+    try {
+      const saved = await stockApi.syncKlines(record.symbol);
+      setSuccess(`已重试 ${record.symbol}，保存 ${saved.length} 条K线`);
+      await loadLogs();
+    } catch (requestError) {
+      console.error('重试K线同步失败:', requestError);
+      setError(requestError instanceof Error ? requestError.message : '重试K线同步失败');
+    } finally {
+      setRetryingLogKey(undefined);
+    }
+  };
+
+  const openSymbolSync = (nextSymbol?: string) => {
+    if (!nextSymbol) {
+      return;
+    }
+    setSyncMode('single');
+    setManualImport(false);
+    setSymbol(nextSymbol);
+    setLogSymbol(nextSymbol);
+  };
+
   const columns: ColumnsType<StockKLineSyncLog> = [
     {
       title: '任务',
@@ -87,7 +119,11 @@ const LifeStockSyncPage = () => {
       title: '标的',
       dataIndex: 'symbol',
       key: 'symbol',
-      render: value => value || <Tag>批量</Tag>
+      render: value => value ? (
+        <Button type="link" onClick={() => openSymbolSync(value)}>
+          {value}
+        </Button>
+      ) : <Tag>批量</Tag>
     },
     {
       title: '周期',
@@ -125,6 +161,21 @@ const LifeStockSyncPage = () => {
       dataIndex: 'finishedAt',
       key: 'finishedAt',
       render: value => formatTime(value)
+    },
+    {
+      title: '操作',
+      key: 'action',
+      fixed: 'right',
+      width: 96,
+      render: (_, record) => record.status === 'FAILED' && record.symbol ? (
+        <Button
+          type="link"
+          loading={retryingLogKey === syncLogKey(record)}
+          onClick={() => retrySyncLog(record)}
+        >
+          重试
+        </Button>
+      ) : '-'
     }
   ];
 
@@ -216,7 +267,7 @@ const LifeStockSyncPage = () => {
           loading={loadingLogs}
           pagination={{ pageSize: 10, showSizeChanger: false }}
           locale={{ emptyText: '暂无同步日志。' }}
-          scroll={{ x: 980 }}
+          scroll={{ x: 1080 }}
           rowClassName="stock-quote-row"
         />
       </Card>
@@ -231,6 +282,8 @@ const parseKLineRows = (value: string): StockKLine[] => {
   }
   return parsed as StockKLine[];
 };
+
+const syncLogKey = (record: StockKLineSyncLog) => record.id || `${record.jobName}-${record.symbol}-${record.startedAt}`;
 
 const statusColor = (value?: string) => {
   if (value === 'SUCCESS') {

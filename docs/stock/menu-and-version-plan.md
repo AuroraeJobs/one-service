@@ -544,7 +544,8 @@ Progress:
 
 Follow-up:
 
-- Add sync retry action for failed logs after backend retry API exists.
+- Single-symbol sync retry action is implemented in Iteration 09 using the existing provider-backed sync API.
+- Add backend batch retry endpoint later if batch retry semantics are needed.
 
 ### V4: Alerts And Daily Monitoring
 
@@ -729,6 +730,7 @@ Progress:
 8. V7 dashboard and detail linkage.
 9. Iteration 07 preferences and provider operations.
 10. Iteration 08 operational editing.
+11. Iteration 09 sync recovery.
 
 ## Architecture Rules To Preserve
 
