@@ -58,6 +58,13 @@ public class StockKLineController {
         return service.retryConfiguredSync();
     }
 
+    @PostMapping("klines/sync/scheduled")
+    @Operation(summary = "手动触发K线定时同步", description = "按定时任务语义立即执行一次配置股票列表的 provider-backed K线同步")
+    public StockKLineSyncLog triggerScheduledSync() {
+        log.info("Triggering scheduled stock kline sync manually");
+        return service.scheduledDailySync();
+    }
+
     @GetMapping("klines/sync-logs")
     @Operation(summary = "查询股票K线同步日志", description = "查询最近的股票K线同步日志")
     public List<StockKLineSyncLog> syncLogs(@RequestParam(name = "symbol", required = false) String symbol) {

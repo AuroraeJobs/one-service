@@ -38,6 +38,7 @@ const LifeStockSyncPage = () => {
   const [logs, setLogs] = useState<StockKLineSyncLog[]>([]);
   const [summary, setSummary] = useState<StockKLineSyncSummary>();
   const [syncing, setSyncing] = useState(false);
+  const [triggeringScheduled, setTriggeringScheduled] = useState(false);
   const [retryingLogKey, setRetryingLogKey] = useState<string>();
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [error, setError] = useState<string>();
@@ -103,6 +104,22 @@ const LifeStockSyncPage = () => {
       setError(requestError instanceof Error ? requestError.message : '重试K线同步失败');
     } finally {
       setRetryingLogKey(undefined);
+    }
+  };
+
+  const triggerScheduledSync = async () => {
+    setTriggeringScheduled(true);
+    setError(undefined);
+    setSuccess(undefined);
+    try {
+      const log = await stockApi.triggerScheduledKlineSync();
+      setSuccess(`已触发定时同步语义任务，状态 ${log.status || '-'}，保存 ${log.savedCount ?? 0} 条K线`);
+      await loadLogs();
+    } catch (requestError) {
+      console.error('触发K线定时同步失败:', requestError);
+      setError(requestError instanceof Error ? requestError.message : '触发K线定时同步失败');
+    } finally {
+      setTriggeringScheduled(false);
     }
   };
 
@@ -193,9 +210,14 @@ const LifeStockSyncPage = () => {
       eyebrow="股票同步"
       title="查看历史数据同步日志，并通过内部同步接口拉取或导入标准化K线。"
       actions={
-        <Button type="primary" icon={<SyncOutlined spin={syncing} />} loading={syncing} onClick={syncKLines}>
-          执行同步
-        </Button>
+        <Space wrap>
+          <Button icon={<SyncOutlined spin={triggeringScheduled} />} loading={triggeringScheduled} onClick={triggerScheduledSync}>
+            触发定时同步
+          </Button>
+          <Button type="primary" icon={<SyncOutlined spin={syncing} />} loading={syncing} onClick={syncKLines}>
+            执行同步
+          </Button>
+        </Space>
       }
     >
       {error ? <Alert type="error" showIcon message={error} className="stock-market-alert" /> : null}

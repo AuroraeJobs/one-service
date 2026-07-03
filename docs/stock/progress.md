@@ -116,6 +116,7 @@ Implemented baseline:
 - Iteration 10 all-provider probe is implemented. `GET /stock/providers/probe/all` checks quote and K-line routes together, and `/investments/providers` can display both normalized results.
 - Iteration 10 provider config snapshot is implemented. `GET /stock/providers/config` exposes a read-only backend runtime snapshot, and `/investments/settings` no longer hard-codes provider/cache/schedule values.
 - Iteration 11 sync summary is implemented. `GET /stock/klines/sync-summary` aggregates recent MongoDB sync logs, and `/investments/sync` shows status counters before the detailed log table.
+- Iteration 11 scheduled-sync trigger is implemented. `POST /stock/klines/sync/scheduled` manually runs the scheduled K-line sync path, and `/investments/sync` exposes an operation button for it.
 
 Architecture rule to preserve:
 
