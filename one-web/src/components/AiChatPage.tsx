@@ -2,9 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, 
 import { Button, Empty, Input, Select, Space, Spin, message } from 'antd';
 import {
   AudioOutlined,
+  CheckOutlined,
   ClearOutlined,
+  DownOutlined,
   PlusOutlined,
-  ReloadOutlined
+  ReloadOutlined,
+  RightOutlined
 } from '@ant-design/icons';
 import LifePageShell from './LifePageShell';
 import { useAuth } from '../contexts/AuthContext';
@@ -26,8 +29,17 @@ interface CombinedModelOption {
 }
 
 interface CombinedModelGroup {
+  provider: AiProvider;
   label: string;
   options: CombinedModelOption[];
+}
+
+interface ModelDropdownContentProps {
+  groups: CombinedModelGroup[];
+  selectedValue?: string;
+  collapsedProviders: Partial<Record<AiProvider, boolean>>;
+  onToggleProvider: (provider: AiProvider) => void;
+  onSelectModel: (value: string) => void;
 }
 
 type MarkdownBlock =
@@ -415,11 +427,65 @@ const MessageMarkdown = ({ content }: { content: string }) => {
   );
 };
 
+const ModelDropdownContent = ({
+  groups,
+  selectedValue,
+  collapsedProviders,
+  onToggleProvider,
+  onSelectModel
+}: ModelDropdownContentProps) => (
+  <div className="ai-chat-model-dropdown" onMouseDown={event => event.preventDefault()}>
+    {groups.map(group => {
+      const collapsed = Boolean(collapsedProviders[group.provider]);
+      const modelCount = group.options.length;
+
+      return (
+        <div className="ai-chat-model-provider-group" key={group.provider}>
+          <button
+            type="button"
+            className="ai-chat-model-provider-header"
+            aria-expanded={!collapsed}
+            onClick={() => onToggleProvider(group.provider)}
+          >
+            {collapsed ? <RightOutlined /> : <DownOutlined />}
+            <span className="ai-chat-model-provider-name">{group.label}</span>
+            <span className="ai-chat-model-provider-count">{modelCount}</span>
+          </button>
+          {!collapsed && (
+            <div className="ai-chat-model-option-list">
+              {modelCount > 0 ? (
+                group.options.map(option => {
+                  const selected = option.value === selectedValue;
+                  return (
+                    <button
+                      type="button"
+                      className={`ai-chat-model-option${selected ? ' ai-chat-model-option-selected' : ''}`}
+                      key={option.value}
+                      onClick={() => onSelectModel(option.value)}
+                    >
+                      <span className="ai-chat-model-option-label">{option.label}</span>
+                      {selected && <CheckOutlined />}
+                    </button>
+                  );
+                })
+              ) : (
+                <div className="ai-chat-model-empty">暂无模型</div>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    })}
+  </div>
+);
+
 const AiChatPage = () => {
   const { user } = useAuth();
   const [selectedProvider, setSelectedProvider] = useState<AiProvider>('local');
   const [modelsByProvider, setModelsByProvider] = useState<Partial<Record<AiProvider, AiModel[]>>>({});
   const [selectedModel, setSelectedModel] = useState(`local:${DEFAULT_LOCAL_AI_MODEL_KEYWORD}`);
+  const [collapsedModelProviders, setCollapsedModelProviders] = useState<Partial<Record<AiProvider, boolean>>>({});
+  const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [modelsLoading, setModelsLoading] = useState(false);
@@ -440,11 +506,9 @@ const AiChatPage = () => {
   const combinedModelOptions = useMemo(
     () => providerOptions.reduce<CombinedModelGroup[]>((groups, providerOption) => {
       const providerModels = modelsByProvider[providerOption.value] || [];
-      if (providerModels.length === 0) {
-        return groups;
-      }
 
       groups.push({
+        provider: providerOption.value,
         label: providerOption.label,
         options: providerModels.map(model => {
           const modelLabel = getModelDisplayName(model);
@@ -470,6 +534,10 @@ const AiChatPage = () => {
   const selectedCombinedModelOption = useMemo(
     () => combinedModelOptions.flatMap(group => group.options).find(option => option.value === selectedCombinedModelValue),
     [combinedModelOptions, selectedCombinedModelValue]
+  );
+  const modelOptionCount = useMemo(
+    () => combinedModelOptions.reduce((total, group) => total + group.options.length, 0),
+    [combinedModelOptions]
   );
   const composerWidthVars = useMemo(() => {
     const modelSelectWidth = getAdaptiveSelectWidth(selectedModelLabel, 112, 460);
@@ -574,11 +642,23 @@ const AiChatPage = () => {
     }
   };
 
-  const handleCombinedModelChange = (value: string) => {
+  const handleCombinedModelChange = useCallback((value: string) => {
     const { provider, modelId } = parseCombinedModelValue(value);
     setSelectedProvider(provider);
     setSelectedModel(modelId);
-  };
+  }, []);
+
+  const handleModelProviderToggle = useCallback((provider: AiProvider) => {
+    setCollapsedModelProviders(current => ({
+      ...current,
+      [provider]: !current[provider]
+    }));
+  }, []);
+
+  const handleModelDropdownSelect = useCallback((value: string) => {
+    handleCombinedModelChange(value);
+    setModelDropdownOpen(false);
+  }, [handleCombinedModelChange]);
 
   const handleSend = async () => {
     const content = input.trim();
@@ -748,12 +828,23 @@ const AiChatPage = () => {
                 <Select
                   value={selectedCombinedModelOption?.value}
                   options={combinedModelOptions}
+                  open={modelDropdownOpen}
                   loading={modelsLoading}
                   onChange={handleCombinedModelChange}
+                  onOpenChange={setModelDropdownOpen}
+                  popupRender={() => (
+                    <ModelDropdownContent
+                      groups={combinedModelOptions}
+                      selectedValue={selectedCombinedModelOption?.value}
+                      collapsedProviders={collapsedModelProviders}
+                      onToggleProvider={handleModelProviderToggle}
+                      onSelectModel={handleModelDropdownSelect}
+                    />
+                  )}
                   className="ai-chat-inline-model-select ai-chat-combined-model-select"
                   popupClassName="ai-chat-combined-model-popup"
                   popupMatchSelectWidth={false}
-                  disabled={modelsLoading || combinedModelOptions.length === 0}
+                  disabled={modelsLoading || modelOptionCount === 0}
                   placeholder="请选择模型"
                 />
               </div>
