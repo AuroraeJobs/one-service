@@ -168,6 +168,19 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Verify backend tests.
 - [x] Update docs and commit/push after the milestone.
 
+## Iteration 08: Operational Editing
+
+- [x] Add edit action for trade records.
+- [x] Reuse trade modal for create and edit.
+- [x] Wire trade update to `PUT /stock/trades/{id}`.
+- [x] Add edit action for alert rules.
+- [x] Reuse alert modal for create and edit.
+- [x] Wire alert update to `PUT /stock/alerts/rules/{id}`.
+- [ ] Add account selector UX for trade and position pages.
+- [ ] Surface recalculation impact more explicitly after trade save/delete.
+- [x] Verify frontend lint and build.
+- [x] Update docs and commit/push after the milestone.
+
 ## Quality Gates
 
 - [x] Backend compiles with JDK 21.

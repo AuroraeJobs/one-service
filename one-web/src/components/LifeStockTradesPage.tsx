@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Form, Input, InputNumber, Modal, Popconfirm, Select, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { DeleteOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import { stockApi, type StockTrade } from '../services/api';
@@ -41,6 +41,7 @@ const LifeStockTradesPage = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingTrade, setEditingTrade] = useState<StockTrade>();
   const [error, setError] = useState<string>();
 
   const queryParams = useMemo(() => ({
@@ -68,6 +69,7 @@ const LifeStockTradesPage = () => {
 
   const openCreateModal = useCallback(() => {
     form.resetFields();
+    setEditingTrade(undefined);
     form.setFieldsValue({
       accountId: accountId.trim() || undefined,
       symbol: symbol.trim() || undefined,
@@ -76,6 +78,24 @@ const LifeStockTradesPage = () => {
     });
     setModalOpen(true);
   }, [accountId, form, symbol]);
+
+  const openEditModal = (trade: StockTrade) => {
+    setEditingTrade(trade);
+    form.setFieldsValue({
+      accountId: trade.accountId,
+      symbol: trade.symbol,
+      name: trade.name,
+      tradeType: trade.tradeType,
+      quantity: trade.quantity,
+      price: trade.price,
+      amount: trade.amount,
+      fee: trade.fee,
+      tax: trade.tax,
+      tradedAt: trade.tradedAt,
+      remark: trade.remark
+    });
+    setModalOpen(true);
+  };
 
   useEffect(() => {
     if (searchParams.get('action') === 'create') {
@@ -88,14 +108,20 @@ const LifeStockTradesPage = () => {
     setSaving(true);
     setError(undefined);
     try {
-      await stockApi.saveTrade({
+      const payload = {
         ...values,
         accountId: values.accountId?.trim() || undefined,
         symbol: values.symbol.trim(),
         name: values.name?.trim() || undefined,
         remark: values.remark?.trim() || undefined
-      });
+      };
+      if (editingTrade?.id) {
+        await stockApi.updateTrade(editingTrade.id, payload);
+      } else {
+        await stockApi.saveTrade(payload);
+      }
       setModalOpen(false);
+      setEditingTrade(undefined);
       await loadTrades();
     } catch (requestError) {
       console.error('保存股票交易失败:', requestError);
@@ -186,6 +212,7 @@ const LifeStockTradesPage = () => {
           <Button type="link" onClick={() => navigate(`/investments/stocks/${record.symbol}`)}>
             个股
           </Button>
+          <Button type="text" icon={<EditOutlined />} aria-label="编辑交易记录" onClick={() => openEditModal(record)} />
           <Popconfirm title="删除交易记录？" okText="删除" cancelText="取消" onConfirm={() => deleteTrade(record.id)}>
             <Button type="text" danger icon={<DeleteOutlined />} aria-label="删除交易记录" />
           </Popconfirm>
@@ -248,13 +275,16 @@ const LifeStockTradesPage = () => {
       </Card>
 
       <Modal
-        title="新增交易"
+        title={editingTrade ? '编辑交易' : '新增交易'}
         open={modalOpen}
         okText="保存"
         cancelText="取消"
         confirmLoading={saving}
         onOk={saveTrade}
-        onCancel={() => setModalOpen(false)}
+        onCancel={() => {
+          setModalOpen(false);
+          setEditingTrade(undefined);
+        }}
         destroyOnHidden
       >
         <Form form={form} layout="vertical">

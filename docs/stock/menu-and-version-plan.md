@@ -497,7 +497,7 @@ Progress:
 
 Follow-up:
 
-- Add edit-trade modal by reusing the create form.
+- Edit-trade modal is implemented in Iteration 08.
 - Add account selector after account UX is designed.
 - Surface recalculation impact more explicitly after save/delete.
 
@@ -590,9 +590,9 @@ Progress:
 
 Follow-up:
 
-- Add edit-rule modal by reusing the create form.
-- Surface recent triggered alerts on 总览.
-- Show active symbol alerts on 个股 detail.
+- Edit-rule modal is implemented in Iteration 08.
+- Recent triggered alerts are surfaced on 总览.
+- Active symbol alerts are shown on 个股 detail.
 
 ### V5: Analysis Cockpit
 
@@ -728,6 +728,7 @@ Progress:
 7. V6 providers and settings.
 8. V7 dashboard and detail linkage.
 9. Iteration 07 preferences and provider operations.
+10. Iteration 08 operational editing.
 
 ## Architecture Rules To Preserve
 

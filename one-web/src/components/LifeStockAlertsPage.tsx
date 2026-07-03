@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Button, Card, Form, Input, InputNumber, Modal, Popconfirm, Select, Space, Switch, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { BellOutlined, DeleteOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
+import { BellOutlined, DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import { stockApi, type StockAlertHistory, type StockAlertRule } from '../services/api';
@@ -49,6 +49,7 @@ const LifeStockAlertsPage = () => {
   const [saving, setSaving] = useState(false);
   const [evaluating, setEvaluating] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingRule, setEditingRule] = useState<StockAlertRule>();
   const [error, setError] = useState<string>();
   const [success, setSuccess] = useState<string>();
 
@@ -91,6 +92,7 @@ const LifeStockAlertsPage = () => {
 
   const openCreateModal = useCallback(() => {
     form.resetFields();
+    setEditingRule(undefined);
     form.setFieldsValue({
       symbol: historySymbol.trim() || undefined,
       ruleType: 'PRICE',
@@ -100,6 +102,20 @@ const LifeStockAlertsPage = () => {
     });
     setModalOpen(true);
   }, [form, historySymbol]);
+
+  const openEditModal = (rule: StockAlertRule) => {
+    setEditingRule(rule);
+    form.setFieldsValue({
+      symbol: rule.symbol,
+      name: rule.name,
+      ruleType: rule.ruleType,
+      direction: rule.direction,
+      targetValue: rule.targetValue,
+      throttleSeconds: rule.throttleSeconds,
+      enabled: rule.enabled !== false
+    });
+    setModalOpen(true);
+  };
 
   useEffect(() => {
     if (searchParams.get('action') === 'create') {
@@ -113,14 +129,20 @@ const LifeStockAlertsPage = () => {
     setError(undefined);
     setSuccess(undefined);
     try {
-      await stockApi.saveAlertRule({
+      const payload = {
         ...values,
         symbol: values.symbol.trim(),
         name: values.name?.trim() || undefined,
         enabled: values.enabled !== false
-      });
+      };
+      if (editingRule?.id) {
+        await stockApi.updateAlertRule(editingRule.id, payload);
+      } else {
+        await stockApi.saveAlertRule(payload);
+      }
       setModalOpen(false);
-      setSuccess('告警规则已保存');
+      setEditingRule(undefined);
+      setSuccess(editingRule ? '告警规则已更新' : '告警规则已保存');
       await loadRules();
     } catch (requestError) {
       console.error('保存股票告警规则失败:', requestError);
@@ -222,6 +244,7 @@ const LifeStockAlertsPage = () => {
           <Button type="link" onClick={() => navigate(`/investments/stocks/${record.symbol}`)}>
             个股
           </Button>
+          <Button type="text" icon={<EditOutlined />} aria-label="编辑告警规则" onClick={() => openEditModal(record)} />
           <Popconfirm title="删除告警规则？" okText="删除" cancelText="取消" onConfirm={() => deleteRule(record.id)}>
             <Button type="text" danger icon={<DeleteOutlined />} aria-label="删除告警规则" />
           </Popconfirm>
@@ -351,13 +374,16 @@ const LifeStockAlertsPage = () => {
       </Card>
 
       <Modal
-        title="新增告警规则"
+        title={editingRule ? '编辑告警规则' : '新增告警规则'}
         open={modalOpen}
         okText="保存"
         cancelText="取消"
         confirmLoading={saving}
         onOk={saveRule}
-        onCancel={() => setModalOpen(false)}
+        onCancel={() => {
+          setModalOpen(false);
+          setEditingRule(undefined);
+        }}
         destroyOnHidden
       >
         <Form form={form} layout="vertical">
