@@ -133,6 +133,53 @@ class LotteryPredictionControllerTest {
     }
 
     @Test
+    void trainingStatusDelegatesToService() throws Exception {
+        LotteryTrainingStatus status = new LotteryTrainingStatus();
+        status.setRunning(true);
+        status.setPercent(42);
+        status.setReplayCount(30);
+        when(service.trainingStatus()).thenReturn(status);
+
+        mockMvc.perform(get("/lottery/predictions/training/status"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.running").value(true))
+                .andExpect(jsonPath("$.percent").value(42))
+                .andExpect(jsonPath("$.replayCount").value(30));
+
+        verify(service).trainingStatus();
+    }
+
+    @Test
+    void cancelTrainingDelegatesToService() throws Exception {
+        LotteryTrainingStatus status = new LotteryTrainingStatus();
+        status.setCancelled(true);
+        status.setStage("正在取消训练");
+        when(service.cancelTraining()).thenReturn(status);
+
+        mockMvc.perform(post("/lottery/predictions/training/cancel"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cancelled").value(true))
+                .andExpect(jsonPath("$.stage").value("正在取消训练"));
+
+        verify(service).cancelTraining();
+    }
+
+    @Test
+    void retryTrainingDelegatesToService() throws Exception {
+        LotteryTrainingStatus status = new LotteryTrainingStatus();
+        status.setRunning(true);
+        status.setScale("fast");
+        when(service.retryTraining()).thenReturn(status);
+
+        mockMvc.perform(post("/lottery/predictions/training/retry"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.running").value(true))
+                .andExpect(jsonPath("$.scale").value("fast"));
+
+        verify(service).retryTraining();
+    }
+
+    @Test
     void trainDelegatesToTrainingService() throws Exception {
         LotteryTrainingStatus status = new LotteryTrainingStatus();
         status.setRunning(true);

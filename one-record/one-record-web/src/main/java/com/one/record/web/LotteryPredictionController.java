@@ -51,6 +51,24 @@ public class LotteryPredictionController {
         return service.replayMetrics(window);
     }
 
+    @GetMapping("training/status")
+    @Operation(summary = "查询彩票预测训练状态", description = "查询当前训练进度、上次参数、取消和失败状态")
+    public LotteryTrainingStatus trainingStatus() {
+        return service.trainingStatus();
+    }
+
+    @PostMapping("training/cancel")
+    @Operation(summary = "取消彩票预测训练", description = "请求取消当前运行中的预测训练任务")
+    public LotteryTrainingStatus cancelTraining() {
+        return service.cancelTraining();
+    }
+
+    @PostMapping("training/retry")
+    @Operation(summary = "重试彩票预测训练", description = "使用上一次训练参数重新启动训练任务")
+    public LotteryTrainingStatus retryTraining() {
+        return service.retryTraining();
+    }
+
     @GetMapping("{id}")
     @Operation(summary = "查询彩票预测详情", description = "按快照 ID 查询预测详情、候选号码和命中结果")
     public LotteryPredictionSnapshot detail(@PathVariable("id") String id) {

@@ -20,6 +20,10 @@ public interface ILotteryTrainingService {
 
     LotteryTrainingStatus trainingStatus();
 
+    LotteryTrainingStatus cancelTraining();
+
+    LotteryTrainingStatus retryTraining();
+
     PredictionRuleConfig bestRule();
 
     LotteryLatestPrediction latestPrediction();

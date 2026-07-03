@@ -34,8 +34,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -74,7 +76,13 @@ public class LotteryTrainingService implements ILotteryTrainingService {
 
     private final AtomicBoolean trainingRunning = new AtomicBoolean(false);
 
+    private final AtomicBoolean trainingCancelRequested = new AtomicBoolean(false);
+
     private final AtomicReference<LotteryTrainingStatus> trainingStatus = new AtomicReference<>(idleStatus());
+
+    private final AtomicInteger lastReplayCount = new AtomicInteger(30);
+
+    private final AtomicReference<String> lastScale = new AtomicReference<>("standard");
 
     public LotteryTrainingService(StringRedisTemplate redisTemplate,
                                   LotteryPredictionSnapshotRepository predictionSnapshotRepository,
@@ -88,6 +96,8 @@ public class LotteryTrainingService implements ILotteryTrainingService {
 
     @Override
     public LotteryTrainingReport train(int replayCount, String scale) {
+        trainingCancelRequested.set(false);
+        rememberTrainingRequest(replayCount, scale);
         return trainInternal(replayCount, scale, status -> {
         });
     }
@@ -97,17 +107,24 @@ public class LotteryTrainingService implements ILotteryTrainingService {
         if (!trainingRunning.compareAndSet(false, true)) {
             return trainingStatus.get();
         }
-        updateStatus(true, false, 1, "准备训练", 0, 0, "训练任务已启动", null);
+        trainingCancelRequested.set(false);
+        rememberTrainingRequest(replayCount, scale);
+        updateStatus(true, false, false, 1, "准备训练", 0, 0, "训练任务已启动", null);
         CompletableFuture.runAsync(() -> {
             try {
                 LotteryTrainingReport report = trainInternal(replayCount, scale, trainingStatus::set);
-                updateStatus(false, false, 100, "训练完成", report.getReplayCount(), report.getReplayCount(),
+                updateStatus(false, false, false, 100, "训练完成", report.getReplayCount(), report.getReplayCount(),
                         "训练完成，已生成最新预测", report);
+            } catch (CancellationException exception) {
+                updateStatus(false, false, true, trainingStatus.get().getPercent(), "训练已取消",
+                        trainingStatus.get().getProcessed(), trainingStatus.get().getTotal(),
+                        "训练任务已取消，可重试上一次训练参数", null);
             } catch (RuntimeException exception) {
                 log.error("彩票训练失败", exception);
-                updateStatus(false, true, 100, "训练失败", 0, 0, exception.getMessage(), null);
+                updateStatus(false, true, false, 100, "训练失败", 0, 0, exception.getMessage(), null);
             } finally {
                 trainingRunning.set(false);
+                trainingCancelRequested.set(false);
             }
         });
         return trainingStatus.get();
@@ -116,6 +133,25 @@ public class LotteryTrainingService implements ILotteryTrainingService {
     @Override
     public LotteryTrainingStatus trainingStatus() {
         return trainingStatus.get();
+    }
+
+    @Override
+    public LotteryTrainingStatus cancelTraining() {
+        LotteryTrainingStatus current = trainingStatus.get();
+        if (!trainingRunning.get()) {
+            updateStatus(false, false, false, current.getPercent(), current.getStage(), current.getProcessed(),
+                    current.getTotal(), "当前没有运行中的训练任务", current.getReport());
+            return trainingStatus.get();
+        }
+        trainingCancelRequested.set(true);
+        updateStatus(true, false, true, current.getPercent(), "正在取消训练", current.getProcessed(),
+                current.getTotal(), "已收到取消请求，正在等待当前回放步骤停止", current.getReport());
+        return trainingStatus.get();
+    }
+
+    @Override
+    public LotteryTrainingStatus retryTraining() {
+        return startTraining(lastReplayCount.get(), lastScale.get());
     }
 
     private LotteryTrainingReport trainInternal(int replayCount, String scale, Consumer<LotteryTrainingStatus> progressUpdater) {
@@ -128,8 +164,9 @@ public class LotteryTrainingService implements ILotteryTrainingService {
         configs.addAll(buildExplorationConfigs(previousBest, generation, safeScale));
         List<LotteryTrainingReport.TrainingResult> candidateResults = new ArrayList<>();
         for (int index = 0; index < configs.size(); index++) {
+            assertNotCancelled();
             PredictionRuleConfig config = configs.get(index);
-            progressUpdater.accept(buildStatus(true, false,
+            progressUpdater.accept(buildStatus(true, false, false,
                     percent(index, configs.size(), 8, 58),
                     "候选规则回放评分", index, configs.size(),
                     "第 " + generation + " 代正在回放 " + config.getName(), null));
@@ -155,7 +192,7 @@ public class LotteryTrainingService implements ILotteryTrainingService {
             PredictionRuleConfig learnedRule = rolling.getFinalConfig();
             report.setActualRecord(actualRecord);
             if (actualRecord != null) {
-                progressUpdater.accept(buildStatus(true, false, 95, "目标记录反馈",
+                progressUpdater.accept(buildStatus(true, false, false, 95, "目标记录反馈",
                         safeReplayCount, safeReplayCount, "正在根据最新中奖记录微调规则", null));
                 learnedRule = refineRuleWithActual(draws, learnedRule, actualRecord);
             }
@@ -164,7 +201,7 @@ public class LotteryTrainingService implements ILotteryTrainingService {
             saveJson(BEST_RULE_KEY, learnedRule);
             savePredictionRuleRecord(learnedRule, best, generation, safeReplayCount, true);
             saveJson(TRAINING_TIMELINE_KEY, rolling.getTimeline());
-            progressUpdater.accept(buildStatus(true, false, 96, "生成最新预测",
+            progressUpdater.accept(buildStatus(true, false, false, 96, "生成最新预测",
                     safeReplayCount, safeReplayCount, "正在生成下一期预测", null));
             LotteryLatestPrediction latestPrediction = buildLatestPrediction(draws, learnedRule);
             report.setLatestPrediction(latestPrediction);
@@ -518,6 +555,7 @@ public class LotteryTrainingService implements ILotteryTrainingService {
         int start = Math.max(20, draws.size() - replayCount);
         List<ScoredPrediction> bestPredictions = new ArrayList<>();
         for (int index = start; index < draws.size(); index++) {
+            assertNotCancelled();
             Draw target = draws.get(index);
             List<Draw> trainingDraws = draws.subList(0, target.getPeriod() - 1);
             Prediction selected = predict(trainingDraws, config).stream()
@@ -544,9 +582,10 @@ public class LotteryTrainingService implements ILotteryTrainingService {
         List<LotteryTrainingReport.TrainingTimelineItem> timeline = new ArrayList<>();
 
         for (int index = start; index < draws.size(); index++) {
+            assertNotCancelled();
             Draw target = draws.get(index);
             int processed = index - start + 1;
-            progressUpdater.accept(buildStatus(true, false,
+            progressUpdater.accept(buildStatus(true, false, false,
                     percent(processed, replayCount, 58, 95),
                     "逐期滚动调参", processed, replayCount,
                     "正在基于前 " + (target.getPeriod() - 1) + " 期预测第 " + target.getPeriod() + " 期",
@@ -654,29 +693,58 @@ public class LotteryTrainingService implements ILotteryTrainingService {
         LotteryTrainingStatus status = new LotteryTrainingStatus();
         status.setRunning(false);
         status.setFailed(false);
+        status.setCancelled(false);
         status.setPercent(0);
         status.setStage("未开始");
         status.setMessage("点击开始训练");
+        status.setReplayCount(30);
+        status.setScale("standard");
+        status.setUpdatedAt(System.currentTimeMillis());
         return status;
     }
 
-    private void updateStatus(boolean running, boolean failed, int percent, String stage,
+    private void updateStatus(boolean running, boolean failed, boolean cancelled, int percent, String stage,
                               int processed, int total, String message, LotteryTrainingReport report) {
-        trainingStatus.set(buildStatus(running, failed, percent, stage, processed, total, message, report));
+        trainingStatus.set(buildStatus(running, failed, cancelled, percent, stage, processed, total, message, report));
     }
 
-    private LotteryTrainingStatus buildStatus(boolean running, boolean failed, int percent, String stage,
+    private LotteryTrainingStatus buildStatus(boolean running, boolean failed, boolean cancelled, int percent, String stage,
                                               int processed, int total, String message, LotteryTrainingReport report) {
+        LotteryTrainingStatus previous = trainingStatus.get();
         LotteryTrainingStatus status = new LotteryTrainingStatus();
         status.setRunning(running);
         status.setFailed(failed);
+        status.setCancelled(cancelled);
         status.setPercent(percent);
         status.setStage(stage);
         status.setProcessed(processed);
         status.setTotal(total);
         status.setMessage(message);
+        status.setReplayCount(lastReplayCount.get());
+        status.setScale(lastScale.get());
+        Long startedAt = running ? Long.valueOf(startedAt(previous)) : previous.getStartedAt();
+        status.setStartedAt(startedAt);
+        status.setUpdatedAt(System.currentTimeMillis());
         status.setReport(report);
         return status;
+    }
+
+    private long startedAt(LotteryTrainingStatus previous) {
+        if (previous != null && previous.isRunning() && previous.getStartedAt() != null) {
+            return previous.getStartedAt();
+        }
+        return System.currentTimeMillis();
+    }
+
+    private void rememberTrainingRequest(int replayCount, String scale) {
+        lastReplayCount.set(replayCount);
+        lastScale.set(safeScale(scale));
+    }
+
+    private void assertNotCancelled() {
+        if (trainingCancelRequested.get()) {
+            throw new CancellationException("彩票训练已取消");
+        }
     }
 
     private int percent(int processed, int total, int start, int end) {

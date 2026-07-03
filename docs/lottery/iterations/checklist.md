@@ -59,7 +59,7 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add actual-result attachment endpoint. Added `POST /lottery/predictions/{id}/actual` to attach actual draw results and rescore the snapshot and candidates.
 - [x] Add replay metrics by historical window. Added `GET /lottery/predictions/replay-metrics` to aggregate latest training report timeline by requested window.
 - [x] Add rule comparison endpoint. Added `GET /lottery/predictions/rules/compare` with recent rule records and best rank score metadata.
-- [ ] Add cancel/retry/status behavior for training.
+- [x] Add cancel/retry/status behavior for training. Added prediction namespace status, cancel, and retry endpoints plus cooperative cancellation in training loops.
 - [ ] Add prediction history page.
 - [ ] Add prediction detail page with candidates, score, rule, and actual result.
 - [x] Add tests for prediction scoring, actual attachment, and report persistence. Snapshot mapping, history limit, prediction actual attachment, report persistence mapping, and prediction controller routes are covered.

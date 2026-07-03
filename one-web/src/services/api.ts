@@ -1596,11 +1596,16 @@ export interface LotteryTrainingReport {
 export interface LotteryTrainingStatus {
   running: boolean;
   failed: boolean;
+  cancelled?: boolean;
   percent: number;
   stage: string;
   processed: number;
   total: number;
   message: string;
+  replayCount?: number;
+  scale?: 'fast' | 'standard' | 'deep' | string;
+  startedAt?: number;
+  updatedAt?: number;
   report?: LotteryTrainingReport;
 }
 
@@ -1613,6 +1618,12 @@ export const lotteryTrainingApi = {
   },
   status: (): Promise<LotteryTrainingStatus> => {
     return apiClient.get('/lottery/training/status');
+  },
+  cancel: (): Promise<LotteryTrainingStatus> => {
+    return apiClient.post('/lottery/training/cancel');
+  },
+  retry: (): Promise<LotteryTrainingStatus> => {
+    return apiClient.post('/lottery/training/retry');
   },
   best: (): Promise<PredictionRuleConfig> => {
     return apiClient.get('/lottery/training/best');
@@ -1646,6 +1657,15 @@ export const lotteryPredictionApi = {
   },
   replayMetrics: (params?: { window?: number }): Promise<LotteryReplayMetrics> => {
     return apiClient.get('/lottery/predictions/replay-metrics', { params });
+  },
+  trainingStatus: (): Promise<LotteryTrainingStatus> => {
+    return apiClient.get('/lottery/predictions/training/status');
+  },
+  cancelTraining: (): Promise<LotteryTrainingStatus> => {
+    return apiClient.post('/lottery/predictions/training/cancel');
+  },
+  retryTraining: (): Promise<LotteryTrainingStatus> => {
+    return apiClient.post('/lottery/predictions/training/retry');
   },
   train: (params: { replayCount?: number; scale?: 'fast' | 'standard' | 'deep' }): Promise<LotteryTrainingStatus> => {
     return apiClient.post('/lottery/predictions/train', params);

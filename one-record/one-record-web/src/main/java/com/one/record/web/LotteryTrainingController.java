@@ -36,6 +36,16 @@ public class LotteryTrainingController {
         return service.trainingStatus();
     }
 
+    @PostMapping("cancel")
+    public LotteryTrainingStatus cancel() {
+        return service.cancelTraining();
+    }
+
+    @PostMapping("retry")
+    public LotteryTrainingStatus retry() {
+        return service.retryTraining();
+    }
+
     @GetMapping("best")
     public PredictionRuleConfig best() {
         return service.bestRule();

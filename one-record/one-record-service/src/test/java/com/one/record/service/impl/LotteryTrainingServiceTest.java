@@ -194,6 +194,28 @@ class LotteryTrainingServiceTest {
     }
 
     @Test
+    void trainingStatusDefaultsToIdleRetryParams() {
+        var status = service.trainingStatus();
+
+        assertThat(status.isRunning()).isFalse();
+        assertThat(status.isFailed()).isFalse();
+        assertThat(status.isCancelled()).isFalse();
+        assertThat(status.getReplayCount()).isEqualTo(30);
+        assertThat(status.getScale()).isEqualTo("standard");
+        assertThat(status.getUpdatedAt()).isNotNull();
+    }
+
+    @Test
+    void cancelTrainingWithoutRunningKeepsIdleState() {
+        var status = service.cancelTraining();
+
+        assertThat(status.isRunning()).isFalse();
+        assertThat(status.isCancelled()).isFalse();
+        assertThat(status.getMessage()).isEqualTo("当前没有运行中的训练任务");
+        assertThat(status.getUpdatedAt()).isNotNull();
+    }
+
+    @Test
     void replayMetricsAggregatesLatestReportTimelineByWindow() {
         LotteryTrainingReport.TrainingTimelineItem first = timeline(2026001, 90, 2, false, "未中奖");
         LotteryTrainingReport.TrainingTimelineItem second = timeline(2026002, 120, 3, true, "五等奖");

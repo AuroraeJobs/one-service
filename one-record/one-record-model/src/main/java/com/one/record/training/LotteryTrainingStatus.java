@@ -11,6 +11,8 @@ public class LotteryTrainingStatus implements Serializable {
 
     private boolean failed;
 
+    private boolean cancelled;
+
     private int percent;
 
     private String stage;
@@ -20,6 +22,14 @@ public class LotteryTrainingStatus implements Serializable {
     private int total;
 
     private String message;
+
+    private Integer replayCount;
+
+    private String scale;
+
+    private Long startedAt;
+
+    private Long updatedAt;
 
     private LotteryTrainingReport report;
 }
