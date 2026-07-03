@@ -27,6 +27,12 @@ const syncModeOptions = [
   { label: '配置批量', value: 'batch' }
 ];
 
+const summaryLimitOptions = [
+  { label: '最近20条', value: 20 },
+  { label: '最近50条', value: 50 },
+  { label: '最近100条', value: 100 }
+];
+
 const LifeStockSyncPage = () => {
   const [searchParams] = useSearchParams();
   const initialSymbol = searchParams.get('symbol') || '600519';
@@ -37,6 +43,7 @@ const LifeStockSyncPage = () => {
   const [payload, setPayload] = useState(sampleKLines);
   const [logs, setLogs] = useState<StockKLineSyncLog[]>([]);
   const [summary, setSummary] = useState<StockKLineSyncSummary>();
+  const [summaryLimit, setSummaryLimit] = useState(50);
   const [syncing, setSyncing] = useState(false);
   const [triggeringScheduled, setTriggeringScheduled] = useState(false);
   const [retryingLogKey, setRetryingLogKey] = useState<string>();
@@ -51,7 +58,7 @@ const LifeStockSyncPage = () => {
       const symbolFilter = logSymbol.trim() || undefined;
       const [data, nextSummary] = await Promise.all([
         stockApi.klineSyncLogs(symbolFilter),
-        stockApi.klineSyncSummary(symbolFilter)
+        stockApi.klineSyncSummary({ symbol: symbolFilter, limit: summaryLimit })
       ]);
       setLogs(data);
       setSummary(nextSummary);
@@ -61,7 +68,7 @@ const LifeStockSyncPage = () => {
     } finally {
       setLoadingLogs(false);
     }
-  }, [logSymbol]);
+  }, [logSymbol, summaryLimit]);
 
   useEffect(() => {
     loadLogs();
@@ -241,6 +248,26 @@ const LifeStockSyncPage = () => {
           className="stock-market-alert"
         />
       ) : null}
+
+      <Card className="life-panel-card stock-market-panel">
+        <div className="stock-market-toolbar">
+          <div>
+            <h2>摘要窗口</h2>
+            <p>摘要按最近同步日志聚合，窗口越大越适合看趋势，窗口越小越适合看最近一次操作。</p>
+          </div>
+          <Space wrap>
+            <Select
+              value={summaryLimit}
+              options={summaryLimitOptions}
+              style={{ width: 140 }}
+              onChange={setSummaryLimit}
+            />
+            <Button icon={<ReloadOutlined spin={loadingLogs} />} loading={loadingLogs} onClick={loadLogs}>
+              刷新摘要
+            </Button>
+          </Space>
+        </div>
+      </Card>
 
       <Card className="life-panel-card stock-market-panel">
         <div className="stock-market-toolbar">

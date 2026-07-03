@@ -361,6 +361,7 @@ Rules:
 - `POST /stock/klines/sync/scheduled` manually triggers the same scheduled-sync service path for operational verification.
 - Batch retry uses `POST /stock/klines/sync/retry`, fetches configured symbols through `StockKLineProviderRouter`, writes MongoDB sync logs, and protects execution with a Redis lock.
 - `GET /stock/klines/sync-summary` aggregates the latest MongoDB sync logs into status counters and millisecond timestamps.
+- Sync summary supports `limit`, defaults to 50, and is capped at 100 recent logs.
 - Historical third-party provider fetching stays behind provider/router abstractions, not directly in controllers.
 
 Frontend stock detail:

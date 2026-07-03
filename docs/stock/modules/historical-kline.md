@@ -106,7 +106,7 @@ POST /stock/{symbol}/klines/sync
 POST /stock/klines/sync
 POST /stock/klines/sync/scheduled
 GET /stock/klines/sync-logs
-GET /stock/klines/sync-summary
+GET /stock/klines/sync-summary?limit=50
 ```
 
 ## Frontend
@@ -130,4 +130,5 @@ Current UX:
 - Sync page can manually trigger scheduled-sync semantics through `POST /stock/klines/sync/scheduled`.
 - Sync page shows recent MongoDB sync logs, including status, requested/saved counts, messages, and timestamps.
 - Sync page reads `GET /stock/klines/sync-summary` to show recent status, success/failure/running counts, saved rows, and latest completion time.
+- Sync summary supports bounded windows of 20, 50, or 100 recent logs from the UI; backend caps the limit at 100.
 - Provider-specific K-line fetching is still not exposed to the frontend; provider integration remains a backend Track B task.

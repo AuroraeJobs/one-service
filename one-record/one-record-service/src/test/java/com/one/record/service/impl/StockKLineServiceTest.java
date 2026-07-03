@@ -11,6 +11,7 @@ import com.one.record.stock.StockKLineSyncSummary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.MediaType;
@@ -27,6 +28,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
@@ -147,7 +149,7 @@ class StockKLineServiceTest {
 
     @Test
     void syncSummaryAggregatesRecentLogs() {
-        when(syncLogRepository.findTop50ByOrderByStartedAtDesc()).thenReturn(List.of(
+        when(syncLogRepository.findByOrderByStartedAtDesc(any(Pageable.class))).thenReturn(List.of(
                 StockKLineSyncLog.builder()
                         .jobName("stock-kline-sync-all")
                         .status("FAILED")
@@ -179,7 +181,7 @@ class StockKLineServiceTest {
         StockKLineProviderRouter router = new StockKLineProviderRouter(properties, List.of(new StubKLineProvider()));
         StockKLineService service = new StockKLineService(repository, syncLogRepository, stockMarketService, redisTemplate, properties, router);
 
-        StockKLineSyncSummary summary = service.syncSummary(null);
+        StockKLineSyncSummary summary = service.syncSummary(null, 20);
 
         assertThat(summary.getTotalCount()).isEqualTo(3);
         assertThat(summary.getSuccessCount()).isEqualTo(1);
@@ -195,19 +197,38 @@ class StockKLineServiceTest {
         assertThat(summary.getLastSuccessAt()).isEqualTo(2500L);
         assertThat(summary.getLastFailureAt()).isEqualTo(3500L);
         assertThat(summary.getGeneratedAt()).isNotNull();
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        org.mockito.Mockito.verify(syncLogRepository).findByOrderByStartedAtDesc(pageableCaptor.capture());
+        assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(20);
     }
 
     @Test
     void syncSummaryNormalizesSymbolFilter() {
         when(stockMarketService.normalizeSymbol("600519")).thenReturn("sh600519");
-        when(syncLogRepository.findTop50BySymbolOrderByStartedAtDesc("sh600519")).thenReturn(List.of());
+        when(syncLogRepository.findBySymbolOrderByStartedAtDesc(eq("sh600519"), any(Pageable.class))).thenReturn(List.of());
         StockKLineProviderRouter router = new StockKLineProviderRouter(properties, List.of(new StubKLineProvider()));
         StockKLineService service = new StockKLineService(repository, syncLogRepository, stockMarketService, redisTemplate, properties, router);
 
-        StockKLineSyncSummary summary = service.syncSummary("600519");
+        StockKLineSyncSummary summary = service.syncSummary("600519", null);
 
         assertThat(summary.getSymbol()).isEqualTo("sh600519");
         assertThat(summary.getTotalCount()).isZero();
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        org.mockito.Mockito.verify(syncLogRepository).findBySymbolOrderByStartedAtDesc(eq("sh600519"), pageableCaptor.capture());
+        assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(50);
+    }
+
+    @Test
+    void syncSummaryCapsLargeLimit() {
+        when(syncLogRepository.findByOrderByStartedAtDesc(any(Pageable.class))).thenReturn(List.of());
+        StockKLineProviderRouter router = new StockKLineProviderRouter(properties, List.of(new StubKLineProvider()));
+        StockKLineService service = new StockKLineService(repository, syncLogRepository, stockMarketService, redisTemplate, properties, router);
+
+        service.syncSummary(null, 200);
+
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        org.mockito.Mockito.verify(syncLogRepository).findByOrderByStartedAtDesc(pageableCaptor.capture());
+        assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(100);
     }
 
     private static class StubKLineProvider implements StockKLineProvider {

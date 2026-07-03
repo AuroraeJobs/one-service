@@ -17,6 +17,7 @@ Deliverables:
 - Summarize recent sync logs by status, requested count, saved count, and latest completion times.
 - Show summary metrics on `/investments/sync`.
 - Add a manual trigger for scheduled-sync semantics.
+- Add a bounded summary window selector.
 
 Acceptance:
 
@@ -34,6 +35,8 @@ Acceptance:
 - [x] Show sync summary metrics on `/investments/sync`.
 - [x] Add `POST /stock/klines/sync/scheduled`.
 - [x] Add scheduled-sync trigger action on `/investments/sync`.
+- [x] Add `limit` support to `GET /stock/klines/sync-summary`.
+- [x] Add summary window selector on `/investments/sync`.
 - [x] Verify frontend lint and build.
 - [x] Verify backend tests.
 - [x] Update docs and commit/push after the milestone.
@@ -45,4 +48,5 @@ Acceptance:
 - Added K-line sync summary API.
 - Added sync summary metric cards to the sync page.
 - Added manual scheduled-sync trigger from the sync page.
+- Added 20/50/100 log summary windows with a backend cap.
 - Kept sync logs in MongoDB and operational locks/state in Redis.

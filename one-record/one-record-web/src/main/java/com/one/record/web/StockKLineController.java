@@ -73,7 +73,8 @@ public class StockKLineController {
 
     @GetMapping("klines/sync-summary")
     @Operation(summary = "查询股票K线同步摘要", description = "按最近同步日志汇总K线同步状态")
-    public StockKLineSyncSummary syncSummary(@RequestParam(name = "symbol", required = false) String symbol) {
-        return service.syncSummary(symbol);
+    public StockKLineSyncSummary syncSummary(@RequestParam(name = "symbol", required = false) String symbol,
+                                             @RequestParam(name = "limit", required = false) Integer limit) {
+        return service.syncSummary(symbol, limit);
     }
 }

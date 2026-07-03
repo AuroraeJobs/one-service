@@ -495,9 +495,9 @@ export const stockApi = {
     });
   },
 
-  klineSyncSummary: (symbol?: string): Promise<StockKLineSyncSummary> => {
+  klineSyncSummary: (params?: { symbol?: string; limit?: number }): Promise<StockKLineSyncSummary> => {
     return apiClient.get('/stock/klines/sync-summary', {
-      params: { symbol }
+      params
     });
   },
 

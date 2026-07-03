@@ -217,6 +217,8 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Show sync summary metrics on `/investments/sync`.
 - [x] Add `POST /stock/klines/sync/scheduled`.
 - [x] Add scheduled-sync trigger action on `/investments/sync`.
+- [x] Add `limit` support to `GET /stock/klines/sync-summary`.
+- [x] Add summary window selector on `/investments/sync`.
 - [x] Verify frontend lint and build.
 - [x] Verify backend tests.
 - [x] Update docs and commit/push after the milestone.

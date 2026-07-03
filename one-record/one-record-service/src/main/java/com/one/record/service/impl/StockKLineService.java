@@ -10,6 +10,7 @@ import com.one.record.stock.StockKLine;
 import com.one.record.stock.StockKLineSyncLog;
 import com.one.record.stock.StockKLineSyncSummary;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -29,6 +30,10 @@ public class StockKLineService implements IStockKLineService {
     private static final String MAX_DATE = "9999-99-99";
 
     private static final Duration SYNC_LOCK_TTL = Duration.ofMinutes(10);
+
+    private static final int DEFAULT_SUMMARY_LIMIT = 50;
+
+    private static final int MAX_SUMMARY_LIMIT = 100;
 
     private final StockKLineRepository repository;
 
@@ -148,11 +153,12 @@ public class StockKLineService implements IStockKLineService {
     }
 
     @Override
-    public StockKLineSyncSummary syncSummary(String symbol) {
+    public StockKLineSyncSummary syncSummary(String symbol, Integer limit) {
         String normalizedSymbol = StringUtils.hasText(symbol) ? stockMarketService.normalizeSymbol(symbol) : null;
+        int normalizedLimit = normalizeSummaryLimit(limit);
         List<StockKLineSyncLog> logs = StringUtils.hasText(normalizedSymbol)
-                ? syncLogRepository.findTop50BySymbolOrderByStartedAtDesc(normalizedSymbol)
-                : syncLogRepository.findTop50ByOrderByStartedAtDesc();
+                ? syncLogRepository.findBySymbolOrderByStartedAtDesc(normalizedSymbol, PageRequest.of(0, normalizedLimit))
+                : syncLogRepository.findByOrderByStartedAtDesc(PageRequest.of(0, normalizedLimit));
         StockKLineSyncLog latest = logs.isEmpty() ? null : logs.get(0);
         return StockKLineSyncSummary.builder()
                 .symbol(normalizedSymbol)
@@ -171,6 +177,13 @@ public class StockKLineService implements IStockKLineService {
                 .lastFailureAt(lastFinishedAt(logs, "FAILED"))
                 .generatedAt(System.currentTimeMillis())
                 .build();
+    }
+
+    private int normalizeSummaryLimit(Integer limit) {
+        if (limit == null || limit <= 0) {
+            return DEFAULT_SUMMARY_LIMIT;
+        }
+        return Math.min(limit, MAX_SUMMARY_LIMIT);
     }
 
     private int countStatus(List<StockKLineSyncLog> logs, String status) {

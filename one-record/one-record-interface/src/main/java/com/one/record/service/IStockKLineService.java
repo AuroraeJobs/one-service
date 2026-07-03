@@ -20,7 +20,7 @@ public interface IStockKLineService {
 
     StockKLineSyncLog scheduledDailySync();
 
-    StockKLineSyncSummary syncSummary(String symbol);
+    StockKLineSyncSummary syncSummary(String symbol, Integer limit);
 
     List<StockKLineSyncLog> syncLogs(String symbol);
 }
