@@ -40,6 +40,12 @@ real-time quotes -> watchlist -> historical charts -> positions and PnL -> alert
 
 The module should eventually become a personal investment cockpit inside the life/investment area of the app.
 
+Menu-driven planning is maintained in:
+
+```text
+docs/stock/menu-and-version-plan.md
+```
+
 ## Non-Negotiable Architecture Principle
 
 Stock data sources must be switchable. Upper-layer features must not depend on Sina, Tencent, Eastmoney, Tushare, or any other concrete provider.

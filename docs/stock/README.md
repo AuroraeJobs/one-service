@@ -28,6 +28,7 @@ mvn -version
 
 ## Iteration Docs
 
+- [Menu and version plan](menu-and-version-plan.md): target stock menus and version plan by menu.
 - [Roadmap](iterations/roadmap.md): one-month plan and product direction.
 - [Checklist](iterations/checklist.md): completed and remaining task board.
 - [Baseline real-time quote](iterations/00-baseline-real-time-quote.md)

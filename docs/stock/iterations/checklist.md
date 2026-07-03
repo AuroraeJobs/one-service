@@ -125,6 +125,17 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [ ] Confirm quote and K-line providers remain switchable and upper layers do not depend on concrete providers.
 - [ ] Update portfolio, historical K-line, provider, and storage docs with final implementation details.
 
+## Menu-Driven Version Plan
+
+- [x] Plan target stock menu tree and route structure.
+- [x] Plan menu-driven version iterations.
+- [ ] V1: Add stock navigation shell for 总览、自选、行情、个股.
+- [ ] V2: Add portfolio ledger UX for 持仓 and 交易.
+- [ ] V3: Add historical data operations for K线 and 同步.
+- [ ] V4: Add alerts UX for 告警 and overview/detail alert widgets.
+- [ ] V5: Add analysis cockpit for 分析 and overview analysis widgets.
+- [ ] V6: Add provider and settings operations for 数据源 and 设置.
+
 ## Quality Gates
 
 - [x] Backend compiles with JDK 21.
