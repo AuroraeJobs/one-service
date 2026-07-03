@@ -4,6 +4,8 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import com.one.common.util.JsonUtil;
 import com.one.record.file.RecordFile;
+import com.one.record.model.LotteryPredictionSnapshot;
+import com.one.record.repository.LotteryPredictionSnapshotRepository;
 import com.one.record.service.ILotteryTrainingService;
 import com.one.record.training.LotteryActualRecord;
 import com.one.record.training.LotteryLatestPrediction;
@@ -13,6 +15,7 @@ import com.one.record.training.LotteryTrainingReport;
 import com.one.record.training.LotteryTrainingStatus;
 import com.one.record.training.PredictionRuleConfig;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -51,14 +54,22 @@ public class LotteryTrainingService implements ILotteryTrainingService {
 
     private static final String TRAINING_GENERATION_KEY = "lottery:training:generation";
 
+    private static final int DEFAULT_PREDICTION_HISTORY_LIMIT = 20;
+
+    private static final int MAX_PREDICTION_HISTORY_LIMIT = 100;
+
     private final StringRedisTemplate redisTemplate;
+
+    private final LotteryPredictionSnapshotRepository predictionSnapshotRepository;
 
     private final AtomicBoolean trainingRunning = new AtomicBoolean(false);
 
     private final AtomicReference<LotteryTrainingStatus> trainingStatus = new AtomicReference<>(idleStatus());
 
-    public LotteryTrainingService(StringRedisTemplate redisTemplate) {
+    public LotteryTrainingService(StringRedisTemplate redisTemplate,
+                                  LotteryPredictionSnapshotRepository predictionSnapshotRepository) {
         this.redisTemplate = redisTemplate;
+        this.predictionSnapshotRepository = predictionSnapshotRepository;
     }
 
     @Override
@@ -143,6 +154,7 @@ public class LotteryTrainingService implements ILotteryTrainingService {
             LotteryLatestPrediction latestPrediction = buildLatestPrediction(draws, learnedRule);
             report.setLatestPrediction(latestPrediction);
             saveJson(LATEST_PREDICTION_KEY, latestPrediction);
+            savePredictionSnapshot(latestPrediction);
         }
         saveJson(LAST_REPORT_KEY, report);
         return report;
@@ -178,6 +190,43 @@ public class LotteryTrainingService implements ILotteryTrainingService {
             saveJson(LATEST_PREDICTION_KEY, prediction);
         }
         return normalized;
+    }
+
+    @Override
+    public List<LotteryPredictionSnapshot> predictionHistory(Integer limit) {
+        return predictionSnapshotRepository.findByOrderByCreatedAtDesc(PageRequest.of(0, normalizePredictionHistoryLimit(limit)));
+    }
+
+    @Override
+    public LotteryPredictionSnapshot predictionDetail(String id) {
+        if (id == null || id.trim().isEmpty()) {
+            return null;
+        }
+        return predictionSnapshotRepository.findById(id.trim()).orElse(null);
+    }
+
+    LotteryPredictionSnapshot savePredictionSnapshot(LotteryLatestPrediction prediction) {
+        if (prediction == null) {
+            return null;
+        }
+        long now = System.currentTimeMillis();
+        LotteryPredictionSnapshot snapshot = LotteryPredictionSnapshot.builder()
+                .title(prediction.getTitle())
+                .redNumbers(new ArrayList<>(prediction.getRedNumbers()))
+                .blueNumber(prediction.getBlueNumber())
+                .score(prediction.getScore())
+                .ruleId(prediction.getRuleId())
+                .ruleName(prediction.getRuleName())
+                .basedOnPeriod(prediction.getBasedOnPeriod())
+                .targetPeriod(prediction.getTargetPeriod())
+                .reason(prediction.getReason())
+                .actualRecord(prediction.getActualRecord())
+                .result(prediction.getResult())
+                .candidates(new ArrayList<>(prediction.getCandidates()))
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+        return predictionSnapshotRepository.save(snapshot);
     }
 
     private LotteryLatestPrediction buildLatestPrediction(List<Draw> draws, PredictionRuleConfig config) {
@@ -278,6 +327,13 @@ public class LotteryTrainingService implements ILotteryTrainingService {
             throw new IllegalArgumentException("号码格式不正确");
         }
         return String.format("%02d", Integer.parseInt(value.trim()));
+    }
+
+    private static int normalizePredictionHistoryLimit(Integer limit) {
+        if (limit == null || limit <= 0) {
+            return DEFAULT_PREDICTION_HISTORY_LIMIT;
+        }
+        return Math.min(limit, MAX_PREDICTION_HISTORY_LIMIT);
     }
 
     private void saveJson(String key, Object value) {

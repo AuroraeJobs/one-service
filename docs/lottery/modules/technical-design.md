@@ -112,6 +112,8 @@ createdAt
 updatedAt
 ```
 
+`LotteryPredictionSnapshot` is the first durable prediction history model. Training still writes the latest prediction to Redis for compatibility, and now also saves a Mongo snapshot in `lottery_prediction_snapshots`. New prediction operations live under `/lottery/predictions`: history, detail, and async training start. The legacy `/lottery/training/*` endpoints remain compatible while frontend pages migrate.
+
 Training reports should include:
 
 - Replay window.

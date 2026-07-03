@@ -1506,6 +1506,12 @@ export interface LotteryLatestPrediction {
   candidates: LotteryPredictionCandidate[];
 }
 
+export interface LotteryPredictionSnapshot extends LotteryLatestPrediction {
+  id?: string;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
 export interface LotteryPredictionCandidate {
   title: string;
   redNumbers: string[];
@@ -1585,6 +1591,18 @@ export const lotteryTrainingApi = {
   },
   saveLatestActualRecord: (record: LotteryActualRecord): Promise<LotteryActualRecord> => {
     return apiClient.post('/lottery/training/actual/latest', record);
+  }
+};
+
+export const lotteryPredictionApi = {
+  history: (params?: { limit?: number }): Promise<LotteryPredictionSnapshot[]> => {
+    return apiClient.get('/lottery/predictions', { params });
+  },
+  detail: (id: string): Promise<LotteryPredictionSnapshot> => {
+    return apiClient.get(`/lottery/predictions/${id}`);
+  },
+  train: (params: { replayCount?: number; scale?: 'fast' | 'standard' | 'deep' }): Promise<LotteryTrainingStatus> => {
+    return apiClient.post('/lottery/predictions/train', params);
   }
 };
 
