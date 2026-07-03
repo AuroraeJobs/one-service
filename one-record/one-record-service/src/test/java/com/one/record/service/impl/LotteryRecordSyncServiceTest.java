@@ -72,6 +72,24 @@ class LotteryRecordSyncServiceTest {
     }
 
     @Test
+    void syncScheduledUsesScheduledJobName() {
+        Record before = record("2026001", 1);
+        Record after = record("2026002", 2);
+        LotteryRecordSyncLog running = LotteryRecordSyncLog.builder().id("sync-1").status("RUNNING").build();
+        LotteryRecordSyncLog success = LotteryRecordSyncLog.builder().id("sync-1").status("SUCCESS").savedCount(1).build();
+        when(recordService.findLast()).thenReturn(before, after);
+        when(syncLogService.start("scheduled-record-sync", "2026001")).thenReturn(running);
+        when(syncLogService.success(running, "2026002", 1, "新增 1 期开奖记录")).thenReturn(success);
+
+        LotteryRecordSyncLog result = service.syncScheduled();
+
+        assertThat(result.getStatus()).isEqualTo("SUCCESS");
+        verify(syncLogService).start("scheduled-record-sync", "2026001");
+        verify(syncLogService).success(running, "2026002", 1, "新增 1 期开奖记录");
+    }
+
+
+    @Test
     void syncManuallyReturnsSkippedLogWhenLockExists() {
         Record before = record("2026001", 1);
         LotteryRecordSyncLog skipped = LotteryRecordSyncLog.builder().status("SKIPPED").savedCount(0).build();

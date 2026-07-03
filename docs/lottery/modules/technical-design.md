@@ -162,6 +162,7 @@ VOID
 - New record work should prefer `/lottery/records/*`; existing `/record/*` endpoints are legacy-compatible wrappers until callers are migrated.
 - Record sync returns a persisted operation log so frontend pages can show status, saved count, issue range, and failure message.
 - Record sync status values include `RUNNING`, `SUCCESS`, `FAILED`, and `SKIPPED`; `SKIPPED` means another sync already holds the Redis lock.
+- Scheduled record sync is implemented by `LotteryRecordScheduledSync`, disabled by default through `hello.record.scheduled-sync-enabled`, and shares the same sync service, lock, and logs as manual sync.
 - Return normalized project DTOs only.
 - Use explicit filters rather than overloading vague request bodies.
 - Support pagination for list/history endpoints that can grow.

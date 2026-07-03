@@ -29,9 +29,9 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add `POST /lottery/records/sync`. Triggers the existing record update flow.
 - [x] Add `GET /lottery/records/sync-logs`. Supports optional `status` and `limit`.
 - [x] Add Redis sync lock. Manual record sync now uses `lottery:records:sync:lock` with TTL and writes `SKIPPED` logs when another sync is running.
-- [ ] Add scheduled record sync.
+- [x] Add scheduled record sync. Added `LotteryRecordScheduledSync`, disabled by default with `hello.record.scheduled-sync-enabled`, cron configurable by `hello.record.scheduled-sync-cron`.
 - [x] Keep existing `record/*` endpoints compatible. Added new controller without changing `RecordController`.
-- [ ] Add backend tests for number normalization, duplicate issue handling, and sync idempotency. Number normalization is covered by `LotteryDrawUtilTest`; normalized draw query is covered by `RecordServiceTest`; sync lock behavior is covered by `LotteryRecordSyncServiceTest`; provider-backed updater no-new-record path is covered by `RecordUpdaterTest`; duplicate issue and full sync idempotency remain.
+- [ ] Add backend tests for number normalization, duplicate issue handling, and sync idempotency. Number normalization is covered by `LotteryDrawUtilTest`; normalized draw query is covered by `RecordServiceTest`; sync lock behavior is covered by `LotteryRecordSyncServiceTest`; scheduled sync is covered by `LotteryRecordScheduledSyncTest`; provider-backed updater no-new-record path is covered by `RecordUpdaterTest`; duplicate issue and full sync idempotency remain.
 - [x] Add frontend API client methods for `/lottery/records/*`. Includes sync and sync-log methods; pages are not migrated yet.
 - [ ] Update frontend record loading to use normalized APIs when ready.
 

@@ -19,6 +19,8 @@ public class LotteryRecordSyncService implements ILotteryRecordSyncService {
 
     private static final String MANUAL_JOB_NAME = "manual-record-sync";
 
+    private static final String SCHEDULED_JOB_NAME = "scheduled-record-sync";
+
     private static final String SYNC_LOCK_KEY = "lottery:records:sync:lock";
 
     private static final Duration SYNC_LOCK_TTL = Duration.ofMinutes(10);
@@ -33,12 +35,21 @@ public class LotteryRecordSyncService implements ILotteryRecordSyncService {
 
     @Override
     public LotteryRecordSyncLog syncManually() {
+        return sync(MANUAL_JOB_NAME);
+    }
+
+    @Override
+    public LotteryRecordSyncLog syncScheduled() {
+        return sync(SCHEDULED_JOB_NAME);
+    }
+
+    private LotteryRecordSyncLog sync(String jobName) {
         Record before = recordService.findLast();
         String startIssue = before == null ? null : before.getCode();
         if (!acquireLock()) {
-            return syncLogService.skipped(MANUAL_JOB_NAME, startIssue, "开奖记录同步任务正在执行，请稍后重试");
+            return syncLogService.skipped(jobName, startIssue, "开奖记录同步任务正在执行，请稍后重试");
         }
-        LotteryRecordSyncLog syncLog = syncLogService.start(MANUAL_JOB_NAME, startIssue);
+        LotteryRecordSyncLog syncLog = syncLogService.start(jobName, startIssue);
         try {
             recordUpdate.update();
             Record after = recordService.findLast();

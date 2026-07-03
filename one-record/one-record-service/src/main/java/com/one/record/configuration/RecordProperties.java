@@ -16,4 +16,6 @@ public class RecordProperties {
     private boolean update;
 
     private boolean reset;
+
+    private boolean scheduledSyncEnabled;
 }
