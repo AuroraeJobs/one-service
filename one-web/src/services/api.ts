@@ -489,9 +489,9 @@ export const stockApi = {
     return apiClient.post('/stock/klines/sync/scheduled');
   },
 
-  klineSyncLogs: (symbol?: string): Promise<StockKLineSyncLog[]> => {
+  klineSyncLogs: (params?: { symbol?: string; status?: string }): Promise<StockKLineSyncLog[]> => {
     return apiClient.get('/stock/klines/sync-logs', {
-      params: { symbol }
+      params
     });
   },
 

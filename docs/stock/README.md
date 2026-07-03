@@ -41,6 +41,9 @@ mvn -version
 - [Iteration 07 preferences and provider operations](iterations/07-preferences-and-provider-ops.md)
 - [Iteration 08 operational editing](iterations/08-operational-editing.md)
 - [Iteration 09 sync recovery](iterations/09-sync-recovery.md)
+- [Iteration 10 provider operations](iterations/10-provider-operations.md)
+- [Iteration 11 sync operations summary](iterations/11-sync-operations-summary.md)
+- [Iteration 12 sync log filters](iterations/12-sync-log-filters.md)
 - [Quality gates](iterations/quality-gates.md)
 
 ## Module Docs

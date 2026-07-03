@@ -360,6 +360,7 @@ Rules:
 - Scheduled daily sync fetches configured symbols through `StockKLineProviderRouter` and writes `SUCCESS` or `FAILED` logs.
 - `POST /stock/klines/sync/scheduled` manually triggers the same scheduled-sync service path for operational verification.
 - Batch retry uses `POST /stock/klines/sync/retry`, fetches configured symbols through `StockKLineProviderRouter`, writes MongoDB sync logs, and protects execution with a Redis lock.
+- `GET /stock/klines/sync-logs` supports optional `symbol` and `status` filters. Symbol is normalized by `IStockMarketService`; status is trimmed and uppercased before MongoDB repository lookup.
 - `GET /stock/klines/sync-summary` aggregates the latest MongoDB sync logs into status counters and millisecond timestamps.
 - Sync summary supports `limit`, defaults to 50, and is capped at 100 recent logs.
 - Historical third-party provider fetching stays behind provider/router abstractions, not directly in controllers.
@@ -380,7 +381,7 @@ Frontend stock route context:
 - `/investments/trades` supports `symbol`, `accountId`, and `action=create` query params.
 - `/investments/positions` supports `accountId`.
 - `/investments/klines` supports `symbol` and `period`.
-- `/investments/sync` supports `symbol`, `logSymbol`, and `mode=batch`.
+- `/investments/sync` supports `symbol`, `logSymbol`, `status`, and `mode=batch`.
 - `/investments/alerts` supports `symbol` and `action=create`.
 - Query params only prefill internal page state; frontend still calls project-owned `/stock/*` APIs and does not call provider-specific endpoints.
 

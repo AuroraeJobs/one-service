@@ -14,6 +14,10 @@ public interface StockKLineSyncLogRepository extends MongoRepository<StockKLineS
 
     List<StockKLineSyncLog> findTop50BySymbolOrderByStartedAtDesc(String symbol);
 
+    List<StockKLineSyncLog> findTop50ByStatusOrderByStartedAtDesc(String status);
+
+    List<StockKLineSyncLog> findTop50BySymbolAndStatusOrderByStartedAtDesc(String symbol, String status);
+
     List<StockKLineSyncLog> findByOrderByStartedAtDesc(Pageable pageable);
 
     List<StockKLineSyncLog> findBySymbolOrderByStartedAtDesc(String symbol, Pageable pageable);

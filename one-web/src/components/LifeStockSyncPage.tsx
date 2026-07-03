@@ -33,6 +33,13 @@ const summaryLimitOptions = [
   { label: '最近100条', value: 100 }
 ];
 
+const syncStatusOptions = [
+  { label: '全部状态', value: '' },
+  { label: '成功', value: 'SUCCESS' },
+  { label: '失败', value: 'FAILED' },
+  { label: '运行中', value: 'RUNNING' }
+];
+
 const LifeStockSyncPage = () => {
   const [searchParams] = useSearchParams();
   const initialSymbol = searchParams.get('symbol') || '600519';
@@ -44,6 +51,7 @@ const LifeStockSyncPage = () => {
   const [logs, setLogs] = useState<StockKLineSyncLog[]>([]);
   const [summary, setSummary] = useState<StockKLineSyncSummary>();
   const [summaryLimit, setSummaryLimit] = useState(50);
+  const [logStatus, setLogStatus] = useState(searchParams.get('status') || '');
   const [syncing, setSyncing] = useState(false);
   const [triggeringScheduled, setTriggeringScheduled] = useState(false);
   const [retryingLogKey, setRetryingLogKey] = useState<string>();
@@ -56,8 +64,9 @@ const LifeStockSyncPage = () => {
     setError(undefined);
     try {
       const symbolFilter = logSymbol.trim() || undefined;
+      const statusFilter = logStatus || undefined;
       const [data, nextSummary] = await Promise.all([
-        stockApi.klineSyncLogs(symbolFilter),
+        stockApi.klineSyncLogs({ symbol: symbolFilter, status: statusFilter }),
         stockApi.klineSyncSummary({ symbol: symbolFilter, limit: summaryLimit })
       ]);
       setLogs(data);
@@ -68,7 +77,7 @@ const LifeStockSyncPage = () => {
     } finally {
       setLoadingLogs(false);
     }
-  }, [logSymbol, summaryLimit]);
+  }, [logSymbol, logStatus, summaryLimit]);
 
   useEffect(() => {
     loadLogs();
@@ -329,6 +338,12 @@ const LifeStockSyncPage = () => {
                 placeholder="过滤股票代码"
                 prefix={<SearchOutlined />}
                 style={{ width: 180 }}
+              />
+              <Select
+                value={logStatus}
+                options={syncStatusOptions}
+                style={{ width: 120 }}
+                onChange={setLogStatus}
               />
               <Button icon={<ReloadOutlined spin={loadingLogs} />} loading={loadingLogs} onClick={loadLogs}>
                 刷新日志

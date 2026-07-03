@@ -223,6 +223,17 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Verify backend tests.
 - [x] Update docs and commit/push after the milestone.
 
+## Iteration 12: Sync Log Filters
+
+- [x] Add status-specific sync-log repository queries.
+- [x] Add optional `status` parameter to `GET /stock/klines/sync-logs`.
+- [x] Normalize sync-log status filters in the service layer.
+- [x] Keep symbol filtering normalized through `IStockMarketService`.
+- [x] Update frontend stock API client to pass sync-log query params.
+- [x] Add status selector on `/investments/sync`.
+- [x] Add backend tests for status-only and symbol+status filters.
+- [x] Update docs and commit/push after the milestone.
+
 ## Quality Gates
 
 - [x] Backend compiles with JDK 21.

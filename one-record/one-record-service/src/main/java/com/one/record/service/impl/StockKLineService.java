@@ -145,9 +145,17 @@ public class StockKLineService implements IStockKLineService {
     }
 
     @Override
-    public List<StockKLineSyncLog> syncLogs(String symbol) {
-        if (StringUtils.hasText(symbol)) {
-            return syncLogRepository.findTop50BySymbolOrderByStartedAtDesc(stockMarketService.normalizeSymbol(symbol));
+    public List<StockKLineSyncLog> syncLogs(String symbol, String status) {
+        String normalizedSymbol = StringUtils.hasText(symbol) ? stockMarketService.normalizeSymbol(symbol) : null;
+        String normalizedStatus = normalizeStatus(status);
+        if (StringUtils.hasText(normalizedSymbol) && StringUtils.hasText(normalizedStatus)) {
+            return syncLogRepository.findTop50BySymbolAndStatusOrderByStartedAtDesc(normalizedSymbol, normalizedStatus);
+        }
+        if (StringUtils.hasText(normalizedSymbol)) {
+            return syncLogRepository.findTop50BySymbolOrderByStartedAtDesc(normalizedSymbol);
+        }
+        if (StringUtils.hasText(normalizedStatus)) {
+            return syncLogRepository.findTop50ByStatusOrderByStartedAtDesc(normalizedStatus);
         }
         return syncLogRepository.findTop50ByOrderByStartedAtDesc();
     }
@@ -184,6 +192,10 @@ public class StockKLineService implements IStockKLineService {
             return DEFAULT_SUMMARY_LIMIT;
         }
         return Math.min(limit, MAX_SUMMARY_LIMIT);
+    }
+
+    private String normalizeStatus(String status) {
+        return StringUtils.hasText(status) ? status.trim().toUpperCase() : null;
     }
 
     private int countStatus(List<StockKLineSyncLog> logs, String status) {

@@ -231,6 +231,38 @@ class StockKLineServiceTest {
         assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(100);
     }
 
+    @Test
+    void syncLogsCanFilterByStatus() {
+        when(syncLogRepository.findTop50ByStatusOrderByStartedAtDesc("FAILED")).thenReturn(List.of(
+                StockKLineSyncLog.builder().status("FAILED").build()
+        ));
+        StockKLineProviderRouter router = new StockKLineProviderRouter(properties, List.of(new StubKLineProvider()));
+        StockKLineService service = new StockKLineService(repository, syncLogRepository, stockMarketService, redisTemplate, properties, router);
+
+        List<StockKLineSyncLog> logs = service.syncLogs(null, " failed ");
+
+        assertThat(logs).hasSize(1);
+        assertThat(logs.get(0).getStatus()).isEqualTo("FAILED");
+        org.mockito.Mockito.verify(syncLogRepository).findTop50ByStatusOrderByStartedAtDesc("FAILED");
+    }
+
+    @Test
+    void syncLogsCanFilterBySymbolAndStatus() {
+        when(stockMarketService.normalizeSymbol("600519")).thenReturn("sh600519");
+        when(syncLogRepository.findTop50BySymbolAndStatusOrderByStartedAtDesc("sh600519", "SUCCESS")).thenReturn(List.of(
+                StockKLineSyncLog.builder().symbol("sh600519").status("SUCCESS").build()
+        ));
+        StockKLineProviderRouter router = new StockKLineProviderRouter(properties, List.of(new StubKLineProvider()));
+        StockKLineService service = new StockKLineService(repository, syncLogRepository, stockMarketService, redisTemplate, properties, router);
+
+        List<StockKLineSyncLog> logs = service.syncLogs("600519", "success");
+
+        assertThat(logs).hasSize(1);
+        assertThat(logs.get(0).getSymbol()).isEqualTo("sh600519");
+        assertThat(logs.get(0).getStatus()).isEqualTo("SUCCESS");
+        org.mockito.Mockito.verify(syncLogRepository).findTop50BySymbolAndStatusOrderByStartedAtDesc("sh600519", "SUCCESS");
+    }
+
     private static class StubKLineProvider implements StockKLineProvider {
 
         @Override

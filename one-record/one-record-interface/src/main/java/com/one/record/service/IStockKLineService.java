@@ -22,5 +22,5 @@ public interface IStockKLineService {
 
     StockKLineSyncSummary syncSummary(String symbol, Integer limit);
 
-    List<StockKLineSyncLog> syncLogs(String symbol);
+    List<StockKLineSyncLog> syncLogs(String symbol, String status);
 }
