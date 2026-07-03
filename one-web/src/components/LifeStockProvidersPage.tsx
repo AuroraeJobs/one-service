@@ -1,16 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Space, Table, Tag } from 'antd';
+import { Alert, Button, Card, Input, Select, Space, Statistic, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { ApiOutlined, ReloadOutlined } from '@ant-design/icons';
+import { ApiOutlined, ExperimentOutlined, ReloadOutlined } from '@ant-design/icons';
 import LifePageShell from './LifePageShell';
 import MetricCard from './MetricCard';
 import MetricGrid from './MetricGrid';
-import { stockApi, type StockProviderHealth } from '../services/api';
+import { stockApi, type StockProviderHealth, type StockProviderProbeResult } from '../services/api';
 
 const LifeStockProvidersPage = () => {
   const [providers, setProviders] = useState<StockProviderHealth[]>([]);
   const [loading, setLoading] = useState(false);
+  const [probing, setProbing] = useState(false);
+  const [probeCategory, setProbeCategory] = useState('quote');
+  const [probeSymbol, setProbeSymbol] = useState('');
+  const [probeResult, setProbeResult] = useState<StockProviderProbeResult>();
   const [error, setError] = useState<string>();
+  const [probeError, setProbeError] = useState<string>();
 
   const loadProviders = useCallback(async () => {
     setLoading(true);
@@ -29,6 +34,23 @@ const LifeStockProvidersPage = () => {
   useEffect(() => {
     loadProviders();
   }, [loadProviders]);
+
+  const probeProvider = async () => {
+    setProbing(true);
+    setProbeError(undefined);
+    try {
+      const result = await stockApi.providerProbe({
+        category: probeCategory,
+        symbol: probeSymbol.trim() || undefined
+      });
+      setProbeResult(result);
+    } catch (requestError) {
+      console.error('探测股票数据源失败:', requestError);
+      setProbeError(requestError instanceof Error ? requestError.message : '探测股票数据源失败');
+    } finally {
+      setProbing(false);
+    }
+  };
 
   const activeQuoteProvider = useMemo(() => providers.find(item => item.category === 'quote' && item.active)?.provider || '-', [providers]);
   const activeKLineProvider = useMemo(() => providers.find(item => item.category === 'kline' && item.active)?.provider || '-', [providers]);
@@ -100,14 +122,65 @@ const LifeStockProvidersPage = () => {
       }
     >
       {error ? <Alert type="error" showIcon message={error} className="stock-market-alert" /> : null}
+      {probeError ? <Alert type="error" showIcon message={probeError} className="stock-market-alert" /> : null}
 
-        <MetricGrid gap={16} minColumnWidth={200}>
+      <MetricGrid gap={16} minColumnWidth={200}>
         <MetricCard title="行情 Provider" value={activeQuoteProvider} accent="#5856d6" />
         <MetricCard title="K线 Provider" value={activeKLineProvider} accent="#0071e3" />
         <MetricCard title="已注册" value={registeredCount} suffix="个" accent="#34c759" />
         <MetricCard title="缺失" value={missingCount} suffix="个" accent={missingCount > 0 ? '#f5222d' : '#0071e3'} />
         <MetricCard title="检查时间" value={checkedAt} accent="#ff9500" valueStyle={{ fontSize: 18 }} />
       </MetricGrid>
+
+      <Card className="life-panel-card stock-market-panel">
+        <div className="stock-market-toolbar">
+          <div>
+            <h2>Provider 探测</h2>
+            <p>通过内部 Provider Router 拉取样本，返回标准化探测结果；页面仍不感知具体第三方协议。</p>
+          </div>
+          <Space wrap>
+            <Select
+              value={probeCategory}
+              options={[
+                { label: '行情', value: 'quote' },
+                { label: 'K线', value: 'kline' }
+              ]}
+              style={{ width: 120 }}
+              onChange={setProbeCategory}
+            />
+            <Input
+              value={probeSymbol}
+              placeholder="样本代码，可留空"
+              allowClear
+              style={{ width: 180 }}
+              onChange={event => setProbeSymbol(event.target.value)}
+            />
+            <Button type="primary" icon={<ExperimentOutlined />} loading={probing} onClick={probeProvider}>
+              探测
+            </Button>
+          </Space>
+        </div>
+        {probeResult ? (
+          <MetricGrid gap={16} minColumnWidth={180}>
+            <MetricCard title="探测类型" value={providerCategoryLabel(probeResult.category)} accent="#5856d6" />
+            <MetricCard title="样本代码" value={probeResult.symbol || '-'} accent="#0071e3" />
+            <MetricCard title="可用状态" value={probeResult.available ? '可用' : '不可用'} accent={probeResult.available ? '#34c759' : '#f5222d'} />
+            <MetricCard title="样本数量" value={probeResult.sampleCount ?? 0} suffix="条" accent="#ff9500" />
+            <MetricCard title="耗时" value={probeResult.durationMs ?? 0} suffix="ms" accent="#00c7be" />
+          </MetricGrid>
+        ) : null}
+        {probeResult ? (
+          <Alert
+            type={probeResult.success && probeResult.available ? 'success' : 'warning'}
+            showIcon
+            message={probeResult.message || 'Provider 探测完成'}
+            description={`检查时间：${formatTime(probeResult.checkedAt)}`}
+            className="stock-market-alert"
+          />
+        ) : (
+          <Statistic title="最近探测" value="-" />
+        )}
+      </Card>
 
       <Card className="life-panel-card stock-market-panel">
         <div className="stock-market-toolbar">

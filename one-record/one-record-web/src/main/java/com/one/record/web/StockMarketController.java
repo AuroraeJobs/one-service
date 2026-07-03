@@ -2,6 +2,7 @@ package com.one.record.web;
 
 import com.one.record.service.IStockMarketService;
 import com.one.record.stock.StockProviderHealth;
+import com.one.record.stock.StockProviderProbeResult;
 import com.one.record.stock.StockQuote;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
@@ -41,5 +42,13 @@ public class StockMarketController {
     @Operation(summary = "查询股票行情源状态", description = "查询已注册和已配置的股票行情源状态")
     public List<StockProviderHealth> providerHealth() {
         return service.providerHealth();
+    }
+
+    @GetMapping("providers/probe")
+    @Operation(summary = "探测股票数据源", description = "通过 Provider Router 拉取样本数据，验证当前股票数据源是否可用")
+    public StockProviderProbeResult providerProbe(@RequestParam(name = "category", required = false) String category,
+                                                  @RequestParam(name = "symbol", required = false) String symbol) {
+        log.info("Probing stock provider: category={}, symbol={}", category, symbol);
+        return service.providerProbe(category, symbol);
     }
 }

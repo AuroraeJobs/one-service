@@ -670,12 +670,15 @@ Frontend may display:
 - `sourceSymbol`
 - `fetchedAt`
 - `StockProviderHealth.category`, where `quote` means real-time quote provider and `kline` means historical K-line provider.
+- `StockProviderProbeResult` for operational provider probes.
 
 Provider health rules:
 
 - `GET /stock/providers/health` reports configured and registered quote and K-line providers.
+- `GET /stock/providers/probe` probes quote or K-line provider routes through backend routers and returns a normalized result.
 - Quote provider health is sourced from `StockMarketProviderRouter`.
 - K-line provider health is sourced from `StockKLineProviderRouter`.
+- Provider probe results use millisecond `checkedAt` and `durationMs`.
 - The frontend displays provider categories but still does not call provider-specific endpoints.
 - availability or stale-state messages
 

@@ -5,6 +5,7 @@ import com.one.common.util.JsonUtil;
 import com.one.record.configuration.StockMarketProperties;
 import com.one.record.service.IStockMarketService;
 import com.one.record.stock.StockProviderHealth;
+import com.one.record.stock.StockProviderProbeResult;
 import com.one.record.stock.StockQuote;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -242,6 +243,69 @@ public class StockMarketService implements IStockMarketService {
         health.addAll(providerRouter.health());
         health.addAll(kLineProviderRouter.health());
         return health;
+    }
+
+    @Override
+    public StockProviderProbeResult providerProbe(String category, String symbol) {
+        String probeCategory = normalizeProbeCategory(category);
+        String probeSymbol = probeSymbol(probeCategory, symbol);
+        Long startedAt = System.currentTimeMillis();
+        try {
+            int sampleCount;
+            boolean available;
+            if ("kline".equals(probeCategory)) {
+                sampleCount = kLineProviderRouter.dailyKLines(probeSymbol, null, null).size();
+                available = sampleCount > 0;
+            } else {
+                List<StockQuote> quotes = providerRouter.quotes(List.of(probeSymbol));
+                sampleCount = quotes.size();
+                available = quotes.stream().anyMatch(quote -> Boolean.TRUE.equals(quote.getAvailable()));
+            }
+            return probeResult(probeCategory, probeSymbol, true, available, sampleCount, startedAt,
+                    available ? "Provider 探测成功" : "Provider 已响应但未返回可用样本");
+        } catch (RuntimeException ex) {
+            log.warn("Stock provider probe failed, category={}, symbol={}", probeCategory, probeSymbol, ex);
+            return probeResult(probeCategory, probeSymbol, false, false, 0, startedAt, ex.getMessage());
+        }
+    }
+
+    private StockProviderProbeResult probeResult(String category,
+                                                 String symbol,
+                                                 boolean success,
+                                                 boolean available,
+                                                 int sampleCount,
+                                                 Long startedAt,
+                                                 String message) {
+        Long checkedAt = System.currentTimeMillis();
+        return StockProviderProbeResult.builder()
+                .category(category)
+                .symbol(symbol)
+                .success(success)
+                .available(available)
+                .sampleCount(sampleCount)
+                .durationMs(checkedAt - startedAt)
+                .checkedAt(checkedAt)
+                .message(message)
+                .build();
+    }
+
+    private String normalizeProbeCategory(String category) {
+        if (category == null || category.isBlank()) {
+            return "quote";
+        }
+        String value = category.trim().toLowerCase(Locale.ROOT);
+        return "kline".equals(value) ? "kline" : "quote";
+    }
+
+    private String probeSymbol(String category, String symbol) {
+        if (symbol != null && !symbol.isBlank()) {
+            return normalizeSymbol(symbol);
+        }
+        List<String> configuredSymbols = "kline".equals(category) ? properties.getKlineSyncSymbols() : properties.getDefaultSymbols();
+        if (CollectionUtils.isEmpty(configuredSymbols)) {
+            return "sh000001";
+        }
+        return normalizeSymbol(configuredSymbols.get(0));
     }
 
     private String quoteKey(String symbol) {

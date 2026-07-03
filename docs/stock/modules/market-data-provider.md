@@ -106,6 +106,7 @@ Rules:
 GET /stock/quote?symbol=600519
 GET /stock/quotes?symbols=sh000001&symbols=sz399001
 GET /stock/providers/health
+GET /stock/providers/probe?category=quote&symbol=600519
 ```
 
 ## Frontend Routes
@@ -118,9 +119,27 @@ GET /stock/providers/health
 Current UX:
 
 - Provider page reads `GET /stock/providers/health` and shows active, fallback, registered, missing, status, and checked time.
+- Provider page can call `GET /stock/providers/probe` to verify the configured quote or K-line provider route with a sample symbol.
 - Settings page documents current backend configuration boundaries and planned user preferences.
 - Provider switching remains backend configuration-driven.
-- Settings remain read-only until a persisted preferences model and API are designed.
+
+## Provider Probe Logic
+
+```text
+1. Frontend submits category and optional sample symbol.
+2. Backend normalizes category to quote or kline.
+3. Backend picks the requested symbol or the first configured default symbol.
+4. Quote probes call StockMarketProviderRouter directly.
+5. K-line probes call StockKLineProviderRouter directly.
+6. Backend returns StockProviderProbeResult with success, availability, sample count, durationMs, checkedAt, and message.
+```
+
+Rules:
+
+- Probe result timestamps are millisecond values.
+- Probe failures return a normalized result with `success=false`.
+- Controllers and frontend pages do not branch on concrete providers.
+- Probe calls are operational checks and do not write MongoDB or Redis state.
 
 ## Verification
 
@@ -128,4 +147,7 @@ Current UX:
 - `StockMarketServiceTest.quotesParsesSinaResponseIntoNormalizedQuote`
 - `StockMarketServiceTest.quotesWritesFetchedAtQuoteToRedisCache`
 - `StockMarketServiceTest.quotesReturnsLastSuccessCacheWhenProviderFails`
+- `StockMarketServiceTest.providerProbeChecksQuoteProviderThroughRouter`
+- `StockMarketServiceTest.providerProbeChecksKLineProviderThroughRouter`
+- `StockMarketServiceTest.providerProbeReturnsFailureResultWhenProviderFails`
 - `StockMarketControllerTest` for repeated `symbols` query params.

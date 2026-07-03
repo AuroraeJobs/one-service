@@ -379,6 +379,17 @@ export interface StockProviderHealth {
   checkedAt?: number;
 }
 
+export interface StockProviderProbeResult {
+  category?: string;
+  symbol?: string;
+  success?: boolean;
+  available?: boolean;
+  sampleCount?: number;
+  durationMs?: number;
+  checkedAt?: number;
+  message?: string;
+}
+
 export interface StockPreference {
   id?: string;
   userId?: string;
@@ -522,6 +533,10 @@ export const stockApi = {
 
   providerHealth: (): Promise<StockProviderHealth[]> => {
     return apiClient.get('/stock/providers/health');
+  },
+
+  providerProbe: (params?: { category?: string; symbol?: string }): Promise<StockProviderProbeResult> => {
+    return apiClient.get('/stock/providers/probe', { params });
   },
 
   preferences: (): Promise<StockPreference> => {

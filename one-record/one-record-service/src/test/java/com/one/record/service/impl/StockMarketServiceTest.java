@@ -2,6 +2,10 @@ package com.one.record.service.impl;
 
 import com.one.common.util.JsonUtil;
 import com.one.record.configuration.StockMarketProperties;
+import com.one.record.service.StockKLineProvider;
+import com.one.record.service.StockMarketProvider;
+import com.one.record.stock.StockKLine;
+import com.one.record.stock.StockProviderProbeResult;
 import com.one.record.stock.StockQuote;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -162,9 +166,105 @@ class StockMarketServiceTest {
         assertThat(service.providerHealth().get(1).getProvider()).isEqualTo("sina");
     }
 
+    @Test
+    void providerProbeChecksQuoteProviderThroughRouter() {
+        StockMarketService probeService = probeService(
+                symbols -> List.of(StockQuote.builder()
+                        .symbol(symbols.get(0))
+                        .available(true)
+                        .build()),
+                (symbol, startDate, endDate) -> List.of());
+
+        StockProviderProbeResult result = probeService.providerProbe("quote", "600519");
+
+        assertThat(result.getCategory()).isEqualTo("quote");
+        assertThat(result.getSymbol()).isEqualTo("sh600519");
+        assertThat(result.getSuccess()).isTrue();
+        assertThat(result.getAvailable()).isTrue();
+        assertThat(result.getSampleCount()).isEqualTo(1);
+        assertThat(result.getCheckedAt()).isNotNull();
+        assertThat(result.getDurationMs()).isNotNull();
+    }
+
+    @Test
+    void providerProbeChecksKLineProviderThroughRouter() {
+        StockMarketService probeService = probeService(
+                symbols -> List.of(),
+                (symbol, startDate, endDate) -> List.of(StockKLine.builder()
+                        .symbol(symbol)
+                        .tradeDate("2026-07-03")
+                        .build()));
+
+        StockProviderProbeResult result = probeService.providerProbe("kline", null);
+
+        assertThat(result.getCategory()).isEqualTo("kline");
+        assertThat(result.getSymbol()).isEqualTo("sh000001");
+        assertThat(result.getSuccess()).isTrue();
+        assertThat(result.getAvailable()).isTrue();
+        assertThat(result.getSampleCount()).isEqualTo(1);
+    }
+
+    @Test
+    void providerProbeReturnsFailureResultWhenProviderFails() {
+        StockMarketService probeService = probeService(
+                symbols -> {
+                    throw new IllegalStateException("provider down");
+                },
+                (symbol, startDate, endDate) -> List.of());
+
+        StockProviderProbeResult result = probeService.providerProbe("quote", "600519");
+
+        assertThat(result.getSuccess()).isFalse();
+        assertThat(result.getAvailable()).isFalse();
+        assertThat(result.getSampleCount()).isZero();
+        assertThat(result.getMessage()).contains("provider down");
+    }
+
     private MockRestServiceServer bindMockServer() {
         RestTemplate restTemplate = (RestTemplate) ReflectionTestUtils.getField(sinaProvider, "restTemplate");
         return MockRestServiceServer.bindTo(restTemplate).build();
+    }
+
+    private StockMarketService probeService(QuoteProbe quoteProbe, KLineProbe kLineProbe) {
+        StockMarketProviderRouter providerRouter = new StockMarketProviderRouter(properties, List.of(new TestStockMarketProvider(quoteProbe)));
+        StockKLineProviderRouter kLineProviderRouter = new StockKLineProviderRouter(properties, List.of(new TestStockKLineProvider(kLineProbe)));
+        return new StockMarketService(properties, redisTemplate, providerRouter, kLineProviderRouter);
+    }
+
+    @FunctionalInterface
+    private interface QuoteProbe {
+        List<StockQuote> quotes(List<String> symbols);
+    }
+
+    @FunctionalInterface
+    private interface KLineProbe {
+        List<StockKLine> dailyKLines(String symbol, String startDate, String endDate);
+    }
+
+    private record TestStockMarketProvider(QuoteProbe quoteProbe) implements StockMarketProvider {
+
+        @Override
+        public String name() {
+            return "sina";
+        }
+
+        @Override
+        public List<StockQuote> quotes(List<String> symbols) {
+            return quoteProbe.quotes(symbols);
+        }
+    }
+
+    private record TestStockKLineProvider(KLineProbe kLineProbe) implements StockKLineProvider {
+
+        @Override
+        public String name() {
+            return "sina";
+        }
+
+        @Override
+        public List<StockKLine> dailyKLines(String symbol, String startDate, String endDate) {
+            return kLineProbe.dailyKLines(symbol, startDate, endDate);
+        }
     }
 
     private String sinaResponse(String symbol, String payload) {
