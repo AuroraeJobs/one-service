@@ -98,6 +98,9 @@ stock:
     charset: ${STOCK_MARKET_CHARSET:GBK}
     connect-timeout-seconds: ${STOCK_MARKET_CONNECT_TIMEOUT_SECONDS:5}
     read-timeout-seconds: ${STOCK_MARKET_READ_TIMEOUT_SECONDS:10}
+    cache-enabled: ${STOCK_MARKET_CACHE_ENABLED:true}
+    quote-cache-ttl-seconds: ${STOCK_MARKET_QUOTE_CACHE_TTL_SECONDS:10}
+    fallback-cache-ttl-seconds: ${STOCK_MARKET_FALLBACK_CACHE_TTL_SECONDS:604800}
     default-symbols:
       - sh000001
       - sz399001

@@ -30,10 +30,10 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Sort watchlist by `sortOrder`.
 - [x] Update investment page to load watchlist first.
 - [x] Keep manual quote input as quick lookup/debugging.
-- [ ] Add Redis cache for quote responses.
-- [ ] Add provider failure fallback to last successful cached quote.
-- [ ] Add stale-data message when fallback cache is used.
-- [ ] Store latest quote and fallback quote snapshots in Redis.
+- [x] Add Redis cache for quote responses.
+- [x] Add provider failure fallback to last successful cached quote.
+- [x] Add stale-data message when fallback cache is used.
+- [x] Store latest quote and fallback quote snapshots in Redis.
 - [ ] Add unit tests for symbol normalization.
 - [ ] Add unit tests for Sina quote parsing.
 - [ ] Add controller test or manual verification for repeated `symbols` params.

@@ -50,5 +50,9 @@ public class StockQuote {
 
     private Boolean available;
 
+    private Boolean stale;
+
+    private String staleReason;
+
     private String message;
 }

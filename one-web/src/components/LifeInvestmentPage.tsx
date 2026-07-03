@@ -181,7 +181,17 @@ const LifeInvestmentPage = () => {
       title: '行情时间',
       dataIndex: 'tradeDateTime',
       key: 'tradeDateTime',
-      render: (_, record) => record.available ? record.tradeDateTime || '-' : <Tag color="warning">{record.message}</Tag>
+      render: (_, record) => {
+        if (!record.available) {
+          return <Tag color="warning">{record.message}</Tag>;
+        }
+        return (
+          <Space direction="vertical" size={0}>
+            <span>{record.tradeDateTime || '-'}</span>
+            {record.stale ? <Tag color="orange">{record.staleReason || '缓存行情'}</Tag> : null}
+          </Space>
+        );
+      }
     },
     {
       title: '操作',

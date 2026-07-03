@@ -25,5 +25,11 @@ public class StockMarketProperties {
 
     private Integer readTimeoutSeconds = 10;
 
+    private Boolean cacheEnabled = true;
+
+    private Integer quoteCacheTtlSeconds = 10;
+
+    private Integer fallbackCacheTtlSeconds = 604800;
+
     private List<String> defaultSymbols = List.of("sh000001", "sz399001", "sz399006");
 }

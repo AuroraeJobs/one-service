@@ -56,6 +56,9 @@ Implemented baseline:
 - Stock watchlist service and controller exist.
 - Investment page loads saved watchlist first and then fetches quotes for saved symbols.
 - Manual quote input remains available for adding watchlist items and quick lookup.
+- Redis quote cache exists for latest quotes and last successful fallback snapshots.
+- Quote responses include stale metadata for fallback data.
+- Investment page displays stale fallback messages when present.
 
 Architecture rule to preserve:
 
@@ -111,6 +114,13 @@ Successful with explicit JDK 21:
 
 ```bash
 JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home PATH=/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home/bin:$PATH mvn -pl one-record/one-record-service -am compile -DskipTests
+```
+
+Successful for this Redis cache iteration:
+
+```bash
+npm exec eslint -- src/components/LifeInvestmentPage.tsx src/services/api.ts
+JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home PATH=/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home/bin:/Users/aurorae/Program/Git/Apache/Maven/maven3.6.3/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin mvn -pl one-record/one-record-service -am compile -DskipTests
 ```
 
 Blocked:
@@ -183,7 +193,7 @@ Implementation notes:
 
 ### Task 2: Add Quote Cache
 
-Status: not started
+Status: implemented, runtime failure-path verification still recommended
 
 Goal:
 
@@ -205,9 +215,17 @@ stock:quote:last-success:{symbol}
 
 Acceptance criteria:
 
-- Repeated quote calls can be served from cache.
-- Provider failure does not blank the UI when a cached quote exists.
-- Response includes `fetchedAt` and `message`.
+- Repeated quote calls can be served from cache. Implemented with `stock:quote:{symbol}`.
+- Provider failure does not blank the UI when a cached quote exists. Implemented with `stock:quote:last-success:{symbol}`.
+- Response includes `fetchedAt` and `message`. Implemented.
+- Fallback responses include `stale` and `staleReason`. Implemented.
+
+Implementation notes:
+
+- Latest quote cache TTL is configurable with `stock.market.quote-cache-ttl-seconds`.
+- Last successful fallback TTL is configurable with `stock.market.fallback-cache-ttl-seconds`.
+- Cache can be disabled with `stock.market.cache-enabled=false`.
+- Runtime verification with a live Redis instance and simulated provider failure is still useful before marking the quality gate complete.
 
 ### Task 3: Add Stock Detail Page
 

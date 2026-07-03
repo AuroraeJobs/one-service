@@ -153,6 +153,30 @@ Redis stores volatile state:
 
 Do not add another persistent storage engine for the stock module unless the roadmap is explicitly updated.
 
+Current Redis cache implementation:
+
+```text
+stock:quote:{symbol}
+- latest successful quote
+- short TTL
+- used before calling provider
+
+stock:quote:last-success:{symbol}
+- last successful quote snapshot
+- longer TTL
+- used when provider request fails or provider returns unavailable data
+```
+
+Current cache configuration:
+
+```yaml
+stock:
+  market:
+    cache-enabled: true
+    quote-cache-ttl-seconds: 10
+    fallback-cache-ttl-seconds: 604800
+```
+
 ## Redis Key Plan
 
 Use namespaced keys:
@@ -209,6 +233,21 @@ Future DTO field to consider:
 stale: boolean
 staleReason: string
 ```
+
+Implemented DTO stale fields:
+
+```text
+stale
+staleReason
+```
+
+Current behavior:
+
+- Successful provider quotes are written to both latest and last-success Redis keys.
+- Latest cache hits are returned before calling the provider.
+- Provider request failures try last-success fallback for every missing symbol.
+- Provider unavailable responses also try last-success fallback for that symbol.
+- Fallback quotes set `stale=true` and include a `staleReason`.
 
 ## Watchlist Logic
 

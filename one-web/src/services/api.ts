@@ -183,6 +183,8 @@ export interface StockQuote {
   sourceSymbol?: string;
   fetchedAt?: string;
   available?: boolean;
+  stale?: boolean;
+  staleReason?: string;
   message?: string;
 }
 
