@@ -50,6 +50,31 @@ export interface LotteryRecordSyncLog {
   finishedAt?: number;
 }
 
+export interface LotteryDraw {
+  id?: string;
+  issue?: string;
+  period?: number;
+  drawDate?: string;
+  raw?: string;
+  redNumbers: string[];
+  blueNumber: string;
+  redSum?: number;
+  oddCount?: number;
+  evenCount?: number;
+  bigCount?: number;
+  smallCount?: number;
+  span?: number;
+  consecutivePairs?: number;
+  combination?: string;
+  planetName?: string;
+  hexagramCode?: string;
+  hexagramName?: string;
+  source?: string;
+  sourceUpdatedAt?: number;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
 interface ChatResponse {
   response: string;
   model?: string;
@@ -193,8 +218,17 @@ export const lotteryRecordApi = {
   first: (): Promise<LastRecordResponse> => {
     return apiClient.get('/lottery/records/first');
   },
+  latestDraw: (): Promise<LotteryDraw> => {
+    return apiClient.get('/lottery/records/draws/latest');
+  },
+  firstDraw: (): Promise<LotteryDraw> => {
+    return apiClient.get('/lottery/records/draws/first');
+  },
   records: (params?: LotteryRecordQuery): Promise<RecordListResponse[]> => {
     return apiClient.get('/lottery/records', { params });
+  },
+  draws: (params?: LotteryRecordQuery & { page?: number; size?: number }): Promise<LotteryDraw[]> => {
+    return apiClient.get('/lottery/records/draws', { params });
   },
   getYearlyCounts: (): Promise<RecordYearCount[]> => {
     return apiClient.get('/lottery/records/yearly-counts');

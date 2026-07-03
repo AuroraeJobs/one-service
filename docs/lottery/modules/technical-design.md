@@ -87,6 +87,7 @@ Rules:
 - Issue identity is unique.
 - Derived fields can be recalculated, but API responses should be stable.
 - `LotteryDraw` is the first canonical DTO for this contract, with `LotteryDrawUtil` converting legacy `Record` objects or 14-digit compact records into normalized draws.
+- `/lottery/records/draws/latest`, `/lottery/records/draws/first`, and `/lottery/records/draws` expose this DTO while legacy `/lottery/records/*` responses remain compatible with existing `Record` callers.
 
 ## Prediction Contract
 

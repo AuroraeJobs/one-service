@@ -1,5 +1,6 @@
 package com.one.record.service;
 
+import com.one.record.lottery.LotteryDraw;
 import com.one.record.request.RecordRequest;
 import com.one.record.response.Record;
 import com.one.record.response.RecordYearCount;
@@ -19,6 +20,12 @@ public interface IRecordService {
     List<Record> findAll();
 
     List<Record> find(RecordRequest request);
+
+    LotteryDraw findFirstDraw();
+
+    LotteryDraw findLastDraw();
+
+    List<LotteryDraw> findDraws(RecordRequest request, int page, int size);
 
     List<RecordYearCount> countByYear();
 

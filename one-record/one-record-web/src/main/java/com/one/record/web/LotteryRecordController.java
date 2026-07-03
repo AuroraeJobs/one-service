@@ -1,6 +1,7 @@
 package com.one.record.web;
 
 import com.one.record.request.RecordRequest;
+import com.one.record.lottery.LotteryDraw;
 import com.one.record.model.LotteryRecordSyncLog;
 import com.one.record.response.Record;
 import com.one.record.response.RecordYearCount;
@@ -43,6 +44,18 @@ public class LotteryRecordController {
         return service.findFirst();
     }
 
+    @GetMapping("draws/latest")
+    @Operation(summary = "查询最新标准化开奖记录", description = "返回标准化 LotteryDraw DTO")
+    public LotteryDraw latestDraw() {
+        return service.findLastDraw();
+    }
+
+    @GetMapping("draws/first")
+    @Operation(summary = "查询首期标准化开奖记录", description = "返回标准化 LotteryDraw DTO")
+    public LotteryDraw firstDraw() {
+        return service.findFirstDraw();
+    }
+
     @GetMapping
     @Operation(summary = "查询开奖记录", description = "按期号、日期或行号范围查询彩票开奖记录；不传条件时返回全部记录")
     public List<Record> records(@RequestParam(value = "issueStart", required = false) String issueStart,
@@ -62,6 +75,19 @@ public class LotteryRecordController {
             return service.find(request);
         }
         return service.findAll();
+    }
+
+    @GetMapping("draws")
+    @Operation(summary = "查询标准化开奖记录", description = "按期号、日期或行号范围分页查询标准化 LotteryDraw DTO")
+    public List<LotteryDraw> draws(@RequestParam(value = "issueStart", required = false) String issueStart,
+                                   @RequestParam(value = "issueEnd", required = false) String issueEnd,
+                                   @RequestParam(value = "dayStart", required = false) String dayStart,
+                                   @RequestParam(value = "dayEnd", required = false) String dayEnd,
+                                   @RequestParam(value = "lineStart", required = false, defaultValue = "0") long lineStart,
+                                   @RequestParam(value = "lineEnd", required = false, defaultValue = "0") long lineEnd,
+                                   @RequestParam(value = "page", required = false, defaultValue = "0") int page,
+                                   @RequestParam(value = "size", required = false, defaultValue = "50") int size) {
+        return service.findDraws(recordRequest(issueStart, issueEnd, dayStart, dayEnd, lineStart, lineEnd), page, size);
     }
 
     @GetMapping("yearly-counts")
@@ -105,6 +131,18 @@ public class LotteryRecordController {
         return StringUtils.hasText(request.getIssueStart()) && StringUtils.hasText(request.getIssueEnd())
                 || StringUtils.hasText(request.getDayStart()) && StringUtils.hasText(request.getDayEnd())
                 || request.getLineStart() != 0 && request.getLineEnd() != 0;
+    }
+
+    private static RecordRequest recordRequest(String issueStart, String issueEnd, String dayStart, String dayEnd,
+                                               long lineStart, long lineEnd) {
+        RecordRequest request = new RecordRequest();
+        request.setIssueStart(issueStart);
+        request.setIssueEnd(issueEnd);
+        request.setDayStart(dayStart);
+        request.setDayEnd(dayEnd);
+        request.setLineStart(lineStart);
+        request.setLineEnd(lineEnd);
+        return request;
     }
 
     private static int savedCount(Record before, Record after) {

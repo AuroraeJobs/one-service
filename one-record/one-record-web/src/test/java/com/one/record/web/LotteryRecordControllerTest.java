@@ -1,5 +1,6 @@
 package com.one.record.web;
 
+import com.one.record.lottery.LotteryDraw;
 import com.one.record.request.RecordRequest;
 import com.one.record.model.LotteryRecordSyncLog;
 import com.one.record.response.Record;
@@ -87,6 +88,48 @@ class LotteryRecordControllerTest {
 
         ArgumentCaptor<RecordRequest> requestCaptor = ArgumentCaptor.captor();
         verify(recordService).find(requestCaptor.capture());
+        assertThat(requestCaptor.getValue().getIssueStart()).isEqualTo("2026001");
+        assertThat(requestCaptor.getValue().getIssueEnd()).isEqualTo("2026005");
+    }
+
+    @Test
+    void latestDrawUsesNormalizedRecordService() throws Exception {
+        when(recordService.findLastDraw()).thenReturn(LotteryDraw.builder()
+                .issue("2026001")
+                .redNumbers(List.of("01", "02", "03", "04", "05", "06"))
+                .blueNumber("07")
+                .build());
+
+        mockMvc.perform(get("/lottery/records/draws/latest"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.issue").value("2026001"))
+                .andExpect(jsonPath("$.redNumbers[0]").value("01"))
+                .andExpect(jsonPath("$.blueNumber").value("07"));
+
+        verify(recordService).findLastDraw();
+    }
+
+    @Test
+    void drawsBindsFiltersAndPagination() throws Exception {
+        when(recordService.findDraws(org.mockito.ArgumentMatchers.any(RecordRequest.class), org.mockito.ArgumentMatchers.eq(2),
+                org.mockito.ArgumentMatchers.eq(20))).thenReturn(List.of(
+                LotteryDraw.builder()
+                        .issue("2026005")
+                        .blueNumber("16")
+                        .build()
+        ));
+
+        mockMvc.perform(get("/lottery/records/draws")
+                        .param("issueStart", "2026001")
+                        .param("issueEnd", "2026005")
+                        .param("page", "2")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].issue").value("2026005"))
+                .andExpect(jsonPath("$[0].blueNumber").value("16"));
+
+        ArgumentCaptor<RecordRequest> requestCaptor = ArgumentCaptor.captor();
+        verify(recordService).findDraws(requestCaptor.capture(), org.mockito.ArgumentMatchers.eq(2), org.mockito.ArgumentMatchers.eq(20));
         assertThat(requestCaptor.getValue().getIssueStart()).isEqualTo("2026001");
         assertThat(requestCaptor.getValue().getIssueEnd()).isEqualTo("2026005");
     }
