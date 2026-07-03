@@ -130,9 +130,27 @@ GET /stock/positions
 POST /stock/positions
 PUT /stock/positions/{id}
 DELETE /stock/positions/{id}
+POST /stock/positions/recalculate
+POST /stock/positions/{symbol}/recalculate
 GET /stock/trades
 POST /stock/trades
 PUT /stock/trades/{id}
 DELETE /stock/trades/{id}
 GET /stock/portfolio/summary
 ```
+
+## Current Recalculation Behavior
+
+Implemented in Iteration 05:
+
+- Recalculate one position by account and symbol.
+- Recalculate all positions for an account or all known trade keys.
+- Trigger recalculation after trade create, update, and delete.
+- Derive quantity, available quantity, cost amount, and weighted-average cost price from ordered trades.
+- Preserve backend ownership of portfolio math; frontend remains display-only.
+
+Still open:
+
+- Expose realized PnL from sell trades.
+- Persist or summarize dividend cash income separately.
+- Add full test coverage for fee, tax, dividend, bonus share, split, and idempotent recalculation.

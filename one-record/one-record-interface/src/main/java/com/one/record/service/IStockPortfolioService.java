@@ -25,6 +25,10 @@ public interface IStockPortfolioService {
 
     void deletePosition(String id);
 
+    List<StockPosition> recalculatePositions(String accountId);
+
+    StockPosition recalculatePosition(String accountId, String symbol);
+
     List<StockTrade> trades(String accountId, String symbol);
 
     StockTrade saveTrade(StockTrade trade);

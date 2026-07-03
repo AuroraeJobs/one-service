@@ -85,6 +85,7 @@ Implemented baseline:
 - Investment page responsive CSS has been tightened for desktop and mobile: stable metric grid, scrollable no-wrap tables, compact mobile cards, and full-width mobile toolbar controls.
 - Root Maven Surefire is pinned to `3.2.5` so JUnit 5/JUnit Platform tests are discovered instead of being skipped by the old default plugin.
 - Full frontend build now passes. Existing unrelated strict TypeScript errors were fixed in health/hexagram pages, and `one-web` was verified with `npm run build`.
+- Iteration 05 has started. Portfolio recalculation service entry points and manual APIs are implemented, and trade create/update/delete now trigger recalculation for affected positions. Initial tests cover weighted-average buy/sell recalculation and delete-triggered recalculation.
 
 Architecture rule to preserve:
 

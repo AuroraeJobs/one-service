@@ -20,7 +20,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class StockPortfolioServiceTest {
@@ -42,6 +44,11 @@ class StockPortfolioServiceTest {
         tradeRepository = mock(StockTradeRepository.class);
         stockMarketService = mock(IStockMarketService.class);
         service = new StockPortfolioService(accountRepository, positionRepository, tradeRepository, stockMarketService);
+        lenient().when(positionRepository.findByUserIdAndAccountIdIsNullAndSymbol(any(), any())).thenReturn(java.util.Optional.empty());
+        lenient().when(positionRepository.findByUserIdAndAccountIdAndSymbol(any(), any(), any())).thenReturn(java.util.Optional.empty());
+        lenient().when(positionRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(tradeRepository.findByUserIdAndAccountIdIsNullAndSymbolOrderByTradedAtAscCreatedAtAsc(any(), any())).thenReturn(List.of());
+        lenient().when(tradeRepository.findByUserIdAndAccountIdAndSymbolOrderByTradedAtAscCreatedAtAsc(any(), any(), any())).thenReturn(List.of());
     }
 
     @Test
@@ -159,5 +166,78 @@ class StockPortfolioServiceTest {
         assertThat(summary.getHoldings().get(0).getFloatingPnlPercent()).isEqualByComparingTo("13.33");
         assertThat(summary.getHoldings().get(1).getMarketValue()).isEqualByComparingTo("9000.00");
         assertThat(summary.getHoldings().get(1).getFloatingPnl()).isEqualByComparingTo("-1000.00");
+    }
+
+    @Test
+    void recalculatePositionUsesWeightedAverageCostAfterBuyAndSell() {
+        when(stockMarketService.normalizeSymbol("600519")).thenReturn("sh600519");
+        when(tradeRepository.findByUserIdAndAccountIdAndSymbolOrderByTradedAtAscCreatedAtAsc("default", "acc1", "sh600519"))
+                .thenReturn(List.of(
+                        StockTrade.builder()
+                                .accountId("acc1")
+                                .symbol("sh600519")
+                                .name("贵州茅台")
+                                .tradeType("BUY")
+                                .quantity(new BigDecimal("100"))
+                                .price(new BigDecimal("10"))
+                                .fee(new BigDecimal("1"))
+                                .tradedAt(1000L)
+                                .build(),
+                        StockTrade.builder()
+                                .accountId("acc1")
+                                .symbol("sh600519")
+                                .name("贵州茅台")
+                                .tradeType("BUY")
+                                .quantity(new BigDecimal("100"))
+                                .price(new BigDecimal("20"))
+                                .fee(new BigDecimal("1"))
+                                .tradedAt(2000L)
+                                .build(),
+                        StockTrade.builder()
+                                .accountId("acc1")
+                                .symbol("sh600519")
+                                .name("贵州茅台")
+                                .tradeType("SELL")
+                                .quantity(new BigDecimal("50"))
+                                .price(new BigDecimal("30"))
+                                .tradedAt(3000L)
+                                .build()
+                ));
+
+        StockPosition position = service.recalculatePosition("acc1", "600519");
+
+        assertThat(position.getAccountId()).isEqualTo("acc1");
+        assertThat(position.getSymbol()).isEqualTo("sh600519");
+        assertThat(position.getQuantity()).isEqualByComparingTo("150");
+        assertThat(position.getAvailableQuantity()).isEqualByComparingTo("150");
+        assertThat(position.getCostAmount()).isEqualByComparingTo("2251.50");
+        assertThat(position.getCostPrice()).isEqualByComparingTo("15.01");
+        assertThat(position.getOpenedAt()).isEqualTo(1000L);
+        assertThat(position.getUpdatedAt()).isNotNull();
+    }
+
+    @Test
+    void deleteTradeRecalculatesAffectedPosition() {
+        StockTrade existing = StockTrade.builder()
+                .id("t1")
+                .accountId("acc1")
+                .symbol("sh600519")
+                .tradeType("BUY")
+                .quantity(new BigDecimal("100"))
+                .price(new BigDecimal("10"))
+                .build();
+        when(tradeRepository.findByIdAndUserId("t1", "default")).thenReturn(java.util.Optional.of(existing));
+        when(tradeRepository.findByUserIdAndAccountIdAndSymbolOrderByTradedAtAscCreatedAtAsc("default", "acc1", "sh600519"))
+                .thenReturn(List.of());
+
+        service.deleteTrade("t1");
+
+        verify(tradeRepository).deleteById("t1");
+        ArgumentCaptor<StockPosition> captor = ArgumentCaptor.forClass(StockPosition.class);
+        verify(positionRepository).save(captor.capture());
+        assertThat(captor.getValue().getAccountId()).isEqualTo("acc1");
+        assertThat(captor.getValue().getSymbol()).isEqualTo("sh600519");
+        assertThat(captor.getValue().getQuantity()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(captor.getValue().getCostAmount()).isEqualByComparingTo(BigDecimal.ZERO);
     }
 }

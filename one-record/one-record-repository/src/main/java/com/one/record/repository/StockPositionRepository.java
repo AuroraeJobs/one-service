@@ -12,5 +12,9 @@ public interface StockPositionRepository extends MongoRepository<StockPosition, 
 
     List<StockPosition> findByUserIdAndAccountIdOrderBySymbolAscCreatedAtAsc(String userId, String accountId);
 
+    Optional<StockPosition> findByUserIdAndAccountIdAndSymbol(String userId, String accountId, String symbol);
+
+    Optional<StockPosition> findByUserIdAndAccountIdIsNullAndSymbol(String userId, String symbol);
+
     Optional<StockPosition> findByIdAndUserId(String id, String userId);
 }

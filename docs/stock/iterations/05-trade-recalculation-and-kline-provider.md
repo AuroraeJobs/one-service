@@ -152,6 +152,38 @@ cash income is recorded separately from market price PnL
 - Changed frontend files pass lint if frontend changes are made.
 - Full frontend build remains green.
 
+## Progress
+
+### 2026-07-03
+
+Completed the first portfolio recalculation slice:
+
+- Added service entry points to recalculate positions by account and symbol.
+- Added manual APIs:
+
+```text
+POST /stock/positions/recalculate
+POST /stock/positions/{symbol}/recalculate
+```
+
+- Trade create, update, and delete now trigger recalculation for the affected position.
+- Recalculation currently derives quantity, available quantity, cost amount, and weighted-average cost price from trades.
+- Unit coverage was added for weighted-average buy/sell recalculation and delete-triggered recalculation.
+
+Verified:
+
+```bash
+JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home PATH=/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home/bin:/Users/aurorae/Program/Git/Apache/Maven/maven3.6.3/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin mvn -q -pl one-record/one-record-service -am test -Dtest=StockPortfolioServiceTest -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false
+JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home PATH=/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home/bin:/Users/aurorae/Program/Git/Apache/Maven/maven3.6.3/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin mvn -q -pl one-record/one-record-web -am compile -DskipTests
+```
+
+Remaining in Track A:
+
+- Realized PnL exposure.
+- Dividend cash income handling.
+- Bonus share and split test coverage.
+- Idempotency test coverage.
+
 ## Suggested Implementation Order
 
 1. Add portfolio recalculation tests for buy/sell weighted-average cost.

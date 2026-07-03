@@ -19,9 +19,11 @@ import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.Set;
@@ -130,6 +132,28 @@ public class StockPortfolioService implements IStockPortfolioService {
     }
 
     @Override
+    public List<StockPosition> recalculatePositions(String accountId) {
+        List<StockTrade> trades = StringUtils.hasText(accountId)
+                ? tradeRepository.findByUserIdAndAccountIdOrderByTradedAtDescCreatedAtDesc(DEFAULT_USER_ID, accountId.trim())
+                : tradeRepository.findByUserIdOrderByTradedAtDescCreatedAtDesc(DEFAULT_USER_ID);
+        List<PositionKey> keys = trades.stream()
+                .filter(trade -> StringUtils.hasText(trade.getSymbol()))
+                .map(trade -> new PositionKey(trimToNull(trade.getAccountId()), trade.getSymbol()))
+                .distinct()
+                .toList();
+        List<StockPosition> recalculated = new ArrayList<>();
+        for (PositionKey key : keys) {
+            recalculated.add(recalculatePositionByNormalizedSymbol(key.accountId(), key.symbol()));
+        }
+        return recalculated;
+    }
+
+    @Override
+    public StockPosition recalculatePosition(String accountId, String symbol) {
+        return recalculatePositionByNormalizedSymbol(trimToNull(accountId), normalizeRequiredSymbol(symbol));
+    }
+
+    @Override
     public List<StockTrade> trades(String accountId, String symbol) {
         if (StringUtils.hasText(symbol)) {
             return tradeRepository.findByUserIdAndSymbolOrderByTradedAtDescCreatedAtDesc(
@@ -153,7 +177,9 @@ public class StockPortfolioService implements IStockPortfolioService {
                 .updatedAt(now)
                 .build();
         copyTrade(trade, target);
-        return tradeRepository.save(target);
+        StockTrade saved = tradeRepository.save(target);
+        recalculatePositionForTrade(saved);
+        return saved;
     }
 
     @Override
@@ -163,9 +189,16 @@ public class StockPortfolioService implements IStockPortfolioService {
         }
         StockTrade target = tradeRepository.findByIdAndUserId(id, DEFAULT_USER_ID)
                 .orElseThrow(() -> new NotFoundException("股票交易不存在: {}", id));
+        String oldAccountId = trimToNull(target.getAccountId());
+        String oldSymbol = target.getSymbol();
         copyTrade(trade, target);
         target.setUpdatedAt(System.currentTimeMillis());
-        return tradeRepository.save(target);
+        StockTrade saved = tradeRepository.save(target);
+        recalculatePositionForTrade(saved);
+        if (!samePositionKey(oldAccountId, oldSymbol, saved)) {
+            recalculatePositionByNormalizedSymbol(oldAccountId, oldSymbol);
+        }
+        return saved;
     }
 
     @Override
@@ -173,6 +206,7 @@ public class StockPortfolioService implements IStockPortfolioService {
         StockTrade existing = tradeRepository.findByIdAndUserId(id, DEFAULT_USER_ID)
                 .orElseThrow(() -> new NotFoundException("股票交易不存在: {}", id));
         tradeRepository.deleteById(existing.getId());
+        recalculatePositionForTrade(existing);
     }
 
     @Override
@@ -266,6 +300,129 @@ public class StockPortfolioService implements IStockPortfolioService {
         target.setRemark(trimToNull(source.getRemark()));
     }
 
+    private void recalculatePositionForTrade(StockTrade trade) {
+        if (trade == null || !StringUtils.hasText(trade.getSymbol())) {
+            return;
+        }
+        recalculatePositionByNormalizedSymbol(trimToNull(trade.getAccountId()), trade.getSymbol());
+    }
+
+    private StockPosition recalculatePositionByNormalizedSymbol(String accountId, String symbol) {
+        if (!StringUtils.hasText(symbol)) {
+            throw new ServiceException("股票代码不能为空");
+        }
+        String normalizedAccountId = trimToNull(accountId);
+        List<StockTrade> trades = normalizedAccountId == null
+                ? tradeRepository.findByUserIdAndAccountIdIsNullAndSymbolOrderByTradedAtAscCreatedAtAsc(DEFAULT_USER_ID, symbol)
+                : tradeRepository.findByUserIdAndAccountIdAndSymbolOrderByTradedAtAscCreatedAtAsc(DEFAULT_USER_ID, normalizedAccountId, symbol);
+        StockPosition existing = findPosition(normalizedAccountId, symbol).orElse(null);
+        Long now = System.currentTimeMillis();
+        StockPosition target = existing == null
+                ? StockPosition.builder()
+                .userId(DEFAULT_USER_ID)
+                .accountId(normalizedAccountId)
+                .symbol(symbol)
+                .market(market(symbol))
+                .code(code(symbol))
+                .createdAt(now)
+                .openedAt(firstTradeTime(trades, now))
+                .build()
+                : existing;
+
+        PositionAmounts amounts = calculatePositionAmounts(trades);
+        String positionName = trades.stream()
+                .map(StockTrade::getName)
+                .filter(StringUtils::hasText)
+                .reduce((first, second) -> second)
+                .orElse(target.getName());
+        target.setUserId(DEFAULT_USER_ID);
+        target.setAccountId(normalizedAccountId);
+        target.setSymbol(symbol);
+        target.setMarket(market(symbol));
+        target.setCode(code(symbol));
+        target.setName(trimToNull(positionName));
+        target.setQuantity(scaleQuantity(amounts.quantity()));
+        target.setAvailableQuantity(scaleQuantity(amounts.quantity()));
+        target.setCostAmount(scaleMoney(amounts.costAmount()));
+        target.setCostPrice(weightedCostPrice(amounts.costAmount(), amounts.quantity()));
+        target.setOpenedAt(target.getOpenedAt() == null ? firstTradeTime(trades, now) : target.getOpenedAt());
+        target.setUpdatedAt(now);
+        return positionRepository.save(target);
+    }
+
+    private PositionAmounts calculatePositionAmounts(List<StockTrade> trades) {
+        BigDecimal quantity = BigDecimal.ZERO;
+        BigDecimal costAmount = BigDecimal.ZERO;
+        for (StockTrade trade : trades) {
+            String tradeType = trade.getTradeType();
+            BigDecimal tradeQuantity = defaultAmount(trade.getQuantity());
+            BigDecimal feeAndTax = defaultAmount(trade.getFee()).add(defaultAmount(trade.getTax()));
+            if ("BUY".equals(tradeType)) {
+                quantity = quantity.add(tradeQuantity);
+                costAmount = costAmount.add(tradeAmount(trade)).add(feeAndTax);
+            } else if ("SELL".equals(tradeType)) {
+                BigDecimal soldQuantity = tradeQuantity.min(quantity);
+                BigDecimal costBasis = averageCost(costAmount, quantity).multiply(soldQuantity);
+                quantity = quantity.subtract(soldQuantity);
+                costAmount = costAmount.subtract(costBasis);
+            } else if ("FEE".equals(tradeType)) {
+                costAmount = costAmount.add(tradeAmount(trade)).add(feeAndTax);
+            } else if ("BONUS_SHARE".equals(tradeType)) {
+                quantity = quantity.add(tradeQuantity);
+            } else if ("SPLIT".equals(tradeType)) {
+                BigDecimal ratio = tradeQuantity.compareTo(BigDecimal.ZERO) > 0 ? tradeQuantity : defaultAmount(trade.getPrice());
+                if (ratio.compareTo(BigDecimal.ZERO) > 0) {
+                    quantity = quantity.multiply(ratio);
+                }
+            }
+            if (quantity.compareTo(BigDecimal.ZERO) == 0) {
+                costAmount = BigDecimal.ZERO;
+            }
+        }
+        return new PositionAmounts(quantity.max(BigDecimal.ZERO), costAmount.max(BigDecimal.ZERO));
+    }
+
+    private java.util.Optional<StockPosition> findPosition(String accountId, String symbol) {
+        return accountId == null
+                ? positionRepository.findByUserIdAndAccountIdIsNullAndSymbol(DEFAULT_USER_ID, symbol)
+                : positionRepository.findByUserIdAndAccountIdAndSymbol(DEFAULT_USER_ID, accountId, symbol);
+    }
+
+    private Long firstTradeTime(List<StockTrade> trades, Long fallback) {
+        return trades.stream()
+                .map(StockTrade::getTradedAt)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(fallback);
+    }
+
+    private boolean samePositionKey(String oldAccountId, String oldSymbol, StockTrade saved) {
+        return Objects.equals(trimToNull(oldAccountId), trimToNull(saved.getAccountId()))
+                && Objects.equals(oldSymbol, saved.getSymbol());
+    }
+
+    private BigDecimal tradeAmount(StockTrade trade) {
+        BigDecimal amount = defaultAmount(trade.getAmount());
+        if (amount.compareTo(BigDecimal.ZERO) > 0) {
+            return amount;
+        }
+        return defaultAmount(trade.getQuantity()).multiply(defaultAmount(trade.getPrice()));
+    }
+
+    private BigDecimal averageCost(BigDecimal costAmount, BigDecimal quantity) {
+        if (defaultAmount(quantity).compareTo(BigDecimal.ZERO) == 0) {
+            return BigDecimal.ZERO;
+        }
+        return defaultAmount(costAmount).divide(quantity, 10, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal weightedCostPrice(BigDecimal costAmount, BigDecimal quantity) {
+        if (defaultAmount(quantity).compareTo(BigDecimal.ZERO) == 0) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+        return defaultAmount(costAmount).divide(quantity, 2, RoundingMode.HALF_UP);
+    }
+
     private String normalizeRequiredSymbol(String symbol) {
         String normalizedSymbol = stockMarketService.normalizeSymbol(symbol);
         if (!StringUtils.hasText(normalizedSymbol)) {
@@ -355,5 +512,11 @@ public class StockPortfolioService implements IStockPortfolioService {
 
     private String code(String symbol) {
         return symbol.length() > 2 ? symbol.substring(2) : symbol;
+    }
+
+    private record PositionKey(String accountId, String symbol) {
+    }
+
+    private record PositionAmounts(BigDecimal quantity, BigDecimal costAmount) {
     }
 }

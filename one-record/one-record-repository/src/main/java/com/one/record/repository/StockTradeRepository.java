@@ -14,5 +14,9 @@ public interface StockTradeRepository extends MongoRepository<StockTrade, String
 
     List<StockTrade> findByUserIdAndSymbolOrderByTradedAtDescCreatedAtDesc(String userId, String symbol);
 
+    List<StockTrade> findByUserIdAndAccountIdAndSymbolOrderByTradedAtAscCreatedAtAsc(String userId, String accountId, String symbol);
+
+    List<StockTrade> findByUserIdAndAccountIdIsNullAndSymbolOrderByTradedAtAscCreatedAtAsc(String userId, String symbol);
+
     Optional<StockTrade> findByIdAndUserId(String id, String userId);
 }

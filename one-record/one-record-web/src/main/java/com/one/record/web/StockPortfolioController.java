@@ -84,6 +84,21 @@ public class StockPortfolioController {
         service.deletePosition(id);
     }
 
+    @PostMapping("positions/recalculate")
+    @Operation(summary = "重算股票持仓", description = "按交易记录重算当前用户的股票持仓，可按账户过滤")
+    public List<StockPosition> recalculatePositions(@RequestParam(name = "accountId", required = false) String accountId) {
+        log.info("Recalculating stock positions: accountId={}", accountId);
+        return service.recalculatePositions(accountId);
+    }
+
+    @PostMapping("positions/{symbol}/recalculate")
+    @Operation(summary = "重算单只股票持仓", description = "按交易记录重算指定股票持仓，可按账户过滤")
+    public StockPosition recalculatePosition(@PathVariable("symbol") String symbol,
+                                             @RequestParam(name = "accountId", required = false) String accountId) {
+        log.info("Recalculating stock position: accountId={}, symbol={}", accountId, symbol);
+        return service.recalculatePosition(accountId, symbol);
+    }
+
     @GetMapping("trades")
     @Operation(summary = "查询股票交易", description = "查询股票交易，可按账户或股票代码过滤")
     public List<StockTrade> trades(@RequestParam(name = "accountId", required = false) String accountId,
