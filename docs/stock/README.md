@@ -44,6 +44,7 @@ mvn -version
 - [Iteration 10 provider operations](iterations/10-provider-operations.md)
 - [Iteration 11 sync operations summary](iterations/11-sync-operations-summary.md)
 - [Iteration 12 sync log filters](iterations/12-sync-log-filters.md)
+- [Iteration 13 sync log windowing](iterations/13-sync-log-windowing.md)
 - [Quality gates](iterations/quality-gates.md)
 
 ## Module Docs

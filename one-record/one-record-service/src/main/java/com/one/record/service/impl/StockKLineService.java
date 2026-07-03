@@ -31,9 +31,9 @@ public class StockKLineService implements IStockKLineService {
 
     private static final Duration SYNC_LOCK_TTL = Duration.ofMinutes(10);
 
-    private static final int DEFAULT_SUMMARY_LIMIT = 50;
+    private static final int DEFAULT_SYNC_LOG_LIMIT = 50;
 
-    private static final int MAX_SUMMARY_LIMIT = 100;
+    private static final int MAX_SYNC_LOG_LIMIT = 100;
 
     private final StockKLineRepository repository;
 
@@ -145,25 +145,26 @@ public class StockKLineService implements IStockKLineService {
     }
 
     @Override
-    public List<StockKLineSyncLog> syncLogs(String symbol, String status) {
+    public List<StockKLineSyncLog> syncLogs(String symbol, String status, Integer limit) {
         String normalizedSymbol = StringUtils.hasText(symbol) ? stockMarketService.normalizeSymbol(symbol) : null;
         String normalizedStatus = normalizeStatus(status);
+        PageRequest pageRequest = PageRequest.of(0, normalizeSyncLogLimit(limit));
         if (StringUtils.hasText(normalizedSymbol) && StringUtils.hasText(normalizedStatus)) {
-            return syncLogRepository.findTop50BySymbolAndStatusOrderByStartedAtDesc(normalizedSymbol, normalizedStatus);
+            return syncLogRepository.findBySymbolAndStatusOrderByStartedAtDesc(normalizedSymbol, normalizedStatus, pageRequest);
         }
         if (StringUtils.hasText(normalizedSymbol)) {
-            return syncLogRepository.findTop50BySymbolOrderByStartedAtDesc(normalizedSymbol);
+            return syncLogRepository.findBySymbolOrderByStartedAtDesc(normalizedSymbol, pageRequest);
         }
         if (StringUtils.hasText(normalizedStatus)) {
-            return syncLogRepository.findTop50ByStatusOrderByStartedAtDesc(normalizedStatus);
+            return syncLogRepository.findByStatusOrderByStartedAtDesc(normalizedStatus, pageRequest);
         }
-        return syncLogRepository.findTop50ByOrderByStartedAtDesc();
+        return syncLogRepository.findByOrderByStartedAtDesc(pageRequest);
     }
 
     @Override
     public StockKLineSyncSummary syncSummary(String symbol, Integer limit) {
         String normalizedSymbol = StringUtils.hasText(symbol) ? stockMarketService.normalizeSymbol(symbol) : null;
-        int normalizedLimit = normalizeSummaryLimit(limit);
+        int normalizedLimit = normalizeSyncLogLimit(limit);
         List<StockKLineSyncLog> logs = StringUtils.hasText(normalizedSymbol)
                 ? syncLogRepository.findBySymbolOrderByStartedAtDesc(normalizedSymbol, PageRequest.of(0, normalizedLimit))
                 : syncLogRepository.findByOrderByStartedAtDesc(PageRequest.of(0, normalizedLimit));
@@ -187,11 +188,11 @@ public class StockKLineService implements IStockKLineService {
                 .build();
     }
 
-    private int normalizeSummaryLimit(Integer limit) {
+    private int normalizeSyncLogLimit(Integer limit) {
         if (limit == null || limit <= 0) {
-            return DEFAULT_SUMMARY_LIMIT;
+            return DEFAULT_SYNC_LOG_LIMIT;
         }
-        return Math.min(limit, MAX_SUMMARY_LIMIT);
+        return Math.min(limit, MAX_SYNC_LOG_LIMIT);
     }
 
     private String normalizeStatus(String status) {

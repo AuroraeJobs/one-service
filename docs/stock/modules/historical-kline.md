@@ -105,11 +105,11 @@ GET /stock/{symbol}/klines
 POST /stock/{symbol}/klines/sync
 POST /stock/klines/sync
 POST /stock/klines/sync/scheduled
-GET /stock/klines/sync-logs?status=FAILED
+GET /stock/klines/sync-logs?status=FAILED&limit=50
 GET /stock/klines/sync-summary?limit=50
 ```
 
-`sync-logs` supports optional `symbol` and `status` filters. The service normalizes the symbol through `IStockMarketService` and uppercases status before querying MongoDB.
+`sync-logs` supports optional `symbol`, `status`, and `limit` filters. The service normalizes the symbol through `IStockMarketService`, uppercases status, and caps the log window at 100 before querying MongoDB.
 
 ## Frontend
 
@@ -130,7 +130,7 @@ Current UX:
 - K-line page queries MongoDB-backed historical rows by symbol, period, and date range.
 - Sync page can submit standardized K-line JSON to the existing sync APIs.
 - Sync page can manually trigger scheduled-sync semantics through `POST /stock/klines/sync/scheduled`.
-- Sync page can filter MongoDB sync logs by symbol and status.
+- Sync page can filter MongoDB sync logs by symbol, status, and 20/50/100 log windows.
 - Sync page shows recent MongoDB sync logs, including status, requested/saved counts, messages, and timestamps.
 - Sync page reads `GET /stock/klines/sync-summary` to show recent status, success/failure/running counts, saved rows, and latest completion time.
 - Sync summary supports bounded windows of 20, 50, or 100 recent logs from the UI; backend caps the limit at 100.

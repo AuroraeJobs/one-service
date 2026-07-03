@@ -51,6 +51,7 @@ const LifeStockSyncPage = () => {
   const [logs, setLogs] = useState<StockKLineSyncLog[]>([]);
   const [summary, setSummary] = useState<StockKLineSyncSummary>();
   const [summaryLimit, setSummaryLimit] = useState(50);
+  const [logLimit, setLogLimit] = useState(50);
   const [logStatus, setLogStatus] = useState(searchParams.get('status') || '');
   const [syncing, setSyncing] = useState(false);
   const [triggeringScheduled, setTriggeringScheduled] = useState(false);
@@ -66,7 +67,7 @@ const LifeStockSyncPage = () => {
       const symbolFilter = logSymbol.trim() || undefined;
       const statusFilter = logStatus || undefined;
       const [data, nextSummary] = await Promise.all([
-        stockApi.klineSyncLogs({ symbol: symbolFilter, status: statusFilter }),
+        stockApi.klineSyncLogs({ symbol: symbolFilter, status: statusFilter, limit: logLimit }),
         stockApi.klineSyncSummary({ symbol: symbolFilter, limit: summaryLimit })
       ]);
       setLogs(data);
@@ -77,7 +78,7 @@ const LifeStockSyncPage = () => {
     } finally {
       setLoadingLogs(false);
     }
-  }, [logSymbol, logStatus, summaryLimit]);
+  }, [logSymbol, logStatus, logLimit, summaryLimit]);
 
   useEffect(() => {
     loadLogs();
@@ -327,7 +328,7 @@ const LifeStockSyncPage = () => {
         <div className="stock-market-toolbar">
           <div>
             <h2>同步日志</h2>
-            <p>日志来自 MongoDB，可按标的过滤最近 50 条同步记录。</p>
+            <p>日志来自 MongoDB，可按标的、状态和窗口过滤最近同步记录。</p>
           </div>
           <div className="stock-market-actions">
             <Space wrap>
@@ -344,6 +345,12 @@ const LifeStockSyncPage = () => {
                 options={syncStatusOptions}
                 style={{ width: 120 }}
                 onChange={setLogStatus}
+              />
+              <Select
+                value={logLimit}
+                options={summaryLimitOptions}
+                style={{ width: 140 }}
+                onChange={setLogLimit}
               />
               <Button icon={<ReloadOutlined spin={loadingLogs} />} loading={loadingLogs} onClick={loadLogs}>
                 刷新日志

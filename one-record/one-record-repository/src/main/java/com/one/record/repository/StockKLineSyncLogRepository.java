@@ -10,15 +10,11 @@ import java.util.List;
 @Repository
 public interface StockKLineSyncLogRepository extends MongoRepository<StockKLineSyncLog, String> {
 
-    List<StockKLineSyncLog> findTop50ByOrderByStartedAtDesc();
-
-    List<StockKLineSyncLog> findTop50BySymbolOrderByStartedAtDesc(String symbol);
-
-    List<StockKLineSyncLog> findTop50ByStatusOrderByStartedAtDesc(String status);
-
-    List<StockKLineSyncLog> findTop50BySymbolAndStatusOrderByStartedAtDesc(String symbol, String status);
-
     List<StockKLineSyncLog> findByOrderByStartedAtDesc(Pageable pageable);
 
     List<StockKLineSyncLog> findBySymbolOrderByStartedAtDesc(String symbol, Pageable pageable);
+
+    List<StockKLineSyncLog> findByStatusOrderByStartedAtDesc(String status, Pageable pageable);
+
+    List<StockKLineSyncLog> findBySymbolAndStatusOrderByStartedAtDesc(String symbol, String status, Pageable pageable);
 }

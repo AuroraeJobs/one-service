@@ -68,8 +68,9 @@ public class StockKLineController {
     @GetMapping("klines/sync-logs")
     @Operation(summary = "查询股票K线同步日志", description = "查询最近的股票K线同步日志")
     public List<StockKLineSyncLog> syncLogs(@RequestParam(name = "symbol", required = false) String symbol,
-                                            @RequestParam(name = "status", required = false) String status) {
-        return service.syncLogs(symbol, status);
+                                            @RequestParam(name = "status", required = false) String status,
+                                            @RequestParam(name = "limit", required = false) Integer limit) {
+        return service.syncLogs(symbol, status, limit);
     }
 
     @GetMapping("klines/sync-summary")

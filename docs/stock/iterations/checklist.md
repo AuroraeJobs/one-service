@@ -234,6 +234,15 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Add backend tests for status-only and symbol+status filters.
 - [x] Update docs and commit/push after the milestone.
 
+## Iteration 13: Sync Log Windowing
+
+- [x] Replace fixed top-50 sync-log queries with pageable repository queries.
+- [x] Add optional `limit` parameter to `GET /stock/klines/sync-logs`.
+- [x] Reuse bounded default 50 and max 100 window normalization in the service layer.
+- [x] Add frontend log-window selector on `/investments/sync`.
+- [x] Add backend tests for log limit and cap behavior.
+- [x] Update docs and commit/push after the milestone.
+
 ## Quality Gates
 
 - [x] Backend compiles with JDK 21.
