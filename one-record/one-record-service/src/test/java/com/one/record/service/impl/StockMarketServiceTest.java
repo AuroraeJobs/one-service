@@ -260,6 +260,26 @@ class StockMarketServiceTest {
         assertThat(result.getCheckedAt()).isEqualTo(1783065600000L);
     }
 
+    @Test
+    void providerProbeAllChecksQuoteAndKLineProviders() {
+        StockMarketService probeService = probeService(
+                symbols -> List.of(StockQuote.builder()
+                        .symbol(symbols.get(0))
+                        .available(true)
+                        .build()),
+                (symbol, startDate, endDate) -> List.of(StockKLine.builder()
+                        .symbol(symbol)
+                        .tradeDate("2026-07-03")
+                        .build()));
+
+        List<StockProviderProbeResult> results = probeService.providerProbeAll("600519");
+
+        assertThat(results).hasSize(2);
+        assertThat(results).extracting(StockProviderProbeResult::getCategory).containsExactly("quote", "kline");
+        assertThat(results).extracting(StockProviderProbeResult::getSymbol).containsExactly("sh600519", "sh600519");
+        assertThat(results).allMatch(result -> Boolean.TRUE.equals(result.getSuccess()));
+    }
+
     private MockRestServiceServer bindMockServer() {
         RestTemplate restTemplate = (RestTemplate) ReflectionTestUtils.getField(sinaProvider, "restTemplate");
         return MockRestServiceServer.bindTo(restTemplate).build();

@@ -52,6 +52,13 @@ public class StockMarketController {
         return service.providerProbe(category, symbol);
     }
 
+    @GetMapping("providers/probe/all")
+    @Operation(summary = "探测全部股票数据源", description = "通过 Provider Router 同时探测行情和 K线数据源")
+    public List<StockProviderProbeResult> providerProbeAll(@RequestParam(name = "symbol", required = false) String symbol) {
+        log.info("Probing all stock providers: symbol={}", symbol);
+        return service.providerProbeAll(symbol);
+    }
+
     @GetMapping("providers/probe/latest")
     @Operation(summary = "查询最近一次股票数据源探测", description = "从 Redis 查询最近一次 Provider 探测结果")
     public StockProviderProbeResult latestProviderProbe(@RequestParam(name = "category", required = false) String category) {

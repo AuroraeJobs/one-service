@@ -287,6 +287,14 @@ public class StockMarketService implements IStockMarketService {
         }
     }
 
+    @Override
+    public List<StockProviderProbeResult> providerProbeAll(String symbol) {
+        return List.of(
+                providerProbe("quote", symbol),
+                providerProbe("kline", symbol)
+        );
+    }
+
     private StockProviderProbeResult probeResult(String category,
                                                  String symbol,
                                                  boolean success,

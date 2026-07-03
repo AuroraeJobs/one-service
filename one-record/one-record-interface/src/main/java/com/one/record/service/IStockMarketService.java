@@ -18,5 +18,7 @@ public interface IStockMarketService {
 
     StockProviderProbeResult providerProbe(String category, String symbol);
 
+    List<StockProviderProbeResult> providerProbeAll(String symbol);
+
     StockProviderProbeResult latestProviderProbe(String category);
 }

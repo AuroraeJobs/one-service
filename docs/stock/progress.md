@@ -113,6 +113,7 @@ Implemented baseline:
 - Iteration 09 batch retry is implemented. `POST /stock/klines/sync/retry` retries configured-symbol provider-backed K-line sync, and failed batch logs expose the action in the sync page.
 - Iteration 10 provider operations slice is implemented. `GET /stock/providers/probe` verifies quote or K-line provider routes through backend routers, and `/investments/providers` shows normalized probe results without depending on concrete providers.
 - Iteration 10 provider probe persistence is implemented. Latest probe results are cached in Redis with `stock:provider:probe:last:{category}` and restored through `GET /stock/providers/probe/latest`.
+- Iteration 10 all-provider probe is implemented. `GET /stock/providers/probe/all` checks quote and K-line routes together, and `/investments/providers` can display both normalized results.
 
 Architecture rule to preserve:
 

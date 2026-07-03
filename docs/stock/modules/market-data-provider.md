@@ -107,6 +107,7 @@ GET /stock/quote?symbol=600519
 GET /stock/quotes?symbols=sh000001&symbols=sz399001
 GET /stock/providers/health
 GET /stock/providers/probe?category=quote&symbol=600519
+GET /stock/providers/probe/all?symbol=600519
 GET /stock/providers/probe/latest?category=quote
 ```
 
@@ -121,6 +122,7 @@ Current UX:
 
 - Provider page reads `GET /stock/providers/health` and shows active, fallback, registered, missing, status, and checked time.
 - Provider page can call `GET /stock/providers/probe` to verify the configured quote or K-line provider route with a sample symbol.
+- Provider page can call `GET /stock/providers/probe/all` to verify quote and K-line provider routes in one action.
 - Provider page reads `GET /stock/providers/probe/latest` to restore the latest Redis-backed probe result after reload or category changes.
 - Settings page documents current backend configuration boundaries and planned user preferences.
 - Provider switching remains backend configuration-driven.
@@ -144,6 +146,7 @@ Rules:
 - Controllers and frontend pages do not branch on concrete providers.
 - Probe calls are operational checks and do not write MongoDB.
 - Latest probe snapshots are short-lived Redis state controlled by `stock.market.provider-probe-ttl-seconds`.
+- All-provider probe runs quote and K-line probes through the same service method, so each category still updates its own Redis latest key.
 
 ## Verification
 
@@ -156,4 +159,5 @@ Rules:
 - `StockMarketServiceTest.providerProbeReturnsFailureResultWhenProviderFails`
 - `StockMarketServiceTest.providerProbeWritesLatestResultToRedis`
 - `StockMarketServiceTest.latestProviderProbeReadsResultFromRedis`
+- `StockMarketServiceTest.providerProbeAllChecksQuoteAndKLineProviders`
 - `StockMarketControllerTest` for repeated `symbols` query params.

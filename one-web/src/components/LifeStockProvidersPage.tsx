@@ -15,6 +15,7 @@ const LifeStockProvidersPage = () => {
   const [probeCategory, setProbeCategory] = useState('quote');
   const [probeSymbol, setProbeSymbol] = useState('');
   const [probeResult, setProbeResult] = useState<StockProviderProbeResult>();
+  const [probeResults, setProbeResults] = useState<StockProviderProbeResult[]>([]);
   const [error, setError] = useState<string>();
   const [probeError, setProbeError] = useState<string>();
 
@@ -42,6 +43,7 @@ const LifeStockProvidersPage = () => {
     try {
       const result = await stockApi.latestProviderProbe(category);
       setProbeResult(result || undefined);
+      setProbeResults(result ? [result] : []);
     } catch (requestError) {
       console.error('获取最近股票数据源探测失败:', requestError);
       setProbeError(requestError instanceof Error ? requestError.message : '获取最近股票数据源探测失败');
@@ -63,9 +65,25 @@ const LifeStockProvidersPage = () => {
         symbol: probeSymbol.trim() || undefined
       });
       setProbeResult(result);
+      setProbeResults([result]);
     } catch (requestError) {
       console.error('探测股票数据源失败:', requestError);
       setProbeError(requestError instanceof Error ? requestError.message : '探测股票数据源失败');
+    } finally {
+      setProbing(false);
+    }
+  };
+
+  const probeAllProviders = async () => {
+    setProbing(true);
+    setProbeError(undefined);
+    try {
+      const results = await stockApi.providerProbeAll(probeSymbol.trim() || undefined);
+      setProbeResults(results);
+      setProbeResult(results.find(item => item.category === probeCategory) || results[0]);
+    } catch (requestError) {
+      console.error('探测全部股票数据源失败:', requestError);
+      setProbeError(requestError instanceof Error ? requestError.message : '探测全部股票数据源失败');
     } finally {
       setProbing(false);
     }
@@ -178,24 +196,27 @@ const LifeStockProvidersPage = () => {
             <Button type="primary" icon={<ExperimentOutlined />} loading={probing} onClick={probeProvider}>
               探测
             </Button>
+            <Button icon={<ExperimentOutlined />} loading={probing} onClick={probeAllProviders}>
+              全部探测
+            </Button>
           </Space>
         </div>
-        {probeResult ? (
+        {probeResults.length > 0 ? (
           <MetricGrid gap={16} minColumnWidth={180}>
-            <MetricCard title="探测类型" value={providerCategoryLabel(probeResult.category)} accent="#5856d6" />
-            <MetricCard title="样本代码" value={probeResult.symbol || '-'} accent="#0071e3" />
-            <MetricCard title="可用状态" value={probeResult.available ? '可用' : '不可用'} accent={probeResult.available ? '#34c759' : '#f5222d'} />
-            <MetricCard title="样本数量" value={probeResult.sampleCount ?? 0} suffix="条" accent="#ff9500" />
-            <MetricCard title="耗时" value={probeResult.durationMs ?? 0} suffix="ms" accent="#00c7be" />
+            <MetricCard title="探测数量" value={probeResults.length} suffix="项" accent="#5856d6" />
+            <MetricCard title="可用数量" value={probeResults.filter(item => item.available).length} suffix="项" accent="#34c759" />
+            <MetricCard title="异常数量" value={probeResults.filter(item => !item.success || !item.available).length} suffix="项" accent="#f5222d" />
+            <MetricCard title="最近耗时" value={probeResult?.durationMs ?? 0} suffix="ms" accent="#00c7be" />
           </MetricGrid>
         ) : null}
-        {probeResult ? (
-          <Alert
-            type={probeResult.success && probeResult.available ? 'success' : 'warning'}
-            showIcon
-            message={probeResult.message || 'Provider 探测完成'}
-            description={`检查时间：${formatTime(probeResult.checkedAt)}`}
-            className="stock-market-alert"
+        {probeResults.length > 0 ? (
+          <Table
+            rowKey={record => `${record.category || 'unknown'}-${record.symbol || 'default'}`}
+            columns={probeColumns}
+            dataSource={probeResults}
+            pagination={false}
+            scroll={{ x: 760 }}
+            rowClassName="stock-quote-row"
           />
         ) : (
           <Statistic title="最近探测" value={latestLoading ? '加载中' : '-'} />
@@ -223,6 +244,54 @@ const LifeStockProvidersPage = () => {
     </LifePageShell>
   );
 };
+
+const probeColumns: ColumnsType<StockProviderProbeResult> = [
+  {
+    title: '类型',
+    dataIndex: 'category',
+    key: 'category',
+    render: value => <Tag color={value === 'kline' ? 'purple' : 'blue'}>{providerCategoryLabel(value)}</Tag>
+  },
+  {
+    title: '样本代码',
+    dataIndex: 'symbol',
+    key: 'symbol',
+    render: value => value || '-'
+  },
+  {
+    title: '状态',
+    key: 'status',
+    render: (_, record) => (
+      <Tag color={record.success && record.available ? 'green' : 'orange'}>
+        {record.success && record.available ? '可用' : '需关注'}
+      </Tag>
+    )
+  },
+  {
+    title: '样本数',
+    dataIndex: 'sampleCount',
+    key: 'sampleCount',
+    render: value => value ?? 0
+  },
+  {
+    title: '耗时',
+    dataIndex: 'durationMs',
+    key: 'durationMs',
+    render: value => `${value ?? 0} ms`
+  },
+  {
+    title: '检查时间',
+    dataIndex: 'checkedAt',
+    key: 'checkedAt',
+    render: value => formatTime(value)
+  },
+  {
+    title: '说明',
+    dataIndex: 'message',
+    key: 'message',
+    render: value => value || '-'
+  }
+];
 
 const providerCategoryLabel = (value?: string) => {
   if (value === 'kline') {
