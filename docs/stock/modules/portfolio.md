@@ -96,14 +96,28 @@ Rules:
 - Holding rows sort by `marketValue` descending, then `symbol` ascending.
 - If quote data is unavailable, market-derived values default to zero and `quoteAvailable` marks the state.
 
-## Future Position Recalculation
+## Next Iteration: Position Recalculation
 
-Current iteration stores manually maintained positions and trade records. Derived position recalculation from trades should later:
+Current implementation stores manually maintained positions and trade records. Iteration 05 should derive positions from trades:
 
 - Include fees in cost.
 - Reduce remaining quantity and cost basis on sell trades.
 - Track dividends separately from price PnL.
 - Keep calculation logic in backend services.
+
+Initial cost basis policy:
+
+```text
+weighted average cost
+```
+
+Sell policy:
+
+```text
+sellCostBasis = currentAverageCost * soldQuantity
+realizedPnl = sellAmount - sellCostBasis - fee - tax
+remainingCostAmount = previousCostAmount - sellCostBasis
+```
 
 ## API Surface
 

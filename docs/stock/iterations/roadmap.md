@@ -352,10 +352,16 @@ After each completed milestone:
 
 ## Next Recommended Work
 
-Start with Week 1:
+The first one-month plan is complete. Continue with:
 
-1. Add `StockWatchlist` model and repository.
-2. Add watchlist service methods.
-3. Add watchlist controller endpoints.
-4. Add Redis cache for `StockQuote`.
-5. Update investment page to render saved watchlist as the primary table.
+```text
+docs/stock/iterations/05-trade-recalculation-and-kline-provider.md
+```
+
+Recommended order:
+
+1. Implement trade-driven position recalculation with tests.
+2. Trigger recalculation after trade create, update, and delete.
+3. Add manual recalculation endpoints for recovery/debugging.
+4. Add K-line provider interface/router and one concrete daily provider.
+5. Wire manual and scheduled K-line sync to the provider router.

@@ -35,6 +35,7 @@ mvn -version
 - [Week 2 historical data and charts](iterations/02-historical-data-charts.md)
 - [Week 3 positions, trades, and returns](iterations/03-positions-trades-returns.md)
 - [Week 4 alerts, analysis, and provider abstraction](iterations/04-alerts-analysis-provider.md)
+- [Iteration 05 trade recalculation and K-line provider](iterations/05-trade-recalculation-and-kline-provider.md)
 - [Quality gates](iterations/quality-gates.md)
 
 ## Module Docs

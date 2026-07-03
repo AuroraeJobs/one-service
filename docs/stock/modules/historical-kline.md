@@ -77,6 +77,17 @@ finishedAt
 - Scheduled daily sync currently records `SKIPPED` logs until a historical provider is connected.
 - Historical third-party fetching should be added behind provider/router abstractions.
 
+## Next Iteration: Provider-Based Sync
+
+Iteration 05 should connect historical sync to a switchable provider:
+
+- Add a K-line provider interface that returns normalized `StockKLine` rows.
+- Add provider selection/fallback behavior consistent with quote providers.
+- Keep provider-specific field mapping and date parsing inside provider implementations.
+- Let manual sync fetch provider rows when rows are not supplied in the request.
+- Let scheduled sync fetch configured symbols instead of recording only `SKIPPED`.
+- Keep Redis sync locks and MongoDB sync logs.
+
 ## API Surface
 
 ```text
