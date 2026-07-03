@@ -61,7 +61,7 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add rule comparison endpoint. Added `GET /lottery/predictions/rules/compare` with recent rule records and best rank score metadata.
 - [x] Add cancel/retry/status behavior for training. Added prediction namespace status, cancel, and retry endpoints plus cooperative cancellation in training loops.
 - [x] Add prediction history page. Added `/lottery/predictions/history` with snapshot summary cards and recent prediction history list.
-- [ ] Add prediction detail page with candidates, score, rule, and actual result.
+- [x] Add prediction detail page with candidates, score, rule, and actual result. Added `/lottery/predictions/:id` and linked it from prediction history cards.
 - [x] Add tests for prediction scoring, actual attachment, and report persistence. Snapshot mapping, history limit, prediction actual attachment, report persistence mapping, and prediction controller routes are covered.
 
 ## Iteration 04: Personal Tickets And Prize Checking

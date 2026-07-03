@@ -134,6 +134,8 @@ Training operations expose both legacy `/lottery/training/status|cancel|retry` a
 
 The frontend prediction history page at `/lottery/predictions/history` reads `GET /lottery/predictions` and presents recent durable snapshots with rule metadata, generated numbers, result state, and candidate counts.
 
+The frontend prediction detail page at `/lottery/predictions/:id` reads `GET /lottery/predictions/{id}` and displays the saved primary prediction, candidate predictions, rule metadata, scores, actual draw, and hit results.
+
 ## Statistics Contract
 
 `LotteryStatisticsSummary` is the first public statistics DTO for the lottery cockpit. `GET /lottery/statistics/summary` returns record count, first/latest draw metadata, red/blue frequency, and structural distributions for red sum, odd count, big count, and span. `POST /lottery/statistics/summary/refresh` forces a recalculation and rewrites the Redis cache. `GET /lottery/statistics/frequency` and `GET /lottery/statistics/distribution` expose the same data in smaller endpoint-specific shapes for pages that do not need the full summary.

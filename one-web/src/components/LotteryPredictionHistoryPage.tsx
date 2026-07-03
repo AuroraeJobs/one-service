@@ -149,6 +149,13 @@ const LotteryPredictionHistoryPage = () => {
                     <span>候选 {prediction.candidates?.length || 0} 组</span>
                   </div>
                   {prediction.reason ? <p>{prediction.reason}</p> : null}
+                  {prediction.id ? (
+                    <div className="lottery-history-card-actions">
+                      <Button size="small" icon={<HistoryOutlined />} onClick={() => navigate(`/lottery/predictions/${prediction.id}`)}>
+                        查看详情
+                      </Button>
+                    </div>
+                  ) : null}
                 </article>
               ))}
             </div>
