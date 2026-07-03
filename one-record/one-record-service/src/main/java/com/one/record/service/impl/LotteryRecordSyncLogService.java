@@ -53,6 +53,20 @@ public class LotteryRecordSyncLogService implements ILotteryRecordSyncLogService
     }
 
     @Override
+    public LotteryRecordSyncLog skipped(String jobName, String startIssue, String message) {
+        Long now = System.currentTimeMillis();
+        return repository.save(LotteryRecordSyncLog.builder()
+                .jobName(jobName)
+                .status("SKIPPED")
+                .startIssue(startIssue)
+                .savedCount(0)
+                .message(StringUtils.hasText(message) ? message : "开奖记录同步已跳过")
+                .startedAt(now)
+                .finishedAt(now)
+                .build());
+    }
+
+    @Override
     public List<LotteryRecordSyncLog> findRecent(String status, int limit) {
         PageRequest pageRequest = PageRequest.of(0, normalizeLimit(limit));
         if (StringUtils.hasText(status)) {

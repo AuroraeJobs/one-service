@@ -6,9 +6,8 @@ import com.one.record.model.LotteryRecordSyncLog;
 import com.one.record.response.Record;
 import com.one.record.response.RecordYearCount;
 import com.one.record.service.ILotteryRecordSyncLogService;
+import com.one.record.service.ILotteryRecordSyncService;
 import com.one.record.service.IRecordService;
-import com.one.record.service.IRecordUpdate;
-import jakarta.servlet.ServletException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -18,9 +17,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -33,18 +30,18 @@ class LotteryRecordControllerTest {
 
     private IRecordService recordService;
 
-    private IRecordUpdate recordUpdate;
-
     private ILotteryRecordSyncLogService syncLogService;
+
+    private ILotteryRecordSyncService syncService;
 
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         recordService = mock(IRecordService.class);
-        recordUpdate = mock(IRecordUpdate.class);
         syncLogService = mock(ILotteryRecordSyncLogService.class);
-        mockMvc = MockMvcBuilders.standaloneSetup(new LotteryRecordController(recordService, recordUpdate, syncLogService)).build();
+        syncService = mock(ILotteryRecordSyncService.class);
+        mockMvc = MockMvcBuilders.standaloneSetup(new LotteryRecordController(recordService, syncLogService, syncService)).build();
     }
 
     @Test
@@ -61,7 +58,7 @@ class LotteryRecordControllerTest {
                 .andExpect(jsonPath("$.blue").value("07"));
 
         verify(recordService).findLast();
-        verifyNoInteractions(recordUpdate);
+        verifyNoInteractions(syncService);
     }
 
     @Test
@@ -145,51 +142,21 @@ class LotteryRecordControllerTest {
     }
 
     @Test
-    void syncTriggersExistingRecordUpdateFlow() throws Exception {
-        Record before = new Record();
-        before.setCode("2026001");
-        before.setLine(1);
-        Record after = new Record();
-        after.setCode("2026003");
-        after.setLine(3);
-        LotteryRecordSyncLog running = LotteryRecordSyncLog.builder()
-                .id("sync-1")
-                .status("RUNNING")
-                .build();
+    void syncDelegatesToSyncService() throws Exception {
         LotteryRecordSyncLog success = LotteryRecordSyncLog.builder()
                 .id("sync-1")
                 .status("SUCCESS")
                 .endIssue("2026003")
                 .savedCount(2)
                 .build();
-        when(recordService.findLast()).thenReturn(before, after);
-        when(syncLogService.start("manual-record-sync", "2026001")).thenReturn(running);
-        when(syncLogService.success(running, "2026003", 2, "新增 2 期开奖记录")).thenReturn(success);
+        when(syncService.syncManually()).thenReturn(success);
 
         mockMvc.perform(post("/lottery/records/sync"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.savedCount").value(2));
 
-        verify(recordUpdate).update();
-        verify(syncLogService).success(running, "2026003", 2, "新增 2 期开奖记录");
-    }
-
-    @Test
-    void syncRecordsFailureLogAndRethrows() throws Exception {
-        Record before = new Record();
-        before.setCode("2026001");
-        LotteryRecordSyncLog running = LotteryRecordSyncLog.builder()
-                .id("sync-1")
-                .status("RUNNING")
-                .build();
-        when(recordService.findLast()).thenReturn(before);
-        when(syncLogService.start("manual-record-sync", "2026001")).thenReturn(running);
-        doThrow(new IllegalStateException("provider unavailable")).when(recordUpdate).update();
-
-        assertThrows(ServletException.class, () -> mockMvc.perform(post("/lottery/records/sync")));
-
-        verify(syncLogService).failure(running, "provider unavailable");
+        verify(syncService).syncManually();
     }
 
     @Test

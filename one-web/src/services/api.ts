@@ -41,7 +41,7 @@ export interface RecordYearCount {
 export interface LotteryRecordSyncLog {
   id?: string;
   jobName?: string;
-  status?: 'RUNNING' | 'SUCCESS' | 'FAILED' | string;
+  status?: 'RUNNING' | 'SUCCESS' | 'FAILED' | 'SKIPPED' | string;
   startIssue?: string;
   endIssue?: string;
   savedCount?: number;

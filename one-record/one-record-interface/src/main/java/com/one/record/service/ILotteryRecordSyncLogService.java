@@ -12,5 +12,7 @@ public interface ILotteryRecordSyncLogService {
 
     LotteryRecordSyncLog failure(LotteryRecordSyncLog log, String message);
 
+    LotteryRecordSyncLog skipped(String jobName, String startIssue, String message);
+
     List<LotteryRecordSyncLog> findRecent(String status, int limit);
 }

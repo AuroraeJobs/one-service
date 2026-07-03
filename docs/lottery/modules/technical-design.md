@@ -56,7 +56,7 @@ Redis should own volatile or derived state:
 - Latest prediction cache.
 - Last report cache before durable history exists.
 - Statistics summaries.
-- Sync locks.
+- Sync locks. Manual record sync currently uses `lottery:records:sync:lock` with a bounded TTL.
 - Provider health/probe results.
 - Voyage count summaries.
 
@@ -159,6 +159,7 @@ VOID
 - Keep existing APIs compatible while adding new `lottery/*` APIs.
 - New record work should prefer `/lottery/records/*`; existing `/record/*` endpoints are legacy-compatible wrappers until callers are migrated.
 - Record sync returns a persisted operation log so frontend pages can show status, saved count, issue range, and failure message.
+- Record sync status values include `RUNNING`, `SUCCESS`, `FAILED`, and `SKIPPED`; `SKIPPED` means another sync already holds the Redis lock.
 - Return normalized project DTOs only.
 - Use explicit filters rather than overloading vague request bodies.
 - Support pagination for list/history endpoints that can grow.

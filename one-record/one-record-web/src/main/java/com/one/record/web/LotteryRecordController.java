@@ -5,9 +5,9 @@ import com.one.record.lottery.LotteryDraw;
 import com.one.record.model.LotteryRecordSyncLog;
 import com.one.record.response.Record;
 import com.one.record.response.RecordYearCount;
-import com.one.record.service.ILotteryRecordSyncLogService;
 import com.one.record.service.IRecordService;
-import com.one.record.service.IRecordUpdate;
+import com.one.record.service.ILotteryRecordSyncLogService;
+import com.one.record.service.ILotteryRecordSyncService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,9 +28,9 @@ public class LotteryRecordController {
 
     private final IRecordService service;
 
-    private final IRecordUpdate recordUpdate;
-
     private final ILotteryRecordSyncLogService syncLogService;
+
+    private final ILotteryRecordSyncService syncService;
 
     @GetMapping("latest")
     @Operation(summary = "查询最新开奖记录", description = "从数据库获取最新一期彩票开奖记录")
@@ -106,18 +106,7 @@ public class LotteryRecordController {
     @Operation(summary = "同步开奖记录", description = "触发现有开奖记录更新流程；保留 record/update 兼容入口")
     public LotteryRecordSyncLog sync() {
         log.info("Syncing lottery records");
-        Record before = service.findLast();
-        LotteryRecordSyncLog syncLog = syncLogService.start("manual-record-sync", before == null ? null : before.getCode());
-        try {
-            recordUpdate.update();
-            Record after = service.findLast();
-            int savedCount = savedCount(before, after);
-            return syncLogService.success(syncLog, after == null ? null : after.getCode(), savedCount,
-                    savedCount > 0 ? "新增 " + savedCount + " 期开奖记录" : "没有新的开奖记录");
-        } catch (RuntimeException exception) {
-            syncLogService.failure(syncLog, exception.getMessage());
-            throw exception;
-        }
+        return syncService.syncManually();
     }
 
     @GetMapping("sync-logs")
@@ -145,13 +134,4 @@ public class LotteryRecordController {
         return request;
     }
 
-    private static int savedCount(Record before, Record after) {
-        if (after == null) {
-            return 0;
-        }
-        if (before == null) {
-            return 1;
-        }
-        return Math.max(0, (int) (after.getLine() - before.getLine()));
-    }
 }
