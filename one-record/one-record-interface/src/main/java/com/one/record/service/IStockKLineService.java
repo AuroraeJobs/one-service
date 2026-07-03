@@ -15,5 +15,7 @@ public interface IStockKLineService {
 
     List<StockKLine> syncAll(List<StockKLine> kLines);
 
+    StockKLineSyncLog scheduledDailySync();
+
     List<StockKLineSyncLog> syncLogs(String symbol);
 }

@@ -1,6 +1,7 @@
 package com.one.record.service.impl;
 
 import com.one.common.exception.ServiceException;
+import com.one.record.configuration.StockMarketProperties;
 import com.one.record.repository.StockKLineRepository;
 import com.one.record.repository.StockKLineSyncLogRepository;
 import com.one.record.service.IStockKLineService;
@@ -36,6 +37,8 @@ public class StockKLineService implements IStockKLineService {
 
     private final StringRedisTemplate redisTemplate;
 
+    private final StockMarketProperties properties;
+
     @Override
     public List<StockKLine> find(String symbol, String period, String startDate, String endDate) {
         String normalizedSymbol = normalizeSymbol(symbol);
@@ -65,6 +68,37 @@ public class StockKLineService implements IStockKLineService {
     public List<StockKLine> syncAll(List<StockKLine> kLines) {
         return runWithSyncLog(syncLockKey("all"), "stock-kline-sync-all", null, kLines,
                 () -> saveKLines(null, kLines));
+    }
+
+    @Override
+    public StockKLineSyncLog scheduledDailySync() {
+        String lockKey = syncLockKey("scheduled-daily");
+        if (!acquireLock(lockKey)) {
+            throw new ServiceException("K线定时同步任务正在执行，请稍后重试");
+        }
+
+        StockKLineSyncLog syncLog = StockKLineSyncLog.builder()
+                .jobName("stock-kline-scheduled-daily")
+                .period(DEFAULT_PERIOD)
+                .status("RUNNING")
+                .requestedCount(properties.getKlineSyncSymbols() == null ? 0 : properties.getKlineSyncSymbols().size())
+                .savedCount(0)
+                .startedAt(System.currentTimeMillis())
+                .build();
+        syncLog = syncLogRepository.save(syncLog);
+        try {
+            syncLog.setStatus("SKIPPED");
+            syncLog.setMessage("K线历史数据 provider 尚未接入，定时任务仅记录执行日志");
+            return syncLog;
+        } catch (RuntimeException ex) {
+            syncLog.setStatus("FAILED");
+            syncLog.setMessage(ex.getMessage());
+            throw ex;
+        } finally {
+            syncLog.setFinishedAt(System.currentTimeMillis());
+            syncLogRepository.save(syncLog);
+            releaseLock(lockKey);
+        }
     }
 
     @Override

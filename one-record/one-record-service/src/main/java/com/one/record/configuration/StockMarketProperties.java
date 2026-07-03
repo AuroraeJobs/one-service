@@ -32,4 +32,10 @@ public class StockMarketProperties {
     private Integer fallbackCacheTtlSeconds = 604800;
 
     private List<String> defaultSymbols = List.of("sh000001", "sz399001", "sz399006");
+
+    private Boolean klineSyncEnabled = true;
+
+    private String klineSyncCron = "0 30 15 * * MON-FRI";
+
+    private List<String> klineSyncSymbols = List.of("sh000001", "sz399001", "sz399006");
 }

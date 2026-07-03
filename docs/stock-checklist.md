@@ -50,7 +50,7 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Persist daily OHLCV data. Initial implementation supports manual K-line import/upsert.
 - [x] Store K-line sync logs in MongoDB.
 - [x] Use Redis locks to prevent duplicate sync jobs.
-- [ ] Add scheduled daily sync after market close.
+- [x] Add scheduled daily sync after market close. Current job records a skipped sync log until historical provider is connected.
 - [ ] Add stock detail route `/investments/stocks/:symbol`.
 - [ ] Make quote table rows clickable.
 - [ ] Add real-time quote header on detail page.

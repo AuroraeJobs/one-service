@@ -66,6 +66,7 @@ Implemented baseline:
 - `StockMarketControllerTest` verifies repeated `symbols` query params bind to `List<String>`.
 - Initial MongoDB-backed K-line backend exists: `StockKLine`, repository, service, query endpoint, and manual sync/upsert endpoints.
 - K-line manual sync writes MongoDB sync logs and uses Redis locks to avoid duplicate sync execution.
+- K-line scheduled daily sync is wired with a configurable cron and Redis lock; it currently records `SKIPPED` logs until a historical provider is connected.
 - Root Maven Surefire is pinned to `3.2.5` so JUnit 5/JUnit Platform tests are discovered instead of being skipped by the old default plugin.
 
 Architecture rule to preserve:

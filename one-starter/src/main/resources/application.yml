@@ -101,7 +101,13 @@ stock:
     cache-enabled: ${STOCK_MARKET_CACHE_ENABLED:true}
     quote-cache-ttl-seconds: ${STOCK_MARKET_QUOTE_CACHE_TTL_SECONDS:10}
     fallback-cache-ttl-seconds: ${STOCK_MARKET_FALLBACK_CACHE_TTL_SECONDS:604800}
+    kline-sync-enabled: ${STOCK_MARKET_KLINE_SYNC_ENABLED:true}
+    kline-sync-cron: ${STOCK_MARKET_KLINE_SYNC_CRON:0 30 15 * * MON-FRI}
     default-symbols:
+      - sh000001
+      - sz399001
+      - sz399006
+    kline-sync-symbols:
       - sh000001
       - sz399001
       - sz399006
