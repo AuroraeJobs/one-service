@@ -62,6 +62,7 @@ Implemented baseline:
 - `StockMarketServiceTest` covers symbol normalization, Sina quote parsing, quote cache timestamp serialization, and provider failure fallback to last successful Redis cache.
 - JSON conversion is centralized through `com.one.common.util.JsonUtil` for current service-layer Redis/API cache use cases.
 - Stock quote and watchlist time fields use millisecond timestamps instead of `LocalDateTime`.
+- Backend model/service timestamp fields have been migrated away from `LocalDateTime` to millisecond timestamps.
 - Root Maven Surefire is pinned to `3.2.5` so JUnit 5/JUnit Platform tests are discovered instead of being skipped by the old default plugin.
 
 Architecture rule to preserve:

@@ -23,7 +23,6 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +40,7 @@ public class ThirdPartyUserBindingService implements IThirdPartyUserBindingServi
     @Override
     public ThirdPartyUserBinding saveOrUpdate(ThirdPartyUserBinding binding) {
         validate(binding);
-        LocalDateTime now = LocalDateTime.now();
+        Long now = System.currentTimeMillis();
         ThirdPartyUserBinding target = repository
                 .findByProviderAndThirdPartyUserId(binding.getProvider(), binding.getThirdPartyUserId())
                 .orElseGet(() -> {
@@ -130,7 +129,7 @@ public class ThirdPartyUserBindingService implements IThirdPartyUserBindingServi
         existing.setAccountKey(binding.getAccountKey());
         existing.setUnionId(binding.getUnionId());
         existing.setRawProfile(binding.getRawProfile());
-        existing.setUpdatedAt(LocalDateTime.now());
+        existing.setUpdatedAt(System.currentTimeMillis());
         return repository.save(existing);
     }
 

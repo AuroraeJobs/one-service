@@ -7,8 +7,6 @@ import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDateTime;
-
 @Getter
 @Setter
 @NoArgsConstructor
@@ -35,7 +33,7 @@ public class User {
 
     private Boolean deleted;
 
-    private LocalDateTime createTime;
+    private Long createTime;
 
-    private LocalDateTime updateTime;
+    private Long updateTime;
 }

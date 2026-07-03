@@ -17,7 +17,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -67,7 +66,7 @@ public class LotteryAstronautService implements ILotteryAstronautService {
         LotteryAstronaut target = repository.findByCampAndNumber(camp, number)
                 .orElseThrow(() -> new NotFoundException("宇航员编号不存在: " + camp + "-" + number));
         target.setName(astronaut.getName());
-        target.setUpdatedAt(LocalDateTime.now());
+        target.setUpdatedAt(System.currentTimeMillis());
         return repository.save(target);
     }
 
@@ -78,7 +77,7 @@ public class LotteryAstronautService implements ILotteryAstronautService {
                 .collect(Collectors.toMap(item -> normalizeCamp(item.getCamp()) + "-" + normalizeNumber(item.getNumber()),
                         LotteryAstronaut::getName, (left, right) -> right));
         List<LotteryAstronaut> existing = repository.findAll();
-        LocalDateTime now = LocalDateTime.now();
+        Long now = System.currentTimeMillis();
         existing.forEach(item -> {
             String key = item.getCamp() + "-" + item.getNumber();
             if (nameMap.containsKey(key)) {
@@ -261,14 +260,14 @@ public class LotteryAstronautService implements ILotteryAstronautService {
         String[] secondFemaleNames = {
                 "薛宝琴", "鸳鸯", "紫鹃", "小红", "尤二姐", "尤三姐", "邢岫烟", "金钏"
         };
-        LocalDateTime now = LocalDateTime.now();
+        Long now = System.currentTimeMillis();
         addParityDefaults(astronauts, firstMaleNames, firstFemaleNames, CAMP_RED, "英雄名著", "红楼梦", 33, now);
         addParityDefaults(astronauts, secondMaleNames, secondFemaleNames, CAMP_BLUE, "英雄名著", "红楼梦", 16, now);
         return astronauts;
     }
 
     private static void addParityDefaults(List<LotteryAstronaut> astronauts, String[] maleNames, String[] femaleNames,
-                                          String camp, String maleSource, String femaleSource, int total, LocalDateTime now) {
+                                          String camp, String maleSource, String femaleSource, int total, Long now) {
         int maleIndex = 0;
         int femaleIndex = 0;
         for (int i = 1; i <= total; i++) {

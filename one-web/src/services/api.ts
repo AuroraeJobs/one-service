@@ -450,8 +450,8 @@ export interface ChargeStation {
   location: string;
   stationCode: string;
   stationName?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 export interface ChargeStatistics {
@@ -621,8 +621,8 @@ export interface ThirdPartyUserBinding {
   accountKey?: string;
   unionId?: string;
   rawProfile?: Record<string, unknown>;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 export interface GitHubOAuthBindRequest {
@@ -1089,8 +1089,8 @@ export interface LotteryAstronaut {
   name: string;
   gender?: string;
   source?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 export interface LotteryAstronautVoyageRecord {

@@ -9,7 +9,6 @@ import com.one.common.exception.DuplicateException;
 import com.one.common.exception.NotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -27,8 +26,9 @@ public class ChargeStationService implements IChargeStationService {
             throw new DuplicateException("站点编码已存在: " + station.getStationCode());
         }
         
-        station.setCreatedAt(LocalDateTime.now());
-        station.setUpdatedAt(LocalDateTime.now());
+        long now = System.currentTimeMillis();
+        station.setCreatedAt(now);
+        station.setUpdatedAt(now);
         return repository.save(station);
     }
     
@@ -48,7 +48,7 @@ public class ChargeStationService implements IChargeStationService {
         existing.setLocation(station.getLocation());
         existing.setStationCode(station.getStationCode());
         existing.setStationName(station.getStationName());
-        existing.setUpdatedAt(LocalDateTime.now());
+        existing.setUpdatedAt(System.currentTimeMillis());
         
         return repository.save(existing);
     }

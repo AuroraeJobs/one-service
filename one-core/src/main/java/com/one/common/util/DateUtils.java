@@ -5,8 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.*;
-import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 
 @Slf4j
@@ -390,43 +388,37 @@ public class DateUtils {
     }
 
     /**
-     * Date类型转化为LocalDateTime,时区为0:全球通用时间
-     *
-     * @param date
-     * @return
+     * Date类型转化为timestamp毫秒数.
      */
-    public static LocalDateTime dateConvertToLocalDateTime(Date date) {
-        return date.toInstant().atOffset(ZoneOffset.of("+0")).toLocalDateTime();
+    public static long dateConvertToTimestamp(Date date) {
+        return date == null ? 0L : date.getTime();
     }
 
     /**
-     * LocalDateTime转化为timestamp毫秒数,全球通用时间.
-     *
-     * @param localDateTime
-     * @return
+     * Date类型转化为timestamp毫秒数.
      */
-    public static long getTimestampOfLocalDateTime(LocalDateTime localDateTime) {
-        ZoneId zone = ZoneId.of("UTC");
-        Instant instant = localDateTime.atZone(zone).toInstant();
-        return instant.toEpochMilli();
-
+    public static long getTimestamp(Date date) {
+        return date == null ? 0L : date.getTime();
     }
 
     public static Date getMintDay(Date date) {
-
-        LocalDateTime localDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(date.getTime()), ZoneId.systemDefault());
-
-        // 通过LocalDateTime的 with方法设置某天的最小值和最大值！！
-        LocalDateTime minDateTime = localDateTime.with(LocalTime.MIN);
-        // 格式化日期
-        Date fromDate = Date.from(minDateTime.atZone(ZoneId.systemDefault()).toInstant());
-        return fromDate;
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
     }
 
     public static Date getMaxDay(Date date) {
-        LocalDateTime localDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(date.getTime()), ZoneId.systemDefault());
-        LocalDateTime maxDateTime = localDateTime.with(LocalTime.MAX);
-        return Date.from(maxDateTime.atZone(ZoneId.systemDefault()).toInstant());
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.HOUR_OF_DAY, 23);
+        calendar.set(Calendar.MINUTE, 59);
+        calendar.set(Calendar.SECOND, 59);
+        calendar.set(Calendar.MILLISECOND, 999);
+        return calendar.getTime();
     }
 
     public static Date getAfterDatePlus(Date date, int days) {
@@ -792,32 +784,35 @@ public class DateUtils {
         return StringUtil.isNotEmpty(timeText) ? timeText : "0ms";
     }
 
-    public static LocalDateTime getPlusMonth(int plusMonths) {
-        return LocalDateTime.now().plusMonths(plusMonths);
+    public static long getPlusMonth(int plusMonths) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.MONTH, plusMonths);
+        return calendar.getTimeInMillis();
     }
 
-    public static LocalDateTime getPlusDay(int plusDays) {
-        return LocalDateTime.now().plusDays(plusDays);
+    public static long getPlusDay(int plusDays) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_YEAR, plusDays);
+        return calendar.getTimeInMillis();
     }
 
-    public static Date getMonthStart(LocalDateTime now) {
-        LocalDateTime start = LocalDateTime.of(now.getYear(), now.getMonth(), 1, 0, 0, 0, 0);
-        return toDate(start);
+    public static Date getMonthStart(long timestamp) {
+        return getMonthStart(new Date(timestamp));
     }
 
-    public static Date getMonthEnd(LocalDateTime now) {
-        LocalDateTime end = LocalDateTime.of(now.with(TemporalAdjusters.lastDayOfMonth()).getYear(),
-                now.with(TemporalAdjusters.lastDayOfMonth()).getMonth(),
-                now.with(TemporalAdjusters.lastDayOfMonth()).getDayOfMonth(), 23, 59, 59);
-        return toDate(end);
+    public static Date getMonthEnd(long timestamp) {
+        return getMonthEnd(new Date(timestamp));
     }
 
-    public static Date toDate(LocalDateTime now) {
-        return Date.from(now.atZone(ZoneId.systemDefault()).toInstant());
+    public static Date toDate(long timestamp) {
+        return new Date(timestamp);
     }
 
     public static Date plusHours(Date date, int plusHours) {
-        return toDate(date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime().plusHours(plusHours));
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.add(Calendar.HOUR_OF_DAY, plusHours);
+        return calendar.getTime();
     }
 
     /**
@@ -827,9 +822,14 @@ public class DateUtils {
      * @return 月初
      */
     public static Date getMonthStart(Date date) {
-        LocalDateTime now = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-        LocalDateTime start = LocalDateTime.of(now.getYear(), now.getMonth(), 1, 0, 0, 0, 0);
-        return Date.from(start.atZone(ZoneId.systemDefault()).toInstant());
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.DAY_OF_MONTH, 1);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
     }
 
     public static Date getEndOfDay(Date date) {
@@ -849,11 +849,14 @@ public class DateUtils {
      * @return 月末
      */
     public static Date getMonthEnd(Date date) {
-        LocalDateTime now = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-        LocalDateTime end = LocalDateTime.of(now.with(TemporalAdjusters.lastDayOfMonth()).getYear(),
-                now.with(TemporalAdjusters.lastDayOfMonth()).getMonth(),
-                now.with(TemporalAdjusters.lastDayOfMonth()).getDayOfMonth(), 23, 59, 59);
-        return Date.from(end.atZone(ZoneId.systemDefault()).toInstant());
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
+        calendar.set(Calendar.HOUR_OF_DAY, 23);
+        calendar.set(Calendar.MINUTE, 59);
+        calendar.set(Calendar.SECOND, 59);
+        calendar.set(Calendar.MILLISECOND, 999);
+        return calendar.getTime();
     }
 
 
@@ -890,12 +893,7 @@ public class DateUtils {
      * @return [0]月初, [1]月末
      */
     public static Date[] getMonthStartAndEnd(Date date) {
-        LocalDateTime now = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-        LocalDateTime start = LocalDateTime.of(now.getYear(), now.getMonth(), 1, 0, 0, 0, 0);
-        LocalDateTime end = LocalDateTime.of(start.with(TemporalAdjusters.lastDayOfMonth()).getYear(),
-                start.with(TemporalAdjusters.lastDayOfMonth()).getMonth(),
-                start.with(TemporalAdjusters.lastDayOfMonth()).getDayOfMonth(), 23, 59, 59);
-        return new Date[]{Date.from(start.atZone(ZoneId.systemDefault()).toInstant()), Date.from(end.atZone(ZoneId.systemDefault()).toInstant())};
+        return new Date[]{getMonthStart(date), getMonthEnd(date)};
     }
 
     public static Date parseDate(String dateStr) throws ParseException {

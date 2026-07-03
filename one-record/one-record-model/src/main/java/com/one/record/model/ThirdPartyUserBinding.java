@@ -9,7 +9,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDateTime;
 import java.util.Map;
 
 @Data
@@ -45,7 +44,7 @@ public class ThirdPartyUserBinding {
 
     private Map<String, Object> rawProfile;
 
-    private LocalDateTime createdAt;
+    private Long createdAt;
 
-    private LocalDateTime updatedAt;
+    private Long updatedAt;
 }

@@ -15,8 +15,8 @@ interface ChargeStation {
   location: string;
   stationCode: string;
   stationName?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 interface ChargeRecord {
@@ -38,6 +38,31 @@ interface ProviderStats {
   avgPrice: number;
 }
 
+interface ChargeStationFormValues {
+  provider: string;
+  location: string;
+  stationCode: string;
+  stationName?: string;
+}
+
+interface ApiErrorLike {
+  message?: string;
+  response?: {
+    data?: {
+      message?: string;
+      error?: string;
+    };
+  };
+}
+
+const errorMessage = (error: unknown, fallback: string) => {
+  const apiError = error as ApiErrorLike;
+  return apiError.response?.data?.message
+    || apiError.response?.data?.error
+    || apiError.message
+    || fallback;
+};
+
 const HealthChargeStationPage: React.FC = () => {
   const navigate = useNavigate();
   const [stations, setStations] = useState<ChargeStation[]>([]);
@@ -52,7 +77,7 @@ const HealthChargeStationPage: React.FC = () => {
   const [addForm] = Form.useForm();
   const [editForm] = Form.useForm();
 
-  const validateStationCode = async (_: any, value: string) => {
+  const validateStationCode = async (_: unknown, value: string) => {
     if (!value) {
       return Promise.resolve();
     }
@@ -60,12 +85,12 @@ const HealthChargeStationPage: React.FC = () => {
     try {
       await chargeStationApi.findByStationCode(value);
       return Promise.reject(new Error('站点编码已存在'));
-    } catch (error) {
+    } catch {
       return Promise.resolve();
     }
   };
 
-  const validateStationCodeEdit = async (_: any, value: string) => {
+  const validateStationCodeEdit = async (_: unknown, value: string) => {
     if (!value || !selectedStation) {
       return Promise.resolve();
     }
@@ -77,16 +102,10 @@ const HealthChargeStationPage: React.FC = () => {
     try {
       await chargeStationApi.findByStationCode(value);
       return Promise.reject(new Error('站点编码已存在'));
-    } catch (error) {
+    } catch {
       return Promise.resolve();
     }
   };
-
-  useEffect(() => {
-    loadStations();
-    loadProviders();
-    loadChargeRecords();
-  }, []);
 
   const loadStations = async () => {
     try {
@@ -116,6 +135,14 @@ const HealthChargeStationPage: React.FC = () => {
       console.error('加载充电记录失败:', error);
     }
   };
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      void loadStations();
+      void loadProviders();
+      void loadChargeRecords();
+    });
+  }, []);
 
   const getProviderLabel = (providerValue: string): string => {
     const provider = providers.find(p => p.value === providerValue);
@@ -173,29 +200,20 @@ const HealthChargeStationPage: React.FC = () => {
 
   const providerStats = calculateProviderStats();
 
-  const handleAdd = async (values: any) => {
+  const handleAdd = async (values: ChargeStationFormValues) => {
     try {
       await chargeStationApi.save(values);
       message.success('添加充电站成功');
       setIsAddDrawerVisible(false);
       addForm.resetFields();
       loadStations();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('添加充电站错误:', error);
-      // 尝试多种方式获取错误信息
-      let errorMsg = '添加充电站失败';
-      if (error.response?.data?.message) {
-        errorMsg = error.response.data.message;
-      } else if (error.response?.data?.error) {
-        errorMsg = error.response.data.error;
-      } else if (error.message) {
-        errorMsg = error.message;
-      }
-      message.error(errorMsg);
+      message.error(errorMessage(error, '添加充电站失败'));
     }
   };
 
-  const handleEdit = async (values: any) => {
+  const handleEdit = async (values: ChargeStationFormValues) => {
     if (!selectedStation) return;
     
     try {
@@ -205,17 +223,9 @@ const HealthChargeStationPage: React.FC = () => {
       editForm.resetFields();
       setSelectedStation(null);
       loadStations();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('更新充电站错误:', error);
-      let errorMsg = '更新充电站失败';
-      if (error.response?.data?.message) {
-        errorMsg = error.response.data.message;
-      } else if (error.response?.data?.error) {
-        errorMsg = error.response.data.error;
-      } else if (error.message) {
-        errorMsg = error.message;
-      }
-      message.error(errorMsg);
+      message.error(errorMessage(error, '更新充电站失败'));
     }
   };
 
@@ -224,17 +234,9 @@ const HealthChargeStationPage: React.FC = () => {
       await chargeStationApi.delete(id);
       message.success('删除充电站成功');
       loadStations();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('删除充电站错误:', error);
-      let errorMsg = '删除充电站失败';
-      if (error.response?.data?.message) {
-        errorMsg = error.response.data.message;
-      } else if (error.response?.data?.error) {
-        errorMsg = error.response.data.error;
-      } else if (error.message) {
-        errorMsg = error.message;
-      }
-      message.error(errorMsg);
+      message.error(errorMessage(error, '删除充电站失败'));
     }
   };
 

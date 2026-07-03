@@ -31,7 +31,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 
 @Slf4j
 @RestController
@@ -138,8 +137,9 @@ public class AuthController {
             user.setRole("USER");
             user.setEnabled(true);
             user.setDeleted(false);
-            user.setCreateTime(LocalDateTime.now());
-            user.setUpdateTime(LocalDateTime.now());
+            long now = System.currentTimeMillis();
+            user.setCreateTime(now);
+            user.setUpdateTime(now);
             
             userRepository.save(user);
             
@@ -216,7 +216,7 @@ public class AuthController {
         user.setEmail(email);
         user.setPhone(phone);
         user.setAvatar(avatar);
-        user.setUpdateTime(LocalDateTime.now());
+        user.setUpdateTime(System.currentTimeMillis());
         userRepository.save(user);
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
@@ -266,7 +266,7 @@ public class AuthController {
         }
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        user.setUpdateTime(LocalDateTime.now());
+        user.setUpdateTime(System.currentTimeMillis());
         userRepository.save(user);
 
         return ResponseEntity.ok(Response.success("密码已更新"));

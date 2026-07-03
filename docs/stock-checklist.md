@@ -110,6 +110,7 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Quote provider failure path is verified. Unit test covers provider error fallback to `stock:quote:last-success:{symbol}`.
 - [x] Quote cache uses millisecond timestamps for time fields such as `fetchedAt`.
 - [x] Stock watchlist uses millisecond timestamps for `createdAt` and `updatedAt`.
+- [x] Remaining backend `LocalDateTime` fields/usages are migrated to millisecond timestamps.
 - [ ] Mobile layout is checked for investment page.
 - [ ] Desktop layout is checked for investment page.
 - [x] Documentation is updated after each completed milestone.

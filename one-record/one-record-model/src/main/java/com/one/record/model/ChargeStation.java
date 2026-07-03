@@ -7,8 +7,6 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDateTime;
-
 @Data
 @Builder
 @NoArgsConstructor
@@ -27,7 +25,7 @@ public class ChargeStation {
     
     private String stationName;
     
-    private LocalDateTime createdAt;
+    private Long createdAt;
     
-    private LocalDateTime updatedAt;
+    private Long updatedAt;
 }

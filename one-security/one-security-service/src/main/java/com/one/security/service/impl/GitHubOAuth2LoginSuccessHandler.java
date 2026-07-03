@@ -26,7 +26,6 @@ import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -140,7 +139,7 @@ public class GitHubOAuth2LoginSuccessHandler implements AuthenticationSuccessHan
             throw new IllegalArgumentException("GitHub 用户信息缺少 id");
         }
 
-        LocalDateTime now = LocalDateTime.now();
+        long now = System.currentTimeMillis();
         Query query = Query.query(Criteria.where("provider").is("GitHub").and("thirdPartyUserId").is(githubId));
         Update update = new Update()
                 .set("provider", "GitHub")
