@@ -51,7 +51,7 @@ Use this file as the durable task board for the lottery module. When a task is f
 ## Iteration 03: Prediction Replay And Rule Operations
 
 - [x] Add durable prediction snapshot model. Added `LotteryPredictionSnapshot` stored in `lottery_prediction_snapshots`.
-- [ ] Add durable training report model.
+- [x] Add durable training report model. Added `LotteryTrainingReportRecord` stored in `lottery_training_reports` and persisted when training completes.
 - [ ] Add prediction rule model or persist rule versions explicitly.
 - [x] Add prediction history endpoint. Added `GET /lottery/predictions`.
 - [x] Add prediction detail endpoint. Added `GET /lottery/predictions/{id}`.
@@ -62,7 +62,7 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [ ] Add cancel/retry/status behavior for training.
 - [ ] Add prediction history page.
 - [ ] Add prediction detail page with candidates, score, rule, and actual result.
-- [ ] Add tests for prediction scoring, actual attachment, and report persistence. Snapshot mapping, history limit, prediction actual attachment, and prediction controller routes are covered; durable training report persistence remains.
+- [x] Add tests for prediction scoring, actual attachment, and report persistence. Snapshot mapping, history limit, prediction actual attachment, report persistence mapping, and prediction controller routes are covered.
 
 ## Iteration 04: Personal Tickets And Prize Checking
 

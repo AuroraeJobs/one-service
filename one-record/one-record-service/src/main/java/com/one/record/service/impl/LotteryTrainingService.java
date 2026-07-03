@@ -5,7 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import com.one.common.util.JsonUtil;
 import com.one.record.file.RecordFile;
 import com.one.record.model.LotteryPredictionSnapshot;
+import com.one.record.model.LotteryTrainingReportRecord;
 import com.one.record.repository.LotteryPredictionSnapshotRepository;
+import com.one.record.repository.LotteryTrainingReportRepository;
 import com.one.record.service.ILotteryTrainingService;
 import com.one.record.training.LotteryActualRecord;
 import com.one.record.training.LotteryLatestPrediction;
@@ -62,14 +64,18 @@ public class LotteryTrainingService implements ILotteryTrainingService {
 
     private final LotteryPredictionSnapshotRepository predictionSnapshotRepository;
 
+    private final LotteryTrainingReportRepository trainingReportRepository;
+
     private final AtomicBoolean trainingRunning = new AtomicBoolean(false);
 
     private final AtomicReference<LotteryTrainingStatus> trainingStatus = new AtomicReference<>(idleStatus());
 
     public LotteryTrainingService(StringRedisTemplate redisTemplate,
-                                  LotteryPredictionSnapshotRepository predictionSnapshotRepository) {
+                                  LotteryPredictionSnapshotRepository predictionSnapshotRepository,
+                                  LotteryTrainingReportRepository trainingReportRepository) {
         this.redisTemplate = redisTemplate;
         this.predictionSnapshotRepository = predictionSnapshotRepository;
+        this.trainingReportRepository = trainingReportRepository;
     }
 
     @Override
@@ -157,6 +163,7 @@ public class LotteryTrainingService implements ILotteryTrainingService {
             savePredictionSnapshot(latestPrediction);
         }
         saveJson(LAST_REPORT_KEY, report);
+        saveTrainingReportRecord(report);
         return report;
     }
 
@@ -245,6 +252,26 @@ public class LotteryTrainingService implements ILotteryTrainingService {
                 .updatedAt(now)
                 .build();
         return predictionSnapshotRepository.save(snapshot);
+    }
+
+    LotteryTrainingReportRecord saveTrainingReportRecord(LotteryTrainingReport report) {
+        if (report == null) {
+            return null;
+        }
+        long now = System.currentTimeMillis();
+        LotteryTrainingReportRecord record = LotteryTrainingReportRecord.builder()
+                .replayCount(report.getReplayCount())
+                .generation(report.getGeneration())
+                .best(report.getBest())
+                .learnedRule(report.getLearnedRule())
+                .latestPrediction(report.getLatestPrediction())
+                .actualRecord(report.getActualRecord())
+                .candidates(new ArrayList<>(report.getCandidates()))
+                .timeline(new ArrayList<>(report.getTimeline()))
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+        return trainingReportRepository.save(record);
     }
 
     private LotteryLatestPrediction buildLatestPrediction(List<Draw> draws, PredictionRuleConfig config) {

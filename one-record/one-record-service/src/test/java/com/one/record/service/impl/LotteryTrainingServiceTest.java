@@ -1,10 +1,13 @@
 package com.one.record.service.impl;
 
 import com.one.record.model.LotteryPredictionSnapshot;
+import com.one.record.model.LotteryTrainingReportRecord;
 import com.one.record.repository.LotteryPredictionSnapshotRepository;
+import com.one.record.repository.LotteryTrainingReportRepository;
 import com.one.record.training.LotteryActualRecord;
 import com.one.record.training.LotteryLatestPrediction;
 import com.one.record.training.LotteryPredictionCandidate;
+import com.one.record.training.LotteryTrainingReport;
 import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,12 +26,15 @@ class LotteryTrainingServiceTest {
 
     private LotteryPredictionSnapshotRepository predictionSnapshotRepository;
 
+    private LotteryTrainingReportRepository trainingReportRepository;
+
     private LotteryTrainingService service;
 
     @BeforeEach
     void setUp() {
         predictionSnapshotRepository = mock(LotteryPredictionSnapshotRepository.class);
-        service = new LotteryTrainingService(mock(StringRedisTemplate.class), predictionSnapshotRepository);
+        trainingReportRepository = mock(LotteryTrainingReportRepository.class);
+        service = new LotteryTrainingService(mock(StringRedisTemplate.class), predictionSnapshotRepository, trainingReportRepository);
     }
 
     @Test
@@ -107,5 +113,35 @@ class LotteryTrainingServiceTest {
         assertThat(result.getCandidates().get(0).getResult().getRedHits()).isEqualTo(3);
         assertThat(result.getCandidates().get(0).getResult().isBlueHit()).isFalse();
         assertThat(result.getUpdatedAt()).isGreaterThan(100L);
+    }
+
+    @Test
+    void saveTrainingReportRecordMapsReport() {
+        LotteryTrainingReport.TrainingResult best = new LotteryTrainingReport.TrainingResult();
+        LotteryLatestPrediction prediction = new LotteryLatestPrediction();
+        prediction.setTitle("综合推荐");
+        prediction.setBlueNumber("07");
+        LotteryTrainingReport.TrainingTimelineItem timelineItem = new LotteryTrainingReport.TrainingTimelineItem();
+        timelineItem.setPeriod(2026001);
+        LotteryTrainingReport report = new LotteryTrainingReport();
+        report.setReplayCount(30);
+        report.setGeneration(2);
+        report.setBest(best);
+        report.setLatestPrediction(prediction);
+        report.setCandidates(List.of(best));
+        report.setTimeline(List.of(timelineItem));
+        when(trainingReportRepository.save(org.mockito.ArgumentMatchers.any(LotteryTrainingReportRecord.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        LotteryTrainingReportRecord record = service.saveTrainingReportRecord(report);
+
+        assertThat(record.getReplayCount()).isEqualTo(30);
+        assertThat(record.getGeneration()).isEqualTo(2);
+        assertThat(record.getBest()).isSameAs(best);
+        assertThat(record.getLatestPrediction().getBlueNumber()).isEqualTo("07");
+        assertThat(record.getCandidates()).hasSize(1);
+        assertThat(record.getTimeline()).hasSize(1);
+        assertThat(record.getCreatedAt()).isNotNull();
+        assertThat(record.getUpdatedAt()).isEqualTo(record.getCreatedAt());
     }
 }
