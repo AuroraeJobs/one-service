@@ -205,6 +205,24 @@ public class LotteryTrainingService implements ILotteryTrainingService {
         return predictionSnapshotRepository.findById(id.trim()).orElse(null);
     }
 
+    @Override
+    public LotteryPredictionSnapshot attachPredictionActual(String id, LotteryActualRecord record) {
+        LotteryPredictionSnapshot snapshot = predictionDetail(id);
+        if (snapshot == null) {
+            return null;
+        }
+        LotteryActualRecord normalized = normalizeActualRecord(record);
+        snapshot.setActualRecord(normalized);
+        snapshot.setResult(scorePrediction(snapshot.getRedNumbers(), snapshot.getBlueNumber(), normalized));
+        if (snapshot.getCandidates() != null) {
+            for (LotteryPredictionCandidate candidate : snapshot.getCandidates()) {
+                candidate.setResult(scorePrediction(candidate.getRedNumbers(), candidate.getBlueNumber(), normalized));
+            }
+        }
+        snapshot.setUpdatedAt(System.currentTimeMillis());
+        return predictionSnapshotRepository.save(snapshot);
+    }
+
     LotteryPredictionSnapshot savePredictionSnapshot(LotteryLatestPrediction prediction) {
         if (prediction == null) {
             return null;

@@ -56,13 +56,13 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add prediction history endpoint. Added `GET /lottery/predictions`.
 - [x] Add prediction detail endpoint. Added `GET /lottery/predictions/{id}`.
 - [x] Add training start endpoint under `/lottery/predictions/train` or document continued `/lottery/training/start` use. Added `POST /lottery/predictions/train` delegating to the existing async training service.
-- [ ] Add actual-result attachment endpoint.
+- [x] Add actual-result attachment endpoint. Added `POST /lottery/predictions/{id}/actual` to attach actual draw results and rescore the snapshot and candidates.
 - [ ] Add replay metrics by historical window.
 - [ ] Add rule comparison endpoint.
 - [ ] Add cancel/retry/status behavior for training.
 - [ ] Add prediction history page.
 - [ ] Add prediction detail page with candidates, score, rule, and actual result.
-- [ ] Add tests for prediction scoring, actual attachment, and report persistence.
+- [ ] Add tests for prediction scoring, actual attachment, and report persistence. Snapshot mapping, history limit, prediction actual attachment, and prediction controller routes are covered; durable training report persistence remains.
 
 ## Iteration 04: Personal Tickets And Prize Checking
 

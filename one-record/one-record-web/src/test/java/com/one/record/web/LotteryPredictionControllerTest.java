@@ -62,6 +62,24 @@ class LotteryPredictionControllerTest {
     }
 
     @Test
+    void attachActualDelegatesToTrainingService() throws Exception {
+        when(service.attachPredictionActual(org.mockito.ArgumentMatchers.eq("snapshot-1"), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(LotteryPredictionSnapshot.builder()
+                        .id("snapshot-1")
+                        .blueNumber("07")
+                        .build());
+
+        mockMvc.perform(post("/lottery/predictions/snapshot-1/actual")
+                        .contentType("application/json")
+                        .content("{\"period\":2026002,\"redNumbers\":[\"01\",\"02\",\"03\",\"04\",\"05\",\"06\"],\"blueNumber\":\"07\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("snapshot-1"))
+                .andExpect(jsonPath("$.blueNumber").value("07"));
+
+        verify(service).attachPredictionActual(org.mockito.ArgumentMatchers.eq("snapshot-1"), org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
     void trainDelegatesToTrainingService() throws Exception {
         LotteryTrainingStatus status = new LotteryTrainingStatus();
         status.setRunning(true);

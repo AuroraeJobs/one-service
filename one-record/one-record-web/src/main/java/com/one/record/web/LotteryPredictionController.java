@@ -2,6 +2,7 @@ package com.one.record.web;
 
 import com.one.record.model.LotteryPredictionSnapshot;
 import com.one.record.service.ILotteryTrainingService;
+import com.one.record.training.LotteryActualRecord;
 import com.one.record.training.LotteryTrainingRequest;
 import com.one.record.training.LotteryTrainingStatus;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,6 +34,13 @@ public class LotteryPredictionController {
     @Operation(summary = "查询彩票预测详情", description = "按快照 ID 查询预测详情、候选号码和命中结果")
     public LotteryPredictionSnapshot detail(@PathVariable("id") String id) {
         return service.predictionDetail(id);
+    }
+
+    @PostMapping("{id}/actual")
+    @Operation(summary = "附加预测实际开奖结果", description = "按快照 ID 附加实际开奖结果并重算命中结果")
+    public LotteryPredictionSnapshot attachActual(@PathVariable("id") String id,
+                                                  @RequestBody LotteryActualRecord record) {
+        return service.attachPredictionActual(id, record);
     }
 
     @PostMapping("train")

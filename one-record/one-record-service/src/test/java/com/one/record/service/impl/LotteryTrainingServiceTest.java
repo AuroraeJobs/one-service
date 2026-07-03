@@ -2,6 +2,7 @@ package com.one.record.service.impl;
 
 import com.one.record.model.LotteryPredictionSnapshot;
 import com.one.record.repository.LotteryPredictionSnapshotRepository;
+import com.one.record.training.LotteryActualRecord;
 import com.one.record.training.LotteryLatestPrediction;
 import com.one.record.training.LotteryPredictionCandidate;
 import org.mockito.ArgumentCaptor;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -72,5 +74,38 @@ class LotteryTrainingServiceTest {
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
         verify(predictionSnapshotRepository).findByOrderByCreatedAtDesc(pageableCaptor.capture());
         assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(100);
+    }
+
+    @Test
+    void attachPredictionActualScoresSnapshotAndCandidates() {
+        LotteryPredictionCandidate candidate = new LotteryPredictionCandidate();
+        candidate.setTitle("候选");
+        candidate.setRedNumbers(List.of("01", "02", "03", "04", "05", "06"));
+        candidate.setBlueNumber("08");
+        LotteryPredictionSnapshot snapshot = LotteryPredictionSnapshot.builder()
+                .id("snapshot-1")
+                .redNumbers(List.of("01", "02", "03", "04", "05", "06"))
+                .blueNumber("07")
+                .candidates(List.of(candidate))
+                .createdAt(100L)
+                .updatedAt(100L)
+                .build();
+        LotteryActualRecord actual = new LotteryActualRecord();
+        actual.setPeriod(2026002);
+        actual.setRedNumbers(List.of("1", "02", "03", "09", "10", "11"));
+        actual.setBlueNumber("7");
+        when(predictionSnapshotRepository.findById("snapshot-1")).thenReturn(Optional.of(snapshot));
+        when(predictionSnapshotRepository.save(org.mockito.ArgumentMatchers.any(LotteryPredictionSnapshot.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        LotteryPredictionSnapshot result = service.attachPredictionActual("snapshot-1", actual);
+
+        assertThat(result.getActualRecord().getRedNumbers()).containsExactly("01", "02", "03", "09", "10", "11");
+        assertThat(result.getActualRecord().getBlueNumber()).isEqualTo("07");
+        assertThat(result.getResult().getRedHits()).isEqualTo(3);
+        assertThat(result.getResult().isBlueHit()).isTrue();
+        assertThat(result.getCandidates().get(0).getResult().getRedHits()).isEqualTo(3);
+        assertThat(result.getCandidates().get(0).getResult().isBlueHit()).isFalse();
+        assertThat(result.getUpdatedAt()).isGreaterThan(100L);
     }
 }

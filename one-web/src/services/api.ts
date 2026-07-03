@@ -1601,6 +1601,9 @@ export const lotteryPredictionApi = {
   detail: (id: string): Promise<LotteryPredictionSnapshot> => {
     return apiClient.get(`/lottery/predictions/${id}`);
   },
+  attachActual: (id: string, record: LotteryActualRecord): Promise<LotteryPredictionSnapshot> => {
+    return apiClient.post(`/lottery/predictions/${id}/actual`, record);
+  },
   train: (params: { replayCount?: number; scale?: 'fast' | 'standard' | 'deep' }): Promise<LotteryTrainingStatus> => {
     return apiClient.post('/lottery/predictions/train', params);
   }

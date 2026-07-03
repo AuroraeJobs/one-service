@@ -28,4 +28,6 @@ public interface ILotteryTrainingService {
     List<LotteryPredictionSnapshot> predictionHistory(Integer limit);
 
     LotteryPredictionSnapshot predictionDetail(String id);
+
+    LotteryPredictionSnapshot attachPredictionActual(String id, LotteryActualRecord record);
 }
