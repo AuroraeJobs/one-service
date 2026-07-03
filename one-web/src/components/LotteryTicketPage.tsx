@@ -92,6 +92,9 @@ const LotteryTicketPage = () => {
   const [tickets, setTickets] = useState<LotteryTicket[]>([]);
   const [summary, setSummary] = useState<LotteryTicketSummary>(emptySummary);
   const [issue, setIssue] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>();
+  const [sourceFilter, setSourceFilter] = useState<string>();
+  const [prizeGradeFilter, setPrizeGradeFilter] = useState<string>();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -99,8 +102,11 @@ const LotteryTicketPage = () => {
   const [error, setError] = useState<string>();
 
   const queryParams = useMemo(() => ({
-    issue: issue.trim() || undefined
-  }), [issue]);
+    issue: issue.trim() || undefined,
+    status: statusFilter,
+    source: sourceFilter,
+    prizeGrade: prizeGradeFilter
+  }), [issue, prizeGradeFilter, sourceFilter, statusFilter]);
 
   const loadTickets = useCallback(async () => {
     setLoading(true);
@@ -283,6 +289,46 @@ const LotteryTicketPage = () => {
             value={issue}
             onChange={event => setIssue(event.target.value)}
             style={{ width: 180 }}
+          />
+          <Select
+            allowClear
+            placeholder="状态"
+            value={statusFilter}
+            onChange={setStatusFilter}
+            style={{ width: 120 }}
+            options={[
+              { label: '草稿', value: 'DRAFT' },
+              { label: '已购买', value: 'BOUGHT' },
+              { label: '已兑奖', value: 'CHECKED' },
+              { label: '作废', value: 'VOID' }
+            ]}
+          />
+          <Select
+            allowClear
+            placeholder="来源"
+            value={sourceFilter}
+            onChange={setSourceFilter}
+            style={{ width: 120 }}
+            options={[
+              { label: '手动', value: 'MANUAL' },
+              { label: '预测', value: 'PREDICTION' }
+            ]}
+          />
+          <Select
+            allowClear
+            placeholder="奖级"
+            value={prizeGradeFilter}
+            onChange={setPrizeGradeFilter}
+            style={{ width: 130 }}
+            options={[
+              { label: '一等奖', value: 'FIRST' },
+              { label: '二等奖', value: 'SECOND' },
+              { label: '三等奖', value: 'THIRD' },
+              { label: '四等奖', value: 'FOURTH' },
+              { label: '五等奖', value: 'FIFTH' },
+              { label: '六等奖', value: 'SIXTH' },
+              { label: '未中奖', value: 'NONE' }
+            ]}
           />
           <Button icon={<ReloadOutlined />} loading={loading} onClick={loadTickets}>
             刷新

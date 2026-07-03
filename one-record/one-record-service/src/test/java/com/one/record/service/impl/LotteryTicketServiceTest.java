@@ -36,9 +36,21 @@ class LotteryTicketServiceTest {
     void ticketsFiltersByIssueWhenProvided() {
         when(repository.findByUserIdAndIssueOrderByCreatedAtDesc("default", "2026001")).thenReturn(List.of());
 
-        service.tickets(" 2026001 ");
+        service.tickets(" 2026001 ", null, null, null);
 
         verify(repository).findByUserIdAndIssueOrderByCreatedAtDesc("default", "2026001");
+    }
+
+    @Test
+    void ticketsFiltersByStatusSourceAndPrizeGrade() {
+        when(repository.findByUserIdOrderByPeriodDescCreatedAtDesc("default")).thenReturn(List.of(
+                LotteryTicket.builder().id("a").status("CHECKED").source("PREDICTION").prizeGrade("FIFTH").build(),
+                LotteryTicket.builder().id("b").status("DRAFT").source("MANUAL").prizeGrade("NONE").build()
+        ));
+
+        List<LotteryTicket> tickets = service.tickets(null, "checked", "prediction", "fifth");
+
+        assertThat(tickets).extracting(LotteryTicket::getId).containsExactly("a");
     }
 
     @Test

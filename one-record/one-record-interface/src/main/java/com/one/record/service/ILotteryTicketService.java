@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface ILotteryTicketService {
 
-    List<LotteryTicket> tickets(String issue);
+    List<LotteryTicket> tickets(String issue, String status, String source, String prizeGrade);
 
     LotteryTicket saveTicket(LotteryTicket ticket);
 

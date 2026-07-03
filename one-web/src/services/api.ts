@@ -1714,7 +1714,7 @@ export const lotteryPredictionApi = {
 };
 
 export const lotteryTicketApi = {
-  tickets: (params?: { issue?: string }): Promise<LotteryTicket[]> => {
+  tickets: (params?: { issue?: string; status?: string; source?: string; prizeGrade?: string }): Promise<LotteryTicket[]> => {
     return apiClient.get('/lottery/tickets', { params });
   },
   summary: (): Promise<LotteryTicketSummary> => {

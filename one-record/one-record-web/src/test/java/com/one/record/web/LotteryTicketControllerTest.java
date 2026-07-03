@@ -34,18 +34,22 @@ class LotteryTicketControllerTest {
 
     @Test
     void ticketsBindsIssueFilter() throws Exception {
-        when(service.tickets("2026001")).thenReturn(List.of(LotteryTicket.builder()
+        when(service.tickets("2026001", "CHECKED", "PREDICTION", "FIFTH")).thenReturn(List.of(LotteryTicket.builder()
                 .id("ticket-1")
                 .issue("2026001")
                 .blueNumber("07")
                 .build()));
 
-        mockMvc.perform(get("/lottery/tickets").param("issue", "2026001"))
+        mockMvc.perform(get("/lottery/tickets")
+                        .param("issue", "2026001")
+                        .param("status", "CHECKED")
+                        .param("source", "PREDICTION")
+                        .param("prizeGrade", "FIFTH"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value("ticket-1"))
                 .andExpect(jsonPath("$[0].blueNumber").value("07"));
 
-        verify(service).tickets("2026001");
+        verify(service).tickets("2026001", "CHECKED", "PREDICTION", "FIFTH");
     }
 
     @Test

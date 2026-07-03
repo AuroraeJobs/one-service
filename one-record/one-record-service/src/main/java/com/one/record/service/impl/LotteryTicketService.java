@@ -32,11 +32,21 @@ public class LotteryTicketService implements ILotteryTicketService {
     private final LotteryTicketRepository repository;
 
     @Override
-    public List<LotteryTicket> tickets(String issue) {
+    public List<LotteryTicket> tickets(String issue, String status, String source, String prizeGrade) {
+        String safeStatus = normalizeOptional(status);
+        String safeSource = normalizeOptional(source);
+        String safePrizeGrade = normalizeOptional(prizeGrade);
+        List<LotteryTicket> items;
         if (StringUtils.hasText(issue)) {
-            return repository.findByUserIdAndIssueOrderByCreatedAtDesc(DEFAULT_USER_ID, issue.trim());
+            items = repository.findByUserIdAndIssueOrderByCreatedAtDesc(DEFAULT_USER_ID, issue.trim());
+        } else {
+            items = repository.findByUserIdOrderByPeriodDescCreatedAtDesc(DEFAULT_USER_ID);
         }
-        return repository.findByUserIdOrderByPeriodDescCreatedAtDesc(DEFAULT_USER_ID);
+        return items.stream()
+                .filter(ticket -> safeStatus == null || safeStatus.equals(normalizeOptional(ticket.getStatus())))
+                .filter(ticket -> safeSource == null || safeSource.equals(normalizeOptional(ticket.getSource())))
+                .filter(ticket -> safePrizeGrade == null || safePrizeGrade.equals(normalizeOptional(ticket.getPrizeGrade())))
+                .toList();
     }
 
     @Override
@@ -162,5 +172,9 @@ public class LotteryTicketService implements ILotteryTicketService {
 
     private String trimToNull(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
+    private String normalizeOptional(String value) {
+        return StringUtils.hasText(value) ? value.trim().toUpperCase() : null;
     }
 }

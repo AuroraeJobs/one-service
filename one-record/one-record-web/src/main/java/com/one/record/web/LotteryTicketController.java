@@ -30,9 +30,12 @@ public class LotteryTicketController {
     private final ILotteryTicketService service;
 
     @GetMapping
-    @Operation(summary = "查询彩票票据", description = "查询个人彩票票据，可按期号过滤")
-    public List<LotteryTicket> tickets(@RequestParam(name = "issue", required = false) String issue) {
-        return service.tickets(issue);
+    @Operation(summary = "查询彩票票据", description = "查询个人彩票票据，可按期号、状态、来源或奖级过滤")
+    public List<LotteryTicket> tickets(@RequestParam(name = "issue", required = false) String issue,
+                                       @RequestParam(name = "status", required = false) String status,
+                                       @RequestParam(name = "source", required = false) String source,
+                                       @RequestParam(name = "prizeGrade", required = false) String prizeGrade) {
+        return service.tickets(issue, status, source, prizeGrade);
     }
 
     @GetMapping("summary")
