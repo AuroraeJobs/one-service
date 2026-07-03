@@ -172,6 +172,7 @@ VOID
 ## Frontend Rules
 
 - Keep existing visual analysis pages, but route shared data through common APIs and utilities.
+- `RecordContext` is the first migrated shared frontend data layer: it reads paged `/lottery/records/draws`, sorts draws by period/issue ascending for legacy time-series semantics, exposes normalized `lotteryDraws`, and keeps `allRecords` as 14-digit compact strings until analysis pages are migrated.
 - Do not duplicate lottery number parsing across pages when a shared helper exists.
 - Keep prediction UX research-oriented and avoid guaranteed-win language.
 - Ticket and ledger pages should be quiet, record-focused, and explicit about cost and outcome.

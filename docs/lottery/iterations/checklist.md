@@ -32,8 +32,8 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add scheduled record sync. Added `LotteryRecordScheduledSync`, disabled by default with `hello.record.scheduled-sync-enabled`, cron configurable by `hello.record.scheduled-sync-cron`.
 - [x] Keep existing `record/*` endpoints compatible. Added new controller without changing `RecordController`.
 - [ ] Add backend tests for number normalization, duplicate issue handling, and sync idempotency. Number normalization is covered by `LotteryDrawUtilTest`; normalized draw query is covered by `RecordServiceTest`; sync lock behavior is covered by `LotteryRecordSyncServiceTest`; scheduled sync is covered by `LotteryRecordScheduledSyncTest`; provider-backed updater no-new-record path is covered by `RecordUpdaterTest`; duplicate issue and full sync idempotency remain.
-- [x] Add frontend API client methods for `/lottery/records/*`. Includes sync and sync-log methods; pages are not migrated yet.
-- [ ] Update frontend record loading to use normalized APIs when ready.
+- [x] Add frontend API client methods for `/lottery/records/*`. Includes sync and sync-log methods.
+- [x] Update frontend record loading to use normalized APIs when ready. `RecordContext` now loads paged `/lottery/records/draws`, keeps `allRecords` as compact strings for legacy statistics pages, and exposes `lotteryDraws` for future normalized UI work.
 
 ## Iteration 02: Statistics Cockpit
 
