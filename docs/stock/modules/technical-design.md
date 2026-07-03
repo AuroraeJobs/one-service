@@ -338,6 +338,7 @@ Rules:
 - Manual sync uses Redis locks with keys like `stock:sync:lock:kline:{symbol}` and a short TTL.
 - Scheduled daily sync is enabled by Spring scheduling and configured with `stock.market.kline-sync-cron`.
 - Scheduled daily sync fetches configured symbols through `StockKLineProviderRouter` and writes `SUCCESS` or `FAILED` logs.
+- Batch retry uses `POST /stock/klines/sync/retry`, fetches configured symbols through `StockKLineProviderRouter`, writes MongoDB sync logs, and protects execution with a Redis lock.
 - Historical third-party provider fetching stays behind provider/router abstractions, not directly in controllers.
 
 Frontend stock detail:

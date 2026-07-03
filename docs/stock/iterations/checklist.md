@@ -186,7 +186,7 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Add retry action for failed single-symbol sync logs.
 - [x] Link sync-log symbols back to single-symbol sync mode.
 - [x] Keep Provider-backed sync as the retry path.
-- [ ] Add backend batch retry endpoint if batch retry semantics are needed.
+- [x] Add backend batch retry endpoint if batch retry semantics are needed.
 - [x] Verify frontend lint and build.
 - [x] Update docs and commit/push after the milestone.
 

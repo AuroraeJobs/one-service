@@ -50,6 +50,13 @@ public class StockKLineController {
         return service.syncAll(kLines);
     }
 
+    @PostMapping("klines/sync/retry")
+    @Operation(summary = "重试批量K线同步", description = "按后端配置的股票列表重试 provider-backed K线同步")
+    public List<StockKLine> retryConfiguredSync() {
+        log.info("Retrying configured stock kline sync");
+        return service.retryConfiguredSync();
+    }
+
     @GetMapping("klines/sync-logs")
     @Operation(summary = "查询股票K线同步日志", description = "查询最近的股票K线同步日志")
     public List<StockKLineSyncLog> syncLogs(@RequestParam(name = "symbol", required = false) String symbol) {

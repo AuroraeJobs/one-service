@@ -127,6 +127,23 @@ class StockKLineServiceTest {
         assertThat(log.getMessage()).isEqualTo("OK");
     }
 
+    @Test
+    void retryConfiguredSyncFetchesConfiguredSymbolsFromProvider() {
+        StockKLineProvider provider = new StubKLineProvider();
+        StockKLineProviderRouter router = new StockKLineProviderRouter(properties, List.of(provider));
+        StockKLineService service = new StockKLineService(repository, syncLogRepository, stockMarketService, redisTemplate, properties, router);
+
+        List<StockKLine> saved = service.retryConfiguredSync();
+
+        assertThat(saved).hasSize(1);
+        ArgumentCaptor<StockKLineSyncLog> captor = ArgumentCaptor.forClass(StockKLineSyncLog.class);
+        org.mockito.Mockito.verify(syncLogRepository, org.mockito.Mockito.atLeastOnce()).save(captor.capture());
+        StockKLineSyncLog lastLog = captor.getAllValues().get(captor.getAllValues().size() - 1);
+        assertThat(lastLog.getJobName()).isEqualTo("stock-kline-sync-retry-all");
+        assertThat(lastLog.getStatus()).isEqualTo("SUCCESS");
+        assertThat(lastLog.getSavedCount()).isEqualTo(1);
+    }
+
     private static class StubKLineProvider implements StockKLineProvider {
 
         @Override

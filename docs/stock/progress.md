@@ -110,6 +110,7 @@ Implemented baseline:
 - Iteration 08 has started. Trade records and alert rules can now be edited from their operation pages through existing internal update APIs.
 - Iteration 08 account and recalculation UX is implemented. Trade and position pages use account selectors, and trade mutations show backend recalculation impact messages.
 - Iteration 09 has started. Failed single-symbol K-line sync logs can be retried from `/investments/sync` through the existing provider-backed sync API.
+- Iteration 09 batch retry is implemented. `POST /stock/klines/sync/retry` retries configured-symbol provider-backed K-line sync, and failed batch logs expose the action in the sync page.
 
 Architecture rule to preserve:
 

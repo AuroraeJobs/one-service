@@ -78,17 +78,17 @@ const LifeStockSyncPage = () => {
   };
 
   const retrySyncLog = async (record: StockKLineSyncLog) => {
-    if (!record.symbol) {
-      setError('批量同步日志暂不支持按单条重试');
-      return;
-    }
     const logKey = syncLogKey(record);
     setRetryingLogKey(logKey);
     setError(undefined);
     setSuccess(undefined);
     try {
-      const saved = await stockApi.syncKlines(record.symbol);
-      setSuccess(`已重试 ${record.symbol}，保存 ${saved.length} 条K线`);
+      const saved = record.symbol
+        ? await stockApi.syncKlines(record.symbol)
+        : await stockApi.retryKlineSync();
+      setSuccess(record.symbol
+        ? `已重试 ${record.symbol}，保存 ${saved.length} 条K线`
+        : `已重试配置批量同步，保存 ${saved.length} 条K线`);
       await loadLogs();
     } catch (requestError) {
       console.error('重试K线同步失败:', requestError);
@@ -167,13 +167,13 @@ const LifeStockSyncPage = () => {
       key: 'action',
       fixed: 'right',
       width: 96,
-      render: (_, record) => record.status === 'FAILED' && record.symbol ? (
+      render: (_, record) => record.status === 'FAILED' ? (
         <Button
           type="link"
           loading={retryingLogKey === syncLogKey(record)}
           onClick={() => retrySyncLog(record)}
         >
-          重试
+          {record.symbol ? '重试' : '批量重试'}
         </Button>
       ) : '-'
     }

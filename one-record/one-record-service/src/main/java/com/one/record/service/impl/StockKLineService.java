@@ -89,6 +89,18 @@ public class StockKLineService implements IStockKLineService {
     }
 
     @Override
+    public List<StockKLine> retryConfiguredSync() {
+        return runWithSyncLog(syncLockKey("retry-all"), "stock-kline-sync-retry-all", null, null,
+                () -> {
+                    List<StockKLine> fetched = new ArrayList<>();
+                    for (String symbol : configuredSyncSymbols()) {
+                        fetched.addAll(providerRouter.dailyKLines(normalizeSymbol(symbol), null, null));
+                    }
+                    return saveKLines(null, fetched);
+                });
+    }
+
+    @Override
     public StockKLineSyncLog scheduledDailySync() {
         String lockKey = syncLockKey("scheduled-daily");
         if (!acquireLock(lockKey)) {

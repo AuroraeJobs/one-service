@@ -436,6 +436,10 @@ export const stockApi = {
     return apiClient.post('/stock/klines/sync', klines);
   },
 
+  retryKlineSync: (): Promise<StockKLine[]> => {
+    return apiClient.post('/stock/klines/sync/retry');
+  },
+
   klineSyncLogs: (symbol?: string): Promise<StockKLineSyncLog[]> => {
     return apiClient.get('/stock/klines/sync-logs', {
       params: { symbol }
