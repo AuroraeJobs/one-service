@@ -120,6 +120,7 @@ Implemented baseline:
 - Iteration 11 summary windowing is implemented. `GET /stock/klines/sync-summary` accepts a capped `limit`, and `/investments/sync` can switch between 20/50/100 recent-log windows.
 - Iteration 12 sync-log status filtering is implemented. `GET /stock/klines/sync-logs` accepts optional `symbol` and `status`, and `/investments/sync` can filter MongoDB sync logs by execution status.
 - Iteration 13 sync-log windowing is implemented. `GET /stock/klines/sync-logs` accepts a capped `limit`, and `/investments/sync` can switch log windows between 20/50/100 rows.
+- Iteration 14 sync health rates are implemented. `GET /stock/klines/sync-summary` now returns backend-calculated success and failure rates, and `/investments/sync` displays them as summary cards.
 
 Architecture rule to preserve:
 

@@ -244,6 +244,8 @@ const LifeStockSyncPage = () => {
         <MetricCard title="最近状态" value={summary?.latestStatus || '-'} accent={summary?.latestStatus === 'FAILED' ? '#f5222d' : '#34c759'} />
         <MetricCard title="成功" value={summary?.successCount ?? 0} suffix="次" accent="#34c759" />
         <MetricCard title="失败" value={summary?.failedCount ?? 0} suffix="次" accent="#f5222d" />
+        <MetricCard title="成功率" value={formatRate(summary?.successRate)} accent="#30d158" />
+        <MetricCard title="失败率" value={formatRate(summary?.failedRate)} accent="#ff3b30" />
         <MetricCard title="运行中" value={summary?.runningCount ?? 0} suffix="次" accent="#0071e3" />
         <MetricCard title="保存" value={summary?.savedCount ?? 0} suffix="条" accent="#ff9500" />
         <MetricCard title="最后完成" value={formatTime(summary?.latestFinishedAt)} accent="#5856d6" valueStyle={{ fontSize: 18 }} />
@@ -401,6 +403,13 @@ const formatTime = (value?: number) => {
     return '-';
   }
   return new Date(value).toLocaleString();
+};
+
+const formatRate = (value?: number) => {
+  if (typeof value !== 'number') {
+    return '-';
+  }
+  return `${value.toFixed(2)}%`;
 };
 
 export default LifeStockSyncPage;

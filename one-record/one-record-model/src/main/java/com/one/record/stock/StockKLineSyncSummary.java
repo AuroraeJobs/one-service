@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -20,6 +22,10 @@ public class StockKLineSyncSummary {
     private Integer failedCount;
 
     private Integer runningCount;
+
+    private BigDecimal successRate;
+
+    private BigDecimal failedRate;
 
     private Integer requestedCount;
 

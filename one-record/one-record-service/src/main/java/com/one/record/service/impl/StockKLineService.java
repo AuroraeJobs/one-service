@@ -15,6 +15,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -169,12 +171,17 @@ public class StockKLineService implements IStockKLineService {
                 ? syncLogRepository.findBySymbolOrderByStartedAtDesc(normalizedSymbol, PageRequest.of(0, normalizedLimit))
                 : syncLogRepository.findByOrderByStartedAtDesc(PageRequest.of(0, normalizedLimit));
         StockKLineSyncLog latest = logs.isEmpty() ? null : logs.get(0);
+        int totalCount = logs.size();
+        int successCount = countStatus(logs, "SUCCESS");
+        int failedCount = countStatus(logs, "FAILED");
         return StockKLineSyncSummary.builder()
                 .symbol(normalizedSymbol)
-                .totalCount(logs.size())
-                .successCount(countStatus(logs, "SUCCESS"))
-                .failedCount(countStatus(logs, "FAILED"))
+                .totalCount(totalCount)
+                .successCount(successCount)
+                .failedCount(failedCount)
                 .runningCount(countStatus(logs, "RUNNING"))
+                .successRate(percent(successCount, totalCount))
+                .failedRate(percent(failedCount, totalCount))
                 .requestedCount(sumRequested(logs))
                 .savedCount(sumSaved(logs))
                 .latestJobName(latest == null ? null : latest.getJobName())
@@ -203,6 +210,15 @@ public class StockKLineService implements IStockKLineService {
         return (int) logs.stream()
                 .filter(log -> status.equals(log.getStatus()))
                 .count();
+    }
+
+    private BigDecimal percent(int count, int total) {
+        if (total <= 0) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+        return BigDecimal.valueOf(count)
+                .multiply(BigDecimal.valueOf(100))
+                .divide(BigDecimal.valueOf(total), 2, RoundingMode.HALF_UP);
     }
 
     private int sumRequested(List<StockKLineSyncLog> logs) {

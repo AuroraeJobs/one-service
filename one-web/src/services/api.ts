@@ -239,6 +239,8 @@ export interface StockKLineSyncSummary {
   successCount?: number;
   failedCount?: number;
   runningCount?: number;
+  successRate?: number;
+  failedRate?: number;
   requestedCount?: number;
   savedCount?: number;
   latestJobName?: string;

@@ -187,6 +187,8 @@ class StockKLineServiceTest {
         assertThat(summary.getSuccessCount()).isEqualTo(1);
         assertThat(summary.getFailedCount()).isEqualTo(1);
         assertThat(summary.getRunningCount()).isEqualTo(1);
+        assertThat(summary.getSuccessRate()).isEqualByComparingTo(new BigDecimal("33.33"));
+        assertThat(summary.getFailedRate()).isEqualByComparingTo(new BigDecimal("33.33"));
         assertThat(summary.getRequestedCount()).isEqualTo(5);
         assertThat(summary.getSavedCount()).isEqualTo(2);
         assertThat(summary.getLatestJobName()).isEqualTo("stock-kline-sync-all");
@@ -213,6 +215,8 @@ class StockKLineServiceTest {
 
         assertThat(summary.getSymbol()).isEqualTo("sh600519");
         assertThat(summary.getTotalCount()).isZero();
+        assertThat(summary.getSuccessRate()).isEqualByComparingTo(new BigDecimal("0.00"));
+        assertThat(summary.getFailedRate()).isEqualByComparingTo(new BigDecimal("0.00"));
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
         org.mockito.Mockito.verify(syncLogRepository).findBySymbolOrderByStartedAtDesc(eq("sh600519"), pageableCaptor.capture());
         assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(50);

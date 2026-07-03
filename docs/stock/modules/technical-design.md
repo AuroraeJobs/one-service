@@ -336,6 +336,8 @@ totalCount
 successCount
 failedCount
 runningCount
+successRate
+failedRate
 requestedCount
 savedCount
 latestJobName
@@ -362,6 +364,7 @@ Rules:
 - Batch retry uses `POST /stock/klines/sync/retry`, fetches configured symbols through `StockKLineProviderRouter`, writes MongoDB sync logs, and protects execution with a Redis lock.
 - `GET /stock/klines/sync-logs` supports optional `symbol`, `status`, and `limit` filters. Symbol is normalized by `IStockMarketService`; status is trimmed and uppercased; limit defaults to 50 and is capped at 100 before MongoDB repository lookup.
 - `GET /stock/klines/sync-summary` aggregates the latest MongoDB sync logs into status counters and millisecond timestamps.
+- Sync summary success and failure rates are percentage values calculated in the backend and rounded to two decimals.
 - Sync summary supports `limit`, defaults to 50, and is capped at 100 recent logs.
 - Historical third-party provider fetching stays behind provider/router abstractions, not directly in controllers.
 

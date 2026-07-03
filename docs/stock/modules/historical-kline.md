@@ -134,4 +134,5 @@ Current UX:
 - Sync page shows recent MongoDB sync logs, including status, requested/saved counts, messages, and timestamps.
 - Sync page reads `GET /stock/klines/sync-summary` to show recent status, success/failure/running counts, saved rows, and latest completion time.
 - Sync summary supports bounded windows of 20, 50, or 100 recent logs from the UI; backend caps the limit at 100.
+- Sync summary includes backend-calculated success and failure rates for the selected recent-log window.
 - Provider-specific K-line fetching is still not exposed to the frontend; provider integration remains a backend Track B task.

@@ -243,6 +243,16 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Add backend tests for log limit and cap behavior.
 - [x] Update docs and commit/push after the milestone.
 
+## Iteration 14: Sync Health Rates
+
+- [x] Add `successRate` and `failedRate` to `StockKLineSyncSummary`.
+- [x] Calculate summary rate metrics in the backend service.
+- [x] Return zero rates for empty summary windows.
+- [x] Update frontend stock API type.
+- [x] Show success-rate and failure-rate cards on `/investments/sync`.
+- [x] Add backend tests for rate calculations.
+- [x] Update docs and commit/push after the milestone.
+
 ## Quality Gates
 
 - [x] Backend compiles with JDK 21.
