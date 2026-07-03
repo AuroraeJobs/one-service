@@ -378,6 +378,17 @@ export interface StockProviderHealth {
   checkedAt?: number;
 }
 
+export interface StockPreference {
+  id?: string;
+  userId?: string;
+  defaultAccountId?: string;
+  defaultCurrency?: string;
+  defaultKLinePeriod?: string;
+  quoteRefreshIntervalSeconds?: number;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
 export const stockApi = {
   quote: (symbol: string): Promise<StockQuote> => {
     return apiClient.get('/stock/quote', {
@@ -506,6 +517,14 @@ export const stockApi = {
 
   providerHealth: (): Promise<StockProviderHealth[]> => {
     return apiClient.get('/stock/providers/health');
+  },
+
+  preferences: (): Promise<StockPreference> => {
+    return apiClient.get('/stock/preferences');
+  },
+
+  savePreferences: (preference: StockPreference): Promise<StockPreference> => {
+    return apiClient.put('/stock/preferences', preference);
   }
 };
 

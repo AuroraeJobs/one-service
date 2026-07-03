@@ -105,6 +105,7 @@ Implemented baseline:
 - Iteration 06 first detail-linkage slice is implemented. Linked stock pages read route query context, and symbol detail now shows holding summary, recent trades, active alerts, plus symbol-aware shortcuts.
 - Iteration 06 overview cockpit slice is implemented. `/investments` now shows live portfolio, holdings, alert history, analysis, and provider health widgets from internal stock APIs.
 - Iteration 06 acceptance polish is complete. Empty, loading, and error states are verified for the overview/detail linkage surfaces.
+- Iteration 07 has started. MongoDB-backed stock preferences and internal `/stock/preferences` APIs are implemented, and `/investments/settings` now edits persisted user preferences while provider config remains backend-owned.
 
 Architecture rule to preserve:
 

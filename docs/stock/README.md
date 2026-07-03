@@ -38,6 +38,7 @@ mvn -version
 - [Week 4 alerts, analysis, and provider abstraction](iterations/04-alerts-analysis-provider.md)
 - [Iteration 05 trade recalculation and K-line provider](iterations/05-trade-recalculation-and-kline-provider.md)
 - [Iteration 06 dashboard and detail linkage](iterations/06-dashboard-detail-linkage.md)
+- [Iteration 07 preferences and provider operations](iterations/07-preferences-and-provider-ops.md)
 - [Quality gates](iterations/quality-gates.md)
 
 ## Module Docs

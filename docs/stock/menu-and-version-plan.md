@@ -680,8 +680,8 @@ Progress:
 
 Follow-up:
 
-- Add persisted stock user preferences model and API.
-- Add write controls only after persistence and validation rules are implemented.
+- Persisted stock user preferences model and API are implemented in Iteration 07.
+- Settings page now has write controls for persisted user preferences.
 - Add detailed K-line provider health after provider health DTO expands beyond quote-provider status.
 
 ### V7: Dashboard And Detail Linkage
@@ -727,6 +727,7 @@ Progress:
 6. V5 analysis.
 7. V6 providers and settings.
 8. V7 dashboard and detail linkage.
+9. Iteration 07 preferences and provider operations.
 
 ## Architecture Rules To Preserve
 

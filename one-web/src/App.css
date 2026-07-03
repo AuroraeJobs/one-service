@@ -1202,6 +1202,12 @@ body {
   gap: 8px;
 }
 
+.stock-settings-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+}
+
 .stock-empty-dashboard {
   min-height: 44px;
   border: 1px dashed var(--app-border);
@@ -1271,6 +1277,10 @@ body {
 
   .life-investment-page .stock-symbol-search .ant-input-affix-wrapper {
     min-width: 0;
+  }
+
+  .stock-settings-form {
+    grid-template-columns: 1fr;
   }
 
   .life-investment-page .ant-table {

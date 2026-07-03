@@ -1,7 +1,9 @@
-import { Card, Table, Tag } from 'antd';
+import { useCallback, useEffect, useState } from 'react';
+import { Alert, Button, Card, Form, Input, InputNumber, Select, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { SettingOutlined } from '@ant-design/icons';
+import { ReloadOutlined, SaveOutlined, SettingOutlined } from '@ant-design/icons';
 import LifePageShell from './LifePageShell';
+import { stockApi, type StockPreference } from '../services/api';
 
 interface SettingRow {
   key: string;
@@ -17,14 +19,14 @@ const settingRows: SettingRow[] = [
     name: 'stock.market.provider',
     value: 'sina',
     status: '配置项',
-    note: '当前由后端配置决定，页面只展示规划，不直接写配置。'
+    note: '由后端配置决定；用户偏好不会直接写 Spring 配置。'
   },
   {
     key: 'fallback',
     name: 'stock.market.fallback-providers',
     value: '[]',
     status: '配置项',
-    note: '后续接入第二数据源后展示主备顺序。'
+    note: '数据源切换仍由后端 provider/router 抽象控制。'
   },
   {
     key: 'quoteTtl',
@@ -56,38 +58,63 @@ const settingRows: SettingRow[] = [
   }
 ];
 
-const futureRows: SettingRow[] = [
-  {
-    key: 'defaultAccount',
-    name: '默认账户',
-    value: '-',
-    status: '待设计',
-    note: '需要用户偏好持久化。'
-  },
-  {
-    key: 'defaultCurrency',
-    name: '默认币种',
-    value: 'CNY',
-    status: '待设计',
-    note: '需要和账户/组合模型统一。'
-  },
-  {
-    key: 'chartPeriod',
-    name: '默认K线周期',
-    value: 'daily',
-    status: '待设计',
-    note: '需要前端偏好或后端偏好 API。'
-  },
-  {
-    key: 'refreshInterval',
-    name: '行情刷新间隔',
-    value: '-',
-    status: '待设计',
-    note: '需要避免绕过后端 Redis TTL 策略。'
-  }
+const kLinePeriodOptions = [
+  { label: '日线', value: 'daily' },
+  { label: '周线', value: 'weekly' },
+  { label: '月线', value: 'monthly' }
 ];
 
 const LifeStockSettingsPage = () => {
+  const [form] = Form.useForm<StockPreference>();
+  const [preference, setPreference] = useState<StockPreference>();
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string>();
+  const [success, setSuccess] = useState<string>();
+
+  const loadPreference = useCallback(async () => {
+    setLoading(true);
+    setError(undefined);
+    try {
+      const data = await stockApi.preferences();
+      setPreference(data);
+      form.setFieldsValue(data);
+    } catch (requestError) {
+      console.error('获取股票偏好失败:', requestError);
+      setError(requestError instanceof Error ? requestError.message : '获取股票偏好失败');
+    } finally {
+      setLoading(false);
+    }
+  }, [form]);
+
+  useEffect(() => {
+    loadPreference();
+  }, [loadPreference]);
+
+  const savePreference = async () => {
+    const values = await form.validateFields();
+    setSaving(true);
+    setError(undefined);
+    setSuccess(undefined);
+    try {
+      const saved = await stockApi.savePreferences({
+        ...preference,
+        ...values,
+        defaultAccountId: values.defaultAccountId?.trim() || undefined,
+        defaultCurrency: values.defaultCurrency?.trim() || undefined,
+        defaultKLinePeriod: values.defaultKLinePeriod?.trim() || undefined
+      });
+      setPreference(saved);
+      form.setFieldsValue(saved);
+      setSuccess('股票偏好已保存');
+    } catch (requestError) {
+      console.error('保存股票偏好失败:', requestError);
+      setError(requestError instanceof Error ? requestError.message : '保存股票偏好失败');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const columns: ColumnsType<SettingRow> = [
     {
       title: '设置项',
@@ -109,7 +136,7 @@ const LifeStockSettingsPage = () => {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
-      render: value => <Tag color={value === '配置项' ? 'blue' : 'orange'}>{value}</Tag>
+      render: value => <Tag color="blue">{value}</Tag>
     },
     {
       title: '说明',
@@ -122,36 +149,60 @@ const LifeStockSettingsPage = () => {
     <LifePageShell
       className="life-investment-page"
       eyebrow="股票设置"
-      title="先把配置边界说明清楚，再设计可持久化的用户偏好。"
+      title="维护股票模块的用户偏好；数据源切换仍由后端 provider/router 管理。"
+      actions={
+        <Space wrap>
+          <Button icon={<ReloadOutlined spin={loading} />} loading={loading} onClick={loadPreference}>
+            重新加载
+          </Button>
+          <Button type="primary" icon={<SaveOutlined />} loading={saving} onClick={savePreference}>
+            保存偏好
+          </Button>
+        </Space>
+      }
     >
+      {error ? <Alert type="error" showIcon message={error} className="stock-market-alert" /> : null}
+      {success ? <Alert type="success" showIcon message={success} className="stock-market-alert" /> : null}
+
       <Card className="life-panel-card stock-market-panel">
         <div className="stock-market-toolbar">
           <div>
-            <h2>后端配置项</h2>
-            <p>这些值由 Spring 配置和后端默认值控制，当前页面只读展示规划，避免前端写入不可持久化的假设置。</p>
+            <h2>用户偏好</h2>
+            <p>这些值保存到 MongoDB，用于后续页面默认值；不会绕过 Redis TTL，也不会让前端直接依赖具体数据源。</p>
+          </div>
+          <Tag color="green">MongoDB 持久化</Tag>
+        </div>
+        <Form form={form} layout="vertical" className="stock-settings-form">
+          <Form.Item name="defaultAccountId" label="默认账户 ID">
+            <Input placeholder="可留空" />
+          </Form.Item>
+          <Form.Item name="defaultCurrency" label="默认币种">
+            <Input placeholder="CNY" maxLength={8} />
+          </Form.Item>
+          <Form.Item name="defaultKLinePeriod" label="默认K线周期" rules={[{ required: true, message: '请选择默认K线周期' }]}>
+            <Select options={kLinePeriodOptions} />
+          </Form.Item>
+          <Form.Item
+            name="quoteRefreshIntervalSeconds"
+            label="行情刷新间隔（秒）"
+            rules={[{ required: true, message: '请输入行情刷新间隔' }]}
+          >
+            <InputNumber min={5} max={3600} precision={0} style={{ width: '100%' }} />
+          </Form.Item>
+        </Form>
+      </Card>
+
+      <Card className="life-panel-card stock-market-panel">
+        <div className="stock-market-toolbar">
+          <div>
+            <h2>后端配置边界</h2>
+            <p>下面是服务端配置边界，只读展示；Provider、缓存 TTL、定时任务仍由后端配置和服务抽象控制。</p>
           </div>
         </div>
         <Table
           rowKey={record => record.key}
           columns={columns}
           dataSource={settingRows}
-          pagination={false}
-          scroll={{ x: 760 }}
-          rowClassName="stock-quote-row"
-        />
-      </Card>
-
-      <Card className="life-panel-card stock-market-panel">
-        <div className="stock-market-toolbar">
-          <div>
-            <h2>后续用户偏好</h2>
-            <p>这些设置需要先设计 MongoDB 持久化模型和 API，再接入可编辑控件。</p>
-          </div>
-        </div>
-        <Table
-          rowKey={record => record.key}
-          columns={columns}
-          dataSource={futureRows}
           pagination={false}
           scroll={{ x: 760 }}
           rowClassName="stock-quote-row"

@@ -408,6 +408,27 @@ stock_trades
 - updatedAt
 ```
 
+Stock preferences:
+
+```text
+stock_preferences
+- userId
+- defaultAccountId
+- defaultCurrency
+- defaultKLinePeriod
+- quoteRefreshIntervalSeconds
+- createdAt
+- updatedAt
+```
+
+Rules:
+
+- Preferences are user-level module defaults stored in MongoDB.
+- Preferences do not directly mutate backend `stock.market.*` provider configuration.
+- `defaultKLinePeriod` is normalized to `daily`, `weekly`, or `monthly`.
+- `quoteRefreshIntervalSeconds` is validated between 5 and 3600 seconds and should not bypass backend Redis TTL behavior.
+- API time fields use millisecond timestamps.
+
 Portfolio rules:
 
 - Portfolio state is persisted in MongoDB.

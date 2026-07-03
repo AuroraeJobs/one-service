@@ -152,6 +152,22 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Verify frontend lint and build.
 - [x] Update docs and commit/push after the milestone.
 
+## Iteration 07: Preferences And Provider Operations
+
+- [x] Add `StockPreference` MongoDB model.
+- [x] Add `StockPreferenceRepository`.
+- [x] Add `IStockPreferenceService` and implementation.
+- [x] Add `GET /stock/preferences`.
+- [x] Add `PUT /stock/preferences`.
+- [x] Add service tests for defaults, normalization, and validation.
+- [x] Wire frontend `stockApi` preferences methods.
+- [x] Replace read-only settings future table with editable persisted preference form.
+- [ ] Expand provider health DTO for quote and K-line provider categories.
+- [ ] Show detailed K-line provider health on 数据源/总览.
+- [x] Verify frontend lint and build.
+- [x] Verify backend tests.
+- [x] Update docs and commit/push after the milestone.
+
 ## Quality Gates
 
 - [x] Backend compiles with JDK 21.
