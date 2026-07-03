@@ -22,6 +22,8 @@ public class LotteryTicket {
     @Id
     private String id;
 
+    private String userId;
+
     private String issue;
 
     private Long period;

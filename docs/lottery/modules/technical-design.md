@@ -172,6 +172,8 @@ updatedAt
 
 `LotteryPrizeCalculator` is the shared prize-grade utility. It normalizes ticket and actual numbers with `LotteryDrawUtil`, counts red and blue hits, and maps 双色球 prize rules to `FIRST` through `SIXTH` or `NONE`.
 
+`LotteryTicketService` is the first ticket service boundary. It uses default user scoping, normalizes red and blue numbers, defaults quantity/cost/source/status, and exposes list/create/update/delete through `/lottery/tickets`.
+
 Suggested statuses:
 
 ```text

@@ -68,11 +68,11 @@ Use this file as the durable task board for the lottery module. When a task is f
 
 - [x] Add `LotteryTicket` model. Added Mongo document model for personal ticket records.
 - [x] Add `LotteryPrizeResult` model. Added prize result DTO with hit counts, grade, level, fixed amount, and winning flag.
-- [ ] Add ticket repository and service.
-- [ ] Add `GET /lottery/tickets`.
-- [ ] Add `POST /lottery/tickets`.
-- [ ] Add `PUT /lottery/tickets/{id}`.
-- [ ] Add `DELETE /lottery/tickets/{id}`.
+- [x] Add ticket repository and service. Added `LotteryTicketRepository` and `LotteryTicketService` with default user scoping and ticket normalization.
+- [x] Add `GET /lottery/tickets`. Supports optional `issue` filter.
+- [x] Add `POST /lottery/tickets`. Creates normalized personal tickets.
+- [x] Add `PUT /lottery/tickets/{id}`. Updates existing personal tickets.
+- [x] Add `DELETE /lottery/tickets/{id}`. Deletes an existing personal ticket by ID.
 - [ ] Add `POST /lottery/tickets/check-prizes`.
 - [ ] Add `GET /lottery/tickets/summary`.
 - [x] Add prize grade calculation utility. Added `LotteryPrizeCalculator` with validation-backed hit counting and prize grade mapping tests.
