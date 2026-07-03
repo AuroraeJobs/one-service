@@ -265,6 +265,56 @@ export interface StockPortfolioSummary {
   holdings?: StockHoldingSummary[];
 }
 
+export interface StockAccount {
+  id?: string;
+  userId?: string;
+  name: string;
+  broker?: string;
+  accountNo?: string;
+  currency?: string;
+  cashBalance?: number;
+  status?: string;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
+export interface StockPosition {
+  id?: string;
+  userId?: string;
+  accountId?: string;
+  symbol: string;
+  market?: string;
+  code?: string;
+  name?: string;
+  quantity?: number;
+  availableQuantity?: number;
+  costPrice?: number;
+  costAmount?: number;
+  openedAt?: number;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
+export interface StockTrade {
+  id?: string;
+  userId?: string;
+  accountId?: string;
+  symbol: string;
+  market?: string;
+  code?: string;
+  name?: string;
+  tradeType: string;
+  quantity?: number;
+  price?: number;
+  amount?: number;
+  fee?: number;
+  tax?: number;
+  tradedAt?: number;
+  remark?: string;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
 export const stockApi = {
   quote: (symbol: string): Promise<StockQuote> => {
     return apiClient.get('/stock/quote', {
@@ -319,6 +369,44 @@ export const stockApi = {
 
   portfolioSummary: (): Promise<StockPortfolioSummary> => {
     return apiClient.get('/stock/portfolio/summary');
+  },
+
+  accounts: (): Promise<StockAccount[]> => {
+    return apiClient.get('/stock/accounts');
+  },
+
+  positions: (accountId?: string): Promise<StockPosition[]> => {
+    return apiClient.get('/stock/positions', {
+      params: { accountId }
+    });
+  },
+
+  recalculatePositions: (accountId?: string): Promise<StockPosition[]> => {
+    return apiClient.post('/stock/positions/recalculate', undefined, {
+      params: { accountId }
+    });
+  },
+
+  recalculatePosition: (symbol: string, accountId?: string): Promise<StockPosition> => {
+    return apiClient.post(`/stock/positions/${symbol}/recalculate`, undefined, {
+      params: { accountId }
+    });
+  },
+
+  trades: (params?: { accountId?: string; symbol?: string }): Promise<StockTrade[]> => {
+    return apiClient.get('/stock/trades', { params });
+  },
+
+  saveTrade: (trade: StockTrade): Promise<StockTrade> => {
+    return apiClient.post('/stock/trades', trade);
+  },
+
+  updateTrade: (id: string, trade: StockTrade): Promise<StockTrade> => {
+    return apiClient.put(`/stock/trades/${id}`, trade);
+  },
+
+  deleteTrade: (id: string): Promise<void> => {
+    return apiClient.delete(`/stock/trades/${id}`);
   }
 };
 

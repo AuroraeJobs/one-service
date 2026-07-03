@@ -139,6 +139,20 @@ DELETE /stock/trades/{id}
 GET /stock/portfolio/summary
 ```
 
+## Frontend Routes
+
+```text
+/investments/positions
+/investments/trades
+```
+
+Current UX:
+
+- Positions page lists backend position rows, supports account filtering, and can trigger manual recalculation.
+- Trades page lists trade records, supports account/symbol filtering, and can create/delete trade records.
+- Trade creation supports `BUY`, `SELL`, `DIVIDEND`, `FEE`, `BONUS_SHARE`, and `SPLIT`.
+- Edit trade remains a follow-up UX task.
+
 ## Current Recalculation Behavior
 
 Implemented in Iteration 05:

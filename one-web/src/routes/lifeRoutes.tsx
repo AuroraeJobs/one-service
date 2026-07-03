@@ -11,7 +11,9 @@ import HealthWinterSolsticePage from '../components/HealthWinterSolsticePage';
 import HexagramPage from '../components/HexagramPage';
 import LifeDataConnectionsPage from '../components/LifeDataConnectionsPage';
 import LifeInvestmentPage from '../components/LifeInvestmentPage';
+import LifeStockPositionsPage from '../components/LifeStockPositionsPage';
 import LifeStockDetailPage from '../components/LifeStockDetailPage';
+import LifeStockTradesPage from '../components/LifeStockTradesPage';
 import LifeOverviewPage from '../components/LifeOverviewPage';
 import LotteryOverviewPage from '../components/LotteryOverviewPage';
 import LotteryAstronautPage from '../components/LotteryAstronautPage';
@@ -41,6 +43,8 @@ export const createProtectedRoutes = (isTabVisible: boolean): ProtectedRouteConf
   { path: '/investments', element: <LifeInvestmentPage /> },
   { path: '/investments/watchlist', element: <LifeInvestmentPage /> },
   { path: '/investments/market', element: <LifeInvestmentPage /> },
+  { path: '/investments/positions', element: <LifeStockPositionsPage /> },
+  { path: '/investments/trades', element: <LifeStockTradesPage /> },
   { path: '/investments/stocks/:symbol', element: <LifeStockDetailPage /> },
   { path: '/vehicle', element: <HealthSpringEquinoxPage /> },
   { path: '/vehicle/tesla', element: <TeslaFleetManagerPage /> },

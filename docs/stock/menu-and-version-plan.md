@@ -479,6 +479,28 @@ Acceptance:
 - Trade page supports the full current trade type list.
 - Backend tests cover recalculation; frontend changed files pass lint/build.
 
+Progress:
+
+- Completed first UX slice on 2026-07-03.
+- Added routes:
+
+```text
+/investments/positions
+/investments/trades
+```
+
+- Added stock subnav items for 持仓 and 交易.
+- Added positions page with account filter and manual recalculation action.
+- Added trades page with account/symbol filters, trade creation, and delete action.
+- Trade creation supports `BUY`, `SELL`, `DIVIDEND`, `FEE`, `BONUS_SHARE`, and `SPLIT`.
+- Verified changed files with ESLint and full frontend build.
+
+Follow-up:
+
+- Add edit-trade modal by reusing the create form.
+- Add account selector after account UX is designed.
+- Surface recalculation impact more explicitly after save/delete.
+
 ### V3: Historical Data Operations
 
 Goal:
