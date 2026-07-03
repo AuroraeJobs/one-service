@@ -168,6 +168,10 @@ createdAt
 updatedAt
 ```
 
+`LotteryTicket` is the durable personal ticket model for `lottery_tickets`. It stores issue/period, red and blue numbers, quantity, cost, source, status, optional prediction snapshot linkage, and the latest `LotteryPrizeResult`.
+
+`LotteryPrizeCalculator` is the shared prize-grade utility. It normalizes ticket and actual numbers with `LotteryDrawUtil`, counts red and blue hits, and maps 双色球 prize rules to `FIRST` through `SIXTH` or `NONE`.
+
 Suggested statuses:
 
 ```text

@@ -49,6 +49,13 @@ public final class LotteryDrawUtil {
 
     public static List<String> normalizeRedNumbers(String red) {
         List<String> numbers = splitNumbers(red);
+        return normalizeRedNumbers(numbers);
+    }
+
+    public static List<String> normalizeRedNumbers(List<String> numbers) {
+        if (numbers == null) {
+            throw new IllegalArgumentException("红球必须是6个号码");
+        }
         if (numbers.size() != 6) {
             throw new IllegalArgumentException("红球必须是6个号码");
         }

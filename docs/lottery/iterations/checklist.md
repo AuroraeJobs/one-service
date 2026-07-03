@@ -66,8 +66,8 @@ Use this file as the durable task board for the lottery module. When a task is f
 
 ## Iteration 04: Personal Tickets And Prize Checking
 
-- [ ] Add `LotteryTicket` model.
-- [ ] Add `LotteryPrizeResult` model.
+- [x] Add `LotteryTicket` model. Added Mongo document model for personal ticket records.
+- [x] Add `LotteryPrizeResult` model. Added prize result DTO with hit counts, grade, level, fixed amount, and winning flag.
 - [ ] Add ticket repository and service.
 - [ ] Add `GET /lottery/tickets`.
 - [ ] Add `POST /lottery/tickets`.
@@ -75,12 +75,12 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [ ] Add `DELETE /lottery/tickets/{id}`.
 - [ ] Add `POST /lottery/tickets/check-prizes`.
 - [ ] Add `GET /lottery/tickets/summary`.
-- [ ] Add prize grade calculation utility.
+- [x] Add prize grade calculation utility. Added `LotteryPrizeCalculator` with validation-backed hit counting and prize grade mapping tests.
 - [ ] Add ticket list page.
 - [ ] Add ticket create/edit modal.
 - [ ] Add action to save prediction candidates as tickets.
 - [ ] Add filters by issue, status, source, and prize grade.
-- [ ] Add tests for prize grade calculation.
+- [x] Add tests for prize grade calculation. Covered first through sixth prize, no prize, normalized number matching, and invalid hit counts.
 
 ## Iteration 05: Outcome Analysis And Ledger
 
