@@ -18,6 +18,7 @@ import {
   MoneyCollectOutlined,
   SafetyCertificateOutlined,
   StockOutlined,
+  SyncOutlined,
   ThunderboltOutlined,
   TrophyOutlined,
   UserOutlined,
@@ -172,6 +173,8 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
     { id: 'investment-market', moduleKey: 'investment', path: '/investments/market', label: '行情', icon: <LineChartOutlined />, accent: '#34c759' },
     { id: 'investment-positions', moduleKey: 'investment', path: '/investments/positions', label: '持仓', icon: <WalletOutlined />, accent: '#ff9500' },
     { id: 'investment-trades', moduleKey: 'investment', path: '/investments/trades', label: '交易', icon: <BarChartOutlined />, accent: '#ff3b30' },
+    { id: 'investment-klines', moduleKey: 'investment', path: '/investments/klines', label: 'K线', icon: <LineChartOutlined />, accent: '#5856d6' },
+    { id: 'investment-sync', moduleKey: 'investment', path: '/investments/sync', label: '同步', icon: <SyncOutlined />, accent: '#00c7be' },
     { id: 'investment-connections', moduleKey: 'investment', path: '/connections', label: '接入', icon: <DatabaseOutlined />, accent: '#00c7be' }
   ],
   connectors: [

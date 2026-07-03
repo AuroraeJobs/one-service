@@ -103,3 +103,17 @@ GET /stock/klines/sync-logs
 - Uses internal APIs only: `GET /stock/quote` and `GET /stock/{symbol}/klines`.
 - Uses `echarts-for-react`.
 - Renders candlestick, volume, MA5, MA10, and MA20.
+
+## Operations Routes
+
+```text
+/investments/klines
+/investments/sync
+```
+
+Current UX:
+
+- K-line page queries MongoDB-backed historical rows by symbol, period, and date range.
+- Sync page can submit standardized K-line JSON to the existing sync APIs.
+- Sync page shows recent MongoDB sync logs, including status, requested/saved counts, messages, and timestamps.
+- Provider-specific K-line fetching is still not exposed to the frontend; provider integration remains a backend Track B task.

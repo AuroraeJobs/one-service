@@ -95,6 +95,7 @@ Implemented baseline:
 - Stock menu and version planning has been documented. The target menu tree includes 总览、自选、行情、持仓、交易、个股、K线、告警、分析、数据源、同步、设置, with versions planned by menu capability.
 - Menu V1 is implemented. The stock subnav now exposes 总览、自选、行情, routes `/investments/watchlist` and `/investments/market` are wired, and `/investments/stocks/:symbol` remains the 个股 detail route.
 - Menu V2 first UX slice is implemented. Routes `/investments/positions` and `/investments/trades` are wired, the stock subnav exposes 持仓 and 交易, positions can be filtered/recalculated, and trades can be created/deleted from the UI.
+- Menu V3 first UX slice is implemented. Routes `/investments/klines` and `/investments/sync` are wired, the stock subnav exposes K线 and 同步, K-line rows can be queried, standardized K-line JSON can be submitted to sync APIs, and sync logs are visible.
 
 Architecture rule to preserve:
 

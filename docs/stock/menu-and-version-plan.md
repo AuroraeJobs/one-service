@@ -527,6 +527,26 @@ Acceptance:
 - Sync logs are visible.
 - K-line provider details remain hidden behind internal APIs.
 
+Progress:
+
+- Completed first UX slice on 2026-07-03.
+- Added routes:
+
+```text
+/investments/klines
+/investments/sync
+```
+
+- Added stock subnav items for K线 and 同步.
+- Added K-line page with symbol, period, and date-range filters.
+- Added sync page with standardized K-line JSON import, single-symbol/batch modes, and sync log table.
+- Verified changed files with ESLint and full frontend build.
+
+Follow-up:
+
+- Once K-line provider sync is implemented, replace manual JSON import as the primary action and keep JSON import as an advanced fallback.
+- Add sync retry action for failed logs after backend retry API exists.
+
 ### V4: Alerts And Daily Monitoring
 
 Goal:
