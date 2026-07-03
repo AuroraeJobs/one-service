@@ -1,8 +1,7 @@
 package com.one.record.service.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.one.common.exception.ServiceException;
+import com.one.common.util.JsonUtil;
 import com.one.record.configuration.StockMarketProperties;
 import com.one.record.service.IStockMarketService;
 import com.one.record.stock.StockQuote;
@@ -22,7 +21,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.Charset;
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -43,16 +41,12 @@ public class StockMarketService implements IStockMarketService {
 
     private final StringRedisTemplate redisTemplate;
 
-    private final ObjectMapper objectMapper;
-
     private final RestTemplate restTemplate;
 
     public StockMarketService(StockMarketProperties properties,
-                              StringRedisTemplate redisTemplate,
-                              ObjectMapper objectMapper) {
+                              StringRedisTemplate redisTemplate) {
         this.properties = properties;
         this.redisTemplate = redisTemplate;
-        this.objectMapper = objectMapper.copy().findAndRegisterModules();
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(Duration.ofSeconds(properties.getConnectTimeoutSeconds()));
         requestFactory.setReadTimeout(Duration.ofSeconds(properties.getReadTimeoutSeconds()));
@@ -154,7 +148,7 @@ public class StockMarketService implements IStockMarketService {
     }
 
     private List<StockQuote> parseSinaQuotes(String quoteText, List<String> requestedSymbols) {
-        LocalDateTime fetchedAt = LocalDateTime.now();
+        Long fetchedAt = System.currentTimeMillis();
         List<StockQuote> quotes = new ArrayList<>();
         Matcher matcher = SINA_QUOTE_PATTERN.matcher(quoteText);
         while (matcher.find()) {
@@ -173,7 +167,7 @@ public class StockMarketService implements IStockMarketService {
         return quotes;
     }
 
-    private StockQuote parseSinaQuote(String sourceSymbol, String payload, LocalDateTime fetchedAt) {
+    private StockQuote parseSinaQuote(String sourceSymbol, String payload, Long fetchedAt) {
         String market = sourceSymbol.length() > 2 ? sourceSymbol.substring(0, 2) : "";
         String code = sourceSymbol.length() > 2 ? sourceSymbol.substring(2) : sourceSymbol;
         if (payload == null || payload.isBlank()) {
@@ -217,7 +211,7 @@ public class StockMarketService implements IStockMarketService {
                 .build();
     }
 
-    private StockQuote unavailableQuote(String sourceSymbol, LocalDateTime fetchedAt, String message) {
+    private StockQuote unavailableQuote(String sourceSymbol, Long fetchedAt, String message) {
         String market = sourceSymbol.length() > 2 ? sourceSymbol.substring(0, 2) : "";
         String code = sourceSymbol.length() > 2 ? sourceSymbol.substring(2) : sourceSymbol;
         return StockQuote.builder()
@@ -247,7 +241,7 @@ public class StockMarketService implements IStockMarketService {
     }
 
     private List<StockQuote> fallbackQuotes(List<String> sourceSymbols, String reason) {
-        LocalDateTime fallbackAt = LocalDateTime.now();
+        Long fallbackAt = System.currentTimeMillis();
         List<StockQuote> quotes = new ArrayList<>();
         for (String sourceSymbol : sourceSymbols) {
             StockQuote fallbackQuote = readCachedQuote(sourceSymbol, lastSuccessQuoteKey(sourceSymbol));
@@ -293,7 +287,7 @@ public class StockMarketService implements IStockMarketService {
             if (value == null || value.isBlank()) {
                 return null;
             }
-            StockQuote quote = objectMapper.readValue(value, StockQuote.class);
+            StockQuote quote = JsonUtil.toObject(value, StockQuote.class);
             if (quote.getSymbol() == null || quote.getSymbol().isBlank()) {
                 quote.setSymbol(sourceSymbol);
             }
@@ -306,14 +300,12 @@ public class StockMarketService implements IStockMarketService {
 
     private void writeCache(String key, StockQuote quote, Integer ttlSeconds) {
         try {
-            String value = objectMapper.writeValueAsString(quote);
+            String value = JsonUtil.toJson(quote);
             if (ttlSeconds == null || ttlSeconds <= 0) {
                 redisTemplate.opsForValue().set(key, value);
             } else {
                 redisTemplate.opsForValue().set(key, value, Duration.ofSeconds(ttlSeconds));
             }
-        } catch (JsonProcessingException ex) {
-            log.warn("Failed to serialize stock quote cache, key={}", key, ex);
         } catch (RuntimeException ex) {
             log.warn("Failed to write stock quote cache, key={}", key, ex);
         }

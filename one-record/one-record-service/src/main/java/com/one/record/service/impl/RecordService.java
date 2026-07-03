@@ -1,8 +1,7 @@
 package com.one.record.service.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.one.common.util.JsonUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.one.record.repository.RecordRepository;
@@ -30,8 +29,6 @@ public class RecordService implements IRecordService {
     private final RecordRepository repository;
 
     private final StringRedisTemplate redisTemplate;
-
-    private final ObjectMapper objectMapper;
 
     @Override
     public void saveAll(List<Record> item) {
@@ -99,23 +96,19 @@ public class RecordService implements IRecordService {
             if (!StringUtils.hasText(value)) {
                 return Collections.emptyList();
             }
-            return objectMapper.readValue(value, new TypeReference<List<RecordYearCount>>() {
+            return JsonUtil.toObject(value, new TypeReference<List<RecordYearCount>>() {
             });
-        } catch (JsonProcessingException exception) {
-            log.warn("年度记录数反序列化失败，key={}", RECORD_YEAR_COUNT_KEY, exception);
         } catch (RuntimeException exception) {
-            log.warn("年度记录数读取 Redis 失败，key={}", RECORD_YEAR_COUNT_KEY, exception);
+            log.warn("年度记录数读取或反序列化失败，key={}", RECORD_YEAR_COUNT_KEY, exception);
         }
         return Collections.emptyList();
     }
 
     private void saveYearCounts(List<RecordYearCount> yearCounts) {
         try {
-            redisTemplate.opsForValue().set(RECORD_YEAR_COUNT_KEY, objectMapper.writeValueAsString(yearCounts));
-        } catch (JsonProcessingException exception) {
-            log.warn("年度记录数序列化失败，key={}", RECORD_YEAR_COUNT_KEY, exception);
+            redisTemplate.opsForValue().set(RECORD_YEAR_COUNT_KEY, JsonUtil.toJson(yearCounts));
         } catch (RuntimeException exception) {
-            log.warn("年度记录数写入 Redis 失败，key={}", RECORD_YEAR_COUNT_KEY, exception);
+            log.warn("年度记录数序列化或写入 Redis 失败，key={}", RECORD_YEAR_COUNT_KEY, exception);
         }
     }
 }

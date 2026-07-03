@@ -1,8 +1,7 @@
 package com.one.record.service.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.one.common.util.JsonUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.one.common.exception.NotFoundException;
@@ -44,8 +43,6 @@ public class LotteryAstronautService implements ILotteryAstronautService {
     private final BlueBallRepository blueBallRepository;
 
     private final StringRedisTemplate redisTemplate;
-
-    private final ObjectMapper objectMapper;
 
     @Override
     public List<LotteryAstronaut> findAll() {
@@ -131,12 +128,10 @@ public class LotteryAstronautService implements ILotteryAstronautService {
             if (!StringUtils.hasText(value)) {
                 return new ArrayList<>();
             }
-            return objectMapper.readValue(value, new TypeReference<List<LotteryAstronautVoyageStat>>() {
+            return JsonUtil.toObject(value, new TypeReference<List<LotteryAstronautVoyageStat>>() {
             });
-        } catch (JsonProcessingException exception) {
-            log.warn("宇航员出行次数反序列化失败，key={}", VOYAGE_STATS_KEY, exception);
         } catch (RuntimeException exception) {
-            log.warn("宇航员出行次数读取 Redis 失败，key={}", VOYAGE_STATS_KEY, exception);
+            log.warn("宇航员出行次数读取或反序列化失败，key={}", VOYAGE_STATS_KEY, exception);
         }
         return new ArrayList<>();
     }
@@ -160,11 +155,9 @@ public class LotteryAstronautService implements ILotteryAstronautService {
 
     private void saveVoyageStats(List<LotteryAstronautVoyageStat> stats) {
         try {
-            redisTemplate.opsForValue().set(VOYAGE_STATS_KEY, objectMapper.writeValueAsString(stats));
-        } catch (JsonProcessingException exception) {
-            log.warn("宇航员出行次数序列化失败，key={}", VOYAGE_STATS_KEY, exception);
+            redisTemplate.opsForValue().set(VOYAGE_STATS_KEY, JsonUtil.toJson(stats));
         } catch (RuntimeException exception) {
-            log.warn("宇航员出行次数写入 Redis 失败，key={}", VOYAGE_STATS_KEY, exception);
+            log.warn("宇航员出行次数序列化或写入 Redis 失败，key={}", VOYAGE_STATS_KEY, exception);
         }
     }
 

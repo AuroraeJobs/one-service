@@ -1,6 +1,6 @@
 package com.one.record.configuration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.one.common.util.JsonUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.SmartLifecycle;
@@ -27,8 +27,6 @@ import java.util.stream.Collectors;
 public class TeslaFleetTelemetryLifecycle implements SmartLifecycle {
 
     private final TeslaFleetProperties properties;
-    private final ObjectMapper objectMapper;
-
     private volatile Process process;
     private volatile boolean running;
     private volatile Path generatedConfigFile;
@@ -101,7 +99,7 @@ public class TeslaFleetTelemetryLifecycle implements SmartLifecycle {
         validateRequired("tesla.fleet.telemetry-tls-key", properties.getTelemetryTlsKey());
 
         Path file = Files.createTempFile("tesla-fleet-telemetry-", ".json");
-        objectMapper.writeValue(file.toFile(), generatedConfig());
+        JsonUtil.writeValue(file.toFile(), generatedConfig());
         generatedConfigFile = file;
         return file.toAbsolutePath().toString();
     }

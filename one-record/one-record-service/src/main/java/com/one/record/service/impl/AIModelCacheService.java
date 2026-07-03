@@ -1,8 +1,7 @@
 package com.one.record.service.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.one.common.util.JsonUtil;
 import com.one.record.ai.AiModelOption;
 import com.one.record.service.IAIModelCacheService;
 import com.one.record.service.ILocalAIService;
@@ -37,8 +36,6 @@ public class AIModelCacheService implements IAIModelCacheService {
 
     private final StringRedisTemplate redisTemplate;
 
-    private final ObjectMapper objectMapper;
-
     @Value("${localai.model:llama3.1}")
     private String defaultLocalModel;
 
@@ -50,12 +47,10 @@ public class AIModelCacheService implements IAIModelCacheService {
 
     public AIModelCacheService(ILocalAIService localAIService,
                                IOpenAIModelService openAIModelService,
-                               StringRedisTemplate redisTemplate,
-                               ObjectMapper objectMapper) {
+                               StringRedisTemplate redisTemplate) {
         this.localAIService = localAIService;
         this.openAIModelService = openAIModelService;
         this.redisTemplate = redisTemplate;
-        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -238,23 +233,19 @@ public class AIModelCacheService implements IAIModelCacheService {
             if (value == null || value.trim().isEmpty()) {
                 return new ArrayList<>();
             }
-            return objectMapper.readValue(value, new TypeReference<List<AiModelOption>>() {
+            return JsonUtil.toObject(value, new TypeReference<List<AiModelOption>>() {
             });
-        } catch (JsonProcessingException exception) {
-            log.warn("AI 模型列表反序列化失败，key={}", key, exception);
         } catch (RuntimeException exception) {
-            log.warn("AI 模型列表读取 Redis 失败，key={}", key, exception);
+            log.warn("AI 模型列表读取或反序列化失败，key={}", key, exception);
         }
         return new ArrayList<>();
     }
 
     private void saveModels(String key, List<AiModelOption> models) {
         try {
-            redisTemplate.opsForValue().set(key, objectMapper.writeValueAsString(models));
-        } catch (JsonProcessingException exception) {
-            log.warn("AI 模型列表序列化失败，key={}", key, exception);
+            redisTemplate.opsForValue().set(key, JsonUtil.toJson(models));
         } catch (RuntimeException exception) {
-            log.warn("AI 模型列表写入 Redis 失败，key={}", key, exception);
+            log.warn("AI 模型列表序列化或写入 Redis 失败，key={}", key, exception);
         }
     }
 }

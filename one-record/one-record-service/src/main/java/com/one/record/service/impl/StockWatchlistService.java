@@ -12,7 +12,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,7 +39,7 @@ public class StockWatchlistService implements IStockWatchlistService {
             throw new DuplicateException("自选股已存在: {}", symbol);
         }
 
-        LocalDateTime now = LocalDateTime.now();
+        Long now = System.currentTimeMillis();
         StockWatchlist item = StockWatchlist.builder()
                 .userId(DEFAULT_USER_ID)
                 .symbol(symbol)
@@ -80,7 +79,7 @@ public class StockWatchlistService implements IStockWatchlistService {
             StockWatchlist existing = repository.findByUserIdAndSymbol(DEFAULT_USER_ID, normalizedSymbol)
                     .orElseThrow(() -> new NotFoundException("自选股不存在: {}", normalizedSymbol));
             existing.setSortOrder(sortOrder++);
-            existing.setUpdatedAt(LocalDateTime.now());
+            existing.setUpdatedAt(System.currentTimeMillis());
             updated.add(repository.save(existing));
         }
         return findAll();

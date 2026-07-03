@@ -1,6 +1,6 @@
 package com.one.record.service.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.one.common.util.JsonUtil;
 import com.one.record.configuration.StockMarketProperties;
 import com.one.record.stock.StockQuote;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,8 +37,6 @@ class StockMarketServiceTest {
 
     private ValueOperations<String, String> valueOperations;
 
-    private ObjectMapper objectMapper;
-
     private StockMarketService service;
 
     @BeforeEach
@@ -48,8 +46,7 @@ class StockMarketServiceTest {
         redisTemplate = mock(StringRedisTemplate.class);
         valueOperations = mockValueOperations();
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        objectMapper = new ObjectMapper();
-        service = new StockMarketService(properties, redisTemplate, objectMapper);
+        service = new StockMarketService(properties, redisTemplate);
     }
 
     @SuppressWarnings("unchecked")
@@ -110,9 +107,8 @@ class StockMarketServiceTest {
         assertThat(quotes.get(0).getFetchedAt()).isNotNull();
         ArgumentCaptor<String> cacheValueCaptor = ArgumentCaptor.forClass(String.class);
         verify(valueOperations, times(2)).set(anyString(), cacheValueCaptor.capture(), any(Duration.class));
-        for (String cacheValue : cacheValueCaptor.getAllValues()) {
-            assertThat(objectMapper.readTree(cacheValue).hasNonNull("fetchedAt")).isTrue();
-        }
+        cacheValueCaptor.getAllValues().forEach(cacheValue ->
+                assertThat(JsonUtil.toJsonNode(cacheValue).get("fetchedAt").isNumber()).isTrue());
         server.verify();
     }
 
@@ -133,7 +129,7 @@ class StockMarketServiceTest {
                 .message("OK")
                 .build();
         when(valueOperations.get("stock:quote:sh600519")).thenReturn(null);
-        when(valueOperations.get("stock:quote:last-success:sh600519")).thenReturn(objectMapper.writeValueAsString(cachedQuote));
+        when(valueOperations.get("stock:quote:last-success:sh600519")).thenReturn(JsonUtil.toJson(cachedQuote));
 
         MockRestServiceServer server = bindMockServer();
         server.expect(requestTo("https://hq.sinajs.cn/list=sh600519")).andRespond(withServerError());

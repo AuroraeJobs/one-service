@@ -1,7 +1,7 @@
 package com.one.record.configuration;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.one.common.util.JsonUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.one.record.tesla.TeslaFleetTelemetryCache;
@@ -27,7 +27,6 @@ public class TeslaFleetTelemetryRedisListener implements SmartLifecycle, Message
     private final TeslaFleetProperties properties;
     private final RedisConnectionFactory connectionFactory;
     private final StringRedisTemplate redisTemplate;
-    private final ObjectMapper objectMapper;
 
     private RedisMessageListenerContainer container;
     private volatile boolean running;
@@ -89,7 +88,7 @@ public class TeslaFleetTelemetryRedisListener implements SmartLifecycle, Message
         String channel = new String(message.getChannel(), StandardCharsets.UTF_8);
         String payload = new String(message.getBody(), StandardCharsets.UTF_8);
         try {
-            Map<String, Object> data = objectMapper.readValue(payload, new TypeReference<Map<String, Object>>() {
+            Map<String, Object> data = JsonUtil.toObject(payload, new TypeReference<Map<String, Object>>() {
             });
             String recordType = recordType(channel);
             String vin = vin(channel, data);
@@ -103,7 +102,7 @@ public class TeslaFleetTelemetryRedisListener implements SmartLifecycle, Message
             cache.setChannel(channel);
             cache.setData(data);
             cache.setUpdatedAt(System.currentTimeMillis());
-            redisTemplate.opsForValue().set(telemetryKey(vin, recordType), objectMapper.writeValueAsString(cache));
+            redisTemplate.opsForValue().set(telemetryKey(vin, recordType), JsonUtil.toJson(cache));
         } catch (Exception e) {
             log.warn("Tesla 遥测消息保存失败: channel={}, error={}", channel, e.getMessage());
         }

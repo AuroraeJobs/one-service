@@ -1,7 +1,7 @@
 package com.one.record.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.one.common.util.JsonUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.one.common.exception.ServiceException;
@@ -48,7 +48,6 @@ public class TeslaFleetApiService implements ITeslaFleetApiService {
 
     private final TeslaFleetProperties properties;
     private final RestTemplate restTemplate;
-    private final ObjectMapper objectMapper;
     private final StringRedisTemplate redisTemplate;
 
     @Override
@@ -208,7 +207,7 @@ public class TeslaFleetApiService implements ITeslaFleetApiService {
             return null;
         }
         try {
-            return objectMapper.readValue(value, TeslaFleetApiCache.class);
+            return JsonUtil.toObject(value, TeslaFleetApiCache.class);
         } catch (Exception e) {
             throw new ServiceException("Tesla API 缓存读取失败: {}", e.getMessage());
         }
@@ -257,7 +256,7 @@ public class TeslaFleetApiService implements ITeslaFleetApiService {
             return null;
         }
         try {
-            return objectMapper.readValue(value, TeslaFleetVehicleCache.class);
+            return JsonUtil.toObject(value, TeslaFleetVehicleCache.class);
         } catch (Exception e) {
             throw new ServiceException("Tesla 车辆缓存读取失败: {}", e.getMessage());
         }
@@ -281,7 +280,7 @@ public class TeslaFleetApiService implements ITeslaFleetApiService {
             return null;
         }
         try {
-            return objectMapper.readValue(value, TeslaFleetChargingHistoryCache.class);
+            return JsonUtil.toObject(value, TeslaFleetChargingHistoryCache.class);
         } catch (Exception e) {
             throw new ServiceException("Tesla 充电记录缓存读取失败: {}", e.getMessage());
         }
@@ -361,7 +360,7 @@ public class TeslaFleetApiService implements ITeslaFleetApiService {
             return null;
         }
         try {
-            return objectMapper.readValue(value, TeslaFleetTelemetryCache.class);
+            return JsonUtil.toObject(value, TeslaFleetTelemetryCache.class);
         } catch (Exception e) {
             throw new ServiceException("Tesla 遥测缓存读取失败: {}", e.getMessage());
         }
@@ -438,7 +437,7 @@ public class TeslaFleetApiService implements ITeslaFleetApiService {
             return null;
         }
         try {
-            return objectMapper.readValue(value, TeslaFleetTokenCache.class);
+            return JsonUtil.toObject(value, TeslaFleetTokenCache.class);
         } catch (Exception e) {
             throw new ServiceException("Tesla token 缓存读取失败: {}", e.getMessage());
         }
@@ -446,7 +445,7 @@ public class TeslaFleetApiService implements ITeslaFleetApiService {
 
     private void saveJson(String key, Object value) {
         try {
-            redisTemplate.opsForValue().set(key, objectMapper.writeValueAsString(value));
+            redisTemplate.opsForValue().set(key, JsonUtil.toJson(value));
         } catch (Exception e) {
             throw new ServiceException("Tesla Redis 缓存写入失败: {}", e.getMessage());
         }
@@ -598,7 +597,7 @@ public class TeslaFleetApiService implements ITeslaFleetApiService {
     private ServiceException teslaException(String prefix, HttpStatusCodeException e) {
         String detail = e.getResponseBodyAsString();
         try {
-            Map<String, Object> error = objectMapper.readValue(detail, new TypeReference<Map<String, Object>>() {
+            Map<String, Object> error = JsonUtil.toObject(detail, new TypeReference<Map<String, Object>>() {
             });
             detail = String.valueOf(error);
         } catch (Exception ignored) {

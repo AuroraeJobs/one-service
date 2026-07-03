@@ -181,7 +181,7 @@ export interface StockQuote {
   tradeDateTime?: string;
   source?: string;
   sourceSymbol?: string;
-  fetchedAt?: string;
+  fetchedAt?: number;
   available?: boolean;
   stale?: boolean;
   staleReason?: string;
@@ -196,8 +196,8 @@ export interface StockWatchlistItem {
   code?: string;
   name?: string;
   sortOrder?: number;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 export const stockApi = {

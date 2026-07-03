@@ -2,8 +2,7 @@ package com.one.record.service.impl;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.one.common.util.JsonUtil;
 import com.one.record.file.RecordFile;
 import com.one.record.service.ILotteryTrainingService;
 import com.one.record.training.LotteryActualRecord;
@@ -54,15 +53,12 @@ public class LotteryTrainingService implements ILotteryTrainingService {
 
     private final StringRedisTemplate redisTemplate;
 
-    private final ObjectMapper objectMapper;
-
     private final AtomicBoolean trainingRunning = new AtomicBoolean(false);
 
     private final AtomicReference<LotteryTrainingStatus> trainingStatus = new AtomicReference<>(idleStatus());
 
-    public LotteryTrainingService(StringRedisTemplate redisTemplate, ObjectMapper objectMapper) {
+    public LotteryTrainingService(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
-        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -286,11 +282,9 @@ public class LotteryTrainingService implements ILotteryTrainingService {
 
     private void saveJson(String key, Object value) {
         try {
-            redisTemplate.opsForValue().set(key, objectMapper.writeValueAsString(value));
-        } catch (JsonProcessingException exception) {
-            log.warn("彩票训练结果序列化失败，key={}", key, exception);
+            redisTemplate.opsForValue().set(key, JsonUtil.toJson(value));
         } catch (RuntimeException exception) {
-            log.warn("彩票训练结果写入 Redis 失败，key={}", key, exception);
+            log.warn("彩票训练结果序列化或写入 Redis 失败，key={}", key, exception);
         }
     }
 
@@ -307,11 +301,9 @@ public class LotteryTrainingService implements ILotteryTrainingService {
     private <T> T readJson(String key, Class<T> type) {
         try {
             String value = redisTemplate.opsForValue().get(key);
-            return value == null ? null : objectMapper.readValue(value, type);
-        } catch (JsonProcessingException exception) {
-            log.warn("彩票训练结果反序列化失败，key={}", key, exception);
+            return value == null ? null : JsonUtil.toObject(value, type);
         } catch (RuntimeException exception) {
-            log.warn("彩票训练结果读取 Redis 失败，key={}", key, exception);
+            log.warn("彩票训练结果读取或反序列化失败，key={}", key, exception);
         }
         return null;
     }
