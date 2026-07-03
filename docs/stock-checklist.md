@@ -111,8 +111,8 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Quote cache uses millisecond timestamps for time fields such as `fetchedAt`.
 - [x] Stock watchlist uses millisecond timestamps for `createdAt` and `updatedAt`.
 - [x] Remaining backend `LocalDateTime` fields/usages are migrated to millisecond timestamps.
-- [ ] Mobile layout is checked for investment page.
-- [ ] Desktop layout is checked for investment page.
+- [x] Mobile layout is checked for investment page.
+- [x] Desktop layout is checked for investment page.
 - [x] Documentation is updated after each completed milestone.
 - [x] Changes are reviewed with `git status --short` and `git diff --stat`.
 - [x] Completed milestone is committed with a clear message.

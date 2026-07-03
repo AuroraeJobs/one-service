@@ -1021,6 +1021,10 @@ body {
   margin-bottom: 24px;
 }
 
+.life-investment-page .metric-grid {
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
 .stock-market-toolbar {
   display: flex;
   align-items: flex-start;
@@ -1047,6 +1051,18 @@ body {
   gap: 10px;
   width: min(520px, 100%);
   flex-shrink: 0;
+}
+
+.life-investment-page .ant-table {
+  margin-bottom: 0;
+}
+
+.life-investment-page .ant-table-cell {
+  white-space: nowrap;
+}
+
+.life-investment-page .ant-table-cell:first-child {
+  min-width: 136px;
 }
 
 .stock-market-alert {
@@ -1125,6 +1141,58 @@ body {
     width: 100%;
   }
 
+  .life-investment-page {
+    padding-inline: 12px;
+  }
+
+  .life-investment-page .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .life-investment-page .metric-card {
+    min-width: 0 !important;
+  }
+
+  .life-investment-page .metric-card .ant-card-body {
+    padding: 12px !important;
+  }
+
+  .life-investment-page .ant-statistic-content {
+    font-size: 18px !important;
+    line-height: 1.25;
+  }
+
+  .life-investment-page .stock-market-panel .ant-card-body {
+    padding: 14px !important;
+  }
+
+  .life-investment-page .stock-market-toolbar h2 {
+    font-size: 17px;
+  }
+
+  .life-investment-page .stock-market-toolbar p {
+    font-size: 13px;
+  }
+
+  .life-investment-page .stock-market-actions .ant-space,
+  .life-investment-page .stock-market-actions .ant-space-item,
+  .life-investment-page .stock-market-actions .ant-btn {
+    width: 100%;
+  }
+
+  .life-investment-page .stock-symbol-search {
+    display: flex;
+  }
+
+  .life-investment-page .stock-symbol-search .ant-input-affix-wrapper {
+    min-width: 0;
+  }
+
+  .life-investment-page .ant-table {
+    font-size: 13px;
+  }
+
   .stock-detail-header {
     align-items: flex-start;
     flex-direction: column;
@@ -1138,6 +1206,12 @@ body {
 
   .stock-kline-chart {
     height: 420px;
+  }
+}
+
+@media (max-width: 420px) {
+  .life-investment-page .metric-grid {
+    grid-template-columns: 1fr;
   }
 }
 

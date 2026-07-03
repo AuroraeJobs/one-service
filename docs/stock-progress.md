@@ -82,6 +82,7 @@ Implemented baseline:
 - Quote provider abstraction is implemented with `StockMarketProvider`, `StockMarketProviderRouter`, and `SinaStockMarketProvider`.
 - Active quote provider is configured with `stock.market.provider`; fallback provider order is configured with `stock.market.fallback-providers`.
 - Provider health endpoint `GET /stock/providers/health` reports configured and registered providers.
+- Investment page responsive CSS has been tightened for desktop and mobile: stable metric grid, scrollable no-wrap tables, compact mobile cards, and full-width mobile toolbar controls.
 - Root Maven Surefire is pinned to `3.2.5` so JUnit 5/JUnit Platform tests are discovered instead of being skipped by the old default plugin.
 
 Architecture rule to preserve:
