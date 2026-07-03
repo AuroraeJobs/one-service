@@ -39,14 +39,14 @@ public class ChargeRecordController {
     
     @DeleteMapping("{id}")
     @Operation(summary = "删除充电记录", description = "根据ID删除充电记录")
-    public void delete(@PathVariable String id) {
+    public void delete(@PathVariable("id") String id) {
         log.info("Deleting charge record with id: {}", id);
         service.delete(id);
     }
     
     @GetMapping("{id}")
     @Operation(summary = "查询充电记录", description = "根据ID查询充电记录")
-    public ChargeRecord findById(@PathVariable String id) {
+    public ChargeRecord findById(@PathVariable("id") String id) {
         return service.findById(id);
     }
     
@@ -59,20 +59,20 @@ public class ChargeRecordController {
     @GetMapping("date-range")
     @Operation(summary = "按日期范围查询", description = "查询指定日期范围内的充电记录")
     public List<ChargeRecord> findByDateRange(
-            @RequestParam String startDate,
-            @RequestParam String endDate) {
+            @RequestParam("startDate") String startDate,
+            @RequestParam("endDate") String endDate) {
         return service.findByDateRange(startDate, endDate);
     }
     
     @GetMapping("charger-type")
     @Operation(summary = "按充电方式查询", description = "查询指定充电方式的充电记录")
-    public List<ChargeRecord> findByChargerType(@RequestParam String chargerType) {
+    public List<ChargeRecord> findByChargerType(@RequestParam("chargerType") String chargerType) {
         return service.findByChargerType(chargerType);
     }
     
     @GetMapping("location")
     @Operation(summary = "按地点查询", description = "查询指定地点的充电记录")
-    public List<ChargeRecord> findByLocation(@RequestParam String location) {
+    public List<ChargeRecord> findByLocation(@RequestParam("location") String location) {
         return service.findByLocation(location);
     }
     

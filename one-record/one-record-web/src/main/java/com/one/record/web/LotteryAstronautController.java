@@ -47,13 +47,13 @@ public class LotteryAstronautController {
 
     @GetMapping("{camp}")
     @Operation(summary = "按阵营查询宇航员", description = "按 RED 或 BLUE 查询宇航员名称映射")
-    public List<LotteryAstronaut> findByCamp(@PathVariable String camp) {
+    public List<LotteryAstronaut> findByCamp(@PathVariable("camp") String camp) {
         return service.findByCamp(camp);
     }
 
     @GetMapping("{camp}/{number}/voyage")
     @Operation(summary = "查询宇航员航行记录", description = "按阵营和编号查询宇航员历史命中记录与统计")
-    public LotteryAstronautVoyage voyage(@PathVariable String camp, @PathVariable String number) {
+    public LotteryAstronautVoyage voyage(@PathVariable("camp") String camp, @PathVariable("number") String number) {
         return service.voyage(camp, number);
     }
 

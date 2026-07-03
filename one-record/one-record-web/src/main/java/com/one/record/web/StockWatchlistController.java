@@ -41,7 +41,7 @@ public class StockWatchlistController {
 
     @DeleteMapping("{symbol}")
     @Operation(summary = "删除股票自选", description = "按股票代码删除自选股")
-    public void delete(@PathVariable String symbol) {
+    public void delete(@PathVariable("symbol") String symbol) {
         log.info("Deleting stock watchlist item: {}", symbol);
         service.delete(symbol);
     }

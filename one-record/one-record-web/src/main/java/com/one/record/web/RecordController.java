@@ -43,7 +43,7 @@ public class RecordController {
 
     @GetMapping("findById")
     @Operation(summary = "数据id查询", description = "从数据库获取数据")
-    public Record findById(@RequestParam String id) {
+    public Record findById(@RequestParam("id") String id) {
         return service.findById(id);
     }
 
@@ -67,13 +67,13 @@ public class RecordController {
 
     @GetMapping("count")
     @Operation(summary = "期数查询", description = "从网站获取数据")
-    public List<Record> getByCount(@RequestParam long issueCount) {
+    public List<Record> getByCount(@RequestParam("issueCount") long issueCount) {
         return RecordClient.record(issueCount);
     }
 
     @GetMapping("issue")
     @Operation(summary = "期号查询", description = "从网站获取数据")
-    public List<Record> getByIssue(@RequestParam String start, @RequestParam String end) {
+    public List<Record> getByIssue(@RequestParam("start") String start, @RequestParam("end") String end) {
         return RecordClient.record(start, end);
     }
 

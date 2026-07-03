@@ -34,14 +34,14 @@ public class ChargeStationController {
     
     @DeleteMapping("{id}")
     @Operation(summary = "删除充电站", description = "根据ID删除充电站")
-    public void delete(@PathVariable String id) {
+    public void delete(@PathVariable("id") String id) {
         log.info("Deleting charge station with id: {}", id);
         service.delete(id);
     }
     
     @GetMapping("{id}")
     @Operation(summary = "查询充电站", description = "根据ID查询充电站")
-    public ChargeStation findById(@PathVariable String id) {
+    public ChargeStation findById(@PathVariable("id") String id) {
         return service.findById(id);
     }
     
@@ -53,27 +53,27 @@ public class ChargeStationController {
     
     @GetMapping("provider/{provider}")
     @Operation(summary = "按充电提供方查询", description = "查询指定充电提供方的充电站")
-    public List<ChargeStation> findByProvider(@PathVariable String provider) {
+    public List<ChargeStation> findByProvider(@PathVariable("provider") String provider) {
         return service.findByProvider(provider);
     }
     
     @GetMapping("location/{location}")
     @Operation(summary = "按地点查询", description = "查询指定地点的充电站")
-    public List<ChargeStation> findByLocation(@PathVariable String location) {
+    public List<ChargeStation> findByLocation(@PathVariable("location") String location) {
         return service.findByLocation(location);
     }
     
     @GetMapping("search")
     @Operation(summary = "按提供方和地点查询", description = "按充电提供方和地点查询充电站")
     public List<ChargeStation> findByProviderAndLocation(
-            @RequestParam String provider,
-            @RequestParam String location) {
+            @RequestParam("provider") String provider,
+            @RequestParam("location") String location) {
         return service.findByProviderAndLocation(provider, location);
     }
     
     @GetMapping("code/{stationCode}")
     @Operation(summary = "按站点编码查询", description = "根据站点编码查询充电站")
-    public ChargeStation findByStationCode(@PathVariable String stationCode) {
+    public ChargeStation findByStationCode(@PathVariable("stationCode") String stationCode) {
         return service.findByStationCode(stationCode);
     }
 }

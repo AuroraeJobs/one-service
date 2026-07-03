@@ -16,7 +16,7 @@ public class BoxController {
     private final IBoxService service;
 
     @GetMapping("findById")
-    public ColorBox findById(@RequestParam String code) {
+    public ColorBox findById(@RequestParam("code") String code) {
         return service.findById(code);
     }
 }

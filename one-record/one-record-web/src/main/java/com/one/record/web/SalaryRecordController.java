@@ -35,14 +35,14 @@ public class SalaryRecordController {
     
     @DeleteMapping("{id}")
     @Operation(summary = "删除工资记录", description = "根据ID删除工资记录")
-    public void delete(@PathVariable String id) {
+    public void delete(@PathVariable("id") String id) {
         log.info("Deleting salary record with id: {}", id);
         service.delete(id);
     }
     
     @GetMapping("{id}")
     @Operation(summary = "查询工资记录", description = "根据ID查询工资记录")
-    public SalaryRecord findById(@PathVariable String id) {
+    public SalaryRecord findById(@PathVariable("id") String id) {
         return service.findById(id);
     }
     
@@ -54,15 +54,15 @@ public class SalaryRecordController {
     
     @GetMapping("month")
     @Operation(summary = "按月份查询", description = "查询指定月份的工资记录")
-    public SalaryRecord findByMonth(@RequestParam String month) {
+    public SalaryRecord findByMonth(@RequestParam("month") String month) {
         return service.findByMonth(month);
     }
     
     @GetMapping("month-range")
     @Operation(summary = "按月份范围查询", description = "查询指定月份范围内的工资记录")
     public List<SalaryRecord> findByMonthRange(
-            @RequestParam String startMonth,
-            @RequestParam String endMonth) {
+            @RequestParam("startMonth") String startMonth,
+            @RequestParam("endMonth") String endMonth) {
         return service.findByMonthRange(startMonth, endMonth);
     }
     

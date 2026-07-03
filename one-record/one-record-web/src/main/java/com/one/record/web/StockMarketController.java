@@ -24,7 +24,7 @@ public class StockMarketController {
 
     @GetMapping("quote")
     @Operation(summary = "查询股票实时行情", description = "对接第三方行情系统，查询单个股票实时行情")
-    public StockQuote quote(@RequestParam String symbol) {
+    public StockQuote quote(@RequestParam("symbol") String symbol) {
         log.info("Fetching stock quote: {}", symbol);
         return service.quote(symbol);
     }
