@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Button, Card, Input, Select, Space, Table, Tag } from 'antd';
+import { Alert, Button, Card, Checkbox, Input, Select, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { ReloadOutlined, SearchOutlined, SyncOutlined } from '@ant-design/icons';
 import LifePageShell from './LifePageShell';
@@ -21,13 +21,14 @@ const sampleKLines = JSON.stringify([
 
 const syncModeOptions = [
   { label: '单只标的', value: 'single' },
-  { label: '批量导入', value: 'batch' }
+  { label: '配置批量', value: 'batch' }
 ];
 
 const LifeStockSyncPage = () => {
   const [symbol, setSymbol] = useState('600519');
   const [logSymbol, setLogSymbol] = useState('');
   const [syncMode, setSyncMode] = useState<'single' | 'batch'>('single');
+  const [manualImport, setManualImport] = useState(false);
   const [payload, setPayload] = useState(sampleKLines);
   const [logs, setLogs] = useState<StockKLineSyncLog[]>([]);
   const [syncing, setSyncing] = useState(false);
@@ -58,11 +59,11 @@ const LifeStockSyncPage = () => {
     setError(undefined);
     setSuccess(undefined);
     try {
-      const rows = parseKLineRows(payload);
+      const rows = manualImport ? parseKLineRows(payload) : undefined;
       const saved = syncMode === 'single'
         ? await stockApi.syncKlines(symbol.trim(), rows)
         : await stockApi.syncAllKlines(rows);
-      setSuccess(`同步完成，保存 ${saved.length} 条K线`);
+      setSuccess(`${manualImport ? '导入' : 'Provider 同步'}完成，保存 ${saved.length} 条K线`);
       await loadLogs();
     } catch (requestError) {
       console.error('同步K线失败:', requestError);
@@ -128,7 +129,7 @@ const LifeStockSyncPage = () => {
     <LifePageShell
       className="life-investment-page"
       eyebrow="股票同步"
-      title="查看历史数据同步日志，并通过内部同步接口导入标准化K线。"
+      title="查看历史数据同步日志，并通过内部同步接口拉取或导入标准化K线。"
       actions={
         <Button type="primary" icon={<SyncOutlined spin={syncing} />} loading={syncing} onClick={syncKLines}>
           执行同步
@@ -142,7 +143,7 @@ const LifeStockSyncPage = () => {
         <div className="stock-market-toolbar">
           <div>
             <h2>K线导入</h2>
-            <p>当前同步接口接收标准化K线 JSON；历史 provider 接入后，这里会继续复用同步日志和状态视图。</p>
+            <p>默认通过后端 K线 Provider 拉取数据；手动 JSON 导入保留为高级兜底入口。</p>
           </div>
           <div className="stock-market-actions">
             <Space wrap>
@@ -155,19 +156,32 @@ const LifeStockSyncPage = () => {
                 prefix={<SearchOutlined />}
                 style={{ width: 160 }}
               />
-              <Button onClick={() => setPayload(sampleKLines)}>
-                示例
-              </Button>
+              <Checkbox checked={manualImport} onChange={event => setManualImport(event.target.checked)}>
+                手动导入
+              </Checkbox>
+              {manualImport ? (
+                <Button onClick={() => setPayload(sampleKLines)}>
+                  示例
+                </Button>
+              ) : null}
             </Space>
           </div>
         </div>
-        <Input.TextArea
-          value={payload}
-          onChange={event => setPayload(event.target.value)}
-          rows={10}
-          spellCheck={false}
-          placeholder="粘贴 StockKLine JSON 数组"
-        />
+        {manualImport ? (
+          <Input.TextArea
+            value={payload}
+            onChange={event => setPayload(event.target.value)}
+            rows={10}
+            spellCheck={false}
+            placeholder="粘贴 StockKLine JSON 数组"
+          />
+        ) : (
+          <Alert
+            type="info"
+            showIcon
+            message={syncMode === 'single' ? '将调用单只标的 Provider 同步' : '将按后端配置的 klineSyncSymbols 批量同步'}
+          />
+        )}
       </Card>
 
       <Card className="life-panel-card stock-market-panel">

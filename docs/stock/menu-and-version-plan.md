@@ -539,12 +539,11 @@ Progress:
 
 - Added stock subnav items for K线 and 同步.
 - Added K-line page with symbol, period, and date-range filters.
-- Added sync page with standardized K-line JSON import, single-symbol/batch modes, and sync log table.
+- Added sync page with Provider-backed sync as the primary action, standardized K-line JSON import as an advanced fallback, single-symbol/configured-batch modes, and sync log table.
 - Verified changed files with ESLint and full frontend build.
 
 Follow-up:
 
-- Once K-line provider sync is implemented, replace manual JSON import as the primary action and keep JSON import as an advanced fallback.
 - Add sync retry action for failed logs after backend retry API exists.
 
 ### V4: Alerts And Daily Monitoring

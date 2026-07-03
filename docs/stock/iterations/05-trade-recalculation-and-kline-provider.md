@@ -15,10 +15,10 @@ This iteration has two tracks:
 
 The first month built the full skeleton: quotes, watchlist, charts, portfolio summary, alerts, analysis, provider routing, MongoDB, Redis, and quality gates. The most valuable next improvement is making the persisted data self-maintaining.
 
-Current gaps:
+Original gaps:
 
 - Positions can be manually maintained, but trades do not yet recalculate holdings.
-- Historical sync has storage, logs, locks, and scheduler, but the scheduled job still records `SKIPPED` because no historical provider is wired.
+- Historical sync had storage, logs, locks, and scheduler, but the scheduled job recorded `SKIPPED` because no historical provider was wired.
 - Analysis quality depends on having real K-line history.
 
 ## Scope

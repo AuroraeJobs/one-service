@@ -337,8 +337,8 @@ Rules:
 - Manual sync writes a MongoDB sync log with `RUNNING`, `SUCCESS`, or `FAILED` status.
 - Manual sync uses Redis locks with keys like `stock:sync:lock:kline:{symbol}` and a short TTL.
 - Scheduled daily sync is enabled by Spring scheduling and configured with `stock.market.kline-sync-cron`.
-- Scheduled daily sync currently writes a `SKIPPED` log because the historical K-line provider is intentionally not bound directly to the scheduler.
-- Historical third-party provider fetching should be added behind provider/router abstractions, not directly in controllers.
+- Scheduled daily sync fetches configured symbols through `StockKLineProviderRouter` and writes `SUCCESS` or `FAILED` logs.
+- Historical third-party provider fetching stays behind provider/router abstractions, not directly in controllers.
 
 Frontend stock detail:
 

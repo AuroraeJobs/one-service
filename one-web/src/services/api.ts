@@ -416,11 +416,11 @@ export const stockApi = {
     return apiClient.get(`/stock/${symbol}/klines`, { params });
   },
 
-  syncKlines: (symbol: string, klines: StockKLine[]): Promise<StockKLine[]> => {
+  syncKlines: (symbol: string, klines?: StockKLine[]): Promise<StockKLine[]> => {
     return apiClient.post(`/stock/${symbol}/klines/sync`, klines);
   },
 
-  syncAllKlines: (klines: StockKLine[]): Promise<StockKLine[]> => {
+  syncAllKlines: (klines?: StockKLine[]): Promise<StockKLine[]> => {
     return apiClient.post('/stock/klines/sync', klines);
   },
 

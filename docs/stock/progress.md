@@ -72,7 +72,7 @@ Implemented baseline:
 - `StockMarketControllerTest` verifies repeated `symbols` query params bind to `List<String>`.
 - Initial MongoDB-backed K-line backend exists: `StockKLine`, repository, service, query endpoint, and manual sync/upsert endpoints.
 - K-line manual sync writes MongoDB sync logs and uses Redis locks to avoid duplicate sync execution.
-- K-line scheduled daily sync is wired with a configurable cron and Redis lock; it currently records `SKIPPED` logs until a historical provider is connected.
+- K-line scheduled daily sync is wired with a configurable cron and Redis lock; it now fetches configured symbols through `StockKLineProviderRouter`.
 - Frontend stock rows navigate to `/investments/stocks/:symbol`; the detail page loads normalized quote and K-line APIs, then renders a real-time quote header plus candlestick, volume, MA5, MA10, and MA20 charts through `echarts-for-react`.
 - Stock portfolio foundation exists: MongoDB-backed account, position, and trade models plus CRUD endpoints for `/stock/accounts`, `/stock/positions`, and `/stock/trades`.
 - Stock trade CRUD accepts `BUY`, `SELL`, `DIVIDEND`, `FEE`, `BONUS_SHARE`, and `SPLIT`; position and return calculations are intentionally deferred to the next iteration.
@@ -95,7 +95,7 @@ Implemented baseline:
 - Stock menu and version planning has been documented. The target menu tree includes 总览、自选、行情、持仓、交易、个股、K线、告警、分析、数据源、同步、设置, with versions planned by menu capability.
 - Menu V1 is implemented. The stock subnav now exposes 总览、自选、行情, routes `/investments/watchlist` and `/investments/market` are wired, and `/investments/stocks/:symbol` remains the 个股 detail route.
 - Menu V2 first UX slice is implemented. Routes `/investments/positions` and `/investments/trades` are wired, the stock subnav exposes 持仓 and 交易, positions can be filtered/recalculated, and trades can be created/deleted from the UI.
-- Menu V3 first UX slice is implemented. Routes `/investments/klines` and `/investments/sync` are wired, the stock subnav exposes K线 and 同步, K-line rows can be queried, standardized K-line JSON can be submitted to sync APIs, and sync logs are visible.
+- Menu V3 first UX slice is implemented. Routes `/investments/klines` and `/investments/sync` are wired, the stock subnav exposes K线 and 同步, K-line rows can be queried, Provider-backed sync is the primary action, standardized K-line JSON can still be submitted as an advanced fallback, and sync logs are visible.
 - Menu V4 first UX slice is implemented. Route `/investments/alerts` is wired, the stock subnav exposes 告警, alert rules can be listed/created/deleted, enabled rules can be manually evaluated, and trigger history is visible.
 - Menu V5 first UX slice is implemented. Route `/investments/analysis` is wired, the stock subnav exposes 分析, and analysis summary data is displayed for concentration, volatility, drawdown, top gainers, and top losers.
 - Menu V6 first UX slice is implemented. Routes `/investments/providers` and `/investments/settings` are wired, provider health is visible, and settings boundaries are documented as read-only until preferences persistence is designed.
