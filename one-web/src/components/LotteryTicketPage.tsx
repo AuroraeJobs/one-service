@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Input, Space, Table, Tag } from 'antd';
+import { Alert, Button, Card, Form, Input, InputNumber, Modal, Popconfirm, Select, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { ReloadOutlined, SearchOutlined, TrophyOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SearchOutlined, TrophyOutlined } from '@ant-design/icons';
 import LifePageShell from './LifePageShell';
 import LotteryBalls from './lottery/LotteryBalls';
 import { lotteryTicketApi, type LotteryTicket, type LotteryTicketSummary } from '../services/api';
@@ -20,6 +20,24 @@ const formatPrizeAmount = (value?: number) => {
   }
   return `¥${(Number(value) / 100).toFixed(2)}`;
 };
+
+interface TicketFormValues {
+  issue?: string;
+  redNumbers?: string;
+  blueNumber?: string;
+  quantity?: number;
+  cost?: number;
+  source?: string;
+  status?: string;
+  note?: string;
+}
+
+const splitNumbers = (value?: string) =>
+  (value || '')
+    .split(/[\s,，]+/)
+    .map(item => item.trim())
+    .filter(Boolean)
+    .map(item => item.padStart(2, '0'));
 
 const formatTime = (value?: number) => {
   if (!value) {
@@ -70,10 +88,14 @@ const emptySummary: LotteryTicketSummary = {
 };
 
 const LotteryTicketPage = () => {
+  const [form] = Form.useForm<TicketFormValues>();
   const [tickets, setTickets] = useState<LotteryTicket[]>([]);
   const [summary, setSummary] = useState<LotteryTicketSummary>(emptySummary);
   const [issue, setIssue] = useState('');
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingTicket, setEditingTicket] = useState<LotteryTicket>();
   const [error, setError] = useState<string>();
 
   const queryParams = useMemo(() => ({
@@ -101,6 +123,83 @@ const LotteryTicketPage = () => {
   useEffect(() => {
     loadTickets();
   }, [loadTickets]);
+
+  const openCreateModal = useCallback(() => {
+    setEditingTicket(undefined);
+    form.resetFields();
+    form.setFieldsValue({
+      issue: issue.trim() || undefined,
+      quantity: 1,
+      source: 'MANUAL',
+      status: 'DRAFT'
+    });
+    setModalOpen(true);
+  }, [form, issue]);
+
+  const openEditModal = (ticket: LotteryTicket) => {
+    setEditingTicket(ticket);
+    form.setFieldsValue({
+      issue: ticket.issue,
+      redNumbers: ticket.redNumbers?.join(' '),
+      blueNumber: ticket.blueNumber,
+      quantity: ticket.quantity || 1,
+      cost: ticket.cost,
+      source: ticket.source || 'MANUAL',
+      status: ticket.status || 'DRAFT',
+      note: ticket.note
+    });
+    setModalOpen(true);
+  };
+
+  const saveTicket = async () => {
+    const values = await form.validateFields();
+    const redNumbers = splitNumbers(values.redNumbers);
+    if (redNumbers.length !== 6) {
+      setError('请输入 6 个红球号码');
+      return;
+    }
+    setSaving(true);
+    setError(undefined);
+    try {
+      const payload = {
+        issue: values.issue?.trim(),
+        redNumbers,
+        blueNumber: values.blueNumber?.trim().padStart(2, '0'),
+        quantity: values.quantity,
+        cost: values.cost,
+        source: values.source,
+        status: values.status,
+        note: values.note?.trim() || undefined
+      };
+      if (editingTicket?.id) {
+        await lotteryTicketApi.updateTicket(editingTicket.id, payload);
+      } else {
+        await lotteryTicketApi.saveTicket(payload);
+      }
+      setModalOpen(false);
+      setEditingTicket(undefined);
+      await loadTickets();
+    } catch (requestError) {
+      console.error('保存彩票票据失败:', requestError);
+      setError(requestError instanceof Error ? requestError.message : '保存彩票票据失败');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteTicket = async (id?: string) => {
+    if (!id) {
+      return;
+    }
+    setError(undefined);
+    try {
+      await lotteryTicketApi.deleteTicket(id);
+      await loadTickets();
+    } catch (requestError) {
+      console.error('删除彩票票据失败:', requestError);
+      setError(requestError instanceof Error ? requestError.message : '删除彩票票据失败');
+    }
+  };
 
   const columns: ColumnsType<LotteryTicket> = [
     {
@@ -151,6 +250,19 @@ const LotteryTicketPage = () => {
       dataIndex: 'updatedAt',
       key: 'updatedAt',
       render: value => formatTime(value)
+    },
+    {
+      title: '操作',
+      key: 'actions',
+      fixed: 'right',
+      render: (_, record) => (
+        <Space>
+          <Button size="small" icon={<EditOutlined />} onClick={() => openEditModal(record)} />
+          <Popconfirm title="删除票据？" okText="删除" cancelText="取消" onConfirm={() => deleteTicket(record.id)}>
+            <Button size="small" danger icon={<DeleteOutlined />} />
+          </Popconfirm>
+        </Space>
+      )
     }
   ];
 
@@ -161,6 +273,9 @@ const LotteryTicketPage = () => {
       title="我的彩票"
       actions={
         <Space wrap>
+          <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
+            新增票据
+          </Button>
           <Input
             allowClear
             prefix={<SearchOutlined />}
@@ -225,6 +340,59 @@ const LotteryTicketPage = () => {
           scroll={{ x: 920 }}
         />
       </Card>
+
+      <Modal
+        title={editingTicket ? '编辑票据' : '新增票据'}
+        open={modalOpen}
+        okText="保存"
+        cancelText="取消"
+        confirmLoading={saving}
+        onOk={saveTicket}
+        onCancel={() => setModalOpen(false)}
+      >
+        <Form form={form} layout="vertical">
+          <Form.Item name="issue" label="期号" rules={[{ required: true, message: '请输入期号' }]}>
+            <Input placeholder="例如 2026001" />
+          </Form.Item>
+          <Form.Item name="redNumbers" label="红球" rules={[{ required: true, message: '请输入红球号码' }]}>
+            <Input placeholder="例如 03 05 16 18 29 32" />
+          </Form.Item>
+          <Form.Item name="blueNumber" label="蓝球" rules={[{ required: true, message: '请输入蓝球号码' }]}>
+            <Input placeholder="例如 07" />
+          </Form.Item>
+          <Space.Compact block>
+            <Form.Item name="quantity" label="注数" style={{ width: '50%' }}>
+              <InputNumber min={1} precision={0} style={{ width: '100%' }} />
+            </Form.Item>
+            <Form.Item name="cost" label="成本" style={{ width: '50%' }}>
+              <InputNumber min={0} precision={2} style={{ width: '100%' }} />
+            </Form.Item>
+          </Space.Compact>
+          <Space.Compact block>
+            <Form.Item name="source" label="来源" style={{ width: '50%' }}>
+              <Select
+                options={[
+                  { label: '手动', value: 'MANUAL' },
+                  { label: '预测', value: 'PREDICTION' }
+                ]}
+              />
+            </Form.Item>
+            <Form.Item name="status" label="状态" style={{ width: '50%' }}>
+              <Select
+                options={[
+                  { label: '草稿', value: 'DRAFT' },
+                  { label: '已购买', value: 'BOUGHT' },
+                  { label: '已兑奖', value: 'CHECKED' },
+                  { label: '作废', value: 'VOID' }
+                ]}
+              />
+            </Form.Item>
+          </Space.Compact>
+          <Form.Item name="note" label="备注">
+            <Input.TextArea rows={3} placeholder="可记录购买渠道、想法或组合来源" />
+          </Form.Item>
+        </Form>
+      </Modal>
     </LifePageShell>
   );
 };

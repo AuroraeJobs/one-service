@@ -77,7 +77,7 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add `GET /lottery/tickets/summary`. Aggregates ticket count, checked/pending counts, winning count, cost, prize amount, and distributions.
 - [x] Add prize grade calculation utility. Added `LotteryPrizeCalculator` with validation-backed hit counting and prize grade mapping tests.
 - [x] Add ticket list page. Added `/lottery/tickets` with summary cards, issue filter, and ticket table backed by ticket APIs.
-- [ ] Add ticket create/edit modal.
+- [x] Add ticket create/edit modal. Ticket list page now supports create, edit, and delete actions with normalized number input.
 - [ ] Add action to save prediction candidates as tickets.
 - [ ] Add filters by issue, status, source, and prize grade.
 - [x] Add tests for prize grade calculation. Covered first through sixth prize, no prize, normalized number matching, and invalid hit counts.
