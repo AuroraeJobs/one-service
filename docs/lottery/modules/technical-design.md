@@ -37,6 +37,8 @@ Controller
 
 Provider-specific fetch and parse logic should not leak into controllers, frontend code, or shared DTOs.
 
+The first provider boundary is `LotteryDrawProvider`, with `CwlLotteryDrawProvider` wrapping the existing China Welfare Lottery fetch path. `RecordUpdater` depends on the provider interface rather than `RecordCalendar` or `RecordClient` directly.
+
 ## Data Ownership
 
 MongoDB should own durable domain data:

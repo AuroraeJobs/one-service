@@ -2,14 +2,13 @@ package com.one.record.command;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import com.one.record.client.RecordCalendar;
-import com.one.record.client.RecordClient;
 import com.one.record.configuration.RecordProperties;
 import com.one.record.file.RecordFile;
 import com.one.record.response.Record;
 import com.one.record.service.IBoxService;
 import com.one.record.service.IRecordService;
 import com.one.record.service.IRecordUpdate;
+import com.one.record.service.LotteryDrawProvider;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -26,6 +25,8 @@ public class RecordUpdater implements CommandLineRunner, IRecordUpdate {
     private final IBoxService boxService;
 
     private final RecordProperties properties;
+
+    private final LotteryDrawProvider lotteryDrawProvider;
 
     @Override
     public void run(String... args) {
@@ -50,7 +51,7 @@ public class RecordUpdater implements CommandLineRunner, IRecordUpdate {
             return;
         }
         // 从线上获取记录进行计算
-        List<Record> records = RecordCalendar.fetch(last.date());
+        List<Record> records = lotteryDrawProvider.fetchAfterDate(last.date());
         if (CollectionUtils.isEmpty(records)) {
             return;
         }
@@ -73,7 +74,7 @@ public class RecordUpdater implements CommandLineRunner, IRecordUpdate {
 
     private void init() {
         // 从2013年获取记录进行计算
-        List<Record> records = RecordClient.year();
+        List<Record> records = lotteryDrawProvider.fetchYearlyRecords();
         RecordFile.write(records);
         recordService.saveAll(records);
         boxService.init(records);

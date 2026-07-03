@@ -21,8 +21,8 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add or confirm canonical lottery draw model. Added `LotteryDraw` DTO and `LotteryDrawUtil` normalization helpers.
 - [x] Add repository/service methods for latest, first, range, and paged draw query. Added normalized `LotteryDraw` service methods and `/lottery/records/draws*` endpoints.
 - [x] Add draw sync log model. Added `LotteryRecordSyncLog` persisted in `lottery_record_sync_logs`.
-- [ ] Add lottery draw provider interface.
-- [ ] Move external record fetch/parsing behind provider implementation.
+- [x] Add lottery draw provider interface. Added `LotteryDrawProvider`.
+- [x] Move external record fetch/parsing behind provider implementation. Added `CwlLotteryDrawProvider`; `RecordUpdater` no longer calls `RecordCalendar` or `RecordClient` directly.
 - [x] Add `GET /lottery/records/latest`. Reuses existing record service.
 - [x] Add `GET /lottery/records/first`. Reuses existing record service.
 - [x] Add `GET /lottery/records`. Supports issue/date/line filters and all-record fallback.
@@ -31,7 +31,7 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add Redis sync lock. Manual record sync now uses `lottery:records:sync:lock` with TTL and writes `SKIPPED` logs when another sync is running.
 - [ ] Add scheduled record sync.
 - [x] Keep existing `record/*` endpoints compatible. Added new controller without changing `RecordController`.
-- [ ] Add backend tests for number normalization, duplicate issue handling, and sync idempotency. Number normalization is covered by `LotteryDrawUtilTest`; normalized draw query is covered by `RecordServiceTest`; sync lock behavior is covered by `LotteryRecordSyncServiceTest`; duplicate issue and full sync idempotency remain.
+- [ ] Add backend tests for number normalization, duplicate issue handling, and sync idempotency. Number normalization is covered by `LotteryDrawUtilTest`; normalized draw query is covered by `RecordServiceTest`; sync lock behavior is covered by `LotteryRecordSyncServiceTest`; provider-backed updater no-new-record path is covered by `RecordUpdaterTest`; duplicate issue and full sync idempotency remain.
 - [x] Add frontend API client methods for `/lottery/records/*`. Includes sync and sync-log methods; pages are not migrated yet.
 - [ ] Update frontend record loading to use normalized APIs when ready.
 
