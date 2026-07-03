@@ -80,9 +80,9 @@ Use this file as the durable task board for the stock module. When a task is fin
 
 ## Week 4: Alerts, Analysis, And Provider Abstraction
 
-- [ ] Add `StockAlertRule` model.
-- [ ] Persist alert rules and alert history in MongoDB.
-- [ ] Add alert CRUD endpoints.
+- [x] Add `StockAlertRule` model.
+- [x] Persist alert rules and alert history in MongoDB.
+- [x] Add alert CRUD endpoints.
 - [ ] Add price alert evaluation.
 - [ ] Add percent-change alert evaluation.
 - [ ] Add volume abnormality alert evaluation.

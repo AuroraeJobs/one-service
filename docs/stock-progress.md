@@ -73,6 +73,8 @@ Implemented baseline:
 - Portfolio summary endpoint `GET /stock/portfolio/summary` calculates current market value, floating PnL, floating PnL percent, and today PnL from persisted positions plus normalized quote data.
 - Investment page now loads `stockApi.portfolioSummary`, renders portfolio summary cards, and shows holdings sorted by backend market value/PnL calculations.
 - `StockPortfolioServiceTest` covers account defaults, trade symbol normalization, unsupported trade type rejection, and portfolio summary calculations.
+- Stock alert foundation exists: MongoDB-backed alert rule and alert history models, CRUD APIs for `/stock/alerts/rules`, and recent history query `/stock/alerts/history`.
+- `StockAlertServiceTest` covers alert rule normalization/defaults, unsupported rule type rejection, and history symbol filtering.
 - Root Maven Surefire is pinned to `3.2.5` so JUnit 5/JUnit Platform tests are discovered instead of being skipped by the old default plugin.
 
 Architecture rule to preserve:
@@ -111,6 +113,11 @@ POST /stock/trades
 PUT /stock/trades/{id}
 DELETE /stock/trades/{id}
 GET /stock/portfolio/summary
+GET /stock/alerts/rules
+POST /stock/alerts/rules
+PUT /stock/alerts/rules/{id}
+DELETE /stock/alerts/rules/{id}
+GET /stock/alerts/history
 ```
 
 Current frontend page:
@@ -150,6 +157,13 @@ one-record/one-record-repository/src/main/java/com/one/record/repository/StockTr
 one-record/one-record-interface/src/main/java/com/one/record/service/IStockPortfolioService.java
 one-record/one-record-service/src/main/java/com/one/record/service/impl/StockPortfolioService.java
 one-record/one-record-web/src/main/java/com/one/record/web/StockPortfolioController.java
+one-record/one-record-model/src/main/java/com/one/record/stock/StockAlertRule.java
+one-record/one-record-model/src/main/java/com/one/record/stock/StockAlertHistory.java
+one-record/one-record-repository/src/main/java/com/one/record/repository/StockAlertRuleRepository.java
+one-record/one-record-repository/src/main/java/com/one/record/repository/StockAlertHistoryRepository.java
+one-record/one-record-interface/src/main/java/com/one/record/service/IStockAlertService.java
+one-record/one-record-service/src/main/java/com/one/record/service/impl/StockAlertService.java
+one-record/one-record-web/src/main/java/com/one/record/web/StockAlertController.java
 ```
 
 ## Verification Notes

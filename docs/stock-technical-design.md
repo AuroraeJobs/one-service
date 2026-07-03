@@ -420,6 +420,46 @@ Portfolio summary:
 - If quote data is unavailable, latest price and market-derived PnL default to zero while `quoteAvailable` marks the row state.
 - The investment dashboard consumes `stockApi.portfolioSummary` for summary cards and the holdings table. It does not recalculate portfolio metrics in the browser.
 
+Alert storage:
+
+```text
+stock_alert_rules
+- userId
+- symbol
+- market
+- code
+- name
+- ruleType
+- direction
+- targetValue
+- enabled
+- throttleSeconds
+- lastTriggeredAt
+- createdAt
+- updatedAt
+
+stock_alert_history
+- userId
+- ruleId
+- symbol
+- ruleType
+- direction
+- targetValue
+- triggerValue
+- message
+- triggeredAt
+- createdAt
+```
+
+Alert rules:
+
+- Rule CRUD endpoints live under `/stock/alerts/rules`.
+- Recent trigger history is queried through `/stock/alerts/history`.
+- Rule symbols are normalized through `IStockMarketService`.
+- Supported rule types are `PRICE`, `PERCENT_CHANGE`, and `VOLUME_ABNORMAL`.
+- Supported directions are `ABOVE`, `BELOW`, `UP`, and `DOWN`.
+- Evaluation, Redis throttling, and scheduled alert jobs come in the next alert iteration.
+
 K-line sync configuration:
 
 ```yaml
