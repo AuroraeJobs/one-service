@@ -42,7 +42,7 @@ Provider-specific fetch and parse logic should not leak into controllers, fronte
 MongoDB should own durable domain data:
 
 - Draw records.
-- Sync logs.
+- Sync logs. Current implementation starts with `LotteryRecordSyncLog` in `lottery_record_sync_logs` for manual record sync operations.
 - Prediction rules and prediction snapshots.
 - Training reports when they need history.
 - Personal tickets.
@@ -156,6 +156,7 @@ VOID
 
 - Keep existing APIs compatible while adding new `lottery/*` APIs.
 - New record work should prefer `/lottery/records/*`; existing `/record/*` endpoints are legacy-compatible wrappers until callers are migrated.
+- Record sync returns a persisted operation log so frontend pages can show status, saved count, issue range, and failure message.
 - Return normalized project DTOs only.
 - Use explicit filters rather than overloading vague request bodies.
 - Support pagination for list/history endpoints that can grow.

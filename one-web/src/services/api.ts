@@ -38,6 +38,18 @@ export interface RecordYearCount {
   count: number;
 }
 
+export interface LotteryRecordSyncLog {
+  id?: string;
+  jobName?: string;
+  status?: 'RUNNING' | 'SUCCESS' | 'FAILED' | string;
+  startIssue?: string;
+  endIssue?: string;
+  savedCount?: number;
+  message?: string;
+  startedAt?: number;
+  finishedAt?: number;
+}
+
 interface ChatResponse {
   response: string;
   model?: string;
@@ -190,8 +202,11 @@ export const lotteryRecordApi = {
   refreshYearlyCounts: (): Promise<RecordYearCount[]> => {
     return apiClient.post('/lottery/records/yearly-counts/statistics');
   },
-  sync: (): Promise<void> => {
+  sync: (): Promise<LotteryRecordSyncLog> => {
     return apiClient.post('/lottery/records/sync');
+  },
+  syncLogs: (params?: { status?: string; limit?: number }): Promise<LotteryRecordSyncLog[]> => {
+    return apiClient.get('/lottery/records/sync-logs', { params });
   },
 };
 

@@ -1,8 +1,10 @@
 package com.one.record.web;
 
 import com.one.record.request.RecordRequest;
+import com.one.record.model.LotteryRecordSyncLog;
 import com.one.record.response.Record;
 import com.one.record.response.RecordYearCount;
+import com.one.record.service.ILotteryRecordSyncLogService;
 import com.one.record.service.IRecordService;
 import com.one.record.service.IRecordUpdate;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,6 +28,8 @@ public class LotteryRecordController {
     private final IRecordService service;
 
     private final IRecordUpdate recordUpdate;
+
+    private final ILotteryRecordSyncLogService syncLogService;
 
     @GetMapping("latest")
     @Operation(summary = "查询最新开奖记录", description = "从数据库获取最新一期彩票开奖记录")
@@ -74,14 +78,42 @@ public class LotteryRecordController {
 
     @PostMapping("sync")
     @Operation(summary = "同步开奖记录", description = "触发现有开奖记录更新流程；保留 record/update 兼容入口")
-    public void sync() {
+    public LotteryRecordSyncLog sync() {
         log.info("Syncing lottery records");
-        recordUpdate.update();
+        Record before = service.findLast();
+        LotteryRecordSyncLog syncLog = syncLogService.start("manual-record-sync", before == null ? null : before.getCode());
+        try {
+            recordUpdate.update();
+            Record after = service.findLast();
+            int savedCount = savedCount(before, after);
+            return syncLogService.success(syncLog, after == null ? null : after.getCode(), savedCount,
+                    savedCount > 0 ? "新增 " + savedCount + " 期开奖记录" : "没有新的开奖记录");
+        } catch (RuntimeException exception) {
+            syncLogService.failure(syncLog, exception.getMessage());
+            throw exception;
+        }
+    }
+
+    @GetMapping("sync-logs")
+    @Operation(summary = "查询开奖记录同步日志", description = "查询最近的开奖记录同步日志，可按状态过滤")
+    public List<LotteryRecordSyncLog> syncLogs(@RequestParam(value = "status", required = false) String status,
+                                               @RequestParam(value = "limit", required = false, defaultValue = "50") int limit) {
+        return syncLogService.findRecent(status, limit);
     }
 
     private static boolean hasFilter(RecordRequest request) {
         return StringUtils.hasText(request.getIssueStart()) && StringUtils.hasText(request.getIssueEnd())
                 || StringUtils.hasText(request.getDayStart()) && StringUtils.hasText(request.getDayEnd())
                 || request.getLineStart() != 0 && request.getLineEnd() != 0;
+    }
+
+    private static int savedCount(Record before, Record after) {
+        if (after == null) {
+            return 0;
+        }
+        if (before == null) {
+            return 1;
+        }
+        return Math.max(0, (int) (after.getLine() - before.getLine()));
     }
 }

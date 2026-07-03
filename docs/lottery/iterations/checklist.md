@@ -20,19 +20,19 @@ Use this file as the durable task board for the lottery module. When a task is f
 
 - [ ] Add or confirm canonical lottery draw model.
 - [ ] Add repository/service methods for latest, first, range, and paged draw query.
-- [ ] Add draw sync log model.
+- [x] Add draw sync log model. Added `LotteryRecordSyncLog` persisted in `lottery_record_sync_logs`.
 - [ ] Add lottery draw provider interface.
 - [ ] Move external record fetch/parsing behind provider implementation.
 - [x] Add `GET /lottery/records/latest`. Reuses existing record service.
 - [x] Add `GET /lottery/records/first`. Reuses existing record service.
 - [x] Add `GET /lottery/records`. Supports issue/date/line filters and all-record fallback.
 - [x] Add `POST /lottery/records/sync`. Triggers the existing record update flow.
-- [ ] Add `GET /lottery/records/sync-logs`.
+- [x] Add `GET /lottery/records/sync-logs`. Supports optional `status` and `limit`.
 - [ ] Add Redis sync lock.
 - [ ] Add scheduled record sync.
 - [x] Keep existing `record/*` endpoints compatible. Added new controller without changing `RecordController`.
 - [ ] Add backend tests for number normalization, duplicate issue handling, and sync idempotency.
-- [x] Add frontend API client methods for `/lottery/records/*`. Pages are not migrated yet.
+- [x] Add frontend API client methods for `/lottery/records/*`. Includes sync and sync-log methods; pages are not migrated yet.
 - [ ] Update frontend record loading to use normalized APIs when ready.
 
 ## Iteration 02: Statistics Cockpit
