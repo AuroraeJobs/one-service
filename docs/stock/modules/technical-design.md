@@ -345,6 +345,8 @@ latestStatus
 latestMessage
 latestStartedAt
 latestFinishedAt
+latestDurationMs
+averageDurationMs
 lastSuccessAt
 lastFailureAt
 generatedAt
@@ -365,6 +367,7 @@ Rules:
 - `GET /stock/klines/sync-logs` supports optional `symbol`, `status`, and `limit` filters. Symbol is normalized by `IStockMarketService`; status is trimmed and uppercased; limit defaults to 50 and is capped at 100 before MongoDB repository lookup.
 - `GET /stock/klines/sync-summary` aggregates the latest MongoDB sync logs into status counters and millisecond timestamps.
 - Sync summary success and failure rates are percentage values calculated in the backend and rounded to two decimals.
+- Sync summary duration metrics are calculated in the backend from millisecond timestamps. Average duration ignores running or invalid logs without a non-negative finished duration.
 - Sync summary supports `limit`, defaults to 50, and is capped at 100 recent logs.
 - Historical third-party provider fetching stays behind provider/router abstractions, not directly in controllers.
 

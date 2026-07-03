@@ -248,6 +248,8 @@ const LifeStockSyncPage = () => {
         <MetricCard title="失败率" value={formatRate(summary?.failedRate)} accent="#ff3b30" />
         <MetricCard title="运行中" value={summary?.runningCount ?? 0} suffix="次" accent="#0071e3" />
         <MetricCard title="保存" value={summary?.savedCount ?? 0} suffix="条" accent="#ff9500" />
+        <MetricCard title="最近耗时" value={formatDuration(summary?.latestDurationMs)} accent="#00a6a6" />
+        <MetricCard title="平均耗时" value={formatDuration(summary?.averageDurationMs)} accent="#bf5af2" />
         <MetricCard title="最后完成" value={formatTime(summary?.latestFinishedAt)} accent="#5856d6" valueStyle={{ fontSize: 18 }} />
       </MetricGrid>
 
@@ -410,6 +412,19 @@ const formatRate = (value?: number) => {
     return '-';
   }
   return `${value.toFixed(2)}%`;
+};
+
+const formatDuration = (value?: number) => {
+  if (typeof value !== 'number') {
+    return '-';
+  }
+  if (value < 1000) {
+    return `${value}ms`;
+  }
+  if (value < 60000) {
+    return `${(value / 1000).toFixed(1)}s`;
+  }
+  return `${(value / 60000).toFixed(1)}m`;
 };
 
 export default LifeStockSyncPage;

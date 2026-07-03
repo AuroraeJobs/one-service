@@ -41,6 +41,10 @@ public class StockKLineSyncSummary {
 
     private Long latestFinishedAt;
 
+    private Long latestDurationMs;
+
+    private Long averageDurationMs;
+
     private Long lastSuccessAt;
 
     private Long lastFailureAt;

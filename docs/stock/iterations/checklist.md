@@ -253,6 +253,16 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Add backend tests for rate calculations.
 - [x] Update docs and commit/push after the milestone.
 
+## Iteration 15: Sync Duration Metrics
+
+- [x] Add `latestDurationMs` and `averageDurationMs` to `StockKLineSyncSummary`.
+- [x] Calculate duration metrics from millisecond timestamps in the backend service.
+- [x] Ignore running or invalid logs when calculating average duration.
+- [x] Update frontend stock API type.
+- [x] Show recent-duration and average-duration cards on `/investments/sync`.
+- [x] Add backend tests for populated and empty duration metrics.
+- [x] Update docs and commit/push after the milestone.
+
 ## Quality Gates
 
 - [x] Backend compiles with JDK 21.

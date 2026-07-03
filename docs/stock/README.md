@@ -46,6 +46,7 @@ mvn -version
 - [Iteration 12 sync log filters](iterations/12-sync-log-filters.md)
 - [Iteration 13 sync log windowing](iterations/13-sync-log-windowing.md)
 - [Iteration 14 sync health rates](iterations/14-sync-health-rates.md)
+- [Iteration 15 sync duration metrics](iterations/15-sync-duration-metrics.md)
 - [Quality gates](iterations/quality-gates.md)
 
 ## Module Docs

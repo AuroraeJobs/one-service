@@ -189,6 +189,8 @@ public class StockKLineService implements IStockKLineService {
                 .latestMessage(latest == null ? null : latest.getMessage())
                 .latestStartedAt(latest == null ? null : latest.getStartedAt())
                 .latestFinishedAt(latest == null ? null : latest.getFinishedAt())
+                .latestDurationMs(durationMs(latest))
+                .averageDurationMs(averageDurationMs(logs))
                 .lastSuccessAt(lastFinishedAt(logs, "SUCCESS"))
                 .lastFailureAt(lastFinishedAt(logs, "FAILED"))
                 .generatedAt(System.currentTimeMillis())
@@ -219,6 +221,28 @@ public class StockKLineService implements IStockKLineService {
         return BigDecimal.valueOf(count)
                 .multiply(BigDecimal.valueOf(100))
                 .divide(BigDecimal.valueOf(total), 2, RoundingMode.HALF_UP);
+    }
+
+    private Long durationMs(StockKLineSyncLog log) {
+        if (log == null || log.getStartedAt() == null || log.getFinishedAt() == null) {
+            return null;
+        }
+        long duration = log.getFinishedAt() - log.getStartedAt();
+        return duration >= 0 ? duration : null;
+    }
+
+    private Long averageDurationMs(List<StockKLineSyncLog> logs) {
+        List<Long> durations = logs.stream()
+                .map(this::durationMs)
+                .filter(duration -> duration != null)
+                .toList();
+        if (durations.isEmpty()) {
+            return null;
+        }
+        return Math.round(durations.stream()
+                .mapToLong(Long::longValue)
+                .average()
+                .orElse(0));
     }
 
     private int sumRequested(List<StockKLineSyncLog> logs) {

@@ -248,6 +248,8 @@ export interface StockKLineSyncSummary {
   latestMessage?: string;
   latestStartedAt?: number;
   latestFinishedAt?: number;
+  latestDurationMs?: number;
+  averageDurationMs?: number;
   lastSuccessAt?: number;
   lastFailureAt?: number;
   generatedAt?: number;
