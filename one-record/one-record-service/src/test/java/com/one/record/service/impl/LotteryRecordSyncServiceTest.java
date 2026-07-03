@@ -5,6 +5,7 @@ import com.one.record.response.Record;
 import com.one.record.service.ILotteryRecordSyncLogService;
 import com.one.record.service.IRecordService;
 import com.one.record.service.IRecordUpdate;
+import com.one.record.service.ILotteryStatisticsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -30,6 +31,8 @@ class LotteryRecordSyncServiceTest {
 
     private ILotteryRecordSyncLogService syncLogService;
 
+    private ILotteryStatisticsService statisticsService;
+
     private StringRedisTemplate redisTemplate;
 
     private ValueOperations<String, String> valueOperations;
@@ -41,11 +44,12 @@ class LotteryRecordSyncServiceTest {
         recordService = mock(IRecordService.class);
         recordUpdate = mock(IRecordUpdate.class);
         syncLogService = mock(ILotteryRecordSyncLogService.class);
+        statisticsService = mock(ILotteryStatisticsService.class);
         redisTemplate = mock(StringRedisTemplate.class);
         valueOperations = mockValueOperations();
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.setIfAbsent(anyString(), anyString(), any(Duration.class))).thenReturn(true);
-        service = new LotteryRecordSyncService(recordService, recordUpdate, syncLogService, redisTemplate);
+        service = new LotteryRecordSyncService(recordService, recordUpdate, syncLogService, statisticsService, redisTemplate);
     }
 
     @SuppressWarnings("unchecked")
@@ -67,8 +71,25 @@ class LotteryRecordSyncServiceTest {
 
         assertThat(result.getStatus()).isEqualTo("SUCCESS");
         verify(recordUpdate).update();
+        verify(statisticsService).invalidateCache();
         verify(syncLogService).success(running, "2026003", 2, "新增 2 期开奖记录");
         verify(redisTemplate).delete("lottery:records:sync:lock");
+    }
+
+    @Test
+    void syncManuallyKeepsStatisticsCacheWhenNoRecordsSaved() {
+        Record before = record("2026001", 1);
+        LotteryRecordSyncLog running = LotteryRecordSyncLog.builder().id("sync-1").status("RUNNING").build();
+        LotteryRecordSyncLog success = LotteryRecordSyncLog.builder().id("sync-1").status("SUCCESS").savedCount(0).build();
+        when(recordService.findLast()).thenReturn(before, before);
+        when(syncLogService.start("manual-record-sync", "2026001")).thenReturn(running);
+        when(syncLogService.success(running, "2026001", 0, "没有新的开奖记录")).thenReturn(success);
+
+        LotteryRecordSyncLog result = service.syncManually();
+
+        assertThat(result.getSavedCount()).isZero();
+        verify(statisticsService, never()).invalidateCache();
+        verify(syncLogService).success(running, "2026001", 0, "没有新的开奖记录");
     }
 
     @Test
@@ -101,6 +122,7 @@ class LotteryRecordSyncServiceTest {
 
         assertThat(result.getStatus()).isEqualTo("SKIPPED");
         verify(recordUpdate, never()).update();
+        verify(statisticsService, never()).invalidateCache();
         verify(redisTemplate, never()).delete(anyString());
     }
 

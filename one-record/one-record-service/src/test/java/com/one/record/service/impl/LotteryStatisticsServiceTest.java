@@ -6,6 +6,8 @@ import com.one.record.request.RecordRequest;
 import com.one.record.service.IRecordService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 
 import java.util.List;
 
@@ -13,6 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -20,12 +23,24 @@ class LotteryStatisticsServiceTest {
 
     private IRecordService recordService;
 
+    private StringRedisTemplate redisTemplate;
+
+    private ValueOperations<String, String> valueOperations;
+
     private LotteryStatisticsService service;
 
     @BeforeEach
     void setUp() {
         recordService = mock(IRecordService.class);
-        service = new LotteryStatisticsService(recordService);
+        redisTemplate = mock(StringRedisTemplate.class);
+        valueOperations = mockValueOperations();
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        service = new LotteryStatisticsService(recordService, redisTemplate);
+    }
+
+    @SuppressWarnings("unchecked")
+    private ValueOperations<String, String> mockValueOperations() {
+        return (ValueOperations<String, String>) mock(ValueOperations.class);
     }
 
     @Test
@@ -50,6 +65,20 @@ class LotteryStatisticsServiceTest {
         assertThat(summary.getBigCountDistribution()).extracting("value").containsExactly("0");
         assertThat(summary.getGeneratedAt()).isNotNull();
         verify(recordService).findDraws(any(RecordRequest.class), eq(0), eq(500));
+        verify(valueOperations).set(eq(LotteryStatisticsService.SUMMARY_CACHE_KEY), any(String.class));
+    }
+
+    @Test
+    void summaryReturnsCachedValueWhenAvailable() {
+        when(valueOperations.get(LotteryStatisticsService.SUMMARY_CACHE_KEY)).thenReturn("""
+                {"totalDraws":8,"latestIssue":"2026008","redFrequency":[],"blueFrequency":[],"redSumDistribution":[],"oddCountDistribution":[],"bigCountDistribution":[],"spanDistribution":[]}
+                """);
+
+        LotteryStatisticsSummary summary = service.summary();
+
+        assertThat(summary.getTotalDraws()).isEqualTo(8);
+        assertThat(summary.getLatestIssue()).isEqualTo("2026008");
+        verify(recordService, never()).findDraws(any(RecordRequest.class), eq(0), eq(500));
     }
 
     @Test
@@ -79,6 +108,13 @@ class LotteryStatisticsServiceTest {
         assertThat(service.distribution())
                 .containsKeys("redSum", "oddCount", "bigCount", "span")
                 .satisfies(result -> assertThat(result.get("redSum")).extracting("value").containsExactly("21"));
+    }
+
+    @Test
+    void invalidateCacheDeletesSummaryKey() {
+        service.invalidateCache();
+
+        verify(redisTemplate).delete(LotteryStatisticsService.SUMMARY_CACHE_KEY);
     }
 
     private static LotteryDraw draw(String issue, String date, List<String> redNumbers, String blueNumber) {

@@ -5,6 +5,7 @@ import com.one.record.service.ILotteryStatisticsService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,6 +23,12 @@ public class LotteryStatisticsController {
     @Operation(summary = "查询彩票统计汇总", description = "返回开奖记录总览、红蓝球频率和基础结构分布")
     public LotteryStatisticsSummary summary() {
         return service.summary();
+    }
+
+    @PostMapping("summary/refresh")
+    @Operation(summary = "重算彩票统计汇总", description = "强制重算开奖记录统计汇总并刷新缓存")
+    public LotteryStatisticsSummary refreshSummary() {
+        return service.refreshSummary();
     }
 
     @GetMapping("frequency")

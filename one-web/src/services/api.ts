@@ -277,6 +277,9 @@ export const lotteryStatisticsApi = {
   summary: (): Promise<LotteryStatisticsSummary> => {
     return apiClient.get('/lottery/statistics/summary');
   },
+  refreshSummary: (): Promise<LotteryStatisticsSummary> => {
+    return apiClient.post('/lottery/statistics/summary/refresh');
+  },
   frequency: (): Promise<{ red: LotteryNumberFrequency[]; blue: LotteryNumberFrequency[] }> => {
     return apiClient.get('/lottery/statistics/frequency');
   },

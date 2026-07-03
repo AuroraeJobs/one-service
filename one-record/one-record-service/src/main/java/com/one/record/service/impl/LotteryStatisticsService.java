@@ -1,12 +1,16 @@
 package com.one.record.service.impl;
 
+import com.one.common.util.JsonUtil;
 import com.one.record.lottery.LotteryDraw;
 import com.one.record.lottery.LotteryStatisticsSummary;
 import com.one.record.request.RecordRequest;
 import com.one.record.service.ILotteryStatisticsService;
 import com.one.record.service.IRecordService;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -18,21 +22,35 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class LotteryStatisticsService implements ILotteryStatisticsService {
+
+    public static final String SUMMARY_CACHE_KEY = "lottery:statistics:summary";
 
     private static final int PAGE_SIZE = 500;
 
     private final IRecordService recordService;
 
+    private final StringRedisTemplate redisTemplate;
+
     @Override
     public LotteryStatisticsSummary summary() {
+        LotteryStatisticsSummary cached = readSummaryCache();
+        if (cached != null) {
+            return cached;
+        }
+        return refreshSummary();
+    }
+
+    @Override
+    public LotteryStatisticsSummary refreshSummary() {
         List<LotteryDraw> draws = loadAllDraws();
         LotteryDraw first = recordService.findFirstDraw();
         LotteryDraw latest = recordService.findLastDraw();
 
-        return LotteryStatisticsSummary.builder()
+        LotteryStatisticsSummary summary = LotteryStatisticsSummary.builder()
                 .totalDraws(draws.size())
                 .firstIssue(first == null ? null : first.getIssue())
                 .latestIssue(latest == null ? null : latest.getIssue())
@@ -48,6 +66,8 @@ public class LotteryStatisticsService implements ILotteryStatisticsService {
                 .spanDistribution(buildDistribution(draws, draw -> draw.getSpan() == null ? null : draw.getSpan().toString()))
                 .generatedAt(System.currentTimeMillis())
                 .build();
+        writeSummaryCache(summary);
+        return summary;
     }
 
     @Override
@@ -68,6 +88,36 @@ public class LotteryStatisticsService implements ILotteryStatisticsService {
         result.put("bigCount", summary.getBigCountDistribution());
         result.put("span", summary.getSpanDistribution());
         return result;
+    }
+
+    @Override
+    public void invalidateCache() {
+        try {
+            redisTemplate.delete(SUMMARY_CACHE_KEY);
+        } catch (RuntimeException exception) {
+            log.warn("彩票统计缓存清理失败，key={}", SUMMARY_CACHE_KEY, exception);
+        }
+    }
+
+    private LotteryStatisticsSummary readSummaryCache() {
+        try {
+            String value = redisTemplate.opsForValue().get(SUMMARY_CACHE_KEY);
+            if (!StringUtils.hasText(value)) {
+                return null;
+            }
+            return JsonUtil.toObject(value, LotteryStatisticsSummary.class);
+        } catch (RuntimeException exception) {
+            log.warn("彩票统计缓存读取失败，key={}", SUMMARY_CACHE_KEY, exception);
+            return null;
+        }
+    }
+
+    private void writeSummaryCache(LotteryStatisticsSummary summary) {
+        try {
+            redisTemplate.opsForValue().set(SUMMARY_CACHE_KEY, JsonUtil.toJson(summary));
+        } catch (RuntimeException exception) {
+            log.warn("彩票统计缓存写入失败，key={}", SUMMARY_CACHE_KEY, exception);
+        }
     }
 
     private List<LotteryDraw> loadAllDraws() {

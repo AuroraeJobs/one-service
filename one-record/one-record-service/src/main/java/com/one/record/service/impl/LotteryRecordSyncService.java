@@ -5,6 +5,7 @@ import com.one.record.model.LotteryRecordSyncLog;
 import com.one.record.response.Record;
 import com.one.record.service.ILotteryRecordSyncLogService;
 import com.one.record.service.ILotteryRecordSyncService;
+import com.one.record.service.ILotteryStatisticsService;
 import com.one.record.service.IRecordService;
 import com.one.record.service.IRecordUpdate;
 import lombok.AllArgsConstructor;
@@ -31,6 +32,8 @@ public class LotteryRecordSyncService implements ILotteryRecordSyncService {
 
     private final ILotteryRecordSyncLogService syncLogService;
 
+    private final ILotteryStatisticsService statisticsService;
+
     private final StringRedisTemplate redisTemplate;
 
     @Override
@@ -54,6 +57,9 @@ public class LotteryRecordSyncService implements ILotteryRecordSyncService {
             recordUpdate.update();
             Record after = recordService.findLast();
             int savedCount = savedCount(before, after);
+            if (savedCount > 0) {
+                statisticsService.invalidateCache();
+            }
             return syncLogService.success(syncLog, after == null ? null : after.getCode(), savedCount,
                     savedCount > 0 ? "新增 " + savedCount + " 期开奖记录" : "没有新的开奖记录");
         } catch (RuntimeException exception) {

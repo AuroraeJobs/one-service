@@ -15,6 +15,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -65,6 +66,23 @@ class LotteryStatisticsControllerTest {
                 .andExpect(jsonPath("$.generatedAt").value(123));
 
         verify(service).summary();
+    }
+
+    @Test
+    void refreshSummaryRecalculatesStatistics() throws Exception {
+        when(service.refreshSummary()).thenReturn(LotteryStatisticsSummary.builder()
+                .totalDraws(3)
+                .latestIssue("2026003")
+                .generatedAt(456L)
+                .build());
+
+        mockMvc.perform(post("/lottery/statistics/summary/refresh"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalDraws").value(3))
+                .andExpect(jsonPath("$.latestIssue").value("2026003"))
+                .andExpect(jsonPath("$.generatedAt").value(456));
+
+        verify(service).refreshSummary();
     }
 
     @Test
