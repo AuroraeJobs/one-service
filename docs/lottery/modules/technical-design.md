@@ -180,6 +180,8 @@ The frontend ticket list page at `/lottery/tickets` reads ticket list and summar
 
 The ticket page create/edit modal posts to the ticket CRUD APIs and accepts red numbers as space- or comma-separated input before converting them to the backend list format.
 
+Prediction detail can save the primary prediction or candidate predictions as draft tickets with `source=PREDICTION` and `predictionSnapshotId` linked to the originating snapshot.
+
 Suggested statuses:
 
 ```text

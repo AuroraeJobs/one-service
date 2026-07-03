@@ -6,6 +6,7 @@ import LifePageShell from './LifePageShell';
 import LotteryBalls from './lottery/LotteryBalls';
 import {
   lotteryPredictionApi,
+  lotteryTicketApi,
   type LotteryPredictionCandidate,
   type LotteryPredictionSnapshot
 } from '../services/api';
@@ -40,6 +41,7 @@ const LotteryPredictionDetailPage = () => {
   const navigate = useNavigate();
   const [prediction, setPrediction] = useState<LotteryPredictionSnapshot>();
   const [loading, setLoading] = useState(true);
+  const [savingTicketKey, setSavingTicketKey] = useState<string>();
   const [error, setError] = useState<string>();
 
   const loadDetail = async () => {
@@ -73,6 +75,41 @@ const LotteryPredictionDetailPage = () => {
 
   const hitRedNumbers = useMemo(() => prediction?.actualRecord?.redNumbers || [], [prediction?.actualRecord?.redNumbers]);
   const hitBlueNumber = prediction?.actualRecord?.blueNumber;
+
+  const saveAsTicket = async (
+    ticketKey: string,
+    title: string,
+    redNumbers: string[],
+    blueNumber: string,
+    score?: number
+  ) => {
+    if (!prediction?.targetPeriod) {
+      message.error('缺少目标期号，无法保存票据');
+      return;
+    }
+    setSavingTicketKey(ticketKey);
+    setError(undefined);
+    try {
+      await lotteryTicketApi.saveTicket({
+        issue: String(prediction.targetPeriod),
+        redNumbers,
+        blueNumber,
+        quantity: 1,
+        cost: 2,
+        source: 'PREDICTION',
+        status: 'DRAFT',
+        predictionSnapshotId: prediction.id,
+        note: `${title} · 预测评分 ${score ?? '-'}`
+      });
+      message.success('已保存为彩票票据');
+    } catch (requestError) {
+      console.error('保存预测票据失败:', requestError);
+      setError(requestError instanceof Error ? requestError.message : '保存预测票据失败');
+      message.error('保存预测票据失败');
+    } finally {
+      setSavingTicketKey(undefined);
+    }
+  };
 
   return (
     <LifePageShell
@@ -120,6 +157,20 @@ const LotteryPredictionDetailPage = () => {
               {prediction.reason ? <p>{prediction.reason}</p> : null}
               <div className="lottery-detail-result-line">
                 {scoreTag(prediction.result)}
+                <Button
+                  size="small"
+                  type="primary"
+                  loading={savingTicketKey === 'primary'}
+                  onClick={() => saveAsTicket(
+                    'primary',
+                    prediction.title || '主预测',
+                    prediction.redNumbers || [],
+                    prediction.blueNumber || '',
+                    prediction.score
+                  )}
+                >
+                  保存为票据
+                </Button>
               </div>
             </Card>
 
@@ -175,6 +226,21 @@ const LotteryPredictionDetailPage = () => {
                         hitRedNumbers={hitRedNumbers}
                         hitBlueNumber={hitBlueNumber}
                       />
+                      <div className="lottery-history-card-actions">
+                        <Button
+                          size="small"
+                          loading={savingTicketKey === `${candidate.title}-${candidate.blueNumber}`}
+                          onClick={() => saveAsTicket(
+                            `${candidate.title}-${candidate.blueNumber}`,
+                            candidate.title,
+                            candidate.redNumbers || [],
+                            candidate.blueNumber || '',
+                            candidate.score
+                          )}
+                        >
+                          保存为票据
+                        </Button>
+                      </div>
                     </article>
                   ))}
                 </div>
