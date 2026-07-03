@@ -478,6 +478,16 @@ stock:
     alert-evaluation-cron: "0 */5 9-15 * * MON-FRI"
 ```
 
+Analysis summary:
+
+- Endpoint: `GET /stock/analysis/summary`.
+- Concentration source: `IStockPortfolioService.summary().holdings`.
+- Concentration percent: holding `marketValue / totalMarketValue * 100`, sorted by market value descending.
+- Top gainers and losers use normalized holding `changePercent` from portfolio summary.
+- Volatility uses recent MongoDB K-line rows from `stock_klines`; current metric is average absolute `changePercent` over the latest 60 daily rows.
+- Drawdown uses recent MongoDB K-line closes; current metric is max peak-to-close drawdown over the latest 60 daily rows.
+- Analysis reads internal normalized DTOs and MongoDB history only; it does not depend on a concrete quote provider.
+
 K-line sync configuration:
 
 ```yaml

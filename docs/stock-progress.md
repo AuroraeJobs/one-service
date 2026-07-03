@@ -77,6 +77,8 @@ Implemented baseline:
 - Alert evaluation exists for price, percent-change, and volume-abnormal rules. It writes trigger history to MongoDB and uses Redis for per-rule throttling plus last-evaluated state.
 - Alert scheduled evaluation is configurable through `stock.market.alert-evaluation-enabled` and `stock.market.alert-evaluation-cron`.
 - `StockAlertServiceTest` covers alert rule normalization/defaults, unsupported rule type rejection, history symbol filtering, alert evaluation, and throttling.
+- Analysis summary endpoint `GET /stock/analysis/summary` returns concentration, recent volatility, recent drawdown, top gainers, and top losers from portfolio summary plus MongoDB K-line data.
+- `StockAnalysisServiceTest` covers concentration, volatility, drawdown, and ranking calculations.
 - Root Maven Surefire is pinned to `3.2.5` so JUnit 5/JUnit Platform tests are discovered instead of being skipped by the old default plugin.
 
 Architecture rule to preserve:
@@ -121,6 +123,7 @@ PUT /stock/alerts/rules/{id}
 DELETE /stock/alerts/rules/{id}
 GET /stock/alerts/history
 POST /stock/alerts/evaluate
+GET /stock/analysis/summary
 ```
 
 Current frontend page:
@@ -167,6 +170,11 @@ one-record/one-record-repository/src/main/java/com/one/record/repository/StockAl
 one-record/one-record-interface/src/main/java/com/one/record/service/IStockAlertService.java
 one-record/one-record-service/src/main/java/com/one/record/service/impl/StockAlertService.java
 one-record/one-record-web/src/main/java/com/one/record/web/StockAlertController.java
+one-record/one-record-model/src/main/java/com/one/record/stock/StockAnalysisItem.java
+one-record/one-record-model/src/main/java/com/one/record/stock/StockAnalysisSummary.java
+one-record/one-record-interface/src/main/java/com/one/record/service/IStockAnalysisService.java
+one-record/one-record-service/src/main/java/com/one/record/service/impl/StockAnalysisService.java
+one-record/one-record-web/src/main/java/com/one/record/web/StockAnalysisController.java
 ```
 
 ## Verification Notes

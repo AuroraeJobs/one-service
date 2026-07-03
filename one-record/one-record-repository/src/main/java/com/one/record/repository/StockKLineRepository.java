@@ -13,4 +13,6 @@ public interface StockKLineRepository extends MongoRepository<StockKLine, String
     Optional<StockKLine> findBySymbolAndPeriodAndTradeDate(String symbol, String period, String tradeDate);
 
     List<StockKLine> findBySymbolAndPeriodAndTradeDateBetweenOrderByTradeDateAsc(String symbol, String period, String startDate, String endDate);
+
+    List<StockKLine> findTop60BySymbolAndPeriodOrderByTradeDateDesc(String symbol, String period);
 }

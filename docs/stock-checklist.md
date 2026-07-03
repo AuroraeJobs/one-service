@@ -88,11 +88,11 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Add volume abnormality alert evaluation.
 - [x] Add scheduled alert evaluation job.
 - [x] Use Redis to store alert evaluation throttling and last-evaluated state.
-- [ ] Add analysis summary endpoint.
-- [ ] Add concentration analysis.
-- [ ] Add volatility analysis.
-- [ ] Add drawdown analysis.
-- [ ] Add top gainers and top losers.
+- [x] Add analysis summary endpoint.
+- [x] Add concentration analysis.
+- [x] Add volatility analysis.
+- [x] Add drawdown analysis.
+- [x] Add top gainers and top losers.
 - [ ] Extract `StockMarketProvider` interface.
 - [ ] Add provider router or strategy for selecting the active provider.
 - [ ] Move Sina parsing behind provider implementation.
