@@ -12,8 +12,12 @@ import com.one.record.service.LotteryDrawProvider;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Component
@@ -55,15 +59,33 @@ public class RecordUpdater implements CommandLineRunner, IRecordUpdate {
         if (CollectionUtils.isEmpty(records)) {
             return;
         }
-        // 对新记录重新设置一些属性
-        for (int i = 0; i < records.size(); i++) {
-            Record record = records.get(i);
-            record.setLine(last.getLine() + i + 1);
-            record.setDate(record.date());
+        List<Record> newRecords = prepareNewRecords(last, records);
+        if (CollectionUtils.isEmpty(newRecords)) {
+            return;
         }
-        RecordFile.write(records);
-        recordService.saveAll(records);
-        boxService.update(last.getCode(), records);
+        RecordFile.write(newRecords);
+        recordService.saveAll(newRecords);
+        boxService.update(last.getCode(), newRecords);
+    }
+
+    List<Record> prepareNewRecords(Record last, List<Record> records) {
+        if (last == null || !StringUtils.hasText(last.getCode()) || CollectionUtils.isEmpty(records)) {
+            return List.of();
+        }
+        Set<String> seenCodes = new HashSet<>();
+        List<Record> newRecords = new ArrayList<>();
+        for (Record record : records) {
+            if (record == null || !StringUtils.hasText(record.getCode()) || record.getCode().compareTo(last.getCode()) <= 0) {
+                continue;
+            }
+            if (!seenCodes.add(record.getCode())) {
+                continue;
+            }
+            record.setLine(last.getLine() + newRecords.size() + 1);
+            record.setDate(record.date());
+            newRecords.add(record);
+        }
+        return newRecords;
     }
 
     private void reset() {

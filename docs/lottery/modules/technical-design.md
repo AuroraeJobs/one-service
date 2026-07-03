@@ -163,6 +163,7 @@ VOID
 - Record sync returns a persisted operation log so frontend pages can show status, saved count, issue range, and failure message.
 - Record sync status values include `RUNNING`, `SUCCESS`, `FAILED`, and `SKIPPED`; `SKIPPED` means another sync already holds the Redis lock.
 - Scheduled record sync is implemented by `LotteryRecordScheduledSync`, disabled by default through `hello.record.scheduled-sync-enabled`, and shares the same sync service, lock, and logs as manual sync.
+- `RecordUpdater` filters provider results before persistence: records at or before the current last issue are skipped, duplicate issue codes in the same fetch are ignored, and new records receive sequential line numbers from the last persisted record.
 - Return normalized project DTOs only.
 - Use explicit filters rather than overloading vague request bodies.
 - Support pagination for list/history endpoints that can grow.
