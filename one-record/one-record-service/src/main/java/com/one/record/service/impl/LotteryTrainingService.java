@@ -15,6 +15,7 @@ import com.one.record.training.LotteryActualRecord;
 import com.one.record.training.LotteryLatestPrediction;
 import com.one.record.training.LotteryPredictionCandidate;
 import com.one.record.training.LotteryPredictionResult;
+import com.one.record.training.LotteryReplayMetrics;
 import com.one.record.training.LotteryRuleComparison;
 import com.one.record.training.LotteryTrainingReport;
 import com.one.record.training.LotteryTrainingStatus;
@@ -259,6 +260,52 @@ public class LotteryTrainingService implements ILotteryTrainingService {
                 .build();
     }
 
+    @Override
+    public LotteryReplayMetrics replayMetrics(Integer window) {
+        LotteryTrainingReportRecord report = trainingReportRepository.findByOrderByCreatedAtDesc(PageRequest.of(0, 1))
+                .stream()
+                .findFirst()
+                .orElse(null);
+        if (report == null || report.getTimeline() == null || report.getTimeline().isEmpty()) {
+            return LotteryReplayMetrics.builder()
+                    .requestedWindow(normalizeReplayMetricsWindow(window))
+                    .actualWindow(0)
+                    .prizeDistribution(new LinkedHashMap<>())
+                    .generatedAt(System.currentTimeMillis())
+                    .build();
+        }
+        int safeWindow = normalizeReplayMetricsWindow(window);
+        List<LotteryTrainingReport.TrainingTimelineItem> timeline = report.getTimeline();
+        List<LotteryTrainingReport.TrainingTimelineItem> windowItems = timeline.subList(Math.max(0, timeline.size() - safeWindow), timeline.size());
+        int totalScore = 0;
+        int totalRedHits = 0;
+        int blueHits = 0;
+        int bestScore = 0;
+        Map<String, Integer> prizeDistribution = new LinkedHashMap<>();
+        for (LotteryTrainingReport.TrainingTimelineItem item : windowItems) {
+            totalScore += item.getScore();
+            totalRedHits += item.getRedHits();
+            if (item.isBlueHit()) {
+                blueHits += 1;
+            }
+            bestScore = Math.max(bestScore, item.getScore());
+            prizeDistribution.put(item.getPrizeName(), prizeDistribution.getOrDefault(item.getPrizeName(), 0) + 1);
+        }
+        int actualWindow = windowItems.size();
+        return LotteryReplayMetrics.builder()
+                .requestedWindow(safeWindow)
+                .actualWindow(actualWindow)
+                .reportReplayCount(report.getReplayCount())
+                .generation(report.getGeneration())
+                .averageScore(roundOne((double) totalScore / actualWindow))
+                .averageRedHits(roundOne((double) totalRedHits / actualWindow))
+                .blueHitRate((int) Math.round((double) blueHits * 100 / actualWindow))
+                .bestScore(bestScore)
+                .prizeDistribution(prizeDistribution)
+                .generatedAt(System.currentTimeMillis())
+                .build();
+    }
+
     LotteryPredictionSnapshot savePredictionSnapshot(LotteryLatestPrediction prediction) {
         if (prediction == null) {
             return null;
@@ -430,6 +477,13 @@ public class LotteryTrainingService implements ILotteryTrainingService {
             return DEFAULT_PREDICTION_HISTORY_LIMIT;
         }
         return Math.min(limit, MAX_PREDICTION_HISTORY_LIMIT);
+    }
+
+    private static int normalizeReplayMetricsWindow(Integer window) {
+        if (window == null || window <= 0) {
+            return 30;
+        }
+        return Math.min(window, 500);
     }
 
     private void saveJson(String key, Object value) {

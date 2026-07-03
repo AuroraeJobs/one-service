@@ -9,6 +9,7 @@ import com.one.record.repository.LotteryTrainingReportRepository;
 import com.one.record.training.LotteryActualRecord;
 import com.one.record.training.LotteryLatestPrediction;
 import com.one.record.training.LotteryPredictionCandidate;
+import com.one.record.training.LotteryReplayMetrics;
 import com.one.record.training.LotteryTrainingReport;
 import com.one.record.training.PredictionRuleConfig;
 import org.mockito.ArgumentCaptor;
@@ -190,5 +191,54 @@ class LotteryTrainingServiceTest {
         assertThat(comparison.getBestRuleName()).isEqualTo("B");
         assertThat(comparison.getBestRankScore()).isEqualTo(20);
         assertThat(comparison.getGeneratedAt()).isNotNull();
+    }
+
+    @Test
+    void replayMetricsAggregatesLatestReportTimelineByWindow() {
+        LotteryTrainingReport.TrainingTimelineItem first = timeline(2026001, 90, 2, false, "未中奖");
+        LotteryTrainingReport.TrainingTimelineItem second = timeline(2026002, 120, 3, true, "五等奖");
+        LotteryTrainingReport.TrainingTimelineItem third = timeline(2026003, 150, 4, false, "四等奖");
+        when(trainingReportRepository.findByOrderByCreatedAtDesc(org.mockito.ArgumentMatchers.any(Pageable.class)))
+                .thenReturn(List.of(LotteryTrainingReportRecord.builder()
+                        .replayCount(30)
+                        .generation(5)
+                        .timeline(List.of(first, second, third))
+                        .build()));
+
+        LotteryReplayMetrics metrics = service.replayMetrics(2);
+
+        assertThat(metrics.getRequestedWindow()).isEqualTo(2);
+        assertThat(metrics.getActualWindow()).isEqualTo(2);
+        assertThat(metrics.getReportReplayCount()).isEqualTo(30);
+        assertThat(metrics.getGeneration()).isEqualTo(5);
+        assertThat(metrics.getAverageScore()).isEqualTo(135.0);
+        assertThat(metrics.getAverageRedHits()).isEqualTo(3.5);
+        assertThat(metrics.getBlueHitRate()).isEqualTo(50);
+        assertThat(metrics.getBestScore()).isEqualTo(150);
+        assertThat(metrics.getPrizeDistribution()).containsEntry("五等奖", 1).containsEntry("四等奖", 1);
+    }
+
+    @Test
+    void replayMetricsReturnsEmptyMetricsWhenNoReportExists() {
+        when(trainingReportRepository.findByOrderByCreatedAtDesc(org.mockito.ArgumentMatchers.any(Pageable.class)))
+                .thenReturn(List.of());
+
+        LotteryReplayMetrics metrics = service.replayMetrics(12);
+
+        assertThat(metrics.getRequestedWindow()).isEqualTo(12);
+        assertThat(metrics.getActualWindow()).isZero();
+        assertThat(metrics.getPrizeDistribution()).isEmpty();
+        assertThat(metrics.getGeneratedAt()).isNotNull();
+    }
+
+    private static LotteryTrainingReport.TrainingTimelineItem timeline(int period, int score, int redHits,
+                                                                       boolean blueHit, String prizeName) {
+        LotteryTrainingReport.TrainingTimelineItem item = new LotteryTrainingReport.TrainingTimelineItem();
+        item.setPeriod(period);
+        item.setScore(score);
+        item.setRedHits(redHits);
+        item.setBlueHit(blueHit);
+        item.setPrizeName(prizeName);
+        return item;
     }
 }

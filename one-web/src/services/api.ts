@@ -1533,6 +1533,19 @@ export interface LotteryRuleComparison {
   generatedAt?: number;
 }
 
+export interface LotteryReplayMetrics {
+  requestedWindow?: number;
+  actualWindow?: number;
+  reportReplayCount?: number;
+  generation?: number;
+  averageScore?: number;
+  averageRedHits?: number;
+  blueHitRate?: number;
+  bestScore?: number;
+  prizeDistribution: Record<string, number>;
+  generatedAt?: number;
+}
+
 export interface LotteryPredictionCandidate {
   title: string;
   redNumbers: string[];
@@ -1630,6 +1643,9 @@ export const lotteryPredictionApi = {
   },
   compareRules: (params?: { limit?: number }): Promise<LotteryRuleComparison> => {
     return apiClient.get('/lottery/predictions/rules/compare', { params });
+  },
+  replayMetrics: (params?: { window?: number }): Promise<LotteryReplayMetrics> => {
+    return apiClient.get('/lottery/predictions/replay-metrics', { params });
   },
   train: (params: { replayCount?: number; scale?: 'fast' | 'standard' | 'deep' }): Promise<LotteryTrainingStatus> => {
     return apiClient.post('/lottery/predictions/train', params);

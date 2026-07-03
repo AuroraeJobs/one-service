@@ -57,7 +57,7 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add prediction detail endpoint. Added `GET /lottery/predictions/{id}`.
 - [x] Add training start endpoint under `/lottery/predictions/train` or document continued `/lottery/training/start` use. Added `POST /lottery/predictions/train` delegating to the existing async training service.
 - [x] Add actual-result attachment endpoint. Added `POST /lottery/predictions/{id}/actual` to attach actual draw results and rescore the snapshot and candidates.
-- [ ] Add replay metrics by historical window.
+- [x] Add replay metrics by historical window. Added `GET /lottery/predictions/replay-metrics` to aggregate latest training report timeline by requested window.
 - [x] Add rule comparison endpoint. Added `GET /lottery/predictions/rules/compare` with recent rule records and best rank score metadata.
 - [ ] Add cancel/retry/status behavior for training.
 - [ ] Add prediction history page.

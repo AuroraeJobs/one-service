@@ -4,6 +4,7 @@ import com.one.record.model.LotteryPredictionRuleRecord;
 import com.one.record.model.LotteryPredictionSnapshot;
 import com.one.record.service.ILotteryTrainingService;
 import com.one.record.training.LotteryActualRecord;
+import com.one.record.training.LotteryReplayMetrics;
 import com.one.record.training.LotteryRuleComparison;
 import com.one.record.training.LotteryTrainingRequest;
 import com.one.record.training.LotteryTrainingStatus;
@@ -42,6 +43,12 @@ public class LotteryPredictionController {
     @Operation(summary = "比较彩票预测规则", description = "查询最近规则版本并返回当前排名最高的规则")
     public LotteryRuleComparison compareRules(@RequestParam(value = "limit", required = false, defaultValue = "20") Integer limit) {
         return service.comparePredictionRules(limit);
+    }
+
+    @GetMapping("replay-metrics")
+    @Operation(summary = "查询彩票预测回放指标", description = "基于最近训练报告时间线按历史窗口聚合回放指标")
+    public LotteryReplayMetrics replayMetrics(@RequestParam(value = "window", required = false, defaultValue = "30") Integer window) {
+        return service.replayMetrics(window);
     }
 
     @GetMapping("{id}")

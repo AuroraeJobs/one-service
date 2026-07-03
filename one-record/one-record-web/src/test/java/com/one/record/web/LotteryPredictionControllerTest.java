@@ -3,6 +3,7 @@ package com.one.record.web;
 import com.one.record.model.LotteryPredictionRuleRecord;
 import com.one.record.model.LotteryPredictionSnapshot;
 import com.one.record.service.ILotteryTrainingService;
+import com.one.record.training.LotteryReplayMetrics;
 import com.one.record.training.LotteryTrainingStatus;
 import com.one.record.training.LotteryRuleComparison;
 import org.junit.jupiter.api.BeforeEach;
@@ -111,6 +112,24 @@ class LotteryPredictionControllerTest {
                 .andExpect(jsonPath("$.bestRankScore").value(99));
 
         verify(service).comparePredictionRules(5);
+    }
+
+    @Test
+    void replayMetricsBindsWindow() throws Exception {
+        when(service.replayMetrics(12)).thenReturn(LotteryReplayMetrics.builder()
+                .requestedWindow(12)
+                .actualWindow(10)
+                .averageScore(88.8)
+                .blueHitRate(20)
+                .build());
+
+        mockMvc.perform(get("/lottery/predictions/replay-metrics").param("window", "12"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.requestedWindow").value(12))
+                .andExpect(jsonPath("$.actualWindow").value(10))
+                .andExpect(jsonPath("$.blueHitRate").value(20));
+
+        verify(service).replayMetrics(12);
     }
 
     @Test
