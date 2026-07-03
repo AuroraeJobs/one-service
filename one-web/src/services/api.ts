@@ -390,6 +390,22 @@ export interface StockProviderProbeResult {
   message?: string;
 }
 
+export interface StockProviderConfig {
+  provider?: string;
+  fallbackProviders?: string[];
+  cacheEnabled?: boolean;
+  quoteCacheTtlSeconds?: number;
+  fallbackCacheTtlSeconds?: number;
+  providerProbeTtlSeconds?: number;
+  defaultSymbols?: string[];
+  klineSyncEnabled?: boolean;
+  klineSyncCron?: string;
+  klineSyncSymbols?: string[];
+  alertEvaluationEnabled?: boolean;
+  alertEvaluationCron?: string;
+  checkedAt?: number;
+}
+
 export interface StockPreference {
   id?: string;
   userId?: string;
@@ -533,6 +549,10 @@ export const stockApi = {
 
   providerHealth: (): Promise<StockProviderHealth[]> => {
     return apiClient.get('/stock/providers/health');
+  },
+
+  providerConfig: (): Promise<StockProviderConfig> => {
+    return apiClient.get('/stock/providers/config');
   },
 
   providerProbe: (params?: { category?: string; symbol?: string }): Promise<StockProviderProbeResult> => {

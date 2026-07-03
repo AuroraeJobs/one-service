@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Form, Input, InputNumber, Select, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { ReloadOutlined, SaveOutlined, SettingOutlined } from '@ant-design/icons';
 import LifePageShell from './LifePageShell';
-import { stockApi, type StockPreference } from '../services/api';
+import { stockApi, type StockPreference, type StockProviderConfig } from '../services/api';
 
 interface SettingRow {
   key: string;
@@ -12,51 +12,6 @@ interface SettingRow {
   status: string;
   note: string;
 }
-
-const settingRows: SettingRow[] = [
-  {
-    key: 'provider',
-    name: 'stock.market.provider',
-    value: 'sina',
-    status: '配置项',
-    note: '由后端配置决定；用户偏好不会直接写 Spring 配置。'
-  },
-  {
-    key: 'fallback',
-    name: 'stock.market.fallback-providers',
-    value: '[]',
-    status: '配置项',
-    note: '数据源切换仍由后端 provider/router 抽象控制。'
-  },
-  {
-    key: 'quoteTtl',
-    name: 'quote-cache-ttl-seconds',
-    value: '10',
-    status: '配置项',
-    note: 'Redis 最新行情缓存 TTL。'
-  },
-  {
-    key: 'fallbackTtl',
-    name: 'fallback-cache-ttl-seconds',
-    value: '604800',
-    status: '配置项',
-    note: 'Redis last-success fallback 快照 TTL。'
-  },
-  {
-    key: 'klineCron',
-    name: 'kline-sync-cron',
-    value: '0 30 15 * * MON-FRI',
-    status: '配置项',
-    note: 'K线定时同步计划。'
-  },
-  {
-    key: 'alertCron',
-    name: 'alert-evaluation-cron',
-    value: '0 */5 9-15 * * MON-FRI',
-    status: '配置项',
-    note: '告警定时评估计划。'
-  }
-];
 
 const kLinePeriodOptions = [
   { label: '日线', value: 'daily' },
@@ -67,6 +22,7 @@ const kLinePeriodOptions = [
 const LifeStockSettingsPage = () => {
   const [form] = Form.useForm<StockPreference>();
   const [preference, setPreference] = useState<StockPreference>();
+  const [providerConfig, setProviderConfig] = useState<StockProviderConfig>();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
@@ -76,8 +32,12 @@ const LifeStockSettingsPage = () => {
     setLoading(true);
     setError(undefined);
     try {
-      const data = await stockApi.preferences();
+      const [data, config] = await Promise.all([
+        stockApi.preferences(),
+        stockApi.providerConfig()
+      ]);
       setPreference(data);
+      setProviderConfig(config);
       form.setFieldsValue(data);
     } catch (requestError) {
       console.error('获取股票偏好失败:', requestError);
@@ -86,6 +46,8 @@ const LifeStockSettingsPage = () => {
       setLoading(false);
     }
   }, [form]);
+
+  const settingRows = useMemo(() => buildSettingRows(providerConfig), [providerConfig]);
 
   useEffect(() => {
     loadPreference();
@@ -203,6 +165,7 @@ const LifeStockSettingsPage = () => {
           rowKey={record => record.key}
           columns={columns}
           dataSource={settingRows}
+          loading={loading}
           pagination={false}
           scroll={{ x: 760 }}
           rowClassName="stock-quote-row"
@@ -210,6 +173,128 @@ const LifeStockSettingsPage = () => {
       </Card>
     </LifePageShell>
   );
+};
+
+const buildSettingRows = (config?: StockProviderConfig): SettingRow[] => [
+  {
+    key: 'provider',
+    name: 'stock.market.provider',
+    value: config?.provider || '-',
+    status: '只读配置',
+    note: '由后端配置决定；用户偏好不会直接写 Spring 配置。'
+  },
+  {
+    key: 'fallback',
+    name: 'stock.market.fallback-providers',
+    value: formatList(config?.fallbackProviders),
+    status: '只读配置',
+    note: '数据源切换仍由后端 provider/router 抽象控制。'
+  },
+  {
+    key: 'cacheEnabled',
+    name: 'stock.market.cache-enabled',
+    value: formatBoolean(config?.cacheEnabled),
+    status: '只读配置',
+    note: '控制 Redis 行情缓存和 fallback 快照读取写入。'
+  },
+  {
+    key: 'quoteTtl',
+    name: 'stock.market.quote-cache-ttl-seconds',
+    value: formatValue(config?.quoteCacheTtlSeconds),
+    status: '只读配置',
+    note: 'Redis 最新行情缓存 TTL。'
+  },
+  {
+    key: 'fallbackTtl',
+    name: 'stock.market.fallback-cache-ttl-seconds',
+    value: formatValue(config?.fallbackCacheTtlSeconds),
+    status: '只读配置',
+    note: 'Redis last-success fallback 快照 TTL。'
+  },
+  {
+    key: 'probeTtl',
+    name: 'stock.market.provider-probe-ttl-seconds',
+    value: formatValue(config?.providerProbeTtlSeconds),
+    status: '只读配置',
+    note: 'Redis 最近 Provider 探测结果 TTL。'
+  },
+  {
+    key: 'defaultSymbols',
+    name: 'stock.market.default-symbols',
+    value: formatList(config?.defaultSymbols),
+    status: '只读配置',
+    note: '默认行情样本和无自选时的展示代码。'
+  },
+  {
+    key: 'klineSync',
+    name: 'stock.market.kline-sync-enabled',
+    value: formatBoolean(config?.klineSyncEnabled),
+    status: '只读配置',
+    note: 'K线定时同步开关。'
+  },
+  {
+    key: 'klineCron',
+    name: 'stock.market.kline-sync-cron',
+    value: config?.klineSyncCron || '-',
+    status: '只读配置',
+    note: 'K线定时同步计划。'
+  },
+  {
+    key: 'klineSymbols',
+    name: 'stock.market.kline-sync-symbols',
+    value: formatList(config?.klineSyncSymbols),
+    status: '只读配置',
+    note: 'K线批量同步和批量重试的后端配置代码。'
+  },
+  {
+    key: 'alertEnabled',
+    name: 'stock.market.alert-evaluation-enabled',
+    value: formatBoolean(config?.alertEvaluationEnabled),
+    status: '只读配置',
+    note: '告警定时评估开关。'
+  },
+  {
+    key: 'alertCron',
+    name: 'stock.market.alert-evaluation-cron',
+    value: config?.alertEvaluationCron || '-',
+    status: '只读配置',
+    note: '告警定时评估计划。'
+  },
+  {
+    key: 'checkedAt',
+    name: 'providerConfig.checkedAt',
+    value: formatTime(config?.checkedAt),
+    status: '快照时间',
+    note: '后端生成配置快照的毫秒时间戳。'
+  }
+];
+
+const formatList = (value?: string[]) => {
+  if (!value || value.length === 0) {
+    return '[]';
+  }
+  return value.join(', ');
+};
+
+const formatBoolean = (value?: boolean) => {
+  if (typeof value !== 'boolean') {
+    return '-';
+  }
+  return value ? 'true' : 'false';
+};
+
+const formatValue = (value?: number) => {
+  if (typeof value !== 'number') {
+    return '-';
+  }
+  return String(value);
+};
+
+const formatTime = (value?: number) => {
+  if (typeof value !== 'number') {
+    return '-';
+  }
+  return new Date(value).toLocaleString();
 };
 
 export default LifeStockSettingsPage;

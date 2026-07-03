@@ -671,10 +671,12 @@ Frontend may display:
 - `fetchedAt`
 - `StockProviderHealth.category`, where `quote` means real-time quote provider and `kline` means historical K-line provider.
 - `StockProviderProbeResult` for operational provider probes.
+- `StockProviderConfig` for read-only backend provider configuration snapshots.
 
 Provider health rules:
 
 - `GET /stock/providers/health` reports configured and registered quote and K-line providers.
+- `GET /stock/providers/config` reports provider, fallback, cache, sync, and alert-evaluation configuration as a read-only runtime snapshot.
 - `GET /stock/providers/probe` probes quote or K-line provider routes through backend routers and returns a normalized result.
 - `GET /stock/providers/probe/all` probes quote and K-line provider routes in one operation and updates both Redis latest keys.
 - `GET /stock/providers/probe/latest` reads the latest Redis-backed probe result by category.
@@ -683,6 +685,7 @@ Provider health rules:
 - Provider probe results use millisecond `checkedAt` and `durationMs`.
 - Latest provider probe Redis keys use `stock:provider:probe:last:{category}` and are controlled by `stock.market.provider-probe-ttl-seconds`.
 - The frontend displays provider categories but still does not call provider-specific endpoints.
+- Settings uses backend `StockProviderConfig` instead of hard-coded values and still cannot mutate `stock.market.*`.
 - availability or stale-state messages
 
 These are observability fields, not business logic switches.

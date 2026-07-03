@@ -1,6 +1,7 @@
 package com.one.record.service;
 
 import com.one.record.stock.StockQuote;
+import com.one.record.stock.StockProviderConfig;
 import com.one.record.stock.StockProviderHealth;
 import com.one.record.stock.StockProviderProbeResult;
 
@@ -15,6 +16,8 @@ public interface IStockMarketService {
     String normalizeSymbol(String symbol);
 
     List<StockProviderHealth> providerHealth();
+
+    StockProviderConfig providerConfig();
 
     StockProviderProbeResult providerProbe(String category, String symbol);
 

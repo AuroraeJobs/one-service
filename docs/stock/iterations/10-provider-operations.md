@@ -18,6 +18,7 @@ Deliverables:
 - Store the latest probe result in Redis as short-lived operational state.
 - Add a probe action to `/investments/providers`.
 - Add an all-provider probe action for quote and K-line provider routes.
+- Add a read-only backend provider configuration snapshot for settings.
 
 Acceptance:
 
@@ -34,9 +35,11 @@ Acceptance:
 - [x] Cache latest probe result in Redis by provider category.
 - [x] Add `GET /stock/providers/probe/latest`.
 - [x] Add `GET /stock/providers/probe/all`.
+- [x] Add `GET /stock/providers/config`.
 - [x] Wire `/investments/providers` probe controls and result display.
 - [x] Load latest probe result when the data source page opens or category changes.
 - [x] Add one-click all-provider probe on `/investments/providers`.
+- [x] Replace hard-coded settings config rows with backend runtime configuration snapshot.
 - [x] Verify frontend lint and build.
 - [x] Verify backend tests.
 - [x] Update docs and commit/push after the milestone.
@@ -50,3 +53,4 @@ Acceptance:
 - Kept provider switching backend-owned and upper layers provider-neutral.
 - Added Redis-backed latest probe result lookup for quote and K-line categories.
 - Added one-click all-provider probe for quote and K-line categories.
+- Added read-only provider configuration snapshot for `/investments/settings`.

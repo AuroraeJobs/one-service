@@ -4,6 +4,7 @@ import com.one.common.exception.ServiceException;
 import com.one.common.util.JsonUtil;
 import com.one.record.configuration.StockMarketProperties;
 import com.one.record.service.IStockMarketService;
+import com.one.record.stock.StockProviderConfig;
 import com.one.record.stock.StockProviderHealth;
 import com.one.record.stock.StockProviderProbeResult;
 import com.one.record.stock.StockQuote;
@@ -243,6 +244,25 @@ public class StockMarketService implements IStockMarketService {
         health.addAll(providerRouter.health());
         health.addAll(kLineProviderRouter.health());
         return health;
+    }
+
+    @Override
+    public StockProviderConfig providerConfig() {
+        return StockProviderConfig.builder()
+                .provider(properties.getProvider())
+                .fallbackProviders(properties.getFallbackProviders())
+                .cacheEnabled(properties.getCacheEnabled())
+                .quoteCacheTtlSeconds(properties.getQuoteCacheTtlSeconds())
+                .fallbackCacheTtlSeconds(properties.getFallbackCacheTtlSeconds())
+                .providerProbeTtlSeconds(properties.getProviderProbeTtlSeconds())
+                .defaultSymbols(properties.getDefaultSymbols())
+                .klineSyncEnabled(properties.getKlineSyncEnabled())
+                .klineSyncCron(properties.getKlineSyncCron())
+                .klineSyncSymbols(properties.getKlineSyncSymbols())
+                .alertEvaluationEnabled(properties.getAlertEvaluationEnabled())
+                .alertEvaluationCron(properties.getAlertEvaluationCron())
+                .checkedAt(System.currentTimeMillis())
+                .build();
     }
 
     @Override

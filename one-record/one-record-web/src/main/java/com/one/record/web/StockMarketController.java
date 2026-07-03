@@ -1,6 +1,7 @@
 package com.one.record.web;
 
 import com.one.record.service.IStockMarketService;
+import com.one.record.stock.StockProviderConfig;
 import com.one.record.stock.StockProviderHealth;
 import com.one.record.stock.StockProviderProbeResult;
 import com.one.record.stock.StockQuote;
@@ -42,6 +43,12 @@ public class StockMarketController {
     @Operation(summary = "查询股票行情源状态", description = "查询已注册和已配置的股票行情源状态")
     public List<StockProviderHealth> providerHealth() {
         return service.providerHealth();
+    }
+
+    @GetMapping("providers/config")
+    @Operation(summary = "查询股票数据源配置快照", description = "只读返回当前后端股票数据源、缓存和定时任务配置")
+    public StockProviderConfig providerConfig() {
+        return service.providerConfig();
     }
 
     @GetMapping("providers/probe")

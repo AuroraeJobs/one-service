@@ -5,6 +5,7 @@ import com.one.record.configuration.StockMarketProperties;
 import com.one.record.service.StockKLineProvider;
 import com.one.record.service.StockMarketProvider;
 import com.one.record.stock.StockKLine;
+import com.one.record.stock.StockProviderConfig;
 import com.one.record.stock.StockProviderProbeResult;
 import com.one.record.stock.StockQuote;
 import org.junit.jupiter.api.BeforeEach;
@@ -165,6 +166,36 @@ class StockMarketServiceTest {
         assertThat(service.providerHealth().get(0).getRegistered()).isTrue();
         assertThat(service.providerHealth().get(1).getCategory()).isEqualTo("kline");
         assertThat(service.providerHealth().get(1).getProvider()).isEqualTo("sina");
+    }
+
+    @Test
+    void providerConfigReturnsBackendRuntimeSnapshot() {
+        properties.setProvider("sina");
+        properties.setFallbackProviders(List.of("tencent", "eastmoney"));
+        properties.setCacheEnabled(true);
+        properties.setQuoteCacheTtlSeconds(9);
+        properties.setFallbackCacheTtlSeconds(600);
+        properties.setProviderProbeTtlSeconds(120);
+        properties.setDefaultSymbols(List.of("sh000001"));
+        properties.setKlineSyncEnabled(true);
+        properties.setKlineSyncCron("0 30 15 * * MON-FRI");
+        properties.setKlineSyncSymbols(List.of("sh000001", "sz399001"));
+        properties.setAlertEvaluationEnabled(false);
+        properties.setAlertEvaluationCron("0 */5 9-15 * * MON-FRI");
+
+        StockProviderConfig config = service.providerConfig();
+
+        assertThat(config.getProvider()).isEqualTo("sina");
+        assertThat(config.getFallbackProviders()).containsExactly("tencent", "eastmoney");
+        assertThat(config.getCacheEnabled()).isTrue();
+        assertThat(config.getQuoteCacheTtlSeconds()).isEqualTo(9);
+        assertThat(config.getFallbackCacheTtlSeconds()).isEqualTo(600);
+        assertThat(config.getProviderProbeTtlSeconds()).isEqualTo(120);
+        assertThat(config.getDefaultSymbols()).containsExactly("sh000001");
+        assertThat(config.getKlineSyncEnabled()).isTrue();
+        assertThat(config.getKlineSyncSymbols()).containsExactly("sh000001", "sz399001");
+        assertThat(config.getAlertEvaluationEnabled()).isFalse();
+        assertThat(config.getCheckedAt()).isNotNull();
     }
 
     @Test

@@ -114,6 +114,7 @@ Implemented baseline:
 - Iteration 10 provider operations slice is implemented. `GET /stock/providers/probe` verifies quote or K-line provider routes through backend routers, and `/investments/providers` shows normalized probe results without depending on concrete providers.
 - Iteration 10 provider probe persistence is implemented. Latest probe results are cached in Redis with `stock:provider:probe:last:{category}` and restored through `GET /stock/providers/probe/latest`.
 - Iteration 10 all-provider probe is implemented. `GET /stock/providers/probe/all` checks quote and K-line routes together, and `/investments/providers` can display both normalized results.
+- Iteration 10 provider config snapshot is implemented. `GET /stock/providers/config` exposes a read-only backend runtime snapshot, and `/investments/settings` no longer hard-codes provider/cache/schedule values.
 
 Architecture rule to preserve:
 

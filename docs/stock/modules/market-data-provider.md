@@ -106,6 +106,7 @@ Rules:
 GET /stock/quote?symbol=600519
 GET /stock/quotes?symbols=sh000001&symbols=sz399001
 GET /stock/providers/health
+GET /stock/providers/config
 GET /stock/providers/probe?category=quote&symbol=600519
 GET /stock/providers/probe/all?symbol=600519
 GET /stock/providers/probe/latest?category=quote
@@ -124,8 +125,20 @@ Current UX:
 - Provider page can call `GET /stock/providers/probe` to verify the configured quote or K-line provider route with a sample symbol.
 - Provider page can call `GET /stock/providers/probe/all` to verify quote and K-line provider routes in one action.
 - Provider page reads `GET /stock/providers/probe/latest` to restore the latest Redis-backed probe result after reload or category changes.
+- Settings page reads `GET /stock/providers/config` for a read-only backend runtime configuration snapshot.
 - Settings page documents current backend configuration boundaries and planned user preferences.
 - Provider switching remains backend configuration-driven.
+
+## Provider Config Snapshot
+
+`GET /stock/providers/config` returns `StockProviderConfig` with provider, fallback provider order, Redis TTLs, configured symbols, scheduled sync switches, cron expressions, and a millisecond `checkedAt` timestamp.
+
+Rules:
+
+- The endpoint is read-only.
+- It reflects backend runtime configuration; it does not persist user preferences.
+- Frontend settings uses this snapshot instead of hard-coded config values.
+- Provider switching still happens through backend configuration and provider routers.
 
 ## Provider Probe Logic
 
@@ -160,4 +173,5 @@ Rules:
 - `StockMarketServiceTest.providerProbeWritesLatestResultToRedis`
 - `StockMarketServiceTest.latestProviderProbeReadsResultFromRedis`
 - `StockMarketServiceTest.providerProbeAllChecksQuoteAndKLineProviders`
+- `StockMarketServiceTest.providerConfigReturnsBackendRuntimeSnapshot`
 - `StockMarketControllerTest` for repeated `symbols` query params.

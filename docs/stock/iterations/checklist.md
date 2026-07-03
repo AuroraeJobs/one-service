@@ -199,9 +199,11 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Cache latest probe result in Redis by provider category.
 - [x] Add `GET /stock/providers/probe/latest`.
 - [x] Add `GET /stock/providers/probe/all`.
+- [x] Add `GET /stock/providers/config`.
 - [x] Wire `/investments/providers` probe controls and result display.
 - [x] Load latest probe result when the data source page opens or category changes.
 - [x] Add one-click all-provider probe on `/investments/providers`.
+- [x] Replace hard-coded settings config rows with backend runtime configuration snapshot.
 - [x] Verify frontend lint and build.
 - [x] Verify backend tests.
 - [x] Update docs and commit/push after the milestone.
