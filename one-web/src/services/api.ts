@@ -346,6 +346,25 @@ export interface StockAlertHistory {
   createdAt?: number;
 }
 
+export interface StockAnalysisItem {
+  symbol?: string;
+  name?: string;
+  value?: number;
+  percent?: number;
+  message?: string;
+}
+
+export interface StockAnalysisSummary {
+  concentrationPercent?: number;
+  concentrationSymbol?: string;
+  concentration?: StockAnalysisItem[];
+  volatility?: StockAnalysisItem[];
+  drawdown?: StockAnalysisItem[];
+  topGainers?: StockAnalysisItem[];
+  topLosers?: StockAnalysisItem[];
+  calculatedAt?: number;
+}
+
 export const stockApi = {
   quote: (symbol: string): Promise<StockQuote> => {
     return apiClient.get('/stock/quote', {
@@ -466,6 +485,10 @@ export const stockApi = {
 
   evaluateAlerts: (): Promise<StockAlertHistory[]> => {
     return apiClient.post('/stock/alerts/evaluate');
+  },
+
+  analysisSummary: (): Promise<StockAnalysisSummary> => {
+    return apiClient.get('/stock/analysis/summary');
   }
 };
 

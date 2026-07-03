@@ -619,6 +619,25 @@ Acceptance:
 - Analysis uses backend calculations.
 - No frontend-side duplication of portfolio math.
 
+Progress:
+
+- Completed first UX slice on 2026-07-03.
+- Added route:
+
+```text
+/investments/analysis
+```
+
+- Added stock subnav item for 分析.
+- Added analysis page with concentration, volatility, drawdown, top gainers, and top losers.
+- Analysis page reads `GET /stock/analysis/summary` and does not duplicate backend portfolio math in the browser.
+- Verified changed files with ESLint and full frontend build.
+
+Follow-up:
+
+- Surface compact analysis widgets on 总览.
+- Add charts after the analysis DTO supports trend/history windows.
+
 ### V6: Provider And Settings Operations
 
 Goal:

@@ -102,6 +102,19 @@ Rules:
 - Drawdown uses recent MongoDB K-line closes and max peak-to-close drawdown over the latest 60 daily rows.
 - Analysis reads internal normalized DTOs and MongoDB history only.
 
+## Analysis Frontend Route
+
+```text
+/investments/analysis
+```
+
+Current UX:
+
+- Shows concentration, volatility, drawdown, top gainers, and top losers from `GET /stock/analysis/summary`.
+- Links each analysis item back to the stock detail page.
+- Keeps calculation logic in backend analysis services.
+- Overview analysis widgets remain follow-up work.
+
 ## Dependency Rule
 
 Alerts and analysis must not depend on concrete quote providers. They consume normalized quote, portfolio, and K-line data only.

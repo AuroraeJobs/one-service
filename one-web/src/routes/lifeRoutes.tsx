@@ -12,6 +12,7 @@ import HexagramPage from '../components/HexagramPage';
 import LifeDataConnectionsPage from '../components/LifeDataConnectionsPage';
 import LifeInvestmentPage from '../components/LifeInvestmentPage';
 import LifeStockAlertsPage from '../components/LifeStockAlertsPage';
+import LifeStockAnalysisPage from '../components/LifeStockAnalysisPage';
 import LifeStockKLinesPage from '../components/LifeStockKLinesPage';
 import LifeStockPositionsPage from '../components/LifeStockPositionsPage';
 import LifeStockDetailPage from '../components/LifeStockDetailPage';
@@ -51,6 +52,7 @@ export const createProtectedRoutes = (isTabVisible: boolean): ProtectedRouteConf
   { path: '/investments/klines', element: <LifeStockKLinesPage /> },
   { path: '/investments/sync', element: <LifeStockSyncPage /> },
   { path: '/investments/alerts', element: <LifeStockAlertsPage /> },
+  { path: '/investments/analysis', element: <LifeStockAnalysisPage /> },
   { path: '/investments/stocks/:symbol', element: <LifeStockDetailPage /> },
   { path: '/vehicle', element: <HealthSpringEquinoxPage /> },
   { path: '/vehicle/tesla', element: <TeslaFleetManagerPage /> },
