@@ -43,6 +43,10 @@ public class StockHoldingSummary {
 
     private BigDecimal floatingPnlPercent;
 
+    private BigDecimal realizedPnl;
+
+    private BigDecimal dividendIncome;
+
     private BigDecimal todayPnl;
 
     private Boolean quoteAvailable;

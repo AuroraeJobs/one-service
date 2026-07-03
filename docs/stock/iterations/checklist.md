@@ -107,14 +107,14 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Add position recalculation service entry point by account and symbol.
 - [x] Recalculate position quantity and available quantity from trades.
 - [x] Recalculate cost amount and weighted-average cost price from buy/sell trades.
-- [ ] Include fee and tax in cost and realized PnL calculations.
-- [ ] Track or expose realized PnL from sell trades.
-- [ ] Apply dividend records as cash income separate from price PnL.
-- [ ] Apply bonus share records without changing total cost basis incorrectly.
-- [ ] Apply split records by adjusting quantity and cost price.
+- [x] Include fee and tax in cost and realized PnL calculations.
+- [x] Track or expose realized PnL from sell trades. Exposed through holding and portfolio summary DTOs.
+- [x] Apply dividend records as cash income separate from price PnL.
+- [x] Apply bonus share records without changing total cost basis incorrectly.
+- [x] Apply split records by adjusting quantity and cost price.
 - [x] Trigger recalculation after trade create, update, and delete.
 - [x] Add manual position recalculation endpoints.
-- [ ] Add unit tests for buy, sell, fee, dividend, bonus share, split, delete, and idempotent recalculation.
+- [x] Add unit tests for buy, sell, fee, dividend, bonus share, split, delete, and idempotent recalculation.
 - [ ] Extract or add a K-line provider interface returning normalized `StockKLine` rows.
 - [ ] Add provider router/selection for historical K-line data.
 - [ ] Add one concrete A-share daily K-line provider.

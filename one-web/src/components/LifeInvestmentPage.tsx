@@ -281,6 +281,20 @@ const LifeInvestmentPage = () => {
       render: (_, record) => <PnlText value={record.floatingPnl} percent={record.floatingPnlPercent} />
     },
     {
+      title: '已实现',
+      dataIndex: 'realizedPnl',
+      key: 'realizedPnl',
+      align: 'right',
+      render: value => <PnlText value={value} />
+    },
+    {
+      title: '分红',
+      dataIndex: 'dividendIncome',
+      key: 'dividendIncome',
+      align: 'right',
+      render: value => formatMoney(value)
+    },
+    {
       title: '今日盈亏',
       dataIndex: 'todayPnl',
       key: 'todayPnl',
@@ -314,6 +328,8 @@ const LifeInvestmentPage = () => {
         <MetricGrid gap={16} minColumnWidth={200}>
           <MetricCard title="组合市值" value={formatMoney(portfolioSummary?.totalMarketValue)} accent="#5856d6" />
           <MetricCard title="浮动盈亏" value={formatSignedMoney(portfolioSummary?.floatingPnl)} suffix={formatPercentSuffix(portfolioSummary?.floatingPnlPercent)} accent={pnlAccent(portfolioSummary?.floatingPnl)} />
+          <MetricCard title="已实现盈亏" value={formatSignedMoney(portfolioSummary?.realizedPnl)} accent={pnlAccent(portfolioSummary?.realizedPnl)} />
+          <MetricCard title="分红收入" value={formatMoney(portfolioSummary?.dividendIncome)} accent="#ff9500" />
           <MetricCard title="今日盈亏" value={formatSignedMoney(portfolioSummary?.todayPnl)} accent={pnlAccent(portfolioSummary?.todayPnl)} />
           <MetricCard title="持仓数量" value={portfolioSummary?.holdingCount || 0} suffix="只" accent="#0071e3" />
         </MetricGrid>
@@ -342,7 +358,7 @@ const LifeInvestmentPage = () => {
           loading={portfolioLoading}
           pagination={false}
           locale={{ emptyText: '暂无股票持仓，可先通过接口添加账户、持仓和交易记录。' }}
-          scroll={{ x: 980 }}
+          scroll={{ x: 1140 }}
           rowClassName="stock-quote-row"
           onRow={record => ({
             onClick: () => navigate(`/investments/stocks/${record.symbol}`)

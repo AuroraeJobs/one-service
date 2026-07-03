@@ -92,13 +92,15 @@ Rules:
 - Current market value: `quantity * latestPrice`.
 - Floating PnL: `marketValue - costAmount`.
 - Floating PnL percent: `floatingPnl / costAmount * 100`; zero when `costAmount` is zero.
+- Realized PnL: sell proceeds minus sold cost basis, fee, and tax.
+- Dividend income: dividend trade amount, kept separate from price PnL.
 - Today PnL: `quantity * quote.changeAmount`.
 - Holding rows sort by `marketValue` descending, then `symbol` ascending.
 - If quote data is unavailable, market-derived values default to zero and `quoteAvailable` marks the state.
 
 ## Next Iteration: Position Recalculation
 
-Current implementation stores manually maintained positions and trade records. Iteration 05 should derive positions from trades:
+Current implementation stores trades and derives positions from ordered trade records:
 
 - Include fees in cost.
 - Reduce remaining quantity and cost basis on sell trades.
@@ -161,10 +163,9 @@ Implemented in Iteration 05:
 - Recalculate all positions for an account or all known trade keys.
 - Trigger recalculation after trade create, update, and delete.
 - Derive quantity, available quantity, cost amount, and weighted-average cost price from ordered trades.
+- Expose realized PnL and dividend income through holding and portfolio summary DTOs.
 - Preserve backend ownership of portfolio math; frontend remains display-only.
 
 Still open:
 
-- Expose realized PnL from sell trades.
-- Persist or summarize dividend cash income separately.
-- Add full test coverage for fee, tax, dividend, bonus share, split, and idempotent recalculation.
+- Persist realized PnL and dividend income as dedicated ledger records if later reporting requires historical attribution beyond current summary recomputation.

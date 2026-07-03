@@ -240,4 +240,108 @@ class StockPortfolioServiceTest {
         assertThat(captor.getValue().getQuantity()).isEqualByComparingTo(BigDecimal.ZERO);
         assertThat(captor.getValue().getCostAmount()).isEqualByComparingTo(BigDecimal.ZERO);
     }
+
+    @Test
+    void recalculatePositionHandlesFeeTaxDividendBonusShareSplitAndIsIdempotent() {
+        when(stockMarketService.normalizeSymbol("600519")).thenReturn("sh600519");
+        when(tradeRepository.findByUserIdAndAccountIdAndSymbolOrderByTradedAtAscCreatedAtAsc("default", "acc1", "sh600519"))
+                .thenReturn(complexTradeFlow());
+
+        StockPosition first = service.recalculatePosition("acc1", "600519");
+        StockPosition second = service.recalculatePosition("acc1", "600519");
+
+        assertThat(first.getQuantity()).isEqualByComparingTo("200");
+        assertThat(first.getAvailableQuantity()).isEqualByComparingTo("200");
+        assertThat(first.getCostAmount()).isEqualByComparingTo("910.00");
+        assertThat(first.getCostPrice()).isEqualByComparingTo("4.55");
+        assertThat(second.getQuantity()).isEqualByComparingTo(first.getQuantity());
+        assertThat(second.getCostAmount()).isEqualByComparingTo(first.getCostAmount());
+        assertThat(second.getCostPrice()).isEqualByComparingTo(first.getCostPrice());
+    }
+
+    @Test
+    void summaryExposesRealizedPnlAndDividendIncomeFromTrades() {
+        when(positionRepository.findByUserIdOrderBySymbolAscCreatedAtAsc("default")).thenReturn(List.of(
+                StockPosition.builder()
+                        .id("p1")
+                        .accountId("acc1")
+                        .symbol("sh600519")
+                        .market("sh")
+                        .code("600519")
+                        .name("贵州茅台")
+                        .quantity(new BigDecimal("200"))
+                        .costPrice(new BigDecimal("4.55"))
+                        .costAmount(new BigDecimal("910"))
+                        .build()
+        ));
+        when(tradeRepository.findByUserIdAndAccountIdAndSymbolOrderByTradedAtAscCreatedAtAsc("default", "acc1", "sh600519"))
+                .thenReturn(complexTradeFlow());
+        when(stockMarketService.quotes(List.of("sh600519"))).thenReturn(List.of(
+                StockQuote.builder()
+                        .symbol("sh600519")
+                        .name("贵州茅台")
+                        .price(new BigDecimal("5"))
+                        .changeAmount(new BigDecimal("0.10"))
+                        .changePercent(new BigDecimal("2"))
+                        .available(true)
+                        .stale(false)
+                        .build()
+        ));
+
+        StockPortfolioSummary summary = service.summary();
+
+        assertThat(summary.getTotalMarketValue()).isEqualByComparingTo("1000.00");
+        assertThat(summary.getTotalCostAmount()).isEqualByComparingTo("910.00");
+        assertThat(summary.getFloatingPnl()).isEqualByComparingTo("90.00");
+        assertThat(summary.getRealizedPnl()).isEqualByComparingTo("206.00");
+        assertThat(summary.getDividendIncome()).isEqualByComparingTo("50.00");
+        assertThat(summary.getHoldings().get(0).getRealizedPnl()).isEqualByComparingTo("206.00");
+        assertThat(summary.getHoldings().get(0).getDividendIncome()).isEqualByComparingTo("50.00");
+    }
+
+    private List<StockTrade> complexTradeFlow() {
+        return List.of(
+                StockTrade.builder()
+                        .accountId("acc1")
+                        .symbol("sh600519")
+                        .tradeType("BUY")
+                        .quantity(new BigDecimal("100"))
+                        .price(new BigDecimal("10"))
+                        .fee(new BigDecimal("1"))
+                        .tax(BigDecimal.ZERO)
+                        .tradedAt(1000L)
+                        .build(),
+                StockTrade.builder()
+                        .accountId("acc1")
+                        .symbol("sh600519")
+                        .tradeType("DIVIDEND")
+                        .amount(new BigDecimal("50"))
+                        .tradedAt(1500L)
+                        .build(),
+                StockTrade.builder()
+                        .accountId("acc1")
+                        .symbol("sh600519")
+                        .tradeType("BONUS_SHARE")
+                        .quantity(new BigDecimal("10"))
+                        .tradedAt(2000L)
+                        .build(),
+                StockTrade.builder()
+                        .accountId("acc1")
+                        .symbol("sh600519")
+                        .tradeType("SPLIT")
+                        .quantity(new BigDecimal("2"))
+                        .tradedAt(2500L)
+                        .build(),
+                StockTrade.builder()
+                        .accountId("acc1")
+                        .symbol("sh600519")
+                        .tradeType("SELL")
+                        .quantity(new BigDecimal("20"))
+                        .price(new BigDecimal("15"))
+                        .fee(new BigDecimal("2"))
+                        .tax(new BigDecimal("1"))
+                        .tradedAt(3000L)
+                        .build()
+        );
+    }
 }

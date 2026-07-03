@@ -218,6 +218,8 @@ public class StockPortfolioService implements IStockPortfolioService {
                     .totalCostAmount(BigDecimal.ZERO)
                     .floatingPnl(BigDecimal.ZERO)
                     .floatingPnlPercent(BigDecimal.ZERO)
+                    .realizedPnl(BigDecimal.ZERO)
+                    .dividendIncome(BigDecimal.ZERO)
                     .todayPnl(BigDecimal.ZERO)
                     .holdingCount(0)
                     .calculatedAt(System.currentTimeMillis())
@@ -246,6 +248,8 @@ public class StockPortfolioService implements IStockPortfolioService {
                 .totalCostAmount(scaleMoney(totalCostAmount))
                 .floatingPnl(scaleMoney(floatingPnl))
                 .floatingPnlPercent(percent(floatingPnl, totalCostAmount))
+                .realizedPnl(scaleMoney(sum(holdings, StockHoldingSummary::getRealizedPnl)))
+                .dividendIncome(scaleMoney(sum(holdings, StockHoldingSummary::getDividendIncome)))
                 .todayPnl(scaleMoney(sum(holdings, StockHoldingSummary::getTodayPnl)))
                 .holdingCount(holdings.size())
                 .calculatedAt(System.currentTimeMillis())
@@ -353,6 +357,8 @@ public class StockPortfolioService implements IStockPortfolioService {
     private PositionAmounts calculatePositionAmounts(List<StockTrade> trades) {
         BigDecimal quantity = BigDecimal.ZERO;
         BigDecimal costAmount = BigDecimal.ZERO;
+        BigDecimal realizedPnl = BigDecimal.ZERO;
+        BigDecimal dividendIncome = BigDecimal.ZERO;
         for (StockTrade trade : trades) {
             String tradeType = trade.getTradeType();
             BigDecimal tradeQuantity = defaultAmount(trade.getQuantity());
@@ -363,8 +369,11 @@ public class StockPortfolioService implements IStockPortfolioService {
             } else if ("SELL".equals(tradeType)) {
                 BigDecimal soldQuantity = tradeQuantity.min(quantity);
                 BigDecimal costBasis = averageCost(costAmount, quantity).multiply(soldQuantity);
+                realizedPnl = realizedPnl.add(tradeAmount(trade).subtract(costBasis).subtract(feeAndTax));
                 quantity = quantity.subtract(soldQuantity);
                 costAmount = costAmount.subtract(costBasis);
+            } else if ("DIVIDEND".equals(tradeType)) {
+                dividendIncome = dividendIncome.add(tradeAmount(trade));
             } else if ("FEE".equals(tradeType)) {
                 costAmount = costAmount.add(tradeAmount(trade)).add(feeAndTax);
             } else if ("BONUS_SHARE".equals(tradeType)) {
@@ -379,7 +388,11 @@ public class StockPortfolioService implements IStockPortfolioService {
                 costAmount = BigDecimal.ZERO;
             }
         }
-        return new PositionAmounts(quantity.max(BigDecimal.ZERO), costAmount.max(BigDecimal.ZERO));
+        return new PositionAmounts(
+                quantity.max(BigDecimal.ZERO),
+                costAmount.max(BigDecimal.ZERO),
+                realizedPnl,
+                dividendIncome);
     }
 
     private java.util.Optional<StockPosition> findPosition(String accountId, String symbol) {
@@ -407,6 +420,13 @@ public class StockPortfolioService implements IStockPortfolioService {
             return amount;
         }
         return defaultAmount(trade.getQuantity()).multiply(defaultAmount(trade.getPrice()));
+    }
+
+    private List<StockTrade> findPositionTrades(String accountId, String symbol) {
+        String normalizedAccountId = trimToNull(accountId);
+        return normalizedAccountId == null
+                ? tradeRepository.findByUserIdAndAccountIdIsNullAndSymbolOrderByTradedAtAscCreatedAtAsc(DEFAULT_USER_ID, symbol)
+                : tradeRepository.findByUserIdAndAccountIdAndSymbolOrderByTradedAtAscCreatedAtAsc(DEFAULT_USER_ID, normalizedAccountId, symbol);
     }
 
     private BigDecimal averageCost(BigDecimal costAmount, BigDecimal quantity) {
@@ -438,6 +458,7 @@ public class StockPortfolioService implements IStockPortfolioService {
     private StockHoldingSummary toHoldingSummary(StockPosition position, StockQuote quote) {
         BigDecimal quantity = defaultAmount(position.getQuantity());
         BigDecimal costAmount = defaultAmount(position.getCostAmount());
+        PositionAmounts performance = calculatePositionAmounts(findPositionTrades(position.getAccountId(), position.getSymbol()));
         BigDecimal latestPrice = quotePrice(quote);
         BigDecimal marketValue = quantity.multiply(latestPrice);
         BigDecimal floatingPnl = marketValue.subtract(costAmount);
@@ -458,6 +479,8 @@ public class StockPortfolioService implements IStockPortfolioService {
                 .marketValue(scaleMoney(marketValue))
                 .floatingPnl(scaleMoney(floatingPnl))
                 .floatingPnlPercent(percent(floatingPnl, costAmount))
+                .realizedPnl(scaleMoney(performance.realizedPnl()))
+                .dividendIncome(scaleMoney(performance.dividendIncome()))
                 .todayPnl(scaleMoney(todayPnl))
                 .quoteAvailable(quote != null && Boolean.TRUE.equals(quote.getAvailable()))
                 .stale(quote != null && Boolean.TRUE.equals(quote.getStale()))
@@ -517,6 +540,9 @@ public class StockPortfolioService implements IStockPortfolioService {
     private record PositionKey(String accountId, String symbol) {
     }
 
-    private record PositionAmounts(BigDecimal quantity, BigDecimal costAmount) {
+    private record PositionAmounts(BigDecimal quantity,
+                                   BigDecimal costAmount,
+                                   BigDecimal realizedPnl,
+                                   BigDecimal dividendIncome) {
     }
 }

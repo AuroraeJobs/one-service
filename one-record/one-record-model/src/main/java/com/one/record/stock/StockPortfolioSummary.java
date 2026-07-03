@@ -22,6 +22,10 @@ public class StockPortfolioSummary {
 
     private BigDecimal floatingPnlPercent;
 
+    private BigDecimal realizedPnl;
+
+    private BigDecimal dividendIncome;
+
     private BigDecimal todayPnl;
 
     private Integer holdingCount;

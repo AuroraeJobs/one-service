@@ -249,6 +249,8 @@ export interface StockHoldingSummary {
   marketValue?: number;
   floatingPnl?: number;
   floatingPnlPercent?: number;
+  realizedPnl?: number;
+  dividendIncome?: number;
   todayPnl?: number;
   quoteAvailable?: boolean;
   stale?: boolean;
@@ -259,6 +261,8 @@ export interface StockPortfolioSummary {
   totalCostAmount?: number;
   floatingPnl?: number;
   floatingPnlPercent?: number;
+  realizedPnl?: number;
+  dividendIncome?: number;
   todayPnl?: number;
   holdingCount?: number;
   calculatedAt?: number;

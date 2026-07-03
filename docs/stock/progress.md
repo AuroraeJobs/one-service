@@ -99,6 +99,7 @@ Implemented baseline:
 - Menu V4 first UX slice is implemented. Route `/investments/alerts` is wired, the stock subnav exposes 告警, alert rules can be listed/created/deleted, enabled rules can be manually evaluated, and trigger history is visible.
 - Menu V5 first UX slice is implemented. Route `/investments/analysis` is wired, the stock subnav exposes 分析, and analysis summary data is displayed for concentration, volatility, drawdown, top gainers, and top losers.
 - Menu V6 first UX slice is implemented. Routes `/investments/providers` and `/investments/settings` are wired, provider health is visible, and settings boundaries are documented as read-only until preferences persistence is designed.
+- Iteration 05 Track A calculation coverage is complete for the current DTO model. Holding and portfolio summaries now expose realized PnL and dividend income; tests cover buy, sell, fee, tax, dividend, bonus share, split, delete, and idempotent recalculation.
 
 Architecture rule to preserve:
 
