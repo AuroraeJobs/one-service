@@ -405,7 +405,19 @@ Portfolio rules:
 - Account, position, and trade controllers depend on `IStockPortfolioService`, not provider implementations.
 - Position and trade symbols are normalized through the stock market service contract before persistence.
 - Supported trade types are `BUY`, `SELL`, `DIVIDEND`, `FEE`, `BONUS_SHARE`, and `SPLIT`.
-- Current iteration stores manually maintained positions and trade records. Derived position recalculation and return metrics come next.
+- Current iteration stores manually maintained positions and trade records. Derived position recalculation from trades comes next.
+
+Portfolio summary:
+
+- Endpoint: `GET /stock/portfolio/summary`.
+- Source of persisted state: MongoDB `stock_positions`.
+- Source of market data: `IStockMarketService.quotes`, returning normalized `StockQuote`.
+- Current market value: `quantity * latestPrice`.
+- Floating PnL: `marketValue - costAmount`.
+- Floating PnL percent: `floatingPnl / costAmount * 100`; zero when `costAmount` is zero.
+- Today PnL: `quantity * quote.changeAmount`.
+- Holding rows are returned sorted by `marketValue` descending, then `symbol` ascending.
+- If quote data is unavailable, latest price and market-derived PnL default to zero while `quoteAvailable` marks the row state.
 
 K-line sync configuration:
 

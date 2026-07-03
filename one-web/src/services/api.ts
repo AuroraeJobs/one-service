@@ -233,6 +233,38 @@ export interface StockKLineSyncLog {
   finishedAt?: number;
 }
 
+export interface StockHoldingSummary {
+  positionId?: string;
+  accountId?: string;
+  symbol: string;
+  market?: string;
+  code?: string;
+  name?: string;
+  quantity?: number;
+  costPrice?: number;
+  costAmount?: number;
+  latestPrice?: number;
+  changeAmount?: number;
+  changePercent?: number;
+  marketValue?: number;
+  floatingPnl?: number;
+  floatingPnlPercent?: number;
+  todayPnl?: number;
+  quoteAvailable?: boolean;
+  stale?: boolean;
+}
+
+export interface StockPortfolioSummary {
+  totalMarketValue?: number;
+  totalCostAmount?: number;
+  floatingPnl?: number;
+  floatingPnlPercent?: number;
+  todayPnl?: number;
+  holdingCount?: number;
+  calculatedAt?: number;
+  holdings?: StockHoldingSummary[];
+}
+
 export const stockApi = {
   quote: (symbol: string): Promise<StockQuote> => {
     return apiClient.get('/stock/quote', {
@@ -283,6 +315,10 @@ export const stockApi = {
     return apiClient.get('/stock/klines/sync-logs', {
       params: { symbol }
     });
+  },
+
+  portfolioSummary: (): Promise<StockPortfolioSummary> => {
+    return apiClient.get('/stock/portfolio/summary');
   }
 };
 

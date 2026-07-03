@@ -1,6 +1,7 @@
 package com.one.record.service;
 
 import com.one.record.stock.StockAccount;
+import com.one.record.stock.StockPortfolioSummary;
 import com.one.record.stock.StockPosition;
 import com.one.record.stock.StockTrade;
 
@@ -31,4 +32,6 @@ public interface IStockPortfolioService {
     StockTrade updateTrade(String id, StockTrade trade);
 
     void deleteTrade(String id);
+
+    StockPortfolioSummary summary();
 }

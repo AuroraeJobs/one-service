@@ -70,7 +70,8 @@ Implemented baseline:
 - Frontend stock rows navigate to `/investments/stocks/:symbol`; the detail page loads normalized quote and K-line APIs, then renders a real-time quote header plus candlestick, volume, MA5, MA10, and MA20 charts through `echarts-for-react`.
 - Stock portfolio foundation exists: MongoDB-backed account, position, and trade models plus CRUD endpoints for `/stock/accounts`, `/stock/positions`, and `/stock/trades`.
 - Stock trade CRUD accepts `BUY`, `SELL`, `DIVIDEND`, `FEE`, `BONUS_SHARE`, and `SPLIT`; position and return calculations are intentionally deferred to the next iteration.
-- `StockPortfolioServiceTest` covers account defaults, trade symbol normalization, and unsupported trade type rejection.
+- Portfolio summary endpoint `GET /stock/portfolio/summary` calculates current market value, floating PnL, floating PnL percent, and today PnL from persisted positions plus normalized quote data.
+- `StockPortfolioServiceTest` covers account defaults, trade symbol normalization, unsupported trade type rejection, and portfolio summary calculations.
 - Root Maven Surefire is pinned to `3.2.5` so JUnit 5/JUnit Platform tests are discovered instead of being skipped by the old default plugin.
 
 Architecture rule to preserve:
@@ -108,6 +109,7 @@ GET /stock/trades
 POST /stock/trades
 PUT /stock/trades/{id}
 DELETE /stock/trades/{id}
+GET /stock/portfolio/summary
 ```
 
 Current frontend page:
@@ -139,6 +141,8 @@ one-record/one-record-web/src/main/java/com/one/record/web/StockKLineController.
 one-record/one-record-model/src/main/java/com/one/record/stock/StockAccount.java
 one-record/one-record-model/src/main/java/com/one/record/stock/StockPosition.java
 one-record/one-record-model/src/main/java/com/one/record/stock/StockTrade.java
+one-record/one-record-model/src/main/java/com/one/record/stock/StockHoldingSummary.java
+one-record/one-record-model/src/main/java/com/one/record/stock/StockPortfolioSummary.java
 one-record/one-record-repository/src/main/java/com/one/record/repository/StockAccountRepository.java
 one-record/one-record-repository/src/main/java/com/one/record/repository/StockPositionRepository.java
 one-record/one-record-repository/src/main/java/com/one/record/repository/StockTradeRepository.java

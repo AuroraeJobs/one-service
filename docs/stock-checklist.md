@@ -70,11 +70,11 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Support buy trade records. Initial CRUD supports `BUY`; holding recalculation comes next.
 - [x] Support sell trade records. Initial CRUD supports `SELL`; holding recalculation comes next.
 - [x] Support dividend, fee, bonus share, and split records. Initial CRUD supports `DIVIDEND`, `FEE`, `BONUS_SHARE`, and `SPLIT`.
-- [ ] Calculate current market value.
-- [ ] Calculate floating PnL.
-- [ ] Calculate floating PnL percent.
-- [ ] Calculate today PnL.
-- [ ] Add portfolio summary endpoint.
+- [x] Calculate current market value.
+- [x] Calculate floating PnL.
+- [x] Calculate floating PnL percent.
+- [x] Calculate today PnL.
+- [x] Add portfolio summary endpoint.
 - [ ] Add investment dashboard summary cards.
 - [ ] Add holdings table sorted by market value, PnL, and daily change.
 

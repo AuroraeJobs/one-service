@@ -8,14 +8,22 @@ import com.one.record.repository.StockTradeRepository;
 import com.one.record.service.IStockMarketService;
 import com.one.record.service.IStockPortfolioService;
 import com.one.record.stock.StockAccount;
+import com.one.record.stock.StockHoldingSummary;
 import com.one.record.stock.StockPosition;
+import com.one.record.stock.StockPortfolioSummary;
+import com.one.record.stock.StockQuote;
 import com.one.record.stock.StockTrade;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.Set;
 
 @Service
@@ -167,6 +175,50 @@ public class StockPortfolioService implements IStockPortfolioService {
         tradeRepository.deleteById(existing.getId());
     }
 
+    @Override
+    public StockPortfolioSummary summary() {
+        List<StockPosition> positions = positionRepository.findByUserIdOrderBySymbolAscCreatedAtAsc(DEFAULT_USER_ID);
+        if (positions.isEmpty()) {
+            return StockPortfolioSummary.builder()
+                    .totalMarketValue(BigDecimal.ZERO)
+                    .totalCostAmount(BigDecimal.ZERO)
+                    .floatingPnl(BigDecimal.ZERO)
+                    .floatingPnlPercent(BigDecimal.ZERO)
+                    .todayPnl(BigDecimal.ZERO)
+                    .holdingCount(0)
+                    .calculatedAt(System.currentTimeMillis())
+                    .holdings(List.of())
+                    .build();
+        }
+
+        Map<String, StockQuote> quoteMap = stockMarketService.quotes(positions.stream()
+                        .map(StockPosition::getSymbol)
+                        .filter(StringUtils::hasText)
+                        .distinct()
+                        .toList())
+                .stream()
+                .collect(Collectors.toMap(StockQuote::getSymbol, Function.identity(), (left, right) -> left));
+        List<StockHoldingSummary> holdings = positions.stream()
+                .map(position -> toHoldingSummary(position, quoteMap.get(position.getSymbol())))
+                .sorted(Comparator.comparing(StockHoldingSummary::getMarketValue, Comparator.nullsLast(BigDecimal::compareTo)).reversed()
+                        .thenComparing(StockHoldingSummary::getSymbol, Comparator.nullsLast(String::compareTo)))
+                .toList();
+
+        BigDecimal totalMarketValue = sum(holdings, StockHoldingSummary::getMarketValue);
+        BigDecimal totalCostAmount = sum(holdings, StockHoldingSummary::getCostAmount);
+        BigDecimal floatingPnl = totalMarketValue.subtract(totalCostAmount);
+        return StockPortfolioSummary.builder()
+                .totalMarketValue(scaleMoney(totalMarketValue))
+                .totalCostAmount(scaleMoney(totalCostAmount))
+                .floatingPnl(scaleMoney(floatingPnl))
+                .floatingPnlPercent(percent(floatingPnl, totalCostAmount))
+                .todayPnl(scaleMoney(sum(holdings, StockHoldingSummary::getTodayPnl)))
+                .holdingCount(holdings.size())
+                .calculatedAt(System.currentTimeMillis())
+                .holdings(holdings)
+                .build();
+    }
+
     private void copyAccount(StockAccount source, StockAccount target) {
         if (!StringUtils.hasText(source.getName())) {
             throw new ServiceException("股票账户名称不能为空");
@@ -224,6 +276,73 @@ public class StockPortfolioService implements IStockPortfolioService {
 
     private BigDecimal defaultAmount(BigDecimal value) {
         return value == null ? BigDecimal.ZERO : value;
+    }
+
+    private StockHoldingSummary toHoldingSummary(StockPosition position, StockQuote quote) {
+        BigDecimal quantity = defaultAmount(position.getQuantity());
+        BigDecimal costAmount = defaultAmount(position.getCostAmount());
+        BigDecimal latestPrice = quotePrice(quote);
+        BigDecimal marketValue = quantity.multiply(latestPrice);
+        BigDecimal floatingPnl = marketValue.subtract(costAmount);
+        BigDecimal todayPnl = quantity.multiply(defaultAmount(quote == null ? null : quote.getChangeAmount()));
+        return StockHoldingSummary.builder()
+                .positionId(position.getId())
+                .accountId(position.getAccountId())
+                .symbol(position.getSymbol())
+                .market(position.getMarket())
+                .code(position.getCode())
+                .name(StringUtils.hasText(position.getName()) ? position.getName() : quoteName(quote, position.getSymbol()))
+                .quantity(scaleQuantity(quantity))
+                .costPrice(scaleMoney(position.getCostPrice()))
+                .costAmount(scaleMoney(costAmount))
+                .latestPrice(scaleMoney(latestPrice))
+                .changeAmount(scaleMoney(quote == null ? null : quote.getChangeAmount()))
+                .changePercent(scalePercent(quote == null ? null : quote.getChangePercent()))
+                .marketValue(scaleMoney(marketValue))
+                .floatingPnl(scaleMoney(floatingPnl))
+                .floatingPnlPercent(percent(floatingPnl, costAmount))
+                .todayPnl(scaleMoney(todayPnl))
+                .quoteAvailable(quote != null && Boolean.TRUE.equals(quote.getAvailable()))
+                .stale(quote != null && Boolean.TRUE.equals(quote.getStale()))
+                .build();
+    }
+
+    private BigDecimal quotePrice(StockQuote quote) {
+        if (quote == null || !Boolean.TRUE.equals(quote.getAvailable())) {
+            return BigDecimal.ZERO;
+        }
+        return defaultAmount(quote.getPrice());
+    }
+
+    private String quoteName(StockQuote quote, String fallback) {
+        return quote != null && StringUtils.hasText(quote.getName()) ? quote.getName() : fallback;
+    }
+
+    private BigDecimal sum(List<StockHoldingSummary> holdings, Function<StockHoldingSummary, BigDecimal> mapper) {
+        return holdings.stream()
+                .map(mapper)
+                .map(this::defaultAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private BigDecimal percent(BigDecimal numerator, BigDecimal denominator) {
+        BigDecimal safeDenominator = defaultAmount(denominator);
+        if (safeDenominator.compareTo(BigDecimal.ZERO) == 0) {
+            return BigDecimal.ZERO;
+        }
+        return defaultAmount(numerator).multiply(BigDecimal.valueOf(100)).divide(safeDenominator, 2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal scaleMoney(BigDecimal value) {
+        return defaultAmount(value).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal scalePercent(BigDecimal value) {
+        return defaultAmount(value).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal scaleQuantity(BigDecimal value) {
+        return defaultAmount(value).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros();
     }
 
     private String trimToNull(String value) {

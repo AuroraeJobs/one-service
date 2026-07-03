@@ -2,6 +2,7 @@ package com.one.record.web;
 
 import com.one.record.service.IStockPortfolioService;
 import com.one.record.stock.StockAccount;
+import com.one.record.stock.StockPortfolioSummary;
 import com.one.record.stock.StockPosition;
 import com.one.record.stock.StockTrade;
 import io.swagger.v3.oas.annotations.Operation;
@@ -109,5 +110,11 @@ public class StockPortfolioController {
     public void deleteTrade(@PathVariable("id") String id) {
         log.info("Deleting stock trade: {}", id);
         service.deleteTrade(id);
+    }
+
+    @GetMapping("portfolio/summary")
+    @Operation(summary = "查询股票组合汇总", description = "查询当前股票持仓市值、浮动盈亏和当日盈亏")
+    public StockPortfolioSummary summary() {
+        return service.summary();
     }
 }
