@@ -68,6 +68,9 @@ Implemented baseline:
 - K-line manual sync writes MongoDB sync logs and uses Redis locks to avoid duplicate sync execution.
 - K-line scheduled daily sync is wired with a configurable cron and Redis lock; it currently records `SKIPPED` logs until a historical provider is connected.
 - Frontend stock rows navigate to `/investments/stocks/:symbol`; the detail page loads normalized quote and K-line APIs, then renders a real-time quote header plus candlestick, volume, MA5, MA10, and MA20 charts through `echarts-for-react`.
+- Stock portfolio foundation exists: MongoDB-backed account, position, and trade models plus CRUD endpoints for `/stock/accounts`, `/stock/positions`, and `/stock/trades`.
+- Stock trade CRUD accepts `BUY`, `SELL`, `DIVIDEND`, `FEE`, `BONUS_SHARE`, and `SPLIT`; position and return calculations are intentionally deferred to the next iteration.
+- `StockPortfolioServiceTest` covers account defaults, trade symbol normalization, and unsupported trade type rejection.
 - Root Maven Surefire is pinned to `3.2.5` so JUnit 5/JUnit Platform tests are discovered instead of being skipped by the old default plugin.
 
 Architecture rule to preserve:
@@ -93,6 +96,18 @@ GET /stock/{symbol}/klines
 POST /stock/{symbol}/klines/sync
 POST /stock/klines/sync
 GET /stock/klines/sync-logs
+GET /stock/accounts
+POST /stock/accounts
+PUT /stock/accounts/{id}
+DELETE /stock/accounts/{id}
+GET /stock/positions
+POST /stock/positions
+PUT /stock/positions/{id}
+DELETE /stock/positions/{id}
+GET /stock/trades
+POST /stock/trades
+PUT /stock/trades/{id}
+DELETE /stock/trades/{id}
 ```
 
 Current frontend page:
@@ -121,6 +136,15 @@ one-record/one-record-repository/src/main/java/com/one/record/repository/StockKL
 one-record/one-record-interface/src/main/java/com/one/record/service/IStockKLineService.java
 one-record/one-record-service/src/main/java/com/one/record/service/impl/StockKLineService.java
 one-record/one-record-web/src/main/java/com/one/record/web/StockKLineController.java
+one-record/one-record-model/src/main/java/com/one/record/stock/StockAccount.java
+one-record/one-record-model/src/main/java/com/one/record/stock/StockPosition.java
+one-record/one-record-model/src/main/java/com/one/record/stock/StockTrade.java
+one-record/one-record-repository/src/main/java/com/one/record/repository/StockAccountRepository.java
+one-record/one-record-repository/src/main/java/com/one/record/repository/StockPositionRepository.java
+one-record/one-record-repository/src/main/java/com/one/record/repository/StockTradeRepository.java
+one-record/one-record-interface/src/main/java/com/one/record/service/IStockPortfolioService.java
+one-record/one-record-service/src/main/java/com/one/record/service/impl/StockPortfolioService.java
+one-record/one-record-web/src/main/java/com/one/record/web/StockPortfolioController.java
 ```
 
 ## Verification Notes

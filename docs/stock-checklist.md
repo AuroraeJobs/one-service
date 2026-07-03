@@ -60,16 +60,16 @@ Use this file as the durable task board for the stock module. When a task is fin
 
 ## Week 3: Positions, Trades, And Returns
 
-- [ ] Add `StockAccount` model.
-- [ ] Add `StockPosition` model.
-- [ ] Add `StockTrade` model.
-- [ ] Persist accounts, positions, and trades in MongoDB.
-- [ ] Add account CRUD endpoints.
-- [ ] Add position endpoints.
-- [ ] Add trade endpoints.
-- [ ] Support buy trade records.
-- [ ] Support sell trade records.
-- [ ] Support dividend, fee, bonus share, and split records.
+- [x] Add `StockAccount` model.
+- [x] Add `StockPosition` model.
+- [x] Add `StockTrade` model.
+- [x] Persist accounts, positions, and trades in MongoDB.
+- [x] Add account CRUD endpoints.
+- [x] Add position endpoints.
+- [x] Add trade endpoints.
+- [x] Support buy trade records. Initial CRUD supports `BUY`; holding recalculation comes next.
+- [x] Support sell trade records. Initial CRUD supports `SELL`; holding recalculation comes next.
+- [x] Support dividend, fee, bonus share, and split records. Initial CRUD supports `DIVIDEND`, `FEE`, `BONUS_SHARE`, and `SPLIT`.
 - [ ] Calculate current market value.
 - [ ] Calculate floating PnL.
 - [ ] Calculate floating PnL percent.

@@ -350,6 +350,63 @@ Frontend stock detail:
 - The detail page renders quote metrics from `StockQuote` and chart series from normalized `StockKLine`; it does not know the concrete market data provider.
 - K-line visualization uses `echarts-for-react` with candlestick, volume, MA5, MA10, and MA20 series.
 
+Portfolio storage:
+
+```text
+stock_accounts
+- userId
+- name
+- broker
+- accountNo
+- currency
+- cashBalance
+- status
+- createdAt
+- updatedAt
+
+stock_positions
+- userId
+- accountId
+- symbol
+- market
+- code
+- name
+- quantity
+- availableQuantity
+- costPrice
+- costAmount
+- openedAt
+- createdAt
+- updatedAt
+
+stock_trades
+- userId
+- accountId
+- symbol
+- market
+- code
+- name
+- tradeType
+- quantity
+- price
+- amount
+- fee
+- tax
+- tradedAt
+- remark
+- createdAt
+- updatedAt
+```
+
+Portfolio rules:
+
+- Portfolio state is persisted in MongoDB.
+- `createdAt`, `updatedAt`, `openedAt`, and `tradedAt` are millisecond timestamps.
+- Account, position, and trade controllers depend on `IStockPortfolioService`, not provider implementations.
+- Position and trade symbols are normalized through the stock market service contract before persistence.
+- Supported trade types are `BUY`, `SELL`, `DIVIDEND`, `FEE`, `BONUS_SHARE`, and `SPLIT`.
+- Current iteration stores manually maintained positions and trade records. Derived position recalculation and return metrics come next.
+
 K-line sync configuration:
 
 ```yaml
