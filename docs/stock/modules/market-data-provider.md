@@ -99,6 +99,20 @@ GET /stock/quotes?symbols=sh000001&symbols=sz399001
 GET /stock/providers/health
 ```
 
+## Frontend Routes
+
+```text
+/investments/providers
+/investments/settings
+```
+
+Current UX:
+
+- Provider page reads `GET /stock/providers/health` and shows active, fallback, registered, missing, status, and checked time.
+- Settings page documents current backend configuration boundaries and planned user preferences.
+- Provider switching remains backend configuration-driven.
+- Settings remain read-only until a persisted preferences model and API are designed.
+
 ## Verification
 
 - `StockMarketServiceTest.normalizeSymbolAddsMarketPrefixForAShares`

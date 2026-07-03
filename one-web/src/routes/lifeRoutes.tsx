@@ -15,6 +15,8 @@ import LifeStockAlertsPage from '../components/LifeStockAlertsPage';
 import LifeStockAnalysisPage from '../components/LifeStockAnalysisPage';
 import LifeStockKLinesPage from '../components/LifeStockKLinesPage';
 import LifeStockPositionsPage from '../components/LifeStockPositionsPage';
+import LifeStockProvidersPage from '../components/LifeStockProvidersPage';
+import LifeStockSettingsPage from '../components/LifeStockSettingsPage';
 import LifeStockDetailPage from '../components/LifeStockDetailPage';
 import LifeStockSyncPage from '../components/LifeStockSyncPage';
 import LifeStockTradesPage from '../components/LifeStockTradesPage';
@@ -53,6 +55,8 @@ export const createProtectedRoutes = (isTabVisible: boolean): ProtectedRouteConf
   { path: '/investments/sync', element: <LifeStockSyncPage /> },
   { path: '/investments/alerts', element: <LifeStockAlertsPage /> },
   { path: '/investments/analysis', element: <LifeStockAnalysisPage /> },
+  { path: '/investments/providers', element: <LifeStockProvidersPage /> },
+  { path: '/investments/settings', element: <LifeStockSettingsPage /> },
   { path: '/investments/stocks/:symbol', element: <LifeStockDetailPage /> },
   { path: '/vehicle', element: <HealthSpringEquinoxPage /> },
   { path: '/vehicle/tesla', element: <TeslaFleetManagerPage /> },

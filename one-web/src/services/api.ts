@@ -365,6 +365,15 @@ export interface StockAnalysisSummary {
   calculatedAt?: number;
 }
 
+export interface StockProviderHealth {
+  provider?: string;
+  active?: boolean;
+  fallback?: boolean;
+  registered?: boolean;
+  status?: string;
+  checkedAt?: number;
+}
+
 export const stockApi = {
   quote: (symbol: string): Promise<StockQuote> => {
     return apiClient.get('/stock/quote', {
@@ -489,6 +498,10 @@ export const stockApi = {
 
   analysisSummary: (): Promise<StockAnalysisSummary> => {
     return apiClient.get('/stock/analysis/summary');
+  },
+
+  providerHealth: (): Promise<StockProviderHealth[]> => {
+    return apiClient.get('/stock/providers/health');
   }
 };
 

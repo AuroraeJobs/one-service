@@ -98,6 +98,7 @@ Implemented baseline:
 - Menu V3 first UX slice is implemented. Routes `/investments/klines` and `/investments/sync` are wired, the stock subnav exposes K线 and 同步, K-line rows can be queried, standardized K-line JSON can be submitted to sync APIs, and sync logs are visible.
 - Menu V4 first UX slice is implemented. Route `/investments/alerts` is wired, the stock subnav exposes 告警, alert rules can be listed/created/deleted, enabled rules can be manually evaluated, and trigger history is visible.
 - Menu V5 first UX slice is implemented. Route `/investments/analysis` is wired, the stock subnav exposes 分析, and analysis summary data is displayed for concentration, volatility, drawdown, top gainers, and top losers.
+- Menu V6 first UX slice is implemented. Routes `/investments/providers` and `/investments/settings` are wired, provider health is visible, and settings boundaries are documented as read-only until preferences persistence is designed.
 
 Architecture rule to preserve:
 

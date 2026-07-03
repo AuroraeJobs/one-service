@@ -18,6 +18,7 @@ import {
   MoneyCollectOutlined,
   PieChartOutlined,
   SafetyCertificateOutlined,
+  SettingOutlined,
   StockOutlined,
   SyncOutlined,
   ThunderboltOutlined,
@@ -178,7 +179,8 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
     { id: 'investment-alerts', moduleKey: 'investment', path: '/investments/alerts', label: '告警', icon: <SafetyCertificateOutlined />, accent: '#ff9500' },
     { id: 'investment-analysis', moduleKey: 'investment', path: '/investments/analysis', label: '分析', icon: <PieChartOutlined />, accent: '#5856d6' },
     { id: 'investment-sync', moduleKey: 'investment', path: '/investments/sync', label: '同步', icon: <SyncOutlined />, accent: '#00c7be' },
-    { id: 'investment-connections', moduleKey: 'investment', path: '/connections', label: '接入', icon: <DatabaseOutlined />, accent: '#00c7be' }
+    { id: 'investment-providers', moduleKey: 'investment', path: '/investments/providers', label: '数据源', icon: <ApiOutlined />, accent: '#0071e3' },
+    { id: 'investment-settings', moduleKey: 'investment', path: '/investments/settings', label: '设置', icon: <SettingOutlined />, accent: '#8e8e93' }
   ],
   connectors: [
     { id: 'connectors-overview', moduleKey: 'connectors', path: '/connections', label: '接入', icon: <DatabaseOutlined />, accent: '#00c7be' }

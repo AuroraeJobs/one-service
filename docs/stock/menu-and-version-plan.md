@@ -663,6 +663,28 @@ Acceptance:
 - Provider switching remains configuration-driven.
 - Settings do not couple frontend to a concrete provider.
 
+Progress:
+
+- Completed first UX slice on 2026-07-03.
+- Added routes:
+
+```text
+/investments/providers
+/investments/settings
+```
+
+- Added stock subnav items for 数据源 and 设置.
+- Added read-only provider health page using `GET /stock/providers/health`.
+- Added settings boundary page documenting current backend config items and future user preferences.
+- Settings are intentionally read-only until a MongoDB-backed preferences model and write API are designed.
+- Verified changed files with ESLint and full frontend build.
+
+Follow-up:
+
+- Add persisted stock user preferences model and API.
+- Add write controls only after persistence and validation rules are implemented.
+- Add K-line provider status after historical provider routing is implemented.
+
 ## Recommended Build Order
 
 1. V1 navigation shell.
