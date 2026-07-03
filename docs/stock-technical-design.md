@@ -455,10 +455,28 @@ Alert rules:
 
 - Rule CRUD endpoints live under `/stock/alerts/rules`.
 - Recent trigger history is queried through `/stock/alerts/history`.
+- Manual evaluation endpoint: `POST /stock/alerts/evaluate`.
 - Rule symbols are normalized through `IStockMarketService`.
 - Supported rule types are `PRICE`, `PERCENT_CHANGE`, and `VOLUME_ABNORMAL`.
 - Supported directions are `ABOVE`, `BELOW`, `UP`, and `DOWN`.
-- Evaluation, Redis throttling, and scheduled alert jobs come in the next alert iteration.
+- `PRICE` evaluates `StockQuote.price`.
+- `PERCENT_CHANGE` evaluates `StockQuote.changePercent`.
+- `VOLUME_ABNORMAL` evaluates `StockQuote.volume`.
+- `ABOVE` and `UP` trigger when actual value is greater than or equal to `targetValue`.
+- `BELOW` and `DOWN` trigger when actual value is less than or equal to `targetValue`.
+- Trigger history is persisted to MongoDB collection `stock_alert_history`.
+- Redis throttle key: `stock:alert:triggered:{userId}:{ruleId}`.
+- Redis last-evaluated key: `stock:alert:last-evaluated:{userId}`.
+- Scheduled evaluation is enabled by Spring scheduling and configured with `stock.market.alert-evaluation-cron`.
+
+Alert evaluation configuration:
+
+```yaml
+stock:
+  market:
+    alert-evaluation-enabled: true
+    alert-evaluation-cron: "0 */5 9-15 * * MON-FRI"
+```
 
 K-line sync configuration:
 

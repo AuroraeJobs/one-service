@@ -60,4 +60,11 @@ public class StockAlertController {
     public List<StockAlertHistory> history(@RequestParam(name = "symbol", required = false) String symbol) {
         return service.history(symbol);
     }
+
+    @PostMapping("evaluate")
+    @Operation(summary = "评估股票提醒规则", description = "手动评估已启用的股票提醒规则")
+    public List<StockAlertHistory> evaluate() {
+        log.info("Evaluating stock alert rules");
+        return service.evaluate();
+    }
 }

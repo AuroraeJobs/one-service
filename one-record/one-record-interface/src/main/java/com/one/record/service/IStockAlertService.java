@@ -16,4 +16,6 @@ public interface IStockAlertService {
     void deleteRule(String id);
 
     List<StockAlertHistory> history(String symbol);
+
+    List<StockAlertHistory> evaluate();
 }

@@ -6,16 +6,23 @@ import com.one.record.repository.StockAlertRuleRepository;
 import com.one.record.service.IStockMarketService;
 import com.one.record.stock.StockAlertHistory;
 import com.one.record.stock.StockAlertRule;
+import com.one.record.stock.StockQuote;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -27,6 +34,10 @@ class StockAlertServiceTest {
 
     private IStockMarketService stockMarketService;
 
+    private StringRedisTemplate redisTemplate;
+
+    private ValueOperations<String, String> valueOperations;
+
     private StockAlertService service;
 
     @BeforeEach
@@ -34,7 +45,15 @@ class StockAlertServiceTest {
         ruleRepository = mock(StockAlertRuleRepository.class);
         historyRepository = mock(StockAlertHistoryRepository.class);
         stockMarketService = mock(IStockMarketService.class);
-        service = new StockAlertService(ruleRepository, historyRepository, stockMarketService);
+        redisTemplate = mock(StringRedisTemplate.class);
+        valueOperations = mockValueOperations();
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        service = new StockAlertService(ruleRepository, historyRepository, stockMarketService, redisTemplate);
+    }
+
+    @SuppressWarnings("unchecked")
+    private ValueOperations<String, String> mockValueOperations() {
+        return (ValueOperations<String, String>) mock(ValueOperations.class);
     }
 
     @Test
@@ -89,5 +108,66 @@ class StockAlertServiceTest {
 
         assertThat(histories).hasSize(1);
         verify(historyRepository).findTop100ByUserIdAndSymbolOrderByTriggeredAtDesc("default", "sh600519");
+    }
+
+    @Test
+    void evaluateTriggersPricePercentAndVolumeRules() {
+        when(ruleRepository.findByUserIdAndEnabledOrderByCreatedAtDesc("default", true)).thenReturn(List.of(
+                alertRule("r1", "PRICE", "ABOVE", "1800"),
+                alertRule("r2", "PERCENT_CHANGE", "UP", "3"),
+                alertRule("r3", "VOLUME_ABNORMAL", "ABOVE", "1000")
+        ));
+        when(stockMarketService.quotes(List.of("sh600519"))).thenReturn(List.of(StockQuote.builder()
+                .symbol("sh600519")
+                .price(new BigDecimal("1810"))
+                .changePercent(new BigDecimal("3.5"))
+                .volume(2000L)
+                .available(true)
+                .build()));
+        when(valueOperations.setIfAbsent(anyString(), anyString(), any(Duration.class))).thenReturn(true);
+        when(historyRepository.save(any(StockAlertHistory.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(ruleRepository.save(any(StockAlertRule.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        List<StockAlertHistory> histories = service.evaluate();
+
+        assertThat(histories).hasSize(3);
+        assertThat(histories).extracting(StockAlertHistory::getRuleType)
+                .containsExactly("PRICE", "PERCENT_CHANGE", "VOLUME_ABNORMAL");
+        assertThat(histories).extracting(StockAlertHistory::getTriggerValue)
+                .containsExactly(new BigDecimal("1810"), new BigDecimal("3.5"), new BigDecimal("2000"));
+        verify(ruleRepository, times(3)).save(any(StockAlertRule.class));
+        verify(valueOperations, times(3)).setIfAbsent(anyString(), anyString(), any(Duration.class));
+        verify(valueOperations).set(anyString(), anyString());
+    }
+
+    @Test
+    void evaluateSkipsThrottledRule() {
+        when(ruleRepository.findByUserIdAndEnabledOrderByCreatedAtDesc("default", true)).thenReturn(List.of(
+                alertRule("r1", "PRICE", "ABOVE", "1800")
+        ));
+        when(stockMarketService.quotes(List.of("sh600519"))).thenReturn(List.of(StockQuote.builder()
+                .symbol("sh600519")
+                .price(new BigDecimal("1810"))
+                .available(true)
+                .build()));
+        when(valueOperations.setIfAbsent(anyString(), anyString(), any(Duration.class))).thenReturn(false);
+
+        List<StockAlertHistory> histories = service.evaluate();
+
+        assertThat(histories).isEmpty();
+        verify(valueOperations).set(anyString(), anyString());
+    }
+
+    private StockAlertRule alertRule(String id, String ruleType, String direction, String targetValue) {
+        return StockAlertRule.builder()
+                .id(id)
+                .userId("default")
+                .symbol("sh600519")
+                .ruleType(ruleType)
+                .direction(direction)
+                .targetValue(new BigDecimal(targetValue))
+                .enabled(true)
+                .throttleSeconds(60)
+                .build();
     }
 }

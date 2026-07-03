@@ -74,7 +74,9 @@ Implemented baseline:
 - Investment page now loads `stockApi.portfolioSummary`, renders portfolio summary cards, and shows holdings sorted by backend market value/PnL calculations.
 - `StockPortfolioServiceTest` covers account defaults, trade symbol normalization, unsupported trade type rejection, and portfolio summary calculations.
 - Stock alert foundation exists: MongoDB-backed alert rule and alert history models, CRUD APIs for `/stock/alerts/rules`, and recent history query `/stock/alerts/history`.
-- `StockAlertServiceTest` covers alert rule normalization/defaults, unsupported rule type rejection, and history symbol filtering.
+- Alert evaluation exists for price, percent-change, and volume-abnormal rules. It writes trigger history to MongoDB and uses Redis for per-rule throttling plus last-evaluated state.
+- Alert scheduled evaluation is configurable through `stock.market.alert-evaluation-enabled` and `stock.market.alert-evaluation-cron`.
+- `StockAlertServiceTest` covers alert rule normalization/defaults, unsupported rule type rejection, history symbol filtering, alert evaluation, and throttling.
 - Root Maven Surefire is pinned to `3.2.5` so JUnit 5/JUnit Platform tests are discovered instead of being skipped by the old default plugin.
 
 Architecture rule to preserve:
@@ -118,6 +120,7 @@ POST /stock/alerts/rules
 PUT /stock/alerts/rules/{id}
 DELETE /stock/alerts/rules/{id}
 GET /stock/alerts/history
+POST /stock/alerts/evaluate
 ```
 
 Current frontend page:

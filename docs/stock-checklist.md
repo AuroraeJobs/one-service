@@ -83,11 +83,11 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Add `StockAlertRule` model.
 - [x] Persist alert rules and alert history in MongoDB.
 - [x] Add alert CRUD endpoints.
-- [ ] Add price alert evaluation.
-- [ ] Add percent-change alert evaluation.
-- [ ] Add volume abnormality alert evaluation.
-- [ ] Add scheduled alert evaluation job.
-- [ ] Use Redis to store alert evaluation throttling and last-evaluated state.
+- [x] Add price alert evaluation.
+- [x] Add percent-change alert evaluation.
+- [x] Add volume abnormality alert evaluation.
+- [x] Add scheduled alert evaluation job.
+- [x] Use Redis to store alert evaluation throttling and last-evaluated state.
 - [ ] Add analysis summary endpoint.
 - [ ] Add concentration analysis.
 - [ ] Add volatility analysis.

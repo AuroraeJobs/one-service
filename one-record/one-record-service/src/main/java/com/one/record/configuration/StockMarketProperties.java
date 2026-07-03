@@ -38,4 +38,8 @@ public class StockMarketProperties {
     private String klineSyncCron = "0 30 15 * * MON-FRI";
 
     private List<String> klineSyncSymbols = List.of("sh000001", "sz399001", "sz399006");
+
+    private Boolean alertEvaluationEnabled = true;
+
+    private String alertEvaluationCron = "0 */5 9-15 * * MON-FRI";
 }

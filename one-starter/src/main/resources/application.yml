@@ -111,3 +111,5 @@ stock:
       - sh000001
       - sz399001
       - sz399006
+    alert-evaluation-enabled: ${STOCK_MARKET_ALERT_EVALUATION_ENABLED:true}
+    alert-evaluation-cron: ${STOCK_MARKET_ALERT_EVALUATION_CRON:0 */5 9-15 * * MON-FRI}

@@ -8,13 +8,20 @@ import com.one.record.service.IStockAlertService;
 import com.one.record.service.IStockMarketService;
 import com.one.record.stock.StockAlertHistory;
 import com.one.record.stock.StockAlertRule;
+import com.one.record.stock.StockQuote;
 import lombok.AllArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -33,6 +40,8 @@ public class StockAlertService implements IStockAlertService {
     private final StockAlertHistoryRepository historyRepository;
 
     private final IStockMarketService stockMarketService;
+
+    private final StringRedisTemplate redisTemplate;
 
     @Override
     public List<StockAlertRule> rules(Boolean enabled) {
@@ -85,6 +94,39 @@ public class StockAlertService implements IStockAlertService {
         return historyRepository.findTop100ByUserIdOrderByTriggeredAtDesc(DEFAULT_USER_ID);
     }
 
+    @Override
+    public List<StockAlertHistory> evaluate() {
+        List<StockAlertRule> enabledRules = ruleRepository.findByUserIdAndEnabledOrderByCreatedAtDesc(DEFAULT_USER_ID, true);
+        if (enabledRules.isEmpty()) {
+            markLastEvaluated();
+            return List.of();
+        }
+        Map<String, StockQuote> quoteMap = stockMarketService.quotes(enabledRules.stream()
+                        .map(StockAlertRule::getSymbol)
+                        .filter(StringUtils::hasText)
+                        .distinct()
+                        .toList())
+                .stream()
+                .collect(Collectors.toMap(StockQuote::getSymbol, Function.identity(), (left, right) -> left));
+
+        List<StockAlertHistory> triggeredHistories = new ArrayList<>();
+        for (StockAlertRule rule : enabledRules) {
+            StockQuote quote = quoteMap.get(rule.getSymbol());
+            if (quote == null || !Boolean.TRUE.equals(quote.getAvailable())) {
+                continue;
+            }
+            BigDecimal triggerValue = triggerValue(rule, quote);
+            if (triggerValue == null || !matches(rule, triggerValue) || throttled(rule)) {
+                continue;
+            }
+            StockAlertHistory history = saveHistory(rule, triggerValue);
+            triggeredHistories.add(history);
+            markTriggered(rule);
+        }
+        markLastEvaluated();
+        return triggeredHistories;
+    }
+
     private void copyRule(StockAlertRule source, StockAlertRule target) {
         String symbol = stockMarketService.normalizeSymbol(source.getSymbol());
         if (!StringUtils.hasText(symbol)) {
@@ -124,6 +166,70 @@ public class StockAlertService implements IStockAlertService {
 
     private String trimToNull(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
+    private BigDecimal triggerValue(StockAlertRule rule, StockQuote quote) {
+        return switch (rule.getRuleType()) {
+            case "PRICE" -> quote.getPrice();
+            case "PERCENT_CHANGE" -> quote.getChangePercent();
+            case "VOLUME_ABNORMAL" -> quote.getVolume() == null ? null : BigDecimal.valueOf(quote.getVolume());
+            default -> null;
+        };
+    }
+
+    private boolean matches(StockAlertRule rule, BigDecimal triggerValue) {
+        int compared = triggerValue.compareTo(rule.getTargetValue());
+        return switch (rule.getDirection()) {
+            case "ABOVE", "UP" -> compared >= 0;
+            case "BELOW", "DOWN" -> compared <= 0;
+            default -> false;
+        };
+    }
+
+    private boolean throttled(StockAlertRule rule) {
+        String key = triggerThrottleKey(rule.getId());
+        Boolean absent = redisTemplate.opsForValue().setIfAbsent(
+                key,
+                String.valueOf(System.currentTimeMillis()),
+                Duration.ofSeconds(rule.getThrottleSeconds() == null ? DEFAULT_THROTTLE_SECONDS : rule.getThrottleSeconds()));
+        return !Boolean.TRUE.equals(absent);
+    }
+
+    private StockAlertHistory saveHistory(StockAlertRule rule, BigDecimal triggerValue) {
+        Long now = System.currentTimeMillis();
+        StockAlertHistory history = StockAlertHistory.builder()
+                .userId(DEFAULT_USER_ID)
+                .ruleId(rule.getId())
+                .symbol(rule.getSymbol())
+                .ruleType(rule.getRuleType())
+                .direction(rule.getDirection())
+                .targetValue(rule.getTargetValue())
+                .triggerValue(triggerValue)
+                .message(alertMessage(rule, triggerValue))
+                .triggeredAt(now)
+                .createdAt(now)
+                .build();
+        return historyRepository.save(history);
+    }
+
+    private void markTriggered(StockAlertRule rule) {
+        Long now = System.currentTimeMillis();
+        rule.setLastTriggeredAt(now);
+        rule.setUpdatedAt(now);
+        ruleRepository.save(rule);
+    }
+
+    private void markLastEvaluated() {
+        redisTemplate.opsForValue().set("stock:alert:last-evaluated:" + DEFAULT_USER_ID, String.valueOf(System.currentTimeMillis()));
+    }
+
+    private String alertMessage(StockAlertRule rule, BigDecimal triggerValue) {
+        return rule.getSymbol() + " " + rule.getRuleType() + " " + rule.getDirection()
+                + " target=" + rule.getTargetValue() + ", actual=" + triggerValue;
+    }
+
+    private String triggerThrottleKey(String ruleId) {
+        return "stock:alert:triggered:" + DEFAULT_USER_ID + ":" + ruleId;
     }
 
     private String market(String symbol) {
