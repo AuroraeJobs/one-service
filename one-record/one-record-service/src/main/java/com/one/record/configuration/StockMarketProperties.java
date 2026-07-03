@@ -13,6 +13,10 @@ public class StockMarketProperties {
 
     private String source = "sina";
 
+    private String provider = "sina";
+
+    private List<String> fallbackProviders = List.of();
+
     private String sinaQuoteUrl = "https://hq.sinajs.cn/list=";
 
     private String referer = "https://finance.sina.com.cn";

@@ -93,14 +93,14 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Add volatility analysis.
 - [x] Add drawdown analysis.
 - [x] Add top gainers and top losers.
-- [ ] Extract `StockMarketProvider` interface.
-- [ ] Add provider router or strategy for selecting the active provider.
-- [ ] Move Sina parsing behind provider implementation.
-- [ ] Make active provider configurable with `stock.market.provider`.
-- [ ] Design fallback provider config, for example `stock.market.fallback-providers`.
-- [ ] Add provider health status endpoint.
-- [ ] Keep frontend API contract unchanged after provider abstraction.
-- [ ] Confirm no controller, frontend, watchlist, position, alert, or analysis code depends on a concrete provider.
+- [x] Extract `StockMarketProvider` interface.
+- [x] Add provider router or strategy for selecting the active provider.
+- [x] Move Sina parsing behind provider implementation.
+- [x] Make active provider configurable with `stock.market.provider`.
+- [x] Design fallback provider config, for example `stock.market.fallback-providers`.
+- [x] Add provider health status endpoint.
+- [x] Keep frontend API contract unchanged after provider abstraction.
+- [x] Confirm no controller, frontend, watchlist, position, alert, or analysis code depends on a concrete provider.
 
 ## Quality Gates
 
@@ -117,6 +117,6 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Changes are reviewed with `git status --short` and `git diff --stat`.
 - [x] Completed milestone is committed with a clear message.
 - [x] Committed branch is pushed to the remote.
-- [ ] Provider abstraction rule is still true: upper layers depend on interfaces and normalized DTOs only.
-- [ ] Storage rule is still true: MongoDB for persisted stock data, Redis for volatile market and operational state.
+- [x] Provider abstraction rule is still true: upper layers depend on interfaces and normalized DTOs only.
+- [x] Storage rule is still true: MongoDB for persisted stock data, Redis for volatile market and operational state.
 - [x] `docs/stock-technical-design.md` is updated when key logic or architecture changes.

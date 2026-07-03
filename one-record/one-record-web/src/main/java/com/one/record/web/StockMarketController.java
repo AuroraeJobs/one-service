@@ -1,6 +1,7 @@
 package com.one.record.web;
 
 import com.one.record.service.IStockMarketService;
+import com.one.record.stock.StockProviderHealth;
 import com.one.record.stock.StockQuote;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
@@ -34,5 +35,11 @@ public class StockMarketController {
     public List<StockQuote> quotes(@RequestParam(name = "symbols", required = false) List<String> symbols) {
         log.info("Fetching stock quotes: {}", symbols);
         return service.quotes(symbols);
+    }
+
+    @GetMapping("providers/health")
+    @Operation(summary = "查询股票行情源状态", description = "查询已注册和已配置的股票行情源状态")
+    public List<StockProviderHealth> providerHealth() {
+        return service.providerHealth();
     }
 }

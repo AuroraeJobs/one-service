@@ -50,33 +50,24 @@ Cache service -> Redis keys
 
 ## Provider Abstraction
 
-Target provider interface:
+Current provider interface:
 
 ```java
 public interface StockMarketProvider {
-    String providerName();
-
-    boolean supports(String market);
-
-    StockQuote quote(String symbol);
+    String name();
 
     List<StockQuote> quotes(List<String> symbols);
-
-    List<StockKLine> klines(String symbol, StockKLineQuery query);
-
-    StockProviderHealth health();
 }
 ```
 
-Target provider router:
+Current provider router:
 
 ```text
 StockMarketProviderRouter
-- reads configured provider order
-- chooses active provider
-- optionally tries fallback providers
+- chooses active provider by stock.market.provider
+- tries fallback providers from stock.market.fallback-providers
 - returns normalized DTOs only
-- records provider health in Redis
+- reports configured and registered provider health
 ```
 
 Configuration direction:
@@ -93,6 +84,12 @@ stock:
 Provider switching rule:
 
 Changing `stock.market.provider` should not require changing controllers, frontend pages, watchlist logic, position logic, alert logic, or analysis logic.
+
+Current implementation:
+
+- `SinaStockMarketProvider` owns Sina HTTP access, GBK decoding, response parsing, and provider-specific unavailable quote mapping.
+- `StockMarketService` owns cache, last-success fallback snapshots, quote ordering, and normalized public behavior.
+- Provider health endpoint: `GET /stock/providers/health`.
 
 ## Symbol Normalization
 

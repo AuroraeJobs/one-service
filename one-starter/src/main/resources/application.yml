@@ -91,6 +91,8 @@ github:
 
 stock:
   market:
+    provider: ${STOCK_MARKET_PROVIDER:sina}
+    fallback-providers: ${STOCK_MARKET_FALLBACK_PROVIDERS:}
     source: ${STOCK_MARKET_SOURCE:sina}
     sina-quote-url: ${STOCK_MARKET_SINA_QUOTE_URL:https://hq.sinajs.cn/list=}
     referer: ${STOCK_MARKET_REFERER:https://finance.sina.com.cn}

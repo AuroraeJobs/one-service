@@ -79,6 +79,9 @@ Implemented baseline:
 - `StockAlertServiceTest` covers alert rule normalization/defaults, unsupported rule type rejection, history symbol filtering, alert evaluation, and throttling.
 - Analysis summary endpoint `GET /stock/analysis/summary` returns concentration, recent volatility, recent drawdown, top gainers, and top losers from portfolio summary plus MongoDB K-line data.
 - `StockAnalysisServiceTest` covers concentration, volatility, drawdown, and ranking calculations.
+- Quote provider abstraction is implemented with `StockMarketProvider`, `StockMarketProviderRouter`, and `SinaStockMarketProvider`.
+- Active quote provider is configured with `stock.market.provider`; fallback provider order is configured with `stock.market.fallback-providers`.
+- Provider health endpoint `GET /stock/providers/health` reports configured and registered providers.
 - Root Maven Surefire is pinned to `3.2.5` so JUnit 5/JUnit Platform tests are discovered instead of being skipped by the old default plugin.
 
 Architecture rule to preserve:
@@ -96,6 +99,7 @@ Current API surface:
 ```text
 GET /stock/quote?symbol=600519
 GET /stock/quotes?symbols=sh000001&symbols=sz399001
+GET /stock/providers/health
 GET /stock/watchlist
 POST /stock/watchlist
 DELETE /stock/watchlist/{symbol}
@@ -139,6 +143,9 @@ one-record/one-record-model/src/main/java/com/one/record/stock/StockQuote.java
 one-record/one-record-interface/src/main/java/com/one/record/service/IStockMarketService.java
 one-record/one-record-service/src/main/java/com/one/record/configuration/StockMarketProperties.java
 one-record/one-record-service/src/main/java/com/one/record/service/impl/StockMarketService.java
+one-record/one-record-interface/src/main/java/com/one/record/service/StockMarketProvider.java
+one-record/one-record-service/src/main/java/com/one/record/service/impl/StockMarketProviderRouter.java
+one-record/one-record-service/src/main/java/com/one/record/service/impl/SinaStockMarketProvider.java
 one-record/one-record-web/src/main/java/com/one/record/web/StockMarketController.java
 one-record/one-record-model/src/main/java/com/one/record/stock/StockWatchlist.java
 one-record/one-record-repository/src/main/java/com/one/record/repository/StockWatchlistRepository.java

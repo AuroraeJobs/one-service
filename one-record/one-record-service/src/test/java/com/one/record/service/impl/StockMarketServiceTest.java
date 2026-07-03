@@ -39,6 +39,8 @@ class StockMarketServiceTest {
 
     private StockMarketService service;
 
+    private SinaStockMarketProvider sinaProvider;
+
     @BeforeEach
     void setUp() {
         properties = new StockMarketProperties();
@@ -46,7 +48,9 @@ class StockMarketServiceTest {
         redisTemplate = mock(StringRedisTemplate.class);
         valueOperations = mockValueOperations();
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        service = new StockMarketService(properties, redisTemplate);
+        sinaProvider = new SinaStockMarketProvider(properties);
+        StockMarketProviderRouter providerRouter = new StockMarketProviderRouter(properties, List.of(sinaProvider));
+        service = new StockMarketService(properties, redisTemplate, providerRouter);
     }
 
     @SuppressWarnings("unchecked")
@@ -146,8 +150,16 @@ class StockMarketServiceTest {
         server.verify();
     }
 
+    @Test
+    void providerHealthReportsConfiguredProvider() {
+        assertThat(service.providerHealth()).hasSize(1);
+        assertThat(service.providerHealth().get(0).getProvider()).isEqualTo("sina");
+        assertThat(service.providerHealth().get(0).getActive()).isTrue();
+        assertThat(service.providerHealth().get(0).getRegistered()).isTrue();
+    }
+
     private MockRestServiceServer bindMockServer() {
-        RestTemplate restTemplate = (RestTemplate) ReflectionTestUtils.getField(service, "restTemplate");
+        RestTemplate restTemplate = (RestTemplate) ReflectionTestUtils.getField(sinaProvider, "restTemplate");
         return MockRestServiceServer.bindTo(restTemplate).build();
     }
 
