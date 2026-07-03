@@ -1,6 +1,7 @@
 package com.one.record.service;
 
 import com.one.record.stock.StockKLine;
+import com.one.record.stock.StockKLineSyncLog;
 
 import java.util.List;
 
@@ -13,4 +14,6 @@ public interface IStockKLineService {
     List<StockKLine> sync(String symbol, List<StockKLine> kLines);
 
     List<StockKLine> syncAll(List<StockKLine> kLines);
+
+    List<StockKLineSyncLog> syncLogs(String symbol);
 }

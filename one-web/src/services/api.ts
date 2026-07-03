@@ -220,6 +220,19 @@ export interface StockKLine {
   updatedAt?: number;
 }
 
+export interface StockKLineSyncLog {
+  id?: string;
+  jobName?: string;
+  symbol?: string;
+  period?: string;
+  status?: string;
+  requestedCount?: number;
+  savedCount?: number;
+  message?: string;
+  startedAt?: number;
+  finishedAt?: number;
+}
+
 export const stockApi = {
   quote: (symbol: string): Promise<StockQuote> => {
     return apiClient.get('/stock/quote', {
@@ -264,6 +277,12 @@ export const stockApi = {
 
   syncAllKlines: (klines: StockKLine[]): Promise<StockKLine[]> => {
     return apiClient.post('/stock/klines/sync', klines);
+  },
+
+  klineSyncLogs: (symbol?: string): Promise<StockKLineSyncLog[]> => {
+    return apiClient.get('/stock/klines/sync-logs', {
+      params: { symbol }
+    });
   }
 };
 

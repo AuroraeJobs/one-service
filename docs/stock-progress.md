@@ -65,6 +65,7 @@ Implemented baseline:
 - Backend model/service timestamp fields have been migrated away from `LocalDateTime` to millisecond timestamps.
 - `StockMarketControllerTest` verifies repeated `symbols` query params bind to `List<String>`.
 - Initial MongoDB-backed K-line backend exists: `StockKLine`, repository, service, query endpoint, and manual sync/upsert endpoints.
+- K-line manual sync writes MongoDB sync logs and uses Redis locks to avoid duplicate sync execution.
 - Root Maven Surefire is pinned to `3.2.5` so JUnit 5/JUnit Platform tests are discovered instead of being skipped by the old default plugin.
 
 Architecture rule to preserve:
@@ -89,6 +90,7 @@ PUT /stock/watchlist/order
 GET /stock/{symbol}/klines
 POST /stock/{symbol}/klines/sync
 POST /stock/klines/sync
+GET /stock/klines/sync-logs
 ```
 
 Current frontend page:
@@ -111,7 +113,9 @@ one-record/one-record-interface/src/main/java/com/one/record/service/IStockWatch
 one-record/one-record-service/src/main/java/com/one/record/service/impl/StockWatchlistService.java
 one-record/one-record-web/src/main/java/com/one/record/web/StockWatchlistController.java
 one-record/one-record-model/src/main/java/com/one/record/stock/StockKLine.java
+one-record/one-record-model/src/main/java/com/one/record/stock/StockKLineSyncLog.java
 one-record/one-record-repository/src/main/java/com/one/record/repository/StockKLineRepository.java
+one-record/one-record-repository/src/main/java/com/one/record/repository/StockKLineSyncLogRepository.java
 one-record/one-record-interface/src/main/java/com/one/record/service/IStockKLineService.java
 one-record/one-record-service/src/main/java/com/one/record/service/impl/StockKLineService.java
 one-record/one-record-web/src/main/java/com/one/record/web/StockKLineController.java

@@ -48,8 +48,8 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Add endpoint `POST /stock/{symbol}/klines/sync`.
 - [x] Add endpoint `POST /stock/klines/sync`.
 - [x] Persist daily OHLCV data. Initial implementation supports manual K-line import/upsert.
-- [ ] Store K-line sync logs in MongoDB.
-- [ ] Use Redis locks to prevent duplicate sync jobs.
+- [x] Store K-line sync logs in MongoDB.
+- [x] Use Redis locks to prevent duplicate sync jobs.
 - [ ] Add scheduled daily sync after market close.
 - [ ] Add stock detail route `/investments/stocks/:symbol`.
 - [ ] Make quote table rows clickable.

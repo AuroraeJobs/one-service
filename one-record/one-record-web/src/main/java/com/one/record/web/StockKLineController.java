@@ -2,6 +2,7 @@ package com.one.record.web;
 
 import com.one.record.service.IStockKLineService;
 import com.one.record.stock.StockKLine;
+import com.one.record.stock.StockKLineSyncLog;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,5 +48,11 @@ public class StockKLineController {
     public List<StockKLine> syncAll(@RequestBody List<StockKLine> kLines) {
         log.info("Syncing stock klines in batch: size={}", kLines == null ? 0 : kLines.size());
         return service.syncAll(kLines);
+    }
+
+    @GetMapping("klines/sync-logs")
+    @Operation(summary = "查询股票K线同步日志", description = "查询最近的股票K线同步日志")
+    public List<StockKLineSyncLog> syncLogs(@RequestParam(name = "symbol", required = false) String symbol) {
+        return service.syncLogs(symbol);
     }
 }

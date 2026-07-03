@@ -290,6 +290,12 @@ collection: stock_klines
 unique key: symbol + period + tradeDate
 ```
 
+Sync log storage:
+
+```text
+collection: stock_kline_sync_logs
+```
+
 Current fields:
 
 ```text
@@ -311,12 +317,28 @@ createdAt
 updatedAt
 ```
 
+Sync log fields:
+
+```text
+jobName
+symbol
+period
+status
+requestedCount
+savedCount
+message
+startedAt
+finishedAt
+```
+
 Rules:
 
 - `tradeDate` is a trading-day identifier such as `2026-07-03`, not a timezone-bound timestamp.
 - `createdAt` and `updatedAt` are millisecond timestamps.
 - The service normalizes `symbol`, `market`, and `code` before persistence.
 - The first backend iteration supports manual sync/upsert through internal APIs.
+- Manual sync writes a MongoDB sync log with `RUNNING`, `SUCCESS`, or `FAILED` status.
+- Manual sync uses Redis locks with keys like `stock:sync:lock:kline:{symbol}` and a short TTL.
 - Historical third-party provider fetching should be added behind provider/router abstractions, not directly in controllers.
 
 Ordering:

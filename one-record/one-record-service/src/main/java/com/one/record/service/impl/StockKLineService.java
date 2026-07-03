@@ -2,13 +2,17 @@ package com.one.record.service.impl;
 
 import com.one.common.exception.ServiceException;
 import com.one.record.repository.StockKLineRepository;
+import com.one.record.repository.StockKLineSyncLogRepository;
 import com.one.record.service.IStockKLineService;
 import com.one.record.service.IStockMarketService;
 import com.one.record.stock.StockKLine;
+import com.one.record.stock.StockKLineSyncLog;
 import lombok.AllArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,9 +26,15 @@ public class StockKLineService implements IStockKLineService {
 
     private static final String MAX_DATE = "9999-99-99";
 
+    private static final Duration SYNC_LOCK_TTL = Duration.ofMinutes(10);
+
     private final StockKLineRepository repository;
 
+    private final StockKLineSyncLogRepository syncLogRepository;
+
     private final IStockMarketService stockMarketService;
+
+    private final StringRedisTemplate redisTemplate;
 
     @Override
     public List<StockKLine> find(String symbol, String period, String startDate, String endDate) {
@@ -47,12 +57,22 @@ public class StockKLineService implements IStockKLineService {
     @Override
     public List<StockKLine> sync(String symbol, List<StockKLine> kLines) {
         String normalizedSymbol = normalizeSymbol(symbol);
-        return saveKLines(normalizedSymbol, kLines);
+        return runWithSyncLog(syncLockKey(normalizedSymbol), "stock-kline-sync", normalizedSymbol, kLines,
+                () -> saveKLines(normalizedSymbol, kLines));
     }
 
     @Override
     public List<StockKLine> syncAll(List<StockKLine> kLines) {
-        return saveKLines(null, kLines);
+        return runWithSyncLog(syncLockKey("all"), "stock-kline-sync-all", null, kLines,
+                () -> saveKLines(null, kLines));
+    }
+
+    @Override
+    public List<StockKLineSyncLog> syncLogs(String symbol) {
+        if (StringUtils.hasText(symbol)) {
+            return syncLogRepository.findTop50BySymbolOrderByStartedAtDesc(stockMarketService.normalizeSymbol(symbol));
+        }
+        return syncLogRepository.findTop50ByOrderByStartedAtDesc();
     }
 
     private List<StockKLine> saveKLines(String fixedSymbol, List<StockKLine> kLines) {
@@ -114,6 +134,70 @@ public class StockKLineService implements IStockKLineService {
         return StringUtils.hasText(period) ? period.trim().toLowerCase() : DEFAULT_PERIOD;
     }
 
+    private List<StockKLine> runWithSyncLog(String lockKey,
+                                            String jobName,
+                                            String symbol,
+                                            List<StockKLine> kLines,
+                                            SyncAction action) {
+        if (!acquireLock(lockKey)) {
+            throw new ServiceException("K线同步任务正在执行，请稍后重试");
+        }
+
+        StockKLineSyncLog syncLog = StockKLineSyncLog.builder()
+                .jobName(jobName)
+                .symbol(symbol)
+                .period(resolveLogPeriod(kLines))
+                .status("RUNNING")
+                .requestedCount(kLines == null ? 0 : kLines.size())
+                .savedCount(0)
+                .startedAt(System.currentTimeMillis())
+                .build();
+        syncLog = syncLogRepository.save(syncLog);
+        try {
+            List<StockKLine> saved = action.run();
+            syncLog.setStatus("SUCCESS");
+            syncLog.setSavedCount(saved.size());
+            syncLog.setMessage("OK");
+            return saved;
+        } catch (RuntimeException ex) {
+            syncLog.setStatus("FAILED");
+            syncLog.setMessage(ex.getMessage());
+            throw ex;
+        } finally {
+            syncLog.setFinishedAt(System.currentTimeMillis());
+            syncLogRepository.save(syncLog);
+            releaseLock(lockKey);
+        }
+    }
+
+    private boolean acquireLock(String lockKey) {
+        try {
+            Boolean locked = redisTemplate.opsForValue().setIfAbsent(lockKey, String.valueOf(System.currentTimeMillis()), SYNC_LOCK_TTL);
+            return Boolean.TRUE.equals(locked);
+        } catch (RuntimeException ex) {
+            throw new ServiceException("K线同步锁获取失败: " + ex.getMessage());
+        }
+    }
+
+    private void releaseLock(String lockKey) {
+        try {
+            redisTemplate.delete(lockKey);
+        } catch (RuntimeException ignored) {
+            // Lock will expire by TTL if Redis delete fails.
+        }
+    }
+
+    private String syncLockKey(String symbol) {
+        return "stock:sync:lock:kline:" + symbol;
+    }
+
+    private String resolveLogPeriod(List<StockKLine> kLines) {
+        if (kLines == null || kLines.isEmpty() || kLines.get(0) == null) {
+            return DEFAULT_PERIOD;
+        }
+        return normalizePeriod(kLines.get(0).getPeriod());
+    }
+
     private String valueOrDefault(String value, String fallback) {
         return StringUtils.hasText(value) ? value : fallback;
     }
@@ -124,5 +208,10 @@ public class StockKLineService implements IStockKLineService {
 
     private String code(String symbol) {
         return symbol.length() > 2 ? symbol.substring(2) : symbol;
+    }
+
+    private interface SyncAction {
+
+        List<StockKLine> run();
     }
 }
