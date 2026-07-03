@@ -71,6 +71,7 @@ Implemented baseline:
 - Stock portfolio foundation exists: MongoDB-backed account, position, and trade models plus CRUD endpoints for `/stock/accounts`, `/stock/positions`, and `/stock/trades`.
 - Stock trade CRUD accepts `BUY`, `SELL`, `DIVIDEND`, `FEE`, `BONUS_SHARE`, and `SPLIT`; position and return calculations are intentionally deferred to the next iteration.
 - Portfolio summary endpoint `GET /stock/portfolio/summary` calculates current market value, floating PnL, floating PnL percent, and today PnL from persisted positions plus normalized quote data.
+- Investment page now loads `stockApi.portfolioSummary`, renders portfolio summary cards, and shows holdings sorted by backend market value/PnL calculations.
 - `StockPortfolioServiceTest` covers account defaults, trade symbol normalization, unsupported trade type rejection, and portfolio summary calculations.
 - Root Maven Surefire is pinned to `3.2.5` so JUnit 5/JUnit Platform tests are discovered instead of being skipped by the old default plugin.
 

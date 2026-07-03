@@ -418,6 +418,7 @@ Portfolio summary:
 - Today PnL: `quantity * quote.changeAmount`.
 - Holding rows are returned sorted by `marketValue` descending, then `symbol` ascending.
 - If quote data is unavailable, latest price and market-derived PnL default to zero while `quoteAvailable` marks the row state.
+- The investment dashboard consumes `stockApi.portfolioSummary` for summary cards and the holdings table. It does not recalculate portfolio metrics in the browser.
 
 K-line sync configuration:
 

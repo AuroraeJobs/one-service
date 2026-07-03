@@ -75,8 +75,8 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Calculate floating PnL percent.
 - [x] Calculate today PnL.
 - [x] Add portfolio summary endpoint.
-- [ ] Add investment dashboard summary cards.
-- [ ] Add holdings table sorted by market value, PnL, and daily change.
+- [x] Add investment dashboard summary cards.
+- [x] Add holdings table sorted by market value, PnL, and daily change.
 
 ## Week 4: Alerts, Analysis, And Provider Abstraction
 

@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import MetricCard from './MetricCard';
 import MetricGrid from './MetricGrid';
 import LifePageShell from './LifePageShell';
-import { stockApi, type StockQuote, type StockWatchlistItem } from '../services/api';
+import { stockApi, type StockHoldingSummary, type StockPortfolioSummary, type StockQuote, type StockWatchlistItem } from '../services/api';
 
 const investmentTracks = [
   {
@@ -34,8 +34,10 @@ const LifeInvestmentPage = () => {
   const [symbolInput, setSymbolInput] = useState('600519');
   const [watchlist, setWatchlist] = useState<StockWatchlistItem[]>([]);
   const [quotes, setQuotes] = useState<StockQuote[]>([]);
+  const [portfolioSummary, setPortfolioSummary] = useState<StockPortfolioSummary>();
   const [loading, setLoading] = useState(false);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
+  const [portfolioLoading, setPortfolioLoading] = useState(false);
   const [addLoading, setAddLoading] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -50,17 +52,10 @@ const LifeInvestmentPage = () => {
 
   const watchlistSymbolSet = useMemo(() => new Set(watchlistSymbols), [watchlistSymbols]);
 
-  const latestFetchedAt = useMemo(() => {
-    const fetchedAt = quotes.find(item => item.fetchedAt)?.fetchedAt;
-    return fetchedAt ? new Date(fetchedAt).toLocaleString() : '尚未刷新';
-  }, [quotes]);
-
-  const availableQuotes = useMemo(() => quotes.filter(item => item.available), [quotes]);
-
-  const totalMarketAmount = useMemo(() => {
-    const amount = availableQuotes.reduce((sum, item) => sum + Number(item.amount || 0), 0);
-    return amount > 0 ? (amount / 100000000).toFixed(1) : '0';
-  }, [availableQuotes]);
+  const portfolioCalculatedAt = useMemo(() => {
+    const calculatedAt = portfolioSummary?.calculatedAt;
+    return calculatedAt ? new Date(calculatedAt).toLocaleString() : '尚未计算';
+  }, [portfolioSummary?.calculatedAt]);
 
   const fetchQuotes = useCallback(async (nextSymbols: string[]) => {
     if (nextSymbols.length === 0) {
@@ -95,9 +90,24 @@ const LifeInvestmentPage = () => {
     }
   }, [fetchQuotes]);
 
+  const fetchPortfolioSummary = useCallback(async () => {
+    setPortfolioLoading(true);
+    setError(undefined);
+    try {
+      const data = await stockApi.portfolioSummary();
+      setPortfolioSummary(data);
+    } catch (requestError) {
+      console.error('获取股票组合汇总失败:', requestError);
+      setError(requestError instanceof Error ? requestError.message : '获取股票组合汇总失败');
+    } finally {
+      setPortfolioLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchWatchlist();
-  }, [fetchWatchlist]);
+    fetchPortfolioSummary();
+  }, [fetchPortfolioSummary, fetchWatchlist]);
 
   const addWatchlist = useCallback(async () => {
     if (symbols.length === 0) {
@@ -131,7 +141,7 @@ const LifeInvestmentPage = () => {
     }
   }, [fetchWatchlist]);
 
-  const columns: ColumnsType<StockQuote> = [
+  const quoteColumns: ColumnsType<StockQuote> = [
     {
       title: '标的',
       dataIndex: 'name',
@@ -208,6 +218,71 @@ const LifeInvestmentPage = () => {
     }
   ];
 
+  const holdingColumns: ColumnsType<StockHoldingSummary> = [
+    {
+      title: '持仓',
+      dataIndex: 'name',
+      key: 'name',
+      render: (_, record) => (
+        <Space direction="vertical" size={0}>
+          <strong>{record.name || record.symbol}</strong>
+          <span className="stock-quote-code">{record.symbol}</span>
+        </Space>
+      )
+    },
+    {
+      title: '数量',
+      dataIndex: 'quantity',
+      key: 'quantity',
+      align: 'right',
+      render: value => formatQuantity(value)
+    },
+    {
+      title: '最新价',
+      dataIndex: 'latestPrice',
+      key: 'latestPrice',
+      align: 'right',
+      render: value => formatPrice(value)
+    },
+    {
+      title: '市值',
+      dataIndex: 'marketValue',
+      key: 'marketValue',
+      align: 'right',
+      render: value => formatMoney(value)
+    },
+    {
+      title: '持仓成本',
+      dataIndex: 'costAmount',
+      key: 'costAmount',
+      align: 'right',
+      render: value => formatMoney(value)
+    },
+    {
+      title: '浮动盈亏',
+      key: 'floatingPnl',
+      align: 'right',
+      render: (_, record) => <PnlText value={record.floatingPnl} percent={record.floatingPnlPercent} />
+    },
+    {
+      title: '今日盈亏',
+      dataIndex: 'todayPnl',
+      key: 'todayPnl',
+      align: 'right',
+      render: value => <PnlText value={value} />
+    },
+    {
+      title: '行情',
+      key: 'quoteState',
+      render: (_, record) => {
+        if (!record.quoteAvailable) {
+          return <Tag color="warning">暂无行情</Tag>;
+        }
+        return record.stale ? <Tag color="orange">缓存行情</Tag> : <Tag color="green">实时</Tag>;
+      }
+    }
+  ];
+
   return (
     <LifePageShell
       className="life-investment-page"
@@ -220,11 +295,42 @@ const LifeInvestmentPage = () => {
       }
     >
       <MetricGrid gap={16} minColumnWidth={200}>
-        <MetricCard title="行情源" value="Sina" accent="#5856d6" />
-        <MetricCard title="自选标的" value={watchlist.length} suffix="个" accent="#0071e3" />
-        <MetricCard title="成交额" value={totalMarketAmount} suffix="亿" accent="#ff9500" />
-        <MetricCard title="刷新时间" value={latestFetchedAt} accent="#34c759" valueStyle={{ fontSize: 18 }} />
+        <MetricCard title="组合市值" value={formatMoney(portfolioSummary?.totalMarketValue)} accent="#5856d6" />
+        <MetricCard title="浮动盈亏" value={formatSignedMoney(portfolioSummary?.floatingPnl)} suffix={formatPercentSuffix(portfolioSummary?.floatingPnlPercent)} accent={pnlAccent(portfolioSummary?.floatingPnl)} />
+        <MetricCard title="今日盈亏" value={formatSignedMoney(portfolioSummary?.todayPnl)} accent={pnlAccent(portfolioSummary?.todayPnl)} />
+        <MetricCard title="持仓数量" value={portfolioSummary?.holdingCount || 0} suffix="只" accent="#0071e3" />
       </MetricGrid>
+      {error ? <Alert type="error" showIcon message={error} className="stock-market-alert" /> : null}
+
+      <Card className="life-panel-card stock-market-panel">
+        <div className="stock-market-toolbar">
+          <div>
+            <h2>组合持仓</h2>
+            <p>持仓保存在 MongoDB，市值和收益通过内部组合汇总接口计算；行情来源由后端服务抽象统一处理。</p>
+          </div>
+          <div className="stock-market-actions">
+            <Space wrap>
+              <Tag color="blue">计算时间 {portfolioCalculatedAt}</Tag>
+              <Button icon={<SyncOutlined spin={portfolioLoading} />} loading={portfolioLoading} onClick={fetchPortfolioSummary}>
+                刷新组合
+              </Button>
+            </Space>
+          </div>
+        </div>
+        <Table
+          rowKey={record => record.positionId || record.symbol}
+          columns={holdingColumns}
+          dataSource={portfolioSummary?.holdings || []}
+          loading={portfolioLoading}
+          pagination={false}
+          locale={{ emptyText: '暂无股票持仓，可先通过接口添加账户、持仓和交易记录。' }}
+          scroll={{ x: 980 }}
+          rowClassName="stock-quote-row"
+          onRow={record => ({
+            onClick: () => navigate(`/investments/stocks/${record.symbol}`)
+          })}
+        />
+      </Card>
 
       <Card className="life-panel-card stock-market-panel">
         <div className="stock-market-toolbar">
@@ -255,10 +361,9 @@ const LifeInvestmentPage = () => {
             </Space>
           </div>
         </div>
-        {error ? <Alert type="error" showIcon message={error} className="stock-market-alert" /> : null}
         <Table
           rowKey={record => record.symbol}
-          columns={columns}
+          columns={quoteColumns}
           dataSource={quotes}
           loading={loading || watchlistLoading}
           pagination={false}
@@ -309,6 +414,65 @@ const formatAmount = (value?: number) => {
     return '-';
   }
   return `${(value / 100000000).toFixed(2)} 亿`;
+};
+
+const formatMoney = (value?: number) => {
+  if (typeof value !== 'number') {
+    return '-';
+  }
+  return value.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
+
+const formatSignedMoney = (value?: number) => {
+  if (typeof value !== 'number') {
+    return '-';
+  }
+  const sign = value > 0 ? '+' : '';
+  return `${sign}${formatMoney(value)}`;
+};
+
+const formatQuantity = (value?: number) => {
+  if (typeof value !== 'number') {
+    return '-';
+  }
+  return value.toLocaleString(undefined, {
+    maximumFractionDigits: 4
+  });
+};
+
+const formatPercentSuffix = (value?: number) => {
+  if (typeof value !== 'number') {
+    return '';
+  }
+  const sign = value > 0 ? '+' : '';
+  return ` / ${sign}${value.toFixed(2)}%`;
+};
+
+const pnlAccent = (value?: number) => {
+  if (typeof value !== 'number') {
+    return '#0071e3';
+  }
+  if (value > 0) {
+    return '#f5222d';
+  }
+  if (value < 0) {
+    return '#16a34a';
+  }
+  return '#0071e3';
+};
+
+const PnlText = ({ value, percent }: { value?: number; percent?: number }) => {
+  if (typeof value !== 'number') {
+    return <span>-</span>;
+  }
+  return (
+    <span style={{ color: pnlAccent(value), fontWeight: 700 }}>
+      {formatSignedMoney(value)}{formatPercentSuffix(percent)}
+    </span>
+  );
 };
 
 const QuoteChange = ({ quote }: { quote: StockQuote }) => {
