@@ -93,6 +93,7 @@ Implemented baseline:
 - Full frontend build now passes. Existing unrelated strict TypeScript errors were fixed in health/hexagram pages, and `one-web` was verified with `npm run build`.
 - Iteration 05 has started. Portfolio recalculation service entry points and manual APIs are implemented, and trade create/update/delete now trigger recalculation for affected positions. Initial tests cover weighted-average buy/sell recalculation and delete-triggered recalculation.
 - Stock menu and version planning has been documented. The target menu tree includes 总览、自选、行情、持仓、交易、个股、K线、告警、分析、数据源、同步、设置, with versions planned by menu capability.
+- Menu V1 is implemented. The stock subnav now exposes 总览、自选、行情, routes `/investments/watchlist` and `/investments/market` are wired, and `/investments/stocks/:symbol` remains the 个股 detail route.
 
 Architecture rule to preserve:
 

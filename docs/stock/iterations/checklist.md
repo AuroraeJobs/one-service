@@ -129,7 +129,7 @@ Use this file as the durable task board for the stock module. When a task is fin
 
 - [x] Plan target stock menu tree and route structure.
 - [x] Plan menu-driven version iterations.
-- [ ] V1: Add stock navigation shell for 总览、自选、行情、个股.
+- [x] V1: Add stock navigation shell for 总览、自选、行情、个股. Added stock subnav routes and reused the existing investment page by route mode.
 - [ ] V2: Add portfolio ledger UX for 持仓 and 交易.
 - [ ] V3: Add historical data operations for K线 and 同步.
 - [ ] V4: Add alerts UX for 告警 and overview/detail alert widgets.

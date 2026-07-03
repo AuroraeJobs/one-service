@@ -438,6 +438,20 @@ Acceptance:
 - No concrete provider dependency appears in frontend.
 - Frontend build passes.
 
+Progress:
+
+- Completed on 2026-07-03.
+- Added stock subnav items for 总览、自选、行情, while keeping 个股 at `/investments/stocks/:symbol`.
+- Added routes:
+
+```text
+/investments/watchlist
+/investments/market
+```
+
+- Reused `LifeInvestmentPage` with route-based view modes for V1 to avoid duplicating quote/watchlist logic.
+- Verified changed files with ESLint and full frontend build.
+
 ### V2: Portfolio Ledger UX
 
 Goal:

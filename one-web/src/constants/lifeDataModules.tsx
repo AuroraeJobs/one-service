@@ -167,7 +167,9 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
     { id: 'overview-home', moduleKey: 'overview', path: '/overview', label: '首页', icon: <DashboardOutlined />, accent: '#0071e3' }
   ],
   investment: [
-    { id: 'investment-overview', moduleKey: 'investment', path: '/investments', label: '资产', icon: <StockOutlined />, accent: '#5856d6' },
+    { id: 'investment-overview', moduleKey: 'investment', path: '/investments', label: '总览', icon: <DashboardOutlined />, accent: '#5856d6' },
+    { id: 'investment-watchlist', moduleKey: 'investment', path: '/investments/watchlist', label: '自选', icon: <StockOutlined />, accent: '#0071e3' },
+    { id: 'investment-market', moduleKey: 'investment', path: '/investments/market', label: '行情', icon: <LineChartOutlined />, accent: '#34c759' },
     { id: 'investment-connections', moduleKey: 'investment', path: '/connections', label: '接入', icon: <DatabaseOutlined />, accent: '#00c7be' }
   ],
   connectors: [

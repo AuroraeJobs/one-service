@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Input, Popconfirm, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { BarChartOutlined, DeleteOutlined, LineChartOutlined, PieChartOutlined, PlusOutlined, SearchOutlined, SyncOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import MetricCard from './MetricCard';
 import MetricGrid from './MetricGrid';
 import LifePageShell from './LifePageShell';
@@ -31,6 +31,7 @@ const investmentTracks = [
 
 const LifeInvestmentPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [symbolInput, setSymbolInput] = useState('600519');
   const [watchlist, setWatchlist] = useState<StockWatchlistItem[]>([]);
   const [quotes, setQuotes] = useState<StockQuote[]>([]);
@@ -51,6 +52,21 @@ const LifeInvestmentPage = () => {
   const watchlistSymbols = useMemo(() => watchlist.map(item => item.symbol).filter(Boolean), [watchlist]);
 
   const watchlistSymbolSet = useMemo(() => new Set(watchlistSymbols), [watchlistSymbols]);
+
+  const activeView = useMemo<StockInvestmentView>(() => {
+    if (location.pathname.endsWith('/watchlist')) {
+      return 'watchlist';
+    }
+    if (location.pathname.endsWith('/market')) {
+      return 'market';
+    }
+    return 'overview';
+  }, [location.pathname]);
+
+  const isOverview = activeView === 'overview';
+  const isWatchlist = activeView === 'watchlist';
+  const isMarket = activeView === 'market';
+  const pageMeta = stockViewMeta[activeView];
 
   const portfolioCalculatedAt = useMemo(() => {
     const calculatedAt = portfolioSummary?.calculatedAt;
@@ -286,23 +302,25 @@ const LifeInvestmentPage = () => {
   return (
     <LifePageShell
       className="life-investment-page"
-      eyebrow="投资资产"
-      title="把账户、持仓、行情和收益归因整理成长期资产视图。"
+      eyebrow={pageMeta.eyebrow}
+      title={pageMeta.title}
       actions={
         <Button type="primary" icon={<SyncOutlined />} onClick={() => navigate('/connections')}>
           配置接入
         </Button>
       }
     >
-      <MetricGrid gap={16} minColumnWidth={200}>
-        <MetricCard title="组合市值" value={formatMoney(portfolioSummary?.totalMarketValue)} accent="#5856d6" />
-        <MetricCard title="浮动盈亏" value={formatSignedMoney(portfolioSummary?.floatingPnl)} suffix={formatPercentSuffix(portfolioSummary?.floatingPnlPercent)} accent={pnlAccent(portfolioSummary?.floatingPnl)} />
-        <MetricCard title="今日盈亏" value={formatSignedMoney(portfolioSummary?.todayPnl)} accent={pnlAccent(portfolioSummary?.todayPnl)} />
-        <MetricCard title="持仓数量" value={portfolioSummary?.holdingCount || 0} suffix="只" accent="#0071e3" />
-      </MetricGrid>
+      {isOverview ? (
+        <MetricGrid gap={16} minColumnWidth={200}>
+          <MetricCard title="组合市值" value={formatMoney(portfolioSummary?.totalMarketValue)} accent="#5856d6" />
+          <MetricCard title="浮动盈亏" value={formatSignedMoney(portfolioSummary?.floatingPnl)} suffix={formatPercentSuffix(portfolioSummary?.floatingPnlPercent)} accent={pnlAccent(portfolioSummary?.floatingPnl)} />
+          <MetricCard title="今日盈亏" value={formatSignedMoney(portfolioSummary?.todayPnl)} accent={pnlAccent(portfolioSummary?.todayPnl)} />
+          <MetricCard title="持仓数量" value={portfolioSummary?.holdingCount || 0} suffix="只" accent="#0071e3" />
+        </MetricGrid>
+      ) : null}
       {error ? <Alert type="error" showIcon message={error} className="stock-market-alert" /> : null}
 
-      <Card className="life-panel-card stock-market-panel">
+      {isOverview ? <Card className="life-panel-card stock-market-panel">
         <div className="stock-market-toolbar">
           <div>
             <h2>组合持仓</h2>
@@ -330,13 +348,13 @@ const LifeInvestmentPage = () => {
             onClick: () => navigate(`/investments/stocks/${record.symbol}`)
           })}
         />
-      </Card>
+      </Card> : null}
 
-      <Card className="life-panel-card stock-market-panel">
+      {(isOverview || isWatchlist || isMarket) ? <Card className="life-panel-card stock-market-panel">
         <div className="stock-market-toolbar">
           <div>
-            <h2>自选行情</h2>
-            <p>自选股保存到 MongoDB，行情通过内部接口统一获取；可输入 A 股代码添加自选或临时查询。</p>
+            <h2>{isMarket ? '行情查询' : '自选行情'}</h2>
+            <p>{isMarket ? '输入股票或指数代码进行临时查询，查询结果仍然来自内部行情接口。' : '自选股保存到 MongoDB，行情通过内部接口统一获取；可输入 A 股代码添加自选或临时查询。'}</p>
           </div>
           <div className="stock-market-actions">
             <Space.Compact className="stock-symbol-search">
@@ -374,9 +392,9 @@ const LifeInvestmentPage = () => {
             onClick: () => navigate(`/investments/stocks/${record.symbol}`)
           })}
         />
-      </Card>
+      </Card> : null}
 
-      <section className="life-section-grid life-section-grid-three">
+      {isOverview ? <section className="life-section-grid life-section-grid-three">
         {investmentTracks.map(track => (
           <Card key={track.title} className="life-module-card">
             <div className="life-module-card-head">
@@ -388,18 +406,35 @@ const LifeInvestmentPage = () => {
             <p>{track.description}</p>
           </Card>
         ))}
-      </section>
+      </section> : null}
 
-      <Card className="life-panel-card">
+      {isOverview ? <Card className="life-panel-card">
         <h2>建议的数据模型</h2>
         <div className="life-data-model-grid">
           {['账户 Account', '资产 Asset', '持仓 Position', '交易 Trade', '行情 Quote', '收益 Return'].map(item => (
             <span key={item}>{item}</span>
           ))}
         </div>
-      </Card>
+      </Card> : null}
     </LifePageShell>
   );
+};
+
+type StockInvestmentView = 'overview' | 'watchlist' | 'market';
+
+const stockViewMeta: Record<StockInvestmentView, { eyebrow: string; title: string }> = {
+  overview: {
+    eyebrow: '股票总览',
+    title: '把账户、持仓、行情和收益归因整理成长期资产视图。'
+  },
+  watchlist: {
+    eyebrow: '股票自选',
+    title: '维护关注标的，快速查看内部行情服务返回的实时数据。'
+  },
+  market: {
+    eyebrow: '行情查询',
+    title: '独立查询股票、指数和后续扩展市场标的，不绑定具体第三方来源。'
+  }
 };
 
 const formatPrice = (value?: number) => {

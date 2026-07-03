@@ -39,6 +39,8 @@ export const createProtectedRoutes = (isTabVisible: boolean): ProtectedRouteConf
   { path: '/connections', element: <LifeDataConnectionsPage /> },
   { path: '/ai/chat', element: <AiChatPage /> },
   { path: '/investments', element: <LifeInvestmentPage /> },
+  { path: '/investments/watchlist', element: <LifeInvestmentPage /> },
+  { path: '/investments/market', element: <LifeInvestmentPage /> },
   { path: '/investments/stocks/:symbol', element: <LifeStockDetailPage /> },
   { path: '/vehicle', element: <HealthSpringEquinoxPage /> },
   { path: '/vehicle/tesla', element: <TeslaFleetManagerPage /> },
