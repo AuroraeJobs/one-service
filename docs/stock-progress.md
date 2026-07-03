@@ -52,6 +52,10 @@ Implemented baseline:
 - Stock quote controller exists.
 - Frontend `stockApi` exists.
 - Investment page can request and display real-time quotes.
+- MongoDB-backed stock watchlist exists.
+- Stock watchlist service and controller exist.
+- Investment page loads saved watchlist first and then fetches quotes for saved symbols.
+- Manual quote input remains available for adding watchlist items and quick lookup.
 
 Architecture rule to preserve:
 
@@ -68,6 +72,10 @@ Current API surface:
 ```text
 GET /stock/quote?symbol=600519
 GET /stock/quotes?symbols=sh000001&symbols=sz399001
+GET /stock/watchlist
+POST /stock/watchlist
+DELETE /stock/watchlist/{symbol}
+PUT /stock/watchlist/order
 ```
 
 Current frontend page:
@@ -84,6 +92,11 @@ one-record/one-record-interface/src/main/java/com/one/record/service/IStockMarke
 one-record/one-record-service/src/main/java/com/one/record/configuration/StockMarketProperties.java
 one-record/one-record-service/src/main/java/com/one/record/service/impl/StockMarketService.java
 one-record/one-record-web/src/main/java/com/one/record/web/StockMarketController.java
+one-record/one-record-model/src/main/java/com/one/record/stock/StockWatchlist.java
+one-record/one-record-repository/src/main/java/com/one/record/repository/StockWatchlistRepository.java
+one-record/one-record-interface/src/main/java/com/one/record/service/IStockWatchlistService.java
+one-record/one-record-service/src/main/java/com/one/record/service/impl/StockWatchlistService.java
+one-record/one-record-web/src/main/java/com/one/record/web/StockWatchlistController.java
 ```
 
 ## Verification Notes
@@ -92,6 +105,12 @@ Successful:
 
 ```bash
 npm exec eslint -- src/components/LifeInvestmentPage.tsx src/services/api.ts
+```
+
+Successful with explicit JDK 21:
+
+```bash
+JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home PATH=/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home/bin:$PATH mvn -pl one-record/one-record-service -am compile -DskipTests
 ```
 
 Blocked:
@@ -108,7 +127,7 @@ Blocked:
 mvn -pl one-record/one-record-service -am compile -DskipTests
 ```
 
-Reason: local Java was 1.8 while the project targets Java 21.
+Reason: the default local Java is still 1.8 while the project targets Java 21. The same compile succeeds when `JAVA_HOME` is explicitly set to JDK 21.
 
 Expected fix:
 
@@ -123,7 +142,7 @@ Both should show Java 21 before backend compile is retried.
 
 ### Task 1: Add Watchlist Persistence
 
-Status: not started
+Status: completed
 
 Goal:
 
@@ -150,11 +169,17 @@ PUT    /stock/watchlist/order
 
 Acceptance criteria:
 
-- Add a symbol to watchlist.
-- Remove a symbol from watchlist.
-- List watchlist ordered by `sortOrder`.
-- Duplicate symbols are rejected or idempotently ignored.
-- Frontend loads watchlist first, then requests quotes for those symbols.
+- Add a symbol to watchlist. Completed.
+- Remove a symbol from watchlist. Completed.
+- List watchlist ordered by `sortOrder`. Completed.
+- Duplicate symbols are rejected. Completed.
+- Frontend loads watchlist first, then requests quotes for those symbols. Completed.
+
+Implementation notes:
+
+- Current watchlist ownership uses `userId = default`; final auth-bound ownership is still open.
+- `StockWatchlistService` uses `IStockMarketService.normalizeSymbol` so symbol logic stays centralized.
+- The frontend still calls only internal `/stock/*` APIs.
 
 ### Task 2: Add Quote Cache
 

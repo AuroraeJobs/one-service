@@ -186,6 +186,18 @@ export interface StockQuote {
   message?: string;
 }
 
+export interface StockWatchlistItem {
+  id?: string;
+  userId?: string;
+  symbol: string;
+  market?: string;
+  code?: string;
+  name?: string;
+  sortOrder?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export const stockApi = {
   quote: (symbol: string): Promise<StockQuote> => {
     return apiClient.get('/stock/quote', {
@@ -200,6 +212,24 @@ export const stockApi = {
         indexes: null
       }
     });
+  },
+
+  watchlist: (): Promise<StockWatchlistItem[]> => {
+    return apiClient.get('/stock/watchlist');
+  },
+
+  addWatchlist: (symbol: string): Promise<StockWatchlistItem> => {
+    return apiClient.post('/stock/watchlist', {
+      symbol
+    });
+  },
+
+  deleteWatchlist: (symbol: string): Promise<void> => {
+    return apiClient.delete(`/stock/watchlist/${symbol}`);
+  },
+
+  updateWatchlistOrder: (symbols: string[]): Promise<StockWatchlistItem[]> => {
+    return apiClient.put('/stock/watchlist/order', symbols);
   }
 };
 

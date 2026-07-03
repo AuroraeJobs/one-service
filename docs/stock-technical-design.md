@@ -234,6 +234,35 @@ User ownership:
 
 Initial option can be global if auth context is not ready. Final design should bind watchlists to `userId`.
 
+Current implementation:
+
+```text
+StockWatchlist
+- persisted in MongoDB collection stock_watchlist
+- current userId is default
+- duplicate key behavior is enforced by service lookup on userId + normalized symbol
+- ordering uses sortOrder asc, createdAt asc
+```
+
+Current endpoints:
+
+```text
+GET    /stock/watchlist
+POST   /stock/watchlist
+DELETE /stock/watchlist/{symbol}
+PUT    /stock/watchlist/order
+```
+
+Current frontend behavior:
+
+```text
+1. Load /stock/watchlist.
+2. Fetch /stock/quotes for saved symbols.
+3. Add input symbols to watchlist through /stock/watchlist.
+4. Keep quick lookup separate from persisted watchlist.
+5. Delete saved symbols through /stock/watchlist/{symbol}.
+```
+
 ## K-Line Logic
 
 Historical sync flow:

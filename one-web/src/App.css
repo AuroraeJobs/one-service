@@ -1041,6 +1041,14 @@ body {
   flex-shrink: 0;
 }
 
+.stock-market-actions {
+  display: grid;
+  justify-items: end;
+  gap: 10px;
+  width: min(520px, 100%);
+  flex-shrink: 0;
+}
+
 .stock-market-alert {
   margin-bottom: 14px;
 }
@@ -1057,6 +1065,11 @@ body {
   }
 
   .stock-symbol-search {
+    width: 100%;
+  }
+
+  .stock-market-actions {
+    justify-items: stretch;
     width: 100%;
   }
 }

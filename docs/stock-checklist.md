@@ -17,19 +17,19 @@ Use this file as the durable task board for the stock module. When a task is fin
 
 ## Week 1: Watchlist And Quote Stability
 
-- [ ] Add `StockWatchlist` model.
-- [ ] Add MongoDB-backed `StockWatchlistRepository`.
-- [ ] Add `IStockWatchlistService`.
-- [ ] Add `StockWatchlistService`.
-- [ ] Add `StockWatchlistController`.
-- [ ] Implement `GET /stock/watchlist`.
-- [ ] Implement `POST /stock/watchlist`.
-- [ ] Implement `DELETE /stock/watchlist/{symbol}`.
-- [ ] Implement `PUT /stock/watchlist/order`.
-- [ ] Reject or idempotently ignore duplicate watchlist symbols.
-- [ ] Sort watchlist by `sortOrder`.
-- [ ] Update investment page to load watchlist first.
-- [ ] Keep manual quote input as quick lookup/debugging.
+- [x] Add `StockWatchlist` model.
+- [x] Add MongoDB-backed `StockWatchlistRepository`.
+- [x] Add `IStockWatchlistService`.
+- [x] Add `StockWatchlistService`.
+- [x] Add `StockWatchlistController`.
+- [x] Implement `GET /stock/watchlist`.
+- [x] Implement `POST /stock/watchlist`.
+- [x] Implement `DELETE /stock/watchlist/{symbol}`.
+- [x] Implement `PUT /stock/watchlist/order`.
+- [x] Reject or idempotently ignore duplicate watchlist symbols.
+- [x] Sort watchlist by `sortOrder`.
+- [x] Update investment page to load watchlist first.
+- [x] Keep manual quote input as quick lookup/debugging.
 - [ ] Add Redis cache for quote responses.
 - [ ] Add provider failure fallback to last successful cached quote.
 - [ ] Add stale-data message when fallback cache is used.
@@ -37,7 +37,7 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [ ] Add unit tests for symbol normalization.
 - [ ] Add unit tests for Sina quote parsing.
 - [ ] Add controller test or manual verification for repeated `symbols` params.
-- [ ] Ensure watchlist and quote UI depend only on normalized project DTOs, not Sina-specific fields.
+- [x] Ensure watchlist and quote UI depend only on normalized project DTOs, not Sina-specific fields.
 
 ## Week 2: Historical Data And Charts
 
@@ -104,16 +104,16 @@ Use this file as the durable task board for the stock module. When a task is fin
 
 ## Quality Gates
 
-- [ ] Backend compiles with JDK 21.
-- [ ] Frontend changed files pass ESLint.
+- [x] Backend compiles with JDK 21.
+- [x] Frontend changed files pass ESLint.
 - [ ] Full frontend build passes after unrelated TypeScript errors are fixed.
 - [ ] Quote provider failure path is verified.
 - [ ] Mobile layout is checked for investment page.
 - [ ] Desktop layout is checked for investment page.
-- [ ] Documentation is updated after each completed milestone.
+- [x] Documentation is updated after each completed milestone.
 - [ ] Changes are reviewed with `git status --short` and `git diff --stat`.
 - [ ] Completed milestone is committed with a clear message.
 - [ ] Committed branch is pushed to the remote.
 - [ ] Provider abstraction rule is still true: upper layers depend on interfaces and normalized DTOs only.
 - [ ] Storage rule is still true: MongoDB for persisted stock data, Redis for volatile market and operational state.
-- [ ] `docs/stock-technical-design.md` is updated when key logic or architecture changes.
+- [x] `docs/stock-technical-design.md` is updated when key logic or architecture changes.

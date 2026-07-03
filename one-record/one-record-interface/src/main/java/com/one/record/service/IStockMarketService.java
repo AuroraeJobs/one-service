@@ -9,4 +9,6 @@ public interface IStockMarketService {
     StockQuote quote(String symbol);
 
     List<StockQuote> quotes(List<String> symbols);
+
+    String normalizeSymbol(String symbol);
 }

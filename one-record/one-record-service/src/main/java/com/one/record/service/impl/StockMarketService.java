@@ -81,7 +81,11 @@ public class StockMarketService implements IStockMarketService {
         return new ArrayList<>(sourceSymbols);
     }
 
-    private String normalizeSymbol(String symbol) {
+    @Override
+    public String normalizeSymbol(String symbol) {
+        if (symbol == null) {
+            return "";
+        }
         String value = symbol.trim().toLowerCase(Locale.ROOT).replaceAll("\\s+", "");
         if (value.startsWith("sh") || value.startsWith("sz")) {
             return value;
