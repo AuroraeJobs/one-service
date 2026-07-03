@@ -104,6 +104,7 @@ Implemented baseline:
 - Iteration 06 is planned in `docs/stock/iterations/06-dashboard-detail-linkage.md`. The next focus is linking overview, symbol detail, alerts, analysis, holdings, trades, K-lines, and sync into a daily-use cockpit.
 - Iteration 06 first detail-linkage slice is implemented. Linked stock pages read route query context, and symbol detail now shows holding summary, recent trades, active alerts, plus symbol-aware shortcuts.
 - Iteration 06 overview cockpit slice is implemented. `/investments` now shows live portfolio, holdings, alert history, analysis, and provider health widgets from internal stock APIs.
+- Iteration 06 acceptance polish is complete. Empty, loading, and error states are verified for the overview/detail linkage surfaces.
 
 Architecture rule to preserve:
 

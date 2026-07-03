@@ -148,7 +148,7 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Add analysis widgets to overview.
 - [x] Add provider health mini status to overview.
 - [x] Link overview and analysis items to symbol detail.
-- [ ] Verify empty, loading, and error states.
+- [x] Verify empty, loading, and error states.
 - [x] Verify frontend lint and build.
 - [x] Update docs and commit/push after the milestone.
 

@@ -135,7 +135,7 @@ Documentation:
 - [x] Add analysis widgets to overview.
 - [x] Add provider health mini status to overview.
 - [x] Link overview and analysis items to symbol detail.
-- [ ] Verify empty, loading, and error states.
+- [x] Verify empty, loading, and error states.
 - [x] Verify frontend lint and build.
 - [x] Update docs and commit/push after the milestone.
 
@@ -158,3 +158,9 @@ Documentation:
 - Upgraded `/investments` with analysis summary, recent alert history, and provider health widgets.
 - Replaced early static planning cards with live dashboard data from internal stock APIs.
 - Linked overview alert and analysis items back to symbol detail or full management pages.
+
+### 2026-07-03 Acceptance Polish
+
+- Verified empty, loading, and error states for the Iteration 06 overview/detail surfaces.
+- Added explicit no-holding state on symbol detail.
+- Added distinct provider-health loading copy on overview.

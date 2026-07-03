@@ -464,7 +464,7 @@ const LifeInvestmentPage = () => {
                 </Tag>
               </button>
             )) : (
-              <div className="stock-empty-dashboard">暂无数据源健康信息。</div>
+              <div className="stock-empty-dashboard">{dashboardLoading ? '数据源健康加载中...' : '暂无数据源健康信息。'}</div>
             )}
           </div>
         </Card>

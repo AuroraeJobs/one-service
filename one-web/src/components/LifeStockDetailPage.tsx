@@ -192,6 +192,7 @@ const LifeStockDetailPage = () => {
             <MetricCard title="市值" value={formatMoney(holding?.marketValue)} accent="#34c759" />
             <MetricCard title="浮动盈亏" value={formatMoney(holding?.floatingPnl)} accent={pnlAccent(holding?.floatingPnl)} />
           </MetricGrid>
+          {!holding ? <Alert type="info" showIcon message="暂无该标的持仓，新增交易后会由后端重算持仓。" className="stock-market-alert stock-detail-inline-alert" /> : null}
         </Card>
 
         <Card className="life-panel-card stock-market-panel">
