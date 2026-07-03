@@ -200,7 +200,7 @@ const LifeInvestmentPage = () => {
       width: 92,
       render: (_, record) => watchlistSymbolSet.has(record.symbol) ? (
         <Popconfirm title="删除自选股？" okText="删除" cancelText="取消" onConfirm={() => deleteWatchlist(record.symbol)}>
-          <Button type="text" danger icon={<DeleteOutlined />} aria-label="删除自选股" />
+          <Button type="text" danger icon={<DeleteOutlined />} aria-label="删除自选股" onClick={event => event.stopPropagation()} />
         </Popconfirm>
       ) : (
         <Tag>查询结果</Tag>
@@ -264,6 +264,10 @@ const LifeInvestmentPage = () => {
           pagination={false}
           locale={{ emptyText: '暂无自选股，输入股票代码后添加自选。' }}
           scroll={{ x: 920 }}
+          rowClassName="stock-quote-row"
+          onRow={record => ({
+            onClick: () => navigate(`/investments/stocks/${record.symbol}`)
+          })}
         />
       </Card>
 

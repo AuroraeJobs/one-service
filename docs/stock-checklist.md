@@ -51,12 +51,12 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Store K-line sync logs in MongoDB.
 - [x] Use Redis locks to prevent duplicate sync jobs.
 - [x] Add scheduled daily sync after market close. Current job records a skipped sync log until historical provider is connected.
-- [ ] Add stock detail route `/investments/stocks/:symbol`.
-- [ ] Make quote table rows clickable.
-- [ ] Add real-time quote header on detail page.
-- [ ] Add K-line chart with existing `echarts`.
-- [ ] Add volume chart.
-- [ ] Add MA5, MA10, and MA20 overlays.
+- [x] Add stock detail route `/investments/stocks/:symbol`.
+- [x] Make quote table rows clickable.
+- [x] Add real-time quote header on detail page.
+- [x] Add K-line chart with existing `echarts`.
+- [x] Add volume chart.
+- [x] Add MA5, MA10, and MA20 overlays.
 
 ## Week 3: Positions, Trades, And Returns
 

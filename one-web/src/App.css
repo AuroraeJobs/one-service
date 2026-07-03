@@ -1059,6 +1059,58 @@ body {
   line-height: 1.4;
 }
 
+.stock-quote-row {
+  cursor: pointer;
+}
+
+.stock-detail-header-card,
+.stock-chart-card {
+  margin-top: 16px;
+}
+
+.stock-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.stock-detail-header h2 {
+  margin-bottom: 12px;
+}
+
+.stock-detail-change {
+  min-width: 148px;
+  text-align: right;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.stock-detail-change-flat {
+  color: var(--app-text-muted);
+}
+
+.stock-chart-title-icon {
+  color: var(--app-text-muted);
+  font-size: 20px;
+}
+
+.stock-kline-chart {
+  width: 100%;
+  height: 460px;
+}
+
+.stock-empty-chart {
+  min-height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--app-text-muted);
+  border: 1px dashed var(--app-border);
+  border-radius: 8px;
+}
+
 @media (max-width: 720px) {
   .stock-market-toolbar {
     flex-direction: column;
@@ -1071,6 +1123,21 @@ body {
   .stock-market-actions {
     justify-items: stretch;
     width: 100%;
+  }
+
+  .stock-detail-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .stock-detail-change {
+    min-width: 0;
+    text-align: left;
+    font-size: 20px;
+  }
+
+  .stock-kline-chart {
+    height: 420px;
   }
 }
 

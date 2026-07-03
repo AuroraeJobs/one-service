@@ -67,6 +67,7 @@ Implemented baseline:
 - Initial MongoDB-backed K-line backend exists: `StockKLine`, repository, service, query endpoint, and manual sync/upsert endpoints.
 - K-line manual sync writes MongoDB sync logs and uses Redis locks to avoid duplicate sync execution.
 - K-line scheduled daily sync is wired with a configurable cron and Redis lock; it currently records `SKIPPED` logs until a historical provider is connected.
+- Frontend stock rows navigate to `/investments/stocks/:symbol`; the detail page loads normalized quote and K-line APIs, then renders a real-time quote header plus candlestick, volume, MA5, MA10, and MA20 charts through `echarts-for-react`.
 - Root Maven Surefire is pinned to `3.2.5` so JUnit 5/JUnit Platform tests are discovered instead of being skipped by the old default plugin.
 
 Architecture rule to preserve:

@@ -343,6 +343,13 @@ Rules:
 - Scheduled daily sync currently writes a `SKIPPED` log because the historical K-line provider is intentionally not bound directly to the scheduler.
 - Historical third-party provider fetching should be added behind provider/router abstractions, not directly in controllers.
 
+Frontend stock detail:
+
+- `/investments` owns the watchlist table and navigates rows to `/investments/stocks/:symbol`.
+- `/investments/stocks/:symbol` consumes only internal APIs: `GET /stock/quote` and `GET /stock/{symbol}/klines`.
+- The detail page renders quote metrics from `StockQuote` and chart series from normalized `StockKLine`; it does not know the concrete market data provider.
+- K-line visualization uses `echarts-for-react` with candlestick, volume, MA5, MA10, and MA20 series.
+
 K-line sync configuration:
 
 ```yaml

@@ -11,6 +11,7 @@ import HealthWinterSolsticePage from '../components/HealthWinterSolsticePage';
 import HexagramPage from '../components/HexagramPage';
 import LifeDataConnectionsPage from '../components/LifeDataConnectionsPage';
 import LifeInvestmentPage from '../components/LifeInvestmentPage';
+import LifeStockDetailPage from '../components/LifeStockDetailPage';
 import LifeOverviewPage from '../components/LifeOverviewPage';
 import LotteryOverviewPage from '../components/LotteryOverviewPage';
 import LotteryAstronautPage from '../components/LotteryAstronautPage';
@@ -38,6 +39,7 @@ export const createProtectedRoutes = (isTabVisible: boolean): ProtectedRouteConf
   { path: '/connections', element: <LifeDataConnectionsPage /> },
   { path: '/ai/chat', element: <AiChatPage /> },
   { path: '/investments', element: <LifeInvestmentPage /> },
+  { path: '/investments/stocks/:symbol', element: <LifeStockDetailPage /> },
   { path: '/vehicle', element: <HealthSpringEquinoxPage /> },
   { path: '/vehicle/tesla', element: <TeslaFleetManagerPage /> },
   { path: '/vehicle/charging', element: <HealthSpringEquinoxPage /> },
