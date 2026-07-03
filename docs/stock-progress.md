@@ -59,6 +59,8 @@ Implemented baseline:
 - Redis quote cache exists for latest quotes and last successful fallback snapshots.
 - Quote responses include stale metadata for fallback data.
 - Investment page displays stale fallback messages when present.
+- `StockMarketServiceTest` covers symbol normalization, Sina quote parsing, and provider failure fallback to last successful Redis cache.
+- Root Maven Surefire is pinned to `3.2.5` so JUnit 5/JUnit Platform tests are discovered instead of being skipped by the old default plugin.
 
 Architecture rule to preserve:
 
@@ -122,6 +124,14 @@ Successful for this Redis cache iteration:
 npm exec eslint -- src/components/LifeInvestmentPage.tsx src/services/api.ts
 JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home PATH=/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home/bin:/Users/aurorae/Program/Git/Apache/Maven/maven3.6.3/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin mvn -pl one-record/one-record-service -am compile -DskipTests
 ```
+
+Successful for stock service unit tests:
+
+```bash
+JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home PATH=/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home/bin:/Users/aurorae/Program/Git/Apache/Maven/maven3.6.3/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin mvn -q -pl one-record/one-record-service -am test -Dtest=StockMarketServiceTest -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false
+```
+
+Note: the provider failure fallback test intentionally logs the mocked 500 response before asserting fallback behavior.
 
 Blocked:
 
@@ -193,7 +203,7 @@ Implementation notes:
 
 ### Task 2: Add Quote Cache
 
-Status: implemented, runtime failure-path verification still recommended
+Status: implemented and covered by unit tests; runtime integration verification is still recommended
 
 Goal:
 

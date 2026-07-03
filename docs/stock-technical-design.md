@@ -249,6 +249,13 @@ Current behavior:
 - Provider unavailable responses also try last-success fallback for that symbol.
 - Fallback quotes set `stale=true` and include a `staleReason`.
 
+Current verification:
+
+- `StockMarketServiceTest.normalizeSymbolAddsMarketPrefixForAShares` covers the initial A-share normalization rules.
+- `StockMarketServiceTest.quotesParsesSinaResponseIntoNormalizedQuote` covers GBK Sina payload parsing into the project-owned `StockQuote` DTO.
+- `StockMarketServiceTest.quotesReturnsLastSuccessCacheWhenProviderFails` covers provider error fallback to `stock:quote:last-success:{symbol}`.
+- Maven Surefire is pinned to `3.2.5` in the root POM so these JUnit Platform tests are executed.
+
 ## Watchlist Logic
 
 Watchlist flow:

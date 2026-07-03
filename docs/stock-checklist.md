@@ -34,8 +34,8 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Add provider failure fallback to last successful cached quote.
 - [x] Add stale-data message when fallback cache is used.
 - [x] Store latest quote and fallback quote snapshots in Redis.
-- [ ] Add unit tests for symbol normalization.
-- [ ] Add unit tests for Sina quote parsing.
+- [x] Add unit tests for symbol normalization. Covered by `StockMarketServiceTest`.
+- [x] Add unit tests for Sina quote parsing. Covered by `StockMarketServiceTest`.
 - [ ] Add controller test or manual verification for repeated `symbols` params.
 - [x] Ensure watchlist and quote UI depend only on normalized project DTOs, not Sina-specific fields.
 
@@ -107,13 +107,13 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Backend compiles with JDK 21.
 - [x] Frontend changed files pass ESLint.
 - [ ] Full frontend build passes after unrelated TypeScript errors are fixed.
-- [ ] Quote provider failure path is verified.
+- [x] Quote provider failure path is verified. Unit test covers provider error fallback to `stock:quote:last-success:{symbol}`.
 - [ ] Mobile layout is checked for investment page.
 - [ ] Desktop layout is checked for investment page.
 - [x] Documentation is updated after each completed milestone.
-- [ ] Changes are reviewed with `git status --short` and `git diff --stat`.
-- [ ] Completed milestone is committed with a clear message.
-- [ ] Committed branch is pushed to the remote.
+- [x] Changes are reviewed with `git status --short` and `git diff --stat`.
+- [x] Completed milestone is committed with a clear message.
+- [x] Committed branch is pushed to the remote.
 - [ ] Provider abstraction rule is still true: upper layers depend on interfaces and normalized DTOs only.
 - [ ] Storage rule is still true: MongoDB for persisted stock data, Redis for volatile market and operational state.
 - [x] `docs/stock-technical-design.md` is updated when key logic or architecture changes.
