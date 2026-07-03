@@ -101,6 +101,7 @@ Implemented baseline:
 - Menu V6 first UX slice is implemented. Routes `/investments/providers` and `/investments/settings` are wired, provider health is visible, and settings boundaries are documented as read-only until preferences persistence is designed.
 - Iteration 05 Track A calculation coverage is complete for the current DTO model. Holding and portfolio summaries now expose realized PnL and dividend income; tests cover buy, sell, fee, tax, dividend, bonus share, split, delete, and idempotent recalculation.
 - Iteration 05 Track B first provider-backed sync slice is complete. K-line provider interface/router and Sina daily K-line provider are implemented; manual sync can fetch provider data with an empty request body, scheduled sync fetches configured symbols, and tests cover provider parsing plus sync upsert/logging.
+- Iteration 06 is planned in `docs/stock/iterations/06-dashboard-detail-linkage.md`. The next focus is linking overview, symbol detail, alerts, analysis, holdings, trades, K-lines, and sync into a daily-use cockpit.
 
 Architecture rule to preserve:
 

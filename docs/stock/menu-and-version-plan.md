@@ -682,17 +682,51 @@ Follow-up:
 
 - Add persisted stock user preferences model and API.
 - Add write controls only after persistence and validation rules are implemented.
-- Add K-line provider status after historical provider routing is implemented.
+- Add detailed K-line provider health after provider health DTO expands beyond quote-provider status.
+
+### V7: Dashboard And Detail Linkage
+
+Goal:
+
+Connect existing stock menus into a daily-use cockpit.
+
+Menus delivered:
+
+- 总览
+- 个股
+- 告警 widgets
+- 分析 widgets
+- 持仓 and 交易 shortcuts
+- K线 and 同步 shortcuts
+
+Tasks:
+
+- Upgrade 总览 with portfolio summary, holdings highlights, recent alert history, analysis widgets, watchlist highlights, and provider health.
+- Enrich 个股 with holding summary, recent trades, active alert rules, and symbol-aware shortcuts.
+- Add query-param support for symbol/account filters where useful.
+- Link analysis, holdings, trades, alerts, K-lines, and sync pages without requiring users to retype the symbol.
+
+Acceptance:
+
+- Users can start at 总览, identify a stock or risk, and drill into the relevant detail page.
+- Users can start at 个股 and jump to trades, alerts, K-lines, or sync with the symbol prefilled.
+- Existing full management pages remain the source of write-heavy operations.
+- Frontend calls only internal `/stock/*` APIs and does not depend on concrete providers.
+
+Progress:
+
+- Planned in `docs/stock/iterations/06-dashboard-detail-linkage.md`.
 
 ## Recommended Build Order
 
 1. V1 navigation shell.
 2. V2 portfolio ledger UX.
-3. Finish Iteration 05 backend gaps: realized PnL, dividend cash income, bonus/split tests, K-line provider.
+3. Iteration 05 backend gaps: realized PnL, dividend cash income, bonus/split tests, K-line provider.
 4. V3 historical data operations.
 5. V4 alerts.
 6. V5 analysis.
 7. V6 providers and settings.
+8. V7 dashboard and detail linkage.
 
 ## Architecture Rules To Preserve
 

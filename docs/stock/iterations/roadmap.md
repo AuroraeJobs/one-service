@@ -358,16 +358,16 @@ After each completed milestone:
 
 ## Next Recommended Work
 
-The first one-month plan is complete. Continue with:
+The first one-month plan and Iteration 05 are complete. Continue with:
 
 ```text
-docs/stock/iterations/05-trade-recalculation-and-kline-provider.md
+docs/stock/iterations/06-dashboard-detail-linkage.md
 ```
 
 Recommended order:
 
-1. Implement trade-driven position recalculation with tests.
-2. Trigger recalculation after trade create, update, and delete.
-3. Add manual recalculation endpoints for recovery/debugging.
-4. Add K-line provider interface/router and one concrete daily provider.
-5. Wire manual and scheduled K-line sync to the provider router.
+1. Add query-param support for linked stock pages.
+2. Enrich symbol detail with holding, trades, active alerts, and shortcuts.
+3. Upgrade overview with portfolio, alerts, analysis, watchlist highlights, and provider health.
+4. Keep all data access behind internal `/stock/*` APIs and normalized DTOs.
+5. Update checklist, technical docs, commit, and push each completed slice.
