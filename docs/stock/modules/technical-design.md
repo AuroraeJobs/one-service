@@ -668,6 +668,14 @@ Frontend may display:
 - `source`
 - `sourceSymbol`
 - `fetchedAt`
+- `StockProviderHealth.category`, where `quote` means real-time quote provider and `kline` means historical K-line provider.
+
+Provider health rules:
+
+- `GET /stock/providers/health` reports configured and registered quote and K-line providers.
+- Quote provider health is sourced from `StockMarketProviderRouter`.
+- K-line provider health is sourced from `StockKLineProviderRouter`.
+- The frontend displays provider categories but still does not call provider-specific endpoints.
 - availability or stale-state messages
 
 These are observability fields, not business logic switches.

@@ -30,7 +30,8 @@ const LifeStockProvidersPage = () => {
     loadProviders();
   }, [loadProviders]);
 
-  const activeProvider = useMemo(() => providers.find(item => item.active)?.provider || '-', [providers]);
+  const activeQuoteProvider = useMemo(() => providers.find(item => item.category === 'quote' && item.active)?.provider || '-', [providers]);
+  const activeKLineProvider = useMemo(() => providers.find(item => item.category === 'kline' && item.active)?.provider || '-', [providers]);
   const registeredCount = useMemo(() => providers.filter(item => item.registered).length, [providers]);
   const missingCount = useMemo(() => providers.filter(item => !item.registered).length, [providers]);
   const checkedAt = useMemo(() => {
@@ -39,6 +40,12 @@ const LifeStockProvidersPage = () => {
   }, [providers]);
 
   const columns: ColumnsType<StockProviderHealth> = [
+    {
+      title: '类型',
+      dataIndex: 'category',
+      key: 'category',
+      render: value => <Tag color={value === 'kline' ? 'purple' : 'blue'}>{providerCategoryLabel(value)}</Tag>
+    },
     {
       title: 'Provider',
       dataIndex: 'provider',
@@ -94,8 +101,9 @@ const LifeStockProvidersPage = () => {
     >
       {error ? <Alert type="error" showIcon message={error} className="stock-market-alert" /> : null}
 
-      <MetricGrid gap={16} minColumnWidth={200}>
-        <MetricCard title="当前 Provider" value={activeProvider} accent="#5856d6" />
+        <MetricGrid gap={16} minColumnWidth={200}>
+        <MetricCard title="行情 Provider" value={activeQuoteProvider} accent="#5856d6" />
+        <MetricCard title="K线 Provider" value={activeKLineProvider} accent="#0071e3" />
         <MetricCard title="已注册" value={registeredCount} suffix="个" accent="#34c759" />
         <MetricCard title="缺失" value={missingCount} suffix="个" accent={missingCount > 0 ? '#f5222d' : '#0071e3'} />
         <MetricCard title="检查时间" value={checkedAt} accent="#ff9500" valueStyle={{ fontSize: 18 }} />
@@ -115,12 +123,22 @@ const LifeStockProvidersPage = () => {
           loading={loading}
           pagination={false}
           locale={{ emptyText: '暂无 Provider 状态。' }}
-          scroll={{ x: 760 }}
+          scroll={{ x: 860 }}
           rowClassName="stock-quote-row"
         />
       </Card>
     </LifePageShell>
   );
+};
+
+const providerCategoryLabel = (value?: string) => {
+  if (value === 'kline') {
+    return 'K线';
+  }
+  if (value === 'quote') {
+    return '行情';
+  }
+  return value || '-';
 };
 
 const formatTime = (value?: number) => {

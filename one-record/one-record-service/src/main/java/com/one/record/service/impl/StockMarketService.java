@@ -30,12 +30,16 @@ public class StockMarketService implements IStockMarketService {
 
     private final StockMarketProviderRouter providerRouter;
 
+    private final StockKLineProviderRouter kLineProviderRouter;
+
     public StockMarketService(StockMarketProperties properties,
                               StringRedisTemplate redisTemplate,
-                              StockMarketProviderRouter providerRouter) {
+                              StockMarketProviderRouter providerRouter,
+                              StockKLineProviderRouter kLineProviderRouter) {
         this.properties = properties;
         this.redisTemplate = redisTemplate;
         this.providerRouter = providerRouter;
+        this.kLineProviderRouter = kLineProviderRouter;
     }
 
     @Override
@@ -234,7 +238,10 @@ public class StockMarketService implements IStockMarketService {
 
     @Override
     public List<StockProviderHealth> providerHealth() {
-        return providerRouter.health();
+        List<StockProviderHealth> health = new ArrayList<>();
+        health.addAll(providerRouter.health());
+        health.addAll(kLineProviderRouter.health());
+        return health;
     }
 
     private String quoteKey(String symbol) {

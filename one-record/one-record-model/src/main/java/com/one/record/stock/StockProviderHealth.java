@@ -11,6 +11,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class StockProviderHealth {
 
+    private String category;
+
     private String provider;
 
     private Boolean active;

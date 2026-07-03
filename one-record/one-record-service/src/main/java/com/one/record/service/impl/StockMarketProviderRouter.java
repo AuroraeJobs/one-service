@@ -60,6 +60,7 @@ public class StockMarketProviderRouter {
         Long checkedAt = System.currentTimeMillis();
         return configuredProviders.stream()
                 .map(providerName -> StockProviderHealth.builder()
+                        .category("quote")
                         .provider(providerName)
                         .active(providerName.equals(activeProviderName()))
                         .fallback(fallbackProviderNames().contains(providerName))

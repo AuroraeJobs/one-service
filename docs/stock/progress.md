@@ -106,6 +106,7 @@ Implemented baseline:
 - Iteration 06 overview cockpit slice is implemented. `/investments` now shows live portfolio, holdings, alert history, analysis, and provider health widgets from internal stock APIs.
 - Iteration 06 acceptance polish is complete. Empty, loading, and error states are verified for the overview/detail linkage surfaces.
 - Iteration 07 has started. MongoDB-backed stock preferences and internal `/stock/preferences` APIs are implemented, and `/investments/settings` now edits persisted user preferences while provider config remains backend-owned.
+- Iteration 07 provider health slice is implemented. `/stock/providers/health` now reports quote and K-line provider categories, and 数据源/总览 distinguish both provider types.
 
 Architecture rule to preserve:
 

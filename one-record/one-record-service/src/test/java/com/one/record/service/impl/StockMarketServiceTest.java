@@ -50,7 +50,8 @@ class StockMarketServiceTest {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         sinaProvider = new SinaStockMarketProvider(properties);
         StockMarketProviderRouter providerRouter = new StockMarketProviderRouter(properties, List.of(sinaProvider));
-        service = new StockMarketService(properties, redisTemplate, providerRouter);
+        StockKLineProviderRouter kLineProviderRouter = new StockKLineProviderRouter(properties, List.of(new SinaStockKLineProvider(properties)));
+        service = new StockMarketService(properties, redisTemplate, providerRouter, kLineProviderRouter);
     }
 
     @SuppressWarnings("unchecked")
@@ -152,10 +153,13 @@ class StockMarketServiceTest {
 
     @Test
     void providerHealthReportsConfiguredProvider() {
-        assertThat(service.providerHealth()).hasSize(1);
+        assertThat(service.providerHealth()).hasSize(2);
         assertThat(service.providerHealth().get(0).getProvider()).isEqualTo("sina");
+        assertThat(service.providerHealth().get(0).getCategory()).isEqualTo("quote");
         assertThat(service.providerHealth().get(0).getActive()).isTrue();
         assertThat(service.providerHealth().get(0).getRegistered()).isTrue();
+        assertThat(service.providerHealth().get(1).getCategory()).isEqualTo("kline");
+        assertThat(service.providerHealth().get(1).getProvider()).isEqualTo("sina");
     }
 
     private MockRestServiceServer bindMockServer() {

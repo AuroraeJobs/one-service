@@ -457,7 +457,7 @@ const LifeInvestmentPage = () => {
               >
                 <span>
                   <strong>{provider.provider || '-'}</strong>
-                  <small>{provider.active ? '当前启用' : provider.fallback ? '备用' : '已注册'}</small>
+                  <small>{providerCategoryLabel(provider.category)} · {provider.active ? '当前启用' : provider.fallback ? '备用' : '已注册'}</small>
                 </span>
                 <Tag color={provider.status === 'UP' || provider.registered ? 'green' : 'orange'}>
                   {provider.status || (provider.registered ? 'READY' : 'UNKNOWN')}
@@ -629,6 +629,16 @@ const ruleTypeLabel = (value?: string) => {
     VOLUME_ABNORMAL: '成交量异常'
   };
   return value ? labels[value] || value : '-';
+};
+
+const providerCategoryLabel = (value?: string) => {
+  if (value === 'kline') {
+    return 'K线';
+  }
+  if (value === 'quote') {
+    return '行情';
+  }
+  return value || '-';
 };
 
 const AnalysisList = ({ title, items, navigate }: { title: string; items?: StockAnalysisItem[]; navigate: (path: string) => void }) => (

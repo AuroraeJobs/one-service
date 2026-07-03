@@ -48,8 +48,8 @@ Acceptance:
 - [x] Add service tests for defaults, normalization, and validation.
 - [x] Wire frontend `stockApi` preferences methods.
 - [x] Replace read-only settings future table with editable persisted preference form.
-- [ ] Expand provider health DTO for quote and K-line provider categories.
-- [ ] Show detailed K-line provider health on 数据源/总览.
+- [x] Expand provider health DTO for quote and K-line provider categories.
+- [x] Show detailed K-line provider health on 数据源/总览.
 - [x] Verify frontend lint and build.
 - [x] Verify backend tests.
 - [x] Update docs and commit/push after the milestone.
@@ -63,3 +63,10 @@ Acceptance:
 - Settings page now loads and saves persisted stock user preferences.
 - Provider configuration remains read-only and backend-owned.
 - Verified with changed-file ESLint, full frontend build, and `StockPreferenceServiceTest`.
+
+### 2026-07-03 Provider Health Categories
+
+- Extended `StockProviderHealth` with `category` so one internal API can report quote and K-line provider status.
+- Aggregated quote and K-line provider router health in `GET /stock/providers/health`.
+- Updated 数据源 and 总览 widgets to distinguish 行情 Provider and K线 Provider.
+- Verified with changed-file ESLint and `StockMarketServiceTest`.

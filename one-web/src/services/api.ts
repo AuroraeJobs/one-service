@@ -370,6 +370,7 @@ export interface StockAnalysisSummary {
 }
 
 export interface StockProviderHealth {
+  category?: string;
   provider?: string;
   active?: boolean;
   fallback?: boolean;
