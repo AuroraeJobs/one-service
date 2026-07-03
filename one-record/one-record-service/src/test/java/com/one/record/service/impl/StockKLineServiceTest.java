@@ -7,6 +7,7 @@ import com.one.record.service.IStockMarketService;
 import com.one.record.service.StockKLineProvider;
 import com.one.record.stock.StockKLine;
 import com.one.record.stock.StockKLineSyncLog;
+import com.one.record.stock.StockKLineSyncSummary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -142,6 +143,71 @@ class StockKLineServiceTest {
         assertThat(lastLog.getJobName()).isEqualTo("stock-kline-sync-retry-all");
         assertThat(lastLog.getStatus()).isEqualTo("SUCCESS");
         assertThat(lastLog.getSavedCount()).isEqualTo(1);
+    }
+
+    @Test
+    void syncSummaryAggregatesRecentLogs() {
+        when(syncLogRepository.findTop50ByOrderByStartedAtDesc()).thenReturn(List.of(
+                StockKLineSyncLog.builder()
+                        .jobName("stock-kline-sync-all")
+                        .status("FAILED")
+                        .requestedCount(3)
+                        .savedCount(0)
+                        .message("provider down")
+                        .startedAt(3000L)
+                        .finishedAt(3500L)
+                        .build(),
+                StockKLineSyncLog.builder()
+                        .jobName("stock-kline-sync")
+                        .symbol("sh600519")
+                        .status("SUCCESS")
+                        .requestedCount(1)
+                        .savedCount(2)
+                        .message("OK")
+                        .startedAt(2000L)
+                        .finishedAt(2500L)
+                        .build(),
+                StockKLineSyncLog.builder()
+                        .jobName("stock-kline-sync")
+                        .symbol("sh600519")
+                        .status("RUNNING")
+                        .requestedCount(1)
+                        .savedCount(0)
+                        .startedAt(1000L)
+                        .build()
+        ));
+        StockKLineProviderRouter router = new StockKLineProviderRouter(properties, List.of(new StubKLineProvider()));
+        StockKLineService service = new StockKLineService(repository, syncLogRepository, stockMarketService, redisTemplate, properties, router);
+
+        StockKLineSyncSummary summary = service.syncSummary(null);
+
+        assertThat(summary.getTotalCount()).isEqualTo(3);
+        assertThat(summary.getSuccessCount()).isEqualTo(1);
+        assertThat(summary.getFailedCount()).isEqualTo(1);
+        assertThat(summary.getRunningCount()).isEqualTo(1);
+        assertThat(summary.getRequestedCount()).isEqualTo(5);
+        assertThat(summary.getSavedCount()).isEqualTo(2);
+        assertThat(summary.getLatestJobName()).isEqualTo("stock-kline-sync-all");
+        assertThat(summary.getLatestStatus()).isEqualTo("FAILED");
+        assertThat(summary.getLatestMessage()).isEqualTo("provider down");
+        assertThat(summary.getLatestStartedAt()).isEqualTo(3000L);
+        assertThat(summary.getLatestFinishedAt()).isEqualTo(3500L);
+        assertThat(summary.getLastSuccessAt()).isEqualTo(2500L);
+        assertThat(summary.getLastFailureAt()).isEqualTo(3500L);
+        assertThat(summary.getGeneratedAt()).isNotNull();
+    }
+
+    @Test
+    void syncSummaryNormalizesSymbolFilter() {
+        when(stockMarketService.normalizeSymbol("600519")).thenReturn("sh600519");
+        when(syncLogRepository.findTop50BySymbolOrderByStartedAtDesc("sh600519")).thenReturn(List.of());
+        StockKLineProviderRouter router = new StockKLineProviderRouter(properties, List.of(new StubKLineProvider()));
+        StockKLineService service = new StockKLineService(repository, syncLogRepository, stockMarketService, redisTemplate, properties, router);
+
+        StockKLineSyncSummary summary = service.syncSummary("600519");
+
+        assertThat(summary.getSymbol()).isEqualTo("sh600519");
+        assertThat(summary.getTotalCount()).isZero();
     }
 
     private static class StubKLineProvider implements StockKLineProvider {

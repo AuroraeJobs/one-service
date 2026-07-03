@@ -4,7 +4,9 @@ import type { ColumnsType } from 'antd/es/table';
 import { ReloadOutlined, SearchOutlined, SyncOutlined } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
-import { stockApi, type StockKLine, type StockKLineSyncLog } from '../services/api';
+import MetricCard from './MetricCard';
+import MetricGrid from './MetricGrid';
+import { stockApi, type StockKLine, type StockKLineSyncLog, type StockKLineSyncSummary } from '../services/api';
 
 const sampleKLines = JSON.stringify([
   {
@@ -34,6 +36,7 @@ const LifeStockSyncPage = () => {
   const [manualImport, setManualImport] = useState(false);
   const [payload, setPayload] = useState(sampleKLines);
   const [logs, setLogs] = useState<StockKLineSyncLog[]>([]);
+  const [summary, setSummary] = useState<StockKLineSyncSummary>();
   const [syncing, setSyncing] = useState(false);
   const [retryingLogKey, setRetryingLogKey] = useState<string>();
   const [loadingLogs, setLoadingLogs] = useState(false);
@@ -44,8 +47,13 @@ const LifeStockSyncPage = () => {
     setLoadingLogs(true);
     setError(undefined);
     try {
-      const data = await stockApi.klineSyncLogs(logSymbol.trim() || undefined);
+      const symbolFilter = logSymbol.trim() || undefined;
+      const [data, nextSummary] = await Promise.all([
+        stockApi.klineSyncLogs(symbolFilter),
+        stockApi.klineSyncSummary(symbolFilter)
+      ]);
       setLogs(data);
+      setSummary(nextSummary);
     } catch (requestError) {
       console.error('获取K线同步日志失败:', requestError);
       setError(requestError instanceof Error ? requestError.message : '获取K线同步日志失败');
@@ -192,6 +200,25 @@ const LifeStockSyncPage = () => {
     >
       {error ? <Alert type="error" showIcon message={error} className="stock-market-alert" /> : null}
       {success ? <Alert type="success" showIcon message={success} className="stock-market-alert" /> : null}
+
+      <MetricGrid gap={16} minColumnWidth={180}>
+        <MetricCard title="最近状态" value={summary?.latestStatus || '-'} accent={summary?.latestStatus === 'FAILED' ? '#f5222d' : '#34c759'} />
+        <MetricCard title="成功" value={summary?.successCount ?? 0} suffix="次" accent="#34c759" />
+        <MetricCard title="失败" value={summary?.failedCount ?? 0} suffix="次" accent="#f5222d" />
+        <MetricCard title="运行中" value={summary?.runningCount ?? 0} suffix="次" accent="#0071e3" />
+        <MetricCard title="保存" value={summary?.savedCount ?? 0} suffix="条" accent="#ff9500" />
+        <MetricCard title="最后完成" value={formatTime(summary?.latestFinishedAt)} accent="#5856d6" valueStyle={{ fontSize: 18 }} />
+      </MetricGrid>
+
+      {summary?.latestMessage ? (
+        <Alert
+          type={summary.latestStatus === 'FAILED' ? 'warning' : 'info'}
+          showIcon
+          message={summary.latestMessage}
+          description={`最近任务：${summary.latestJobName || '-'}，摘要生成：${formatTime(summary.generatedAt)}`}
+          className="stock-market-alert"
+        />
+      ) : null}
 
       <Card className="life-panel-card stock-market-panel">
         <div className="stock-market-toolbar">

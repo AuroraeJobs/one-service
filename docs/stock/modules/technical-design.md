@@ -328,6 +328,26 @@ startedAt
 finishedAt
 ```
 
+Sync summary fields:
+
+```text
+symbol
+totalCount
+successCount
+failedCount
+runningCount
+requestedCount
+savedCount
+latestJobName
+latestStatus
+latestMessage
+latestStartedAt
+latestFinishedAt
+lastSuccessAt
+lastFailureAt
+generatedAt
+```
+
 Rules:
 
 - `tradeDate` is a trading-day identifier such as `2026-07-03`, not a timezone-bound timestamp.
@@ -339,6 +359,7 @@ Rules:
 - Scheduled daily sync is enabled by Spring scheduling and configured with `stock.market.kline-sync-cron`.
 - Scheduled daily sync fetches configured symbols through `StockKLineProviderRouter` and writes `SUCCESS` or `FAILED` logs.
 - Batch retry uses `POST /stock/klines/sync/retry`, fetches configured symbols through `StockKLineProviderRouter`, writes MongoDB sync logs, and protects execution with a Redis lock.
+- `GET /stock/klines/sync-summary` aggregates the latest MongoDB sync logs into status counters and millisecond timestamps.
 - Historical third-party provider fetching stays behind provider/router abstractions, not directly in controllers.
 
 Frontend stock detail:

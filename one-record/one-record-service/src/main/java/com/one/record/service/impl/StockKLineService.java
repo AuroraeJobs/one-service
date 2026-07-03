@@ -8,6 +8,7 @@ import com.one.record.service.IStockKLineService;
 import com.one.record.service.IStockMarketService;
 import com.one.record.stock.StockKLine;
 import com.one.record.stock.StockKLineSyncLog;
+import com.one.record.stock.StockKLineSyncSummary;
 import lombok.AllArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -144,6 +145,63 @@ public class StockKLineService implements IStockKLineService {
             return syncLogRepository.findTop50BySymbolOrderByStartedAtDesc(stockMarketService.normalizeSymbol(symbol));
         }
         return syncLogRepository.findTop50ByOrderByStartedAtDesc();
+    }
+
+    @Override
+    public StockKLineSyncSummary syncSummary(String symbol) {
+        String normalizedSymbol = StringUtils.hasText(symbol) ? stockMarketService.normalizeSymbol(symbol) : null;
+        List<StockKLineSyncLog> logs = StringUtils.hasText(normalizedSymbol)
+                ? syncLogRepository.findTop50BySymbolOrderByStartedAtDesc(normalizedSymbol)
+                : syncLogRepository.findTop50ByOrderByStartedAtDesc();
+        StockKLineSyncLog latest = logs.isEmpty() ? null : logs.get(0);
+        return StockKLineSyncSummary.builder()
+                .symbol(normalizedSymbol)
+                .totalCount(logs.size())
+                .successCount(countStatus(logs, "SUCCESS"))
+                .failedCount(countStatus(logs, "FAILED"))
+                .runningCount(countStatus(logs, "RUNNING"))
+                .requestedCount(sumRequested(logs))
+                .savedCount(sumSaved(logs))
+                .latestJobName(latest == null ? null : latest.getJobName())
+                .latestStatus(latest == null ? null : latest.getStatus())
+                .latestMessage(latest == null ? null : latest.getMessage())
+                .latestStartedAt(latest == null ? null : latest.getStartedAt())
+                .latestFinishedAt(latest == null ? null : latest.getFinishedAt())
+                .lastSuccessAt(lastFinishedAt(logs, "SUCCESS"))
+                .lastFailureAt(lastFinishedAt(logs, "FAILED"))
+                .generatedAt(System.currentTimeMillis())
+                .build();
+    }
+
+    private int countStatus(List<StockKLineSyncLog> logs, String status) {
+        return (int) logs.stream()
+                .filter(log -> status.equals(log.getStatus()))
+                .count();
+    }
+
+    private int sumRequested(List<StockKLineSyncLog> logs) {
+        return logs.stream()
+                .map(StockKLineSyncLog::getRequestedCount)
+                .filter(count -> count != null)
+                .mapToInt(Integer::intValue)
+                .sum();
+    }
+
+    private int sumSaved(List<StockKLineSyncLog> logs) {
+        return logs.stream()
+                .map(StockKLineSyncLog::getSavedCount)
+                .filter(count -> count != null)
+                .mapToInt(Integer::intValue)
+                .sum();
+    }
+
+    private Long lastFinishedAt(List<StockKLineSyncLog> logs, String status) {
+        return logs.stream()
+                .filter(log -> status.equals(log.getStatus()))
+                .map(log -> log.getFinishedAt() == null ? log.getStartedAt() : log.getFinishedAt())
+                .filter(time -> time != null)
+                .findFirst()
+                .orElse(null);
     }
 
     private List<StockKLine> saveKLines(String fixedSymbol, List<StockKLine> kLines) {

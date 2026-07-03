@@ -3,6 +3,7 @@ package com.one.record.web;
 import com.one.record.service.IStockKLineService;
 import com.one.record.stock.StockKLine;
 import com.one.record.stock.StockKLineSyncLog;
+import com.one.record.stock.StockKLineSyncSummary;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,5 +62,11 @@ public class StockKLineController {
     @Operation(summary = "查询股票K线同步日志", description = "查询最近的股票K线同步日志")
     public List<StockKLineSyncLog> syncLogs(@RequestParam(name = "symbol", required = false) String symbol) {
         return service.syncLogs(symbol);
+    }
+
+    @GetMapping("klines/sync-summary")
+    @Operation(summary = "查询股票K线同步摘要", description = "按最近同步日志汇总K线同步状态")
+    public StockKLineSyncSummary syncSummary(@RequestParam(name = "symbol", required = false) String symbol) {
+        return service.syncSummary(symbol);
     }
 }

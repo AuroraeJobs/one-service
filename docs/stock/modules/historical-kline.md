@@ -105,6 +105,7 @@ GET /stock/{symbol}/klines
 POST /stock/{symbol}/klines/sync
 POST /stock/klines/sync
 GET /stock/klines/sync-logs
+GET /stock/klines/sync-summary
 ```
 
 ## Frontend
@@ -126,4 +127,5 @@ Current UX:
 - K-line page queries MongoDB-backed historical rows by symbol, period, and date range.
 - Sync page can submit standardized K-line JSON to the existing sync APIs.
 - Sync page shows recent MongoDB sync logs, including status, requested/saved counts, messages, and timestamps.
+- Sync page reads `GET /stock/klines/sync-summary` to show recent status, success/failure/running counts, saved rows, and latest completion time.
 - Provider-specific K-line fetching is still not exposed to the frontend; provider integration remains a backend Track B task.

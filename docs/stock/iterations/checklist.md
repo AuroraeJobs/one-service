@@ -208,6 +208,17 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Verify backend tests.
 - [x] Update docs and commit/push after the milestone.
 
+## Iteration 11: Sync Operations Summary
+
+- [x] Add `StockKLineSyncSummary`.
+- [x] Add `GET /stock/klines/sync-summary`.
+- [x] Aggregate success, failure, running, requested, and saved counts from recent logs.
+- [x] Support optional symbol filter with backend normalization.
+- [x] Show sync summary metrics on `/investments/sync`.
+- [x] Verify frontend lint and build.
+- [x] Verify backend tests.
+- [x] Update docs and commit/push after the milestone.
+
 ## Quality Gates
 
 - [x] Backend compiles with JDK 21.

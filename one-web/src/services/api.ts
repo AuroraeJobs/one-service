@@ -233,6 +233,24 @@ export interface StockKLineSyncLog {
   finishedAt?: number;
 }
 
+export interface StockKLineSyncSummary {
+  symbol?: string;
+  totalCount?: number;
+  successCount?: number;
+  failedCount?: number;
+  runningCount?: number;
+  requestedCount?: number;
+  savedCount?: number;
+  latestJobName?: string;
+  latestStatus?: string;
+  latestMessage?: string;
+  latestStartedAt?: number;
+  latestFinishedAt?: number;
+  lastSuccessAt?: number;
+  lastFailureAt?: number;
+  generatedAt?: number;
+}
+
 export interface StockHoldingSummary {
   positionId?: string;
   accountId?: string;
@@ -469,6 +487,12 @@ export const stockApi = {
 
   klineSyncLogs: (symbol?: string): Promise<StockKLineSyncLog[]> => {
     return apiClient.get('/stock/klines/sync-logs', {
+      params: { symbol }
+    });
+  },
+
+  klineSyncSummary: (symbol?: string): Promise<StockKLineSyncSummary> => {
+    return apiClient.get('/stock/klines/sync-summary', {
       params: { symbol }
     });
   },

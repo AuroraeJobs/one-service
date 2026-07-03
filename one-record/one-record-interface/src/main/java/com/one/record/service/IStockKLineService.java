@@ -2,6 +2,7 @@ package com.one.record.service;
 
 import com.one.record.stock.StockKLine;
 import com.one.record.stock.StockKLineSyncLog;
+import com.one.record.stock.StockKLineSyncSummary;
 
 import java.util.List;
 
@@ -18,6 +19,8 @@ public interface IStockKLineService {
     List<StockKLine> retryConfiguredSync();
 
     StockKLineSyncLog scheduledDailySync();
+
+    StockKLineSyncSummary syncSummary(String symbol);
 
     List<StockKLineSyncLog> syncLogs(String symbol);
 }
