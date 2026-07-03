@@ -176,8 +176,8 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Add edit action for alert rules.
 - [x] Reuse alert modal for create and edit.
 - [x] Wire alert update to `PUT /stock/alerts/rules/{id}`.
-- [ ] Add account selector UX for trade and position pages.
-- [ ] Surface recalculation impact more explicitly after trade save/delete.
+- [x] Add account selector UX for trade and position pages.
+- [x] Surface recalculation impact more explicitly after trade save/delete.
 - [x] Verify frontend lint and build.
 - [x] Update docs and commit/push after the milestone.
 

@@ -108,6 +108,7 @@ Implemented baseline:
 - Iteration 07 has started. MongoDB-backed stock preferences and internal `/stock/preferences` APIs are implemented, and `/investments/settings` now edits persisted user preferences while provider config remains backend-owned.
 - Iteration 07 provider health slice is implemented. `/stock/providers/health` now reports quote and K-line provider categories, and 数据源/总览 distinguish both provider types.
 - Iteration 08 has started. Trade records and alert rules can now be edited from their operation pages through existing internal update APIs.
+- Iteration 08 account and recalculation UX is implemented. Trade and position pages use account selectors, and trade mutations show backend recalculation impact messages.
 
 Architecture rule to preserve:
 

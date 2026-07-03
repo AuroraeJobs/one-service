@@ -43,8 +43,8 @@ Acceptance:
 - [x] Add edit action for alert rules.
 - [x] Reuse alert modal for create and edit.
 - [x] Wire alert update to `PUT /stock/alerts/rules/{id}`.
-- [ ] Add account selector UX for trade and position pages.
-- [ ] Surface recalculation impact more explicitly after trade save/delete.
+- [x] Add account selector UX for trade and position pages.
+- [x] Surface recalculation impact more explicitly after trade save/delete.
 - [x] Verify frontend lint and build.
 - [x] Update docs and commit/push after the milestone.
 
@@ -56,3 +56,8 @@ Acceptance:
 - Added edit actions to `/investments/alerts`.
 - Reused existing create modals and internal update APIs.
 - Verified with changed-file ESLint and full frontend build.
+
+### 2026-07-03 Account And Recalculation UX
+
+- Added account selectors to trade and position pages using `GET /stock/accounts`.
+- Trade save, update, and delete now surface a success message that backend recalculation has been triggered.

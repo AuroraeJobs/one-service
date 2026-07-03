@@ -4,7 +4,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
-import { stockApi, type StockTrade } from '../services/api';
+import { stockApi, type StockAccount, type StockTrade } from '../services/api';
 
 interface StockTradeFormValues {
   accountId?: string;
@@ -34,6 +34,7 @@ const LifeStockTradesPage = () => {
   const [searchParams] = useSearchParams();
   const [form] = Form.useForm<StockTradeFormValues>();
   const [trades, setTrades] = useState<StockTrade[]>([]);
+  const [accounts, setAccounts] = useState<StockAccount[]>([]);
   const initialAccountId = searchParams.get('accountId') || '';
   const initialSymbol = searchParams.get('symbol') || '';
   const [accountId, setAccountId] = useState(initialAccountId);
@@ -43,11 +44,26 @@ const LifeStockTradesPage = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTrade, setEditingTrade] = useState<StockTrade>();
   const [error, setError] = useState<string>();
+  const [success, setSuccess] = useState<string>();
 
   const queryParams = useMemo(() => ({
     accountId: accountId.trim() || undefined,
     symbol: symbol.trim() || undefined
   }), [accountId, symbol]);
+
+  const accountOptions = useMemo(() => accounts.map(account => ({
+    label: `${account.name || account.id || '未命名账户'}${account.broker ? ` · ${account.broker}` : ''}`,
+    value: account.id || ''
+  })).filter(item => item.value), [accounts]);
+
+  const loadAccounts = useCallback(async () => {
+    try {
+      const data = await stockApi.accounts();
+      setAccounts(data);
+    } catch (requestError) {
+      console.error('获取股票账户失败:', requestError);
+    }
+  }, []);
 
   const loadTrades = useCallback(async () => {
     setLoading(true);
@@ -66,6 +82,10 @@ const LifeStockTradesPage = () => {
   useEffect(() => {
     loadTrades();
   }, [loadTrades]);
+
+  useEffect(() => {
+    loadAccounts();
+  }, [loadAccounts]);
 
   const openCreateModal = useCallback(() => {
     form.resetFields();
@@ -107,6 +127,7 @@ const LifeStockTradesPage = () => {
     const values = await form.validateFields();
     setSaving(true);
     setError(undefined);
+    setSuccess(undefined);
     try {
       const payload = {
         ...values,
@@ -117,8 +138,10 @@ const LifeStockTradesPage = () => {
       };
       if (editingTrade?.id) {
         await stockApi.updateTrade(editingTrade.id, payload);
+        setSuccess('交易已更新，后端已按交易记录触发持仓重算。');
       } else {
         await stockApi.saveTrade(payload);
+        setSuccess('交易已保存，后端已按交易记录触发持仓重算。');
       }
       setModalOpen(false);
       setEditingTrade(undefined);
@@ -136,8 +159,10 @@ const LifeStockTradesPage = () => {
       return;
     }
     setError(undefined);
+    setSuccess(undefined);
     try {
       await stockApi.deleteTrade(id);
+      setSuccess('交易已删除，后端已按交易记录触发持仓重算。');
       await loadTrades();
     } catch (requestError) {
       console.error('删除股票交易失败:', requestError);
@@ -233,6 +258,7 @@ const LifeStockTradesPage = () => {
       }
     >
       {error ? <Alert type="error" showIcon message={error} className="stock-market-alert" /> : null}
+      {success ? <Alert type="success" showIcon message={success} className="stock-market-alert" /> : null}
 
       <Card className="life-panel-card stock-market-panel">
         <div className="stock-market-toolbar">
@@ -242,12 +268,14 @@ const LifeStockTradesPage = () => {
           </div>
           <div className="stock-market-actions">
             <Space wrap>
-              <Input
+              <Select
+                allowClear
+                showSearch
                 value={accountId}
-                onChange={event => setAccountId(event.target.value)}
-                onPressEnter={loadTrades}
+                onChange={value => setAccountId(value || '')}
+                options={accountOptions}
                 placeholder="账户 ID"
-                prefix={<SearchOutlined />}
+                style={{ width: 220 }}
               />
               <Input
                 value={symbol}
@@ -294,8 +322,8 @@ const LifeStockTradesPage = () => {
           <Form.Item name="tradeType" label="交易类型" rules={[{ required: true, message: '请选择交易类型' }]}>
             <Select options={tradeTypeOptions} />
           </Form.Item>
-          <Form.Item name="accountId" label="账户 ID">
-            <Input placeholder="可留空" />
+          <Form.Item name="accountId" label="账户">
+            <Select allowClear showSearch options={accountOptions} placeholder="可留空" />
           </Form.Item>
           <Form.Item name="name" label="名称">
             <Input placeholder="可选" />

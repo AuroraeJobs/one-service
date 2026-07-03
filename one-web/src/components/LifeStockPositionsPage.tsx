@@ -1,19 +1,34 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Button, Card, Input, Space, Table, Tag } from 'antd';
+import { Alert, Button, Card, Select, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { ReloadOutlined, SearchOutlined, SyncOutlined } from '@ant-design/icons';
+import { ReloadOutlined, SyncOutlined } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
-import { stockApi, type StockPosition } from '../services/api';
+import { stockApi, type StockAccount, type StockPosition } from '../services/api';
 
 const LifeStockPositionsPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [accounts, setAccounts] = useState<StockAccount[]>([]);
   const [positions, setPositions] = useState<StockPosition[]>([]);
   const [accountId, setAccountId] = useState(searchParams.get('accountId') || '');
   const [loading, setLoading] = useState(false);
   const [recalculating, setRecalculating] = useState(false);
   const [error, setError] = useState<string>();
+
+  const accountOptions = accounts.map(account => ({
+    label: `${account.name || account.id || '未命名账户'}${account.broker ? ` · ${account.broker}` : ''}`,
+    value: account.id || ''
+  })).filter(item => item.value);
+
+  const loadAccounts = useCallback(async () => {
+    try {
+      const data = await stockApi.accounts();
+      setAccounts(data);
+    } catch (requestError) {
+      console.error('获取股票账户失败:', requestError);
+    }
+  }, []);
 
   const loadPositions = useCallback(async () => {
     setLoading(true);
@@ -32,6 +47,10 @@ const LifeStockPositionsPage = () => {
   useEffect(() => {
     loadPositions();
   }, [loadPositions]);
+
+  useEffect(() => {
+    loadAccounts();
+  }, [loadAccounts]);
 
   const recalculatePositions = useCallback(async () => {
     setRecalculating(true);
@@ -137,12 +156,14 @@ const LifeStockPositionsPage = () => {
           </div>
           <div className="stock-market-actions">
             <Space.Compact className="stock-symbol-search">
-              <Input
+              <Select
+                allowClear
+                showSearch
                 value={accountId}
-                onChange={event => setAccountId(event.target.value)}
-                onPressEnter={loadPositions}
+                onChange={value => setAccountId(value || '')}
+                options={accountOptions}
                 placeholder="账户 ID，可留空"
-                prefix={<SearchOutlined />}
+                style={{ minWidth: 220 }}
               />
               <Button icon={<ReloadOutlined spin={loading} />} loading={loading} onClick={loadPositions}>
                 查询
