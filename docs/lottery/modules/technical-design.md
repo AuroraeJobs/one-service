@@ -86,6 +86,7 @@ Rules:
 - Blue number is one two-digit string.
 - Issue identity is unique.
 - Derived fields can be recalculated, but API responses should be stable.
+- `LotteryDraw` is the first canonical DTO for this contract, with `LotteryDrawUtil` converting legacy `Record` objects or 14-digit compact records into normalized draws.
 
 ## Prediction Contract
 

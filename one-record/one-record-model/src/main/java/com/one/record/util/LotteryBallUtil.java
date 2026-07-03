@@ -92,7 +92,11 @@ public final class LotteryBallUtil {
     }
 
     public static String redHexagram(String... balls) {
-        return HEXAGRAM.getOrDefault(hexagramCode(balls), "坤");
+        return HEXAGRAM.getOrDefault(redHexagramCode(balls), "坤");
+    }
+
+    public static String redHexagramCode(String... balls) {
+        return hexagramCode(balls);
     }
 
     public static String bluePlanet(String ball) {

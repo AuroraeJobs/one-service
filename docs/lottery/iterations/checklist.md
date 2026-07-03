@@ -18,7 +18,7 @@ Use this file as the durable task board for the lottery module. When a task is f
 
 ## Iteration 01: Historical Records And Sync Foundation
 
-- [ ] Add or confirm canonical lottery draw model.
+- [x] Add or confirm canonical lottery draw model. Added `LotteryDraw` DTO and `LotteryDrawUtil` normalization helpers.
 - [ ] Add repository/service methods for latest, first, range, and paged draw query.
 - [x] Add draw sync log model. Added `LotteryRecordSyncLog` persisted in `lottery_record_sync_logs`.
 - [ ] Add lottery draw provider interface.
@@ -31,7 +31,7 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [ ] Add Redis sync lock.
 - [ ] Add scheduled record sync.
 - [x] Keep existing `record/*` endpoints compatible. Added new controller without changing `RecordController`.
-- [ ] Add backend tests for number normalization, duplicate issue handling, and sync idempotency.
+- [ ] Add backend tests for number normalization, duplicate issue handling, and sync idempotency. Number normalization is covered by `LotteryDrawUtilTest`; duplicate issue and sync idempotency remain.
 - [x] Add frontend API client methods for `/lottery/records/*`. Includes sync and sync-log methods; pages are not migrated yet.
 - [ ] Update frontend record loading to use normalized APIs when ready.
 
