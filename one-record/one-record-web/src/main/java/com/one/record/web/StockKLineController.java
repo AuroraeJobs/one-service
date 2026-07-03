@@ -38,14 +38,14 @@ public class StockKLineController {
 
     @PostMapping("{symbol}/klines/sync")
     @Operation(summary = "同步单只股票K线", description = "导入或更新指定股票的历史K线数据")
-    public List<StockKLine> sync(@PathVariable("symbol") String symbol, @RequestBody List<StockKLine> kLines) {
+    public List<StockKLine> sync(@PathVariable("symbol") String symbol, @RequestBody(required = false) List<StockKLine> kLines) {
         log.info("Syncing stock klines: symbol={}, size={}", symbol, kLines == null ? 0 : kLines.size());
         return service.sync(symbol, kLines);
     }
 
     @PostMapping("klines/sync")
     @Operation(summary = "批量同步股票K线", description = "导入或更新多只股票的历史K线数据")
-    public List<StockKLine> syncAll(@RequestBody List<StockKLine> kLines) {
+    public List<StockKLine> syncAll(@RequestBody(required = false) List<StockKLine> kLines) {
         log.info("Syncing stock klines in batch: size={}", kLines == null ? 0 : kLines.size());
         return service.syncAll(kLines);
     }

@@ -74,19 +74,29 @@ finishedAt
 - `createdAt` and `updatedAt` are millisecond timestamps.
 - Service normalizes `symbol`, `market`, and `code` before persistence.
 - Manual sync writes `RUNNING`, `SUCCESS`, or `FAILED` status.
-- Scheduled daily sync currently records `SKIPPED` logs until a historical provider is connected.
-- Historical third-party fetching should be added behind provider/router abstractions.
+- Scheduled daily sync fetches configured symbols through `StockKLineProviderRouter`.
+- Historical third-party fetching stays behind provider/router abstractions.
 
-## Next Iteration: Provider-Based Sync
+## Provider-Based Sync
 
-Iteration 05 should connect historical sync to a switchable provider:
+Iteration 05 connects historical sync to a switchable provider:
 
-- Add a K-line provider interface that returns normalized `StockKLine` rows.
-- Add provider selection/fallback behavior consistent with quote providers.
-- Keep provider-specific field mapping and date parsing inside provider implementations.
-- Let manual sync fetch provider rows when rows are not supplied in the request.
-- Let scheduled sync fetch configured symbols instead of recording only `SKIPPED`.
-- Keep Redis sync locks and MongoDB sync logs.
+- `StockKLineProvider` returns normalized `StockKLine` rows.
+- `StockKLineProviderRouter` selects active and fallback providers using the same provider configuration as quote routing.
+- `SinaStockKLineProvider` owns Sina daily K-line HTTP access and JSON parsing.
+- Manual sync fetches provider rows when rows are not supplied in the request.
+- Scheduled sync fetches configured symbols instead of recording only `SKIPPED`.
+- Redis sync locks and MongoDB sync logs remain in the sync path.
+
+Current provider configuration:
+
+```yaml
+stock:
+  market:
+    provider: sina
+    fallback-providers: []
+    sina-kline-url: https://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData
+```
 
 ## API Surface
 

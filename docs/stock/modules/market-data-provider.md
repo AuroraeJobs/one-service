@@ -29,6 +29,12 @@ public interface StockMarketProvider {
 
     List<StockQuote> quotes(List<String> symbols);
 }
+
+public interface StockKLineProvider {
+    String name();
+
+    List<StockKLine> dailyKLines(String symbol, String startDate, String endDate);
+}
 ```
 
 ## Current Implementations
@@ -36,6 +42,9 @@ public interface StockMarketProvider {
 - `SinaStockMarketProvider`: owns Sina HTTP access, GBK decoding, response parsing, and provider-specific unavailable quote mapping.
 - `StockMarketProviderRouter`: chooses active provider and fallback providers.
 - `StockMarketService`: owns cache, last-success fallback snapshots, quote ordering, and normalized public behavior.
+- `SinaStockKLineProvider`: owns Sina daily K-line HTTP access and JSON parsing.
+- `StockKLineProviderRouter`: chooses active and fallback K-line providers.
+- `StockKLineService`: owns MongoDB upsert, Redis sync locks, sync logs, and scheduled/manual sync behavior.
 
 ## Configuration
 

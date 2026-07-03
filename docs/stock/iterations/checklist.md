@@ -115,15 +115,15 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Trigger recalculation after trade create, update, and delete.
 - [x] Add manual position recalculation endpoints.
 - [x] Add unit tests for buy, sell, fee, dividend, bonus share, split, delete, and idempotent recalculation.
-- [ ] Extract or add a K-line provider interface returning normalized `StockKLine` rows.
-- [ ] Add provider router/selection for historical K-line data.
-- [ ] Add one concrete A-share daily K-line provider.
-- [ ] Wire manual K-line sync to fetch provider data when request rows are not provided.
-- [ ] Wire scheduled K-line sync to fetch configured symbols instead of recording only `SKIPPED`.
-- [ ] Preserve Redis sync locks and MongoDB sync logs during provider-based sync.
-- [ ] Add tests for K-line provider parsing and sync upsert behavior.
-- [ ] Confirm quote and K-line providers remain switchable and upper layers do not depend on concrete providers.
-- [ ] Update portfolio, historical K-line, provider, and storage docs with final implementation details.
+- [x] Extract or add a K-line provider interface returning normalized `StockKLine` rows.
+- [x] Add provider router/selection for historical K-line data.
+- [x] Add one concrete A-share daily K-line provider. Implemented `SinaStockKLineProvider`.
+- [x] Wire manual K-line sync to fetch provider data when request rows are not provided.
+- [x] Wire scheduled K-line sync to fetch configured symbols instead of recording only `SKIPPED`.
+- [x] Preserve Redis sync locks and MongoDB sync logs during provider-based sync.
+- [x] Add tests for K-line provider parsing and sync upsert behavior.
+- [x] Confirm quote and K-line providers remain switchable and upper layers do not depend on concrete providers.
+- [x] Update portfolio, historical K-line, provider, and storage docs with final implementation details.
 
 ## Menu-Driven Version Plan
 

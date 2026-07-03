@@ -39,6 +39,8 @@ public class StockKLineService implements IStockKLineService {
 
     private final StockMarketProperties properties;
 
+    private final StockKLineProviderRouter providerRouter;
+
     @Override
     public List<StockKLine> find(String symbol, String period, String startDate, String endDate) {
         String normalizedSymbol = normalizeSymbol(symbol);
@@ -60,14 +62,30 @@ public class StockKLineService implements IStockKLineService {
     @Override
     public List<StockKLine> sync(String symbol, List<StockKLine> kLines) {
         String normalizedSymbol = normalizeSymbol(symbol);
+        boolean providerSync = kLines == null || kLines.isEmpty();
         return runWithSyncLog(syncLockKey(normalizedSymbol), "stock-kline-sync", normalizedSymbol, kLines,
-                () -> saveKLines(normalizedSymbol, kLines));
+                () -> {
+                    List<StockKLine> source = providerSync
+                            ? providerRouter.dailyKLines(normalizedSymbol, null, null)
+                            : kLines;
+                    return saveKLines(normalizedSymbol, source);
+                });
     }
 
     @Override
     public List<StockKLine> syncAll(List<StockKLine> kLines) {
+        boolean providerSync = kLines == null || kLines.isEmpty();
         return runWithSyncLog(syncLockKey("all"), "stock-kline-sync-all", null, kLines,
-                () -> saveKLines(null, kLines));
+                () -> {
+                    if (!providerSync) {
+                        return saveKLines(null, kLines);
+                    }
+                    List<StockKLine> fetched = new ArrayList<>();
+                    for (String symbol : configuredSyncSymbols()) {
+                        fetched.addAll(providerRouter.dailyKLines(normalizeSymbol(symbol), null, null));
+                    }
+                    return saveKLines(null, fetched);
+                });
     }
 
     @Override
@@ -77,18 +95,25 @@ public class StockKLineService implements IStockKLineService {
             throw new ServiceException("K线定时同步任务正在执行，请稍后重试");
         }
 
+        List<String> symbols = configuredSyncSymbols();
         StockKLineSyncLog syncLog = StockKLineSyncLog.builder()
                 .jobName("stock-kline-scheduled-daily")
                 .period(DEFAULT_PERIOD)
                 .status("RUNNING")
-                .requestedCount(properties.getKlineSyncSymbols() == null ? 0 : properties.getKlineSyncSymbols().size())
+                .requestedCount(symbols.size())
                 .savedCount(0)
                 .startedAt(System.currentTimeMillis())
                 .build();
         syncLog = syncLogRepository.save(syncLog);
         try {
-            syncLog.setStatus("SKIPPED");
-            syncLog.setMessage("K线历史数据 provider 尚未接入，定时任务仅记录执行日志");
+            List<StockKLine> fetched = new ArrayList<>();
+            for (String symbol : symbols) {
+                fetched.addAll(providerRouter.dailyKLines(normalizeSymbol(symbol), null, null));
+            }
+            List<StockKLine> saved = saveKLines(null, fetched);
+            syncLog.setStatus("SUCCESS");
+            syncLog.setSavedCount(saved.size());
+            syncLog.setMessage("OK");
             return syncLog;
         } catch (RuntimeException ex) {
             syncLog.setStatus("FAILED");
@@ -230,6 +255,16 @@ public class StockKLineService implements IStockKLineService {
             return DEFAULT_PERIOD;
         }
         return normalizePeriod(kLines.get(0).getPeriod());
+    }
+
+    private List<String> configuredSyncSymbols() {
+        if (properties.getKlineSyncSymbols() == null || properties.getKlineSyncSymbols().isEmpty()) {
+            return List.of();
+        }
+        return properties.getKlineSyncSymbols().stream()
+                .filter(StringUtils::hasText)
+                .distinct()
+                .toList();
     }
 
     private String valueOrDefault(String value, String fallback) {

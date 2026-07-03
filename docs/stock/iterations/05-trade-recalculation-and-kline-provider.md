@@ -187,9 +187,19 @@ Track A status:
 
 Remaining in Track B:
 
-- K-line provider interface/router.
-- Concrete A-share daily K-line provider.
-- Provider-backed manual and scheduled sync.
+- Complete for the first provider-backed sync slice.
+- `StockKLineProvider` and `StockKLineProviderRouter` route historical daily K-line fetches.
+- `SinaStockKLineProvider` fetches and parses normalized A-share daily K-line rows.
+- Manual sync fetches provider data when the request body is empty.
+- Scheduled sync fetches configured symbols and writes `SUCCESS`/`FAILED` logs instead of always recording `SKIPPED`.
+- Redis sync locks and MongoDB sync logs remain in the sync path.
+
+Verified:
+
+```bash
+JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home PATH=/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home/bin:/Users/aurorae/Program/Git/Apache/Maven/maven3.6.3/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin mvn -q -pl one-record/one-record-service -am test -Dtest=StockKLineServiceTest -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false
+JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home PATH=/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home/bin:/Users/aurorae/Program/Git/Apache/Maven/maven3.6.3/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin mvn -q -pl one-record/one-record-web -am compile -DskipTests
+```
 
 ## Suggested Implementation Order
 

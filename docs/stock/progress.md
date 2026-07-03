@@ -100,6 +100,7 @@ Implemented baseline:
 - Menu V5 first UX slice is implemented. Route `/investments/analysis` is wired, the stock subnav exposes 分析, and analysis summary data is displayed for concentration, volatility, drawdown, top gainers, and top losers.
 - Menu V6 first UX slice is implemented. Routes `/investments/providers` and `/investments/settings` are wired, provider health is visible, and settings boundaries are documented as read-only until preferences persistence is designed.
 - Iteration 05 Track A calculation coverage is complete for the current DTO model. Holding and portfolio summaries now expose realized PnL and dividend income; tests cover buy, sell, fee, tax, dividend, bonus share, split, delete, and idempotent recalculation.
+- Iteration 05 Track B first provider-backed sync slice is complete. K-line provider interface/router and Sina daily K-line provider are implemented; manual sync can fetch provider data with an empty request body, scheduled sync fetches configured symbols, and tests cover provider parsing plus sync upsert/logging.
 
 Architecture rule to preserve:
 

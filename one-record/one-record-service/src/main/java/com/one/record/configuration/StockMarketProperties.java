@@ -19,6 +19,8 @@ public class StockMarketProperties {
 
     private String sinaQuoteUrl = "https://hq.sinajs.cn/list=";
 
+    private String sinaKlineUrl = "https://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData";
+
     private String referer = "https://finance.sina.com.cn";
 
     private String userAgent = "Mozilla/5.0";
