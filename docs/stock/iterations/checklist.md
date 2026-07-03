@@ -138,19 +138,19 @@ Use this file as the durable task board for the stock module. When a task is fin
 
 ## Iteration 06: Dashboard And Detail Linkage
 
-- [ ] Add query-param support for symbol/account filters on linked stock pages.
-- [ ] Add holding summary widget to symbol detail.
-- [ ] Add recent trades widget to symbol detail.
-- [ ] Add active alert rules widget to symbol detail.
-- [ ] Add symbol-aware shortcuts from detail to trades, alerts, K-lines, and sync.
+- [x] Add query-param support for symbol/account filters on linked stock pages. Trades, positions, K-lines, sync, and alerts read route context for initial filters/actions.
+- [x] Add holding summary widget to symbol detail.
+- [x] Add recent trades widget to symbol detail.
+- [x] Add active alert rules widget to symbol detail.
+- [x] Add symbol-aware shortcuts from detail to trades, alerts, K-lines, and sync.
 - [ ] Upgrade overview dashboard with portfolio summary and holdings highlights.
 - [ ] Add recent alert history widget to overview.
 - [ ] Add analysis widgets to overview.
 - [ ] Add provider health mini status to overview.
 - [ ] Link overview and analysis items to symbol detail.
 - [ ] Verify empty, loading, and error states.
-- [ ] Verify frontend lint and build.
-- [ ] Update docs and commit/push after the milestone.
+- [x] Verify frontend lint and build.
+- [x] Update docs and commit/push after the milestone.
 
 ## Quality Gates
 

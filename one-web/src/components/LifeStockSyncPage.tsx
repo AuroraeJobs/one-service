@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Alert, Button, Card, Checkbox, Input, Select, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { ReloadOutlined, SearchOutlined, SyncOutlined } from '@ant-design/icons';
+import { useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import { stockApi, type StockKLine, type StockKLineSyncLog } from '../services/api';
 
@@ -25,9 +26,11 @@ const syncModeOptions = [
 ];
 
 const LifeStockSyncPage = () => {
-  const [symbol, setSymbol] = useState('600519');
-  const [logSymbol, setLogSymbol] = useState('');
-  const [syncMode, setSyncMode] = useState<'single' | 'batch'>('single');
+  const [searchParams] = useSearchParams();
+  const initialSymbol = searchParams.get('symbol') || '600519';
+  const [symbol, setSymbol] = useState(initialSymbol);
+  const [logSymbol, setLogSymbol] = useState(searchParams.get('logSymbol') || searchParams.get('symbol') || '');
+  const [syncMode, setSyncMode] = useState<'single' | 'batch'>(searchParams.get('mode') === 'batch' ? 'batch' : 'single');
   const [manualImport, setManualImport] = useState(false);
   const [payload, setPayload] = useState(sampleKLines);
   const [logs, setLogs] = useState<StockKLineSyncLog[]>([]);

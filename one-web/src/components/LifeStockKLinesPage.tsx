@@ -1,8 +1,8 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Input, Select, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { LineChartOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import { stockApi, type StockKLine } from '../services/api';
 
@@ -14,8 +14,9 @@ const periodOptions = [
 
 const LifeStockKLinesPage = () => {
   const navigate = useNavigate();
-  const [symbol, setSymbol] = useState('600519');
-  const [period, setPeriod] = useState('daily');
+  const [searchParams] = useSearchParams();
+  const [symbol, setSymbol] = useState(searchParams.get('symbol') || '600519');
+  const [period, setPeriod] = useState(searchParams.get('period') || 'daily');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [kLines, setKLines] = useState<StockKLine[]>([]);
@@ -45,6 +46,12 @@ const LifeStockKLinesPage = () => {
       setLoading(false);
     }
   }, [endDate, normalizedSymbol, period, startDate]);
+
+  useEffect(() => {
+    if (searchParams.get('symbol')) {
+      loadKLines();
+    }
+  }, [loadKLines, searchParams]);
 
   const columns: ColumnsType<StockKLine> = [
     {

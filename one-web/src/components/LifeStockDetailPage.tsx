@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Space, Spin, Tag } from 'antd';
-import { ArrowLeftOutlined, LineChartOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Alert, Button, Card, Space, Spin, Table, Tag } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import { AlertOutlined, ArrowLeftOutlined, BarChartOutlined, LineChartOutlined, ReloadOutlined, SyncOutlined } from '@ant-design/icons';
 import type { EChartsOption } from 'echarts';
 import ReactECharts from 'echarts-for-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import MetricCard from './MetricCard';
 import MetricGrid from './MetricGrid';
-import { stockApi, type StockKLine, type StockQuote } from '../services/api';
+import { stockApi, type StockAlertRule, type StockHoldingSummary, type StockKLine, type StockQuote, type StockTrade } from '../services/api';
 
 const MA_WINDOWS = [5, 10, 20];
 
@@ -16,6 +17,9 @@ const LifeStockDetailPage = () => {
   const { symbol = '' } = useParams();
   const [quote, setQuote] = useState<StockQuote>();
   const [kLines, setKLines] = useState<StockKLine[]>([]);
+  const [holding, setHolding] = useState<StockHoldingSummary>();
+  const [trades, setTrades] = useState<StockTrade[]>([]);
+  const [alertRules, setAlertRules] = useState<StockAlertRule[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -28,12 +32,18 @@ const LifeStockDetailPage = () => {
     setLoading(true);
     setError(undefined);
     try {
-      const [nextQuote, nextKLines] = await Promise.all([
+      const [nextQuote, nextKLines, portfolio, nextTrades, activeRules] = await Promise.all([
         stockApi.quote(normalizedSymbol),
-        stockApi.klines(normalizedSymbol, { period: 'daily' })
+        stockApi.klines(normalizedSymbol, { period: 'daily' }),
+        stockApi.portfolioSummary(),
+        stockApi.trades({ symbol: normalizedSymbol }),
+        stockApi.alertRules(true)
       ]);
       setQuote(nextQuote);
       setKLines(nextKLines);
+      setHolding(portfolio.holdings?.find(item => item.symbol === normalizedSymbol));
+      setTrades(nextTrades.slice(0, 5));
+      setAlertRules(activeRules.filter(item => item.symbol === normalizedSymbol));
     } catch (requestError) {
       console.error('获取股票详情失败:', requestError);
       setError(requestError instanceof Error ? requestError.message : '获取股票详情失败');
@@ -48,6 +58,61 @@ const LifeStockDetailPage = () => {
 
   const chartOption = useMemo(() => buildKLineChartOption(kLines), [kLines]);
   const fetchedAt = quote?.fetchedAt ? new Date(quote.fetchedAt).toLocaleString() : '尚未刷新';
+  const tradeColumns = useMemo<ColumnsType<StockTrade>>(() => [
+    {
+      title: '类型',
+      dataIndex: 'tradeType',
+      key: 'tradeType',
+      render: value => <Tag color={tradeTypeColor(value)}>{tradeTypeLabel(value)}</Tag>
+    },
+    {
+      title: '数量',
+      dataIndex: 'quantity',
+      key: 'quantity',
+      align: 'right',
+      render: value => formatQuantity(value)
+    },
+    {
+      title: '价格',
+      dataIndex: 'price',
+      key: 'price',
+      align: 'right',
+      render: value => formatPrice(value)
+    },
+    {
+      title: '时间',
+      dataIndex: 'tradedAt',
+      key: 'tradedAt',
+      render: value => formatTime(value)
+    }
+  ], []);
+  const alertColumns = useMemo<ColumnsType<StockAlertRule>>(() => [
+    {
+      title: '类型',
+      dataIndex: 'ruleType',
+      key: 'ruleType',
+      render: value => <Tag color="blue">{ruleTypeLabel(value)}</Tag>
+    },
+    {
+      title: '方向',
+      dataIndex: 'direction',
+      key: 'direction',
+      render: value => <Tag color={directionColor(value)}>{directionLabel(value)}</Tag>
+    },
+    {
+      title: '目标值',
+      dataIndex: 'targetValue',
+      key: 'targetValue',
+      align: 'right',
+      render: value => formatQuantity(value)
+    },
+    {
+      title: '最近触发',
+      dataIndex: 'lastTriggeredAt',
+      key: 'lastTriggeredAt',
+      render: value => formatTime(value)
+    }
+  ], []);
 
   return (
     <LifePageShell
@@ -58,6 +123,18 @@ const LifeStockDetailPage = () => {
         <Space wrap>
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/investments')}>
             返回
+          </Button>
+          <Button icon={<BarChartOutlined />} onClick={() => navigate(`/investments/trades?symbol=${encodeURIComponent(symbol)}&action=create`)}>
+            新增交易
+          </Button>
+          <Button icon={<AlertOutlined />} onClick={() => navigate(`/investments/alerts?symbol=${encodeURIComponent(symbol)}&action=create`)}>
+            告警
+          </Button>
+          <Button icon={<LineChartOutlined />} onClick={() => navigate(`/investments/klines?symbol=${encodeURIComponent(symbol)}&period=daily`)}>
+            K线
+          </Button>
+          <Button icon={<SyncOutlined />} onClick={() => navigate(`/investments/sync?symbol=${encodeURIComponent(symbol)}`)}>
+            同步
           </Button>
           <Button type="primary" icon={<ReloadOutlined spin={loading} />} onClick={loadStockDetail}>
             刷新
@@ -100,6 +177,57 @@ const LifeStockDetailPage = () => {
           ) : (
             <div className="stock-empty-chart">暂无 K 线数据</div>
           )}
+        </Card>
+
+        <Card className="life-panel-card stock-market-panel">
+          <div className="life-panel-title-row">
+            <h2>持仓摘要</h2>
+            <Button type="link" onClick={() => navigate(`/investments/positions?accountId=${encodeURIComponent(holding?.accountId || '')}`)}>
+              持仓页
+            </Button>
+          </div>
+          <MetricGrid gap={12} minColumnWidth={160}>
+            <MetricCard title="持仓数量" value={formatQuantity(holding?.quantity)} accent="#0071e3" />
+            <MetricCard title="成本价" value={formatPrice(holding?.costPrice)} accent="#ff9500" />
+            <MetricCard title="市值" value={formatMoney(holding?.marketValue)} accent="#34c759" />
+            <MetricCard title="浮动盈亏" value={formatMoney(holding?.floatingPnl)} accent={pnlAccent(holding?.floatingPnl)} />
+          </MetricGrid>
+        </Card>
+
+        <Card className="life-panel-card stock-market-panel">
+          <div className="life-panel-title-row">
+            <h2>近期交易</h2>
+            <Button type="link" onClick={() => navigate(`/investments/trades?symbol=${encodeURIComponent(symbol)}`)}>
+              全部交易
+            </Button>
+          </div>
+          <Table
+            rowKey={record => record.id || `${record.symbol}-${record.tradedAt}`}
+            columns={tradeColumns}
+            dataSource={trades}
+            pagination={false}
+            size="small"
+            locale={{ emptyText: '暂无该标的交易记录。' }}
+            rowClassName="stock-quote-row"
+          />
+        </Card>
+
+        <Card className="life-panel-card stock-market-panel">
+          <div className="life-panel-title-row">
+            <h2>有效告警</h2>
+            <Button type="link" onClick={() => navigate(`/investments/alerts?symbol=${encodeURIComponent(symbol)}`)}>
+              告警页
+            </Button>
+          </div>
+          <Table
+            rowKey={record => record.id || `${record.symbol}-${record.ruleType}-${record.direction}`}
+            columns={alertColumns}
+            dataSource={alertRules}
+            pagination={false}
+            size="small"
+            locale={{ emptyText: '暂无该标的启用告警。' }}
+            rowClassName="stock-quote-row"
+          />
         </Card>
       </Spin>
     </LifePageShell>
@@ -226,6 +354,32 @@ const calculateMovingAverage = (kLines: StockKLine[], windowSize: number) => {
 
 const formatPrice = (value?: number) => typeof value === 'number' ? value.toFixed(2) : '-';
 
+const formatMoney = (value?: number) => {
+  if (typeof value !== 'number') {
+    return '-';
+  }
+  return value.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
+
+const formatQuantity = (value?: number) => {
+  if (typeof value !== 'number') {
+    return '-';
+  }
+  return value.toLocaleString(undefined, {
+    maximumFractionDigits: 4
+  });
+};
+
+const formatTime = (value?: number) => {
+  if (typeof value !== 'number') {
+    return '-';
+  }
+  return new Date(value).toLocaleString();
+};
+
 const formatAmount = (value?: number) => {
   if (typeof value !== 'number' || value <= 0) {
     return '-';
@@ -252,6 +406,64 @@ const quoteAccent = (quote?: StockQuote) => {
     return '#16a34a';
   }
   return '#0071e3';
+};
+
+const pnlAccent = (value?: number) => {
+  if (typeof value !== 'number') {
+    return '#0071e3';
+  }
+  return value >= 0 ? '#f5222d' : '#16a34a';
+};
+
+const tradeTypeLabel = (value?: string) => {
+  const labels: Record<string, string> = {
+    BUY: '买入',
+    SELL: '卖出',
+    DIVIDEND: '分红',
+    FEE: '费用',
+    BONUS_SHARE: '送股',
+    SPLIT: '拆股'
+  };
+  return value ? labels[value] || value : '-';
+};
+
+const tradeTypeColor = (value?: string) => {
+  if (value === 'BUY' || value === 'BONUS_SHARE') {
+    return 'red';
+  }
+  if (value === 'SELL' || value === 'FEE') {
+    return 'green';
+  }
+  return 'blue';
+};
+
+const ruleTypeLabel = (value?: string) => {
+  const labels: Record<string, string> = {
+    PRICE: '价格',
+    PERCENT_CHANGE: '涨跌幅',
+    VOLUME_ABNORMAL: '成交量异常'
+  };
+  return value ? labels[value] || value : '-';
+};
+
+const directionLabel = (value?: string) => {
+  const labels: Record<string, string> = {
+    ABOVE: '高于/向上',
+    BELOW: '低于/向下',
+    UP: '上涨触发',
+    DOWN: '下跌触发'
+  };
+  return value ? labels[value] || value : '-';
+};
+
+const directionColor = (value?: string) => {
+  if (value === 'ABOVE' || value === 'UP') {
+    return 'red';
+  }
+  if (value === 'BELOW' || value === 'DOWN') {
+    return 'green';
+  }
+  return 'blue';
 };
 
 const QuoteChange = ({ quote }: { quote?: StockQuote }) => {

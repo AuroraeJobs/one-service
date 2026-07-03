@@ -125,16 +125,30 @@ Documentation:
 
 ## Checklist
 
-- [ ] Add query-param support for symbol/account filters on linked stock pages.
-- [ ] Add holding summary widget to symbol detail.
-- [ ] Add recent trades widget to symbol detail.
-- [ ] Add active alert rules widget to symbol detail.
-- [ ] Add symbol-aware shortcuts from detail to trades, alerts, K-lines, and sync.
+- [x] Add query-param support for symbol/account filters on linked stock pages. Trades, positions, K-lines, sync, and alerts read route context for initial filters/actions.
+- [x] Add holding summary widget to symbol detail.
+- [x] Add recent trades widget to symbol detail.
+- [x] Add active alert rules widget to symbol detail.
+- [x] Add symbol-aware shortcuts from detail to trades, alerts, K-lines, and sync.
 - [ ] Upgrade overview dashboard with portfolio summary and holdings highlights.
 - [ ] Add recent alert history widget to overview.
 - [ ] Add analysis widgets to overview.
 - [ ] Add provider health mini status to overview.
 - [ ] Link overview and analysis items to symbol detail.
 - [ ] Verify empty, loading, and error states.
-- [ ] Verify frontend lint and build.
-- [ ] Update docs and commit/push after the milestone.
+- [x] Verify frontend lint and build.
+- [x] Update docs and commit/push after the milestone.
+
+## Progress
+
+### 2026-07-03
+
+- Added route-context support for linked stock pages:
+  - `/investments/trades?symbol=600519&accountId=...&action=create`
+  - `/investments/positions?accountId=...`
+  - `/investments/klines?symbol=600519&period=daily`
+  - `/investments/sync?symbol=600519&mode=single`
+  - `/investments/alerts?symbol=600519&action=create`
+- Enriched `/investments/stocks/:symbol` with holding summary, recent trades, and active alert rules.
+- Added symbol-aware detail shortcuts for creating a trade, creating an alert, querying K-lines, and opening K-line sync.
+- Verified with changed-file ESLint and full frontend build.

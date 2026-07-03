@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Alert, Button, Card, Form, Input, InputNumber, Modal, Popconfirm, Select, Space, Switch, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { BellOutlined, DeleteOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import { stockApi, type StockAlertHistory, type StockAlertRule } from '../services/api';
 
@@ -37,11 +37,13 @@ const enabledOptions = [
 
 const LifeStockAlertsPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [form] = Form.useForm<StockAlertRuleFormValues>();
   const [rules, setRules] = useState<StockAlertRule[]>([]);
   const [histories, setHistories] = useState<StockAlertHistory[]>([]);
   const [enabledFilter, setEnabledFilter] = useState<'all' | 'true' | 'false'>('all');
-  const [historySymbol, setHistorySymbol] = useState('');
+  const initialSymbol = searchParams.get('symbol') || '';
+  const [historySymbol, setHistorySymbol] = useState(initialSymbol);
   const [loadingRules, setLoadingRules] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -87,16 +89,23 @@ const LifeStockAlertsPage = () => {
     loadHistory();
   }, [loadHistory]);
 
-  const openCreateModal = () => {
+  const openCreateModal = useCallback(() => {
     form.resetFields();
     form.setFieldsValue({
+      symbol: historySymbol.trim() || undefined,
       ruleType: 'PRICE',
       direction: 'ABOVE',
       enabled: true,
       throttleSeconds: 3600
     });
     setModalOpen(true);
-  };
+  }, [form, historySymbol]);
+
+  useEffect(() => {
+    if (searchParams.get('action') === 'create') {
+      openCreateModal();
+    }
+  }, [openCreateModal, searchParams]);
 
   const saveRule = async () => {
     const values = await form.validateFields();

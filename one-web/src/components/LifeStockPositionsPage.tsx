@@ -2,14 +2,15 @@ import { useCallback, useEffect, useState } from 'react';
 import { Alert, Button, Card, Input, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { ReloadOutlined, SearchOutlined, SyncOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import { stockApi, type StockPosition } from '../services/api';
 
 const LifeStockPositionsPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [positions, setPositions] = useState<StockPosition[]>([]);
-  const [accountId, setAccountId] = useState('');
+  const [accountId, setAccountId] = useState(searchParams.get('accountId') || '');
   const [loading, setLoading] = useState(false);
   const [recalculating, setRecalculating] = useState(false);
   const [error, setError] = useState<string>();
@@ -101,11 +102,16 @@ const LifeStockPositionsPage = () => {
     {
       title: '操作',
       key: 'action',
-      width: 120,
+      width: 180,
       render: (_, record) => (
-        <Button type="link" onClick={() => navigate(`/investments/stocks/${record.symbol}`)}>
-          个股
-        </Button>
+        <Space>
+          <Button type="link" onClick={() => navigate(`/investments/stocks/${record.symbol}`)}>
+            个股
+          </Button>
+          <Button type="link" onClick={() => navigate(`/investments/trades?symbol=${encodeURIComponent(record.symbol)}&accountId=${encodeURIComponent(record.accountId || '')}`)}>
+            交易
+          </Button>
+        </Space>
       )
     }
   ];

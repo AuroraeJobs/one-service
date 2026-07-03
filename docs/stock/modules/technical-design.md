@@ -343,9 +343,20 @@ Rules:
 Frontend stock detail:
 
 - `/investments` owns the watchlist table and navigates rows to `/investments/stocks/:symbol`.
-- `/investments/stocks/:symbol` consumes only internal APIs: `GET /stock/quote` and `GET /stock/{symbol}/klines`.
+- `/investments/stocks/:symbol` consumes only internal APIs: `GET /stock/quote`, `GET /stock/{symbol}/klines`, `GET /stock/portfolio/summary`, `GET /stock/trades`, and `GET /stock/alerts/rules`.
 - The detail page renders quote metrics from `StockQuote` and chart series from normalized `StockKLine`; it does not know the concrete market data provider.
 - K-line visualization uses `echarts-for-react` with candlestick, volume, MA5, MA10, and MA20 series.
+- Symbol detail also renders holding, recent trades, and active alert rules from normalized stock DTOs.
+- Symbol detail provides shortcuts to trades, alerts, K-lines, and sync pages with `symbol` preserved in the route query.
+
+Frontend stock route context:
+
+- `/investments/trades` supports `symbol`, `accountId`, and `action=create` query params.
+- `/investments/positions` supports `accountId`.
+- `/investments/klines` supports `symbol` and `period`.
+- `/investments/sync` supports `symbol`, `logSymbol`, and `mode=batch`.
+- `/investments/alerts` supports `symbol` and `action=create`.
+- Query params only prefill internal page state; frontend still calls project-owned `/stock/*` APIs and does not call provider-specific endpoints.
 
 Portfolio storage:
 

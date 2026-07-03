@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Form, Input, InputNumber, Modal, Popconfirm, Select, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { DeleteOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import { stockApi, type StockTrade } from '../services/api';
 
@@ -31,10 +31,13 @@ const tradeTypeOptions = [
 
 const LifeStockTradesPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [form] = Form.useForm<StockTradeFormValues>();
   const [trades, setTrades] = useState<StockTrade[]>([]);
-  const [accountId, setAccountId] = useState('');
-  const [symbol, setSymbol] = useState('');
+  const initialAccountId = searchParams.get('accountId') || '';
+  const initialSymbol = searchParams.get('symbol') || '';
+  const [accountId, setAccountId] = useState(initialAccountId);
+  const [symbol, setSymbol] = useState(initialSymbol);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -63,14 +66,22 @@ const LifeStockTradesPage = () => {
     loadTrades();
   }, [loadTrades]);
 
-  const openCreateModal = () => {
+  const openCreateModal = useCallback(() => {
     form.resetFields();
     form.setFieldsValue({
+      accountId: accountId.trim() || undefined,
+      symbol: symbol.trim() || undefined,
       tradeType: 'BUY',
       tradedAt: Date.now()
     });
     setModalOpen(true);
-  };
+  }, [accountId, form, symbol]);
+
+  useEffect(() => {
+    if (searchParams.get('action') === 'create') {
+      openCreateModal();
+    }
+  }, [openCreateModal, searchParams]);
 
   const saveTrade = async () => {
     const values = await form.validateFields();
