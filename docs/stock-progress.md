@@ -59,7 +59,7 @@ Implemented baseline:
 - Redis quote cache exists for latest quotes and last successful fallback snapshots.
 - Quote responses include stale metadata for fallback data.
 - Investment page displays stale fallback messages when present.
-- `StockMarketServiceTest` covers symbol normalization, Sina quote parsing, and provider failure fallback to last successful Redis cache.
+- `StockMarketServiceTest` covers symbol normalization, Sina quote parsing, quote cache Java Time serialization, and provider failure fallback to last successful Redis cache.
 - Root Maven Surefire is pinned to `3.2.5` so JUnit 5/JUnit Platform tests are discovered instead of being skipped by the old default plugin.
 
 Architecture rule to preserve:

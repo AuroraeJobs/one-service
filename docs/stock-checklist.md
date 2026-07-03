@@ -108,6 +108,7 @@ Use this file as the durable task board for the stock module. When a task is fin
 - [x] Frontend changed files pass ESLint.
 - [ ] Full frontend build passes after unrelated TypeScript errors are fixed.
 - [x] Quote provider failure path is verified. Unit test covers provider error fallback to `stock:quote:last-success:{symbol}`.
+- [x] Quote cache supports `LocalDateTime` fields such as `fetchedAt`.
 - [ ] Mobile layout is checked for investment page.
 - [ ] Desktop layout is checked for investment page.
 - [x] Documentation is updated after each completed milestone.

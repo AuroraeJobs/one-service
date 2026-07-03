@@ -52,7 +52,7 @@ public class StockMarketService implements IStockMarketService {
                               ObjectMapper objectMapper) {
         this.properties = properties;
         this.redisTemplate = redisTemplate;
-        this.objectMapper = objectMapper;
+        this.objectMapper = objectMapper.copy().findAndRegisterModules();
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(Duration.ofSeconds(properties.getConnectTimeoutSeconds()));
         requestFactory.setReadTimeout(Duration.ofSeconds(properties.getReadTimeoutSeconds()));

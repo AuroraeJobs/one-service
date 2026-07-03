@@ -5,6 +5,7 @@ import com.one.record.configuration.StockMarketProperties;
 import com.one.record.stock.StockQuote;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.MediaType;
@@ -14,9 +15,14 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
+import java.time.Duration;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
@@ -84,6 +90,29 @@ class StockMarketServiceTest {
         assertThat(quote.getTradeDateTime()).isEqualTo("2026-07-03 15:00:00");
         assertThat(quote.getAvailable()).isTrue();
         assertThat(quote.getStale()).isFalse();
+        server.verify();
+    }
+
+    @Test
+    void quotesWritesFetchedAtQuoteToRedisCache() throws Exception {
+        properties.setCacheEnabled(true);
+        properties.setQuoteCacheTtlSeconds(10);
+        properties.setFallbackCacheTtlSeconds(604800);
+        when(valueOperations.get(anyString())).thenReturn(null);
+
+        MockRestServiceServer server = bindMockServer();
+        server.expect(requestTo("https://hq.sinajs.cn/list=sh600519"))
+                .andRespond(withSuccess(sinaResponse("sh600519", sinaPayload("贵州茅台")).getBytes(Charset.forName("GBK")), MediaType.TEXT_PLAIN));
+
+        List<StockQuote> quotes = service.quotes(List.of("600519"));
+
+        assertThat(quotes).hasSize(1);
+        assertThat(quotes.get(0).getFetchedAt()).isNotNull();
+        ArgumentCaptor<String> cacheValueCaptor = ArgumentCaptor.forClass(String.class);
+        verify(valueOperations, times(2)).set(anyString(), cacheValueCaptor.capture(), any(Duration.class));
+        for (String cacheValue : cacheValueCaptor.getAllValues()) {
+            assertThat(objectMapper.readTree(cacheValue).hasNonNull("fetchedAt")).isTrue();
+        }
         server.verify();
     }
 

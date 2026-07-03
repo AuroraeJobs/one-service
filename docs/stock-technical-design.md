@@ -248,11 +248,13 @@ Current behavior:
 - Provider request failures try last-success fallback for every missing symbol.
 - Provider unavailable responses also try last-success fallback for that symbol.
 - Fallback quotes set `stale=true` and include a `staleReason`.
+- Quote cache JSON is written with a service-local `ObjectMapper` copy that auto-registers modules, so Java Time fields such as `fetchedAt: LocalDateTime` can be serialized and deserialized.
 
 Current verification:
 
 - `StockMarketServiceTest.normalizeSymbolAddsMarketPrefixForAShares` covers the initial A-share normalization rules.
 - `StockMarketServiceTest.quotesParsesSinaResponseIntoNormalizedQuote` covers GBK Sina payload parsing into the project-owned `StockQuote` DTO.
+- `StockMarketServiceTest.quotesWritesFetchedAtQuoteToRedisCache` covers Redis serialization for quotes that contain `fetchedAt`.
 - `StockMarketServiceTest.quotesReturnsLastSuccessCacheWhenProviderFails` covers provider error fallback to `stock:quote:last-success:{symbol}`.
 - Maven Surefire is pinned to `3.2.5` in the root POM so these JUnit Platform tests are executed.
 
