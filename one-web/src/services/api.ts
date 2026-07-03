@@ -24,6 +24,15 @@ interface RecordListResponse {
   line: string;
 }
 
+export interface LotteryRecordQuery {
+  issueStart?: string;
+  issueEnd?: string;
+  lineStart?: string;
+  lineEnd?: string;
+  dayStart?: string;
+  dayEnd?: string;
+}
+
 export interface RecordYearCount {
   year: string;
   count: number;
@@ -161,6 +170,28 @@ export const recordApi = {
   // 更新记录
   update: (): Promise<void> => {
     return apiClient.get('/record/update');
+  },
+};
+
+// 彩票开奖记录API，新功能优先使用 /lottery/records 命名空间
+export const lotteryRecordApi = {
+  latest: (): Promise<LastRecordResponse> => {
+    return apiClient.get('/lottery/records/latest');
+  },
+  first: (): Promise<LastRecordResponse> => {
+    return apiClient.get('/lottery/records/first');
+  },
+  records: (params?: LotteryRecordQuery): Promise<RecordListResponse[]> => {
+    return apiClient.get('/lottery/records', { params });
+  },
+  getYearlyCounts: (): Promise<RecordYearCount[]> => {
+    return apiClient.get('/lottery/records/yearly-counts');
+  },
+  refreshYearlyCounts: (): Promise<RecordYearCount[]> => {
+    return apiClient.post('/lottery/records/yearly-counts/statistics');
+  },
+  sync: (): Promise<void> => {
+    return apiClient.post('/lottery/records/sync');
   },
 };
 
