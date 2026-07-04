@@ -84,7 +84,7 @@ Use this file as the durable task board for the lottery module. When a task is f
 
 ## Iteration 05: Outcome Analysis And Ledger
 
-- [ ] Add ledger summary DTO.
+- [x] Add ledger summary DTO. Added `LotteryLedgerSummary` and `GET /lottery/ledger/summary` for cost, prize, net result, and ROI.
 - [ ] Add issue-level ledger endpoint.
 - [ ] Add monthly ledger endpoint.
 - [ ] Add rule/source performance endpoint.
