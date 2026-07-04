@@ -309,8 +309,22 @@ const LotteryExportMaintenancePage = () => {
       key: 'research-presets',
       label: '研究预设报告',
       status: 'PASS',
-      message: '研究页支持最新预测、最强规则、波动规则、票据结果预设和打印摘要',
+      message: '研究页支持决策差额、ROI 优先、预警复核和打印摘要',
       path: '/lottery/research'
+    },
+    {
+      key: 'outcome-operations',
+      label: '复盘运营入口',
+      status: 'PASS',
+      message: '决策页、工作台、票据结算和研究页均已接入保存决策复盘入口',
+      path: '/lottery/predictions/decision'
+    },
+    {
+      key: 'month-end-report-presets',
+      label: '月末报表预设',
+      status: 'PASS',
+      message: '导出页提供复盘运营和月末复盘报表区块预设',
+      path: '/lottery/exports'
     },
     {
       key: 'api-contract',
@@ -323,7 +337,7 @@ const LotteryExportMaintenancePage = () => {
       key: 'automated-route-smoke',
       label: '自动路由冒烟',
       status: 'PASS',
-      message: 'npm run lottery:smoke 使用 fixture 校验工作台、决策、票据、研究和导出路由',
+      message: 'npm run lottery:smoke 使用 V12 fixture 校验工作台、决策、票据、研究和导出路由',
       path: '/lottery/exports'
     },
     {
@@ -340,7 +354,7 @@ const LotteryExportMaintenancePage = () => {
       message: '真实浏览器复测仍需要本地登录态、后端服务和代理/网络状态确认',
       path: '/lottery/workbench'
     }
-  ], [maintenance]);
+  ], []);
 
   const auditColumns: ColumnsType<LotteryAuditEvent> = [
     { title: '类型', dataIndex: 'targetType', key: 'targetType', render: value => <Tag color="blue">{value || '-'}</Tag> },

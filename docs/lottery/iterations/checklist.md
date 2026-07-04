@@ -419,10 +419,10 @@ Goal: make the saved-decision outcome loop easier to operate from the frontend, 
 
 ### Wave 15D: Release Evidence And Month-End UX Polish
 
-- [ ] Extend route smoke fixtures/assertions for outcome filters, export URL initialization, and workbench follow-up links.
-- [ ] Add release-readiness evidence for V12 frontend outcome operations.
-- [ ] Review responsive layout for decision, export, workbench, research, and ticket pages.
-- [ ] Run month-end verification, update docs, commit, and push.
+- [x] Extend route smoke fixtures/assertions for outcome filters, export URL initialization, and workbench follow-up links. Route smoke fixture now targets V12 frontend outcome operations and checks decision empty states, workbench saved-outcome states, ticket drilldown copy, research presets, and export report presets.
+- [x] Add release-readiness evidence for V12 frontend outcome operations. Export release readiness now includes outcome operations, V12 route smoke evidence, and month-end report presets.
+- [x] Review responsive layout for decision, export, workbench, research, and ticket pages. CSS now keeps decision outcome grids, ticket decision drilldowns, report sections, release cards, and report builder controls single-column on narrow screens.
+- [x] Run month-end verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
 ## Documentation And Delivery
 

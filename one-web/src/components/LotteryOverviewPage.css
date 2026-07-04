@@ -4683,9 +4683,21 @@ button.lottery-latest-vs-card:hover {
   .lottery-ticket-budget-grid,
   .lottery-ticket-settlement-metrics,
   .lottery-ticket-settlement-list,
+  .lottery-ticket-decision-drilldown,
+  .lottery-report-section-grid,
   .lottery-research-report-grid,
   .lottery-release-readiness-grid,
   .lottery-workbench-status-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lottery-report-builder > .ant-space {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .lottery-report-builder .ant-checkbox-group {
+    display: grid;
     grid-template-columns: minmax(0, 1fr);
   }
 
