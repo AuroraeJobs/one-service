@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Button, Card, Empty, Space, Spin, Tag, message } from 'antd';
-import { BellOutlined, CheckCircleOutlined, ClockCircleOutlined, ReloadOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
+import { BellOutlined, CheckCircleOutlined, ClockCircleOutlined, MobileOutlined, ReloadOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import { lotteryCalendarApi, type LotteryCalendarReminder, type LotteryCalendarState } from '../services/api';
@@ -71,6 +71,9 @@ const LotteryAlertPage = () => {
       title="日历提醒"
       actions={
         <Space wrap>
+          <Button icon={<MobileOutlined />} onClick={() => navigate('/lottery/mobile')}>
+            移动指挥
+          </Button>
           <Button icon={<SafetyCertificateOutlined />} onClick={() => navigate('/lottery/ticket-packs')}>
             票包队列
           </Button>

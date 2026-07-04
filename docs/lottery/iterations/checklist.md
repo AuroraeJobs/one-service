@@ -518,11 +518,11 @@ Goal: turn the V14 execution workflow into a learning loop: every strategy, simu
 
 ### Week 3: Mobile Command Flow And Batch Review
 
-- [ ] Add mobile-oriented summaries for today, next draw, pending approvals, stale evidence, settlement gaps, and release blockers.
-- [ ] Add backend compact summary API only if existing workbench/governance responses are too heavy for mobile command flow.
-- [ ] Add `/lottery/mobile` frontend command page with compact cards, segmented views, large touch targets, and batch review actions for reminders, packs, and outcomes.
-- [ ] Add mobile entry points from workbench, alerts, governance, ticket packs, and monthly review while preserving desktop routes.
-- [ ] Run mobile route smoke/build verification, responsive layout review, update docs, commit, and push.
+- [x] Add mobile-oriented summaries for today, next draw, pending approvals, stale evidence, settlement gaps, and release blockers. Added `/lottery/mobile` metric cards backed by workbench, operations health, reminders, ticket packs, outcomes, and recommendations.
+- [x] Add backend compact summary API only if existing workbench/governance responses are too heavy for mobile command flow. Reused existing workbench, operations, reminder, ticket-pack, outcome, and recommendation APIs; no extra backend endpoint was needed for this slice.
+- [x] Add `/lottery/mobile` frontend command page with compact cards, segmented views, large touch targets, and batch review actions for reminders, packs, and outcomes. Added action, ticket-pack, attribution, and recommendation segments with confirm, snooze, approve, save-as-ticket, apply, and defer actions.
+- [x] Add mobile entry points from workbench, alerts, governance, ticket packs, and monthly review while preserving desktop routes. Added `移动指挥` handoffs without changing desktop workflow routes.
+- [x] Run mobile route smoke/build verification, responsive layout review, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
 ### Week 4: Closed-Loop Reports, Evidence Packs, And Release Readiness
 

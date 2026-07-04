@@ -1607,6 +1607,9 @@ const LotteryWorkbenchPage = () => {
           <Button icon={<ReloadOutlined />} loading={loading} onClick={loadSummary}>
             刷新
           </Button>
+          <Button icon={<ThunderboltOutlined />} onClick={() => navigate('/lottery/mobile')}>
+            移动指挥
+          </Button>
           <Button icon={<SyncOutlined />} onClick={() => navigate(savedSyncPath)}>
             同步运维
           </Button>

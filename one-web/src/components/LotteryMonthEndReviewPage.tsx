@@ -7,6 +7,7 @@ import {
   CheckCircleOutlined,
   DownloadOutlined,
   FileTextOutlined,
+  MobileOutlined,
   PieChartOutlined,
   ReloadOutlined,
   SafetyCertificateOutlined,
@@ -213,6 +214,9 @@ const LotteryMonthEndReviewPage = () => {
       title="月末复盘"
       actions={
         <Space wrap>
+          <Button icon={<MobileOutlined />} onClick={() => navigate('/lottery/mobile')}>
+            移动指挥
+          </Button>
           <Button icon={<BranchesOutlined />} onClick={() => navigate('/lottery/outcomes')}>
             归因
           </Button>

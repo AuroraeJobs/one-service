@@ -4,6 +4,7 @@ import {
   CheckCircleOutlined,
   FileAddOutlined,
   ImportOutlined,
+  MobileOutlined,
   ReloadOutlined,
   SafetyCertificateOutlined,
   SaveOutlined
@@ -172,6 +173,7 @@ const LotteryTicketPackPage = () => {
       actions={
         <Space wrap>
           <Button icon={<ReloadOutlined />} onClick={loadPacks} loading={loading}>刷新</Button>
+          <Button icon={<MobileOutlined />} onClick={() => navigate('/lottery/mobile')}>移动指挥</Button>
           <Button type="primary" icon={<FileAddOutlined />} loading={actionLoading === 'create'} onClick={createPack}>建草稿</Button>
         </Space>
       }

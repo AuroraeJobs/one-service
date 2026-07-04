@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 18 Week 2 lottery recommendation lifecycle smoke",
-  "generatedAt": "2026-07-04T15:33:41.028Z",
+  "target": "Iteration 18 Week 3 lottery mobile command smoke",
+  "generatedAt": "2026-07-04T15:44:01.718Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
-  "routeCount": 13,
-  "checkCount": 276,
+  "routeCount": 14,
+  "checkCount": 307,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
@@ -17,6 +17,14 @@
       "mockApiCount": 12,
       "emptyStateCount": 7,
       "errorStateCount": 4
+    },
+    {
+      "route": "/lottery/mobile",
+      "label": "移动",
+      "component": "LotteryMobileCommandPage",
+      "mockApiCount": 11,
+      "emptyStateCount": 4,
+      "errorStateCount": 5
     },
     {
       "route": "/lottery/strategy-portfolios",

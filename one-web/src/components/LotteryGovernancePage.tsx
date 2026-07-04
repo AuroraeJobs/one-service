@@ -8,6 +8,7 @@ import {
   CheckCircleOutlined,
   CompassOutlined,
   ExperimentOutlined,
+  MobileOutlined,
   ReloadOutlined,
   SafetyCertificateOutlined,
   WarningOutlined
@@ -207,6 +208,7 @@ const LotteryGovernancePage = () => {
       title="治理看板"
       actions={
         <Space wrap>
+          <Button icon={<MobileOutlined />} onClick={() => navigate('/lottery/mobile')}>移动指挥</Button>
           <Button icon={<BranchesOutlined />} onClick={() => navigate('/lottery/outcomes')}>归因</Button>
           <Button icon={<CompassOutlined />} onClick={() => navigate('/lottery/recommendations')}>推荐</Button>
           <Button onClick={() => navigate('/lottery/settings')}>阈值设置</Button>

@@ -551,6 +551,21 @@ PATCH /lottery/recommendations/{id}/status
 
 The frontend route `/lottery/recommendations` presents promote/watch/pause/retire lanes with confidence, evidence age, expected action, reasons, refresh controls, and one-click lifecycle actions. Strategy portfolios, research notebook, governance, simulator, and prediction decision pages link into the recommendation board so lifecycle review can start from the work surface where stale evidence or strategy drift is discovered.
 
+V15 Week 3 adds a mobile command surface without introducing another backend aggregate. `/lottery/mobile` reuses existing workbench, operations health, reminder, ticket-pack, outcome attribution, and recommendation lifecycle APIs to build compact cards for today, next draw, pending approvals, stale evidence, settlement gaps, and release blockers. This keeps mobile behavior aligned with desktop source-of-truth services while avoiding a second summary contract until payload size or latency requires it.
+
+Mobile command data sources:
+
+```text
+GET /lottery/workbench/summary
+GET /lottery/operations/health
+GET /lottery/reminders/summary
+GET /lottery/ticket-packs
+GET /lottery/outcomes
+GET /lottery/recommendations
+```
+
+Mobile batch actions call the existing reminder, ticket-pack, and recommendation lifecycle endpoints. The page exposes action, ticket-pack, outcome, and recommendation segments with large touch targets for confirm, snooze, approve, save-as-ticket, apply, defer, and handoff navigation. Workbench, alerts, governance, ticket packs, and month-end review link into `/lottery/mobile` while preserving their full desktop routes.
+
 Portfolio-style governance extends preferences and ledger behavior with budget and exposure thresholds. The backend flags budget and max-ticket issues without blocking ordinary CRUD unless a future explicit enforcement mode is added.
 
 Wave 10E extends `LotteryPreference` with `weeklyBudget`, `monthlyBudget`, `maxTicketsPerIssue`, and `budgetReminderPercent`. `GET /lottery/budget/status` reads preferences and recorded tickets to return weekly/monthly usage, max issue exposure, and restrained warning rows for the workbench and ticket page. `LotteryLedgerSummary` also includes rolling 30-day cost/prize/net/ROI plus max/current drawdown values for exposure review.

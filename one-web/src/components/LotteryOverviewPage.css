@@ -2589,6 +2589,108 @@
   gap: 6px;
 }
 
+.lottery-mobile-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 18px;
+  border: 1px solid #edf0f5;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.lottery-mobile-hero > div {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.lottery-mobile-hero span,
+.lottery-mobile-hero p,
+.lottery-mobile-metrics em,
+.lottery-mobile-list article p,
+.lottery-mobile-list article span {
+  color: #6b7280;
+  font-size: 12px;
+  font-style: normal;
+}
+
+.lottery-mobile-hero strong {
+  color: #111827;
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+.lottery-mobile-metrics {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.lottery-mobile-metrics button {
+  display: grid;
+  gap: 8px;
+  min-height: 128px;
+  padding: 14px;
+  text-align: left;
+  border: 1px solid #edf0f5;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.lottery-mobile-metrics button > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #374151;
+  font-size: 13px;
+}
+
+.lottery-mobile-metrics button strong {
+  color: #111827;
+  font-size: 24px;
+  line-height: 1.1;
+}
+
+.lottery-mobile-tabs {
+  margin-bottom: 14px;
+}
+
+.lottery-mobile-list {
+  display: grid;
+  gap: 12px;
+}
+
+.lottery-mobile-list article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #edf0f5;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.lottery-mobile-list article > div {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.lottery-mobile-list article strong {
+  color: #111827;
+  font-size: 15px;
+}
+
+.lottery-mobile-list .ant-btn {
+  min-height: 40px;
+}
+
 .lottery-notebook-editor {
   display: grid;
   gap: 10px;
@@ -5751,6 +5853,7 @@ button.lottery-latest-vs-card:hover {
   .lottery-outcome-card-grid,
   .lottery-recommendation-summary,
   .lottery-recommendation-board,
+  .lottery-mobile-metrics,
   .lottery-portfolio-score-row,
   .lottery-portfolio-evidence-editor-row,
   .lottery-notebook-editor-row,
@@ -5815,9 +5918,16 @@ button.lottery-latest-vs-card:hover {
   .lottery-governance-hero,
   .lottery-outcome-timeline button,
   .lottery-recommendation-card-head,
+  .lottery-mobile-hero,
+  .lottery-mobile-list article,
   .lottery-simulator-candidate-list article {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .lottery-mobile-hero,
+  .lottery-mobile-list article {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .lottery-ticket-import-mobile-list {

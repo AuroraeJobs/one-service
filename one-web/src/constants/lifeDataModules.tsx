@@ -22,6 +22,7 @@ import {
   HistoryOutlined,
   LineChartOutlined,
   MessageOutlined,
+  MobileOutlined,
   MoneyCollectOutlined,
   PieChartOutlined,
   SafetyCertificateOutlined,
@@ -234,6 +235,14 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
       label: '票包',
       icon: <SafetyCertificateOutlined />,
       accent: '#0071e3'
+    },
+    {
+      id: 'lottery-mobile',
+      moduleKey: 'lottery',
+      path: '/lottery/mobile',
+      label: '移动',
+      icon: <MobileOutlined />,
+      accent: '#ff9500'
     },
     {
       id: 'lottery-outcomes',
