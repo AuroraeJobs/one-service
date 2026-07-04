@@ -45,6 +45,7 @@ const LotteryPredictionDetailPage = () => {
   const [preference, setPreference] = useState<LotteryPreference>();
   const [loading, setLoading] = useState(true);
   const [savingTicketKey, setSavingTicketKey] = useState<string>();
+  const [batchSaving, setBatchSaving] = useState(false);
   const [error, setError] = useState<string>();
 
   const loadDetail = async () => {
@@ -122,6 +123,53 @@ const LotteryPredictionDetailPage = () => {
     }
   };
 
+  const saveAllAsTickets = async () => {
+    if (!prediction?.targetPeriod) {
+      message.error('缺少目标期号，无法保存票据');
+      return;
+    }
+    const tickets = [
+      {
+        title: prediction.title || '主预测',
+        redNumbers: prediction.redNumbers || [],
+        blueNumber: prediction.blueNumber || '',
+        score: prediction.score
+      },
+      ...(prediction.candidates || []).map(candidate => ({
+        title: candidate.title,
+        redNumbers: candidate.redNumbers || [],
+        blueNumber: candidate.blueNumber || '',
+        score: candidate.score
+      }))
+    ].filter(item => item.redNumbers.length === 6 && item.blueNumber);
+    if (!tickets.length) {
+      message.warning('暂无可保存的预测号码');
+      return;
+    }
+    setBatchSaving(true);
+    setError(undefined);
+    try {
+      const result = await lotteryTicketApi.saveTickets(tickets.map(ticket => ({
+        issue: String(prediction.targetPeriod),
+        redNumbers: ticket.redNumbers,
+        blueNumber: ticket.blueNumber,
+        quantity: 1,
+        cost: 2,
+        source: preference?.defaultTicketSource || 'PREDICTION',
+        status: 'DRAFT',
+        predictionSnapshotId: prediction.id,
+        note: `${ticket.title} · 预测评分 ${ticket.score ?? '-'}`
+      })));
+      message.success(`已保存 ${result.savedCount || 0} 注，跳过重复 ${result.duplicateCount || 0} 注`);
+    } catch (requestError) {
+      console.error('批量保存预测票据失败:', requestError);
+      setError(requestError instanceof Error ? requestError.message : '批量保存预测票据失败');
+      message.error('批量保存预测票据失败');
+    } finally {
+      setBatchSaving(false);
+    }
+  };
+
   return (
     <LifePageShell
       className="lottery-prediction-page"
@@ -181,6 +229,13 @@ const LotteryPredictionDetailPage = () => {
                   )}
                 >
                   保存为票据
+                </Button>
+                <Button
+                  size="small"
+                  loading={batchSaving}
+                  onClick={saveAllAsTickets}
+                >
+                  保存全部候选
                 </Button>
               </div>
             </Card>

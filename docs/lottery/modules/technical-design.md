@@ -180,6 +180,8 @@ updatedAt
 
 The frontend ticket list page at `/lottery/tickets` reads ticket list and summary APIs together, shows issue filtering, status/prize tags, generated numbers, cost, and prize outcome.
 
+Prediction detail can batch-save the primary prediction and all candidate predictions through `POST /lottery/tickets/batch`; the ticket page can run `POST /lottery/tickets/check-prizes/latest` and display the returned summary before refreshing ticket rows and totals.
+
 The ticket page create/edit modal posts to the ticket CRUD APIs and accepts red numbers as space- or comma-separated input before converting them to the backend list format.
 
 Ticket list filtering supports `issue`, `status`, `source`, and `prizeGrade` on `GET /lottery/tickets`, with the frontend exposing matching controls on the ticket page.

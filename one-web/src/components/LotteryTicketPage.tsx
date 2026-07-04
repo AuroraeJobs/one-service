@@ -4,7 +4,12 @@ import type { ColumnsType } from 'antd/es/table';
 import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SearchOutlined, TrophyOutlined } from '@ant-design/icons';
 import LifePageShell from './LifePageShell';
 import LotteryBalls from './lottery/LotteryBalls';
-import { lotteryTicketApi, type LotteryTicket, type LotteryTicketSummary } from '../services/api';
+import {
+  lotteryTicketApi,
+  type LotteryTicket,
+  type LotteryTicketPrizeCheckSummary,
+  type LotteryTicketSummary
+} from '../services/api';
 import './LotteryOverviewPage.css';
 
 const formatMoney = (value?: number) => {
@@ -97,6 +102,8 @@ const LotteryTicketPage = () => {
   const [prizeGradeFilter, setPrizeGradeFilter] = useState<string>();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [checkingLatest, setCheckingLatest] = useState(false);
+  const [latestCheckSummary, setLatestCheckSummary] = useState<LotteryTicketPrizeCheckSummary>();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTicket, setEditingTicket] = useState<LotteryTicket>();
   const [error, setError] = useState<string>();
@@ -207,6 +214,21 @@ const LotteryTicketPage = () => {
     }
   };
 
+  const checkLatestPrizes = async () => {
+    setCheckingLatest(true);
+    setError(undefined);
+    try {
+      const result = await lotteryTicketApi.checkLatestPrizes();
+      setLatestCheckSummary(result);
+      await loadTickets();
+    } catch (requestError) {
+      console.error('按最新开奖记录核奖失败:', requestError);
+      setError(requestError instanceof Error ? requestError.message : '按最新开奖记录核奖失败');
+    } finally {
+      setCheckingLatest(false);
+    }
+  };
+
   const columns: ColumnsType<LotteryTicket> = [
     {
       title: '期号',
@@ -282,6 +304,9 @@ const LotteryTicketPage = () => {
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
             新增票据
           </Button>
+          <Button icon={<TrophyOutlined />} loading={checkingLatest} onClick={checkLatestPrizes}>
+            最新核奖
+          </Button>
           <Input
             allowClear
             prefix={<SearchOutlined />}
@@ -337,6 +362,14 @@ const LotteryTicketPage = () => {
       }
     >
       {error ? <Alert className="lottery-overview-status-alert" type="error" showIcon message={error} /> : null}
+      {latestCheckSummary ? (
+        <Alert
+          className="lottery-overview-status-alert"
+          type="success"
+          showIcon
+          message={`第 ${latestCheckSummary.issue || '-'} 期已核奖 ${latestCheckSummary.checkedTicketCount || 0} 注，中奖 ${latestCheckSummary.winningTicketCount || 0} 注，奖金 ${formatPrizeAmount(latestCheckSummary.totalPrizeAmount)}`}
+        />
+      ) : null}
       <section className="lottery-history-summary-grid">
         <Card className="life-panel-card lottery-clean-panel">
           <div className="lottery-history-summary-item">

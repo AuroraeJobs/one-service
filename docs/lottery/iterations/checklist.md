@@ -139,14 +139,14 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add `POST /lottery/tickets/batch`. Batch saving skips existing and in-request duplicate tickets.
 - [x] Add `POST /lottery/tickets/check-prizes/latest`. Uses the latest draw record to check pending tickets for that issue and returns a summary.
 - [x] Add backend tests for batch save, duplicate skip, and latest prize-check summary.
-- [ ] Add frontend API client methods for batch ticket save and latest prize-check summary.
-- [ ] Add one-click save of prediction primary plus candidate numbers.
-- [ ] Add latest-draw prize-check action to `/lottery/tickets`.
+- [x] Add frontend API client methods for batch ticket save and latest prize-check summary. Added `lotteryTicketApi.saveTickets` and `lotteryTicketApi.checkLatestPrizes`.
+- [x] Add one-click save of prediction primary plus candidate numbers. Prediction detail can now save the primary prediction and all candidates in one batch, with backend duplicate skipping.
+- [x] Add latest-draw prize-check action to `/lottery/tickets`. Ticket page can run latest-draw prize checking and displays the returned summary.
 - [ ] Add prediction history result-status filtering.
 - [ ] Add prediction detail saved-ticket count or linkback.
 - [ ] Add ticket page linkback to prediction snapshot when `predictionSnapshotId` exists.
 - [ ] Add prediction actual-result attachment from latest draw where matching snapshots exist.
-- [ ] Update frontend build after Iteration 08 page changes.
+- [x] Update frontend build after Iteration 08 page changes. `npm run build` passed after batch-save and latest prize-check UI changes.
 
 ## Documentation And Delivery
 

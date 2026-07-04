@@ -1732,6 +1732,23 @@ export interface LotteryTicketSummary {
   generatedAt?: number;
 }
 
+export interface LotteryTicketBatchSaveResult {
+  requestedCount?: number;
+  savedCount?: number;
+  duplicateCount?: number;
+  savedTickets: LotteryTicket[];
+  duplicateTickets: LotteryTicket[];
+  generatedAt?: number;
+}
+
+export interface LotteryTicketPrizeCheckSummary {
+  issue?: string;
+  checkedTicketCount?: number;
+  winningTicketCount?: number;
+  totalPrizeAmount?: number;
+  generatedAt?: number;
+}
+
 export interface LotteryLedgerSummary {
   ticketCount?: number;
   checkedTicketCount?: number;
@@ -1899,6 +1916,9 @@ export const lotteryTicketApi = {
   saveTicket: (ticket: Partial<LotteryTicket>): Promise<LotteryTicket> => {
     return apiClient.post('/lottery/tickets', ticket);
   },
+  saveTickets: (tickets: Partial<LotteryTicket>[]): Promise<LotteryTicketBatchSaveResult> => {
+    return apiClient.post('/lottery/tickets/batch', { tickets });
+  },
   updateTicket: (id: string, ticket: Partial<LotteryTicket>): Promise<LotteryTicket> => {
     return apiClient.put(`/lottery/tickets/${id}`, ticket);
   },
@@ -1907,6 +1927,9 @@ export const lotteryTicketApi = {
   },
   checkPrizes: (actualRecord: LotteryActualRecord): Promise<LotteryTicket[]> => {
     return apiClient.post('/lottery/tickets/check-prizes', actualRecord);
+  },
+  checkLatestPrizes: (): Promise<LotteryTicketPrizeCheckSummary> => {
+    return apiClient.post('/lottery/tickets/check-prizes/latest');
   }
 };
 
