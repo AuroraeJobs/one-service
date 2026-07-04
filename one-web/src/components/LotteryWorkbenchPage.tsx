@@ -41,6 +41,7 @@ import {
   type LotteryBudgetStatus,
   type LotteryCalendarState,
   type LotteryDailyStateItem,
+  type LotteryDecisionOutcomeItem,
   type LotteryDecisionOutcomeSummary,
   type LotteryPreference,
   type LotteryPredictionSnapshot,
@@ -67,6 +68,10 @@ interface LotteryRecentWorkLink {
   title: string;
   detail: string;
   path: string;
+  actions?: Array<{
+    label: string;
+    path: string;
+  }>;
 }
 
 type WorkbenchWidgetKey =
@@ -259,7 +264,7 @@ const fetchRecentWork = async (): Promise<LotteryWorkbenchRecentWork> => {
     lotteryExperimentApi.experiments({ page: 1, pageSize: 3 }),
     lotteryBacktestApi.reports({ page: 1, pageSize: 3 }),
     lotteryExportApi.auditEvents({ page: 1, pageSize: 3 }),
-    lotteryDecisionSetApi.outcomes({ limit: 3 })
+    lotteryDecisionSetApi.outcomes({ limit: 12 })
   ]);
 
   return {
@@ -312,6 +317,30 @@ const formatRoi = (netResult?: number, totalCost?: number) => {
     return '-';
   }
   return formatPercent((netResult / totalCost) * 100);
+};
+
+const decisionOutcomePath = (item?: LotteryDecisionOutcomeItem, params?: Record<string, string | undefined>) => {
+  const search = new URLSearchParams();
+  if (item?.targetIssue) {
+    search.set('targetIssue', item.targetIssue);
+  }
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value) {
+      search.set(key, value);
+    }
+  });
+  return `/lottery/predictions/decision${search.toString() ? `?${search.toString()}` : ''}`;
+};
+
+const decisionOutcomeTicketPath = (item?: LotteryDecisionOutcomeItem, fallback = '/lottery/tickets') =>
+  item?.targetIssue ? `/lottery/tickets?issue=${encodeURIComponent(item.targetIssue)}` : fallback;
+
+const decisionOutcomeExportPath = (item?: LotteryDecisionOutcomeItem) => {
+  const search = new URLSearchParams({ type: 'decision-outcomes' });
+  if (item?.targetIssue) {
+    search.set('targetIssue', item.targetIssue);
+  }
+  return `/lottery/exports?${search.toString()}`;
 };
 
 const stepStatusColor = (status?: string) => {
@@ -719,6 +748,59 @@ const LotteryWorkbenchPage = () => {
     }
   ];
 
+  const decisionOutcomeFollowUps = useMemo<WorkbenchActionQueueItem[]>(() => {
+    const outcomes = recentWork.decisionOutcomes?.items || [];
+    const items: WorkbenchActionQueueItem[] = [];
+
+    outcomes
+      .filter(item => (item.convertedTicketCount || 0) > (item.checkedConvertedTicketCount || 0))
+      .slice(0, 3)
+      .forEach(item => {
+        items.push({
+          key: `decision-unchecked-${item.decisionSetId || item.targetIssue}`,
+          group: '决策复盘',
+          title: '转票待核奖',
+          detail: `${item.title || `第 ${item.targetIssue || '-'} 期`} · 已核 ${item.checkedConvertedTicketCount || 0}/${item.convertedTicketCount || 0}`,
+          status: 'PENDING',
+          count: Math.max(0, (item.convertedTicketCount || 0) - (item.checkedConvertedTicketCount || 0)),
+          path: decisionOutcomeTicketPath(item, savedTicketsPath)
+        });
+      });
+
+    outcomes
+      .filter(item => (item.staleEvidenceCount || 0) > 0 || (item.volatileEvidenceCount || 0) > 0)
+      .slice(0, 3)
+      .forEach(item => {
+        const alertState = (item.staleEvidenceCount || 0) > 0 ? 'STALE' : 'VOLATILE';
+        items.push({
+          key: `decision-evidence-${item.decisionSetId || item.targetIssue}`,
+          group: '证据复核',
+          title: alertState === 'STALE' ? '决策证据过期' : '决策规则波动',
+          detail: `${item.title || `第 ${item.targetIssue || '-'} 期`} · 过期 ${item.staleEvidenceCount || 0} · 波动 ${item.volatileEvidenceCount || 0}`,
+          status: 'WARNING',
+          count: (item.staleEvidenceCount || 0) + (item.volatileEvidenceCount || 0),
+          path: decisionOutcomePath(item, { outcomeAlert: alertState })
+        });
+      });
+
+    outcomes
+      .filter(item => (item.warningCount || 0) >= 2)
+      .slice(0, 3)
+      .forEach(item => {
+        items.push({
+          key: `decision-warning-export-${item.decisionSetId || item.targetIssue}`,
+          group: '复盘留证',
+          title: '导出高提醒复盘',
+          detail: `${item.title || `第 ${item.targetIssue || '-'} 期`} · 提醒 ${item.warningCount || 0} · 净 ${formatCurrency(item.netResult)}`,
+          status: 'MANUAL',
+          count: item.warningCount,
+          path: decisionOutcomeExportPath(item)
+        });
+      });
+
+    return items;
+  }, [recentWork.decisionOutcomes?.items, savedTicketsPath]);
+
   const actionQueueItems = useMemo<WorkbenchActionQueueItem[]>(() => {
     const items: WorkbenchActionQueueItem[] = [];
     const pushDailyState = (group: string, item?: LotteryDailyStateItem) => {
@@ -800,13 +882,14 @@ const LotteryWorkbenchPage = () => {
         });
       });
 
-    return items;
+    return [...items, ...decisionOutcomeFollowUps];
   }, [
     budgetStatus?.warnings,
     dailyState?.predictionState,
     dailyState?.prizeCheckState,
     dailyState?.qualityState,
     dailyState?.syncState,
+    decisionOutcomeFollowUps,
     latestPredictionTarget,
     operationSummary?.message,
     operationSummary?.pendingActions,
@@ -858,6 +941,7 @@ const LotteryWorkbenchPage = () => {
       icon: ReactNode;
       title: string;
       path: string;
+      emptyDescription?: string;
       items: LotteryRecentWorkLink[];
     }> = [
       {
@@ -865,6 +949,7 @@ const LotteryWorkbenchPage = () => {
         icon: <ThunderboltOutlined />,
         title: '预测',
         path: savedPredictionHistoryPath,
+        emptyDescription: '暂无预测快照',
         items: recentWork.predictions.map(item => ({
           key: item.id || `prediction-${item.targetPeriod}-${item.createdAt}`,
           title: `第 ${item.targetPeriod || '-'} 期`,
@@ -877,6 +962,7 @@ const LotteryWorkbenchPage = () => {
         icon: <FileTextOutlined />,
         title: '票据',
         path: savedTicketsPath,
+        emptyDescription: '暂无票据记录',
         items: recentWork.tickets.map(item => ({
           key: item.id || `ticket-${item.issue}-${item.createdAt}`,
           title: `第 ${item.issue || item.period || '-'} 期`,
@@ -889,11 +975,17 @@ const LotteryWorkbenchPage = () => {
         icon: <SafetyCertificateOutlined />,
         title: '决策复盘',
         path: '/lottery/predictions/decision',
+        emptyDescription: recentWork.decisionOutcomes ? '暂无保存决策复盘结果' : '暂未读取到决策复盘',
         items: (recentWork.decisionOutcomes?.items || []).slice(0, 3).map(item => ({
           key: item.decisionSetId || `decision-${item.targetIssue}-${item.updatedAt}`,
           title: item.title || `第 ${item.targetIssue || '-'} 期决策`,
           detail: `候选 ${item.candidateCount || 0} · 中 ${item.winningCandidateCount || 0} · 净 ${formatCurrency(item.netResult)}`,
-          path: item.targetIssue ? `/lottery/predictions/decision?targetIssue=${item.targetIssue}` : '/lottery/predictions/decision'
+          path: decisionOutcomePath(item),
+          actions: [
+            { label: '决策', path: decisionOutcomePath(item) },
+            { label: '票据', path: decisionOutcomeTicketPath(item, savedTicketsPath) },
+            { label: '导出', path: decisionOutcomeExportPath(item) }
+          ]
         }))
       },
       {
@@ -901,6 +993,7 @@ const LotteryWorkbenchPage = () => {
         icon: <ExperimentOutlined />,
         title: '实验',
         path: '/lottery/experiments',
+        emptyDescription: '暂无策略实验',
         items: recentWork.experiments.map(item => ({
           key: item.id || `experiment-${item.strategyName}-${item.createdAt}`,
           title: item.strategyName || '策略实验',
@@ -913,6 +1006,7 @@ const LotteryWorkbenchPage = () => {
         icon: <BarChartOutlined />,
         title: '回测',
         path: '/lottery/backtests',
+        emptyDescription: '暂无回测报告',
         items: recentWork.backtests.map(item => ({
           key: item.id || `backtest-${item.strategyName}-${item.createdAt}`,
           title: item.strategyName || '回测报告',
@@ -925,6 +1019,7 @@ const LotteryWorkbenchPage = () => {
         icon: <DownloadOutlined />,
         title: '导出',
         path: '/lottery/exports',
+        emptyDescription: '暂无导出审计',
         items: recentWork.exports.map(item => ({
           key: item.id || `export-${item.targetId || item.generatedAt}`,
           title: item.targetType || item.eventType || '导出记录',
@@ -1279,14 +1374,25 @@ const LotteryWorkbenchPage = () => {
                     {group.items.length > 0 ? (
                       <div className="lottery-workbench-recent-list">
                         {group.items.map(item => (
-                          <button key={item.key} type="button" onClick={() => navigate(item.path)}>
-                            <strong>{item.title}</strong>
-                            <small>{item.detail}</small>
-                          </button>
+                          <article key={item.key} className="lottery-workbench-recent-item">
+                            <button type="button" onClick={() => navigate(item.path)}>
+                              <strong>{item.title}</strong>
+                              <small>{item.detail}</small>
+                            </button>
+                            {item.actions?.length ? (
+                              <div className="lottery-workbench-recent-actions">
+                                {item.actions.map(action => (
+                                  <Button key={action.label} size="small" type="link" onClick={() => navigate(action.path)}>
+                                    {action.label}
+                                  </Button>
+                                ))}
+                              </div>
+                            ) : null}
+                          </article>
                         ))}
                       </div>
                     ) : (
-                      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无记录" />
+                      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={group.emptyDescription || '暂无记录'} />
                     )}
                   </section>
                 ))}

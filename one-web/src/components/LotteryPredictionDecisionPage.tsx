@@ -984,7 +984,7 @@ const LotteryPredictionDecisionPage = () => {
         </Card>
       ) : (
         <Card className="life-panel-card lottery-clean-panel">
-          <Empty description="当前复盘筛选下暂无保存决策结果" />
+          <Empty description={(decisionOutcomeSummary?.items || []).length ? '当前复盘筛选下暂无结果' : '暂无保存决策复盘结果'} />
         </Card>
       )}
 

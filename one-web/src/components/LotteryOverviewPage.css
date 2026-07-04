@@ -1578,20 +1578,42 @@
   gap: 6px;
 }
 
+.lottery-workbench-recent-item {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--app-surface);
+}
+
 .lottery-workbench-recent-list button {
   min-width: 0;
   display: grid;
   gap: 3px;
-  padding: 8px;
+  padding: 2px;
   border: 1px solid transparent;
-  border-radius: 7px;
-  background: var(--app-surface);
+  border-radius: 6px;
+  background: transparent;
   text-align: left;
   cursor: pointer;
 }
 
-.lottery-workbench-recent-list button:hover {
+.lottery-workbench-recent-item:hover {
   border-color: var(--module-accent, #0071e3);
+}
+
+.lottery-workbench-recent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.lottery-workbench-recent-actions .ant-btn {
+  height: 22px;
+  padding: 0 4px;
+  font-size: 12px;
 }
 
 .lottery-workbench-generated {

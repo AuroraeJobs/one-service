@@ -405,10 +405,10 @@ Goal: make the saved-decision outcome loop easier to operate from the frontend, 
 
 ### Wave 15B: Workbench Follow-Up Queue
 
-- [ ] Add workbench follow-up grouping for unchecked converted tickets, stale evidence, and high-warning saved decisions.
-- [ ] Add quick actions from workbench outcome cards to decision board, ticket settlement, and export views with preserved issue context.
-- [ ] Add empty/error states that distinguish no saved decisions from no outcomes after filtering.
-- [ ] Run smoke/build verification, update docs, commit, and push.
+- [x] Add workbench follow-up grouping for unchecked converted tickets, stale evidence, and high-warning saved decisions. Workbench action queue now derives decision follow-ups from saved outcomes and groups unchecked converted tickets, stale/volatile evidence, and high-warning export evidence.
+- [x] Add quick actions from workbench outcome cards to decision board, ticket settlement, and export views with preserved issue context. Recent decision outcome cards now expose direct decision, ticket, and export actions with target issue parameters.
+- [x] Add empty/error states that distinguish no saved decisions from no outcomes after filtering. Workbench recent groups now use source-specific empty text, and the decision board distinguishes no saved outcomes from no filtered matches.
+- [x] Run smoke/build verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
 ### Wave 15C: Research And Ticket Outcome Drilldowns
 

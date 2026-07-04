@@ -204,7 +204,7 @@ Goal: make the guided decision workflow durable, auditable, and testable after t
 Goal: make decision outcomes easier to operate from the frontend after the durable saved-decision loop is available.
 
 - Upgrade `/lottery/predictions/decision` into the primary outcome operations cockpit with URL-backed filters for hit state, ticket conversion state, and evidence alert state. The shipped 15A slice adds filtered saved-outcome metrics, a selectable outcome list, and a direct handoff into CSV export.
-- Add workbench follow-up queues for unchecked converted tickets, stale or volatile evidence, and high-warning saved decisions. Planned 15B links each queue item to the decision board, ticket settlement, or export page with preserved issue context.
+- Add workbench follow-up queues for unchecked converted tickets, stale or volatile evidence, and high-warning saved decisions. The shipped 15B slice derives decision follow-ups from saved outcomes, adds direct decision/ticket/export actions on workbench outcome cards, and clarifies saved-outcome empty states.
 - Add research and ticket drilldowns for rule/source deltas, ROI bands, warning states, and settlement-linked candidates. Planned 15C keeps report-style evidence dense while avoiding provider calls from the browser.
 - Extend route smoke, release readiness, and responsive QA for the new frontend outcome operations. Planned 15D records the V12 gates and month-end frontend evidence.
 - Keep frontend copy focused on review, audit, and personal record keeping; no gambling-promotion copy.
