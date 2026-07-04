@@ -216,6 +216,8 @@ VOID
 
 `LotteryPreference` stores default-user lottery preferences in `lottery_preferences`. `GET /lottery/preferences` returns saved preferences or a default fallback, and `PUT /lottery/preferences` normalizes training scale, replay count, auto-save behavior, and default ticket source before saving.
 
+`LotteryDataQualityReport` summarizes record quality checks. `GET /lottery/data-quality` scans current records for missing issue numbers within each year, duplicate issues, malformed red/blue numbers, and draw dates later than today. Response lists are capped to sample-sized issue lists for UI display.
+
 ## API Design Rules
 
 - Keep existing APIs compatible while adding new `lottery/*` APIs.
