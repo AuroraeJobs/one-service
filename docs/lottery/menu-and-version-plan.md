@@ -189,6 +189,16 @@ Goal: turn the lottery module into a guided daily workflow where users can move 
 - Improve research/report pages with guided comparison presets, print/export-ready summary views, and clearer empty/error states for incomplete evidence. The shipped 13D slice adds research presets, print-ready report summaries, and frontend release readiness checks on `/lottery/exports`.
 - Keep the experience operational and dense: no marketing-style landing pages, no browser-side provider calls, and no gambling-promotion copy.
 
+### V11: Productionized Decision Operations
+
+Goal: make the guided decision workflow durable, auditable, and testable after the frontend experience is in place.
+
+- Persist shared workbench preferences and saved decision sets through backend `lottery/*` APIs while keeping browser-local fallback behavior.
+- Move ticket import preview, duplicate grouping, bulk updates, archive, and budget pre-checks behind backend services with audit events.
+- Add automated route smoke and release evidence for workbench, decision board, ticket, research, and export/release pages with mocked or fixture data.
+- Add decision outcome feedback after actual-result attachment, including candidate hit distribution, ticket conversion results, stale-evidence alerts, and report/export sections.
+- Preserve the project-owned API boundary and keep all external provider work behind backend services.
+
 ## API Boundary
 
 Frontend should only call:

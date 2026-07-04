@@ -351,6 +351,46 @@ Goal: add more frontend workflow depth so the lottery module guides a daily user
 - [x] Update version docs, technical design notes, and iteration checklist with delivered scope and verification. Version and technical design docs now describe 13B-13D.
 - [x] Run month-end verification, commit, and push. Verification: `one-web npm run build`.
 
+## Iteration 14: Productionized Decision Operations
+
+Goal: turn the guided frontend workflows from Iteration 13 into durable, auditable, and testable operations so decision sets, ticket imports, budget checks, and release readiness survive reloads and can be trusted in daily use.
+
+### Wave 14A: Shared Preferences And Saved Decision Sets
+
+- [ ] Add backend-backed workbench preference storage for widget visibility/order while preserving browser-local fallback.
+- [ ] Add saved decision-set records for selected prediction candidates, rule/evidence context, target issue, and conversion state.
+- [ ] Add APIs to list, create, update, and archive saved decision sets under project-owned `lottery/*` routes.
+- [ ] Update `/lottery/predictions/decision` to save/load decision sets and show unsaved-change state.
+- [ ] Add audit events for saved decision set create/update/archive actions.
+- [ ] Run focused backend/frontend checks, update docs, commit, and push.
+
+### Wave 14B: Server-Side Ticket Import And Batch Guardrails
+
+- [ ] Add a server-side ticket import preview endpoint with normalized rows, invalid reasons, duplicate grouping, and proposed save payloads.
+- [ ] Add bulk ticket patch/archive endpoints so batch issue, quantity, cost, source, status, and note changes do not require many full-row `PUT` calls.
+- [ ] Add budget pre-check for proposed ticket imports and selected decision-set conversions before saving tickets.
+- [ ] Add audit events for import preview, confirmed import, bulk update, archive, and delete actions.
+- [ ] Update the ticket page and decision board to use preview/pre-check results and show backend-confirmed warnings.
+- [ ] Run focused ticket/import/budget tests, frontend build, update docs, commit, and push.
+
+### Wave 14C: Automated Route Smoke And Release Evidence
+
+- [ ] Add authenticated frontend route smoke coverage for workbench, decision board, ticket page, research page, and export/release page.
+- [ ] Add fixture or mocked API data for route smoke so UI checks do not depend on live lottery provider availability.
+- [ ] Add console-error and empty-state assertions for the new Iteration 13/14 frontend flows.
+- [ ] Feed smoke/build/test result summaries into release readiness surfaces or durable docs.
+- [ ] Document local QA prerequisites for login state, backend service, and proxy-related provider failures.
+- [ ] Run smoke/build verification, update docs, commit, and push.
+
+### Wave 14D: Decision Outcome Feedback Loop
+
+- [ ] Add saved decision-set outcome comparison after actual draw attachment, including candidate hit distribution and ticket conversion results.
+- [ ] Add rule/source performance deltas comparing saved decision sets against existing backtest and ledger evidence.
+- [ ] Add drift and stale-evidence alerts when a saved decision set was created from volatile, stale, or under-tested rules.
+- [ ] Add export/report sections for saved decision sets, import previews, budget pre-checks, and settlement reviews.
+- [ ] Surface outcome feedback on workbench, decision board, research report, and ticket settlement pages.
+- [ ] Run month-end verification, update docs, commit, and push.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.
