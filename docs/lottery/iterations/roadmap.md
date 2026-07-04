@@ -367,6 +367,30 @@ Planned route additions or upgrades:
 /lottery/alerts
 ```
 
+### Iteration 12: Reliability And Intelligent Operations
+
+Goal: make lottery sync, provider access, data repair, prediction replay, and daily operations easier to diagnose and safer to run. CWL remains the primary draw provider; a local proxied `403` should be treated first as proxy/network reachability evidence, not as a provider replacement trigger.
+
+Deliverables:
+
+- Add provider diagnostics for direct/proxy/no-proxy context, HTTP status, response type, latency, and safe response snippets.
+- Surface provider business failure, invalid response, blank response, HTTP failure, and suspected proxy/network block as distinct sync outcomes.
+- Add server-side lottery provider networking configuration where supported by the runtime.
+- Add data-quality repair dry-run and confirm-only repair flows for gaps, duplicates, invalid numbers, stale caches, and bounded issue ranges.
+- Automatically attach new actual draws to eligible prediction snapshots and expose replay/rule evidence quality.
+- Add daily operation summary for sync, quality, prediction attachment, ticket prize checks, alerts, and release checks.
+
+Planned endpoint or surface upgrades:
+
+```text
+/lottery/providers/probe-logs
+/lottery/records/sync-logs
+/lottery/quality
+/lottery/workbench
+/lottery/exports
+/lottery/audit
+```
+
 ## Storage Direction
 
 MongoDB durable data:

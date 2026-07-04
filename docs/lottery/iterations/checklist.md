@@ -272,6 +272,45 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Polish dense loading, empty, error, overflow, and responsive states across workbench, research, ticket, ledger, export, and alert pages. Export/audit/maintenance gained empty states, table scroll, responsive filters, and print layout while reusing the existing workbench/research/ticket/ledger/alert loading and empty-state patterns.
 - [x] Run `npm run build`, update docs, commit, and push.
 
+## Iteration 12: Reliability And Intelligent Operations
+
+### Wave 12A: Provider Diagnostics And Sync Resilience
+
+- [ ] Preserve CWL as the primary provider and document proxy-related failure modes.
+- [ ] Build on explicit provider error handling so null upstream content never reaches JSON parsing.
+- [ ] Add provider request diagnostics for direct/proxy/no-proxy context, HTTP status, response content type, latency, and safe response snippets.
+- [ ] Add server-side configuration for provider direct/proxy/no-proxy behavior where supported.
+- [ ] Surface suspected proxy/network block in `/lottery/sync`, sync logs, and provider probe logs.
+- [ ] Keep fallback provider work secondary until primary direct-connect diagnostics are clear.
+- [ ] Run focused provider/sync tests, update docs, commit, and push.
+
+### Wave 12B: Data Quality Repair Automation
+
+- [ ] Add data-quality issue summary for missing issues, duplicate issues, invalid numbers, out-of-order lines, and stale derived data.
+- [ ] Add repair dry-run output that explains proposed inserts, skips, renumbering, and cache refreshes.
+- [ ] Add confirm-only repair endpoints for safe bounded issue ranges.
+- [ ] Add frontend repair review states on the quality or sync page.
+- [ ] Add audit events for dry-run and confirmed repair actions.
+- [ ] Run focused quality/repair tests, update docs, commit, and push.
+
+### Wave 12C: Prediction Evidence And Rule Intelligence
+
+- [ ] Automatically attach latest actual results to eligible prediction snapshots after sync.
+- [ ] Add replay summary for candidates, hit distribution, rule version, and recent-window drift.
+- [ ] Add rule evidence tags for stable, volatile, stale, and under-tested rules.
+- [ ] Improve frontend comparison states so evidence quality is visible before a rule is trusted.
+- [ ] Add export or report sections for replay and rule evidence.
+- [ ] Run focused prediction/replay tests, frontend build if changed, update docs, commit, and push.
+
+### Wave 12D: Daily Automation And Release Hardening
+
+- [ ] Add scheduled sync runbook state with last run, next run, duration, and failure category.
+- [ ] Add daily operation summary for sync, quality, prediction attachment, ticket prize check, and pending alerts.
+- [ ] Add retention and export checks for sync logs, provider probe logs, repair audit events, and replay evidence.
+- [ ] Add release checklist coverage for backend tests, frontend build, documentation, and pushed commits.
+- [ ] Polish frontend empty/error/loading states touched by this month.
+- [ ] Run month-end verification, update docs, commit, and push.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.
