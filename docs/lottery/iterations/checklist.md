@@ -166,12 +166,12 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Build workbench UI with daily status cards, step-run action, data-quality warning, latest prediction/ticket/ledger sections, and drill-through links.
 - [x] Add query-parameter-backed filters and pagination controls to prediction history. `/lottery/predictions/history` now uses the paged backend query and persists page, result state, target period, and rule filter in the URL.
 - [x] Add query-parameter-backed filters and pagination controls to ticket list. `/lottery/tickets` now uses the paged backend query and persists issue, status, source, prize grade, prediction snapshot, page, and page size in the URL.
-- [ ] Add pagination controls to sync/probe history surfaces if their backend endpoints are migrated in this iteration.
+- [x] Add pagination controls to sync/probe history surfaces if their backend endpoints are migrated in this iteration. `/lottery/sync` now uses paged sync-log and provider-probe-log APIs with separate URL-backed pagination state.
 - [x] Update `docs/lottery/modules/technical-design.md` with workbench, daily-run, and pagination contracts.
 - [x] Update `docs/lottery/menu-and-version-plan.md` with workbench route/menu placement.
 - [x] Run focused backend tests for changed services/controllers. Workbench, prediction pagination, and ticket pagination service/controller tests passed.
-- [ ] Run frontend build after workbench and list-page changes. `npm run build` passes after workbench page/route changes; rerun after list-page pagination controls are wired.
-- [ ] Review git status and diff before each commit, then commit and push.
+- [x] Run frontend build after workbench and list-page changes. `npm run build` passes after workbench, prediction history, ticket list, and sync/probe pagination controls.
+- [x] Review git status and diff before each commit, then commit and push.
 
 ## Iteration 10: Lottery Intelligence Platform
 

@@ -2,13 +2,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Input, Select, Space, Table, Tag, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { ApiOutlined, CheckCircleOutlined, ClockCircleOutlined, ExperimentOutlined, ReloadOutlined, SyncOutlined, WarningOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import {
   lotteryDataQualityApi,
   lotteryProviderApi,
   lotteryRecordApi,
   type LotteryDataQualityReport,
+  type LotteryPageResponse,
   type LotteryProviderProbeLog,
   type LotteryRecordSyncLog,
   type LotteryRecordSyncSummary
@@ -45,35 +46,70 @@ const statusColor = (status?: string) => {
 
 const LotterySyncOperationsPage = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [logs, setLogs] = useState<LotteryRecordSyncLog[]>([]);
+  const [logPageResponse, setLogPageResponse] = useState<LotteryPageResponse<LotteryRecordSyncLog>>();
   const [summary, setSummary] = useState<LotteryRecordSyncSummary>();
   const [probeLogs, setProbeLogs] = useState<LotteryProviderProbeLog[]>([]);
+  const [probePageResponse, setProbePageResponse] = useState<LotteryPageResponse<LotteryProviderProbeLog>>();
   const [qualityReport, setQualityReport] = useState<LotteryDataQualityReport>();
-  const [statusFilter, setStatusFilter] = useState<string>();
-  const [probeProvider, setProbeProvider] = useState('cwl');
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [probing, setProbing] = useState(false);
   const [error, setError] = useState<string>();
 
+  const statusFilter = searchParams.get('status') || undefined;
+  const probeProvider = searchParams.get('provider') || 'cwl';
+  const syncPage = Math.max(1, Number(searchParams.get('syncPage') || '1') || 1);
+  const syncPageSize = Math.max(1, Number(searchParams.get('syncPageSize') || '10') || 10);
+  const probePage = Math.max(1, Number(searchParams.get('probePage') || '1') || 1);
+  const probePageSize = Math.max(1, Number(searchParams.get('probePageSize') || '5') || 5);
+
+  const updateQuery = useCallback((patch: Record<string, string | number | undefined>, resetPage = true) => {
+    const next = new URLSearchParams(searchParams);
+    Object.entries(patch).forEach(([key, value]) => {
+      if (value === undefined || value === '') {
+        next.delete(key);
+      } else {
+        next.set(key, String(value));
+      }
+    });
+    if (resetPage) {
+      if (!Object.prototype.hasOwnProperty.call(patch, 'syncPage')) {
+        next.delete('syncPage');
+      }
+      if (!Object.prototype.hasOwnProperty.call(patch, 'probePage')) {
+        next.delete('probePage');
+      }
+    }
+    setSearchParams(next);
+  }, [searchParams, setSearchParams]);
+
   const queryParams = useMemo(() => ({
     status: statusFilter,
-    limit: 50
-  }), [statusFilter]);
+    page: syncPage,
+    pageSize: syncPageSize
+  }), [statusFilter, syncPage, syncPageSize]);
 
   const loadLogs = useCallback(async () => {
     setLoading(true);
     setError(undefined);
     try {
       const [rows, nextSummary, nextProbeLogs, nextQualityReport] = await Promise.all([
-        lotteryRecordApi.syncLogs(queryParams),
+        lotteryRecordApi.syncLogsPage(queryParams),
         lotteryRecordApi.syncSummary({ limit: 50 }),
-        lotteryProviderApi.probeLogs({ provider: probeProvider.trim() || undefined, limit: 20 }),
+        lotteryProviderApi.probeLogsPage({
+          provider: probeProvider.trim() || undefined,
+          page: probePage,
+          pageSize: probePageSize
+        }),
         lotteryDataQualityApi.report()
       ]);
-      setLogs(rows || []);
+      setLogPageResponse(rows);
+      setLogs(rows.items || []);
       setSummary(nextSummary || undefined);
-      setProbeLogs(nextProbeLogs || []);
+      setProbePageResponse(nextProbeLogs);
+      setProbeLogs(nextProbeLogs.items || []);
       setQualityReport(nextQualityReport || undefined);
     } catch (requestError) {
       console.error('读取彩票同步日志失败:', requestError);
@@ -81,7 +117,7 @@ const LotterySyncOperationsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [probeProvider, queryParams]);
+  }, [probePage, probePageSize, probeProvider, queryParams]);
 
   useEffect(() => {
     loadLogs();
@@ -114,8 +150,7 @@ const LotterySyncOperationsPage = () => {
       const provider = probeProvider.trim() || undefined;
       const result = await lotteryProviderApi.probe({ provider });
       message.success(result.message || 'Provider 探测完成');
-      const nextProbeLogs = await lotteryProviderApi.probeLogs({ provider, limit: 20 });
-      setProbeLogs(nextProbeLogs || []);
+      await loadLogs();
     } catch (requestError) {
       console.error('探测彩票 Provider 失败:', requestError);
       setError(requestError instanceof Error ? requestError.message : '探测彩票 Provider 失败');
@@ -254,7 +289,7 @@ const LotterySyncOperationsPage = () => {
             allowClear
             placeholder="状态"
             value={statusFilter}
-            onChange={setStatusFilter}
+            onChange={value => updateQuery({ status: value })}
             style={{ width: 130 }}
             options={[
               { label: '运行中', value: 'RUNNING' },
@@ -347,7 +382,7 @@ const LotterySyncOperationsPage = () => {
               placeholder="provider"
               allowClear
               style={{ width: 140 }}
-              onChange={event => setProbeProvider(event.target.value)}
+              onChange={event => updateQuery({ provider: event.target.value })}
             />
             <Button icon={<ExperimentOutlined />} loading={probing} onClick={runProbe}>
               探测
@@ -360,7 +395,14 @@ const LotterySyncOperationsPage = () => {
           columns={probeColumns}
           dataSource={probeLogs}
           loading={loading || probing}
-          pagination={{ pageSize: 5 }}
+          pagination={{
+            current: probePage,
+            pageSize: probePageSize,
+            total: probePageResponse?.total || 0,
+            showSizeChanger: true,
+            showTotal: total => `共 ${total} 条`,
+            onChange: (nextPage, nextPageSize) => updateQuery({ probePage: nextPage, probePageSize: nextPageSize }, false)
+          }}
           scroll={{ x: 780 }}
         />
       </Card>
@@ -371,7 +413,14 @@ const LotterySyncOperationsPage = () => {
           columns={columns}
           dataSource={logs}
           loading={loading}
-          pagination={{ pageSize: 10 }}
+          pagination={{
+            current: syncPage,
+            pageSize: syncPageSize,
+            total: logPageResponse?.total || 0,
+            showSizeChanger: true,
+            showTotal: total => `共 ${total} 条`,
+            onChange: (nextPage, nextPageSize) => updateQuery({ syncPage: nextPage, syncPageSize: nextPageSize }, false)
+          }}
           scroll={{ x: 920 }}
         />
       </Card>
