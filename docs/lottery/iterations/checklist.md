@@ -286,12 +286,12 @@ Use this file as the durable task board for the lottery module. When a task is f
 
 ### Wave 12B: Data Quality Repair Automation
 
-- [ ] Add data-quality issue summary for missing issues, duplicate issues, invalid numbers, out-of-order lines, and stale derived data.
-- [ ] Add repair dry-run output that explains proposed inserts, skips, renumbering, and cache refreshes.
-- [ ] Add confirm-only repair endpoints for safe bounded issue ranges.
-- [ ] Add frontend repair review states on the quality or sync page.
-- [ ] Add audit events for dry-run and confirmed repair actions.
-- [ ] Run focused quality/repair tests, update docs, commit, and push.
+- [x] Add data-quality issue summary for missing issues, duplicate issues, invalid numbers, out-of-order lines, and stale derived data.
+- [x] Add repair dry-run output that explains proposed inserts, skips, renumbering, and cache refreshes.
+- [x] Add confirm-only repair endpoints for safe bounded issue ranges. Missing-issue confirm now requires `confirm=true`, supports `issueStart`/`issueEnd`, and keeps the capped repair limit.
+- [x] Add frontend repair review states on the quality or sync page. `/lottery/data-quality` now shows range inputs, repair steps, renumber count, cache-refresh state, and audit id.
+- [x] Add audit events for dry-run and confirmed repair actions.
+- [x] Run focused quality/repair tests, update docs, commit, and push.
 
 ### Wave 12C: Prediction Evidence And Rule Intelligence
 

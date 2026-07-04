@@ -58,7 +58,7 @@ Acceptance:
 
 ## Week 2: Data Quality Repair Automation
 
-Status: planned.
+Status: shipped in Wave 12B.
 
 Goal: make bad or incomplete record data visible and repairable without manual file edits.
 
@@ -69,6 +69,13 @@ Deliverables:
 - Add confirm-only repair endpoints for safe bounded issue ranges.
 - Add frontend repair review states on the quality or sync page.
 - Add audit events for dry-run and confirmed repair actions.
+
+Delivered:
+
+- Data-quality reports now include invalid-number count, out-of-order line issues, and stale derived statistics reasons.
+- Missing-issue repair dry-run now returns proposed inserts, skipped issues, renumbering scope, cache-refresh state, audit id, and human-readable repair steps.
+- Missing-issue confirm now requires `confirm=true`, supports `issueStart`/`issueEnd`, invalidates statistics cache after writes, and writes audit events.
+- `/lottery/data-quality` now supports bounded range inputs and shows repair review details before confirmation.
 
 Acceptance:
 

@@ -30,6 +30,18 @@ public class LotteryDataQualityRepairResult {
 
     private Integer skippedIssueCount;
 
+    private Integer insertedIssueCount;
+
+    private Integer renumberedRecordCount;
+
+    private Boolean cacheInvalidated;
+
+    private Boolean confirmRequired;
+
+    private Boolean confirmed;
+
+    private String auditEventId;
+
     private String message;
 
     @Builder.Default
@@ -43,6 +55,12 @@ public class LotteryDataQualityRepairResult {
 
     @Builder.Default
     private List<String> skippedIssues = new ArrayList<>();
+
+    @Builder.Default
+    private List<String> insertIssues = new ArrayList<>();
+
+    @Builder.Default
+    private List<String> repairSteps = new ArrayList<>();
 
     private Long generatedAt;
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Button, Card, InputNumber, List, Popconfirm, Space, Tag, message } from 'antd';
+import { Alert, Button, Card, Input, InputNumber, List, Popconfirm, Space, Tag, message } from 'antd';
 import { DatabaseOutlined, ReloadOutlined, ToolOutlined, WarningOutlined } from '@ant-design/icons';
 import LifePageShell from './LifePageShell';
 import {
@@ -14,18 +14,25 @@ const emptyReport: LotteryDataQualityReport = {
   missingIssueCount: 0,
   duplicateIssueCount: 0,
   malformedRecordCount: 0,
+  invalidNumberCount: 0,
+  outOfOrderLineCount: 0,
   futureDateCount: 0,
+  staleDerivedDataCount: 0,
   missingIssues: [],
   duplicateIssues: [],
   malformedIssues: [],
-  futureDateIssues: []
+  outOfOrderLineIssues: [],
+  futureDateIssues: [],
+  staleDerivedDataReasons: []
 };
 
 const qualityGroups = (report: LotteryDataQualityReport) => [
   { title: '缺失期号', count: report.missingIssueCount || 0, issues: report.missingIssues || [], color: 'gold' },
   { title: '重复期号', count: report.duplicateIssueCount || 0, issues: report.duplicateIssues || [], color: 'orange' },
   { title: '号码异常', count: report.malformedRecordCount || 0, issues: report.malformedIssues || [], color: 'red' },
-  { title: '未来日期', count: report.futureDateCount || 0, issues: report.futureDateIssues || [], color: 'purple' }
+  { title: 'Line 顺序', count: report.outOfOrderLineCount || 0, issues: report.outOfOrderLineIssues || [], color: 'cyan' },
+  { title: '未来日期', count: report.futureDateCount || 0, issues: report.futureDateIssues || [], color: 'purple' },
+  { title: '派生数据', count: report.staleDerivedDataCount || 0, issues: report.staleDerivedDataReasons || [], color: 'volcano' }
 ];
 
 const formatTime = (value?: number) => {
@@ -46,6 +53,8 @@ const LotteryDataQualityPage = () => {
   const [loading, setLoading] = useState(false);
   const [repairing, setRepairing] = useState(false);
   const [repairLimit, setRepairLimit] = useState(50);
+  const [issueStart, setIssueStart] = useState('');
+  const [issueEnd, setIssueEnd] = useState('');
   const [error, setError] = useState<string>();
 
   const loadReport = useCallback(async () => {
@@ -71,7 +80,11 @@ const LotteryDataQualityPage = () => {
     setRepairing(true);
     setError(undefined);
     try {
-      const result = await lotteryDataQualityApi.dryRunMissingIssuesRepair({ limit: repairLimit });
+      const result = await lotteryDataQualityApi.dryRunMissingIssuesRepair({
+        limit: repairLimit,
+        issueStart: issueStart.trim() || undefined,
+        issueEnd: issueEnd.trim() || undefined
+      });
       setRepairPlan(result);
       message.success(result.message || '修复计划已生成');
     } catch (requestError) {
@@ -89,7 +102,10 @@ const LotteryDataQualityPage = () => {
     try {
       const result = await lotteryDataQualityApi.confirmMissingIssuesRepair({
         issues: repairPlan?.repairableIssues || [],
-        limit: repairLimit
+        issueStart: issueStart.trim() || undefined,
+        issueEnd: issueEnd.trim() || undefined,
+        limit: repairLimit,
+        confirm: true
       });
       setRepairPlan(result);
       message.success(result.message || '缺失期号修复完成');
@@ -168,6 +184,20 @@ const LotteryDataQualityPage = () => {
               onChange={value => setRepairLimit(value || 50)}
               addonAfter="期"
             />
+            <Input
+              value={issueStart}
+              placeholder="起始期号"
+              allowClear
+              style={{ width: 130 }}
+              onChange={event => setIssueStart(event.target.value)}
+            />
+            <Input
+              value={issueEnd}
+              placeholder="结束期号"
+              allowClear
+              style={{ width: 130 }}
+              onChange={event => setIssueEnd(event.target.value)}
+            />
             <Button icon={<ToolOutlined />} loading={repairing} onClick={dryRunRepair}>
               生成计划
             </Button>
@@ -230,14 +260,30 @@ const LotteryDataQualityPage = () => {
                   </div>
                 </div>
               </div>
+              <div className="lottery-clean-panel">
+                <div className="lottery-history-summary-item">
+                  <DatabaseOutlined />
+                  <div>
+                    <strong>{repairPlan.renumberedRecordCount ?? 0}</strong>
+                    <span>重排记录</span>
+                  </div>
+                </div>
+              </div>
             </section>
+            <Alert
+              type={repairPlan.cacheInvalidated ? 'success' : 'info'}
+              showIcon
+              message={`缓存刷新：${repairPlan.cacheInvalidated ? '已刷新' : '等待确认后刷新'}`}
+              description={repairPlan.auditEventId ? `审计事件：${repairPlan.auditEventId}` : undefined}
+            />
             <List
               size="small"
               dataSource={[
                 { title: '请求期号', issues: repairPlan.requestedIssues || [], color: 'blue' },
                 { title: '可修复期号', issues: repairPlan.repairableIssues || [], color: 'green' },
                 { title: '已修复期号', issues: repairPlan.repairedIssues || [], color: 'cyan' },
-                { title: '跳过期号', issues: repairPlan.skippedIssues || [], color: 'orange' }
+                { title: '跳过期号', issues: repairPlan.skippedIssues || [], color: 'orange' },
+                { title: '执行步骤', issues: repairPlan.repairSteps || [], color: 'purple' }
               ]}
               renderItem={group => (
                 <List.Item>

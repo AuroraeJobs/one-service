@@ -17,5 +17,11 @@ public class LotteryDataQualityRepairRequest {
     @Builder.Default
     private List<String> issues = new ArrayList<>();
 
+    private String issueStart;
+
+    private String issueEnd;
+
     private Integer limit;
+
+    private Boolean confirm;
 }

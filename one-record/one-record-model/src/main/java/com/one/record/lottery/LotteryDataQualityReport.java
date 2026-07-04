@@ -23,7 +23,13 @@ public class LotteryDataQualityReport implements Serializable {
 
     private Integer malformedRecordCount;
 
+    private Integer invalidNumberCount;
+
+    private Integer outOfOrderLineCount;
+
     private Integer futureDateCount;
+
+    private Integer staleDerivedDataCount;
 
     @Builder.Default
     private List<String> missingIssues = new ArrayList<>();
@@ -35,7 +41,13 @@ public class LotteryDataQualityReport implements Serializable {
     private List<String> malformedIssues = new ArrayList<>();
 
     @Builder.Default
+    private List<String> outOfOrderLineIssues = new ArrayList<>();
+
+    @Builder.Default
     private List<String> futureDateIssues = new ArrayList<>();
+
+    @Builder.Default
+    private List<String> staleDerivedDataReasons = new ArrayList<>();
 
     private Long generatedAt;
 }

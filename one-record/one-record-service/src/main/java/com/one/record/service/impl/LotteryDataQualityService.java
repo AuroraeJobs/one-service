@@ -3,8 +3,12 @@ package com.one.record.service.impl;
 import com.one.record.lottery.LotteryDataQualityReport;
 import com.one.record.lottery.LotteryDataQualityRepairRequest;
 import com.one.record.lottery.LotteryDataQualityRepairResult;
+import com.one.record.lottery.LotteryStatisticsSummary;
+import com.one.record.model.LotteryAuditEvent;
+import com.one.record.repository.LotteryAuditEventRepository;
 import com.one.record.response.Record;
 import com.one.record.service.ILotteryDataQualityService;
+import com.one.record.service.ILotteryStatisticsService;
 import com.one.record.service.IRecordService;
 import com.one.record.service.LotteryDrawProvider;
 import lombok.AllArgsConstructor;
@@ -20,7 +24,9 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,6 +42,10 @@ public class LotteryDataQualityService implements ILotteryDataQualityService {
     private final IRecordService recordService;
 
     private final LotteryDrawProvider lotteryDrawProvider;
+
+    private final ILotteryStatisticsService statisticsService;
+
+    private final LotteryAuditEventRepository auditEventRepository;
 
     @Override
     public LotteryDataQualityReport report() {
@@ -54,16 +64,23 @@ public class LotteryDataQualityService implements ILotteryDataQualityService {
                 .filter(StringUtils::hasText)
                 .sorted()
                 .toList();
+        List<String> outOfOrderLineIssues = outOfOrderLineIssues(records);
+        List<String> staleReasons = staleDerivedDataReasons(records);
         return LotteryDataQualityReport.builder()
                 .totalRecords(records.size())
                 .missingIssueCount(missingIssues.size())
                 .duplicateIssueCount(duplicateIssues.size())
                 .malformedRecordCount(malformedIssues.size())
+                .invalidNumberCount(malformedIssues.size())
+                .outOfOrderLineCount(outOfOrderLineIssues.size())
                 .futureDateCount(futureDateIssues.size())
+                .staleDerivedDataCount(staleReasons.size())
                 .missingIssues(limit(missingIssues))
                 .duplicateIssues(limit(duplicateIssues))
                 .malformedIssues(limit(malformedIssues))
+                .outOfOrderLineIssues(limit(outOfOrderLineIssues))
                 .futureDateIssues(limit(futureDateIssues))
+                .staleDerivedDataReasons(limit(staleReasons))
                 .generatedAt(System.currentTimeMillis())
                 .build();
     }
@@ -79,6 +96,9 @@ public class LotteryDataQualityService implements ILotteryDataQualityService {
     }
 
     private LotteryDataQualityRepairResult repairMissingIssues(LotteryDataQualityRepairRequest request, boolean dryRun) {
+        if (!dryRun && !Boolean.TRUE.equals(request == null ? null : request.getConfirm())) {
+            throw new IllegalArgumentException("确认修复缺失期号必须传入 confirm=true");
+        }
         List<Record> currentRecords = recordService.findAll();
         List<String> currentMissingIssues = missingIssues(currentRecords);
         List<String> requestedIssues = requestedIssues(request, currentMissingIssues);
@@ -90,15 +110,21 @@ public class LotteryDataQualityService implements ILotteryDataQualityService {
                 .filter(issue -> !providerRecords.containsKey(issue))
                 .toList();
 
+        int renumberedRecordCount = 0;
+        boolean cacheInvalidated = false;
         if (!dryRun && !repairableIssues.isEmpty()) {
             List<Record> repairedRecords = repairableIssues.stream()
                     .map(providerRecords::get)
                     .toList();
-            recordService.saveAll(reorderedRecords(currentRecords, repairedRecords));
+            List<Record> reorderedRecords = reorderedRecords(currentRecords, repairedRecords);
+            recordService.saveAll(reorderedRecords);
+            renumberedRecordCount = reorderedRecords.size();
+            statisticsService.invalidateCache();
+            cacheInvalidated = true;
         }
 
         int missingAfter = dryRun ? currentMissingIssues.size() : Math.max(0, currentMissingIssues.size() - repairableIssues.size());
-        return LotteryDataQualityRepairResult.builder()
+        LotteryDataQualityRepairResult result = LotteryDataQualityRepairResult.builder()
                 .repairType("MISSING_ISSUES")
                 .dryRun(dryRun)
                 .missingBefore(currentMissingIssues.size())
@@ -107,13 +133,22 @@ public class LotteryDataQualityService implements ILotteryDataQualityService {
                 .repairableIssueCount(repairableIssues.size())
                 .repairedIssueCount(dryRun ? 0 : repairableIssues.size())
                 .skippedIssueCount(skippedIssues.size())
+                .insertedIssueCount(dryRun ? 0 : repairableIssues.size())
+                .renumberedRecordCount(renumberedRecordCount)
+                .cacheInvalidated(cacheInvalidated)
+                .confirmRequired(dryRun && !repairableIssues.isEmpty())
+                .confirmed(!dryRun && Boolean.TRUE.equals(request == null ? null : request.getConfirm()))
                 .requestedIssues(requestedIssues)
                 .repairableIssues(repairableIssues)
                 .repairedIssues(dryRun ? List.of() : repairableIssues)
                 .skippedIssues(skippedIssues)
+                .insertIssues(repairableIssues)
+                .repairSteps(repairSteps(dryRun, repairableIssues, skippedIssues, currentRecords.size()))
                 .message(repairMessage(dryRun, repairableIssues.size(), skippedIssues.size()))
                 .generatedAt(System.currentTimeMillis())
                 .build();
+        result.setAuditEventId(saveRepairAudit(result, request));
+        return result;
     }
 
     private List<String> duplicateIssues(List<Record> records) {
@@ -132,10 +167,14 @@ public class LotteryDataQualityService implements ILotteryDataQualityService {
         int limit = normalizeRepairLimit(request == null ? null : request.getLimit());
         List<String> requestIssues = request == null ? List.of() : request.getIssues();
         List<String> sourceIssues = CollectionUtils.isEmpty(requestIssues) ? currentMissingIssues : requestIssues;
+        String issueStart = normalizeIssue(request == null ? null : request.getIssueStart());
+        String issueEnd = normalizeIssue(request == null ? null : request.getIssueEnd());
         return sourceIssues.stream()
                 .filter(StringUtils::hasText)
                 .map(String::trim)
                 .filter(issue -> issue.matches("\\d{7}"))
+                .filter(issue -> issueStart == null || issue.compareTo(issueStart) >= 0)
+                .filter(issue -> issueEnd == null || issue.compareTo(issueEnd) <= 0)
                 .distinct()
                 .sorted()
                 .limit(limit)
@@ -147,7 +186,11 @@ public class LotteryDataQualityService implements ILotteryDataQualityService {
             return Map.of();
         }
         Set<String> requestedIssueSet = new HashSet<>(requestedIssues);
-        return lotteryDrawProvider.fetchYearlyRecords().stream()
+        List<Record> providerRecords = lotteryDrawProvider.fetchYearlyRecords();
+        if (providerRecords == null) {
+            return Map.of();
+        }
+        return providerRecords.stream()
                 .filter(record -> record != null && requestedIssueSet.contains(record.getCode()))
                 .collect(Collectors.toMap(Record::getCode, record -> record, (left, right) -> left, LinkedHashMap::new));
     }
@@ -196,6 +239,46 @@ public class LotteryDataQualityService implements ILotteryDataQualityService {
         }
         missingIssues.sort(Comparator.naturalOrder());
         return missingIssues;
+    }
+
+    private List<String> outOfOrderLineIssues(List<Record> records) {
+        List<Record> sortedRecords = records.stream()
+                .filter(record -> record != null && StringUtils.hasText(record.getCode()))
+                .sorted(Comparator.comparing(Record::getCode))
+                .toList();
+        List<String> issues = new ArrayList<>();
+        for (int index = 0; index < sortedRecords.size(); index++) {
+            Record record = sortedRecords.get(index);
+            long expectedLine = index + 1L;
+            if (!Objects.equals(record.getLine(), expectedLine)) {
+                issues.add(record.getCode());
+            }
+        }
+        return issues;
+    }
+
+    private List<String> staleDerivedDataReasons(List<Record> records) {
+        try {
+            LotteryStatisticsSummary summary = statisticsService.summary();
+            if (summary == null) {
+                return List.of();
+            }
+            List<String> reasons = new ArrayList<>();
+            if (summary.getTotalDraws() != records.size()) {
+                reasons.add("统计缓存记录数 " + summary.getTotalDraws() + " 与开奖记录数 " + records.size() + " 不一致");
+            }
+            String latestIssue = records.stream()
+                    .map(Record::getCode)
+                    .filter(StringUtils::hasText)
+                    .max(Comparator.naturalOrder())
+                    .orElse(null);
+            if (StringUtils.hasText(summary.getLatestIssue()) && StringUtils.hasText(latestIssue) && !latestIssue.equals(summary.getLatestIssue())) {
+                reasons.add("统计缓存最新期号 " + summary.getLatestIssue() + " 与开奖记录最新期号 " + latestIssue + " 不一致");
+            }
+            return reasons;
+        } catch (RuntimeException exception) {
+            return List.of("统计缓存读取失败: " + exception.getMessage());
+        }
     }
 
     private boolean malformed(Record record) {
@@ -252,6 +335,68 @@ public class LotteryDataQualityService implements ILotteryDataQualityService {
 
     private List<String> limit(List<String> values) {
         return values.stream().limit(SAMPLE_LIMIT).toList();
+    }
+
+    private List<String> repairSteps(boolean dryRun,
+                                     List<String> repairableIssues,
+                                     List<String> skippedIssues,
+                                     int currentRecordCount) {
+        List<String> steps = new ArrayList<>();
+        if (repairableIssues.isEmpty()) {
+            steps.add("没有 provider 可证明的缺失期号可写入");
+        } else if (dryRun) {
+            steps.add("确认后将插入 " + repairableIssues.size() + " 个 provider 可证明的缺失期号");
+            steps.add("确认后将按期号重排 " + (currentRecordCount + repairableIssues.size()) + " 条开奖记录 line");
+            steps.add("确认后将刷新彩票统计 Redis 缓存");
+        } else {
+            steps.add("已插入 " + repairableIssues.size() + " 个 provider 可证明的缺失期号");
+            steps.add("已按期号重排 " + (currentRecordCount + repairableIssues.size()) + " 条开奖记录 line");
+            steps.add("已刷新彩票统计 Redis 缓存");
+        }
+        if (!skippedIssues.isEmpty()) {
+            steps.add("跳过 " + skippedIssues.size() + " 个 provider 未返回的期号");
+        }
+        return steps;
+    }
+
+    private String saveRepairAudit(LotteryDataQualityRepairResult result, LotteryDataQualityRepairRequest request) {
+        try {
+            Map<String, String> filters = new LinkedHashMap<>();
+            filters.put("repairType", result.getRepairType());
+            filters.put("dryRun", String.valueOf(result.getDryRun()));
+            filters.put("confirmed", String.valueOf(result.getConfirmed()));
+            filters.put("limit", String.valueOf(normalizeRepairLimit(request == null ? null : request.getLimit())));
+            if (StringUtils.hasText(request == null ? null : request.getIssueStart())) {
+                filters.put("issueStart", request.getIssueStart().trim());
+            }
+            if (StringUtils.hasText(request == null ? null : request.getIssueEnd())) {
+                filters.put("issueEnd", request.getIssueEnd().trim());
+            }
+            filters.put("requestedIssueCount", String.valueOf(result.getRequestedIssueCount()));
+            filters.put("repairableIssueCount", String.valueOf(result.getRepairableIssueCount()));
+            filters.put("skippedIssueCount", String.valueOf(result.getSkippedIssueCount()));
+            LotteryAuditEvent event = auditEventRepository.save(LotteryAuditEvent.builder()
+                    .eventType(Boolean.TRUE.equals(result.getDryRun()) ? "DATA_QUALITY_REPAIR_DRY_RUN" : "DATA_QUALITY_REPAIR_CONFIRM")
+                    .targetType("lottery-data-quality")
+                    .targetId(UUID.randomUUID().toString())
+                    .requesterScope("default")
+                    .filters(filters)
+                    .rowCount(Boolean.TRUE.equals(result.getDryRun()) ? result.getRepairableIssueCount() : result.getRepairedIssueCount())
+                    .message(result.getMessage())
+                    .generatedAt(result.getGeneratedAt())
+                    .build());
+            return event == null ? null : event.getTargetId();
+        } catch (RuntimeException ignored) {
+            return null;
+        }
+    }
+
+    private static String normalizeIssue(String issue) {
+        if (!StringUtils.hasText(issue)) {
+            return null;
+        }
+        String value = issue.trim();
+        return value.matches("\\d{7}") ? value : null;
     }
 
     private static int normalizeRepairLimit(Integer limit) {

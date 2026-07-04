@@ -20,7 +20,7 @@ public class LotteryDataQualityController {
     private final ILotteryDataQualityService service;
 
     @GetMapping
-    @Operation(summary = "查询彩票数据质量报告", description = "检查缺失期号、重复期号、号码格式异常和未来日期")
+    @Operation(summary = "查询彩票数据质量报告", description = "检查缺失期号、重复期号、号码格式异常、line 顺序、统计缓存状态和未来日期")
     public LotteryDataQualityReport report() {
         return service.report();
     }
@@ -32,7 +32,7 @@ public class LotteryDataQualityController {
     }
 
     @PostMapping("repair/missing-issues/confirm")
-    @Operation(summary = "确认缺失期号修复", description = "仅写入 provider 能证明存在的缺失期号，并重新整理开奖记录 line 顺序")
+    @Operation(summary = "确认缺失期号修复", description = "必须传入 confirm=true；仅写入 provider 能证明存在的缺失期号，并重新整理开奖记录 line 顺序")
     public LotteryDataQualityRepairResult confirmMissingIssuesRepair(@RequestBody(required = false) LotteryDataQualityRepairRequest request) {
         return service.confirmMissingIssuesRepair(request);
     }

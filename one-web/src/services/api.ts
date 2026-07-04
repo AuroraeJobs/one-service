@@ -175,17 +175,25 @@ export interface LotteryDataQualityReport {
   missingIssueCount?: number;
   duplicateIssueCount?: number;
   malformedRecordCount?: number;
+  invalidNumberCount?: number;
+  outOfOrderLineCount?: number;
   futureDateCount?: number;
+  staleDerivedDataCount?: number;
   missingIssues: string[];
   duplicateIssues: string[];
   malformedIssues: string[];
+  outOfOrderLineIssues: string[];
   futureDateIssues: string[];
+  staleDerivedDataReasons: string[];
   generatedAt?: number;
 }
 
 export interface LotteryDataQualityRepairRequest {
   issues?: string[];
+  issueStart?: string;
+  issueEnd?: string;
   limit?: number;
+  confirm?: boolean;
 }
 
 export interface LotteryDataQualityRepairResult {
@@ -197,11 +205,19 @@ export interface LotteryDataQualityRepairResult {
   repairableIssueCount?: number;
   repairedIssueCount?: number;
   skippedIssueCount?: number;
+  insertedIssueCount?: number;
+  renumberedRecordCount?: number;
+  cacheInvalidated?: boolean;
+  confirmRequired?: boolean;
+  confirmed?: boolean;
+  auditEventId?: string;
   message?: string;
   requestedIssues: string[];
   repairableIssues: string[];
   repairedIssues: string[];
   skippedIssues: string[];
+  insertIssues: string[];
+  repairSteps: string[];
   generatedAt?: number;
 }
 

@@ -38,15 +38,21 @@ class LotteryDataQualityControllerTest {
                 .missingIssueCount(1)
                 .duplicateIssueCount(1)
                 .malformedRecordCount(1)
+                .outOfOrderLineCount(1)
                 .futureDateCount(1)
+                .staleDerivedDataCount(1)
                 .missingIssues(List.of("2026002"))
+                .outOfOrderLineIssues(List.of("2026003"))
+                .staleDerivedDataReasons(List.of("统计缓存记录数不一致"))
                 .build());
 
         mockMvc.perform(get("/lottery/data-quality"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalRecords").value(10))
                 .andExpect(jsonPath("$.missingIssueCount").value(1))
-                .andExpect(jsonPath("$.missingIssues[0]").value("2026002"));
+                .andExpect(jsonPath("$.missingIssues[0]").value("2026002"))
+                .andExpect(jsonPath("$.outOfOrderLineCount").value(1))
+                .andExpect(jsonPath("$.staleDerivedDataCount").value(1));
 
         verify(service).report();
     }
@@ -59,6 +65,7 @@ class LotteryDataQualityControllerTest {
                         .dryRun(true)
                         .repairableIssueCount(1)
                         .repairableIssues(List.of("2026002"))
+                        .repairSteps(List.of("确认后将插入 1 个 provider 可证明的缺失期号"))
                         .build());
 
         mockMvc.perform(post("/lottery/data-quality/repair/missing-issues/dry-run")
@@ -67,7 +74,8 @@ class LotteryDataQualityControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.dryRun").value(true))
                 .andExpect(jsonPath("$.repairableIssueCount").value(1))
-                .andExpect(jsonPath("$.repairableIssues[0]").value("2026002"));
+                .andExpect(jsonPath("$.repairableIssues[0]").value("2026002"))
+                .andExpect(jsonPath("$.repairSteps[0]").value("确认后将插入 1 个 provider 可证明的缺失期号"));
 
         verify(service).dryRunMissingIssuesRepair(org.mockito.ArgumentMatchers.any(LotteryDataQualityRepairRequest.class));
     }
@@ -80,15 +88,19 @@ class LotteryDataQualityControllerTest {
                         .dryRun(false)
                         .repairedIssueCount(1)
                         .repairedIssues(List.of("2026002"))
+                        .cacheInvalidated(true)
+                        .confirmed(true)
                         .build());
 
         mockMvc.perform(post("/lottery/data-quality/repair/missing-issues/confirm")
                         .contentType("application/json")
-                        .content("{\"issues\":[\"2026002\"]}"))
+                        .content("{\"issues\":[\"2026002\"],\"confirm\":true}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.dryRun").value(false))
                 .andExpect(jsonPath("$.repairedIssueCount").value(1))
-                .andExpect(jsonPath("$.repairedIssues[0]").value("2026002"));
+                .andExpect(jsonPath("$.repairedIssues[0]").value("2026002"))
+                .andExpect(jsonPath("$.cacheInvalidated").value(true))
+                .andExpect(jsonPath("$.confirmed").value(true));
 
         verify(service).confirmMissingIssuesRepair(org.mockito.ArgumentMatchers.any(LotteryDataQualityRepairRequest.class));
     }
