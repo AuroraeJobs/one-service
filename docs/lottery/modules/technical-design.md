@@ -474,6 +474,20 @@ V13 Week 4 adds the month-end review surface at `/lottery/month-end`. It is a fr
 
 The export builder now exposes a `月末治理包` preset that combines ledger, tickets, decision sets, decision outcomes, settlement reviews, budget prechecks, ticket import previews, rule evidence, replay evidence, sync logs, and provider probe logs. Route smoke coverage includes the month-end page and verifies the reused API contract members; release readiness on `/lottery/exports` now lists month-end dashboard, reminder center, and strategy notebook coverage.
 
+V14 Week 1 adds strategy portfolios as the next execution layer. `LotteryStrategyPortfolio` stores named portfolios with allocation weight, tags, and weighted evidence links for rules, experiments, backtests, saved decisions, and strategy notes. `LotteryStrategyPortfolioService` keeps the portfolio document as references only, then derives `LotteryStrategyPortfolioSummary` from the owning source records and decision outcome summaries: health score, health status, ROI, warning count, replay count, evidence coverage, and per-type counts are generated on read.
+
+Strategy portfolio endpoints:
+
+```text
+GET   /lottery/strategy-portfolios
+GET   /lottery/strategy-portfolios/{id}
+POST  /lottery/strategy-portfolios
+PUT   /lottery/strategy-portfolios/{id}
+PATCH /lottery/strategy-portfolios/{id}/archive
+```
+
+The frontend board at `/lottery/strategy-portfolios` is intentionally dense and operation-oriented: portfolio cards expose health, ROI, coverage, warning columns, allocation weights, evidence counts, and evidence-row handoffs back to research, experiments, backtests, decision outcomes, and notebook pages.
+
 Portfolio-style governance extends preferences and ledger behavior with budget and exposure thresholds. The backend flags budget and max-ticket issues without blocking ordinary CRUD unless a future explicit enforcement mode is added.
 
 Wave 10E extends `LotteryPreference` with `weeklyBudget`, `monthlyBudget`, `maxTicketsPerIssue`, and `budgetReminderPercent`. `GET /lottery/budget/status` reads preferences and recorded tickets to return weekly/monthly usage, max issue exposure, and restrained warning rows for the workbench and ticket page. `LotteryLedgerSummary` also includes rolling 30-day cost/prize/net/ROI plus max/current drawdown values for exposure review.

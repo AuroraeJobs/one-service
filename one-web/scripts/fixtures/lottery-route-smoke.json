@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 16 Week 4 lottery month-end review smoke",
+  "target": "Iteration 17 Week 1 lottery strategy portfolio smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -48,6 +48,37 @@
             "dueCount": 1,
             "groups": ["开奖准备", "同步", "决策复盘"]
           }
+        }
+      }
+    },
+    {
+      "route": "/lottery/strategy-portfolios",
+      "label": "策略组合",
+      "component": "LotteryStrategyPortfolioPage",
+      "componentFile": "src/components/LotteryStrategyPortfolioPage.tsx",
+      "mockApis": [
+        "lotteryStrategyPortfolioApi.portfolios",
+        "lotteryStrategyPortfolioApi.create",
+        "lotteryStrategyPortfolioApi.archive"
+      ],
+      "emptyStates": ["暂无策略组合"],
+      "errorStates": ["读取彩票策略组合失败", "创建策略组合失败", "归档策略组合失败"],
+      "fixtureData": {
+        "portfolios": {
+          "items": [
+            {
+              "portfolio": { "id": "portfolio-fixture-1", "name": "稳态组合" },
+              "healthScore": 88,
+              "evidenceCoveragePercent": 80,
+              "ruleCount": 1,
+              "backtestCount": 1,
+              "decisionCount": 1,
+              "noteCount": 1
+            }
+          ],
+          "page": 1,
+          "pageSize": 20,
+          "total": 1
         }
       }
     },

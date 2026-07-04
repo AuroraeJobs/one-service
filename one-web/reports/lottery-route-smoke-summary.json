@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 16 Week 4 lottery month-end review smoke",
-  "generatedAt": "2026-07-04T14:06:36.482Z",
+  "target": "Iteration 17 Week 1 lottery strategy portfolio smoke",
+  "generatedAt": "2026-07-04T14:14:52.300Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
-  "routeCount": 7,
-  "checkCount": 176,
+  "routeCount": 8,
+  "checkCount": 191,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
@@ -17,6 +17,14 @@
       "mockApiCount": 12,
       "emptyStateCount": 7,
       "errorStateCount": 4
+    },
+    {
+      "route": "/lottery/strategy-portfolios",
+      "label": "策略组合",
+      "component": "LotteryStrategyPortfolioPage",
+      "mockApiCount": 3,
+      "emptyStateCount": 1,
+      "errorStateCount": 3
     },
     {
       "route": "/lottery/month-end",

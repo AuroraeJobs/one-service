@@ -1854,6 +1854,166 @@
   grid-column: 2 / -1;
 }
 
+.lottery-portfolio-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.lottery-portfolio-summary-grid article {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+}
+
+.lottery-portfolio-summary-grid strong {
+  color: var(--app-text);
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.lottery-portfolio-summary-grid span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.lottery-portfolio-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.lottery-portfolio-card {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-portfolio-card-head {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.lottery-portfolio-card-head > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.lottery-portfolio-card-head strong {
+  overflow: hidden;
+  color: var(--app-text);
+  font-size: 16px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-portfolio-card-head span {
+  overflow: hidden;
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-portfolio-score-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.lottery-portfolio-score-row button {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  padding: 8px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+  color: var(--app-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lottery-portfolio-score-row strong {
+  overflow: hidden;
+  font-size: 16px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-portfolio-score-row span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.lottery-portfolio-evidence-list,
+.lottery-portfolio-evidence-editor {
+  display: grid;
+  gap: 8px;
+}
+
+.lottery-portfolio-evidence-list button {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+  color: var(--app-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lottery-portfolio-evidence-list span,
+.lottery-portfolio-evidence-list small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-portfolio-evidence-list span {
+  color: var(--app-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.lottery-portfolio-evidence-list small {
+  grid-column: 2 / -1;
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.lottery-portfolio-evidence-editor-row {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr) minmax(0, 1fr) 100px auto;
+  align-items: end;
+  gap: 8px;
+}
+
+.lottery-portfolio-evidence-editor-row .ant-form-item {
+  margin-bottom: 0;
+}
+
 .lottery-notebook-editor {
   display: grid;
   gap: 10px;
@@ -4937,6 +5097,8 @@ button.lottery-latest-vs-card:hover {
   .lottery-maintenance-group-grid,
   .lottery-workbench-action-groups,
   .lottery-month-end-metric-grid,
+  .lottery-portfolio-grid,
+  .lottery-portfolio-summary-grid,
   .lottery-workbench-main-grid,
   .lottery-workbench-recent-grid,
   .lottery-workbench-runbook-grid,
@@ -4995,6 +5157,10 @@ button.lottery-latest-vs-card:hover {
   .lottery-workbench-action-groups,
   .lottery-workbench-health-summary,
   .lottery-month-end-metric-grid,
+  .lottery-portfolio-grid,
+  .lottery-portfolio-summary-grid,
+  .lottery-portfolio-score-row,
+  .lottery-portfolio-evidence-editor-row,
   .lottery-notebook-editor-row,
   .lottery-notebook-grid,
   .lottery-workbench-issue-focus,

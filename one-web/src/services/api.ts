@@ -1867,6 +1867,62 @@ export interface LotteryBacktestReport {
   createdAt?: number;
 }
 
+export interface LotteryStrategyPortfolioEvidenceLink {
+  evidenceType?: string;
+  sourceId?: string;
+  title?: string;
+  path?: string;
+  allocationWeight?: number;
+  note?: string;
+  attachedAt?: number;
+}
+
+export interface LotteryStrategyPortfolio {
+  id?: string;
+  userId?: string;
+  name?: string;
+  description?: string;
+  status?: string;
+  allocationWeight?: number;
+  evidence: LotteryStrategyPortfolioEvidenceLink[];
+  tags: string[];
+  archived?: boolean;
+  archivedAt?: number;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
+export interface LotteryStrategyPortfolioEvidenceSummary {
+  evidenceType?: string;
+  sourceId?: string;
+  title?: string;
+  path?: string;
+  allocationWeight?: number;
+  status?: string;
+  roiPercent?: number;
+  warningCount?: number;
+  replayCount?: number;
+  updatedAt?: number;
+}
+
+export interface LotteryStrategyPortfolioSummary {
+  portfolio?: LotteryStrategyPortfolio;
+  healthScore?: number;
+  healthStatus?: string;
+  roiPercent?: number;
+  warningCount?: number;
+  replayCount?: number;
+  evidenceCoveragePercent?: number;
+  ruleCount?: number;
+  experimentCount?: number;
+  backtestCount?: number;
+  decisionCount?: number;
+  noteCount?: number;
+  allocationWeight?: number;
+  evidence: LotteryStrategyPortfolioEvidenceSummary[];
+  generatedAt?: number;
+}
+
 export interface LotteryBacktestRunRequest {
   experimentId?: string;
   strategyName?: string;
@@ -2683,6 +2739,24 @@ export const lotteryBacktestApi = {
   },
   detail: (id: string): Promise<LotteryBacktestReport> => {
     return apiClient.get(`/lottery/backtests/${id}`);
+  }
+};
+
+export const lotteryStrategyPortfolioApi = {
+  portfolios: (params?: { includeArchived?: boolean; page?: number; pageSize?: number }): Promise<LotteryPageResponse<LotteryStrategyPortfolioSummary>> => {
+    return apiClient.get('/lottery/strategy-portfolios', { params });
+  },
+  detail: (id: string): Promise<LotteryStrategyPortfolioSummary> => {
+    return apiClient.get(`/lottery/strategy-portfolios/${id}`);
+  },
+  create: (portfolio: Partial<LotteryStrategyPortfolio>): Promise<LotteryStrategyPortfolioSummary> => {
+    return apiClient.post('/lottery/strategy-portfolios', portfolio);
+  },
+  update: (id: string, portfolio: Partial<LotteryStrategyPortfolio>): Promise<LotteryStrategyPortfolioSummary> => {
+    return apiClient.put(`/lottery/strategy-portfolios/${id}`, portfolio);
+  },
+  archive: (id: string): Promise<LotteryStrategyPortfolioSummary> => {
+    return apiClient.patch(`/lottery/strategy-portfolios/${id}/archive`);
   }
 };
 

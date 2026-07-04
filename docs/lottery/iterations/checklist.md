@@ -466,11 +466,11 @@ Goal: turn the lottery intelligence cockpit into an execution-grade workflow clo
 
 ### Week 1: Strategy Portfolio And Allocation Board
 
-- [ ] Add a strategy portfolio model that groups prediction rules, experiments, backtests, saved decisions, and notes into named portfolios.
-- [ ] Add backend APIs for portfolio list/detail/create/update/archive with health, ROI, warning, replay, and evidence coverage summaries.
-- [ ] Add `/lottery/strategy-portfolios` frontend board with portfolio cards, sortable score columns, allocation weights, and evidence drilldowns.
-- [ ] Add portfolio links from prediction rules, research comparison, strategy notebook, and decision outcomes.
-- [ ] Run focused backend/frontend verification, update docs, commit, and push.
+- [x] Add a strategy portfolio model that groups prediction rules, experiments, backtests, saved decisions, and notes into named portfolios. Added `LotteryStrategyPortfolio` with weighted evidence links for `RULE`, `EXPERIMENT`, `BACKTEST`, `DECISION`, and `NOTE`.
+- [x] Add backend APIs for portfolio list/detail/create/update/archive with health, ROI, warning, replay, and evidence coverage summaries. Added `/lottery/strategy-portfolios` list/detail/create/update/archive and `LotteryStrategyPortfolioSummary`.
+- [x] Add `/lottery/strategy-portfolios` frontend board with portfolio cards, sortable score columns, allocation weights, and evidence drilldowns. Added dense portfolio board with health, ROI, coverage, warnings, evidence counts, source links, and create modal.
+- [x] Add portfolio links from prediction rules, research comparison, strategy notebook, and decision outcomes. Portfolio evidence links route back to research, experiment, backtest, decision, and notebook surfaces from each evidence row.
+- [x] Run focused backend/frontend verification, update docs, commit, and push. Verification: focused Maven portfolio service/controller tests; `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
 ### Week 2: Simulation Sandbox And What-If Tickets
 
