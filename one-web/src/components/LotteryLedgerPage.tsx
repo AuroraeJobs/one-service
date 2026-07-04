@@ -3,6 +3,7 @@ import { Alert, Button, Card, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
   DollarOutlined,
+  BarChartOutlined,
   LineChartOutlined,
   PercentageOutlined,
   ReloadOutlined,
@@ -17,7 +18,8 @@ import {
   lotteryLedgerApi,
   type LotteryIssueLedger,
   type LotteryLedgerSummary,
-  type LotteryMonthlyLedger
+  type LotteryMonthlyLedger,
+  type LotteryPerformanceLedger
 } from '../services/api';
 import './LotteryOverviewPage.css';
 
@@ -84,10 +86,62 @@ const createMonthlyTrendOption = (months: LotteryMonthlyLedger[]): EChartsOption
   };
 };
 
+const createPerformanceOption = (rows: LotteryPerformanceLedger[], title: string): EChartsOption => {
+  const labels = rows.map(item => item.name || item.key || 'UNKNOWN');
+  return {
+    tooltip: { trigger: 'axis' },
+    legend: { top: 0, data: ['净结果', '命中率'] },
+    grid: { top: 48, right: 48, bottom: 36, left: 48 },
+    xAxis: {
+      type: 'category',
+      data: labels,
+      axisLabel: { interval: 0 },
+      axisLine: { lineStyle: { color: 'rgba(127, 127, 127, 0.2)' } }
+    },
+    yAxis: [
+      {
+        type: 'value',
+        name: '金额',
+        axisLabel: { formatter: '¥{value}' },
+        splitLine: { lineStyle: { color: 'rgba(127, 127, 127, 0.12)' } }
+      },
+      {
+        type: 'value',
+        name: '命中率',
+        axisLabel: { formatter: '{value}%' },
+        splitLine: { show: false }
+      }
+    ],
+    series: [
+      {
+        name: '净结果',
+        type: 'bar',
+        barMaxWidth: 34,
+        itemStyle: { color: '#5856d6' },
+        data: rows.map(item => Number(item.netResult || 0))
+      },
+      {
+        name: '命中率',
+        type: 'line',
+        yAxisIndex: 1,
+        smooth: true,
+        symbolSize: 7,
+        lineStyle: { color: '#34c759', width: 3 },
+        itemStyle: { color: '#34c759' },
+        data: rows.map(item => Number(item.hitRatePercent || 0))
+      }
+    ],
+    title: rows.length ? undefined : { text: `${title}暂无数据`, left: 'center', top: 'middle', textStyle: { color: '#8c8c8c', fontSize: 14 } }
+  };
+};
+
 const LotteryLedgerPage = () => {
   const [summary, setSummary] = useState<LotteryLedgerSummary>(emptySummary);
   const [issues, setIssues] = useState<LotteryIssueLedger[]>([]);
   const [months, setMonths] = useState<LotteryMonthlyLedger[]>([]);
+  const [sourcePerformance, setSourcePerformance] = useState<LotteryPerformanceLedger[]>([]);
+  const [rulePerformance, setRulePerformance] = useState<LotteryPerformanceLedger[]>([]);
+  const [performanceDimension, setPerformanceDimension] = useState<'source' | 'rule'>('source');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -100,19 +154,28 @@ const LotteryLedgerPage = () => {
   }, [summary.checkedTicketCount, summary.winningTicketCount]);
 
   const monthlyTrendOption = useMemo(() => createMonthlyTrendOption(months), [months]);
+  const activePerformanceRows = performanceDimension === 'source' ? sourcePerformance : rulePerformance;
+  const performanceOption = useMemo(
+    () => createPerformanceOption(activePerformanceRows, performanceDimension === 'source' ? '来源表现' : '规则表现'),
+    [activePerformanceRows, performanceDimension]
+  );
 
   const loadSummary = useCallback(async () => {
     setLoading(true);
     setError(undefined);
     try {
-      const [ledgerSummary, issueRows, monthRows] = await Promise.all([
+      const [ledgerSummary, issueRows, monthRows, sourceRows, ruleRows] = await Promise.all([
         lotteryLedgerApi.summary(),
         lotteryLedgerApi.issues(),
-        lotteryLedgerApi.months()
+        lotteryLedgerApi.months(),
+        lotteryLedgerApi.performance({ dimension: 'source' }),
+        lotteryLedgerApi.performance({ dimension: 'rule' })
       ]);
       setSummary(ledgerSummary || emptySummary);
       setIssues(issueRows || []);
       setMonths(monthRows || []);
+      setSourcePerformance(sourceRows || []);
+      setRulePerformance(ruleRows || []);
     } catch (requestError) {
       console.error('获取彩票账本失败:', requestError);
       setError(requestError instanceof Error ? requestError.message : '获取彩票账本失败');
@@ -250,6 +313,23 @@ const LotteryLedgerPage = () => {
 
       <Card className="life-panel-card" title={<Space><LineChartOutlined />月度趋势</Space>}>
         <ReactECharts option={monthlyTrendOption} style={{ height: 320, width: '100%' }} notMerge lazyUpdate />
+      </Card>
+
+      <Card
+        className="life-panel-card"
+        title={<Space><BarChartOutlined />来源/规则表现</Space>}
+        extra={
+          <Space.Compact>
+            <Button type={performanceDimension === 'source' ? 'primary' : 'default'} onClick={() => setPerformanceDimension('source')}>
+              来源
+            </Button>
+            <Button type={performanceDimension === 'rule' ? 'primary' : 'default'} onClick={() => setPerformanceDimension('rule')}>
+              规则
+            </Button>
+          </Space.Compact>
+        }
+      >
+        <ReactECharts option={performanceOption} style={{ height: 320, width: '100%' }} notMerge lazyUpdate />
       </Card>
 
       <Card className="life-panel-card" title="期次账本">

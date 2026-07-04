@@ -1645,6 +1645,21 @@ export interface LotteryMonthlyLedger {
   roiPercent?: number;
 }
 
+export interface LotteryPerformanceLedger {
+  dimension?: string;
+  key?: string;
+  name?: string;
+  ticketCount?: number;
+  checkedTicketCount?: number;
+  pendingTicketCount?: number;
+  winningTicketCount?: number;
+  totalCost?: number;
+  totalPrize?: number;
+  netResult?: number;
+  roiPercent?: number;
+  hitRatePercent?: number;
+}
+
 export interface LotteryTrainingTimelineItem {
   period: number;
   predictedRedNumbers: string[];
@@ -1780,6 +1795,9 @@ export const lotteryLedgerApi = {
   },
   months: (): Promise<LotteryMonthlyLedger[]> => {
     return apiClient.get('/lottery/ledger/months');
+  },
+  performance: (params?: { dimension?: 'source' | 'rule' }): Promise<LotteryPerformanceLedger[]> => {
+    return apiClient.get('/lottery/ledger/performance', { params });
   }
 };
 
