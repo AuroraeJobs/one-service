@@ -129,7 +129,7 @@ Goal: make the module maintainable.
 
 - Add provider health/config/probe pages.
 - Add user preferences and training defaults.
-- Add sync retry and scheduled trigger actions.
+- Add sync retry, scheduled trigger actions, sync summary cards, and provider probe-log inspection.
 - Add data quality checks and repair workflows where safe.
 
 ## API Boundary

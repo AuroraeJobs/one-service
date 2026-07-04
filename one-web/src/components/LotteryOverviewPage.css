@@ -104,6 +104,10 @@
   margin-bottom: 16px;
 }
 
+.lottery-sync-summary-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .lottery-history-summary-item {
   display: flex;
   align-items: center;

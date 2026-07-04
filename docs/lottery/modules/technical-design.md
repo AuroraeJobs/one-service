@@ -244,6 +244,7 @@ VOID
 - Do not duplicate lottery number parsing across pages when a shared helper exists.
 - Keep prediction UX research-oriented and avoid guaranteed-win language.
 - Ticket and ledger pages should be quiet, record-focused, and explicit about cost and outcome.
+- The sync operations page should read backend summaries and provider probe logs rather than recalculating operational health only in the browser.
 
 ## Verification Strategy
 

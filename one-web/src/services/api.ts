@@ -50,6 +50,45 @@ export interface LotteryRecordSyncLog {
   finishedAt?: number;
 }
 
+export interface LotteryRecordSyncSummary {
+  totalCount?: number;
+  successCount?: number;
+  failedCount?: number;
+  skippedCount?: number;
+  runningCount?: number;
+  successRate?: number;
+  failedRate?: number;
+  savedCount?: number;
+  latestJobName?: string;
+  latestStatus?: string;
+  latestMessage?: string;
+  latestStartIssue?: string;
+  latestEndIssue?: string;
+  latestStartedAt?: number;
+  latestFinishedAt?: number;
+  latestDurationMs?: number;
+  averageDurationMs?: number;
+  lastSuccessAt?: number;
+  lastFailureAt?: number;
+  lastSkippedAt?: number;
+  generatedAt?: number;
+}
+
+export interface LotteryProviderProbeResult {
+  category?: string;
+  provider?: string;
+  success?: boolean;
+  status?: string;
+  message?: string;
+  recordCount?: number;
+  durationMs?: number;
+  checkedAt?: number;
+}
+
+export interface LotteryProviderProbeLog extends LotteryProviderProbeResult {
+  id?: string;
+}
+
 export interface LotteryPreference {
   id?: string;
   userId?: string;
@@ -300,6 +339,18 @@ export const lotteryRecordApi = {
   },
   syncLogs: (params?: { status?: string; limit?: number }): Promise<LotteryRecordSyncLog[]> => {
     return apiClient.get('/lottery/records/sync-logs', { params });
+  },
+  syncSummary: (params?: { limit?: number }): Promise<LotteryRecordSyncSummary> => {
+    return apiClient.get('/lottery/records/sync-summary', { params });
+  },
+};
+
+export const lotteryProviderApi = {
+  probe: (params?: { provider?: string }): Promise<LotteryProviderProbeResult> => {
+    return apiClient.get('/lottery/providers/probe', { params });
+  },
+  probeLogs: (params?: { provider?: string; limit?: number }): Promise<LotteryProviderProbeLog[]> => {
+    return apiClient.get('/lottery/providers/probe-logs', { params });
   },
 };
 

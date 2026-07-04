@@ -1,9 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Select, Space, Table, Tag, message } from 'antd';
+import { Alert, Button, Card, Input, Select, Space, Table, Tag, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { ReloadOutlined, SyncOutlined } from '@ant-design/icons';
+import { ApiOutlined, CheckCircleOutlined, ClockCircleOutlined, ExperimentOutlined, ReloadOutlined, SyncOutlined, WarningOutlined } from '@ant-design/icons';
 import LifePageShell from './LifePageShell';
-import { lotteryRecordApi, type LotteryRecordSyncLog } from '../services/api';
+import {
+  lotteryProviderApi,
+  lotteryRecordApi,
+  type LotteryProviderProbeLog,
+  type LotteryRecordSyncLog,
+  type LotteryRecordSyncSummary
+} from '../services/api';
 import './LotteryOverviewPage.css';
 
 const formatTime = (value?: number) => {
@@ -36,9 +42,13 @@ const statusColor = (status?: string) => {
 
 const LotterySyncOperationsPage = () => {
   const [logs, setLogs] = useState<LotteryRecordSyncLog[]>([]);
+  const [summary, setSummary] = useState<LotteryRecordSyncSummary>();
+  const [probeLogs, setProbeLogs] = useState<LotteryProviderProbeLog[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>();
+  const [probeProvider, setProbeProvider] = useState('cwl');
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [probing, setProbing] = useState(false);
   const [error, setError] = useState<string>();
 
   const queryParams = useMemo(() => ({
@@ -50,15 +60,21 @@ const LotterySyncOperationsPage = () => {
     setLoading(true);
     setError(undefined);
     try {
-      const rows = await lotteryRecordApi.syncLogs(queryParams);
+      const [rows, nextSummary, nextProbeLogs] = await Promise.all([
+        lotteryRecordApi.syncLogs(queryParams),
+        lotteryRecordApi.syncSummary({ limit: 50 }),
+        lotteryProviderApi.probeLogs({ provider: probeProvider.trim() || undefined, limit: 20 })
+      ]);
       setLogs(rows || []);
+      setSummary(nextSummary || undefined);
+      setProbeLogs(nextProbeLogs || []);
     } catch (requestError) {
       console.error('读取彩票同步日志失败:', requestError);
       setError(requestError instanceof Error ? requestError.message : '读取彩票同步日志失败');
     } finally {
       setLoading(false);
     }
-  }, [queryParams]);
+  }, [probeProvider, queryParams]);
 
   useEffect(() => {
     loadLogs();
@@ -81,6 +97,24 @@ const LotterySyncOperationsPage = () => {
       message.error('执行彩票同步失败');
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const runProbe = async () => {
+    setProbing(true);
+    setError(undefined);
+    try {
+      const provider = probeProvider.trim() || undefined;
+      const result = await lotteryProviderApi.probe({ provider });
+      message.success(result.message || 'Provider 探测完成');
+      const nextProbeLogs = await lotteryProviderApi.probeLogs({ provider, limit: 20 });
+      setProbeLogs(nextProbeLogs || []);
+    } catch (requestError) {
+      console.error('探测彩票 Provider 失败:', requestError);
+      setError(requestError instanceof Error ? requestError.message : '探测彩票 Provider 失败');
+      message.error('探测彩票 Provider 失败');
+    } finally {
+      setProbing(false);
     }
   };
 
@@ -135,6 +169,60 @@ const LotterySyncOperationsPage = () => {
     }
   ];
 
+  const probeColumns: ColumnsType<LotteryProviderProbeLog> = [
+    {
+      title: 'Provider',
+      dataIndex: 'provider',
+      key: 'provider',
+      render: value => (
+        <Space>
+          <ApiOutlined />
+          <strong>{value || '-'}</strong>
+        </Space>
+      )
+    },
+    {
+      title: '状态',
+      key: 'status',
+      render: (_, record) => (
+        <Tag color={record.success && record.status === 'AVAILABLE' ? 'green' : 'orange'}>
+          {record.status || 'UNKNOWN'}
+        </Tag>
+      )
+    },
+    {
+      title: '记录数',
+      dataIndex: 'recordCount',
+      key: 'recordCount',
+      align: 'right',
+      render: value => value ?? 0
+    },
+    {
+      title: '耗时',
+      dataIndex: 'durationMs',
+      key: 'durationMs',
+      render: value => `${value ?? 0} ms`
+    },
+    {
+      title: '消息',
+      dataIndex: 'message',
+      key: 'message',
+      ellipsis: true,
+      render: value => value || '-'
+    },
+    {
+      title: '检查时间',
+      dataIndex: 'checkedAt',
+      key: 'checkedAt',
+      render: value => formatTime(value)
+    }
+  ];
+
+  const latestStatus = summary?.latestStatus || '-';
+  const latestIssueRange = summary?.latestStartIssue || summary?.latestEndIssue
+    ? `${summary?.latestStartIssue || '-'} 到 ${summary?.latestEndIssue || '-'}`
+    : '-';
+
   return (
     <LifePageShell
       className="lottery-prediction-page"
@@ -171,6 +259,88 @@ const LotterySyncOperationsPage = () => {
       }
     >
       {error ? <Alert className="lottery-overview-status-alert" type="error" showIcon message={error} /> : null}
+
+      <section className="lottery-history-summary-grid lottery-sync-summary-grid">
+        <Card className="life-panel-card lottery-clean-panel" loading={loading}>
+          <div className="lottery-history-summary-item">
+            <CheckCircleOutlined />
+            <div>
+              <strong>{summary?.successCount ?? 0}</strong>
+              <span>成功同步</span>
+            </div>
+          </div>
+        </Card>
+        <Card className="life-panel-card lottery-clean-panel" loading={loading}>
+          <div className="lottery-history-summary-item">
+            <WarningOutlined />
+            <div>
+              <strong>{summary?.failedCount ?? 0}</strong>
+              <span>失败同步</span>
+            </div>
+          </div>
+        </Card>
+        <Card className="life-panel-card lottery-clean-panel" loading={loading}>
+          <div className="lottery-history-summary-item">
+            <SyncOutlined />
+            <div>
+              <strong>{summary?.savedCount ?? 0}</strong>
+              <span>新增记录</span>
+            </div>
+          </div>
+        </Card>
+        <Card className="life-panel-card lottery-clean-panel" loading={loading}>
+          <div className="lottery-history-summary-item">
+            <ClockCircleOutlined />
+            <div>
+              <strong>{summary?.averageDurationMs ?? 0}</strong>
+              <span>平均耗时 ms</span>
+            </div>
+          </div>
+        </Card>
+      </section>
+
+      <Card
+        className="life-panel-card"
+        title="同步摘要"
+        extra={<Tag color={statusColor(latestStatus)}>{latestStatus}</Tag>}
+      >
+        <Space wrap size={[16, 8]}>
+          <span>最近期号：{latestIssueRange}</span>
+          <span>成功率：{summary?.successRate ?? 0}%</span>
+          <span>失败率：{summary?.failedRate ?? 0}%</span>
+          <span>最近完成：{formatTime(summary?.latestFinishedAt)}</span>
+          <span>最近消息：{summary?.latestMessage || '-'}</span>
+        </Space>
+      </Card>
+
+      <Card
+        className="life-panel-card"
+        title="Provider 探测"
+        extra={
+          <Space wrap>
+            <Input
+              value={probeProvider}
+              placeholder="provider"
+              allowClear
+              style={{ width: 140 }}
+              onChange={event => setProbeProvider(event.target.value)}
+            />
+            <Button icon={<ExperimentOutlined />} loading={probing} onClick={runProbe}>
+              探测
+            </Button>
+          </Space>
+        }
+      >
+        <Table
+          rowKey={record => record.id || `${record.provider}-${record.checkedAt}`}
+          columns={probeColumns}
+          dataSource={probeLogs}
+          loading={loading || probing}
+          pagination={{ pageSize: 5 }}
+          scroll={{ x: 780 }}
+        />
+      </Card>
+
       <Card className="life-panel-card">
         <Table
           rowKey={record => record.id || `${record.jobName}-${record.startedAt}`}
