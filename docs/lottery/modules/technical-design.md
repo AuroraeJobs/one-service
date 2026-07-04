@@ -566,6 +566,10 @@ GET /lottery/recommendations
 
 Mobile batch actions call the existing reminder, ticket-pack, and recommendation lifecycle endpoints. The page exposes action, ticket-pack, outcome, and recommendation segments with large touch targets for confirm, snooze, approve, save-as-ticket, apply, defer, and handoff navigation. Workbench, alerts, governance, ticket packs, and month-end review link into `/lottery/mobile` while preserving their full desktop routes.
 
+V15 Week 4 closes the adaptive review loop through export-side evidence instead of adding unsupported CSV contracts. `/lottery/exports` now provides four V15 report presets: `归因闭环包`, `推荐生命周期包`, `移动指挥包`, and `V15治理证据包`. Each preset reuses existing supported export sections such as ledger issues, tickets, decision sets, decision outcomes, settlement reviews, budget prechecks, rule evidence, replay evidence, sync logs, and probe logs.
+
+The export page also owns V15 evidence-pack cards for attribution, recommendation lifecycle, mobile command, and governance evidence. Audit filters include outcome attribution and recommendation refresh/status event types, while release-readiness rows explicitly cover `/lottery/outcomes`, `/lottery/recommendations`, `/lottery/mobile`, and the V15 governance evidence pack. The route smoke fixture targets the Week 4 release evidence slice and keeps `/lottery/outcomes`, `/lottery/recommendations`, `/lottery/mobile`, `/lottery/governance`, and `/lottery/exports` in the same static verification gate.
+
 Portfolio-style governance extends preferences and ledger behavior with budget and exposure thresholds. The backend flags budget and max-ticket issues without blocking ordinary CRUD unless a future explicit enforcement mode is added.
 
 Wave 10E extends `LotteryPreference` with `weeklyBudget`, `monthlyBudget`, `maxTicketsPerIssue`, and `budgetReminderPercent`. `GET /lottery/budget/status` reads preferences and recorded tickets to return weekly/monthly usage, max issue exposure, and restrained warning rows for the workbench and ticket page. `LotteryLedgerSummary` also includes rolling 30-day cost/prize/net/ROI plus max/current drawdown values for exposure review.

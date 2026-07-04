@@ -1,6 +1,6 @@
 {
-  "target": "Iteration 18 Week 3 lottery mobile command smoke",
-  "generatedAt": "2026-07-04T15:44:01.718Z",
+  "target": "Iteration 18 Week 4 lottery closed-loop release evidence smoke",
+  "generatedAt": "2026-07-04T15:49:25.528Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
@@ -119,7 +119,7 @@
       "label": "导出审计",
       "component": "LotteryExportMaintenancePage",
       "mockApiCount": 4,
-      "emptyStateCount": 9,
+      "emptyStateCount": 13,
       "errorStateCount": 4
     }
   ]

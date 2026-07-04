@@ -526,11 +526,11 @@ Goal: turn the V14 execution workflow into a learning loop: every strategy, simu
 
 ### Week 4: Closed-Loop Reports, Evidence Packs, And Release Readiness
 
-- [ ] Add closed-loop report presets for outcome attribution, recommendation lifecycle, mobile command flow, and V15 governance evidence.
-- [ ] Extend export/audit surfaces with V15 evidence filters, report sections, and release-readiness rows.
-- [ ] Extend route smoke coverage for outcomes, recommendations, mobile command flow, and updated release evidence.
-- [ ] Review responsive/mobile layout for outcomes, recommendations, mobile command flow, governance, ticket packs, and export pages.
-- [ ] Run V15 verification, update docs, commit, and push.
+- [x] Add closed-loop report presets for outcome attribution, recommendation lifecycle, mobile command flow, and V15 governance evidence. Added `归因闭环包`, `推荐生命周期包`, `移动指挥包`, and `V15治理证据包` presets that reuse supported export sections.
+- [x] Extend export/audit surfaces with V15 evidence filters, report sections, and release-readiness rows. Added V15 evidence-pack cards, audit filters for attribution/recommendation events, and release-readiness rows for attribution, recommendation lifecycle, mobile command flow, and governance evidence.
+- [x] Extend route smoke coverage for outcomes, recommendations, mobile command flow, and updated release evidence. Smoke fixture now targets V15 Week 4 release evidence and validates the outcome, recommendation, mobile, governance, and export surfaces.
+- [x] Review responsive/mobile layout for outcomes, recommendations, mobile command flow, governance, ticket packs, and export pages. Added responsive evidence-pack grid behavior and kept V15 pages in the existing mobile grid breakpoints.
+- [x] Run V15 verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
 ## Documentation And Delivery
 

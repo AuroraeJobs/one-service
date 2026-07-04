@@ -58,6 +58,61 @@ const reportPresets = [
     key: 'month-end-governance',
     label: '月末治理包',
     sections: ['ledger-issues', 'tickets', 'decision-sets', 'decision-outcomes', 'settlement-reviews', 'budget-prechecks', 'ticket-import-previews', 'rule-evidence', 'replay-evidence', 'sync-logs', 'probe-logs']
+  },
+  {
+    key: 'v15-attribution-loop',
+    label: '归因闭环包',
+    sections: ['ledger-issues', 'tickets', 'decision-outcomes', 'settlement-reviews', 'rule-evidence', 'replay-evidence']
+  },
+  {
+    key: 'v15-recommendation-lifecycle',
+    label: '推荐生命周期包',
+    sections: ['decision-outcomes', 'settlement-reviews', 'rule-evidence', 'replay-evidence', 'sync-logs', 'probe-logs']
+  },
+  {
+    key: 'v15-mobile-command',
+    label: '移动指挥包',
+    sections: ['tickets', 'decision-sets', 'decision-outcomes', 'budget-prechecks', 'settlement-reviews']
+  },
+  {
+    key: 'v15-governance-evidence',
+    label: 'V15治理证据包',
+    sections: ['ledger-issues', 'tickets', 'decision-sets', 'decision-outcomes', 'settlement-reviews', 'budget-prechecks', 'ticket-import-previews', 'rule-evidence', 'replay-evidence', 'sync-logs', 'probe-logs']
+  }
+];
+
+const v15EvidencePacks = [
+  {
+    key: 'attribution',
+    title: '归因闭环证据',
+    route: '/lottery/outcomes',
+    preset: '归因闭环包',
+    auditTypes: ['LOTTERY_OUTCOME_ATTRIBUTION'],
+    sections: ['decision-outcomes', 'settlement-reviews', 'ledger-issues']
+  },
+  {
+    key: 'recommendations',
+    title: '推荐生命周期证据',
+    route: '/lottery/recommendations',
+    preset: '推荐生命周期包',
+    auditTypes: ['LOTTERY_RECOMMENDATION_REFRESH', 'LOTTERY_RECOMMENDATION_STATUS'],
+    sections: ['decision-outcomes', 'rule-evidence', 'replay-evidence']
+  },
+  {
+    key: 'mobile',
+    title: '移动指挥证据',
+    route: '/lottery/mobile',
+    preset: '移动指挥包',
+    auditTypes: ['reminder-ack', 'ticket-pack-action', 'recommendation-status'],
+    sections: ['tickets', 'budget-prechecks', 'settlement-reviews']
+  },
+  {
+    key: 'governance',
+    title: 'V15治理证据',
+    route: '/lottery/governance',
+    preset: 'V15治理证据包',
+    auditTypes: ['EXPORT', 'REPORT_EXPORT', 'LOTTERY_RECOMMENDATION_REFRESH'],
+    sections: ['sync-logs', 'probe-logs', 'decision-outcomes']
   }
 ];
 
@@ -377,7 +432,35 @@ const LotteryExportMaintenancePage = () => {
       key: 'automated-route-smoke',
       label: '自动路由冒烟',
       status: 'PASS',
-      message: 'npm run lottery:smoke 校验工作台、组合、沙盘、票包、治理、月末复盘和导出路由',
+      message: 'npm run lottery:smoke 校验工作台、归因、推荐、移动指挥、治理、月末复盘和导出路由',
+      path: '/lottery/exports'
+    },
+    {
+      key: 'v15-outcome-attribution',
+      label: 'V15归因闭环',
+      status: 'PASS',
+      message: '/lottery/outcomes 已纳入闭环证据、路线冒烟和归因报告预设',
+      path: '/lottery/outcomes'
+    },
+    {
+      key: 'v15-recommendation-lifecycle',
+      label: 'V15推荐生命周期',
+      status: 'PASS',
+      message: '/lottery/recommendations 已纳入生命周期证据、审计筛选和推荐报告预设',
+      path: '/lottery/recommendations'
+    },
+    {
+      key: 'v15-mobile-command',
+      label: 'V15移动指挥',
+      status: 'PASS',
+      message: '/lottery/mobile 已纳入批量复核证据、路线冒烟和移动指挥报告预设',
+      path: '/lottery/mobile'
+    },
+    {
+      key: 'v15-governance-evidence',
+      label: 'V15治理证据包',
+      status: 'PASS',
+      message: '导出页提供归因、推荐、移动指挥和治理闭环证据包',
       path: '/lottery/exports'
     },
     {
@@ -492,6 +575,29 @@ const LotteryExportMaintenancePage = () => {
         </div>
       </Card>
 
+      <Card
+        className="life-panel-card lottery-clean-panel lottery-v15-evidence-card"
+        title={<Space><SafetyCertificateOutlined />V15闭环证据包</Space>}
+        extra={<Tag color="blue">归因 / 推荐 / 移动 / 治理</Tag>}
+      >
+        <div className="lottery-v15-evidence-grid">
+          {v15EvidencePacks.map(pack => (
+            <button
+              key={pack.key}
+              type="button"
+              onClick={() => {
+                setReportSections(pack.sections);
+                window.history.replaceState(null, '', `/lottery/exports?preset=${pack.key}`);
+              }}
+            >
+              <strong>{pack.title}</strong>
+              <span>{pack.preset} · {pack.route}</span>
+              <small>{pack.auditTypes.join(' / ')}</small>
+            </button>
+          ))}
+        </div>
+      </Card>
+
       {result ? (
         <Card
           className="life-panel-card lottery-clean-panel"
@@ -557,6 +663,10 @@ const LotteryExportMaintenancePage = () => {
               onChange={setAuditTypeFilter}
               options={[
                 { label: '导出', value: 'EXPORT' },
+                { label: '报告导出', value: 'REPORT_EXPORT' },
+                { label: '归因审计', value: 'LOTTERY_OUTCOME_ATTRIBUTION' },
+                { label: '推荐刷新', value: 'LOTTERY_RECOMMENDATION_REFRESH' },
+                { label: '推荐状态', value: 'LOTTERY_RECOMMENDATION_STATUS' },
                 ...exportTypeOptions
               ]}
               style={{ width: 140 }}

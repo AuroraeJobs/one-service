@@ -703,6 +703,7 @@
 .lottery-report-builder,
 .lottery-audit-filter-bar,
 .lottery-report-section-grid,
+.lottery-v15-evidence-grid,
 .lottery-maintenance-group-grid {
   display: grid;
   gap: 12px;
@@ -762,6 +763,49 @@
   overflow: hidden;
   color: var(--app-text);
   font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-v15-evidence-card {
+  margin-bottom: 16px;
+}
+
+.lottery-v15-evidence-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.lottery-v15-evidence-grid button {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  min-height: 112px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface-elevated);
+  color: var(--app-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lottery-v15-evidence-grid button:hover {
+  border-color: var(--module-accent, #0071e3);
+}
+
+.lottery-v15-evidence-grid strong {
+  overflow: hidden;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-v15-evidence-grid span,
+.lottery-v15-evidence-grid small {
+  overflow: hidden;
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.35;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -5775,6 +5819,7 @@ button.lottery-latest-vs-card:hover {
   .lottery-ticket-settlement-list,
   .lottery-ticket-decision-drilldown,
   .lottery-report-section-grid,
+  .lottery-v15-evidence-grid,
   .lottery-maintenance-group-grid,
   .lottery-workbench-action-groups,
   .lottery-month-end-metric-grid,
@@ -5871,6 +5916,7 @@ button.lottery-latest-vs-card:hover {
   .lottery-ticket-settlement-list,
   .lottery-ticket-decision-drilldown,
   .lottery-report-section-grid,
+  .lottery-v15-evidence-grid,
   .lottery-research-report-grid,
   .lottery-release-readiness-grid,
   .lottery-workbench-status-grid {
