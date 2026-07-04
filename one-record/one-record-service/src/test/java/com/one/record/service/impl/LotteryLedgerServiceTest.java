@@ -2,6 +2,7 @@ package com.one.record.service.impl;
 
 import com.one.record.lottery.LotteryIssueLedger;
 import com.one.record.lottery.LotteryLedgerSummary;
+import com.one.record.lottery.LotteryMonthlyLedger;
 import com.one.record.lottery.LotteryPrizeResult;
 import com.one.record.model.LotteryTicket;
 import com.one.record.repository.LotteryTicketRepository;
@@ -9,6 +10,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -104,5 +107,55 @@ class LotteryLedgerServiceTest {
         assertThat(checkedIssue.getTotalPrize()).isEqualByComparingTo("10.00");
         assertThat(checkedIssue.getNetResult()).isEqualByComparingTo("4.00");
         assertThat(checkedIssue.getRoiPercent()).isEqualByComparingTo("66.67");
+    }
+
+    @Test
+    void monthsGroupTicketsByCreatedMonthDescending() {
+        when(ticketRepository.findByUserIdOrderByPeriodDescCreatedAtDesc("default")).thenReturn(List.of(
+                LotteryTicket.builder()
+                        .createdAt(timestamp(2026, 7, 3))
+                        .cost(new BigDecimal("2"))
+                        .prizeResult(LotteryPrizeResult.builder()
+                                .prizeAmount(500L)
+                                .winning(true)
+                                .build())
+                        .build(),
+                LotteryTicket.builder()
+                        .createdAt(timestamp(2026, 6, 29))
+                        .cost(new BigDecimal("4"))
+                        .build(),
+                LotteryTicket.builder()
+                        .createdAt(timestamp(2026, 7, 4))
+                        .cost(new BigDecimal("2"))
+                        .prizeResult(LotteryPrizeResult.builder()
+                                .prizeAmount(0L)
+                                .winning(false)
+                                .build())
+                        .build()
+        ));
+
+        List<LotteryMonthlyLedger> months = service.months();
+
+        assertThat(months).hasSize(2);
+        LotteryMonthlyLedger july = months.get(0);
+        assertThat(july.getMonth()).isEqualTo("2026-07");
+        assertThat(july.getTicketCount()).isEqualTo(2);
+        assertThat(july.getCheckedTicketCount()).isEqualTo(2);
+        assertThat(july.getWinningTicketCount()).isEqualTo(1);
+        assertThat(july.getTotalCost()).isEqualByComparingTo("4");
+        assertThat(july.getTotalPrize()).isEqualByComparingTo("5.00");
+        assertThat(july.getNetResult()).isEqualByComparingTo("1.00");
+        assertThat(july.getRoiPercent()).isEqualByComparingTo("25.00");
+
+        assertThat(months.get(1).getMonth()).isEqualTo("2026-06");
+        assertThat(months.get(1).getPendingTicketCount()).isEqualTo(1);
+        assertThat(months.get(1).getNetResult()).isEqualByComparingTo("-4");
+    }
+
+    private long timestamp(int year, int month, int day) {
+        return LocalDateTime.of(year, month, day, 12, 0)
+                .atZone(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli();
     }
 }

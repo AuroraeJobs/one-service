@@ -2,6 +2,7 @@ package com.one.record.service.impl;
 
 import com.one.record.lottery.LotteryIssueLedger;
 import com.one.record.lottery.LotteryLedgerSummary;
+import com.one.record.lottery.LotteryMonthlyLedger;
 import com.one.record.lottery.LotteryPrizeResult;
 import com.one.record.model.LotteryTicket;
 import com.one.record.repository.LotteryTicketRepository;
@@ -11,16 +12,23 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 @Service
 @AllArgsConstructor
 public class LotteryLedgerService implements ILotteryLedgerService {
 
     private static final String DEFAULT_USER_ID = "default";
+
+    private static final DateTimeFormatter MONTH_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM");
 
     private final LotteryTicketRepository ticketRepository;
 
@@ -53,12 +61,39 @@ public class LotteryLedgerService implements ILotteryLedgerService {
                 .toList();
     }
 
+    @Override
+    public List<LotteryMonthlyLedger> months() {
+        List<LotteryTicket> tickets = ticketRepository.findByUserIdOrderByPeriodDescCreatedAtDesc(DEFAULT_USER_ID);
+        Map<String, List<LotteryTicket>> groupedTickets = new TreeMap<>(Comparator.reverseOrder());
+        for (LotteryTicket ticket : tickets) {
+            groupedTickets.computeIfAbsent(monthKey(ticket), ignored -> new ArrayList<>()).add(ticket);
+        }
+        return groupedTickets.entrySet().stream()
+                .map(entry -> buildMonthlyLedger(entry.getKey(), entry.getValue()))
+                .toList();
+    }
+
     private LotteryIssueLedger buildIssueLedger(List<LotteryTicket> tickets) {
         LotteryTicket firstTicket = tickets.get(0);
         LedgerTotals totals = aggregate(tickets);
         return LotteryIssueLedger.builder()
                 .issue(firstTicket.getIssue())
                 .period(firstTicket.getPeriod())
+                .ticketCount(tickets.size())
+                .checkedTicketCount(totals.checkedCount())
+                .pendingTicketCount(tickets.size() - totals.checkedCount())
+                .winningTicketCount(totals.winningCount())
+                .totalCost(totals.totalCost())
+                .totalPrize(totals.totalPrize())
+                .netResult(totals.netResult())
+                .roiPercent(roiPercent(totals.netResult(), totals.totalCost()))
+                .build();
+    }
+
+    private LotteryMonthlyLedger buildMonthlyLedger(String month, List<LotteryTicket> tickets) {
+        LedgerTotals totals = aggregate(tickets);
+        return LotteryMonthlyLedger.builder()
+                .month(month)
                 .ticketCount(tickets.size())
                 .checkedTicketCount(totals.checkedCount())
                 .pendingTicketCount(tickets.size() - totals.checkedCount())
@@ -97,6 +132,16 @@ public class LotteryLedgerService implements ILotteryLedgerService {
             return String.valueOf(ticket.getPeriod());
         }
         return "UNKNOWN";
+    }
+
+    private String monthKey(LotteryTicket ticket) {
+        Long timestamp = ticket.getCreatedAt() == null ? ticket.getUpdatedAt() : ticket.getCreatedAt();
+        if (timestamp == null || timestamp <= 0) {
+            return "UNKNOWN";
+        }
+        return Instant.ofEpochMilli(timestamp)
+                .atZone(ZoneId.systemDefault())
+                .format(MONTH_FORMATTER);
     }
 
     private BigDecimal prizeAmount(LotteryPrizeResult result) {

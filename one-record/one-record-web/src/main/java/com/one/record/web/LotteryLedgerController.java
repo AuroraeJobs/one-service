@@ -2,6 +2,7 @@ package com.one.record.web;
 
 import com.one.record.lottery.LotteryIssueLedger;
 import com.one.record.lottery.LotteryLedgerSummary;
+import com.one.record.lottery.LotteryMonthlyLedger;
 import com.one.record.service.ILotteryLedgerService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
@@ -28,5 +29,11 @@ public class LotteryLedgerController {
     @Operation(summary = "查询彩票期次账本", description = "按期次汇总彩票票据成本、奖金、净收益和 ROI")
     public List<LotteryIssueLedger> issues() {
         return service.issues();
+    }
+
+    @GetMapping("months")
+    @Operation(summary = "查询彩票月度账本", description = "按票据创建月份汇总彩票成本、奖金、净收益和 ROI")
+    public List<LotteryMonthlyLedger> months() {
+        return service.months();
     }
 }

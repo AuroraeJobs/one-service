@@ -2,6 +2,7 @@ package com.one.record.web;
 
 import com.one.record.lottery.LotteryIssueLedger;
 import com.one.record.lottery.LotteryLedgerSummary;
+import com.one.record.lottery.LotteryMonthlyLedger;
 import com.one.record.service.ILotteryLedgerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -71,5 +72,27 @@ class LotteryLedgerControllerTest {
                 .andExpect(jsonPath("$[0].roiPercent").value(66.67));
 
         verify(service).issues();
+    }
+
+    @Test
+    void monthsDelegatesToService() throws Exception {
+        when(service.months()).thenReturn(List.of(LotteryMonthlyLedger.builder()
+                .month("2026-07")
+                .ticketCount(3)
+                .totalCost(new BigDecimal("8"))
+                .totalPrize(new BigDecimal("5"))
+                .netResult(new BigDecimal("-3"))
+                .roiPercent(new BigDecimal("-37.50"))
+                .build()));
+
+        mockMvc.perform(get("/lottery/ledger/months"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].month").value("2026-07"))
+                .andExpect(jsonPath("$[0].ticketCount").value(3))
+                .andExpect(jsonPath("$[0].totalPrize").value(5))
+                .andExpect(jsonPath("$[0].netResult").value(-3))
+                .andExpect(jsonPath("$[0].roiPercent").value(-37.50));
+
+        verify(service).months();
     }
 }
