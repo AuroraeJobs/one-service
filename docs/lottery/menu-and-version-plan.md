@@ -183,7 +183,7 @@ Goal: make the completed platform capabilities feel like a richer user-facing pr
 
 Goal: turn the lottery module into a guided daily workflow where users can move from data health, to prediction review, to ticket tracking, to result review without hunting through separate pages.
 
-- Upgrade `/lottery/workbench` with configurable daily widgets, issue focus, action queue state, and quick drill-throughs that remember the user's last working context.
+- Upgrade `/lottery/workbench` with configurable daily widgets, issue focus, action queue state, and quick drill-throughs that remember the user's last working context. The shipped 13A slice adds browser-local widget visibility/order, the issue-focus strip, the action queue, and recent prediction/ticket/research/export/maintenance shortcuts.
 - Add a prediction decision board that compares saved candidates, rule evidence, replay drift, actual-result status, and ticket conversion state on one screen.
 - Add ticket import and budget UX helpers for paste preview, duplicate grouping, batch edits, exposure warnings, and issue-level settlement review.
 - Improve research/report pages with guided comparison presets, print/export-ready summary views, and clearer empty/error states for incomplete evidence.

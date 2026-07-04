@@ -1,20 +1,25 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Alert, Button, Card, Empty, Progress, Space, Spin, Steps, Tag, message } from 'antd';
+import { Fragment, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Alert, Button, Card, Empty, Progress, Space, Spin, Steps, Tag, Tooltip, message } from 'antd';
 import {
   BarChartOutlined,
   BellOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   DatabaseOutlined,
+  DownOutlined,
   DownloadOutlined,
   ExperimentOutlined,
+  EyeInvisibleOutlined,
+  EyeOutlined,
   FileTextOutlined,
   HistoryOutlined,
   PieChartOutlined,
   ReloadOutlined,
   SafetyCertificateOutlined,
+  SettingOutlined,
   SyncOutlined,
   ThunderboltOutlined,
+  UpOutlined,
   WarningOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
@@ -58,6 +63,147 @@ interface LotteryRecentWorkLink {
   detail: string;
   path: string;
 }
+
+type WorkbenchWidgetKey =
+  | 'status'
+  | 'issueFocus'
+  | 'actionQueue'
+  | 'calendar'
+  | 'runbook'
+  | 'quickActions'
+  | 'predictionTraining'
+  | 'dailyRunRelease'
+  | 'recentWork';
+
+interface WorkbenchWidgetSetting {
+  key: WorkbenchWidgetKey;
+  visible: boolean;
+}
+
+interface WorkbenchWidgetMeta {
+  key: WorkbenchWidgetKey;
+  label: string;
+  description: string;
+}
+
+interface WorkbenchFocusItem {
+  key: string;
+  icon: ReactNode;
+  label: string;
+  value: ReactNode;
+  detail: string;
+  path: string;
+  status?: string;
+}
+
+interface WorkbenchActionQueueItem {
+  key: string;
+  group: string;
+  title: string;
+  detail: string;
+  status?: string;
+  count?: number;
+  path?: string;
+}
+
+interface WorkbenchRecentShortcut {
+  key: string;
+  icon: ReactNode;
+  label: string;
+  title: string;
+  detail: string;
+  path: string;
+}
+
+const workbenchWidgetStorageKey = 'one:lottery:workbench:widgets:v1';
+
+const workbenchWidgetMeta: WorkbenchWidgetMeta[] = [
+  { key: 'status', label: '状态总览', description: '开奖、同步、质量、票据、账本和发布检查' },
+  { key: 'issueFocus', label: '期号焦点', description: '当前期、下一期、预测、票据、核验和账本结果' },
+  { key: 'actionQueue', label: '行动队列', description: '同步、质量、预测回填、核验和发布待办' },
+  { key: 'calendar', label: '开奖日历', description: '开奖日、同步窗口和提醒数量' },
+  { key: 'runbook', label: '运维摘要', description: '日常运维摘要和定时同步 runbook' },
+  { key: 'quickActions', label: '快捷动作', description: '同步、预测、录票、核验、账本、提醒和导出' },
+  { key: 'predictionTraining', label: '预测训练', description: '最近预测和训练进度' },
+  { key: 'dailyRunRelease', label: '执行发布', description: '日常执行结果和发布检查' },
+  { key: 'recentWork', label: '最近工作', description: '最近预测、票据、研究、导出和维护入口' }
+];
+
+const workbenchWidgetMetaMap = new Map(workbenchWidgetMeta.map(item => [item.key, item]));
+
+const defaultWorkbenchWidgetSettings = () =>
+  workbenchWidgetMeta.map(item => ({ key: item.key, visible: true }));
+
+const canUseWorkbenchStorage = () => {
+  try {
+    return typeof window !== 'undefined' && Boolean(window.localStorage);
+  } catch {
+    return false;
+  }
+};
+
+const normalizeWorkbenchWidgetSettings = (settings?: Partial<WorkbenchWidgetSetting>[]) => {
+  const knownKeys = new Set(workbenchWidgetMeta.map(item => item.key));
+  const normalized: WorkbenchWidgetSetting[] = [];
+  (settings || []).forEach(item => {
+    if (item.key && knownKeys.has(item.key) && !normalized.some(existing => existing.key === item.key)) {
+      normalized.push({
+        key: item.key,
+        visible: item.visible !== false
+      });
+    }
+  });
+  workbenchWidgetMeta.forEach(item => {
+    if (!normalized.some(existing => existing.key === item.key)) {
+      normalized.push({ key: item.key, visible: true });
+    }
+  });
+  return normalized;
+};
+
+const readWorkbenchWidgetSettings = () => {
+  if (!canUseWorkbenchStorage()) {
+    return defaultWorkbenchWidgetSettings();
+  }
+  try {
+    const raw = window.localStorage.getItem(workbenchWidgetStorageKey);
+    if (!raw) {
+      return defaultWorkbenchWidgetSettings();
+    }
+    const parsed = JSON.parse(raw) as { widgets?: Partial<WorkbenchWidgetSetting>[] };
+    return normalizeWorkbenchWidgetSettings(parsed.widgets);
+  } catch {
+    window.localStorage.removeItem(workbenchWidgetStorageKey);
+    return defaultWorkbenchWidgetSettings();
+  }
+};
+
+const writeWorkbenchWidgetSettings = (settings: WorkbenchWidgetSetting[]) => {
+  if (!canUseWorkbenchStorage()) {
+    return;
+  }
+  window.localStorage.setItem(workbenchWidgetStorageKey, JSON.stringify({
+    version: 1,
+    widgets: settings,
+    updatedAt: Date.now()
+  }));
+};
+
+const moveWorkbenchWidget = (
+  settings: WorkbenchWidgetSetting[],
+  key: WorkbenchWidgetKey,
+  direction: -1 | 1
+) => {
+  const index = settings.findIndex(item => item.key === key);
+  const nextIndex = index + direction;
+  if (index < 0 || nextIndex < 0 || nextIndex >= settings.length) {
+    return settings;
+  }
+  const next = [...settings];
+  const [item] = next.splice(index, 1);
+  next.splice(nextIndex, 0, item);
+  return next;
+};
 
 const settledItems = <T,>(result: PromiseSettledResult<{ items?: T[] }>) =>
   result.status === 'fulfilled' ? result.value.items || [] : [];
@@ -158,6 +304,24 @@ const scheduledStatusColor = (status?: string) => {
   return 'blue';
 };
 
+const queueStatusColor = (status?: string) => {
+  if (status === 'PASS' || status === 'SUCCESS' || status === 'COMPLETE') return 'green';
+  if (status === 'FAILED' || status === 'WARNING') return 'red';
+  if (status === 'MANUAL') return 'blue';
+  if (status === 'PENDING' || status === 'RUNNING') return 'gold';
+  return 'default';
+};
+
+const isActionableState = (item?: LotteryDailyStateItem) =>
+  Boolean(item && (item.status !== 'COMPLETE' || (item.pendingCount || 0) > 0));
+
+const issueText = (issue?: string | number) => {
+  if (issue === undefined || issue === null || issue === '') {
+    return '-';
+  }
+  return String(issue);
+};
+
 const getQualityIssueCount = (summary?: LotteryWorkbenchSummary) => {
   const report = summary?.dataQualitySummary;
   return (report?.missingIssueCount || 0)
@@ -177,6 +341,8 @@ const LotteryWorkbenchPage = () => {
   const [running, setRunning] = useState(false);
   const [checkingPrize, setCheckingPrize] = useState(false);
   const [error, setError] = useState<string>();
+  const [showWidgetConfig, setShowWidgetConfig] = useState(false);
+  const [widgetSettings, setWidgetSettings] = useState<WorkbenchWidgetSetting[]>(readWorkbenchWidgetSettings);
 
   const qualityIssueCount = useMemo(() => getQualityIssueCount(summary), [summary]);
   const dailyState = summary?.dailyState;
@@ -189,6 +355,10 @@ const LotteryWorkbenchPage = () => {
   const savedPredictionHistoryPath = getLotterySavedViewPath('/lottery/predictions/history', lotteryViewStateKeys.predictionHistory);
   const savedTicketsPath = getLotterySavedViewPath('/lottery/tickets', lotteryViewStateKeys.tickets);
   const savedSyncPath = getLotterySavedViewPath('/lottery/sync', lotteryViewStateKeys.syncOperations);
+
+  useEffect(() => {
+    writeWorkbenchWidgetSettings(widgetSettings);
+  }, [widgetSettings]);
 
   const loadSummary = useCallback(async () => {
     setLoading(true);
@@ -215,6 +385,20 @@ const LotteryWorkbenchPage = () => {
   useEffect(() => {
     loadSummary();
   }, [loadSummary]);
+
+  const toggleWidget = useCallback((key: WorkbenchWidgetKey) => {
+    setWidgetSettings(current => current.map(item => (
+      item.key === key ? { ...item, visible: !item.visible } : item
+    )));
+  }, []);
+
+  const moveWidget = useCallback((key: WorkbenchWidgetKey, direction: -1 | 1) => {
+    setWidgetSettings(current => moveWorkbenchWidget(current, key, direction));
+  }, []);
+
+  const resetWidgetSettings = useCallback(() => {
+    setWidgetSettings(defaultWorkbenchWidgetSettings());
+  }, []);
 
   const runDailyWork = async () => {
     setRunning(true);
@@ -369,13 +553,186 @@ const LotteryWorkbenchPage = () => {
     }
   ];
 
-  const dailyStateItems: LotteryDailyStateItem[] = [
-    dailyState?.syncState,
+  const latestDrawIssue = issueText(summary?.latestDraw?.issue || summary?.latestDraw?.period || dailyState?.latestIssue);
+  const nextIssue = issueText(dailyState?.nextIssue || calendar?.nextIssue);
+  const latestPredictionTarget = issueText(summary?.latestPrediction?.targetPeriod || dailyState?.nextIssue);
+  const latestTicketIssue = issueText(recentWork.tickets[0]?.issue || recentWork.tickets[0]?.period || dailyState?.latestIssue);
+  const latestDrawPeriodNumber = Number(summary?.latestDraw?.period || summary?.latestDraw?.issue || 0);
+  const latestPredictionTargetNumber = Number(summary?.latestPrediction?.targetPeriod || 0);
+  const predictionAttachmentPending = Boolean(
+    summary?.latestPrediction
+      && !summary.latestPrediction.actualRecord
+      && latestDrawPeriodNumber
+      && latestPredictionTargetNumber
+      && latestDrawPeriodNumber >= latestPredictionTargetNumber
+  );
+
+  const issueFocusItems: WorkbenchFocusItem[] = [
+    {
+      key: 'latest-draw',
+      icon: <DatabaseOutlined />,
+      label: '最近开奖',
+      value: latestDrawIssue,
+      detail: summary?.latestDraw?.drawDate || '暂无开奖日期',
+      path: '/lottery/records'
+    },
+    {
+      key: 'next-issue',
+      icon: <ClockCircleOutlined />,
+      label: '下一期',
+      value: nextIssue,
+      detail: calendar?.nextDrawDate ? `${calendar.nextDrawDate} ${calendar.drawWeekday || ''}` : '等待开奖日历',
+      path: '/lottery/alerts',
+      status: calendar?.currentIssueState
+    },
+    {
+      key: 'prediction',
+      icon: <ThunderboltOutlined />,
+      label: '预测目标',
+      value: latestPredictionTarget,
+      detail: summary?.latestPrediction?.ruleName || dailyState?.predictionState?.message || '暂无预测快照',
+      path: summary?.latestPrediction?.id ? `/lottery/predictions/${summary.latestPrediction.id}` : '/lottery/prediction',
+      status: dailyState?.predictionState?.status
+    },
+    {
+      key: 'ticket',
+      icon: <FileTextOutlined />,
+      label: '票据期号',
+      value: latestTicketIssue,
+      detail: `${summary?.pendingTicketCount ?? 0} 张待核验`,
+      path: latestTicketIssue !== '-' ? `/lottery/tickets?issue=${latestTicketIssue}` : savedTicketsPath,
+      status: dailyState?.ticketState?.status
+    },
+    {
+      key: 'prize-check',
+      icon: <CheckCircleOutlined />,
+      label: '中奖核验',
+      value: issueText(summary?.latestPrizeCheckSummary?.issue || latestDrawIssue),
+      detail: `已核验 ${summary?.latestPrizeCheckSummary?.checkedTicketCount ?? 0} 张`,
+      path: dailyState?.prizeCheckState?.path || savedTicketsPath,
+      status: dailyState?.prizeCheckState?.status
+    },
+    {
+      key: 'ledger',
+      icon: <PieChartOutlined />,
+      label: '账本结果',
+      value: formatCurrency(summary?.ledgerSummary?.netResult),
+      detail: `ROI ${formatPercent(summary?.ledgerSummary?.roiPercent)}`,
+      path: '/lottery/ledger'
+    }
+  ];
+
+  const actionQueueItems = useMemo<WorkbenchActionQueueItem[]>(() => {
+    const items: WorkbenchActionQueueItem[] = [];
+    const pushDailyState = (group: string, item?: LotteryDailyStateItem) => {
+      if (!isActionableState(item)) {
+        return;
+      }
+      items.push({
+        key: item?.key || group,
+        group,
+        title: item?.label || group,
+        detail: item?.message || '等待处理',
+        status: item?.status,
+        count: item?.pendingCount,
+        path: item?.path
+      });
+    };
+
+    pushDailyState('同步', dailyState?.syncState);
+    pushDailyState('数据质量', dailyState?.qualityState);
+    pushDailyState('预测', dailyState?.predictionState);
+    pushDailyState('中奖核验', dailyState?.prizeCheckState);
+
+    if (predictionAttachmentPending) {
+      items.push({
+        key: 'prediction-attachment',
+        group: '预测',
+        title: '回填开奖结果',
+        detail: `第 ${latestPredictionTarget} 期预测等待关联最新开奖`,
+        status: 'PENDING',
+        count: 1,
+        path: summary?.latestPrediction?.id ? `/lottery/predictions/${summary.latestPrediction.id}` : savedPredictionHistoryPath
+      });
+    }
+
+    (operationSummary?.pendingActions || []).forEach((action, index) => {
+      items.push({
+        key: `operation-${index}`,
+        group: '日常运维',
+        title: action,
+        detail: operationSummary?.message || '等待日常处理',
+        status: operationSummary?.status || 'PENDING'
+      });
+    });
+
+    if (scheduledRunbook?.healthStatus === 'WARNING') {
+      items.push({
+        key: 'scheduled-sync-warning',
+        group: '同步',
+        title: '定时同步异常',
+        detail: scheduledRunbook.message || scheduledRunbook.lastMessage || '需要检查定时同步',
+        status: 'WARNING',
+        path: savedSyncPath
+      });
+    }
+
+    (budgetStatus?.warnings || []).forEach((warning, index) => {
+      items.push({
+        key: warning.key || `budget-${index}`,
+        group: '预算',
+        title: '预算提醒',
+        detail: warning.message || '预算状态需要确认',
+        status: warning.level || 'WARNING',
+        path: warning.path || '/lottery/settings'
+      });
+    });
+
+    (releaseCheckSummary?.checks || [])
+      .filter(item => item.status && item.status !== 'PASS')
+      .slice(0, 6)
+      .forEach(item => {
+        items.push({
+          key: item.key || item.label || 'release-check',
+          group: item.status === 'MANUAL' ? '发布确认' : '发布告警',
+          title: item.label || item.key || '发布检查',
+          detail: item.message || '需要确认发布检查',
+          status: item.status,
+          count: item.pendingCount,
+          path: item.path
+        });
+      });
+
+    return items;
+  }, [
+    budgetStatus?.warnings,
     dailyState?.predictionState,
-    dailyState?.ticketState,
     dailyState?.prizeCheckState,
-    dailyState?.qualityState
-  ].filter(Boolean) as LotteryDailyStateItem[];
+    dailyState?.qualityState,
+    dailyState?.syncState,
+    latestPredictionTarget,
+    operationSummary?.message,
+    operationSummary?.pendingActions,
+    operationSummary?.status,
+    predictionAttachmentPending,
+    releaseCheckSummary?.checks,
+    savedPredictionHistoryPath,
+    savedSyncPath,
+    scheduledRunbook?.healthStatus,
+    scheduledRunbook?.lastMessage,
+    scheduledRunbook?.message,
+    summary?.latestPrediction?.id
+  ]);
+
+  const actionQueueGroups = useMemo(() => {
+    const groups = new Map<string, WorkbenchActionQueueItem[]>();
+    actionQueueItems.forEach(item => {
+      const groupItems = groups.get(item.group) || [];
+      groupItems.push(item);
+      groups.set(item.group, groupItems);
+    });
+    return Array.from(groups.entries()).map(([title, items]) => ({ title, items }));
+  }, [actionQueueItems]);
 
   const stepItems = (dailyRunResult?.steps || []).map((step: LotteryWorkbenchStepResult) => ({
     title: step.step || '任务',
@@ -471,6 +828,368 @@ const LotteryWorkbenchPage = () => {
     return groups;
   }, [recentWork, savedPredictionHistoryPath, savedTicketsPath]);
 
+  const recentShortcuts = useMemo<WorkbenchRecentShortcut[]>(() => {
+    const latestPrediction = recentWork.predictions[0];
+    const latestTicket = recentWork.tickets[0];
+    const latestBacktest = recentWork.backtests[0];
+    const latestExperiment = recentWork.experiments[0];
+    const latestExport = recentWork.exports[0];
+    const researchKey = latestBacktest?.id
+      ? `backtest:${latestBacktest.id}`
+      : latestExperiment?.id ? `experiment:${latestExperiment.id}` : '';
+
+    return [
+      {
+        key: 'prediction',
+        icon: <ThunderboltOutlined />,
+        label: '预测',
+        title: latestPrediction ? `第 ${latestPrediction.targetPeriod || '-'} 期` : '预测历史',
+        detail: latestPrediction?.ruleName || latestPrediction?.reason || '打开上次筛选',
+        path: latestPrediction?.id ? `/lottery/predictions/${latestPrediction.id}` : savedPredictionHistoryPath
+      },
+      {
+        key: 'ticket',
+        icon: <FileTextOutlined />,
+        label: '票据',
+        title: latestTicket ? `第 ${latestTicket.issue || latestTicket.period || '-'} 期` : '投注记录',
+        detail: latestTicket ? `${latestTicket.status || 'UNKNOWN'} · ${formatDateTime(latestTicket.updatedAt || latestTicket.createdAt)}` : '打开上次筛选',
+        path: latestTicket?.issue ? `/lottery/tickets?issue=${latestTicket.issue}` : savedTicketsPath
+      },
+      {
+        key: 'research',
+        icon: <ExperimentOutlined />,
+        label: '研究',
+        title: latestBacktest?.strategyName || latestExperiment?.strategyName || '研究对比',
+        detail: latestBacktest ? `回测 · ${formatRoi(latestBacktest.netResult, latestBacktest.totalCost)}` : latestExperiment ? `实验 · ${latestExperiment.scale || '-'}` : '打开研究页面',
+        path: researchKey ? `/lottery/research?items=${encodeURIComponent(researchKey)}` : '/lottery/research'
+      },
+      {
+        key: 'export',
+        icon: <DownloadOutlined />,
+        label: '导出',
+        title: latestExport?.targetType || latestExport?.eventType || '导出审计',
+        detail: latestExport ? `${latestExport.rowCount || 0} 行 · ${formatDateTime(latestExport.generatedAt)}` : '打开报表构建器',
+        path: '/lottery/exports'
+      },
+      {
+        key: 'maintenance',
+        icon: <SafetyCertificateOutlined />,
+        label: '维护',
+        title: releaseCheckSummary?.status || '维护检查',
+        detail: releaseCheckSummary?.message || '查看保留和导出检查',
+        path: '/lottery/exports'
+      }
+    ];
+  }, [
+    recentWork.backtests,
+    recentWork.experiments,
+    recentWork.exports,
+    recentWork.predictions,
+    recentWork.tickets,
+    releaseCheckSummary?.message,
+    releaseCheckSummary?.status,
+    savedPredictionHistoryPath,
+    savedTicketsPath
+  ]);
+
+  const visibleWidgetSettings = widgetSettings.filter(item => item.visible);
+
+  const renderWorkbenchWidget = (key: WorkbenchWidgetKey) => {
+    switch (key) {
+      case 'status':
+        return (
+          <section className="lottery-workbench-status-grid">
+            {statusCards.map(item => (
+              <button key={item.key} type="button" className="lottery-workbench-status-card" onClick={() => navigate(item.path)}>
+                <span>{item.icon}</span>
+                <div>
+                  <strong>{item.value}</strong>
+                  <em>{item.label}</em>
+                  <small>{item.detail}</small>
+                </div>
+              </button>
+            ))}
+          </section>
+        );
+      case 'issueFocus':
+        return (
+          <section className="lottery-workbench-issue-focus">
+            {issueFocusItems.map(item => (
+              <button key={item.key} type="button" onClick={() => navigate(item.path)}>
+                <span className="lottery-workbench-issue-icon">{item.icon}</span>
+                <span>
+                  <em>{item.label}</em>
+                  <strong>{item.value}</strong>
+                  <small>{item.detail}</small>
+                </span>
+                {item.status ? <Tag color={dailyStateColor(item.status)}>{item.status}</Tag> : null}
+              </button>
+            ))}
+          </section>
+        );
+      case 'actionQueue':
+        return (
+          <Card
+            className="life-panel-card lottery-clean-panel lottery-workbench-action-queue"
+            title="行动队列"
+            extra={<Tag color={actionQueueItems.length ? 'orange' : 'green'}>{actionQueueItems.length} 项</Tag>}
+          >
+            {actionQueueGroups.length > 0 ? (
+              <div className="lottery-workbench-action-groups">
+                {actionQueueGroups.map(group => (
+                  <section key={group.title} className="lottery-workbench-action-group">
+                    <div className="lottery-workbench-action-group-title">
+                      <strong>{group.title}</strong>
+                      <Tag>{group.items.length}</Tag>
+                    </div>
+                    <div className="lottery-workbench-action-list">
+                      {group.items.map(item => (
+                        <button
+                          key={item.key}
+                          type="button"
+                          disabled={!item.path}
+                          onClick={() => item.path && navigate(item.path)}
+                        >
+                          <Tag color={queueStatusColor(item.status)}>{item.status || 'TODO'}</Tag>
+                          <span>
+                            <strong>{item.title}</strong>
+                            <small>{item.detail}</small>
+                          </span>
+                          {item.count ? <em>{item.count}</em> : null}
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <Empty description="暂无待办" />
+            )}
+          </Card>
+        );
+      case 'calendar':
+        return calendar ? (
+          <section className="lottery-workbench-daily-state lottery-workbench-calendar-state">
+            <div>
+              <strong>{calendar.nextDrawDate || '-'} {calendar.drawWeekday || ''}</strong>
+              <span>同步窗口 {formatDateTime(calendar.expectedSyncStartAt)} - {formatDateTime(calendar.expectedSyncEndAt)}</span>
+            </div>
+            <Space wrap>
+              <Tag color={calendar.currentIssueState === 'BEFORE_DRAW' ? 'blue' : 'orange'}>{calendar.currentIssueState || 'UNKNOWN'}</Tag>
+              <Button size="small" icon={<BellOutlined />} onClick={() => navigate('/lottery/alerts')}>
+                提醒 {calendar.reminders?.length || 0}
+              </Button>
+            </Space>
+          </section>
+        ) : null;
+      case 'runbook':
+        return (
+          <section className="lottery-workbench-runbook-grid">
+            <article className="lottery-workbench-runbook-panel">
+              <div>
+                <strong>日常运维摘要</strong>
+                <span>{operationSummary?.message || '暂无日常摘要'}</span>
+              </div>
+              <Space wrap>
+                <Tag color={dailyStateColor(operationSummary?.status)}>{operationSummary?.status || 'UNKNOWN'}</Tag>
+                <Tag>完成 {operationSummary?.completedCount ?? 0}/{operationSummary?.totalCount ?? 0}</Tag>
+                <Tag>提醒 {operationSummary?.activeReminderCount ?? 0}</Tag>
+                <Tag>预测回填 {operationSummary?.latestPredictionAttachmentCount ?? 0}</Tag>
+              </Space>
+            </article>
+            <article className="lottery-workbench-runbook-panel">
+              <div>
+                <strong>定时同步 Runbook</strong>
+                <span>{scheduledRunbook?.message || '暂无定时同步状态'}</span>
+              </div>
+              <Space wrap>
+                <Tag color={scheduledStatusColor(scheduledRunbook?.healthStatus)}>{scheduledRunbook?.healthStatus || 'UNKNOWN'}</Tag>
+                <Tag>{scheduledRunbook?.enabled ? '已启用' : '未启用'}</Tag>
+                <Tag>{scheduledRunbook?.cron || '-'}</Tag>
+                <Tag>最近 {formatDateTime(scheduledRunbook?.lastRunAt)}</Tag>
+              </Space>
+            </article>
+          </section>
+        );
+      case 'quickActions':
+        return (
+          <section className="lottery-workbench-quick-rail" aria-label="彩票快捷动作">
+            {quickActions.map(action => (
+              <button
+                key={action.key}
+                type="button"
+                className="lottery-workbench-quick-action"
+                disabled={action.loading}
+                onClick={action.onClick}
+              >
+                <span className="lottery-workbench-quick-icon">
+                  {action.loading ? <SyncOutlined spin /> : action.icon}
+                </span>
+                <span>
+                  <strong>{action.label}</strong>
+                  <small>{action.detail}</small>
+                </span>
+              </button>
+            ))}
+          </section>
+        );
+      case 'predictionTraining':
+        return (
+          <section className="lottery-workbench-main-grid">
+            <Card
+              className="life-panel-card lottery-clean-panel"
+              title="最近预测"
+              extra={
+                <Space wrap>
+                  {summary?.latestPrediction?.id ? (
+                    <Button size="small" onClick={() => navigate(`/lottery/predictions/${summary.latestPrediction?.id}`)}>
+                      详情
+                    </Button>
+                  ) : null}
+                  <Button size="small" onClick={() => navigate(dailyState?.predictionState?.path || savedPredictionHistoryPath)}>
+                    历史
+                  </Button>
+                </Space>
+              }
+            >
+              {summary?.latestPrediction ? (
+                <div className="lottery-workbench-prediction">
+                  <div className="lottery-card-title-row">
+                    <div>
+                      <h2>第 {summary.latestPrediction.targetPeriod} 期</h2>
+                      <p>{summary.latestPrediction.ruleName || summary.latestPrediction.reason || '-'}</p>
+                    </div>
+                    <Tag color="processing">评分 {summary.latestPrediction.score ?? 0}</Tag>
+                  </div>
+                  <LotteryBalls redNumbers={summary.latestPrediction.redNumbers || []} blueNumber={summary.latestPrediction.blueNumber || ''} />
+                  <div className="lottery-latest-meta">
+                    <span>基于 {summary.latestPrediction.basedOnPeriod || '-'}</span>
+                    <span>{summary.latestPrediction.result?.prizeName || '待开奖'}</span>
+                    <span>{formatDateTime(summary.latestPrediction.createdAt)}</span>
+                  </div>
+                </div>
+              ) : (
+                <Empty description="暂无预测快照" />
+              )}
+            </Card>
+
+            <Card
+              className="life-panel-card lottery-clean-panel"
+              title="训练状态"
+              extra={
+                <Button size="small" icon={<ThunderboltOutlined />} onClick={() => navigate('/lottery/prediction')}>
+                  预测
+                </Button>
+              }
+            >
+              <div className="lottery-workbench-training">
+                <Progress percent={trainingPercent} status={trainingStatus?.failed ? 'exception' : trainingStatus?.running ? 'active' : 'normal'} />
+                <Space wrap>
+                  <Tag color={trainingStatus?.running ? 'processing' : trainingStatus?.failed ? 'red' : 'green'}>
+                    {trainingStatus?.stage || (trainingStatus?.running ? 'RUNNING' : 'IDLE')}
+                  </Tag>
+                  <Tag>{trainingStatus?.processed ?? 0}/{trainingStatus?.total ?? 0}</Tag>
+                  {trainingStatus?.scale ? <Tag>{trainingStatus.scale}</Tag> : null}
+                </Space>
+                <span>{trainingStatus?.message || '训练任务未运行'}</span>
+              </div>
+            </Card>
+          </section>
+        );
+      case 'dailyRunRelease':
+        return (
+          <section className="lottery-workbench-main-grid">
+            <Card className="life-panel-card lottery-clean-panel" title="日常执行结果">
+              {stepItems.length > 0 ? (
+                <Steps direction="vertical" size="small" items={stepItems} />
+              ) : (
+                <Empty description="暂无执行记录" />
+              )}
+            </Card>
+
+            <Card
+              className="life-panel-card lottery-clean-panel"
+              title="发布检查"
+              extra={<Tag color={releaseStatusColor(releaseCheckSummary?.status)}>{releaseCheckSummary?.status || 'UNKNOWN'}</Tag>}
+            >
+              {releaseCheckItems.length > 0 ? (
+                <div className="lottery-release-check-list">
+                  {releaseCheckItems.map(item => (
+                    <button
+                      key={item.key || item.label}
+                      type="button"
+                      onClick={() => item.path && navigate(item.path)}
+                    >
+                      <Tag color={releaseStatusColor(item.status)}>{item.status || 'UNKNOWN'}</Tag>
+                      <span>
+                        <strong>{item.label || item.key}</strong>
+                        <small>{item.message || '-'}</small>
+                      </span>
+                      {item.pendingCount ? <em>{item.pendingCount}</em> : null}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <Empty description="暂无发布检查" />
+              )}
+            </Card>
+          </section>
+        );
+      case 'recentWork':
+        return (
+          <section className="lottery-workbench-main-grid lottery-workbench-single-grid">
+            <Card
+              className="life-panel-card lottery-clean-panel lottery-workbench-recent-card"
+              title="最近工作"
+              extra={
+                <Button size="small" icon={<HistoryOutlined />} onClick={() => navigate(savedPredictionHistoryPath)}>
+                  历史
+                </Button>
+              }
+            >
+              <div className="lottery-workbench-shortcut-grid">
+                {recentShortcuts.map(item => (
+                  <button key={item.key} type="button" onClick={() => navigate(item.path)}>
+                    <span>{item.icon}</span>
+                    <small>{item.label}</small>
+                    <strong>{item.title}</strong>
+                    <em>{item.detail}</em>
+                  </button>
+                ))}
+              </div>
+              <div className="lottery-workbench-recent-grid">
+                {recentWorkGroups.map(group => (
+                  <section className="lottery-workbench-recent-group" key={group.key}>
+                    <div className="lottery-workbench-recent-title">
+                      <span>{group.icon}</span>
+                      <strong>{group.title}</strong>
+                      <Button type="link" size="small" onClick={() => navigate(group.path)}>
+                        全部
+                      </Button>
+                    </div>
+                    {group.items.length > 0 ? (
+                      <div className="lottery-workbench-recent-list">
+                        {group.items.map(item => (
+                          <button key={item.key} type="button" onClick={() => navigate(item.path)}>
+                            <strong>{item.title}</strong>
+                            <small>{item.detail}</small>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无记录" />
+                    )}
+                  </section>
+                ))}
+              </div>
+            </Card>
+          </section>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <LifePageShell
       className="lottery-prediction-page lottery-workbench-page"
@@ -478,6 +1197,13 @@ const LotteryWorkbenchPage = () => {
       title="日常工作台"
       actions={
         <Space wrap>
+          <Button
+            icon={<SettingOutlined />}
+            type={showWidgetConfig ? 'primary' : 'default'}
+            onClick={() => setShowWidgetConfig(value => !value)}
+          >
+            布局
+          </Button>
           <Button icon={<ReloadOutlined />} loading={loading} onClick={loadSummary}>
             刷新
           </Button>
@@ -518,240 +1244,69 @@ const LotteryWorkbenchPage = () => {
         />
       ) : null}
 
-      <Spin spinning={loading && !summary}>
-        <section className="lottery-workbench-status-grid">
-          {statusCards.map(item => (
-            <button key={item.key} type="button" className="lottery-workbench-status-card" onClick={() => navigate(item.path)}>
-              <span>{item.icon}</span>
-              <div>
-                <strong>{item.value}</strong>
-                <em>{item.label}</em>
-                <small>{item.detail}</small>
-              </div>
-            </button>
-          ))}
-        </section>
-
-        {dailyStateItems.length > 0 ? (
-          <section className="lottery-workbench-daily-state">
+      {showWidgetConfig ? (
+        <section className="lottery-workbench-widget-config">
+          <div className="lottery-workbench-widget-config-head">
             <div>
-              <strong>第 {dailyState?.latestIssue || '-'} 期</strong>
-              <span>下一期 {dailyState?.nextIssue || '-'}</span>
+              <strong>工作台布局</strong>
+              <span>{visibleWidgetSettings.length}/{widgetSettings.length} 个组件已显示</span>
             </div>
-            <Space wrap>
-              {dailyStateItems.map(item => (
-                <button
-                  key={item.key || item.label}
-                  type="button"
-                  className="lottery-workbench-state-chip"
-                  onClick={() => item.path && navigate(item.path)}
-                >
-                  <Tag color={dailyStateColor(item.status)}>{item.status || 'UNKNOWN'}</Tag>
-                  <span>{item.label || item.key}</span>
-                  {item.pendingCount ? <em>{item.pendingCount}</em> : null}
-                </button>
-              ))}
-            </Space>
-          </section>
-        ) : null}
-
-        {calendar ? (
-          <section className="lottery-workbench-daily-state lottery-workbench-calendar-state">
-            <div>
-              <strong>{calendar.nextDrawDate || '-'} {calendar.drawWeekday || ''}</strong>
-              <span>同步窗口 {formatDateTime(calendar.expectedSyncStartAt)} - {formatDateTime(calendar.expectedSyncEndAt)}</span>
-            </div>
-            <Space wrap>
-              <Tag color={calendar.currentIssueState === 'BEFORE_DRAW' ? 'blue' : 'orange'}>{calendar.currentIssueState || 'UNKNOWN'}</Tag>
-              <Button size="small" icon={<BellOutlined />} onClick={() => navigate('/lottery/alerts')}>
-                提醒 {calendar.reminders?.length || 0}
-              </Button>
-            </Space>
-          </section>
-        ) : null}
-
-        <section className="lottery-workbench-runbook-grid">
-          <article className="lottery-workbench-runbook-panel">
-            <div>
-              <strong>日常运维摘要</strong>
-              <span>{operationSummary?.message || '暂无日常摘要'}</span>
-            </div>
-            <Space wrap>
-              <Tag color={dailyStateColor(operationSummary?.status)}>{operationSummary?.status || 'UNKNOWN'}</Tag>
-              <Tag>完成 {operationSummary?.completedCount ?? 0}/{operationSummary?.totalCount ?? 0}</Tag>
-              <Tag>提醒 {operationSummary?.activeReminderCount ?? 0}</Tag>
-              <Tag>预测回填 {operationSummary?.latestPredictionAttachmentCount ?? 0}</Tag>
-            </Space>
-          </article>
-          <article className="lottery-workbench-runbook-panel">
-            <div>
-              <strong>定时同步 Runbook</strong>
-              <span>{scheduledRunbook?.message || '暂无定时同步状态'}</span>
-            </div>
-            <Space wrap>
-              <Tag color={scheduledStatusColor(scheduledRunbook?.healthStatus)}>{scheduledRunbook?.healthStatus || 'UNKNOWN'}</Tag>
-              <Tag>{scheduledRunbook?.enabled ? '已启用' : '未启用'}</Tag>
-              <Tag>{scheduledRunbook?.cron || '-'}</Tag>
-              <Tag>最近 {formatDateTime(scheduledRunbook?.lastRunAt)}</Tag>
-            </Space>
-          </article>
-        </section>
-
-        <section className="lottery-workbench-quick-rail" aria-label="彩票快捷动作">
-          {quickActions.map(action => (
-            <button
-              key={action.key}
-              type="button"
-              className="lottery-workbench-quick-action"
-              disabled={action.loading}
-              onClick={action.onClick}
-            >
-              <span className="lottery-workbench-quick-icon">
-                {action.loading ? <SyncOutlined spin /> : action.icon}
-              </span>
-              <span>
-                <strong>{action.label}</strong>
-                <small>{action.detail}</small>
-              </span>
-            </button>
-          ))}
-        </section>
-
-        <section className="lottery-workbench-main-grid">
-          <Card
-            className="life-panel-card lottery-clean-panel"
-            title="最近预测"
-            extra={
-              <Space wrap>
-                {summary?.latestPrediction?.id ? (
-                  <Button size="small" onClick={() => navigate(`/lottery/predictions/${summary.latestPrediction?.id}`)}>
-                    详情
-                  </Button>
-                ) : null}
-                <Button size="small" onClick={() => navigate(dailyState?.predictionState?.path || savedPredictionHistoryPath)}>
-                  历史
-                </Button>
-              </Space>
-            }
-          >
-            {summary?.latestPrediction ? (
-              <div className="lottery-workbench-prediction">
-                <div className="lottery-card-title-row">
+            <Button size="small" onClick={resetWidgetSettings}>
+              重置
+            </Button>
+          </div>
+          <div className="lottery-workbench-widget-list">
+            {widgetSettings.map((item, index) => {
+              const meta = workbenchWidgetMetaMap.get(item.key);
+              return (
+                <div key={item.key} className="lottery-workbench-widget-row">
+                  <span className="lottery-workbench-widget-index">{index + 1}</span>
                   <div>
-                    <h2>第 {summary.latestPrediction.targetPeriod} 期</h2>
-                    <p>{summary.latestPrediction.ruleName || summary.latestPrediction.reason || '-'}</p>
+                    <strong>{meta?.label || item.key}</strong>
+                    <small>{meta?.description || '-'}</small>
                   </div>
-                  <Tag color="processing">评分 {summary.latestPrediction.score ?? 0}</Tag>
+                  <Space size={4}>
+                    <Tooltip title="上移">
+                      <Button
+                        size="small"
+                        icon={<UpOutlined />}
+                        disabled={index === 0}
+                        onClick={() => moveWidget(item.key, -1)}
+                      />
+                    </Tooltip>
+                    <Tooltip title="下移">
+                      <Button
+                        size="small"
+                        icon={<DownOutlined />}
+                        disabled={index === widgetSettings.length - 1}
+                        onClick={() => moveWidget(item.key, 1)}
+                      />
+                    </Tooltip>
+                    <Tooltip title={item.visible ? '隐藏' : '显示'}>
+                      <Button
+                        size="small"
+                        icon={item.visible ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+                        onClick={() => toggleWidget(item.key)}
+                      />
+                    </Tooltip>
+                  </Space>
                 </div>
-                <LotteryBalls redNumbers={summary.latestPrediction.redNumbers || []} blueNumber={summary.latestPrediction.blueNumber || ''} />
-                <div className="lottery-latest-meta">
-                  <span>基于 {summary.latestPrediction.basedOnPeriod || '-'}</span>
-                  <span>{summary.latestPrediction.result?.prizeName || '待开奖'}</span>
-                  <span>{formatDateTime(summary.latestPrediction.createdAt)}</span>
-                </div>
-              </div>
-            ) : (
-              <Empty description="暂无预测快照" />
-            )}
-          </Card>
-
-          <Card
-            className="life-panel-card lottery-clean-panel"
-            title="训练状态"
-            extra={
-              <Button size="small" icon={<ThunderboltOutlined />} onClick={() => navigate('/lottery/prediction')}>
-                预测
-              </Button>
-            }
-          >
-            <div className="lottery-workbench-training">
-              <Progress percent={trainingPercent} status={trainingStatus?.failed ? 'exception' : trainingStatus?.running ? 'active' : 'normal'} />
-              <Space wrap>
-                <Tag color={trainingStatus?.running ? 'processing' : trainingStatus?.failed ? 'red' : 'green'}>
-                  {trainingStatus?.stage || (trainingStatus?.running ? 'RUNNING' : 'IDLE')}
-                </Tag>
-                <Tag>{trainingStatus?.processed ?? 0}/{trainingStatus?.total ?? 0}</Tag>
-                {trainingStatus?.scale ? <Tag>{trainingStatus.scale}</Tag> : null}
-              </Space>
-              <span>{trainingStatus?.message || '训练任务未运行'}</span>
-            </div>
-          </Card>
+              );
+            })}
+          </div>
         </section>
+      ) : null}
 
-        <section className="lottery-workbench-main-grid">
-          <Card className="life-panel-card lottery-clean-panel" title="日常执行结果">
-            {stepItems.length > 0 ? (
-              <Steps direction="vertical" size="small" items={stepItems} />
-            ) : (
-              <Empty description="暂无执行记录" />
-            )}
-          </Card>
-
-          <Card
-            className="life-panel-card lottery-clean-panel"
-            title="发布检查"
-            extra={<Tag color={releaseStatusColor(releaseCheckSummary?.status)}>{releaseCheckSummary?.status || 'UNKNOWN'}</Tag>}
-          >
-            {releaseCheckItems.length > 0 ? (
-              <div className="lottery-release-check-list">
-                {releaseCheckItems.map(item => (
-                  <button
-                    key={item.key || item.label}
-                    type="button"
-                    onClick={() => item.path && navigate(item.path)}
-                  >
-                    <Tag color={releaseStatusColor(item.status)}>{item.status || 'UNKNOWN'}</Tag>
-                    <span>
-                      <strong>{item.label || item.key}</strong>
-                      <small>{item.message || '-'}</small>
-                    </span>
-                    {item.pendingCount ? <em>{item.pendingCount}</em> : null}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <Empty description="暂无发布检查" />
-            )}
-          </Card>
-        </section>
-
-        <section className="lottery-workbench-main-grid">
-          <Card
-            className="life-panel-card lottery-clean-panel lottery-workbench-recent-card"
-            title="最近工作"
-            extra={
-              <Button size="small" icon={<HistoryOutlined />} onClick={() => navigate(savedPredictionHistoryPath)}>
-                历史
-              </Button>
-            }
-          >
-            <div className="lottery-workbench-recent-grid">
-              {recentWorkGroups.map(group => (
-                <section className="lottery-workbench-recent-group" key={group.key}>
-                  <div className="lottery-workbench-recent-title">
-                    <span>{group.icon}</span>
-                    <strong>{group.title}</strong>
-                    <Button type="link" size="small" onClick={() => navigate(group.path)}>
-                      全部
-                    </Button>
-                  </div>
-                  {group.items.length > 0 ? (
-                    <div className="lottery-workbench-recent-list">
-                      {group.items.map(item => (
-                        <button key={item.key} type="button" onClick={() => navigate(item.path)}>
-                          <strong>{item.title}</strong>
-                          <small>{item.detail}</small>
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无记录" />
-                  )}
-                </section>
-              ))}
-            </div>
-          </Card>
-        </section>
+      <Spin spinning={loading && !summary}>
+        {visibleWidgetSettings.length > 0 ? (
+          visibleWidgetSettings.map(item => (
+            <Fragment key={item.key}>
+              {renderWorkbenchWidget(item.key)}
+            </Fragment>
+          ))
+        ) : (
+          <Empty description="所有工作台组件已隐藏" />
+        )}
 
         <div className="lottery-workbench-generated">
           <ClockCircleOutlined />

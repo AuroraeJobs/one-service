@@ -355,6 +355,160 @@
   font-size: 12px;
 }
 
+.lottery-workbench-widget-config {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+}
+
+.lottery-workbench-widget-config-head,
+.lottery-workbench-widget-row {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lottery-workbench-widget-config-head > div,
+.lottery-workbench-widget-row > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.lottery-workbench-widget-config-head strong,
+.lottery-workbench-widget-row strong {
+  overflow: hidden;
+  color: var(--app-text);
+  font-size: 14px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-workbench-widget-config-head span,
+.lottery-workbench-widget-row small {
+  overflow: hidden;
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-workbench-widget-list {
+  display: grid;
+  gap: 8px;
+}
+
+.lottery-workbench-widget-row {
+  padding: 8px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-workbench-widget-index {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(0, 113, 227, 0.1);
+  color: var(--module-accent, #0071e3);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.lottery-workbench-issue-focus {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.lottery-workbench-issue-focus button {
+  min-width: 0;
+  min-height: 92px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+  color: var(--app-text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.lottery-workbench-issue-focus button:hover {
+  border-color: var(--module-accent, #0071e3);
+  transform: translateY(-1px);
+}
+
+.lottery-workbench-issue-focus .ant-tag {
+  grid-column: 1 / -1;
+  width: max-content;
+  max-width: 100%;
+}
+
+.lottery-workbench-issue-icon {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(52, 199, 89, 0.12);
+  color: #248a3d;
+  font-size: 16px;
+}
+
+.lottery-workbench-issue-focus span:not(.lottery-workbench-issue-icon) {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.lottery-workbench-issue-focus em,
+.lottery-workbench-shortcut-grid small {
+  overflow: hidden;
+  color: var(--app-text-muted);
+  font-size: 12px;
+  font-style: normal;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-workbench-issue-focus strong {
+  overflow: hidden;
+  color: var(--app-text);
+  font-size: 18px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-workbench-issue-focus small {
+  overflow: hidden;
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .lottery-workbench-daily-state {
   display: flex;
   align-items: center;
@@ -935,6 +1089,113 @@
   justify-content: flex-start;
 }
 
+.lottery-workbench-single-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.lottery-workbench-action-queue {
+  margin-bottom: 16px;
+}
+
+.lottery-workbench-action-groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.lottery-workbench-action-group {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-workbench-action-group-title {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.lottery-workbench-action-group-title strong {
+  overflow: hidden;
+  color: var(--app-text);
+  font-size: 13px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-workbench-action-list {
+  display: grid;
+  gap: 6px;
+}
+
+.lottery-workbench-action-list button {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: var(--app-surface);
+  color: var(--app-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lottery-workbench-action-list button:hover:not(:disabled) {
+  border-color: var(--module-accent, #0071e3);
+}
+
+.lottery-workbench-action-list button:disabled {
+  cursor: default;
+}
+
+.lottery-workbench-action-list span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.lottery-workbench-action-list strong {
+  overflow: hidden;
+  color: var(--app-text);
+  font-size: 13px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-workbench-action-list small {
+  overflow: hidden;
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-workbench-action-list em {
+  min-width: 20px;
+  min-height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(255, 149, 0, 0.14);
+  color: #ad6800;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+
 .lottery-release-check-list {
   display: grid;
   gap: 8px;
@@ -998,6 +1259,59 @@
 
 .lottery-workbench-recent-card {
   min-height: 100%;
+}
+
+.lottery-workbench-shortcut-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.lottery-workbench-shortcut-grid button {
+  min-width: 0;
+  min-height: 94px;
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  padding: 10px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+  color: var(--app-text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.lottery-workbench-shortcut-grid button:hover {
+  border-color: var(--module-accent, #0071e3);
+  transform: translateY(-1px);
+}
+
+.lottery-workbench-shortcut-grid button > span {
+  color: var(--module-accent, #0071e3);
+  font-size: 17px;
+}
+
+.lottery-workbench-shortcut-grid strong,
+.lottery-workbench-shortcut-grid em {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-workbench-shortcut-grid strong {
+  color: var(--app-text);
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.lottery-workbench-shortcut-grid em {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  font-style: normal;
+  line-height: 1.35;
 }
 
 .lottery-workbench-recent-grid {
@@ -3692,6 +4006,14 @@ button.lottery-latest-vs-card:hover {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
+  .lottery-workbench-issue-focus {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .lottery-workbench-shortcut-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .lottery-status-grid,
   .lottery-chart-grid,
   .lottery-pixel-stat-layout,
@@ -3873,6 +4195,7 @@ button.lottery-latest-vs-card:hover {
   .lottery-ticket-timeline-metrics,
   .lottery-report-section-grid,
   .lottery-maintenance-group-grid,
+  .lottery-workbench-action-groups,
   .lottery-workbench-main-grid,
   .lottery-workbench-recent-grid,
   .lottery-workbench-runbook-grid,
@@ -3905,8 +4228,16 @@ button.lottery-latest-vs-card:hover {
 
 @media (max-width: 560px) {
   .lottery-workbench-quick-rail,
+  .lottery-workbench-action-groups,
+  .lottery-workbench-issue-focus,
+  .lottery-workbench-shortcut-grid,
   .lottery-workbench-status-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lottery-workbench-widget-row {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .lottery-research-metrics {

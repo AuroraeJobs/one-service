@@ -317,12 +317,12 @@ Goal: add more frontend workflow depth so the lottery module guides a daily user
 
 ### Wave 13A: Workbench Personalization And Action Queue
 
-- [ ] Add configurable workbench widget visibility/order persisted in browser-local state first, with room for backend preferences later.
-- [ ] Add an issue-focus strip that links latest draw, next target issue, pending predictions, ticket status, prize check, and ledger outcome.
-- [ ] Add a daily action queue panel that groups pending sync, data quality, prediction attachment, ticket prize check, and export/release warnings.
-- [ ] Add recent-work shortcuts for the last opened prediction, ticket issue, research comparison, export report, and maintenance page.
-- [ ] Polish responsive layout for the expanded workbench without nesting cards or hiding operational density.
-- [ ] Run frontend build, update docs, commit, and push.
+- [x] Add configurable workbench widget visibility/order persisted in browser-local state first, with room for backend preferences later. Added local layout state under `one:lottery:workbench:widgets:v1`.
+- [x] Add an issue-focus strip that links latest draw, next target issue, pending predictions, ticket status, prize check, and ledger outcome. `/lottery/workbench` now shows these as a single drill-through row.
+- [x] Add a daily action queue panel that groups pending sync, data quality, prediction attachment, ticket prize check, and export/release warnings. The queue is derived from daily state, operation summary, scheduled runbook, budget warnings, and release checks.
+- [x] Add recent-work shortcuts for the last opened prediction, ticket issue, research comparison, export report, and maintenance page. Added top shortcuts above the existing recent-work grouped lists.
+- [x] Polish responsive layout for the expanded workbench without nesting cards or hiding operational density. Added stable grids for widget settings, issue focus, action groups, and shortcuts across desktop/mobile.
+- [x] Run frontend build, update docs, commit, and push. Verification: `one-web npm run build`; Browser smoke was blocked by local login/backend state and did not reveal a Vite overlay on the login screen.
 
 ### Wave 13B: Prediction Decision Board
 
