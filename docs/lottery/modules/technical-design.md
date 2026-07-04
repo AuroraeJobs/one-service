@@ -204,6 +204,8 @@ VOID
 
 `LotteryMonthlyLedger` is the monthly outcome trend DTO. `GET /lottery/ledger/months` groups personal tickets by creation month in `yyyy-MM` format and returns monthly ticket count, checked/pending count, winning count, total cost, total prize, net result, and ROI percent.
 
+`LotteryPerformanceLedger` powers source and rule performance views. `GET /lottery/ledger/performance?dimension=source|rule` groups personal tickets by source by default; with `dimension=rule`, prediction tickets resolve `predictionSnapshotId` to snapshot `ruleId` and `ruleName` when available. Each row returns cost, prize, net result, ROI percent, and hit-rate percent.
+
 ## API Design Rules
 
 - Keep existing APIs compatible while adding new `lottery/*` APIs.

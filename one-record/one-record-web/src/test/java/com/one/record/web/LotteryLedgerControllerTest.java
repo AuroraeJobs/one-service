@@ -3,6 +3,7 @@ package com.one.record.web;
 import com.one.record.lottery.LotteryIssueLedger;
 import com.one.record.lottery.LotteryLedgerSummary;
 import com.one.record.lottery.LotteryMonthlyLedger;
+import com.one.record.lottery.LotteryPerformanceLedger;
 import com.one.record.service.ILotteryLedgerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -94,5 +95,30 @@ class LotteryLedgerControllerTest {
                 .andExpect(jsonPath("$[0].roiPercent").value(-37.50));
 
         verify(service).months();
+    }
+
+    @Test
+    void performanceDelegatesToService() throws Exception {
+        when(service.performance("rule")).thenReturn(List.of(LotteryPerformanceLedger.builder()
+                .dimension("RULE")
+                .key("rule-best")
+                .name("最佳规则")
+                .ticketCount(2)
+                .totalCost(new BigDecimal("4"))
+                .totalPrize(new BigDecimal("5"))
+                .netResult(new BigDecimal("1"))
+                .roiPercent(new BigDecimal("25.00"))
+                .hitRatePercent(new BigDecimal("50.00"))
+                .build()));
+
+        mockMvc.perform(get("/lottery/ledger/performance").param("dimension", "rule"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].dimension").value("RULE"))
+                .andExpect(jsonPath("$[0].key").value("rule-best"))
+                .andExpect(jsonPath("$[0].name").value("最佳规则"))
+                .andExpect(jsonPath("$[0].roiPercent").value(25.00))
+                .andExpect(jsonPath("$[0].hitRatePercent").value(50.00));
+
+        verify(service).performance("rule");
     }
 }
