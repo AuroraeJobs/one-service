@@ -1620,6 +1620,19 @@ export interface LotteryLedgerSummary {
   generatedAt?: number;
 }
 
+export interface LotteryIssueLedger {
+  issue?: string;
+  period?: number;
+  ticketCount?: number;
+  checkedTicketCount?: number;
+  pendingTicketCount?: number;
+  winningTicketCount?: number;
+  totalCost?: number;
+  totalPrize?: number;
+  netResult?: number;
+  roiPercent?: number;
+}
+
 export interface LotteryTrainingTimelineItem {
   period: number;
   predictedRedNumbers: string[];
@@ -1749,6 +1762,9 @@ export const lotteryTicketApi = {
 export const lotteryLedgerApi = {
   summary: (): Promise<LotteryLedgerSummary> => {
     return apiClient.get('/lottery/ledger/summary');
+  },
+  issues: (): Promise<LotteryIssueLedger[]> => {
+    return apiClient.get('/lottery/ledger/issues');
   }
 };
 

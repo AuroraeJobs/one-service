@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Space } from 'antd';
+import { Alert, Button, Card, Space, Table, Tag } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 import {
   DollarOutlined,
   PercentageOutlined,
@@ -9,7 +10,7 @@ import {
   WalletOutlined
 } from '@ant-design/icons';
 import LifePageShell from './LifePageShell';
-import { lotteryLedgerApi, type LotteryLedgerSummary } from '../services/api';
+import { lotteryLedgerApi, type LotteryIssueLedger, type LotteryLedgerSummary } from '../services/api';
 import './LotteryOverviewPage.css';
 
 const emptySummary: LotteryLedgerSummary = {
@@ -29,6 +30,7 @@ const formatPercent = (value?: number) => `${Number(value || 0).toFixed(2)}%`;
 
 const LotteryLedgerPage = () => {
   const [summary, setSummary] = useState<LotteryLedgerSummary>(emptySummary);
+  const [issues, setIssues] = useState<LotteryIssueLedger[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -44,8 +46,12 @@ const LotteryLedgerPage = () => {
     setLoading(true);
     setError(undefined);
     try {
-      const ledgerSummary = await lotteryLedgerApi.summary();
+      const [ledgerSummary, issueRows] = await Promise.all([
+        lotteryLedgerApi.summary(),
+        lotteryLedgerApi.issues()
+      ]);
       setSummary(ledgerSummary || emptySummary);
+      setIssues(issueRows || []);
     } catch (requestError) {
       console.error('获取彩票账本失败:', requestError);
       setError(requestError instanceof Error ? requestError.message : '获取彩票账本失败');
@@ -57,6 +63,59 @@ const LotteryLedgerPage = () => {
   useEffect(() => {
     loadSummary();
   }, [loadSummary]);
+
+  const issueColumns: ColumnsType<LotteryIssueLedger> = [
+    {
+      title: '期号',
+      dataIndex: 'issue',
+      key: 'issue',
+      render: (_, record) => (
+        <Space direction="vertical" size={0}>
+          <strong>{record.issue || record.period || '-'}</strong>
+          <span className="stock-quote-code">{record.pendingTicketCount ? '待开奖' : '已核验'}</span>
+        </Space>
+      )
+    },
+    {
+      title: '票据',
+      key: 'tickets',
+      align: 'right',
+      render: (_, record) => (
+        <Space direction="vertical" size={0}>
+          <strong>{record.ticketCount || 0}</strong>
+          <span className="stock-quote-code">中奖 {record.winningTicketCount || 0}</span>
+        </Space>
+      )
+    },
+    {
+      title: '成本',
+      dataIndex: 'totalCost',
+      key: 'totalCost',
+      align: 'right',
+      render: value => formatMoney(value)
+    },
+    {
+      title: '奖金',
+      dataIndex: 'totalPrize',
+      key: 'totalPrize',
+      align: 'right',
+      render: value => formatMoney(value)
+    },
+    {
+      title: '净结果',
+      dataIndex: 'netResult',
+      key: 'netResult',
+      align: 'right',
+      render: value => <strong>{formatMoney(value)}</strong>
+    },
+    {
+      title: 'ROI',
+      dataIndex: 'roiPercent',
+      key: 'roiPercent',
+      align: 'right',
+      render: value => <Tag color={Number(value || 0) >= 0 ? 'green' : 'red'}>{formatPercent(value)}</Tag>
+    }
+  ];
 
   return (
     <LifePageShell
@@ -126,6 +185,17 @@ const LotteryLedgerPage = () => {
           <span>待开奖 {summary.pendingTicketCount || 0}</span>
           <span>中奖 {summary.winningTicketCount || 0}</span>
         </Space>
+      </Card>
+
+      <Card className="life-panel-card" title="期次账本">
+        <Table
+          rowKey={record => record.issue || String(record.period)}
+          columns={issueColumns}
+          dataSource={issues}
+          loading={loading}
+          pagination={{ pageSize: 10 }}
+          scroll={{ x: 760 }}
+        />
       </Card>
     </LifePageShell>
   );
