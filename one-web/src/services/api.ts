@@ -46,6 +46,11 @@ export interface LotteryRecordSyncLog {
   endIssue?: string;
   savedCount?: number;
   message?: string;
+  failureCategory?: string;
+  provider?: string;
+  requestMode?: string;
+  httpStatus?: number;
+  networkBlockSuspected?: boolean;
   startedAt?: number;
   finishedAt?: number;
 }
@@ -62,6 +67,11 @@ export interface LotteryRecordSyncSummary {
   latestJobName?: string;
   latestStatus?: string;
   latestMessage?: string;
+  latestFailureCategory?: string;
+  latestProvider?: string;
+  latestRequestMode?: string;
+  latestHttpStatus?: number;
+  latestNetworkBlockSuspected?: boolean;
   latestStartIssue?: string;
   latestEndIssue?: string;
   latestStartedAt?: number;
@@ -83,6 +93,12 @@ export interface LotteryProviderProbeResult {
   recordCount?: number;
   durationMs?: number;
   checkedAt?: number;
+  failureCategory?: string;
+  requestMode?: string;
+  httpStatus?: number;
+  responseContentType?: string;
+  responseSnippet?: string;
+  networkBlockSuspected?: boolean;
 }
 
 export interface LotteryProviderProbeLog extends LotteryProviderProbeResult {

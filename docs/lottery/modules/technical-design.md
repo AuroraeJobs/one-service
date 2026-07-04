@@ -222,11 +222,11 @@ VOID
 
 `LotteryProviderHealth` is the first provider operations DTO. `GET /lottery/providers/health` reports registered lottery draw providers, whether each provider is active, and the status check timestamp. The first implementation exposes registered local provider state only; active remote probing is tracked separately by the provider probe endpoint.
 
-`LotteryProviderConfig` is a read-only provider configuration snapshot. `GET /lottery/providers/config` returns the active draw provider, registered draw providers, scheduled sync enabled state, and generation timestamp.
+`LotteryProviderConfig` is a read-only provider configuration snapshot. `GET /lottery/providers/config` returns the active draw provider, registered draw providers, scheduled sync enabled state, provider network mode, proxy host/port, timeout, diagnostic snippet length, and generation timestamp. The default lottery provider network mode is `system`; operators can set `LOTTERY_PROVIDER_NETWORK_MODE=direct` to bypass local/system proxy behavior or `LOTTERY_PROVIDER_NETWORK_MODE=proxy` with `LOTTERY_PROVIDER_PROXY_HOST` and `LOTTERY_PROVIDER_PROXY_PORT` when an explicit proxy is required.
 
-`LotteryProviderProbeResult` records an active provider probe. `GET /lottery/providers/probe?provider=cwl` calls the selected draw provider's yearly fetch method and returns availability, record count, duration, message, and checked timestamp. Missing providers and provider exceptions are returned as structured probe results rather than unhandled errors.
+`LotteryProviderProbeResult` records an active provider probe. `GET /lottery/providers/probe?provider=cwl` calls the selected draw provider's lightweight probe path and returns availability, record count, duration, message, checked timestamp, request mode, HTTP status, response content type, safe response snippet, failure category, and whether a proxy/network block is suspected. Missing providers and provider exceptions are returned as structured probe results rather than unhandled errors.
 
-`LotteryProviderProbeLog` stores durable provider probe history in `lottery_provider_probe_logs`. `GET /lottery/providers/probe-logs?provider=cwl&limit=20` returns recent probe outcomes ordered by check time descending, so operations pages can show provider stability after reloads.
+`LotteryProviderProbeLog` stores durable provider probe history in `lottery_provider_probe_logs`. `GET /lottery/providers/probe-logs?provider=cwl&limit=20` returns recent probe outcomes ordered by check time descending, including request mode, HTTP status, failure category, content type, safe response snippet, and proxy/network suspicion, so operations pages can show provider stability after reloads.
 
 `LotteryPreference` stores default-user lottery preferences in `lottery_preferences`. `GET /lottery/preferences` returns saved preferences or a default fallback, and `PUT /lottery/preferences` normalizes training scale, replay count, auto-save behavior, and default ticket source before saving.
 
@@ -234,9 +234,9 @@ VOID
 
 `LotteryDataQualityRepairRequest` and `LotteryDataQualityRepairResult` power conservative repair flows. `POST /lottery/data-quality/repair/missing-issues/dry-run` computes missing issue repairability from the configured draw provider without writing data. `POST /lottery/data-quality/repair/missing-issues/confirm` writes only provider-backed missing issues, then reorders saved records by issue and reassigns line numbers. Malformed and duplicate records stay report-only until a trusted refetch can prove exact replacement data.
 
-`LotteryRecordSyncSummary` aggregates recent record sync logs. `GET /lottery/records/sync-summary?limit=50` returns status counts, success and failure rates, total saved count, latest status/message/issue range, latest and average duration, and last success/failure/skipped timestamps. The summary is derived from MongoDB sync logs and does not read Redis lock state directly.
+`LotteryRecordSyncSummary` aggregates recent record sync logs. `GET /lottery/records/sync-summary?limit=50` returns status counts, success and failure rates, total saved count, latest status/message/issue range, latest failure category, latest provider, request mode, HTTP status, proxy/network suspicion, latest and average duration, and last success/failure/skipped timestamps. The summary is derived from MongoDB sync logs and does not read Redis lock state directly.
 
-The draw provider client must not pass empty upstream responses into JSON parsing. HTTP failures, blank bodies, invalid JSON, and provider business failures are converted into readable sync failure messages such as `彩票开奖接口请求失败，HTTP 403` or `彩票开奖接口未返回内容`, so operations pages do not show low-level parser errors like `argument "content" is null`.
+The draw provider client must not pass empty upstream responses into JSON parsing. HTTP failures, blank bodies, invalid JSON, and provider business failures are converted into readable sync failure messages such as `彩票开奖接口请求失败，HTTP 403` or `彩票开奖接口未返回内容`, so operations pages do not show low-level parser errors like `argument "content" is null`. HTTP 403/407 responses are categorized as `PROXY_OR_NETWORK_BLOCK`; `/lottery/sync`, sync logs, probe logs, and CSV exports surface this category together with request mode and HTTP status.
 
 ## Workbench Contract
 

@@ -14,18 +14,18 @@ class RecordClientTest {
     @Test
     void parseResponseRejectsBlankContentWithReadableMessage() {
         assertThatThrownBy(() -> RecordClient.parseResponse(null, RecordResponse.class))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(RecordClientException.class)
                 .hasMessage("彩票开奖接口未返回内容");
 
         assertThatThrownBy(() -> RecordClient.parseResponse("  ", RecordResponse.class))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(RecordClientException.class)
                 .hasMessage("彩票开奖接口未返回内容");
     }
 
     @Test
     void parseResponseWrapsInvalidJsonWithSnippet() {
         assertThatThrownBy(() -> RecordClient.parseResponse("<html>blocked</html>", RecordResponse.class))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(RecordClientException.class)
                 .hasMessageContaining("彩票开奖接口响应解析失败")
                 .hasMessageContaining("blocked");
     }
@@ -38,8 +38,18 @@ class RecordClientTest {
                 .build();
 
         assertThatThrownBy(() -> RecordClient.recordsFromResponse(response))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(RecordClientException.class)
                 .hasMessage("彩票开奖接口返回失败: rate limited");
+    }
+
+    @Test
+    void parseResponseCapturesFailureCategory() {
+        assertThatThrownBy(() -> RecordClient.parseResponse("<html>blocked</html>", RecordResponse.class))
+                .isInstanceOfSatisfying(RecordClientException.class, exception -> {
+                    assertThat(exception.getFailureCategory()).isEqualTo("INVALID_JSON");
+                    assertThat(exception.getResponseSnippet()).contains("blocked");
+                    assertThat(exception.getNetworkMode()).isEqualTo("system");
+                });
     }
 
     @Test

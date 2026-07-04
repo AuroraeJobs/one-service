@@ -29,6 +29,16 @@ public class LotteryRecordSyncLog {
 
     private String message;
 
+    private String failureCategory;
+
+    private String provider;
+
+    private String requestMode;
+
+    private Integer httpStatus;
+
+    private Boolean networkBlockSuspected;
+
     private Long startedAt;
 
     private Long finishedAt;

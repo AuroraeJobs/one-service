@@ -59,6 +59,8 @@ class LotteryProviderControllerTest {
                 .activeDrawProvider("cwl")
                 .registeredDrawProviders(List.of("cwl"))
                 .scheduledSyncEnabled(true)
+                .providerNetworkMode("direct")
+                .providerTimeoutSeconds(30)
                 .generatedAt(100L)
                 .build());
 
@@ -66,7 +68,9 @@ class LotteryProviderControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.activeDrawProvider").value("cwl"))
                 .andExpect(jsonPath("$.registeredDrawProviders[0]").value("cwl"))
-                .andExpect(jsonPath("$.scheduledSyncEnabled").value(true));
+                .andExpect(jsonPath("$.scheduledSyncEnabled").value(true))
+                .andExpect(jsonPath("$.providerNetworkMode").value("direct"))
+                .andExpect(jsonPath("$.providerTimeoutSeconds").value(30));
 
         verify(service).config();
     }
@@ -80,6 +84,8 @@ class LotteryProviderControllerTest {
                 .status("AVAILABLE")
                 .recordCount(12)
                 .durationMs(30L)
+                .requestMode("direct")
+                .httpStatus(200)
                 .checkedAt(100L)
                 .build());
 
@@ -88,7 +94,9 @@ class LotteryProviderControllerTest {
                 .andExpect(jsonPath("$.provider").value("cwl"))
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.status").value("AVAILABLE"))
-                .andExpect(jsonPath("$.recordCount").value(12));
+                .andExpect(jsonPath("$.recordCount").value(12))
+                .andExpect(jsonPath("$.requestMode").value("direct"))
+                .andExpect(jsonPath("$.httpStatus").value(200));
 
         verify(service).probe("cwl");
     }
@@ -99,6 +107,8 @@ class LotteryProviderControllerTest {
                 .provider("cwl")
                 .status("AVAILABLE")
                 .recordCount(33)
+                .requestMode("direct")
+                .httpStatus(200)
                 .checkedAt(100L)
                 .build()));
 
@@ -108,7 +118,9 @@ class LotteryProviderControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].provider").value("cwl"))
                 .andExpect(jsonPath("$[0].status").value("AVAILABLE"))
-                .andExpect(jsonPath("$[0].recordCount").value(33));
+                .andExpect(jsonPath("$[0].recordCount").value(33))
+                .andExpect(jsonPath("$[0].requestMode").value("direct"))
+                .andExpect(jsonPath("$[0].httpStatus").value(200));
 
         verify(service).probeLogs("cwl", 10);
     }

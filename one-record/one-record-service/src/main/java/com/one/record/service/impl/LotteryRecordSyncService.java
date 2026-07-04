@@ -63,7 +63,7 @@ public class LotteryRecordSyncService implements ILotteryRecordSyncService {
             return syncLogService.success(syncLog, after == null ? null : after.getCode(), savedCount,
                     savedCount > 0 ? "新增 " + savedCount + " 期开奖记录" : "没有新的开奖记录");
         } catch (RuntimeException exception) {
-            syncLogService.failure(syncLog, exception.getMessage());
+            syncLogService.failure(syncLog, exception);
             throw exception;
         } finally {
             releaseLock();

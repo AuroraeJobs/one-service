@@ -1,4 +1,4 @@
-package com.one.record.lottery;
+package com.one.record.client;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,15 +11,11 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class LotteryProviderProbeResult implements Serializable {
-
-    private String category;
-
-    private String provider;
+public class RecordClientDiagnostic implements Serializable {
 
     private Boolean success;
 
-    private String status;
+    private String failureCategory;
 
     private String message;
 
@@ -29,9 +25,9 @@ public class LotteryProviderProbeResult implements Serializable {
 
     private Long checkedAt;
 
-    private String failureCategory;
+    private String provider;
 
-    private String requestMode;
+    private String networkMode;
 
     private Integer httpStatus;
 

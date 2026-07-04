@@ -21,6 +21,10 @@ public class RecordCalendar {
     private static final SimpleDateFormat FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 
     public static List<Record> fetch(String now) {
+        return fetch(now, RecordClientOptions.defaults());
+    }
+
+    public static List<Record> fetch(String now, RecordClientOptions options) {
         // 看日历是否有最新数据
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.HOUR_OF_DAY, 0);
@@ -48,7 +52,7 @@ public class RecordCalendar {
         if (endTime.after(startTime)) {
             log.info("> ✅开始日期: {}", start);
             log.info("> ✅结束日期: {}", end);
-            List<Record> records = RecordClient.record(start, end);
+            List<Record> records = RecordClient.record(start, end, options);
             log.info("> ✅更新数据: {}", StreamUtil.toList(records, Record::record));
             return records;
         }

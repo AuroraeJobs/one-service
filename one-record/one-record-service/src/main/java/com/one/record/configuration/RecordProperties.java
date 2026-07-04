@@ -18,4 +18,14 @@ public class RecordProperties {
     private boolean reset;
 
     private boolean scheduledSyncEnabled;
+
+    private String providerNetworkMode = "system";
+
+    private String providerProxyHost;
+
+    private Integer providerProxyPort;
+
+    private Integer providerTimeoutSeconds = 30;
+
+    private Integer providerDiagnosticSnippetLength = 240;
 }

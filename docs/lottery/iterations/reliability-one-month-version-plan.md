@@ -28,7 +28,7 @@ Deferred unless the month finishes early:
 
 ## Week 1: Provider Diagnostics And Sync Resilience
 
-Status: planned.
+Status: shipped in Wave 12A.
 
 Goal: make provider failures actionable, especially the known local proxy `403` case.
 
@@ -40,6 +40,14 @@ Deliverables:
 - Add server-side configuration for provider direct/proxy/no-proxy behavior where supported.
 - Surface suspected proxy/network block in sync logs and frontend sync status.
 - Keep fallback provider work secondary until the primary direct-connect diagnostics are clear.
+
+Delivered:
+
+- Added `RecordClientOptions`, `RecordClientDiagnostic`, and `RecordClientException` so provider failures carry request mode, HTTP status, content type, safe response snippet, and failure category.
+- Added server-side config through `LOTTERY_PROVIDER_NETWORK_MODE`, `LOTTERY_PROVIDER_PROXY_HOST`, `LOTTERY_PROVIDER_PROXY_PORT`, `LOTTERY_PROVIDER_TIMEOUT_SECONDS`, and `LOTTERY_PROVIDER_DIAGNOSTIC_SNIPPET_LENGTH`.
+- Added lightweight CWL probe diagnostics while keeping CWL as the active provider.
+- Added sync/probe log diagnostic fields and surfaced them on `/lottery/sync`.
+- Classified HTTP 403/407 as `PROXY_OR_NETWORK_BLOCK`.
 
 Acceptance:
 

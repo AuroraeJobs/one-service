@@ -1,6 +1,7 @@
 package com.one.record.service.impl;
 
 import com.one.record.lottery.LotteryRecordSyncSummary;
+import com.one.record.client.RecordClientException;
 import com.one.record.model.LotteryRecordSyncLog;
 import com.one.record.repository.LotteryRecordSyncLogRepository;
 import org.junit.jupiter.api.Test;
@@ -44,6 +45,63 @@ class LotteryRecordSyncLogServiceTest {
         assertThat(summary.getLastFailureAt()).isEqualTo(900L);
         assertThat(summary.getLastSkippedAt()).isEqualTo(700L);
         verify(repository).findByOrderByStartedAtDesc(any(Pageable.class));
+    }
+
+    @Test
+    void failureCapturesRecordClientDiagnostics() {
+        LotteryRecordSyncLogRepository repository = mock(LotteryRecordSyncLogRepository.class);
+        when(repository.save(any(LotteryRecordSyncLog.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        LotteryRecordSyncLogService service = new LotteryRecordSyncLogService(repository);
+        LotteryRecordSyncLog running = LotteryRecordSyncLog.builder().status("RUNNING").startedAt(100L).build();
+        RecordClientException exception = new RecordClientException(
+                "彩票开奖接口请求失败，HTTP 403",
+                "PROXY_OR_NETWORK_BLOCK",
+                "cwl",
+                "system",
+                403,
+                "text/html",
+                "forbidden",
+                true
+        );
+
+        LotteryRecordSyncLog failed = service.failure(running, exception);
+
+        assertThat(failed.getStatus()).isEqualTo("FAILED");
+        assertThat(failed.getFailureCategory()).isEqualTo("PROXY_OR_NETWORK_BLOCK");
+        assertThat(failed.getProvider()).isEqualTo("cwl");
+        assertThat(failed.getRequestMode()).isEqualTo("system");
+        assertThat(failed.getHttpStatus()).isEqualTo(403);
+        assertThat(failed.getNetworkBlockSuspected()).isTrue();
+        assertThat(failed.getSavedCount()).isZero();
+    }
+
+    @Test
+    void summaryIncludesLatestDiagnostics() {
+        LotteryRecordSyncLogRepository repository = mock(LotteryRecordSyncLogRepository.class);
+        when(repository.findByOrderByStartedAtDesc(any(Pageable.class))).thenReturn(List.of(
+                LotteryRecordSyncLog.builder()
+                        .jobName("manual-record-sync")
+                        .status("FAILED")
+                        .savedCount(0)
+                        .message("彩票开奖接口请求失败，HTTP 403")
+                        .failureCategory("PROXY_OR_NETWORK_BLOCK")
+                        .provider("cwl")
+                        .requestMode("system")
+                        .httpStatus(403)
+                        .networkBlockSuspected(true)
+                        .startedAt(100L)
+                        .finishedAt(120L)
+                        .build()
+        ));
+        LotteryRecordSyncLogService service = new LotteryRecordSyncLogService(repository);
+
+        LotteryRecordSyncSummary summary = service.summary(20);
+
+        assertThat(summary.getLatestFailureCategory()).isEqualTo("PROXY_OR_NETWORK_BLOCK");
+        assertThat(summary.getLatestProvider()).isEqualTo("cwl");
+        assertThat(summary.getLatestRequestMode()).isEqualTo("system");
+        assertThat(summary.getLatestHttpStatus()).isEqualTo(403);
+        assertThat(summary.getLatestNetworkBlockSuspected()).isTrue();
     }
 
     @Test

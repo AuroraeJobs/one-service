@@ -3,6 +3,14 @@ server:
   servlet:
     context-path: /
 
+hello:
+  record:
+    provider-network-mode: ${LOTTERY_PROVIDER_NETWORK_MODE:system}
+    provider-proxy-host: ${LOTTERY_PROVIDER_PROXY_HOST:}
+    provider-proxy-port: ${LOTTERY_PROVIDER_PROXY_PORT:0}
+    provider-timeout-seconds: ${LOTTERY_PROVIDER_TIMEOUT_SECONDS:30}
+    provider-diagnostic-snippet-length: ${LOTTERY_PROVIDER_DIAGNOSTIC_SNIPPET_LENGTH:240}
+
 tesla:
   fleet:
     auth-base-url: ${TESLA_FLEET_AUTH_BASE_URL:https://auth.tesla.cn/oauth2/v3}

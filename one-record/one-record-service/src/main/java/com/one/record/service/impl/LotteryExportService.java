@@ -228,6 +228,11 @@ public class LotteryExportService implements ILotteryExportService {
                         "startIssue", value(log.getStartIssue()),
                         "endIssue", value(log.getEndIssue()),
                         "savedCount", value(log.getSavedCount()),
+                        "failureCategory", value(log.getFailureCategory()),
+                        "provider", value(log.getProvider()),
+                        "requestMode", value(log.getRequestMode()),
+                        "httpStatus", value(log.getHttpStatus()),
+                        "networkBlockSuspected", value(log.getNetworkBlockSuspected()),
                         "message", value(log.getMessage()),
                         "startedAt", value(log.getStartedAt()),
                         "finishedAt", value(log.getFinishedAt())
@@ -246,6 +251,12 @@ public class LotteryExportService implements ILotteryExportService {
                         "success", value(log.getSuccess()),
                         "recordCount", value(log.getRecordCount()),
                         "durationMs", value(log.getDurationMs()),
+                        "failureCategory", value(log.getFailureCategory()),
+                        "requestMode", value(log.getRequestMode()),
+                        "httpStatus", value(log.getHttpStatus()),
+                        "responseContentType", value(log.getResponseContentType()),
+                        "networkBlockSuspected", value(log.getNetworkBlockSuspected()),
+                        "responseSnippet", value(log.getResponseSnippet()),
                         "message", value(log.getMessage()),
                         "checkedAt", value(log.getCheckedAt())
                 ))

@@ -15,6 +15,8 @@ import org.springframework.data.domain.Sort;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentCaptor.forClass;
+import org.mockito.ArgumentCaptor;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -42,6 +44,8 @@ class LotteryProviderServiceTest {
     void configReturnsProviderAndSyncSnapshot() {
         RecordProperties properties = new RecordProperties();
         properties.setScheduledSyncEnabled(true);
+        properties.setProviderNetworkMode("direct");
+        properties.setProviderTimeoutSeconds(12);
         LotteryProviderService service = service(List.of(provider("cwl"), provider("backup")), properties, mock(LotteryProviderProbeLogRepository.class));
 
         LotteryProviderConfig config = service.config();
@@ -49,6 +53,8 @@ class LotteryProviderServiceTest {
         assertThat(config.getActiveDrawProvider()).isEqualTo("cwl");
         assertThat(config.getRegisteredDrawProviders()).containsExactly("backup", "cwl");
         assertThat(config.getScheduledSyncEnabled()).isTrue();
+        assertThat(config.getProviderNetworkMode()).isEqualTo("direct");
+        assertThat(config.getProviderTimeoutSeconds()).isEqualTo(12);
         assertThat(config.getGeneratedAt()).isNotNull();
     }
 
@@ -87,6 +93,25 @@ class LotteryProviderServiceTest {
         assertThat(result.getSuccess()).isFalse();
         assertThat(result.getStatus()).isEqualTo("FAILED");
         assertThat(result.getMessage()).isEqualTo("provider down");
+    }
+
+    @Test
+    void probePersistsDiagnosticFields() {
+        LotteryProviderProbeLogRepository repository = mock(LotteryProviderProbeLogRepository.class);
+        LotteryProviderService service = service(List.of(diagnosticProvider("cwl")), new RecordProperties(), repository);
+
+        LotteryProviderProbeResult result = service.probe("cwl");
+
+        assertThat(result.getFailureCategory()).isEqualTo("PROXY_OR_NETWORK_BLOCK");
+        assertThat(result.getRequestMode()).isEqualTo("system");
+        assertThat(result.getHttpStatus()).isEqualTo(403);
+        assertThat(result.getNetworkBlockSuspected()).isTrue();
+
+        ArgumentCaptor<LotteryProviderProbeLog> captor = forClass(LotteryProviderProbeLog.class);
+        verify(repository).save(captor.capture());
+        assertThat(captor.getValue().getFailureCategory()).isEqualTo("PROXY_OR_NETWORK_BLOCK");
+        assertThat(captor.getValue().getHttpStatus()).isEqualTo(403);
+        assertThat(captor.getValue().getResponseSnippet()).contains("forbidden");
     }
 
     @Test
@@ -172,6 +197,45 @@ class LotteryProviderServiceTest {
             @Override
             public List<Record> fetchYearlyRecords() {
                 throw new RuntimeException("provider down");
+            }
+        };
+    }
+
+    private LotteryDrawProvider diagnosticProvider(String name) {
+        return new LotteryDrawProvider() {
+            @Override
+            public String name() {
+                return name;
+            }
+
+            @Override
+            public List<Record> fetchAfterDate(String lastDrawDate) {
+                return List.of();
+            }
+
+            @Override
+            public List<Record> fetchYearlyRecords() {
+                return List.of();
+            }
+
+            @Override
+            public LotteryProviderProbeResult probe() {
+                return LotteryProviderProbeResult.builder()
+                        .category("draw")
+                        .provider(name)
+                        .success(false)
+                        .status("FAILED")
+                        .message("彩票开奖接口请求失败，HTTP 403")
+                        .recordCount(0)
+                        .durationMs(12L)
+                        .checkedAt(100L)
+                        .failureCategory("PROXY_OR_NETWORK_BLOCK")
+                        .requestMode("system")
+                        .httpStatus(403)
+                        .responseContentType("text/html")
+                        .responseSnippet("forbidden")
+                        .networkBlockSuspected(true)
+                        .build();
             }
         };
     }

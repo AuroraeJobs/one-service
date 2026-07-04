@@ -276,13 +276,13 @@ Use this file as the durable task board for the lottery module. When a task is f
 
 ### Wave 12A: Provider Diagnostics And Sync Resilience
 
-- [ ] Preserve CWL as the primary provider and document proxy-related failure modes.
-- [ ] Build on explicit provider error handling so null upstream content never reaches JSON parsing.
-- [ ] Add provider request diagnostics for direct/proxy/no-proxy context, HTTP status, response content type, latency, and safe response snippets.
-- [ ] Add server-side configuration for provider direct/proxy/no-proxy behavior where supported.
-- [ ] Surface suspected proxy/network block in `/lottery/sync`, sync logs, and provider probe logs.
-- [ ] Keep fallback provider work secondary until primary direct-connect diagnostics are clear.
-- [ ] Run focused provider/sync tests, update docs, commit, and push.
+- [x] Preserve CWL as the primary provider and document proxy-related failure modes. CWL remains the active draw provider; `403` is treated as a proxy/network diagnostic category rather than a source replacement trigger.
+- [x] Build on explicit provider error handling so null upstream content never reaches JSON parsing. `RecordClientException` now carries failure category and request diagnostics for sync logs.
+- [x] Add provider request diagnostics for direct/proxy/no-proxy context, HTTP status, response content type, latency, and safe response snippets. Probe results/logs now include request mode, HTTP status, content type, snippet, category, and network-block suspicion.
+- [x] Add server-side configuration for provider direct/proxy/no-proxy behavior where supported. Added `LOTTERY_PROVIDER_NETWORK_MODE`, proxy host/port, timeout, and diagnostic snippet length config.
+- [x] Surface suspected proxy/network block in `/lottery/sync`, sync logs, and provider probe logs. The sync page now shows failure category, request mode, HTTP status, and a warning for suspected proxy/network blocks.
+- [x] Keep fallback provider work secondary until primary direct-connect diagnostics are clear. No fallback provider was added in 12A; diagnostics are the first shipped step.
+- [x] Run focused provider/sync tests, update docs, commit, and push.
 
 ### Wave 12B: Data Quality Repair Automation
 

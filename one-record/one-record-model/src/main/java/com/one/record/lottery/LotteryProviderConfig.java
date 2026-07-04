@@ -22,5 +22,15 @@ public class LotteryProviderConfig implements Serializable {
 
     private Boolean scheduledSyncEnabled;
 
+    private String providerNetworkMode;
+
+    private String providerProxyHost;
+
+    private Integer providerProxyPort;
+
+    private Integer providerTimeoutSeconds;
+
+    private Integer providerDiagnosticSnippetLength;
+
     private Long generatedAt;
 }

@@ -65,6 +65,11 @@ public class LotteryProviderService implements ILotteryProviderService {
                 .activeDrawProvider(ACTIVE_DRAW_PROVIDER)
                 .registeredDrawProviders(registeredDrawProviders())
                 .scheduledSyncEnabled(recordProperties.isScheduledSyncEnabled())
+                .providerNetworkMode(recordProperties.getProviderNetworkMode())
+                .providerProxyHost(recordProperties.getProviderProxyHost())
+                .providerProxyPort(recordProperties.getProviderProxyPort())
+                .providerTimeoutSeconds(recordProperties.getProviderTimeoutSeconds())
+                .providerDiagnosticSnippetLength(recordProperties.getProviderDiagnosticSnippetLength())
                 .generatedAt(System.currentTimeMillis())
                 .build();
     }
@@ -89,17 +94,15 @@ public class LotteryProviderService implements ILotteryProviderService {
         }
         long startedAt = System.currentTimeMillis();
         try {
-            List<Record> records = drawProvider.fetchYearlyRecords();
-            return saveProbeResult(LotteryProviderProbeResult.builder()
-                    .category("draw")
-                    .provider(providerName)
-                    .success(true)
-                    .status("AVAILABLE")
-                    .message("provider 探测成功")
-                    .recordCount(records == null ? 0 : records.size())
-                    .durationMs(System.currentTimeMillis() - startedAt)
-                    .checkedAt(checkedAt)
-                    .build());
+            LotteryProviderProbeResult result = drawProvider.probe();
+            result.setCategory(StringUtils.hasText(result.getCategory()) ? result.getCategory() : "draw");
+            result.setProvider(providerName);
+            result.setDurationMs(result.getDurationMs() == null ? System.currentTimeMillis() - startedAt : result.getDurationMs());
+            result.setCheckedAt(result.getCheckedAt() == null ? checkedAt : result.getCheckedAt());
+            result.setRecordCount(result.getRecordCount() == null ? 0 : result.getRecordCount());
+            result.setSuccess(Boolean.TRUE.equals(result.getSuccess()));
+            result.setStatus(StringUtils.hasText(result.getStatus()) ? result.getStatus() : Boolean.TRUE.equals(result.getSuccess()) ? "AVAILABLE" : "FAILED");
+            return saveProbeResult(result);
         } catch (RuntimeException exception) {
             return saveProbeResult(LotteryProviderProbeResult.builder()
                     .category("draw")
@@ -110,6 +113,7 @@ public class LotteryProviderService implements ILotteryProviderService {
                     .recordCount(0)
                     .durationMs(System.currentTimeMillis() - startedAt)
                     .checkedAt(checkedAt)
+                    .failureCategory("REQUEST_EXCEPTION")
                     .build());
         }
     }
@@ -171,6 +175,12 @@ public class LotteryProviderService implements ILotteryProviderService {
                     .recordCount(result.getRecordCount())
                     .durationMs(result.getDurationMs())
                     .checkedAt(result.getCheckedAt())
+                    .failureCategory(result.getFailureCategory())
+                    .requestMode(result.getRequestMode())
+                    .httpStatus(result.getHttpStatus())
+                    .responseContentType(result.getResponseContentType())
+                    .responseSnippet(result.getResponseSnippet())
+                    .networkBlockSuspected(result.getNetworkBlockSuspected())
                     .build());
         } catch (RuntimeException exception) {
             log.warn("Failed to save lottery provider probe log, provider={}", result.getProvider(), exception);

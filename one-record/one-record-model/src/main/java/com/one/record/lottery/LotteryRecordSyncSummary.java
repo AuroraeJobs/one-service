@@ -35,6 +35,16 @@ public class LotteryRecordSyncSummary {
 
     private String latestMessage;
 
+    private String latestFailureCategory;
+
+    private String latestProvider;
+
+    private String latestRequestMode;
+
+    private Integer latestHttpStatus;
+
+    private Boolean latestNetworkBlockSuspected;
+
     private String latestStartIssue;
 
     private String latestEndIssue;

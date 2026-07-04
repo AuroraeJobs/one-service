@@ -32,4 +32,16 @@ public class LotteryProviderProbeLog {
     private Long durationMs;
 
     private Long checkedAt;
+
+    private String failureCategory;
+
+    private String requestMode;
+
+    private Integer httpStatus;
+
+    private String responseContentType;
+
+    private String responseSnippet;
+
+    private Boolean networkBlockSuspected;
 }

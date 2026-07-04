@@ -1,6 +1,7 @@
 package com.one.record.service.impl;
 
 import com.one.record.model.LotteryRecordSyncLog;
+import com.one.record.client.RecordClientException;
 import com.one.record.response.Record;
 import com.one.record.service.ILotteryRecordSyncLogService;
 import com.one.record.service.IRecordService;
@@ -130,15 +131,41 @@ class LotteryRecordSyncServiceTest {
     void syncManuallyWritesFailureLogAndReleasesLock() {
         Record before = record("2026001", 1);
         LotteryRecordSyncLog running = LotteryRecordSyncLog.builder().id("sync-1").status("RUNNING").build();
+        IllegalStateException failure = new IllegalStateException("provider unavailable");
         when(recordService.findLast()).thenReturn(before);
         when(syncLogService.start("manual-record-sync", "2026001")).thenReturn(running);
-        doThrow(new IllegalStateException("provider unavailable")).when(recordUpdate).update();
+        doThrow(failure).when(recordUpdate).update();
 
         assertThatThrownBy(() -> service.syncManually())
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("provider unavailable");
 
-        verify(syncLogService).failure(running, "provider unavailable");
+        verify(syncLogService).failure(running, failure);
+        verify(redisTemplate).delete("lottery:records:sync:lock");
+    }
+
+    @Test
+    void syncManuallyPassesRecordClientExceptionToFailureLog() {
+        Record before = record("2026001", 1);
+        LotteryRecordSyncLog running = LotteryRecordSyncLog.builder().id("sync-1").status("RUNNING").build();
+        RecordClientException failure = new RecordClientException(
+                "彩票开奖接口请求失败，HTTP 403",
+                "PROXY_OR_NETWORK_BLOCK",
+                "cwl",
+                "system",
+                403,
+                "text/html",
+                "forbidden",
+                true
+        );
+        when(recordService.findLast()).thenReturn(before);
+        when(syncLogService.start("manual-record-sync", "2026001")).thenReturn(running);
+        doThrow(failure).when(recordUpdate).update();
+
+        assertThatThrownBy(() -> service.syncManually())
+                .isSameAs(failure);
+
+        verify(syncLogService).failure(running, failure);
         verify(redisTemplate).delete("lottery:records:sync:lock");
     }
 

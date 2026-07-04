@@ -47,6 +47,35 @@ const statusColor = (status?: string) => {
   return 'default';
 };
 
+const failureCategoryLabel = (category?: string) => {
+  if (category === 'PROXY_OR_NETWORK_BLOCK') {
+    return '代理/网络阻断';
+  }
+  if (category === 'HTTP_FAILURE') {
+    return 'HTTP失败';
+  }
+  if (category === 'BLANK_RESPONSE') {
+    return '空响应';
+  }
+  if (category === 'INVALID_JSON') {
+    return '响应解析失败';
+  }
+  if (category === 'BUSINESS_FAILURE') {
+    return '接口业务失败';
+  }
+  if (category === 'REQUEST_EXCEPTION') {
+    return '请求异常';
+  }
+  if (category === 'PROXY_CONFIG_INVALID') {
+    return '代理配置错误';
+  }
+  return category || '-';
+};
+
+const diagnosticColor = (record: { networkBlockSuspected?: boolean; failureCategory?: string }) => (
+  record.networkBlockSuspected || record.failureCategory === 'PROXY_OR_NETWORK_BLOCK' ? 'red' : 'gold'
+);
+
 const LotterySyncOperationsPage = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -196,6 +225,22 @@ const LotterySyncOperationsPage = () => {
       render: value => value ?? 0
     },
     {
+      title: '诊断',
+      key: 'diagnostics',
+      render: (_, record) => (
+        record.failureCategory || record.httpStatus || record.requestMode ? (
+          <Space direction="vertical" size={0}>
+            {record.failureCategory ? (
+              <Tag color={diagnosticColor(record)}>{failureCategoryLabel(record.failureCategory)}</Tag>
+            ) : null}
+            <span className="stock-quote-code">
+              {record.requestMode || '-'}{record.httpStatus ? ` / HTTP ${record.httpStatus}` : ''}
+            </span>
+          </Space>
+        ) : '-'
+      )
+    },
+    {
       title: '消息',
       dataIndex: 'message',
       key: 'message',
@@ -249,6 +294,22 @@ const LotterySyncOperationsPage = () => {
       dataIndex: 'durationMs',
       key: 'durationMs',
       render: value => `${value ?? 0} ms`
+    },
+    {
+      title: '诊断',
+      key: 'diagnostics',
+      render: (_, record) => (
+        record.failureCategory || record.httpStatus || record.requestMode ? (
+          <Space direction="vertical" size={0}>
+            {record.failureCategory ? (
+              <Tag color={diagnosticColor(record)}>{failureCategoryLabel(record.failureCategory)}</Tag>
+            ) : null}
+            <span className="stock-quote-code">
+              {record.requestMode || '-'}{record.httpStatus ? ` / HTTP ${record.httpStatus}` : ''}
+            </span>
+          </Space>
+        ) : '-'
+      )
     },
     {
       title: '消息',
@@ -310,6 +371,15 @@ const LotterySyncOperationsPage = () => {
       }
     >
       {error ? <Alert className="lottery-overview-status-alert" type="error" showIcon message={error} /> : null}
+      {summary?.latestNetworkBlockSuspected ? (
+        <Alert
+          className="lottery-overview-status-alert"
+          type="warning"
+          showIcon
+          message="最近一次同步疑似被代理或网络策略阻断"
+          description={`Provider: ${summary.latestProvider || '-'}，模式: ${summary.latestRequestMode || '-'}，HTTP: ${summary.latestHttpStatus || '-'}，分类: ${failureCategoryLabel(summary.latestFailureCategory)}`}
+        />
+      ) : null}
       {qualityIssueCount > 0 ? (
         <Alert
           className="lottery-overview-status-alert"
@@ -373,6 +443,8 @@ const LotterySyncOperationsPage = () => {
           <span>成功率：{summary?.successRate ?? 0}%</span>
           <span>失败率：{summary?.failedRate ?? 0}%</span>
           <span>最近完成：{formatTime(summary?.latestFinishedAt)}</span>
+          <span>诊断：{failureCategoryLabel(summary?.latestFailureCategory)}</span>
+          <span>请求：{summary?.latestRequestMode || '-'}{summary?.latestHttpStatus ? ` / HTTP ${summary.latestHttpStatus}` : ''}</span>
           <span>最近消息：{summary?.latestMessage || '-'}</span>
         </Space>
       </Card>
@@ -408,7 +480,7 @@ const LotterySyncOperationsPage = () => {
             showTotal: total => `共 ${total} 条`,
             onChange: (nextPage, nextPageSize) => updateQuery({ probePage: nextPage, probePageSize: nextPageSize }, false)
           }}
-          scroll={{ x: 780 }}
+          scroll={{ x: 980 }}
         />
       </Card>
 
@@ -426,7 +498,7 @@ const LotterySyncOperationsPage = () => {
             showTotal: total => `共 ${total} 条`,
             onChange: (nextPage, nextPageSize) => updateQuery({ syncPage: nextPage, syncPageSize: nextPageSize }, false)
           }}
-          scroll={{ x: 920 }}
+          scroll={{ x: 1120 }}
         />
       </Card>
     </LifePageShell>

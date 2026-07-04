@@ -2,6 +2,7 @@ package com.one.record.service.impl;
 
 import com.one.record.lottery.LotteryRecordSyncSummary;
 import com.one.record.lottery.LotteryPageResponse;
+import com.one.record.client.RecordClientException;
 import com.one.record.model.LotteryRecordSyncLog;
 import com.one.record.repository.LotteryRecordSyncLogRepository;
 import com.one.record.service.ILotteryRecordSyncLogService;
@@ -54,6 +55,19 @@ public class LotteryRecordSyncLogService implements ILotteryRecordSyncLogService
         LotteryRecordSyncLog target = log == null ? start("manual-record-sync", null) : log;
         target.setStatus("FAILED");
         target.setMessage(StringUtils.hasText(message) ? message : "开奖记录同步失败");
+        target.setSavedCount(target.getSavedCount() == null ? 0 : target.getSavedCount());
+        target.setFinishedAt(System.currentTimeMillis());
+        return repository.save(target);
+    }
+
+    @Override
+    public LotteryRecordSyncLog failure(LotteryRecordSyncLog log, Throwable exception) {
+        String message = exception == null ? null : exception.getMessage();
+        LotteryRecordSyncLog target = log == null ? start("manual-record-sync", null) : log;
+        target.setStatus("FAILED");
+        target.setMessage(StringUtils.hasText(message) ? message : "开奖记录同步失败");
+        target.setSavedCount(target.getSavedCount() == null ? 0 : target.getSavedCount());
+        applyFailureDetails(target, exception);
         target.setFinishedAt(System.currentTimeMillis());
         return repository.save(target);
     }
@@ -118,6 +132,11 @@ public class LotteryRecordSyncLogService implements ILotteryRecordSyncLogService
                 .latestJobName(latest == null ? null : latest.getJobName())
                 .latestStatus(latest == null ? null : latest.getStatus())
                 .latestMessage(latest == null ? null : latest.getMessage())
+                .latestFailureCategory(latest == null ? null : latest.getFailureCategory())
+                .latestProvider(latest == null ? null : latest.getProvider())
+                .latestRequestMode(latest == null ? null : latest.getRequestMode())
+                .latestHttpStatus(latest == null ? null : latest.getHttpStatus())
+                .latestNetworkBlockSuspected(latest == null ? null : latest.getNetworkBlockSuspected())
                 .latestStartIssue(latest == null ? null : latest.getStartIssue())
                 .latestEndIssue(latest == null ? null : latest.getEndIssue())
                 .latestStartedAt(latest == null ? null : latest.getStartedAt())
@@ -214,5 +233,22 @@ public class LotteryRecordSyncLogService implements ILotteryRecordSyncLogService
                 .filter(Objects::nonNull)
                 .findFirst()
                 .orElse(null);
+    }
+
+    private static void applyFailureDetails(LotteryRecordSyncLog target, Throwable exception) {
+        if (exception instanceof RecordClientException recordClientException) {
+            target.setFailureCategory(recordClientException.getFailureCategory());
+            target.setProvider(recordClientException.getProvider());
+            target.setRequestMode(recordClientException.getNetworkMode());
+            target.setHttpStatus(recordClientException.getHttpStatus());
+            target.setNetworkBlockSuspected(recordClientException.getNetworkBlockSuspected());
+            return;
+        }
+        String message = exception == null ? null : exception.getMessage();
+        if (StringUtils.hasText(message) && message.contains("HTTP 403")) {
+            target.setFailureCategory("PROXY_OR_NETWORK_BLOCK");
+            target.setHttpStatus(403);
+            target.setNetworkBlockSuspected(true);
+        }
     }
 }
