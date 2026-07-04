@@ -2293,6 +2293,105 @@
   gap: 10px;
 }
 
+.lottery-governance-hero {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 16px;
+  padding: 18px;
+  border: 1px solid #edf0f5;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.lottery-governance-hero > div {
+  display: grid;
+  gap: 4px;
+}
+
+.lottery-governance-hero strong {
+  color: #111827;
+  font-size: 38px;
+  line-height: 1;
+}
+
+.lottery-governance-hero span {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.lottery-governance-grid,
+.lottery-governance-release-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.lottery-governance-card-head {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.lottery-governance-card-head > span:first-child {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 8px;
+  background: #f3f6fb;
+  color: #0071e3;
+}
+
+.lottery-governance-card-head > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.lottery-governance-card-head strong {
+  color: #111827;
+}
+
+.lottery-governance-card-head small,
+.lottery-governance-grid p {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.lottery-governance-release-grid button,
+.lottery-governance-audit-list button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border: 0;
+  border-bottom: 1px solid #edf0f5;
+  background: transparent;
+  color: #1f2937;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lottery-governance-audit-list {
+  display: grid;
+}
+
+.lottery-governance-audit-list button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.lottery-governance-audit-list small {
+  color: #6b7280;
+}
+
 .lottery-notebook-editor {
   display: grid;
   gap: 10px;
@@ -5447,6 +5546,9 @@ button.lottery-latest-vs-card:hover {
   .lottery-simulator-summary-grid,
   .lottery-ticket-pack-grid,
   .lottery-ticket-pack-summary,
+  .lottery-governance-hero,
+  .lottery-governance-grid,
+  .lottery-governance-release-grid,
   .lottery-portfolio-score-row,
   .lottery-portfolio-evidence-editor-row,
   .lottery-notebook-editor-row,
@@ -5508,6 +5610,7 @@ button.lottery-latest-vs-card:hover {
 
   .lottery-simulator-preview > div,
   .lottery-ticket-pack-head,
+  .lottery-governance-hero,
   .lottery-simulator-candidate-list article {
     align-items: flex-start;
     flex-direction: column;

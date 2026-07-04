@@ -58,6 +58,11 @@ class LotteryPreferenceServiceTest {
                 .monthlyBudget(BigDecimal.ZERO)
                 .maxTicketsPerIssue(0)
                 .budgetReminderPercent(120)
+                .governancePortfolioScoreThreshold(0)
+                .governanceSimulatorHighRiskLimit(200)
+                .governanceTicketPackBudgetExposurePercent(0)
+                .governanceEvidenceFreshnessDays(400)
+                .governanceStaleApprovalHours(0)
                 .workbenchWidgetOrder(List.of("daily-state", " tickets ", "daily-state", ""))
                 .hiddenWorkbenchWidgets(List.of("release", " "))
                 .build());
@@ -72,6 +77,11 @@ class LotteryPreferenceServiceTest {
         assertThat(saved.getMonthlyBudget()).isNull();
         assertThat(saved.getMaxTicketsPerIssue()).isNull();
         assertThat(saved.getBudgetReminderPercent()).isEqualTo(100);
+        assertThat(saved.getGovernancePortfolioScoreThreshold()).isEqualTo(70);
+        assertThat(saved.getGovernanceSimulatorHighRiskLimit()).isEqualTo(100);
+        assertThat(saved.getGovernanceTicketPackBudgetExposurePercent()).isEqualTo(90);
+        assertThat(saved.getGovernanceEvidenceFreshnessDays()).isEqualTo(365);
+        assertThat(saved.getGovernanceStaleApprovalHours()).isEqualTo(24);
         assertThat(saved.getWorkbenchWidgetOrder()).containsExactly("daily-state", "tickets");
         assertThat(saved.getHiddenWorkbenchWidgets()).containsExactly("release");
         assertThat(saved.getUpdatedAt()).isNotNull();

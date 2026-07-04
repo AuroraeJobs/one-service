@@ -45,6 +45,16 @@ public class LotteryPreference {
 
     private Boolean monthEndExportChecklistEnabled;
 
+    private Integer governancePortfolioScoreThreshold;
+
+    private Integer governanceSimulatorHighRiskLimit;
+
+    private Integer governanceTicketPackBudgetExposurePercent;
+
+    private Integer governanceEvidenceFreshnessDays;
+
+    private Integer governanceStaleApprovalHours;
+
     @Builder.Default
     private List<String> workbenchWidgetOrder = new ArrayList<>();
 

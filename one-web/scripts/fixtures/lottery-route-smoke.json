@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 17 Week 3 lottery ticket pack smoke",
+  "target": "Iteration 17 Week 4 lottery governance smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -230,6 +230,30 @@
       }
     },
     {
+      "route": "/lottery/governance",
+      "label": "治理",
+      "component": "LotteryGovernancePage",
+      "componentFile": "src/components/LotteryGovernancePage.tsx",
+      "mockApis": [
+        "lotteryPreferenceApi.preference",
+        "lotteryWorkbenchApi.summary",
+        "lotteryOperationsApi.health",
+        "lotteryReminderApi.summary",
+        "lotteryStrategyPortfolioApi.portfolios",
+        "lotteryTicketPackApi.ticketPacks",
+        "lotteryExportApi.auditEvents"
+      ],
+      "emptyStates": ["暂无发布检查", "暂无治理证据"],
+      "errorStates": ["读取彩票治理看板失败"],
+      "fixtureData": {
+        "governance": {
+          "score": 88,
+          "domains": ["portfolio", "simulator", "ticket-pack", "reminders", "evidence", "release"],
+          "thresholds": ["portfolioScore", "simulatorRisk", "ticketPackExposure", "evidenceFreshness", "staleApproval"]
+        }
+      }
+    },
+    {
       "route": "/lottery/research",
       "label": "研究对比",
       "component": "LotteryResearchPage",
@@ -290,7 +314,7 @@
         "lotteryExportApi.maintenanceSummary",
         "lotteryExportApi.cleanupDryRun"
       ],
-      "emptyStates": ["本次导出没有数据", "暂无数据", "暂无审计事件", "暂无集合状态", "暂无缓存状态", "复盘运营", "月末复盘", "前端发布就绪"],
+      "emptyStates": ["本次导出没有数据", "暂无数据", "暂无审计事件", "暂无集合状态", "暂无缓存状态", "复盘运营", "月末复盘", "治理看板", "前端发布就绪"],
       "errorStates": ["读取彩票导出审计失败", "导出彩票数据失败", "生成彩票报表失败", "执行彩票维护 dry-run 失败"],
       "fixtureData": {
         "releaseEvidence": {

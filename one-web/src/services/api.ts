@@ -193,6 +193,11 @@ export interface LotteryPreference {
   reminderDrawWindowHours?: number;
   reminderDefaultSnoozeMinutes?: number;
   monthEndExportChecklistEnabled?: boolean;
+  governancePortfolioScoreThreshold?: number;
+  governanceSimulatorHighRiskLimit?: number;
+  governanceTicketPackBudgetExposurePercent?: number;
+  governanceEvidenceFreshnessDays?: number;
+  governanceStaleApprovalHours?: number;
   workbenchWidgetOrder?: string[];
   hiddenWorkbenchWidgets?: string[];
   createdAt?: number;

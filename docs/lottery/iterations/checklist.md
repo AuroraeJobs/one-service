@@ -490,11 +490,11 @@ Goal: turn the lottery intelligence cockpit into an execution-grade workflow clo
 
 ### Week 4: Governance Dashboard, Mobile Polish, And Release Evidence
 
-- [ ] Add `/lottery/governance` dashboard that combines strategy portfolio health, simulator usage, ticket packs, reminders, month-end review, exports, and release readiness.
-- [ ] Add configurable governance thresholds for portfolio score, simulator risk, ticket-pack budget exposure, evidence freshness, and stale approvals.
-- [ ] Extend smoke fixtures and release readiness checks for strategy portfolios, simulator, ticket packs, and governance dashboard.
-- [ ] Review responsive/mobile layout for strategy portfolio board, simulator, ticket packs, governance, workbench, and month-end pages.
-- [ ] Run V14 verification, update docs, commit, and push.
+- [x] Add `/lottery/governance` dashboard that combines strategy portfolio health, simulator usage, ticket packs, reminders, month-end review, exports, and release readiness. Added a frontend governance board that aggregates portfolio summaries, simulation audit events, ticket packs, reminders, operations health, workbench release checks, and export evidence.
+- [x] Add configurable governance thresholds for portfolio score, simulator risk, ticket-pack budget exposure, evidence freshness, and stale approvals. Added preference fields and settings controls for portfolio score, simulator high-risk count, ticket-pack budget exposure, evidence freshness days, and stale approval hours.
+- [x] Extend smoke fixtures and release readiness checks for strategy portfolios, simulator, ticket packs, and governance dashboard. Added `/lottery/governance` to route smoke and added V14 execution/governance release readiness rows on the export page.
+- [x] Review responsive/mobile layout for strategy portfolio board, simulator, ticket packs, governance, workbench, and month-end pages. Added responsive governance grid rules and kept strategy portfolio, simulator, ticket-pack, workbench, and month-end mobile grids covered in shared CSS breakpoints.
+- [x] Run V14 verification, update docs, commit, and push. Verification: focused Maven preference tests; `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
 ## Documentation And Delivery
 

@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 17 Week 3 lottery ticket pack smoke",
-  "generatedAt": "2026-07-04T14:38:33.222Z",
+  "target": "Iteration 17 Week 4 lottery governance smoke",
+  "generatedAt": "2026-07-04T15:00:36.742Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
-  "routeCount": 10,
-  "checkCount": 225,
+  "routeCount": 11,
+  "checkCount": 248,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
@@ -67,6 +67,14 @@
       "errorStateCount": 4
     },
     {
+      "route": "/lottery/governance",
+      "label": "治理",
+      "component": "LotteryGovernancePage",
+      "mockApiCount": 7,
+      "emptyStateCount": 2,
+      "errorStateCount": 1
+    },
+    {
       "route": "/lottery/research",
       "label": "研究对比",
       "component": "LotteryResearchPage",
@@ -87,7 +95,7 @@
       "label": "导出审计",
       "component": "LotteryExportMaintenancePage",
       "mockApiCount": 4,
-      "emptyStateCount": 8,
+      "emptyStateCount": 9,
       "errorStateCount": 4
     }
   ]

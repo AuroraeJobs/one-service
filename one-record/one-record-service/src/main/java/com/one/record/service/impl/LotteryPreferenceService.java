@@ -30,6 +30,16 @@ public class LotteryPreferenceService implements ILotteryPreferenceService {
 
     private static final int DEFAULT_REMINDER_SNOOZE_MINUTES = 60;
 
+    private static final int DEFAULT_GOVERNANCE_PORTFOLIO_SCORE = 70;
+
+    private static final int DEFAULT_GOVERNANCE_SIMULATOR_HIGH_RISK_LIMIT = 2;
+
+    private static final int DEFAULT_GOVERNANCE_TICKET_PACK_BUDGET_EXPOSURE_PERCENT = 90;
+
+    private static final int DEFAULT_GOVERNANCE_EVIDENCE_FRESHNESS_DAYS = 14;
+
+    private static final int DEFAULT_GOVERNANCE_STALE_APPROVAL_HOURS = 24;
+
     private final LotteryPreferenceRepository repository;
 
     @Override
@@ -53,6 +63,11 @@ public class LotteryPreferenceService implements ILotteryPreferenceService {
         target.setReminderDrawWindowHours(normalizeReminderDrawWindowHours(preference == null ? null : preference.getReminderDrawWindowHours()));
         target.setReminderDefaultSnoozeMinutes(normalizeSnoozeMinutes(preference == null ? null : preference.getReminderDefaultSnoozeMinutes()));
         target.setMonthEndExportChecklistEnabled(preference == null || !Boolean.FALSE.equals(preference.getMonthEndExportChecklistEnabled()));
+        target.setGovernancePortfolioScoreThreshold(normalizeBoundedInteger(preference == null ? null : preference.getGovernancePortfolioScoreThreshold(), 1, 100, DEFAULT_GOVERNANCE_PORTFOLIO_SCORE));
+        target.setGovernanceSimulatorHighRiskLimit(normalizeBoundedInteger(preference == null ? null : preference.getGovernanceSimulatorHighRiskLimit(), 0, 100, DEFAULT_GOVERNANCE_SIMULATOR_HIGH_RISK_LIMIT));
+        target.setGovernanceTicketPackBudgetExposurePercent(normalizeBoundedInteger(preference == null ? null : preference.getGovernanceTicketPackBudgetExposurePercent(), 1, 100, DEFAULT_GOVERNANCE_TICKET_PACK_BUDGET_EXPOSURE_PERCENT));
+        target.setGovernanceEvidenceFreshnessDays(normalizeBoundedInteger(preference == null ? null : preference.getGovernanceEvidenceFreshnessDays(), 1, 365, DEFAULT_GOVERNANCE_EVIDENCE_FRESHNESS_DAYS));
+        target.setGovernanceStaleApprovalHours(normalizeBoundedInteger(preference == null ? null : preference.getGovernanceStaleApprovalHours(), 1, 24 * 30, DEFAULT_GOVERNANCE_STALE_APPROVAL_HOURS));
         target.setWorkbenchWidgetOrder(normalizeWidgetKeys(preference == null ? null : preference.getWorkbenchWidgetOrder()));
         target.setHiddenWorkbenchWidgets(normalizeWidgetKeys(preference == null ? null : preference.getHiddenWorkbenchWidgets()));
         target.setUpdatedAt(now);
@@ -77,6 +92,11 @@ public class LotteryPreferenceService implements ILotteryPreferenceService {
                 .reminderDrawWindowHours(DEFAULT_REMINDER_DRAW_WINDOW_HOURS)
                 .reminderDefaultSnoozeMinutes(DEFAULT_REMINDER_SNOOZE_MINUTES)
                 .monthEndExportChecklistEnabled(true)
+                .governancePortfolioScoreThreshold(DEFAULT_GOVERNANCE_PORTFOLIO_SCORE)
+                .governanceSimulatorHighRiskLimit(DEFAULT_GOVERNANCE_SIMULATOR_HIGH_RISK_LIMIT)
+                .governanceTicketPackBudgetExposurePercent(DEFAULT_GOVERNANCE_TICKET_PACK_BUDGET_EXPOSURE_PERCENT)
+                .governanceEvidenceFreshnessDays(DEFAULT_GOVERNANCE_EVIDENCE_FRESHNESS_DAYS)
+                .governanceStaleApprovalHours(DEFAULT_GOVERNANCE_STALE_APPROVAL_HOURS)
                 .workbenchWidgetOrder(List.of())
                 .hiddenWorkbenchWidgets(List.of())
                 .createdAt(now)
@@ -126,6 +146,13 @@ public class LotteryPreferenceService implements ILotteryPreferenceService {
             return DEFAULT_REMINDER_SNOOZE_MINUTES;
         }
         return Math.min(7 * 24 * 60, value);
+    }
+
+    private Integer normalizeBoundedInteger(Integer value, int min, int max, int fallback) {
+        if (value == null || value < min) {
+            return fallback;
+        }
+        return Math.min(max, value);
     }
 
     private List<String> normalizeWidgetKeys(List<String> widgetKeys) {

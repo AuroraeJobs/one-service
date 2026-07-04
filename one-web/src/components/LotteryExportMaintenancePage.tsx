@@ -353,17 +353,31 @@ const LotteryExportMaintenancePage = () => {
       path: '/lottery/research/notebook'
     },
     {
+      key: 'strategy-portfolios-simulator',
+      label: '组合与沙盘',
+      status: 'PASS',
+      message: '策略组合、沙盘模拟和票包执行已纳入 V14 执行链路',
+      path: '/lottery/governance'
+    },
+    {
+      key: 'governance-dashboard',
+      label: '治理看板',
+      status: 'PASS',
+      message: '/lottery/governance 汇总组合、沙盘、票包、提醒、月末和发布证据',
+      path: '/lottery/governance'
+    },
+    {
       key: 'api-contract',
       label: 'API 合约覆盖',
       status: 'PASS',
-      message: '新流程复用 lottery/predictions、lottery/tickets、lottery/ledger、lottery/reminders、lottery/exports 合约',
+      message: '新流程复用 lottery/predictions、lottery/tickets、lottery/ticket-packs、lottery/reminders、lottery/exports 合约',
       path: '/lottery/exports'
     },
     {
       key: 'automated-route-smoke',
       label: '自动路由冒烟',
       status: 'PASS',
-      message: 'npm run lottery:smoke 校验工作台、决策、票据、研究、提醒、月末复盘和导出路由',
+      message: 'npm run lottery:smoke 校验工作台、组合、沙盘、票包、治理、月末复盘和导出路由',
       path: '/lottery/exports'
     },
     {

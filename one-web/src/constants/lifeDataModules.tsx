@@ -1,6 +1,7 @@
 import {
   ApiOutlined,
   AppstoreOutlined,
+  AuditOutlined,
   BankOutlined,
   BarChartOutlined,
   BellOutlined,
@@ -232,6 +233,14 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
       label: '票包',
       icon: <SafetyCertificateOutlined />,
       accent: '#0071e3'
+    },
+    {
+      id: 'lottery-governance',
+      moduleKey: 'lottery',
+      path: '/lottery/governance',
+      label: '治理',
+      icon: <AuditOutlined />,
+      accent: '#5856d6'
     },
     {
       id: 'lottery-tickets',

@@ -513,6 +513,20 @@ PATCH /lottery/ticket-packs/{id}/archive
 
 `LotteryTicketPackService` reuses the existing ticket budget precheck for preview and approval, then reuses ticket batch-save for the final save-as-tickets action. Every preview, create, approve, save, and archive action writes a `LotteryAuditEvent` under `lottery-ticket-pack`. The frontend execution board at `/lottery/ticket-packs` shows pending approvals, conflict/warning rows, budget status, candidate balls, and handoff into `/lottery/tickets`; the workbench quick-action rail links directly to the ticket-pack queue.
 
+V14 Week 4 adds the governance surface at `/lottery/governance`. It is a frontend composition over project-owned APIs rather than a separate reporting backend: strategy portfolio summaries, simulation audit events, ticket packs, reminders, operations health, workbench release checks, and export audit evidence are loaded together and scored against configurable thresholds.
+
+Governance thresholds are stored on `LotteryPreference`:
+
+```text
+governancePortfolioScoreThreshold
+governanceSimulatorHighRiskLimit
+governanceTicketPackBudgetExposurePercent
+governanceEvidenceFreshnessDays
+governanceStaleApprovalHours
+```
+
+The settings page owns these controls. The governance board uses them to mark domains as `PASS`, `WARNING`, `FAILED`, or `MANUAL`, then routes users back to the owning surface: strategy portfolios, simulator, ticket packs, reminders/month-end, research, exports, or settings. Route smoke now covers `/lottery/governance`, and export release-readiness rows explicitly include V14 strategy portfolios, simulator, ticket packs, and governance evidence.
+
 Portfolio-style governance extends preferences and ledger behavior with budget and exposure thresholds. The backend flags budget and max-ticket issues without blocking ordinary CRUD unless a future explicit enforcement mode is added.
 
 Wave 10E extends `LotteryPreference` with `weeklyBudget`, `monthlyBudget`, `maxTicketsPerIssue`, and `budgetReminderPercent`. `GET /lottery/budget/status` reads preferences and recorded tickets to return weekly/monthly usage, max issue exposure, and restrained warning rows for the workbench and ticket page. `LotteryLedgerSummary` also includes rolling 30-day cost/prize/net/ROI plus max/current drawdown values for exposure review.

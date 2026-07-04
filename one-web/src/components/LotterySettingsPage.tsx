@@ -67,7 +67,12 @@ const LotterySettingsPage = () => {
           budgetReminderPercent: 80,
           reminderDrawWindowHours: 12,
           reminderDefaultSnoozeMinutes: 60,
-          monthEndExportChecklistEnabled: true
+          monthEndExportChecklistEnabled: true,
+          governancePortfolioScoreThreshold: 70,
+          governanceSimulatorHighRiskLimit: 2,
+          governanceTicketPackBudgetExposurePercent: 90,
+          governanceEvidenceFreshnessDays: 14,
+          governanceStaleApprovalHours: 24
         }}>
           <Form.Item name="defaultTrainingScale" label="训练规模">
             <Select
@@ -118,6 +123,25 @@ const LotterySettingsPage = () => {
           </Space.Compact>
           <Form.Item name="monthEndExportChecklistEnabled" label="月末导出清单提醒" valuePropName="checked">
             <Switch />
+          </Form.Item>
+          <Space.Compact block>
+            <Form.Item name="governancePortfolioScoreThreshold" label="组合健康分阈值" style={{ width: '50%' }}>
+              <InputNumber min={1} max={100} precision={0} style={{ width: '100%' }} />
+            </Form.Item>
+            <Form.Item name="governanceSimulatorHighRiskLimit" label="沙盘高风险上限" style={{ width: '50%' }}>
+              <InputNumber min={0} max={100} precision={0} style={{ width: '100%' }} />
+            </Form.Item>
+          </Space.Compact>
+          <Space.Compact block>
+            <Form.Item name="governanceTicketPackBudgetExposurePercent" label="票包预算暴露阈值" style={{ width: '50%' }}>
+              <InputNumber min={1} max={100} precision={0} addonAfter="%" style={{ width: '100%' }} />
+            </Form.Item>
+            <Form.Item name="governanceEvidenceFreshnessDays" label="证据新鲜天数" style={{ width: '50%' }}>
+              <InputNumber min={1} max={365} precision={0} addonAfter="天" style={{ width: '100%' }} />
+            </Form.Item>
+          </Space.Compact>
+          <Form.Item name="governanceStaleApprovalHours" label="审批滞留阈值">
+            <InputNumber min={1} max={720} precision={0} addonAfter="小时" style={{ width: '100%' }} />
           </Form.Item>
         </Form>
       </Card>
