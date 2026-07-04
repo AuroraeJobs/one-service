@@ -26,6 +26,9 @@ spring:
     mongodb:
       uri: mongodb://localhost:27017/test
       auto-index-creation: true
+    redis:
+      repositories:
+        enabled: false
 
   redis:
     host: localhost
