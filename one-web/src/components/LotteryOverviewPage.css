@@ -414,6 +414,43 @@
   margin-top: -4px;
 }
 
+.lottery-workbench-runbook-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.lottery-workbench-runbook-panel {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+}
+
+.lottery-workbench-runbook-panel > div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.lottery-workbench-runbook-panel strong {
+  color: var(--app-text);
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.lottery-workbench-runbook-panel span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .lottery-workbench-quick-rail {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -896,6 +933,67 @@
 
 .lottery-workbench-action-grid .ant-btn {
   justify-content: flex-start;
+}
+
+.lottery-release-check-list {
+  display: grid;
+  gap: 8px;
+}
+
+.lottery-release-check-list button {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface-elevated);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lottery-release-check-list button:hover {
+  border-color: var(--module-accent, #0071e3);
+}
+
+.lottery-release-check-list span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.lottery-release-check-list strong {
+  overflow: hidden;
+  color: var(--app-text);
+  font-size: 13px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-release-check-list small {
+  overflow: hidden;
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-release-check-list em {
+  min-width: 20px;
+  min-height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(255, 149, 0, 0.14);
+  color: #ad6800;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
 }
 
 .lottery-workbench-recent-card {
@@ -3777,6 +3875,7 @@ button.lottery-latest-vs-card:hover {
   .lottery-maintenance-group-grid,
   .lottery-workbench-main-grid,
   .lottery-workbench-recent-grid,
+  .lottery-workbench-runbook-grid,
   .lottery-research-card-grid,
   .lottery-research-chart-grid {
     grid-template-columns: minmax(0, 1fr);

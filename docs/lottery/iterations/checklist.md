@@ -304,12 +304,12 @@ Use this file as the durable task board for the lottery module. When a task is f
 
 ### Wave 12D: Daily Automation And Release Hardening
 
-- [ ] Add scheduled sync runbook state with last run, next run, duration, and failure category.
-- [ ] Add daily operation summary for sync, quality, prediction attachment, ticket prize check, and pending alerts.
-- [ ] Add retention and export checks for sync logs, provider probe logs, repair audit events, and replay evidence.
-- [ ] Add release checklist coverage for backend tests, frontend build, documentation, and pushed commits.
-- [ ] Polish frontend empty/error/loading states touched by this month.
-- [ ] Run month-end verification, update docs, commit, and push.
+- [x] Add scheduled sync runbook state with last run, next run, duration, and failure category. `LotteryWorkbenchSummary` now includes `scheduledSyncRunbook` from cron config and scheduled sync logs.
+- [x] Add daily operation summary for sync, quality, prediction attachment, ticket prize check, and pending alerts. Added `LotteryDailyOperationSummary` to the workbench summary and UI.
+- [x] Add retention and export checks for sync logs, provider probe logs, repair audit events, and replay evidence. Maintenance preview now includes audit events, prediction rules, and training reports; release checks surface retention/export warnings.
+- [x] Add release checklist coverage for backend tests, frontend build, documentation, and pushed commits. Added `LotteryReleaseCheckSummary` with automatic and manual checklist items.
+- [x] Polish frontend empty/error/loading states touched by this month. Workbench now shows runbook, operation, and release-check empty/default states without adding new navigation.
+- [x] Run month-end verification, update docs, commit, and push. Verification: focused Maven service tests, focused Maven web tests, and `one-web npm run build`.
 
 ## Documentation And Delivery
 

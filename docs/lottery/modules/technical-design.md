@@ -257,7 +257,7 @@ ledgerSummary
 generatedAt
 ```
 
-`GET /lottery/workbench/summary` composes the latest records, sync summary, data quality, prediction status, ticket status, and ledger snapshot into one response for the daily page. It does not fetch external provider data directly and does not duplicate prize or prediction scoring logic.
+`GET /lottery/workbench/summary` composes the latest records, sync summary, data quality, prediction status, ticket status, ledger snapshot, scheduled-sync runbook, daily operation summary, maintenance preview, and release checks into one response for the daily page. It does not fetch external provider data directly and does not duplicate prize or prediction scoring logic.
 
 Iteration 11 keeps the backend workbench contract unchanged and enriches the frontend composition. `/lottery/workbench` now loads the summary, calendar state, budget status, recent predictions, recent tickets, recent experiments, recent backtests, and recent export audit events in parallel through project-owned APIs. The page renders a compact quick-action rail for sync, prediction, ticket entry, latest prize checking, ledger review, alerts, and export. Recent-work shortcuts link to specialist pages with URL-backed filters where available, so the workbench remains a command center rather than a replacement for prediction history, ticket, experiment, backtest, and export pages.
 
@@ -294,6 +294,17 @@ error
 ```
 
 The daily run is intentionally bounded. Safe steps are record sync, latest actual attachment for matching prediction snapshots, latest pending-ticket prize checking, and statistics summary refresh. Each step returns its own status, timestamps, counts, and error message if it fails. Prediction training remains explicit because it can be long-running; the workbench surfaces current training status instead of silently starting training.
+
+Wave 12D extends the workbench with release-hardening state:
+
+```text
+scheduledSyncRunbook -> enabled, cron, last run/status/duration/failure category, next run, health status
+operationSummary -> completed/warning/pending daily operation counts, pending actions, quality issues, prize-check tickets, prediction attachment count
+maintenanceSummary -> cache and collection retention preview
+releaseCheckSummary -> retention/export checks plus manual backend-test, frontend-build, documentation, and commit/push checklist items
+```
+
+The scheduled-sync runbook is derived from `RecordProperties`, sync logs with `jobName=scheduled-record-sync`, and the configured cron expression. Release checks are deliberately conservative: retention/export checks can pass automatically, while test/build/docs/push items remain `MANUAL` and should be confirmed in the delivery notes for each completed iteration.
 
 ## Pagination Contract
 
@@ -454,7 +465,7 @@ probe-logs
 
 The first export service applies explicit filters such as `issue`, `status`, `source`, `targetPeriod`, `ruleId`, `strategyName`, `presetWindow`, `ruleName`, `window`, `provider`, and `limit` depending on export type. Prediction exports include evidence and actual-hit columns. `rule-evidence` exports rule comparison evidence rows, and `replay-evidence` exports the latest replay drift summary. The export response and audit event both record the normalized filters and generated row count. `limit` is capped server-side for bounded API payloads. `GET /lottery/audit/events` uses the shared pagination envelope with `items`, `page`, `pageSize`, `total`, and `hasNext`.
 
-`LotteryMaintenanceSummary` reports non-destructive maintenance previews for caches, old logs, and high-growth history collections. It includes `dryRun`, collection rows with total count, stale count, retention days, oversized count, cleanup support, cache rows with presence and TTL status, message, and generated time.
+`LotteryMaintenanceSummary` reports non-destructive maintenance previews for caches, old logs, repair/export audit rows, replay evidence, and high-growth history collections. It includes `dryRun`, collection rows with total count, stale count, retention days, oversized count, cleanup support, cache rows with presence and TTL status, message, and generated time. Wave 12D covers `lottery_record_sync_logs`, `lottery_provider_probe_logs`, `lottery_audit_events`, `lottery_prediction_rules`, `lottery_training_reports`, `lottery_prediction_snapshots`, `lottery_strategy_experiments`, and `lottery_backtest_reports`.
 
 Maintenance endpoints:
 

@@ -2136,6 +2136,63 @@ export interface LotteryWorkbenchSummary {
   pendingTicketCount?: number;
   latestPrizeCheckSummary?: LotteryTicketPrizeCheckSummary;
   ledgerSummary?: LotteryLedgerSummary;
+  scheduledSyncRunbook?: LotteryScheduledSyncRunbook;
+  operationSummary?: LotteryDailyOperationSummary;
+  maintenanceSummary?: LotteryMaintenanceSummary;
+  releaseCheckSummary?: LotteryReleaseCheckSummary;
+  generatedAt?: number;
+}
+
+export interface LotteryScheduledSyncRunbook {
+  enabled?: boolean;
+  cron?: string;
+  lastRunAt?: number;
+  lastStatus?: string;
+  lastDurationMs?: number;
+  lastFailureCategory?: string;
+  lastMessage?: string;
+  lastSuccessAt?: number;
+  lastFailureAt?: number;
+  nextRunAt?: number;
+  nextRunText?: string;
+  healthStatus?: string;
+  message?: string;
+  generatedAt?: number;
+}
+
+export interface LotteryDailyOperationSummary {
+  status?: string;
+  completedCount?: number;
+  warningCount?: number;
+  pendingCount?: number;
+  totalCount?: number;
+  pendingActions: string[];
+  qualityIssueCount?: number;
+  pendingPrizeTicketCount?: number;
+  activeReminderCount?: number;
+  latestPredictionAttachmentCount?: number;
+  lastSyncFinishedAt?: number;
+  lastPrizeCheckAt?: number;
+  message?: string;
+  generatedAt?: number;
+}
+
+export interface LotteryReleaseCheckItem {
+  key?: string;
+  label?: string;
+  status?: 'PASS' | 'WARNING' | 'MANUAL' | string;
+  message?: string;
+  path?: string;
+  pendingCount?: number;
+}
+
+export interface LotteryReleaseCheckSummary {
+  status?: string;
+  passedCount?: number;
+  warningCount?: number;
+  totalCount?: number;
+  checks: LotteryReleaseCheckItem[];
+  message?: string;
   generatedAt?: number;
 }
 

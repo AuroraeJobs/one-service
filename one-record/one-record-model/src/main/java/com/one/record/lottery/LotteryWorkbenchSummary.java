@@ -33,5 +33,13 @@ public class LotteryWorkbenchSummary implements Serializable {
 
     private LotteryLedgerSummary ledgerSummary;
 
+    private LotteryScheduledSyncRunbook scheduledSyncRunbook;
+
+    private LotteryDailyOperationSummary operationSummary;
+
+    private LotteryMaintenanceSummary maintenanceSummary;
+
+    private LotteryReleaseCheckSummary releaseCheckSummary;
+
     private Long generatedAt;
 }

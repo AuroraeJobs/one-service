@@ -1,13 +1,18 @@
 package com.one.record.service.impl;
 
 import com.one.record.lottery.LotteryMaintenanceSummary;
+import com.one.record.model.LotteryAuditEvent;
 import com.one.record.model.LotteryProviderProbeLog;
 import com.one.record.model.LotteryRecordSyncLog;
+import com.one.record.model.LotteryTrainingReportRecord;
+import com.one.record.repository.LotteryAuditEventRepository;
 import com.one.record.repository.LotteryBacktestReportRepository;
+import com.one.record.repository.LotteryPredictionRuleRepository;
 import com.one.record.repository.LotteryPredictionSnapshotRepository;
 import com.one.record.repository.LotteryProviderProbeLogRepository;
 import com.one.record.repository.LotteryRecordSyncLogRepository;
 import com.one.record.repository.LotteryStrategyExperimentRepository;
+import com.one.record.repository.LotteryTrainingReportRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -34,27 +39,38 @@ class LotteryMaintenanceServiceTest {
         syncLogRepository = mock(LotteryRecordSyncLogRepository.class);
         probeLogRepository = mock(LotteryProviderProbeLogRepository.class);
         LotteryPredictionSnapshotRepository predictionRepository = mock(LotteryPredictionSnapshotRepository.class);
+        LotteryPredictionRuleRepository ruleRepository = mock(LotteryPredictionRuleRepository.class);
+        LotteryTrainingReportRepository trainingReportRepository = mock(LotteryTrainingReportRepository.class);
         LotteryStrategyExperimentRepository experimentRepository = mock(LotteryStrategyExperimentRepository.class);
         LotteryBacktestReportRepository backtestRepository = mock(LotteryBacktestReportRepository.class);
+        LotteryAuditEventRepository auditEventRepository = mock(LotteryAuditEventRepository.class);
         redisTemplate = mock(StringRedisTemplate.class);
         when(syncLogRepository.count()).thenReturn(2L);
         when(probeLogRepository.count()).thenReturn(1L);
         when(predictionRepository.count()).thenReturn(1200L);
+        when(ruleRepository.count()).thenReturn(5L);
+        when(trainingReportRepository.count()).thenReturn(2L);
         when(experimentRepository.count()).thenReturn(3L);
         when(backtestRepository.count()).thenReturn(4L);
+        when(auditEventRepository.count()).thenReturn(6L);
         when(syncLogRepository.findAll()).thenReturn(List.of(
                 LotteryRecordSyncLog.builder().finishedAt(1L).build(),
                 LotteryRecordSyncLog.builder().finishedAt(System.currentTimeMillis()).build()
         ));
         when(probeLogRepository.findAll()).thenReturn(List.of(LotteryProviderProbeLog.builder().checkedAt(1L).build()));
+        when(trainingReportRepository.findAll()).thenReturn(List.of(LotteryTrainingReportRecord.builder().createdAt(1L).build()));
+        when(auditEventRepository.findAll()).thenReturn(List.of(LotteryAuditEvent.builder().generatedAt(1L).build()));
         when(redisTemplate.hasKey(LotteryStatisticsService.SUMMARY_CACHE_KEY)).thenReturn(true);
         when(redisTemplate.getExpire(LotteryStatisticsService.SUMMARY_CACHE_KEY, TimeUnit.SECONDS)).thenReturn(-1L);
         service = new LotteryMaintenanceService(
                 syncLogRepository,
                 probeLogRepository,
                 predictionRepository,
+                ruleRepository,
+                trainingReportRepository,
                 experimentRepository,
                 backtestRepository,
+                auditEventRepository,
                 redisTemplate
         );
     }
@@ -65,7 +81,8 @@ class LotteryMaintenanceServiceTest {
 
         assertThat(summary.getDryRun()).isTrue();
         assertThat(summary.getCollections()).extracting("collection")
-                .contains("lottery_record_sync_logs", "lottery_prediction_snapshots");
+                .contains("lottery_record_sync_logs", "lottery_provider_probe_logs", "lottery_audit_events",
+                        "lottery_prediction_rules", "lottery_training_reports", "lottery_prediction_snapshots");
         assertThat(summary.getCollections()).anySatisfy(item -> {
             assertThat(item.getCollection()).isEqualTo("lottery_prediction_snapshots");
             assertThat(item.getOversizedBy()).isEqualTo(200L);

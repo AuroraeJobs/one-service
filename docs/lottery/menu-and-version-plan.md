@@ -173,7 +173,7 @@ Goal: support a longer research loop with experiments, backtests, reminders, gov
 
 Goal: make the completed platform capabilities feel like a richer user-facing product.
 
-- Upgrade `/lottery/workbench` with quick actions, recent-work shortcuts, saved view state, and richer daily widgets. The shipped 11A slice adds the quick-action rail, recent prediction/ticket/experiment/backtest/export shortcuts, and browser-local saved filter state for key growing lists.
+- Upgrade `/lottery/workbench` with quick actions, recent-work shortcuts, saved view state, and richer daily widgets. The shipped 11A slice adds the quick-action rail, recent prediction/ticket/experiment/backtest/export shortcuts, and browser-local saved filter state for key growing lists; 12D adds scheduled-sync runbook state, daily operation summary, retention/export checks, and release checklist visibility.
 - Add `/lottery/research` for side-by-side experiment, backtest, rule, replay, and ledger evidence comparison. The shipped 11B slice exposes the route, navigation item, URL-backed selection, charts, and deep links from experiment, backtest, prediction, and ledger surfaces; 12C adds visible rule evidence quality and replay drift summaries.
 - Add ticket workflow power tools: bulk paste/import, duplicate preview, batch actions, issue timeline, and mobile-friendly cards.
 - Improve `/lottery/exports` with browser CSV download, report builder, audit filters, maintenance grouping, and print-friendly report views.

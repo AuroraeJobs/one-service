@@ -143,6 +143,21 @@ const dailyStateColor = (status?: string) => {
   return 'default';
 };
 
+const releaseStatusColor = (status?: string) => {
+  if (status === 'PASS') return 'green';
+  if (status === 'WARNING') return 'orange';
+  if (status === 'MANUAL') return 'blue';
+  return 'default';
+};
+
+const scheduledStatusColor = (status?: string) => {
+  if (status === 'READY') return 'green';
+  if (status === 'WARNING') return 'red';
+  if (status === 'DISABLED') return 'default';
+  if (status === 'PENDING') return 'gold';
+  return 'blue';
+};
+
 const getQualityIssueCount = (summary?: LotteryWorkbenchSummary) => {
   const report = summary?.dataQualitySummary;
   return (report?.missingIssueCount || 0)
@@ -165,6 +180,9 @@ const LotteryWorkbenchPage = () => {
 
   const qualityIssueCount = useMemo(() => getQualityIssueCount(summary), [summary]);
   const dailyState = summary?.dailyState;
+  const operationSummary = summary?.operationSummary;
+  const scheduledRunbook = summary?.scheduledSyncRunbook;
+  const releaseCheckSummary = summary?.releaseCheckSummary;
   const latestSyncStatus = summary?.latestSyncSummary?.latestStatus || 'UNKNOWN';
   const trainingStatus = summary?.trainingStatus;
   const trainingPercent = Math.max(0, Math.min(100, trainingStatus?.percent ?? 0));
@@ -257,6 +275,14 @@ const LotteryWorkbenchPage = () => {
       path: dailyState?.syncState?.path || savedSyncPath
     },
     {
+      key: 'scheduled',
+      icon: <ClockCircleOutlined />,
+      label: '定时同步',
+      value: scheduledRunbook?.healthStatus || 'UNKNOWN',
+      detail: scheduledRunbook?.nextRunText || scheduledRunbook?.message || '-',
+      path: savedSyncPath
+    },
+    {
       key: 'quality',
       icon: <SafetyCertificateOutlined />,
       label: '质量问题',
@@ -279,6 +305,14 @@ const LotteryWorkbenchPage = () => {
       value: formatCurrency(summary?.ledgerSummary?.netResult),
       detail: `ROI ${summary?.ledgerSummary?.roiPercent ?? 0}%`,
       path: '/lottery/ledger'
+    },
+    {
+      key: 'release',
+      icon: <CheckCircleOutlined />,
+      label: '发布检查',
+      value: `${releaseCheckSummary?.passedCount ?? 0}/${releaseCheckSummary?.totalCount ?? 0}`,
+      detail: releaseCheckSummary?.message || '-',
+      path: '/lottery/exports'
     }
   ];
 
@@ -358,6 +392,11 @@ const LotteryWorkbenchPage = () => {
       </Space>
     )
   }));
+
+  const releaseCheckItems = useMemo(
+    () => (releaseCheckSummary?.checks || []).slice(0, 6),
+    [releaseCheckSummary?.checks]
+  );
 
   const recentWorkGroups = useMemo(() => {
     const groups: Array<{
@@ -531,6 +570,33 @@ const LotteryWorkbenchPage = () => {
           </section>
         ) : null}
 
+        <section className="lottery-workbench-runbook-grid">
+          <article className="lottery-workbench-runbook-panel">
+            <div>
+              <strong>日常运维摘要</strong>
+              <span>{operationSummary?.message || '暂无日常摘要'}</span>
+            </div>
+            <Space wrap>
+              <Tag color={dailyStateColor(operationSummary?.status)}>{operationSummary?.status || 'UNKNOWN'}</Tag>
+              <Tag>完成 {operationSummary?.completedCount ?? 0}/{operationSummary?.totalCount ?? 0}</Tag>
+              <Tag>提醒 {operationSummary?.activeReminderCount ?? 0}</Tag>
+              <Tag>预测回填 {operationSummary?.latestPredictionAttachmentCount ?? 0}</Tag>
+            </Space>
+          </article>
+          <article className="lottery-workbench-runbook-panel">
+            <div>
+              <strong>定时同步 Runbook</strong>
+              <span>{scheduledRunbook?.message || '暂无定时同步状态'}</span>
+            </div>
+            <Space wrap>
+              <Tag color={scheduledStatusColor(scheduledRunbook?.healthStatus)}>{scheduledRunbook?.healthStatus || 'UNKNOWN'}</Tag>
+              <Tag>{scheduledRunbook?.enabled ? '已启用' : '未启用'}</Tag>
+              <Tag>{scheduledRunbook?.cron || '-'}</Tag>
+              <Tag>最近 {formatDateTime(scheduledRunbook?.lastRunAt)}</Tag>
+            </Space>
+          </article>
+        </section>
+
         <section className="lottery-workbench-quick-rail" aria-label="彩票快捷动作">
           {quickActions.map(action => (
             <button
@@ -621,6 +687,35 @@ const LotteryWorkbenchPage = () => {
             )}
           </Card>
 
+          <Card
+            className="life-panel-card lottery-clean-panel"
+            title="发布检查"
+            extra={<Tag color={releaseStatusColor(releaseCheckSummary?.status)}>{releaseCheckSummary?.status || 'UNKNOWN'}</Tag>}
+          >
+            {releaseCheckItems.length > 0 ? (
+              <div className="lottery-release-check-list">
+                {releaseCheckItems.map(item => (
+                  <button
+                    key={item.key || item.label}
+                    type="button"
+                    onClick={() => item.path && navigate(item.path)}
+                  >
+                    <Tag color={releaseStatusColor(item.status)}>{item.status || 'UNKNOWN'}</Tag>
+                    <span>
+                      <strong>{item.label || item.key}</strong>
+                      <small>{item.message || '-'}</small>
+                    </span>
+                    {item.pendingCount ? <em>{item.pendingCount}</em> : null}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <Empty description="暂无发布检查" />
+            )}
+          </Card>
+        </section>
+
+        <section className="lottery-workbench-main-grid">
           <Card
             className="life-panel-card lottery-clean-panel lottery-workbench-recent-card"
             title="最近工作"

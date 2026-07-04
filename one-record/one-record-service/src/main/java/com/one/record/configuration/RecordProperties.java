@@ -19,6 +19,8 @@ public class RecordProperties {
 
     private boolean scheduledSyncEnabled;
 
+    private String scheduledSyncCron = "0 30 22 * * SUN,TUE,THU";
+
     private String providerNetworkMode = "system";
 
     private String providerProxyHost;

@@ -1,9 +1,11 @@
 package com.one.record.service.impl;
 
+import com.one.record.configuration.RecordProperties;
 import com.one.record.lottery.LotteryDataQualityReport;
 import com.one.record.lottery.LotteryDraw;
 import com.one.record.lottery.LotteryLedgerSummary;
 import com.one.record.lottery.LotteryDailyState;
+import com.one.record.lottery.LotteryMaintenanceSummary;
 import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.lottery.LotteryRecordSyncSummary;
 import com.one.record.lottery.LotteryTicketPrizeCheckSummary;
@@ -14,6 +16,7 @@ import com.one.record.model.LotteryPredictionSnapshot;
 import com.one.record.model.LotteryRecordSyncLog;
 import com.one.record.service.ILotteryDataQualityService;
 import com.one.record.service.ILotteryLedgerService;
+import com.one.record.service.ILotteryMaintenanceService;
 import com.one.record.service.ILotteryRecordSyncLogService;
 import com.one.record.service.ILotteryRecordSyncService;
 import com.one.record.service.ILotteryStatisticsService;
@@ -36,6 +39,8 @@ class LotteryWorkbenchServiceTest {
 
     private IRecordService recordService;
 
+    private RecordProperties recordProperties;
+
     private ILotteryRecordSyncService recordSyncService;
 
     private ILotteryRecordSyncLogService recordSyncLogService;
@@ -50,11 +55,15 @@ class LotteryWorkbenchServiceTest {
 
     private ILotteryStatisticsService statisticsService;
 
+    private ILotteryMaintenanceService maintenanceService;
+
     private LotteryWorkbenchService service;
 
     @BeforeEach
     void setUp() {
         recordService = mock(IRecordService.class);
+        recordProperties = new RecordProperties();
+        recordProperties.setScheduledSyncEnabled(true);
         recordSyncService = mock(ILotteryRecordSyncService.class);
         recordSyncLogService = mock(ILotteryRecordSyncLogService.class);
         dataQualityService = mock(ILotteryDataQualityService.class);
@@ -62,15 +71,18 @@ class LotteryWorkbenchServiceTest {
         ticketService = mock(ILotteryTicketService.class);
         ledgerService = mock(ILotteryLedgerService.class);
         statisticsService = mock(ILotteryStatisticsService.class);
+        maintenanceService = mock(ILotteryMaintenanceService.class);
         service = new LotteryWorkbenchService(
                 recordService,
+                recordProperties,
                 recordSyncService,
                 recordSyncLogService,
                 dataQualityService,
                 trainingService,
                 ticketService,
                 ledgerService,
-                statisticsService
+                statisticsService,
+                maintenanceService
         );
         mockSummaryDependencies();
     }
@@ -88,6 +100,11 @@ class LotteryWorkbenchServiceTest {
         assertThat(summary.getPendingTicketCount()).isEqualTo(2);
         assertThat(summary.getLatestPrizeCheckSummary()).isNull();
         assertThat(summary.getLedgerSummary().getTicketCount()).isEqualTo(3);
+        assertThat(summary.getScheduledSyncRunbook().getHealthStatus()).isEqualTo("READY");
+        assertThat(summary.getOperationSummary().getStatus()).isEqualTo("COMPLETE");
+        assertThat(summary.getMaintenanceSummary().getCollections()).isNotEmpty();
+        assertThat(summary.getReleaseCheckSummary().getChecks()).extracting("key")
+                .contains("sync-log-retention", "backend-tests", "commit-push");
         assertThat(summary.getGeneratedAt()).isNotNull();
 
         verify(recordService).findLastDraw();
@@ -121,6 +138,7 @@ class LotteryWorkbenchServiceTest {
     void dailyStateReportsPendingActions() {
         when(recordSyncLogService.summary(50)).thenReturn(LotteryRecordSyncSummary.builder()
                 .latestStatus("FAILED")
+                .latestMessage("新增 1 期开奖记录，回填 2 条预测结果")
                 .build());
         when(dataQualityService.report()).thenReturn(LotteryDataQualityReport.builder()
                 .totalRecords(10)
@@ -143,6 +161,33 @@ class LotteryWorkbenchServiceTest {
         assertThat(state.getPrizeCheckState().getStatus()).isEqualTo("PENDING");
         assertThat(state.getQualityState().getStatus()).isEqualTo("WARNING");
         assertThat(state.getPendingActions()).containsExactly("sync", "prediction", "tickets", "prize-check", "quality");
+    }
+
+    @Test
+    void summaryReportsPendingOperationAndScheduledFailure() {
+        when(recordSyncLogService.summary(50)).thenReturn(LotteryRecordSyncSummary.builder()
+                .latestStatus("FAILED")
+                .latestMessage("新增 1 期开奖记录，回填 2 条预测结果")
+                .latestFinishedAt(200L)
+                .build());
+        when(recordSyncLogService.findRecent(null, 50)).thenReturn(List.of(LotteryRecordSyncLog.builder()
+                .jobName("scheduled-record-sync")
+                .status("FAILED")
+                .failureCategory("PROXY_OR_NETWORK_BLOCK")
+                .message("HTTP 403")
+                .startedAt(100L)
+                .finishedAt(180L)
+                .build()));
+        when(trainingService.predictionHistory(1)).thenReturn(List.of());
+        when(ticketService.ticketsPage("2026002", null, null, null, null, null, null, 1, 1))
+                .thenReturn(page(0));
+
+        LotteryWorkbenchSummary summary = service.summary();
+
+        assertThat(summary.getScheduledSyncRunbook().getHealthStatus()).isEqualTo("WARNING");
+        assertThat(summary.getScheduledSyncRunbook().getLastDurationMs()).isEqualTo(80L);
+        assertThat(summary.getOperationSummary().getStatus()).isEqualTo("PENDING");
+        assertThat(summary.getOperationSummary().getLatestPredictionAttachmentCount()).isEqualTo(2);
     }
 
     @Test
@@ -207,7 +252,15 @@ class LotteryWorkbenchServiceTest {
                 .build());
         when(recordSyncLogService.summary(50)).thenReturn(LotteryRecordSyncSummary.builder()
                 .latestStatus("SUCCESS")
+                .latestMessage("新增 1 期开奖记录，回填 1 条预测结果")
                 .build());
+        when(recordSyncLogService.findRecent(null, 50)).thenReturn(List.of(LotteryRecordSyncLog.builder()
+                .jobName("scheduled-record-sync")
+                .status("SUCCESS")
+                .message("ok")
+                .startedAt(100L)
+                .finishedAt(160L)
+                .build()));
         when(dataQualityService.report()).thenReturn(LotteryDataQualityReport.builder()
                 .totalRecords(10)
                 .missingIssueCount(0)
@@ -235,6 +288,26 @@ class LotteryWorkbenchServiceTest {
                 .ticketCount(3)
                 .totalCost(new BigDecimal("6"))
                 .build());
+        when(maintenanceService.summary()).thenReturn(LotteryMaintenanceSummary.builder()
+                .collections(List.of(
+                        collection("lottery_record_sync_logs", 3, 0, 0),
+                        collection("lottery_provider_probe_logs", 2, 0, 0),
+                        collection("lottery_audit_events", 4, 0, 0),
+                        collection("lottery_training_reports", 1, 0, 0),
+                        collection("lottery_prediction_rules", 1, 0, 0)
+                ))
+                .generatedAt(1000L)
+                .build());
+    }
+
+    private static LotteryMaintenanceSummary.CollectionStatus collection(String name, long total, long stale, long oversized) {
+        return LotteryMaintenanceSummary.CollectionStatus.builder()
+                .collection(name)
+                .totalCount(total)
+                .staleCount(stale)
+                .oversizedBy(oversized)
+                .cleanupSupported(true)
+                .build();
     }
 
     private static LotteryPageResponse<com.one.record.model.LotteryTicket> page(long total) {

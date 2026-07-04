@@ -1,13 +1,18 @@
 package com.one.record.service.impl;
 
 import com.one.record.lottery.LotteryMaintenanceSummary;
+import com.one.record.model.LotteryAuditEvent;
 import com.one.record.model.LotteryProviderProbeLog;
 import com.one.record.model.LotteryRecordSyncLog;
+import com.one.record.model.LotteryTrainingReportRecord;
+import com.one.record.repository.LotteryAuditEventRepository;
 import com.one.record.repository.LotteryBacktestReportRepository;
+import com.one.record.repository.LotteryPredictionRuleRepository;
 import com.one.record.repository.LotteryPredictionSnapshotRepository;
 import com.one.record.repository.LotteryProviderProbeLogRepository;
 import com.one.record.repository.LotteryRecordSyncLogRepository;
 import com.one.record.repository.LotteryStrategyExperimentRepository;
+import com.one.record.repository.LotteryTrainingReportRepository;
 import com.one.record.service.ILotteryMaintenanceService;
 import lombok.AllArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -39,9 +44,15 @@ public class LotteryMaintenanceService implements ILotteryMaintenanceService {
 
     private final LotteryPredictionSnapshotRepository predictionSnapshotRepository;
 
+    private final LotteryPredictionRuleRepository predictionRuleRepository;
+
+    private final LotteryTrainingReportRepository trainingReportRepository;
+
     private final LotteryStrategyExperimentRepository experimentRepository;
 
     private final LotteryBacktestReportRepository backtestReportRepository;
+
+    private final LotteryAuditEventRepository auditEventRepository;
 
     private final StringRedisTemplate redisTemplate;
 
@@ -61,14 +72,20 @@ public class LotteryMaintenanceService implements ILotteryMaintenanceService {
         long syncTotal = syncLogRepository.count();
         long probeTotal = probeLogRepository.count();
         long predictionTotal = predictionSnapshotRepository.count();
+        long ruleTotal = predictionRuleRepository.count();
+        long trainingReportTotal = trainingReportRepository.count();
         long experimentTotal = experimentRepository.count();
         long backtestTotal = backtestReportRepository.count();
+        long auditTotal = auditEventRepository.count();
         return LotteryMaintenanceSummary.builder()
                 .dryRun(dryRun)
                 .collections(List.of(
                         status("lottery_record_sync_logs", syncTotal, staleSyncLogs(cutoff), LOG_RETENTION_DAYS, Math.max(0, syncTotal - HISTORY_LIMIT), true),
                         status("lottery_provider_probe_logs", probeTotal, staleProbeLogs(cutoff), LOG_RETENTION_DAYS, Math.max(0, probeTotal - HISTORY_LIMIT), true),
+                        status("lottery_audit_events", auditTotal, staleAuditEvents(cutoff), LOG_RETENTION_DAYS, Math.max(0, auditTotal - HISTORY_LIMIT), true),
                         status("lottery_prediction_snapshots", predictionTotal, 0, null, Math.max(0, predictionTotal - HISTORY_LIMIT), false),
+                        status("lottery_prediction_rules", ruleTotal, 0, null, Math.max(0, ruleTotal - HISTORY_LIMIT), false),
+                        status("lottery_training_reports", trainingReportTotal, staleTrainingReports(cutoff), LOG_RETENTION_DAYS, Math.max(0, trainingReportTotal - HISTORY_LIMIT), true),
                         status("lottery_strategy_experiments", experimentTotal, 0, null, Math.max(0, experimentTotal - HISTORY_LIMIT), false),
                         status("lottery_backtest_reports", backtestTotal, 0, null, Math.max(0, backtestTotal - HISTORY_LIMIT), false)
                 ))
@@ -150,6 +167,20 @@ public class LotteryMaintenanceService implements ILotteryMaintenanceService {
     private long staleProbeLogs(long cutoff) {
         return probeLogRepository.findAll().stream()
                 .map(LotteryProviderProbeLog::getCheckedAt)
+                .filter(value -> value != null && value < cutoff)
+                .count();
+    }
+
+    private long staleAuditEvents(long cutoff) {
+        return auditEventRepository.findAll().stream()
+                .map(LotteryAuditEvent::getGeneratedAt)
+                .filter(value -> value != null && value < cutoff)
+                .count();
+    }
+
+    private long staleTrainingReports(long cutoff) {
+        return trainingReportRepository.findAll().stream()
+                .map(LotteryTrainingReportRecord::getCreatedAt)
                 .filter(value -> value != null && value < cutoff)
                 .count();
     }

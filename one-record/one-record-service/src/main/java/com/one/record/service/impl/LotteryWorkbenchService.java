@@ -1,10 +1,15 @@
 package com.one.record.service.impl;
 
+import com.one.record.configuration.RecordProperties;
 import com.one.record.lottery.LotteryAuditMetadata;
+import com.one.record.lottery.LotteryDailyOperationSummary;
 import com.one.record.lottery.LotteryLedgerSummary;
 import com.one.record.lottery.LotteryDailyState;
+import com.one.record.lottery.LotteryMaintenanceSummary;
 import com.one.record.lottery.LotteryRecordSyncSummary;
 import com.one.record.lottery.LotteryPageResponse;
+import com.one.record.lottery.LotteryReleaseCheckSummary;
+import com.one.record.lottery.LotteryScheduledSyncRunbook;
 import com.one.record.lottery.LotteryTicketPrizeCheckSummary;
 import com.one.record.lottery.LotteryTicketSummary;
 import com.one.record.lottery.LotteryWorkbenchDailyRunResult;
@@ -15,6 +20,7 @@ import com.one.record.model.LotteryRecordSyncLog;
 import com.one.record.model.LotteryTicket;
 import com.one.record.service.ILotteryDataQualityService;
 import com.one.record.service.ILotteryLedgerService;
+import com.one.record.service.ILotteryMaintenanceService;
 import com.one.record.service.ILotteryRecordSyncLogService;
 import com.one.record.service.ILotteryRecordSyncService;
 import com.one.record.service.ILotteryStatisticsService;
@@ -26,10 +32,16 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.scheduling.support.CronExpression;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.function.Supplier;
 
 @Slf4j
@@ -39,7 +51,13 @@ public class LotteryWorkbenchService implements ILotteryWorkbenchService {
 
     private static final int SUMMARY_SYNC_LIMIT = 50;
 
+    private static final String SCHEDULED_SYNC_JOB_NAME = "scheduled-record-sync";
+
+    private static final Pattern ATTACHED_PREDICTION_PATTERN = Pattern.compile("回填\\s*(\\d+)\\s*条预测结果");
+
     private final IRecordService recordService;
+
+    private final RecordProperties recordProperties;
 
     private final ILotteryRecordSyncService recordSyncService;
 
@@ -54,6 +72,8 @@ public class LotteryWorkbenchService implements ILotteryWorkbenchService {
     private final ILotteryLedgerService ledgerService;
 
     private final ILotteryStatisticsService statisticsService;
+
+    private final ILotteryMaintenanceService maintenanceService;
 
     @Override
     public LotteryWorkbenchSummary summary() {
@@ -119,7 +139,11 @@ public class LotteryWorkbenchService implements ILotteryWorkbenchService {
         LotteryRecordSyncSummary syncSummary = recordSyncLogService.summary(SUMMARY_SYNC_LIMIT);
         com.one.record.lottery.LotteryDraw latestDraw = recordService.findLastDraw();
         com.one.record.lottery.LotteryDataQualityReport qualityReport = dataQualityService.report();
+        LotteryMaintenanceSummary maintenanceSummary = maintenanceService.summary();
         LotteryDailyState dailyState = buildDailyState(latestDraw, latestPrediction, syncSummary, qualityReport);
+        LotteryScheduledSyncRunbook runbook = scheduledSyncRunbook(syncSummary);
+        LotteryDailyOperationSummary operationSummary = operationSummary(dailyState, syncSummary, qualityReport);
+        LotteryReleaseCheckSummary releaseCheckSummary = releaseCheckSummary(maintenanceSummary);
         return LotteryWorkbenchSummary.builder()
                 .dailyState(dailyState)
                 .latestDraw(latestDraw)
@@ -130,8 +154,234 @@ public class LotteryWorkbenchService implements ILotteryWorkbenchService {
                 .pendingTicketCount(ticketSummary == null ? 0 : ticketSummary.getPendingTicketCount())
                 .latestPrizeCheckSummary(latestPrizeCheckSummary)
                 .ledgerSummary(ledgerSummary)
+                .scheduledSyncRunbook(runbook)
+                .operationSummary(operationSummary)
+                .maintenanceSummary(maintenanceSummary)
+                .releaseCheckSummary(releaseCheckSummary)
                 .generatedAt(System.currentTimeMillis())
                 .build();
+    }
+
+    private LotteryScheduledSyncRunbook scheduledSyncRunbook(LotteryRecordSyncSummary syncSummary) {
+        long now = System.currentTimeMillis();
+        LotteryRecordSyncLog latestScheduled = recordSyncLogService.findRecent(null, SUMMARY_SYNC_LIMIT)
+                .stream()
+                .filter(log -> SCHEDULED_SYNC_JOB_NAME.equals(log.getJobName()))
+                .findFirst()
+                .orElse(null);
+        Long nextRunAt = nextRunAt(recordProperties.getScheduledSyncCron(), now);
+        String lastStatus = latestScheduled == null ? null : latestScheduled.getStatus();
+        String healthStatus = scheduledHealthStatus(recordProperties.isScheduledSyncEnabled(), lastStatus);
+        return LotteryScheduledSyncRunbook.builder()
+                .enabled(recordProperties.isScheduledSyncEnabled())
+                .cron(recordProperties.getScheduledSyncCron())
+                .lastRunAt(latestScheduled == null ? null : latestScheduled.getFinishedAt())
+                .lastStatus(lastStatus)
+                .lastDurationMs(durationMs(latestScheduled))
+                .lastFailureCategory(latestScheduled == null ? null : latestScheduled.getFailureCategory())
+                .lastMessage(latestScheduled == null ? null : latestScheduled.getMessage())
+                .lastSuccessAt(syncSummary == null ? null : syncSummary.getLastSuccessAt())
+                .lastFailureAt(syncSummary == null ? null : syncSummary.getLastFailureAt())
+                .nextRunAt(nextRunAt)
+                .nextRunText(nextRunAt == null ? null : formatRunAt(nextRunAt))
+                .healthStatus(healthStatus)
+                .message(scheduledMessage(recordProperties.isScheduledSyncEnabled(), lastStatus, nextRunAt))
+                .generatedAt(now)
+                .build();
+    }
+
+    private LotteryDailyOperationSummary operationSummary(LotteryDailyState dailyState,
+                                                          LotteryRecordSyncSummary syncSummary,
+                                                          com.one.record.lottery.LotteryDataQualityReport qualityReport) {
+        List<LotteryDailyState.DailyStateItem> items = List.of(
+                dailyState.getSyncState(),
+                dailyState.getPredictionState(),
+                dailyState.getTicketState(),
+                dailyState.getPrizeCheckState(),
+                dailyState.getQualityState()
+        );
+        int complete = (int) items.stream().filter(item -> "COMPLETE".equals(item.getStatus())).count();
+        int warning = (int) items.stream().filter(item -> "WARNING".equals(item.getStatus())).count();
+        int pending = (int) items.stream().filter(item -> "PENDING".equals(item.getStatus())).count();
+        String status = pending > 0 ? "PENDING" : warning > 0 ? "WARNING" : "COMPLETE";
+        return LotteryDailyOperationSummary.builder()
+                .status(status)
+                .completedCount(complete)
+                .warningCount(warning)
+                .pendingCount(pending)
+                .totalCount(items.size())
+                .pendingActions(new ArrayList<>(dailyState.getPendingActions()))
+                .qualityIssueCount(qualityIssueCount(qualityReport))
+                .pendingPrizeTicketCount(dailyState.getPrizeCheckState() == null ? 0 : dailyState.getPrizeCheckState().getPendingCount())
+                .activeReminderCount(dailyState.getPendingActions() == null ? 0 : dailyState.getPendingActions().size())
+                .latestPredictionAttachmentCount(attachedPredictionCount(syncSummary))
+                .lastSyncFinishedAt(syncSummary == null ? null : syncSummary.getLatestFinishedAt())
+                .lastPrizeCheckAt(dailyState.getPrizeCheckState() == null ? null : dailyState.getPrizeCheckState().getUpdatedAt())
+                .message(operationMessage(status, pending, warning))
+                .generatedAt(System.currentTimeMillis())
+                .build();
+    }
+
+    private LotteryReleaseCheckSummary releaseCheckSummary(LotteryMaintenanceSummary maintenanceSummary) {
+        List<LotteryReleaseCheckSummary.CheckItem> checks = new ArrayList<>();
+        checks.add(retentionCheck("sync-log-retention", "同步日志保留", maintenanceSummary, "lottery_record_sync_logs", "/lottery/sync"));
+        checks.add(retentionCheck("probe-log-retention", "探测日志保留", maintenanceSummary, "lottery_provider_probe_logs", "/lottery/sync"));
+        checks.add(retentionCheck("repair-audit-retention", "修复审计保留", maintenanceSummary, "lottery_audit_events", "/lottery/exports"));
+        checks.add(retentionCheck("replay-evidence-retention", "回放证据保留", maintenanceSummary, "lottery_training_reports", "/lottery/exports"));
+        checks.add(collectionPresenceCheck("rule-evidence-export", "规则证据导出", maintenanceSummary, "lottery_prediction_rules", "/lottery/exports"));
+        checks.add(manualCheck("backend-tests", "后端聚焦测试", "提交前运行相关 Maven 测试并在交付说明记录结果"));
+        checks.add(manualCheck("frontend-build", "前端构建", "改动前端后运行 npm run build 并记录结果"));
+        checks.add(manualCheck("documentation", "文档同步", "更新 checklist、技术设计或版本计划"));
+        checks.add(manualCheck("commit-push", "提交与推送", "按 commit message 规范提交，并推送当前分支"));
+        int warnings = (int) checks.stream().filter(check -> !"PASS".equals(check.getStatus())).count();
+        return LotteryReleaseCheckSummary.builder()
+                .status(warnings == 0 ? "PASS" : "WARNING")
+                .passedCount(checks.size() - warnings)
+                .warningCount(warnings)
+                .totalCount(checks.size())
+                .checks(checks)
+                .message(warnings == 0 ? "发布检查均通过" : "存在需要人工确认或维护的发布检查项")
+                .generatedAt(System.currentTimeMillis())
+                .build();
+    }
+
+    private Long nextRunAt(String cron, long now) {
+        if (!StringUtils.hasText(cron)) {
+            return null;
+        }
+        try {
+            CronExpression expression = CronExpression.parse(cron.trim());
+            ZonedDateTime next = expression.next(ZonedDateTime.ofInstant(Instant.ofEpochMilli(now), ZoneId.systemDefault()));
+            return next == null ? null : next.toInstant().toEpochMilli();
+        } catch (RuntimeException exception) {
+            return null;
+        }
+    }
+
+    private String scheduledHealthStatus(boolean enabled, String lastStatus) {
+        if (!enabled) {
+            return "DISABLED";
+        }
+        if (lastStatus == null) {
+            return "PENDING";
+        }
+        if ("FAILED".equals(lastStatus)) {
+            return "WARNING";
+        }
+        return "READY";
+    }
+
+    private String scheduledMessage(boolean enabled, String lastStatus, Long nextRunAt) {
+        if (!enabled) {
+            return "定时同步未启用";
+        }
+        if ("FAILED".equals(lastStatus)) {
+            return "最近一次定时同步失败，需要查看同步日志";
+        }
+        if (nextRunAt == null) {
+            return "定时同步已启用，但 cron 无法计算下一次运行时间";
+        }
+        return "下一次定时同步 " + formatRunAt(nextRunAt);
+    }
+
+    private String formatRunAt(Long timestamp) {
+        if (timestamp == null) {
+            return null;
+        }
+        ZonedDateTime time = ZonedDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZoneId.systemDefault());
+        return String.format("%02d/%02d %02d:%02d", time.getMonthValue(), time.getDayOfMonth(), time.getHour(), time.getMinute());
+    }
+
+    private Long durationMs(LotteryRecordSyncLog log) {
+        if (log == null || log.getStartedAt() == null || log.getFinishedAt() == null) {
+            return null;
+        }
+        return Math.max(0L, log.getFinishedAt() - log.getStartedAt());
+    }
+
+    private Integer attachedPredictionCount(LotteryRecordSyncSummary syncSummary) {
+        String message = syncSummary == null ? null : syncSummary.getLatestMessage();
+        if (!StringUtils.hasText(message)) {
+            return 0;
+        }
+        Matcher matcher = ATTACHED_PREDICTION_PATTERN.matcher(message);
+        if (!matcher.find()) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(matcher.group(1));
+        } catch (NumberFormatException exception) {
+            return 0;
+        }
+    }
+
+    private String operationMessage(String status, int pending, int warning) {
+        if ("COMPLETE".equals(status)) {
+            return "今日关键流程已完成";
+        }
+        if (pending > 0) {
+            return "还有 " + pending + " 个日常动作待处理";
+        }
+        return "有 " + warning + " 个质量或风险项需要关注";
+    }
+
+    private LotteryReleaseCheckSummary.CheckItem retentionCheck(String key,
+                                                               String label,
+                                                               LotteryMaintenanceSummary maintenanceSummary,
+                                                               String collection,
+                                                               String path) {
+        LotteryMaintenanceSummary.CollectionStatus status = collectionStatus(maintenanceSummary, collection);
+        long pending = status == null ? 0L : safe(status.getStaleCount()) + safe(status.getOversizedBy());
+        return LotteryReleaseCheckSummary.CheckItem.builder()
+                .key(key)
+                .label(label)
+                .status(pending > 0 ? "WARNING" : "PASS")
+                .message(pending > 0 ? "存在 " + pending + " 条需维护记录" : "保留检查正常")
+                .path(path)
+                .pendingCount((int) Math.min(Integer.MAX_VALUE, pending))
+                .build();
+    }
+
+    private LotteryReleaseCheckSummary.CheckItem collectionPresenceCheck(String key,
+                                                                        String label,
+                                                                        LotteryMaintenanceSummary maintenanceSummary,
+                                                                        String collection,
+                                                                        String path) {
+        LotteryMaintenanceSummary.CollectionStatus status = collectionStatus(maintenanceSummary, collection);
+        boolean present = status != null && safe(status.getTotalCount()) > 0;
+        return LotteryReleaseCheckSummary.CheckItem.builder()
+                .key(key)
+                .label(label)
+                .status(present ? "PASS" : "MANUAL")
+                .message(present ? "已有可导出的证据记录" : "暂无记录，发布前按需要运行训练或回放")
+                .path(path)
+                .pendingCount(present ? 0 : 1)
+                .build();
+    }
+
+    private LotteryReleaseCheckSummary.CheckItem manualCheck(String key, String label, String message) {
+        return LotteryReleaseCheckSummary.CheckItem.builder()
+                .key(key)
+                .label(label)
+                .status("MANUAL")
+                .message(message)
+                .path("/lottery/exports")
+                .pendingCount(1)
+                .build();
+    }
+
+    private LotteryMaintenanceSummary.CollectionStatus collectionStatus(LotteryMaintenanceSummary summary, String collection) {
+        if (summary == null || summary.getCollections() == null) {
+            return null;
+        }
+        return summary.getCollections().stream()
+                .filter(item -> collection.equals(item.getCollection()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private long safe(Long value) {
+        return value == null ? 0L : value;
     }
 
     private LotteryPredictionSnapshot latestPrediction() {
