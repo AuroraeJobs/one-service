@@ -5,6 +5,7 @@ import {
   BankOutlined,
   BarChartOutlined,
   BellOutlined,
+  BranchesOutlined,
   CalendarOutlined,
   CarOutlined,
   ClockCircleOutlined,
@@ -233,6 +234,14 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
       label: '票包',
       icon: <SafetyCertificateOutlined />,
       accent: '#0071e3'
+    },
+    {
+      id: 'lottery-outcomes',
+      moduleKey: 'lottery',
+      path: '/lottery/outcomes',
+      label: '归因',
+      icon: <BranchesOutlined />,
+      accent: '#34c759'
     },
     {
       id: 'lottery-governance',

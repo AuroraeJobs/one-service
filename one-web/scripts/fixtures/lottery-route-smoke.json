@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 17 Week 4 lottery governance smoke",
+  "target": "Iteration 18 Week 1 lottery outcome attribution smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -227,6 +227,29 @@
           "pageSize": 20,
           "total": 1
         }
+      }
+    },
+    {
+      "route": "/lottery/outcomes",
+      "label": "归因",
+      "component": "LotteryOutcomeAttributionPage",
+      "componentFile": "src/components/LotteryOutcomeAttributionPage.tsx",
+      "mockApis": [
+        "lotteryOutcomeApi.recent",
+        "lotteryOutcomeApi.issue"
+      ],
+      "emptyStates": ["暂无归因期号", "暂无组合贡献", "暂无票包执行", "暂无沙盘归因", "暂无奖级分布", "暂无归因时间线", "暂无归因数据"],
+      "errorStates": ["读取彩票归因失败"],
+      "fixtureData": {
+        "outcomes": [
+          {
+            "issue": "2026068",
+            "calibrationState": "PROMOTE_SIGNAL",
+            "portfolioContributions": ["portfolio-fixture-1"],
+            "ticketPackExecutions": ["pack-fixture-1"],
+            "simulationDrifts": ["audit-fixture-1"]
+          }
+        ]
       }
     },
     {

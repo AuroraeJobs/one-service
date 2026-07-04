@@ -2136,6 +2136,77 @@ export interface LotteryTicketPack {
   updatedAt?: number;
 }
 
+export interface LotteryOutcomePortfolioContribution {
+  portfolioId?: string;
+  name?: string;
+  healthScore?: number;
+  roiPercent?: number;
+  warningCount?: number;
+  linkedDecisionCount?: number;
+  contributionState?: string;
+}
+
+export interface LotteryOutcomeDecisionContribution {
+  decisionSetId?: string;
+  title?: string;
+  ruleName?: string;
+  winningCandidateCount?: number;
+  netResult?: number;
+  roiPercent?: number;
+  contributionState?: string;
+}
+
+export interface LotteryOutcomeTicketPackExecution {
+  packId?: string;
+  title?: string;
+  status?: string;
+  approvalState?: string;
+  itemCount?: number;
+  savedTicketCount?: number;
+  proposedCost?: number;
+  executionState?: string;
+  sourcePack?: LotteryTicketPack;
+}
+
+export interface LotteryOutcomeSimulationDrift {
+  auditId?: string;
+  targetIssue?: string;
+  riskLevel?: string;
+  candidateCount?: number;
+  actualWinningTicketCount?: number;
+  driftState?: string;
+  generatedAt?: number;
+}
+
+export interface LotteryOutcomeTimelineItem {
+  type?: string;
+  title?: string;
+  path?: string;
+  state?: string;
+  timestamp?: number;
+}
+
+export interface LotteryOutcomeAttribution {
+  issue?: string;
+  ticketCount?: number;
+  checkedTicketCount?: number;
+  winningTicketCount?: number;
+  totalCost?: number;
+  totalPrize?: number;
+  netResult?: number;
+  roiPercent?: number;
+  bestRedHits?: number;
+  blueHitCount?: number;
+  calibrationState?: string;
+  prizeDistribution: Record<string, number>;
+  portfolioContributions: LotteryOutcomePortfolioContribution[];
+  decisionContributions: LotteryOutcomeDecisionContribution[];
+  ticketPackExecutions: LotteryOutcomeTicketPackExecution[];
+  simulationDrifts: LotteryOutcomeSimulationDrift[];
+  timeline: LotteryOutcomeTimelineItem[];
+  generatedAt?: number;
+}
+
 export interface LotteryTicketSummary {
   ticketCount?: number;
   checkedTicketCount?: number;
@@ -2926,6 +2997,15 @@ export const lotteryTicketPackApi = {
   },
   archive: (id: string): Promise<LotteryTicketPack> => {
     return apiClient.patch(`/lottery/ticket-packs/${id}/archive`);
+  }
+};
+
+export const lotteryOutcomeApi = {
+  recent: (params?: { limit?: number }): Promise<LotteryOutcomeAttribution[]> => {
+    return apiClient.get('/lottery/outcomes', { params });
+  },
+  issue: (issue: string): Promise<LotteryOutcomeAttribution> => {
+    return apiClient.get(`/lottery/outcomes/${issue}`);
   }
 };
 

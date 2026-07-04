@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 17 Week 4 lottery governance smoke",
-  "generatedAt": "2026-07-04T15:00:36.742Z",
+  "target": "Iteration 18 Week 1 lottery outcome attribution smoke",
+  "generatedAt": "2026-07-04T15:18:55.779Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
-  "routeCount": 11,
-  "checkCount": 248,
+  "routeCount": 12,
+  "checkCount": 261,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
@@ -65,6 +65,14 @@
       "mockApiCount": 6,
       "emptyStateCount": 3,
       "errorStateCount": 4
+    },
+    {
+      "route": "/lottery/outcomes",
+      "label": "归因",
+      "component": "LotteryOutcomeAttributionPage",
+      "mockApiCount": 2,
+      "emptyStateCount": 7,
+      "errorStateCount": 1
     },
     {
       "route": "/lottery/governance",

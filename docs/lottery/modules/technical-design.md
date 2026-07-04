@@ -527,6 +527,17 @@ governanceStaleApprovalHours
 
 The settings page owns these controls. The governance board uses them to mark domains as `PASS`, `WARNING`, `FAILED`, or `MANUAL`, then routes users back to the owning surface: strategy portfolios, simulator, ticket packs, reminders/month-end, research, exports, or settings. Route smoke now covers `/lottery/governance`, and export release-readiness rows explicitly include V14 strategy portfolios, simulator, ticket packs, and governance evidence.
 
+V15 Week 1 adds outcome attribution as the first closed-loop learning layer. `LotteryOutcomeAttribution` is a read model generated from durable tickets, ticket packs, decision outcomes, strategy portfolio summaries, and lottery audit events. It returns issue-level cost/prize/net/ROI, calibration state, prize distribution, portfolio contributions, decision contributions, ticket-pack execution summaries, simulation drift rows, and a cross-surface attribution timeline.
+
+Outcome attribution endpoints:
+
+```text
+GET /lottery/outcomes
+GET /lottery/outcomes/{issue}
+```
+
+The backend service writes `LOTTERY_OUTCOME_ATTRIBUTION` audit events when attribution is generated. The frontend route `/lottery/outcomes` shows recent issues, contribution cards, drift rows, prize distribution, and timeline handoffs into tickets, ticket packs, simulator, strategy portfolios, and decision board. Ticket settlement, month-end review, governance, and strategy portfolio pages link back to this route so post-draw review can start from the user's current workflow.
+
 Portfolio-style governance extends preferences and ledger behavior with budget and exposure thresholds. The backend flags budget and max-ticket issues without blocking ordinary CRUD unless a future explicit enforcement mode is added.
 
 Wave 10E extends `LotteryPreference` with `weeklyBudget`, `monthlyBudget`, `maxTicketsPerIssue`, and `budgetReminderPercent`. `GET /lottery/budget/status` reads preferences and recorded tickets to return weekly/monthly usage, max issue exposure, and restrained warning rows for the workbench and ticket page. `LotteryLedgerSummary` also includes rolling 30-day cost/prize/net/ROI plus max/current drawdown values for exposure review.

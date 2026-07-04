@@ -3,6 +3,7 @@ import { Alert, Button, Card, Empty, Progress, Space, Spin, Tag } from 'antd';
 import {
   BellOutlined,
   BookOutlined,
+  BranchesOutlined,
   CheckCircleOutlined,
   DownloadOutlined,
   FileTextOutlined,
@@ -212,6 +213,9 @@ const LotteryMonthEndReviewPage = () => {
       title="月末复盘"
       actions={
         <Space wrap>
+          <Button icon={<BranchesOutlined />} onClick={() => navigate('/lottery/outcomes')}>
+            归因
+          </Button>
           <Button icon={<DownloadOutlined />} onClick={() => navigate('/lottery/exports?type=decision-outcomes&preset=month-end-governance')}>
             月末包
           </Button>

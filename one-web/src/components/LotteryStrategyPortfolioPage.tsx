@@ -4,6 +4,7 @@ import {
   AppstoreOutlined,
   BarChartOutlined,
   BookOutlined,
+  BranchesOutlined,
   ExperimentOutlined,
   FileAddOutlined,
   PieChartOutlined,
@@ -187,6 +188,7 @@ const LotteryStrategyPortfolioPage = () => {
       title="策略组合"
       actions={
         <Space wrap>
+          <Button icon={<BranchesOutlined />} onClick={() => navigate('/lottery/outcomes')}>归因</Button>
           <Button icon={<ReloadOutlined />} loading={loading} onClick={loadPortfolios}>刷新</Button>
           <Button type="primary" icon={<FileAddOutlined />} onClick={openCreateModal}>新组合</Button>
         </Space>

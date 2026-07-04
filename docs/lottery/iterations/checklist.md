@@ -502,11 +502,11 @@ Goal: turn the V14 execution workflow into a learning loop: every strategy, simu
 
 ### Week 1: Outcome Attribution And Calibration
 
-- [ ] Add an attribution model that connects draw outcomes back to strategy portfolios, simulations, decision sets, ticket packs, and saved tickets.
-- [ ] Add backend attribution APIs for issue-level outcome attribution, portfolio contribution, simulation-vs-result drift, and ticket-pack execution result summaries.
-- [ ] Add `/lottery/outcomes` frontend page with issue timeline, attribution cards, portfolio contribution table, and drilldowns into tickets, packs, simulations, and decisions.
-- [ ] Add outcome handoffs from ticket settlement, month-end review, governance, and strategy portfolio pages.
-- [ ] Run attribution service/controller tests, route smoke/build verification, update docs, commit, and push.
+- [x] Add an attribution model that connects draw outcomes back to strategy portfolios, simulations, decision sets, ticket packs, and saved tickets. Added `LotteryOutcomeAttribution` with portfolio contributions, decision contributions, ticket-pack executions, simulation drift, prize distribution, timeline, ROI, and calibration state.
+- [x] Add backend attribution APIs for issue-level outcome attribution, portfolio contribution, simulation-vs-result drift, and ticket-pack execution result summaries. Added `/lottery/outcomes` and `/lottery/outcomes/{issue}` backed by ticket, ticket-pack, decision-outcome, strategy-portfolio, and audit-event sources.
+- [x] Add `/lottery/outcomes` frontend page with issue timeline, attribution cards, portfolio contribution table, and drilldowns into tickets, packs, simulations, and decisions. Added route, navigation item, issue list, summary cards, contribution panels, drift rows, distribution, and timeline.
+- [x] Add outcome handoffs from ticket settlement, month-end review, governance, and strategy portfolio pages. Added attribution handoff actions from ticket, month-end, governance, and strategy portfolio surfaces.
+- [x] Run attribution service/controller tests, route smoke/build verification, update docs, commit, and push. Verification: focused Maven attribution service/controller tests; `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
 ### Week 2: Recommendation Calibration And Strategy Lifecycle
 

@@ -2392,6 +2392,119 @@
   color: #6b7280;
 }
 
+.lottery-outcome-layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 16px;
+}
+
+.lottery-outcome-issue-list,
+.lottery-outcome-detail,
+.lottery-outcome-table,
+.lottery-outcome-timeline {
+  display: grid;
+  gap: 12px;
+}
+
+.lottery-outcome-issue-list button,
+.lottery-outcome-table button,
+.lottery-outcome-timeline button {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #edf0f5;
+  border-radius: 8px;
+  background: #fff;
+  color: #1f2937;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lottery-outcome-issue-list button.active,
+.lottery-outcome-issue-list button:hover,
+.lottery-outcome-table button:hover,
+.lottery-outcome-timeline button:hover {
+  border-color: #0071e3;
+  background: #f5f9ff;
+}
+
+.lottery-outcome-issue-list strong,
+.lottery-outcome-table span,
+.lottery-outcome-timeline span {
+  color: #111827;
+  font-weight: 700;
+}
+
+.lottery-outcome-issue-list span,
+.lottery-outcome-table small,
+.lottery-outcome-timeline small {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.lottery-outcome-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.lottery-outcome-summary-grid article {
+  display: grid;
+  gap: 6px;
+  min-height: 84px;
+  padding: 14px;
+  border: 1px solid #edf0f5;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.lottery-outcome-summary-grid strong {
+  color: #111827;
+  font-size: 20px;
+  line-height: 1.1;
+}
+
+.lottery-outcome-summary-grid span {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.lottery-outcome-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.lottery-outcome-table button {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.lottery-outcome-table button small {
+  grid-column: 1 / -1;
+}
+
+.lottery-outcome-distribution {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.lottery-outcome-distribution div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #edf0f5;
+}
+
+.lottery-outcome-timeline button {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+}
+
 .lottery-notebook-editor {
   display: grid;
   gap: 10px;
@@ -5549,6 +5662,9 @@ button.lottery-latest-vs-card:hover {
   .lottery-governance-hero,
   .lottery-governance-grid,
   .lottery-governance-release-grid,
+  .lottery-outcome-layout,
+  .lottery-outcome-summary-grid,
+  .lottery-outcome-card-grid,
   .lottery-portfolio-score-row,
   .lottery-portfolio-evidence-editor-row,
   .lottery-notebook-editor-row,
@@ -5611,6 +5727,7 @@ button.lottery-latest-vs-card:hover {
   .lottery-simulator-preview > div,
   .lottery-ticket-pack-head,
   .lottery-governance-hero,
+  .lottery-outcome-timeline button,
   .lottery-simulator-candidate-list article {
     align-items: flex-start;
     flex-direction: column;

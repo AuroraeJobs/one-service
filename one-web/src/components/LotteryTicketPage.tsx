@@ -3,6 +3,7 @@ import type { Key } from 'react';
 import { Alert, Button, Card, Checkbox, Empty, Form, Input, InputNumber, Modal, Popconfirm, Select, Space, Table, Tag, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
+  BranchesOutlined,
   CheckCircleOutlined,
   DeleteOutlined,
   EditOutlined,
@@ -1063,6 +1064,9 @@ const LotteryTicketPage = () => {
           </Button>
           <Button icon={<TrophyOutlined />} loading={checkingLatest} onClick={checkLatestPrizes}>
             最新核奖
+          </Button>
+          <Button icon={<BranchesOutlined />} onClick={() => navigate(`/lottery/outcomes${issue ? `?issue=${issue}` : ''}`)}>
+            归因
           </Button>
           <Input
             allowClear
