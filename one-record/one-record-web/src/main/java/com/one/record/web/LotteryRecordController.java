@@ -109,6 +109,20 @@ public class LotteryRecordController {
         return syncService.syncManually();
     }
 
+    @PostMapping("sync/retry")
+    @Operation(summary = "重试开奖记录同步", description = "按手动同步语义重新触发一次开奖记录同步")
+    public LotteryRecordSyncLog retrySync() {
+        log.info("Retrying lottery record sync");
+        return syncService.syncManually();
+    }
+
+    @PostMapping("sync/scheduled")
+    @Operation(summary = "手动触发定时开奖记录同步", description = "按定时任务语义立即触发一次开奖记录同步")
+    public LotteryRecordSyncLog scheduledSync() {
+        log.info("Triggering scheduled lottery record sync");
+        return syncService.syncScheduled();
+    }
+
     @GetMapping("sync-logs")
     @Operation(summary = "查询开奖记录同步日志", description = "查询最近的开奖记录同步日志，可按状态过滤")
     public List<LotteryRecordSyncLog> syncLogs(@RequestParam(value = "status", required = false) String status,

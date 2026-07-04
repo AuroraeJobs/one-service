@@ -160,6 +160,36 @@ class LotteryRecordControllerTest {
     }
 
     @Test
+    void retrySyncDelegatesToManualSyncService() throws Exception {
+        when(syncService.syncManually()).thenReturn(LotteryRecordSyncLog.builder()
+                .status("SUCCESS")
+                .savedCount(1)
+                .build());
+
+        mockMvc.perform(post("/lottery/records/sync/retry"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.savedCount").value(1));
+
+        verify(syncService).syncManually();
+    }
+
+    @Test
+    void scheduledSyncDelegatesToScheduledSyncService() throws Exception {
+        when(syncService.syncScheduled()).thenReturn(LotteryRecordSyncLog.builder()
+                .status("SKIPPED")
+                .message("running")
+                .build());
+
+        mockMvc.perform(post("/lottery/records/sync/scheduled"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SKIPPED"))
+                .andExpect(jsonPath("$.message").value("running"));
+
+        verify(syncService).syncScheduled();
+    }
+
+    @Test
     void syncLogsBindsStatusAndLimit() throws Exception {
         when(syncLogService.findRecent("SUCCESS", 20)).thenReturn(List.of(
                 LotteryRecordSyncLog.builder()
