@@ -1,6 +1,6 @@
 # Lottery Menu And Version Plan
 
-Last updated: 2026-07-03
+Last updated: 2026-07-04
 
 ## Target Menu Tree
 
@@ -28,6 +28,11 @@ The current lottery navigation already has a strong exploratory surface. The tar
   - 投注记录
   - 中奖核验
   - 投入产出
+- 运维
+  - 数据同步
+  - 数据质量
+  - Provider
+  - 设置
 - 分析
   - 幻境
   - 宇宙
@@ -46,6 +51,13 @@ The current lottery navigation already has a strong exploratory surface. The tar
 /lottery
 /lottery/overview
 /lottery/prediction
+/lottery/predictions/history
+/lottery/predictions/:id
+/lottery/tickets
+/lottery/ledger
+/lottery/sync
+/lottery/settings
+/lottery/data-quality
 /lottery/astronauts
 /lottery/astronauts/:camp/:number
 /lottery/records
@@ -118,7 +130,7 @@ Goal: make the module maintainable.
 - Add provider health/config/probe pages.
 - Add user preferences and training defaults.
 - Add sync retry and scheduled trigger actions.
-- Add data quality repair workflows where safe.
+- Add data quality checks and repair workflows where safe.
 
 ## API Boundary
 
@@ -139,6 +151,7 @@ lottery/tickets/*
 lottery/ledger/*
 lottery/providers/*
 lottery/preferences
+lottery/data-quality
 ```
 
 Do not add browser-side calls to external lottery websites or data providers.

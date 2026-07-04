@@ -1,6 +1,6 @@
 # Lottery Module Checklist
 
-Last updated: 2026-07-03
+Last updated: 2026-07-04
 
 Use this file as the durable task board for the lottery module. When a task is finished, change `[ ]` to `[x]` and add a short note if there is useful context for the next thread.
 
@@ -113,9 +113,9 @@ Use this file as the durable task board for the lottery module. When a task is f
 
 ## Documentation And Delivery
 
-- [ ] Update `docs/lottery/modules/technical-design.md` after key architecture changes.
-- [ ] Update `docs/lottery/menu-and-version-plan.md` when menu scope changes.
-- [ ] Keep `docs/lottery/iterations/checklist.md` current after each milestone.
-- [ ] Run backend tests for changed services/controllers.
-- [ ] Run frontend lint/build after changed pages or API types.
-- [ ] Review `git status --short` and diff before committing.
+- [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, and data quality contracts.
+- [x] Update `docs/lottery/menu-and-version-plan.md` when menu scope changes. Updated route and API boundary plan for ticket, ledger, sync, settings, and quality pages.
+- [x] Keep `docs/lottery/iterations/checklist.md` current after each milestone. Checklist reflects Iterations 01-06 completion.
+- [x] Run backend tests for changed services/controllers. Ran focused Maven tests for changed backend services/controllers after each backend milestone.
+- [x] Run frontend lint/build after changed pages or API types. Ran `npm run build` after frontend route/API/page changes.
+- [x] Review `git status --short` and diff before committing. Reviewed status/diff before each pushed milestone.
