@@ -97,6 +97,8 @@ Acceptance:
 
 Goal: make the research platform reviewable and maintainable.
 
+Status: shipped as Wave 10F. The implementation delivers CSV-shaped API exports, durable export audit events, shared audit metadata on touched lottery records, a non-destructive maintenance summary, a cleanup dry-run endpoint, and a frontend `/lottery/exports` surface. Destructive cleanup and PDF rendering remain deferred.
+
 Deliverables:
 
 - Add export endpoints for tickets, ledger rows, prediction snapshots, experiment reports, backtest reports, sync logs, and probe logs.
@@ -114,6 +116,11 @@ Acceptance:
 - Tests cover export integrity, audit-field preservation, and dry-run behavior.
 - `npm run build` passes.
 
+Month-end split:
+
+- The remaining Wave 10C integration item, connecting backtest summaries into rule comparison and source/rule ledger performance, is explicitly deferred to the next comparison-surface iteration.
+- Week 4 intentionally stops at non-destructive maintenance foundations; destructive cleanup remains out of scope until a confirm-only flow and retention policy are selected.
+
 ## Weekly Delivery Rules
 
 - Each week is a shippable milestone.
@@ -126,7 +133,7 @@ Acceptance:
 
 ## Month-End Release Criteria
 
-- Waves 10C, 10D, 10E, and the non-destructive foundation of 10F are complete or explicitly split into a follow-up plan.
+- Waves 10C, 10D, 10E, and the non-destructive foundation of 10F are complete or explicitly split into a follow-up plan. The only Wave 10C split is the rule-comparison/ledger-performance integration noted above.
 - All newly added growing lists use the shared pagination envelope.
 - All new frontend routes are reachable from lottery navigation.
 - No existing lottery routes are removed.

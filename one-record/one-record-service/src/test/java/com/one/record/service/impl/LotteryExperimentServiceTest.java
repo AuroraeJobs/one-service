@@ -67,6 +67,7 @@ class LotteryExperimentServiceTest {
         assertThat(experiment.getBestRule().getName()).isEqualTo("规则 A");
         assertThat(experiment.getScoreDistribution()).containsEntry("规则 A", 88);
         assertThat(experiment.getGeneratedCandidates()).hasSize(1);
+        assertThat(experiment.getAuditMetadata().getAction()).isEqualTo("experiment-run");
         assertThat(experiment.getCreatedAt()).isNotNull();
 
         verify(trainingService).train(30, "standard");
@@ -102,6 +103,7 @@ class LotteryExperimentServiceTest {
         assertThat(service.detail("exp-1")).isSameAs(existing);
         assertThat(updated.getTags()).containsExactly("复盘", "稳健");
         assertThat(updated.getNotes()).isEqualTo("updated");
+        assertThat(updated.getAuditMetadata().getAction()).isEqualTo("experiment-update");
         assertThat(updated.getUpdatedAt()).isNotNull();
     }
 

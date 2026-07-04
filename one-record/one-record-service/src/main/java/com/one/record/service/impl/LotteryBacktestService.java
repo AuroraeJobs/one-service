@@ -1,5 +1,6 @@
 package com.one.record.service.impl;
 
+import com.one.record.lottery.LotteryAuditMetadata;
 import com.one.record.lottery.LotteryBacktestRunRequest;
 import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.model.LotteryBacktestReport;
@@ -206,6 +207,17 @@ public class LotteryBacktestService implements ILotteryBacktestService {
                 .rows(rows)
                 .bankrollSimulation(bankroll)
                 .createdAt(System.currentTimeMillis())
+                .auditMetadata(audit("backtest-run", "backtest-service", System.currentTimeMillis()))
+                .build();
+    }
+
+    private static LotteryAuditMetadata audit(String action, String source, long now) {
+        return LotteryAuditMetadata.builder()
+                .action(action)
+                .source(source)
+                .requesterScope("default")
+                .createdAt(now)
+                .updatedAt(now)
                 .build();
     }
 

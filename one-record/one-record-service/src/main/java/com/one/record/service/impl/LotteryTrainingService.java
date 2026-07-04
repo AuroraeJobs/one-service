@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import com.one.common.util.JsonUtil;
 import com.one.record.file.RecordFile;
+import com.one.record.lottery.LotteryAuditMetadata;
 import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.model.LotteryPredictionSnapshot;
 import com.one.record.model.LotteryPredictionRuleRecord;
@@ -305,6 +306,7 @@ public class LotteryTrainingService implements ILotteryTrainingService {
             }
         }
         snapshot.setUpdatedAt(System.currentTimeMillis());
+        snapshot.setAuditMetadata(updateAudit(snapshot.getAuditMetadata(), "prediction-attach-actual", snapshot.getUpdatedAt()));
         return predictionSnapshotRepository.save(snapshot);
     }
 
@@ -413,10 +415,32 @@ public class LotteryTrainingService implements ILotteryTrainingService {
                 .actualRecord(prediction.getActualRecord())
                 .result(prediction.getResult())
                 .candidates(new ArrayList<>(prediction.getCandidates()))
+                .auditMetadata(audit("prediction-generate", "training-service", now, now))
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
         return predictionSnapshotRepository.save(snapshot);
+    }
+
+    private LotteryAuditMetadata audit(String action, String source, long createdAt, long updatedAt) {
+        return LotteryAuditMetadata.builder()
+                .action(action)
+                .source(source)
+                .requesterScope("default")
+                .createdAt(createdAt)
+                .updatedAt(updatedAt)
+                .build();
+    }
+
+    private LotteryAuditMetadata updateAudit(LotteryAuditMetadata existing, String action, long updatedAt) {
+        if (existing == null) {
+            return audit(action, "training-service", updatedAt, updatedAt);
+        }
+        existing.setAction(action);
+        existing.setSource("training-service");
+        existing.setRequesterScope("default");
+        existing.setUpdatedAt(updatedAt);
+        return existing;
     }
 
     LotteryTrainingReportRecord saveTrainingReportRecord(LotteryTrainingReport report) {

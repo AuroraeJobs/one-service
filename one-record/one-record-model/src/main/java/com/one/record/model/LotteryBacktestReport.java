@@ -1,5 +1,6 @@
 package com.one.record.model;
 
+import com.one.record.lottery.LotteryAuditMetadata;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -60,6 +61,8 @@ public class LotteryBacktestReport implements Serializable {
 
     @Builder.Default
     private List<BankrollPoint> bankrollSimulation = new ArrayList<>();
+
+    private LotteryAuditMetadata auditMetadata;
 
     private Long createdAt;
 

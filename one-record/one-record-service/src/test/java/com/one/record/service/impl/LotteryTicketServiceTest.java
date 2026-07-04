@@ -1,5 +1,6 @@
 package com.one.record.service.impl;
 
+import com.one.record.lottery.LotteryAuditMetadata;
 import com.one.common.exception.NotFoundException;
 import com.one.record.lottery.LotteryPrizeResult;
 import com.one.record.lottery.LotteryTicketBatchSaveRequest;
@@ -123,6 +124,8 @@ class LotteryTicketServiceTest {
         assertThat(saved.getCost()).isEqualByComparingTo("4");
         assertThat(saved.getSource()).isEqualTo("PREDICTION");
         assertThat(saved.getStatus()).isEqualTo("DRAFT");
+        assertThat(saved.getAuditMetadata().getAction()).isEqualTo("ticket-save");
+        assertThat(saved.getAuditMetadata().getRequesterScope()).isEqualTo("default");
         assertThat(saved.getCreatedAt()).isNotNull();
         assertThat(saved.getUpdatedAt()).isNotNull();
     }
@@ -176,6 +179,13 @@ class LotteryTicketServiceTest {
                 .id("ticket-1")
                 .userId("default")
                 .createdAt(100L)
+                .auditMetadata(LotteryAuditMetadata.builder()
+                        .action("ticket-save")
+                        .source("ticket-service")
+                        .requesterScope("default")
+                        .createdAt(90L)
+                        .updatedAt(100L)
+                        .build())
                 .build()));
         when(repository.save(org.mockito.ArgumentMatchers.any(LotteryTicket.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -194,6 +204,9 @@ class LotteryTicketServiceTest {
         assertThat(updated.getUpdatedAt()).isGreaterThan(100L);
         assertThat(updated.getStatus()).isEqualTo("BOUGHT");
         assertThat(updated.getCost()).isEqualByComparingTo("6");
+        assertThat(updated.getAuditMetadata().getAction()).isEqualTo("ticket-update");
+        assertThat(updated.getAuditMetadata().getCreatedAt()).isEqualTo(90L);
+        assertThat(updated.getAuditMetadata().getUpdatedAt()).isGreaterThan(100L);
     }
 
     @Test

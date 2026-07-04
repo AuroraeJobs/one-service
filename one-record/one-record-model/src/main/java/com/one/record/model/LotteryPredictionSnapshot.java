@@ -1,5 +1,6 @@
 package com.one.record.model;
 
+import com.one.record.lottery.LotteryAuditMetadata;
 import com.one.record.training.LotteryActualRecord;
 import com.one.record.training.LotteryPredictionCandidate;
 import com.one.record.training.LotteryPredictionResult;
@@ -48,6 +49,8 @@ public class LotteryPredictionSnapshot {
 
     @Builder.Default
     private List<LotteryPredictionCandidate> candidates = new ArrayList<>();
+
+    private LotteryAuditMetadata auditMetadata;
 
     private Long createdAt;
 

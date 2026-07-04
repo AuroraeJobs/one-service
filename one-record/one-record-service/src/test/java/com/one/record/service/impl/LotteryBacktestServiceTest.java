@@ -60,6 +60,7 @@ class LotteryBacktestServiceTest {
         assertThat(report.getRows().get(0).getBlueHit()).isTrue();
         assertThat(report.getPrizeDistribution()).containsKey("三等奖");
         assertThat(report.getBankrollSimulation()).hasSize(2);
+        assertThat(report.getAuditMetadata().getAction()).isEqualTo("backtest-run");
         assertThat(report.getCreatedAt()).isNotNull();
     }
 

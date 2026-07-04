@@ -1,5 +1,6 @@
 package com.one.record.model;
 
+import com.one.record.lottery.LotteryAuditMetadata;
 import com.one.record.training.LotteryLatestPrediction;
 import com.one.record.training.LotteryPredictionCandidate;
 import com.one.record.training.LotteryTrainingReport;
@@ -50,6 +51,8 @@ public class LotteryStrategyExperiment {
     private List<String> tags = new ArrayList<>();
 
     private String notes;
+
+    private LotteryAuditMetadata auditMetadata;
 
     private Long createdAt;
 

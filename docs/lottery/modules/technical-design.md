@@ -415,6 +415,40 @@ GET /lottery/budget/status
 
 Exports and audit trails should be reproducible. Export endpoints should record export type, filters, generated row count, generatedAt, and requester scope. Audit metadata should be attached to generated predictions, saved tickets, daily-run steps, strategy experiments, backtests, and exports.
 
+Wave 10F implements the first export, audit, and maintenance foundation. `LotteryExportResult` returns a CSV-shaped payload with `exportId`, `exportType`, `format`, `filters`, `rowCount`, `requesterScope`, `generatedAt`, `fileName`, and `content`. `LotteryAuditEvent` stores export audit rows in `lottery_audit_events` with event type, target type/id, requester scope, filters, row count, message, and generated time. `LotteryAuditMetadata` is attached to touched tickets, prediction snapshots, strategy experiments, backtest reports, and daily-run step results so later reports can explain when and why a durable record was generated or updated.
+
+Export endpoints:
+
+```text
+GET /lottery/exports/{type}
+GET /lottery/audit/events
+```
+
+Supported export types:
+
+```text
+tickets
+ledger-issues
+predictions
+experiments
+backtests
+sync-logs
+probe-logs
+```
+
+The first export service applies explicit filters such as `issue`, `status`, `source`, `targetPeriod`, `ruleId`, `strategyName`, `presetWindow`, `provider`, and `limit` depending on export type. The export response and audit event both record the normalized filters and generated row count. `limit` is capped server-side for bounded API payloads.
+
+`LotteryMaintenanceSummary` reports non-destructive maintenance previews for caches, old logs, and high-growth history collections. It includes `dryRun`, collection rows with total count, stale count, retention days, oversized count, cleanup support, cache rows with presence and TTL status, message, and generated time.
+
+Maintenance endpoints:
+
+```text
+GET  /lottery/maintenance/summary
+POST /lottery/maintenance/cleanup/dry-run
+```
+
+The cleanup endpoint is a dry-run only. It currently reports lottery cache presence/TTL, old sync/probe logs, and oversized prediction, experiment, and backtest histories without deleting data. Destructive cleanup should require a separate confirm-only policy before it is added.
+
 Suggested platform endpoint groups:
 
 ```text
@@ -425,6 +459,7 @@ lottery/calendar/*
 lottery/budget/*
 lottery/exports/*
 lottery/audit/*
+lottery/maintenance/*
 ```
 
 ## API Design Rules

@@ -89,6 +89,56 @@ export interface LotteryProviderProbeLog extends LotteryProviderProbeResult {
   id?: string;
 }
 
+export interface LotteryAuditEvent {
+  id?: string;
+  eventType?: string;
+  targetType?: string;
+  targetId?: string;
+  requesterScope?: string;
+  filters?: Record<string, string>;
+  rowCount?: number;
+  message?: string;
+  generatedAt?: number;
+}
+
+export interface LotteryExportResult {
+  exportId?: string;
+  exportType?: string;
+  format?: string;
+  filters?: Record<string, string>;
+  rowCount?: number;
+  requesterScope?: string;
+  generatedAt?: number;
+  fileName?: string;
+  content?: string;
+}
+
+export interface LotteryMaintenanceCollectionStatus {
+  collection?: string;
+  totalCount?: number;
+  staleCount?: number;
+  retentionDays?: number;
+  oversizedBy?: number;
+  cleanupSupported?: boolean;
+  message?: string;
+}
+
+export interface LotteryMaintenanceCacheStatus {
+  cacheKey?: string;
+  present?: boolean;
+  ttlSeconds?: number;
+  noExpiry?: boolean;
+  cleanupSupported?: boolean;
+  message?: string;
+}
+
+export interface LotteryMaintenanceSummary {
+  dryRun?: boolean;
+  collections: LotteryMaintenanceCollectionStatus[];
+  caches?: LotteryMaintenanceCacheStatus[];
+  generatedAt?: number;
+}
+
 export interface LotteryPreference {
   id?: string;
   userId?: string;
@@ -2238,6 +2288,21 @@ export const lotteryLedgerApi = {
 export const lotteryBudgetApi = {
   status: (): Promise<LotteryBudgetStatus> => {
     return apiClient.get('/lottery/budget/status');
+  }
+};
+
+export const lotteryExportApi = {
+  export: (type: string, params?: Record<string, string | number | undefined>): Promise<LotteryExportResult> => {
+    return apiClient.get(`/lottery/exports/${type}`, { params });
+  },
+  auditEvents: (params?: { limit?: number }): Promise<LotteryAuditEvent[]> => {
+    return apiClient.get('/lottery/audit/events', { params });
+  },
+  maintenanceSummary: (): Promise<LotteryMaintenanceSummary> => {
+    return apiClient.get('/lottery/maintenance/summary');
+  },
+  cleanupDryRun: (): Promise<LotteryMaintenanceSummary> => {
+    return apiClient.post('/lottery/maintenance/cleanup/dry-run');
   }
 };
 

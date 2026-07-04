@@ -405,6 +405,23 @@
   gap: 12px;
 }
 
+.lottery-export-preview {
+  margin: 14px 0 0;
+  max-height: 260px;
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+  color: var(--app-text);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.lottery-maintenance-cache-table {
+  margin-top: 14px;
+}
+
 .lottery-workbench-main-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);

@@ -1,5 +1,6 @@
 package com.one.record.service.impl;
 
+import com.one.record.lottery.LotteryAuditMetadata;
 import com.one.record.lottery.LotteryLedgerSummary;
 import com.one.record.lottery.LotteryDailyState;
 import com.one.record.lottery.LotteryRecordSyncSummary;
@@ -323,6 +324,13 @@ public class LotteryWorkbenchService implements ILotteryWorkbenchService {
                 .checkedCount(result == null ? null : result.getCheckedCount())
                 .updatedCount(result == null ? null : result.getUpdatedCount())
                 .error(error)
+                .auditMetadata(LotteryAuditMetadata.builder()
+                        .action("daily-run-step")
+                        .source(step)
+                        .requesterScope("default")
+                        .createdAt(startedAt)
+                        .updatedAt(finishedAt)
+                        .build())
                 .build();
     }
 }

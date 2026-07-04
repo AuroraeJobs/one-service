@@ -222,13 +222,13 @@ Use this file as the durable task board for the lottery module. When a task is f
 
 ### Wave 10F: Export, Audit, And Maintenance
 
-- [ ] Add export endpoints for tickets, ledger rows, prediction snapshots, experiment reports, and sync/probe logs.
-- [ ] Add audit metadata for generated predictions, saved tickets, daily-run steps, experiments, and exports.
-- [ ] Add maintenance summary for stale caches, old logs, and oversized history collections.
-- [ ] Add cleanup/dry-run endpoints where safe and keep destructive maintenance confirm-only.
-- [ ] Add tests for export integrity, audit-field preservation, and maintenance dry-run behavior.
-- [ ] Update docs and run appropriate backend/frontend verification after each wave.
-- [ ] Commit and push each wave independently.
+- [x] Add export endpoints for tickets, ledger rows, prediction snapshots, experiment reports, and sync/probe logs. Added CSV-shaped `GET /lottery/exports/{type}` for `tickets`, `ledger-issues`, `predictions`, `experiments`, `backtests`, `sync-logs`, and `probe-logs`.
+- [x] Add audit metadata for generated predictions, saved tickets, daily-run steps, experiments, and exports. Added shared `LotteryAuditMetadata` on touched durable records and `LotteryAuditEvent` for export events.
+- [x] Add maintenance summary for stale caches, old logs, and oversized history collections. Added `GET /lottery/maintenance/summary` with cache presence/TTL, log retention, and high-growth collection previews.
+- [x] Add cleanup/dry-run endpoints where safe and keep destructive maintenance confirm-only. Added non-destructive `POST /lottery/maintenance/cleanup/dry-run`; no destructive cleanup is exposed in this wave.
+- [x] Add tests for export integrity, audit-field preservation, and maintenance dry-run behavior. Added service/controller tests plus audit assertions for tickets, experiments, and backtests.
+- [x] Update docs and run appropriate backend/frontend verification after each wave.
+- [x] Commit and push each wave independently.
 
 ## Documentation And Delivery
 

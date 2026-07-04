@@ -12,6 +12,7 @@ import {
   DatabaseOutlined,
   DotChartOutlined,
   DollarOutlined,
+  DownloadOutlined,
   ExperimentOutlined,
   FileTextOutlined,
   GlobalOutlined,
@@ -232,6 +233,14 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
       label: '账本',
       icon: <PieChartOutlined />,
       accent: '#0071e3'
+    },
+    {
+      id: 'lottery-exports',
+      moduleKey: 'lottery',
+      path: '/lottery/exports',
+      label: '导出',
+      icon: <DownloadOutlined />,
+      accent: '#ff9500'
     },
     {
       id: 'lottery-sync',

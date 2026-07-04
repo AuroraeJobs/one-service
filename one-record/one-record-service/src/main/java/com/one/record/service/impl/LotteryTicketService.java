@@ -2,6 +2,7 @@ package com.one.record.service.impl;
 
 import com.one.common.exception.NotFoundException;
 import com.one.common.exception.ServiceException;
+import com.one.record.lottery.LotteryAuditMetadata;
 import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.lottery.LotteryPrizeResult;
 import com.one.record.lottery.LotteryTicketBatchSaveRequest;
@@ -98,6 +99,7 @@ public class LotteryTicketService implements ILotteryTicketService {
                 .userId(DEFAULT_USER_ID)
                 .createdAt(now)
                 .updatedAt(now)
+                .auditMetadata(audit("ticket-save", "ticket-service", now, now))
                 .build();
         copyTicket(ticket, target);
         LotteryTicket duplicate = duplicateOf(target);
@@ -140,6 +142,7 @@ public class LotteryTicketService implements ILotteryTicketService {
                 .orElseThrow(() -> new NotFoundException("彩票票据不存在: {}", id));
         copyTicket(ticket, target);
         target.setUpdatedAt(System.currentTimeMillis());
+        target.setAuditMetadata(updateAudit(target.getAuditMetadata(), "ticket-update", target.getUpdatedAt()));
         return repository.save(target);
     }
 
@@ -176,6 +179,7 @@ public class LotteryTicketService implements ILotteryTicketService {
             ticket.setPrizeGrade(result.getPrizeGrade());
             ticket.setStatus("CHECKED");
             ticket.setUpdatedAt(now);
+            ticket.setAuditMetadata(updateAudit(ticket.getAuditMetadata(), "ticket-prize-check", now));
         }
         return repository.saveAll(tickets);
     }
@@ -272,6 +276,7 @@ public class LotteryTicketService implements ILotteryTicketService {
                 .userId(DEFAULT_USER_ID)
                 .createdAt(now)
                 .updatedAt(now)
+                .auditMetadata(audit("ticket-batch-save", "ticket-service", now, now))
                 .build();
         copyTicket(ticket, target);
         return target;
@@ -333,5 +338,26 @@ public class LotteryTicketService implements ILotteryTicketService {
             return 20;
         }
         return Math.min(pageSize, 200);
+    }
+
+    private LotteryAuditMetadata audit(String action, String source, long createdAt, long updatedAt) {
+        return LotteryAuditMetadata.builder()
+                .action(action)
+                .source(source)
+                .requesterScope(DEFAULT_USER_ID)
+                .createdAt(createdAt)
+                .updatedAt(updatedAt)
+                .build();
+    }
+
+    private LotteryAuditMetadata updateAudit(LotteryAuditMetadata existing, String action, long updatedAt) {
+        if (existing == null) {
+            return audit(action, "ticket-service", updatedAt, updatedAt);
+        }
+        existing.setAction(action);
+        existing.setSource("ticket-service");
+        existing.setRequesterScope(DEFAULT_USER_ID);
+        existing.setUpdatedAt(updatedAt);
+        return existing;
     }
 }

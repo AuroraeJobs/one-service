@@ -30,4 +30,6 @@ public class LotteryWorkbenchStepResult implements Serializable {
     private Integer updatedCount;
 
     private String error;
+
+    private LotteryAuditMetadata auditMetadata;
 }

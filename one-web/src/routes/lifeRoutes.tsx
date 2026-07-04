@@ -31,6 +31,7 @@ import LotteryDataQualityPage from '../components/LotteryDataQualityPage';
 import LotteryLedgerPage from '../components/LotteryLedgerPage';
 import LotteryExperimentDetailPage from '../components/LotteryExperimentDetailPage';
 import LotteryExperimentPage from '../components/LotteryExperimentPage';
+import LotteryExportMaintenancePage from '../components/LotteryExportMaintenancePage';
 import LotteryPredictionDetailPage from '../components/LotteryPredictionDetailPage';
 import LotteryPredictionHistoryPage from '../components/LotteryPredictionHistoryPage';
 import LotteryPredictionPage from '../components/LotteryPredictionPage';
@@ -90,6 +91,7 @@ export const createProtectedRoutes = (isTabVisible: boolean): ProtectedRouteConf
   { path: '/lottery/predictions/:id', element: <LotteryPredictionDetailPage /> },
   { path: '/lottery/tickets', element: <LotteryTicketPage /> },
   { path: '/lottery/ledger', element: <LotteryLedgerPage /> },
+  { path: '/lottery/exports', element: <LotteryExportMaintenancePage /> },
   { path: '/lottery/sync', element: <LotterySyncOperationsPage /> },
   { path: '/lottery/settings', element: <LotterySettingsPage /> },
   { path: '/lottery/data-quality', element: <LotteryDataQualityPage /> },

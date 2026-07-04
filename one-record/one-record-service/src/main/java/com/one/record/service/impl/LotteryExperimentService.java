@@ -1,6 +1,7 @@
 package com.one.record.service.impl;
 
 import com.one.record.lottery.LotteryExperimentRunRequest;
+import com.one.record.lottery.LotteryAuditMetadata;
 import com.one.record.lottery.LotteryExperimentUpdateRequest;
 import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.model.LotteryStrategyExperiment;
@@ -58,6 +59,7 @@ public class LotteryExperimentService implements ILotteryExperimentService {
                 .latestPrediction(report == null ? null : report.getLatestPrediction())
                 .tags(normalized.getTags())
                 .notes(normalized.getNotes())
+                .auditMetadata(audit("experiment-run", "experiment-service", now, now))
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
@@ -102,6 +104,7 @@ public class LotteryExperimentService implements ILotteryExperimentService {
         experiment.setTags(normalizeTags(request == null ? null : request.getTags()));
         experiment.setNotes(trimToNull(request == null ? null : request.getNotes()));
         experiment.setUpdatedAt(System.currentTimeMillis());
+        experiment.setAuditMetadata(updateAudit(experiment.getAuditMetadata(), "experiment-update", experiment.getUpdatedAt()));
         return repository.save(experiment);
     }
 
@@ -221,5 +224,26 @@ public class LotteryExperimentService implements ILotteryExperimentService {
                 .total((long) total)
                 .hasNext(to < total)
                 .build();
+    }
+
+    private static LotteryAuditMetadata audit(String action, String source, long createdAt, long updatedAt) {
+        return LotteryAuditMetadata.builder()
+                .action(action)
+                .source(source)
+                .requesterScope("default")
+                .createdAt(createdAt)
+                .updatedAt(updatedAt)
+                .build();
+    }
+
+    private static LotteryAuditMetadata updateAudit(LotteryAuditMetadata existing, String action, long updatedAt) {
+        if (existing == null) {
+            return audit(action, "experiment-service", updatedAt, updatedAt);
+        }
+        existing.setAction(action);
+        existing.setSource("experiment-service");
+        existing.setRequesterScope("default");
+        existing.setUpdatedAt(updatedAt);
+        return existing;
     }
 }
