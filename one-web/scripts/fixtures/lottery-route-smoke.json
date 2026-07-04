@@ -1,0 +1,146 @@
+{
+  "target": "Iteration 14C lottery frontend route smoke",
+  "mode": "mocked-fixture",
+  "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
+  "providerNetwork": "not-required",
+  "consoleErrors": [],
+  "routes": [
+    {
+      "route": "/lottery/workbench",
+      "label": "工作台",
+      "component": "LotteryWorkbenchPage",
+      "componentFile": "src/components/LotteryWorkbenchPage.tsx",
+      "mockApis": [
+        "lotteryWorkbenchApi.summary",
+        "lotteryCalendarApi.calendar",
+        "lotteryBudgetApi.status",
+        "lotteryPreferenceApi.preference",
+        "lotteryPreferenceApi.updatePreference",
+        "lotteryTicketApi.checkLatestPrizes"
+      ],
+      "emptyStates": ["暂无待办", "暂无预测快照", "暂无发布检查"],
+      "errorStates": ["读取彩票工作台失败", "执行彩票日常任务失败"],
+      "fixtureData": {
+        "summary": {
+          "dailyState": {
+            "latestIssue": "2026067",
+            "nextIssue": "2026068",
+            "pendingActionKeys": ["sync", "ticket"]
+          },
+          "releaseCheckSummary": {
+            "items": [
+              { "key": "frontend-route-smoke", "status": "PASS" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "route": "/lottery/predictions/decision",
+      "label": "预测决策板",
+      "component": "LotteryPredictionDecisionPage",
+      "componentFile": "src/components/LotteryPredictionDecisionPage.tsx",
+      "mockApis": [
+        "lotteryDecisionSetApi.decisionSets",
+        "lotteryDecisionSetApi.createDecisionSet",
+        "lotteryDecisionSetApi.updateDecisionSet",
+        "lotteryDecisionSetApi.archiveDecisionSet",
+        "lotteryPredictionApi.historyPage",
+        "lotteryPredictionApi.compareRules",
+        "lotteryPredictionApi.replayMetrics",
+        "lotteryTicketApi.ticketsPage",
+        "lotteryTicketApi.budgetPrecheck",
+        "lotteryTicketApi.saveTickets"
+      ],
+      "emptyStates": ["暂无预测候选，先运行一次预测训练。"],
+      "errorStates": ["读取预测决策板失败", "保存决策候选为票据失败", "保存决策集失败"],
+      "fixtureData": {
+        "decisionSets": {
+          "items": [
+            {
+              "id": "decision-fixture-1",
+              "title": "2026068 复盘候选",
+              "targetIssue": "2026068"
+            }
+          ],
+          "page": 1,
+          "pageSize": 30,
+          "total": 1
+        }
+      }
+    },
+    {
+      "route": "/lottery/tickets",
+      "label": "票据",
+      "component": "LotteryTicketPage",
+      "componentFile": "src/components/LotteryTicketPage.tsx",
+      "mockApis": [
+        "lotteryTicketApi.ticketsPage",
+        "lotteryTicketApi.summary",
+        "lotteryTicketApi.importPreview",
+        "lotteryTicketApi.bulkUpdateTickets",
+        "lotteryTicketApi.archiveTickets",
+        "lotteryTicketApi.deleteTickets",
+        "lotteryBudgetApi.status",
+        "lotteryLedgerApi.issues"
+      ],
+      "emptyStates": ["暂无暴露", "暂无可汇总的期号票据", "选择期号后查看结算复盘"],
+      "errorStates": ["获取彩票票据失败", "预览批量导入票据失败", "批量更新彩票票据失败", "归档彩票票据失败", "批量删除彩票票据失败"],
+      "fixtureData": {
+        "importPreview": {
+          "rows": [
+            {
+              "lineNumber": 1,
+              "status": "VALID",
+              "issue": "2026068",
+              "redNumbers": ["01", "06", "11", "18", "25", "31"],
+              "blueNumber": "09"
+            }
+          ],
+          "duplicateGroups": []
+        }
+      }
+    },
+    {
+      "route": "/lottery/research",
+      "label": "研究对比",
+      "component": "LotteryResearchPage",
+      "componentFile": "src/components/LotteryResearchPage.tsx",
+      "mockApis": [
+        "lotteryPredictionApi.historyPage",
+        "lotteryExperimentApi.experiments",
+        "lotteryBacktestApi.reports",
+        "lotteryPredictionApi.compareRules",
+        "lotteryLedgerApi.performance"
+      ],
+      "emptyStates": ["选择证据后生成报告摘要", "暂无可比较证据，先运行策略实验、回测或积累票据账本。", "请选择至少两项证据进行对比。"],
+      "errorStates": ["读取彩票研究对比失败"],
+      "fixtureData": {
+        "comparison": {
+          "selectedItems": [],
+          "presets": ["latestPrediction", "strongestRule", "volatileRule", "ticketOutcome"]
+        }
+      }
+    },
+    {
+      "route": "/lottery/exports",
+      "label": "导出审计",
+      "component": "LotteryExportMaintenancePage",
+      "componentFile": "src/components/LotteryExportMaintenancePage.tsx",
+      "mockApis": [
+        "lotteryExportApi.export",
+        "lotteryExportApi.auditEvents",
+        "lotteryExportApi.maintenanceSummary",
+        "lotteryExportApi.cleanupDryRun"
+      ],
+      "emptyStates": ["本次导出没有数据", "暂无数据", "暂无审计事件", "暂无集合状态", "暂无缓存状态"],
+      "errorStates": ["读取彩票导出审计失败", "导出彩票数据失败", "生成彩票报表失败", "执行彩票维护 dry-run 失败"],
+      "fixtureData": {
+        "releaseEvidence": {
+          "smokeCommand": "npm run lottery:smoke",
+          "report": "reports/lottery-route-smoke-summary.json"
+        }
+      }
+    }
+  ]
+}

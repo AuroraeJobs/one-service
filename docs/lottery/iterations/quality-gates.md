@@ -25,6 +25,8 @@ Use these gates when finishing a lottery milestone.
 - Personal ticket and ledger pages show cost and outcome clearly.
 - Workbench drill-through links preserve useful filters in query parameters.
 - Experiment, backtest, alert, export, and audit pages keep research language restrained and evidence-oriented.
+- Run `npm run lottery:smoke` in `one-web` after changing `/lottery/workbench`, `/lottery/predictions/decision`, `/lottery/tickets`, `/lottery/research`, or `/lottery/exports`; this fixture smoke does not require live provider access.
+- Browser QA for those routes still requires a valid local login session and backend service. Proxy-related provider failures, including HTTP 403 when a proxy is enabled, should be recorded as provider/sync evidence rather than treated as route-render failures.
 
 ## Data
 

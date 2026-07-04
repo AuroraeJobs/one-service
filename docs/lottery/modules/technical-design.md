@@ -283,6 +283,8 @@ Iteration 14B productionizes those flows behind backend services. Ticket import 
 
 Iteration 13D adds report and release-readiness surfaces without changing backend contracts. `/lottery/research` now includes prediction evidence items, guided presets for latest prediction, strongest rule, volatile rule, and ticket outcomes, plus a print-ready report summary. `/lottery/exports` includes frontend release readiness checks for the new decision, ticket, research, and reused API-contract flows. Decision-board and ticket-settlement panels are marked as print-ready report areas.
 
+Iteration 14C adds a lightweight frontend route smoke gate for the guided workflow. `npm run lottery:smoke` reads `one-web/scripts/fixtures/lottery-route-smoke.json`, validates protected route registration, lottery navigation, component API call points, fixture-backed empty/error text, and controlled console-error handling for `/lottery/workbench`, `/lottery/predictions/decision`, `/lottery/tickets`, `/lottery/research`, and `/lottery/exports`. It writes `one-web/reports/lottery-route-smoke-summary.json` as local release evidence and does not require live provider access. Authenticated browser QA still requires a local login session and backend service; proxy-related provider failures such as HTTP 403 are handled as sync/provider health evidence rather than route-smoke failures.
+
 Wave 11B adds `/lottery/research` as a frontend-only comparison studio. It composes existing experiment, backtest, prediction rule comparison, and ledger performance APIs into a normalized evidence model without adding backend contracts. The route stores selected comparison items in the `items` query parameter, supports deep links from experiment/backtest detail pages and the ledger performance panel, and shows compact ECharts views for stability/score, average red hits, blue hit rate, net result, ROI, hit rate, and prize distribution. Copy should remain evidence-oriented: historical replay and personal ledger evidence, not outcome promises.
 
 Iteration 10 adds `LotteryDailyState` and `GET /lottery/workbench/daily-state`. The daily state is a compact resumability contract for the current issue. It contains latest issue, next issue, latest prediction id, sync/prediction/ticket/prize-check/quality state items, pending action keys, and `generatedAt`. Each state item includes status, message, optional pending count, updated time, and a project-owned drill-through path.
@@ -552,6 +554,7 @@ Backend:
 Frontend:
 
 - Build after route/API type changes.
+- Run `npm run lottery:smoke` after changing the lottery workbench, decision, ticket, research, or export/release pages; the report is written to `one-web/reports/lottery-route-smoke-summary.json`.
 - Verify empty, loading, error, and stale-cache states.
 - Verify mobile layout for dense tables and chart pages.
 

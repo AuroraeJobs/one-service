@@ -1,0 +1,54 @@
+{
+  "target": "Iteration 14C lottery frontend route smoke",
+  "generatedAt": "2026-07-04T12:44:33.239Z",
+  "status": "PASSED",
+  "mode": "mocked-fixture",
+  "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
+  "providerNetwork": "not-required",
+  "routeCount": 5,
+  "checkCount": 114,
+  "failureCount": 0,
+  "failures": [],
+  "checkedRoutes": [
+    {
+      "route": "/lottery/workbench",
+      "label": "工作台",
+      "component": "LotteryWorkbenchPage",
+      "mockApiCount": 6,
+      "emptyStateCount": 3,
+      "errorStateCount": 2
+    },
+    {
+      "route": "/lottery/predictions/decision",
+      "label": "预测决策板",
+      "component": "LotteryPredictionDecisionPage",
+      "mockApiCount": 10,
+      "emptyStateCount": 1,
+      "errorStateCount": 3
+    },
+    {
+      "route": "/lottery/tickets",
+      "label": "票据",
+      "component": "LotteryTicketPage",
+      "mockApiCount": 8,
+      "emptyStateCount": 3,
+      "errorStateCount": 5
+    },
+    {
+      "route": "/lottery/research",
+      "label": "研究对比",
+      "component": "LotteryResearchPage",
+      "mockApiCount": 5,
+      "emptyStateCount": 3,
+      "errorStateCount": 1
+    },
+    {
+      "route": "/lottery/exports",
+      "label": "导出审计",
+      "component": "LotteryExportMaintenancePage",
+      "mockApiCount": 4,
+      "emptyStateCount": 5,
+      "errorStateCount": 4
+    }
+  ]
+}

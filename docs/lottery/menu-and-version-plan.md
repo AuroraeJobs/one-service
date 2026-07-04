@@ -195,7 +195,7 @@ Goal: make the guided decision workflow durable, auditable, and testable after t
 
 - Persist shared workbench preferences and saved decision sets through backend `lottery/*` APIs while keeping browser-local fallback behavior. The shipped 14A slice stores workbench widget order/visibility in `/lottery/preferences`, adds `/lottery/decision-sets`, and lets the decision board save, load, update, and archive selected candidates with audit events.
 - Move ticket import preview, duplicate grouping, bulk updates, archive, and budget pre-checks behind backend services with audit events. The shipped 14B slice adds `/lottery/tickets/import/preview`, `/lottery/tickets/budget/precheck`, sparse bulk update/archive/delete APIs, audit events, and frontend warnings on the ticket page and decision board.
-- Add automated route smoke and release evidence for workbench, decision board, ticket, research, and export/release pages with mocked or fixture data.
+- Add automated route smoke and release evidence for workbench, decision board, ticket, research, and export/release pages with mocked or fixture data. The shipped 14C slice adds `npm run lottery:smoke`, fixture-backed checks for protected routes/navigation/API call points/empty and error states, a generated smoke report, and a release-readiness item on `/lottery/exports`.
 - Add decision outcome feedback after actual-result attachment, including candidate hit distribution, ticket conversion results, stale-evidence alerts, and report/export sections.
 - Preserve the project-owned API boundary and keep all external provider work behind backend services.
 

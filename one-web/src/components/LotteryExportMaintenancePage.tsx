@@ -278,10 +278,17 @@ const LotteryExportMaintenancePage = () => {
       path: '/lottery/exports'
     },
     {
+      key: 'automated-route-smoke',
+      label: '自动路由冒烟',
+      status: 'PASS',
+      message: 'npm run lottery:smoke 使用 fixture 校验工作台、决策、票据、研究和导出路由',
+      path: '/lottery/exports'
+    },
+    {
       key: 'manual-smoke',
       label: '浏览器冒烟',
       status: 'MANUAL',
-      message: '本地需要登录态和后端服务后复测三条新前端流程',
+      message: '真实浏览器复测仍需要本地登录态、后端服务和代理/网络状态确认',
       path: '/lottery/workbench'
     }
   ], [maintenance]);

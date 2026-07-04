@@ -375,12 +375,12 @@ Goal: turn the guided frontend workflows from Iteration 13 into durable, auditab
 
 ### Wave 14C: Automated Route Smoke And Release Evidence
 
-- [ ] Add authenticated frontend route smoke coverage for workbench, decision board, ticket page, research page, and export/release page.
-- [ ] Add fixture or mocked API data for route smoke so UI checks do not depend on live lottery provider availability.
-- [ ] Add console-error and empty-state assertions for the new Iteration 13/14 frontend flows.
-- [ ] Feed smoke/build/test result summaries into release readiness surfaces or durable docs.
-- [ ] Document local QA prerequisites for login state, backend service, and proxy-related provider failures.
-- [ ] Run smoke/build verification, update docs, commit, and push.
+- [x] Add authenticated frontend route smoke coverage for workbench, decision board, ticket page, research page, and export/release page. Added `npm run lottery:smoke` to validate protected routes, lottery navigation entries, and component bindings for the five core routes.
+- [x] Add fixture or mocked API data for route smoke so UI checks do not depend on live lottery provider availability. Added `one-web/scripts/fixtures/lottery-route-smoke.json` with mocked route/API evidence and explicit `providerNetwork=not-required`.
+- [x] Add console-error and empty-state assertions for the new Iteration 13/14 frontend flows. The smoke script checks controlled `console.error` handling plus route-specific empty/error-state copy.
+- [x] Feed smoke/build/test result summaries into release readiness surfaces or durable docs. `/lottery/exports` now lists the automated route smoke gate, and the script writes `one-web/reports/lottery-route-smoke-summary.json`.
+- [x] Document local QA prerequisites for login state, backend service, and proxy-related provider failures. Quality gates and technical design now separate fixture smoke from real browser login/backend/proxy checks.
+- [x] Run smoke/build verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`.
 
 ### Wave 14D: Decision Outcome Feedback Loop
 
