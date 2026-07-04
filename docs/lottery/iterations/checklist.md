@@ -98,10 +98,10 @@ Use this file as the durable task board for the lottery module. When a task is f
 ## Iteration 06: Provider, Settings, And Operations
 
 - [x] Add lottery provider health DTO. Added `LotteryProviderHealth` for registered draw provider status.
-- [ ] Add provider config snapshot DTO.
+- [x] Add provider config snapshot DTO. Added `LotteryProviderConfig` for active draw provider, registered providers, and scheduled sync state.
 - [ ] Add provider probe result DTO.
 - [x] Add `GET /lottery/providers/health`. Added provider service/controller endpoint with service and controller tests.
-- [ ] Add `GET /lottery/providers/config`.
+- [x] Add `GET /lottery/providers/config`. Added provider config endpoint with service and controller tests.
 - [ ] Add `GET /lottery/providers/probe`.
 - [ ] Add `LotteryPreference` model.
 - [ ] Add `GET /lottery/preferences`.

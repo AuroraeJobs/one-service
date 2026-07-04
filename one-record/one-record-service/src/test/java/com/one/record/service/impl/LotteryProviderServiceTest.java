@@ -1,5 +1,7 @@
 package com.one.record.service.impl;
 
+import com.one.record.configuration.RecordProperties;
+import com.one.record.lottery.LotteryProviderConfig;
 import com.one.record.lottery.LotteryProviderHealth;
 import com.one.record.response.Record;
 import com.one.record.service.LotteryDrawProvider;
@@ -13,7 +15,7 @@ class LotteryProviderServiceTest {
 
     @Test
     void healthReturnsRegisteredDrawProviders() {
-        LotteryProviderService service = new LotteryProviderService(List.of(provider("cwl"), provider("backup")));
+        LotteryProviderService service = new LotteryProviderService(List.of(provider("cwl"), provider("backup")), new RecordProperties());
 
         List<LotteryProviderHealth> health = service.health();
 
@@ -24,6 +26,20 @@ class LotteryProviderServiceTest {
         assertThat(health.get(1).getProvider()).isEqualTo("cwl");
         assertThat(health.get(1).getActive()).isTrue();
         assertThat(health.get(1).getCheckedAt()).isNotNull();
+    }
+
+    @Test
+    void configReturnsProviderAndSyncSnapshot() {
+        RecordProperties properties = new RecordProperties();
+        properties.setScheduledSyncEnabled(true);
+        LotteryProviderService service = new LotteryProviderService(List.of(provider("cwl"), provider("backup")), properties);
+
+        LotteryProviderConfig config = service.config();
+
+        assertThat(config.getActiveDrawProvider()).isEqualTo("cwl");
+        assertThat(config.getRegisteredDrawProviders()).containsExactly("backup", "cwl");
+        assertThat(config.getScheduledSyncEnabled()).isTrue();
+        assertThat(config.getGeneratedAt()).isNotNull();
     }
 
     private LotteryDrawProvider provider(String name) {

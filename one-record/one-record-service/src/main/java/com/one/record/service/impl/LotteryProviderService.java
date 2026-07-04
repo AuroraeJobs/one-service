@@ -1,5 +1,7 @@
 package com.one.record.service.impl;
 
+import com.one.record.configuration.RecordProperties;
+import com.one.record.lottery.LotteryProviderConfig;
 import com.one.record.lottery.LotteryProviderHealth;
 import com.one.record.service.ILotteryProviderService;
 import com.one.record.service.LotteryDrawProvider;
@@ -18,6 +20,8 @@ public class LotteryProviderService implements ILotteryProviderService {
 
     private final List<LotteryDrawProvider> drawProviders;
 
+    private final RecordProperties recordProperties;
+
     @Override
     public List<LotteryProviderHealth> health() {
         Long checkedAt = System.currentTimeMillis();
@@ -33,6 +37,24 @@ public class LotteryProviderService implements ILotteryProviderService {
                         .status("REGISTERED")
                         .checkedAt(checkedAt)
                         .build())
+                .toList();
+    }
+
+    @Override
+    public LotteryProviderConfig config() {
+        return LotteryProviderConfig.builder()
+                .activeDrawProvider(ACTIVE_DRAW_PROVIDER)
+                .registeredDrawProviders(registeredDrawProviders())
+                .scheduledSyncEnabled(recordProperties.isScheduledSyncEnabled())
+                .generatedAt(System.currentTimeMillis())
+                .build();
+    }
+
+    private List<String> registeredDrawProviders() {
+        return drawProviders.stream()
+                .map(provider -> normalizeProviderName(provider.name()))
+                .distinct()
+                .sorted(Comparator.naturalOrder())
                 .toList();
     }
 
