@@ -2,10 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Input, Select, Space, Table, Tag, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { ApiOutlined, CheckCircleOutlined, ClockCircleOutlined, ExperimentOutlined, ReloadOutlined, SyncOutlined, WarningOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import {
+  lotteryDataQualityApi,
   lotteryProviderApi,
   lotteryRecordApi,
+  type LotteryDataQualityReport,
   type LotteryProviderProbeLog,
   type LotteryRecordSyncLog,
   type LotteryRecordSyncSummary
@@ -41,9 +44,11 @@ const statusColor = (status?: string) => {
 };
 
 const LotterySyncOperationsPage = () => {
+  const navigate = useNavigate();
   const [logs, setLogs] = useState<LotteryRecordSyncLog[]>([]);
   const [summary, setSummary] = useState<LotteryRecordSyncSummary>();
   const [probeLogs, setProbeLogs] = useState<LotteryProviderProbeLog[]>([]);
+  const [qualityReport, setQualityReport] = useState<LotteryDataQualityReport>();
   const [statusFilter, setStatusFilter] = useState<string>();
   const [probeProvider, setProbeProvider] = useState('cwl');
   const [loading, setLoading] = useState(false);
@@ -60,14 +65,16 @@ const LotterySyncOperationsPage = () => {
     setLoading(true);
     setError(undefined);
     try {
-      const [rows, nextSummary, nextProbeLogs] = await Promise.all([
+      const [rows, nextSummary, nextProbeLogs, nextQualityReport] = await Promise.all([
         lotteryRecordApi.syncLogs(queryParams),
         lotteryRecordApi.syncSummary({ limit: 50 }),
-        lotteryProviderApi.probeLogs({ provider: probeProvider.trim() || undefined, limit: 20 })
+        lotteryProviderApi.probeLogs({ provider: probeProvider.trim() || undefined, limit: 20 }),
+        lotteryDataQualityApi.report()
       ]);
       setLogs(rows || []);
       setSummary(nextSummary || undefined);
       setProbeLogs(nextProbeLogs || []);
+      setQualityReport(nextQualityReport || undefined);
     } catch (requestError) {
       console.error('读取彩票同步日志失败:', requestError);
       setError(requestError instanceof Error ? requestError.message : '读取彩票同步日志失败');
@@ -222,6 +229,10 @@ const LotterySyncOperationsPage = () => {
   const latestIssueRange = summary?.latestStartIssue || summary?.latestEndIssue
     ? `${summary?.latestStartIssue || '-'} 到 ${summary?.latestEndIssue || '-'}`
     : '-';
+  const qualityIssueCount = (qualityReport?.missingIssueCount || 0)
+    + (qualityReport?.duplicateIssueCount || 0)
+    + (qualityReport?.malformedRecordCount || 0)
+    + (qualityReport?.futureDateCount || 0);
 
   return (
     <LifePageShell
@@ -259,6 +270,19 @@ const LotterySyncOperationsPage = () => {
       }
     >
       {error ? <Alert className="lottery-overview-status-alert" type="error" showIcon message={error} /> : null}
+      {qualityIssueCount > 0 ? (
+        <Alert
+          className="lottery-overview-status-alert"
+          type="warning"
+          showIcon
+          message={`发现 ${qualityIssueCount} 项数据质量问题`}
+          action={
+            <Button size="small" icon={<WarningOutlined />} onClick={() => navigate('/lottery/data-quality')}>
+              查看
+            </Button>
+          }
+        />
+      ) : null}
 
       <section className="lottery-history-summary-grid lottery-sync-summary-grid">
         <Card className="life-panel-card lottery-clean-panel" loading={loading}>

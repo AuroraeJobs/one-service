@@ -248,6 +248,7 @@ VOID
 - Ticket and ledger pages should be quiet, record-focused, and explicit about cost and outcome.
 - The sync operations page should read backend summaries and provider probe logs rather than recalculating operational health only in the browser.
 - The data quality page should use a two-step repair flow: generate a backend dry-run plan first, then enable confirm only for provider-backed missing issues.
+- Prediction pages should read `LotteryPreference` for default training scale, replay count, automatic prediction ticket saving, and default ticket source. Operational entry points should surface data-quality warnings from the backend report instead of hiding them behind a separate page.
 
 ## Verification Strategy
 

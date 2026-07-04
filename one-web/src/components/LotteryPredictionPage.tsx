@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Button, Space, message } from 'antd';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Alert, Button, Space, Tag, message } from 'antd';
 import {
   DatabaseOutlined,
   ExperimentOutlined,
@@ -16,9 +16,12 @@ import LotteryRuleTrainer from './lottery/LotteryRuleTrainer';
 import { useRecordContext } from '../contexts/RecordContext';
 import { buildLotteryStats } from '../utils/lotteryStats';
 import {
+  lotteryPreferenceApi,
+  lotteryTicketApi,
   lotteryTrainingApi,
   type LotteryActualRecord,
   type LotteryLatestPrediction,
+  type LotteryPreference,
   type LotteryTrainingReport,
   type LotteryTrainingStatus
 } from '../services/api';
@@ -33,17 +36,44 @@ const LotteryPredictionPage = () => {
   const [training, setTraining] = useState(false);
   const [trainingStatus, setTrainingStatus] = useState<LotteryTrainingStatus | undefined>();
   const [trainingReport, setTrainingReport] = useState<LotteryTrainingReport | undefined>();
+  const [preference, setPreference] = useState<LotteryPreference>();
+
+  const savePredictionTicket = useCallback(async (prediction?: LotteryLatestPrediction) => {
+    if (!preference?.autoSavePredictions || !prediction?.targetPeriod || !prediction.redNumbers?.length) {
+      return;
+    }
+    try {
+      await lotteryTicketApi.saveTicket({
+        issue: String(prediction.targetPeriod),
+        redNumbers: prediction.redNumbers,
+        blueNumber: prediction.blueNumber,
+        quantity: 1,
+        cost: 2,
+        source: preference.defaultTicketSource || 'PREDICTION',
+        status: 'DRAFT',
+        note: `${prediction.title || '自动保存预测'} · 预测评分 ${prediction.score ?? '-'}`
+      });
+      message.success('已按偏好自动保存预测票据');
+    } catch (error) {
+      console.error('自动保存预测票据失败:', error);
+      message.error('自动保存预测票据失败');
+    }
+  }, [preference]);
 
   const runTraining = async () => {
     setTraining(true);
     setTrainingReport(undefined);
     try {
-      const status = await lotteryTrainingApi.start({ replayCount: 0, scale: 'deep' });
+      const status = await lotteryTrainingApi.start({
+        replayCount: preference?.defaultReplayCount ?? 0,
+        scale: (preference?.defaultTrainingScale as 'fast' | 'standard' | 'deep' | undefined) || 'standard'
+      });
       setTrainingStatus(status);
       if (!status.running && status.report) {
         setTrainingReport(status.report);
         setTrainedPrediction(status.report.latestPrediction);
-        message.success('全历史训练完成，已重新预测');
+        await savePredictionTicket(status.report.latestPrediction);
+        message.success('训练完成，已重新预测');
       }
     } catch (error) {
       console.error('规则训练失败:', error);
@@ -70,7 +100,8 @@ const LotteryPredictionPage = () => {
             if (status.report) {
               setTrainingReport(status.report);
               setTrainedPrediction(status.report.latestPrediction);
-              message.success('全历史训练完成，已重新预测');
+              savePredictionTicket(status.report.latestPrediction);
+              message.success('训练完成，已重新预测');
             }
           }
         })
@@ -82,7 +113,15 @@ const LotteryPredictionPage = () => {
         });
     }, 1000);
     return () => window.clearInterval(timer);
-  }, [training]);
+  }, [savePredictionTicket, training]);
+
+  useEffect(() => {
+    lotteryPreferenceApi.preference()
+      .then(setPreference)
+      .catch(error => {
+        console.warn('读取彩票偏好失败:', error);
+      });
+  }, []);
 
   useEffect(() => {
     lotteryTrainingApi.status()
@@ -158,6 +197,23 @@ const LotteryPredictionPage = () => {
         </Space>
       }
     >
+      {preference ? (
+        <Alert
+          className="lottery-overview-status-alert"
+          type={preference.autoSavePredictions ? 'success' : 'info'}
+          showIcon
+          message={
+            <Space wrap>
+              <span>训练偏好</span>
+              <Tag>{preference.defaultTrainingScale || 'standard'}</Tag>
+              <Tag>回放 {preference.defaultReplayCount ?? 0}</Tag>
+              <Tag color={preference.autoSavePredictions ? 'green' : 'default'}>
+                {preference.autoSavePredictions ? '自动保存票据' : '不自动保存'}
+              </Tag>
+            </Space>
+          }
+        />
+      ) : null}
       <LotteryPredictionInsights
         stats={stats}
         trainedPrediction={trainedPrediction}

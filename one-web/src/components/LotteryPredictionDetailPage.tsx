@@ -5,10 +5,12 @@ import { useNavigate, useParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import LotteryBalls from './lottery/LotteryBalls';
 import {
+  lotteryPreferenceApi,
   lotteryPredictionApi,
   lotteryTicketApi,
   type LotteryPredictionCandidate,
-  type LotteryPredictionSnapshot
+  type LotteryPredictionSnapshot,
+  type LotteryPreference
 } from '../services/api';
 import './LotteryOverviewPage.css';
 
@@ -40,6 +42,7 @@ const LotteryPredictionDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [prediction, setPrediction] = useState<LotteryPredictionSnapshot>();
+  const [preference, setPreference] = useState<LotteryPreference>();
   const [loading, setLoading] = useState(true);
   const [savingTicketKey, setSavingTicketKey] = useState<string>();
   const [error, setError] = useState<string>();
@@ -73,6 +76,14 @@ const LotteryPredictionDetailPage = () => {
     loadDetail();
   }, [id]);
 
+  useEffect(() => {
+    lotteryPreferenceApi.preference()
+      .then(setPreference)
+      .catch(requestError => {
+        console.warn('读取彩票偏好失败:', requestError);
+      });
+  }, []);
+
   const hitRedNumbers = useMemo(() => prediction?.actualRecord?.redNumbers || [], [prediction?.actualRecord?.redNumbers]);
   const hitBlueNumber = prediction?.actualRecord?.blueNumber;
 
@@ -96,7 +107,7 @@ const LotteryPredictionDetailPage = () => {
         blueNumber,
         quantity: 1,
         cost: 2,
-        source: 'PREDICTION',
+        source: preference?.defaultTicketSource || 'PREDICTION',
         status: 'DRAFT',
         predictionSnapshotId: prediction.id,
         note: `${title} · 预测评分 ${score ?? '-'}`

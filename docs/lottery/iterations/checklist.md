@@ -125,8 +125,8 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add provider operations panel to `/lottery/sync` or `/lottery/settings`. `/lottery/sync` now has a provider probe action and recent probe-log table.
 - [x] Add sync summary cards to `/lottery/sync`. Added recent success/failure/saved/duration cards and a latest sync summary strip.
 - [x] Add data quality repair UI with dry-run, confirm, and before/after report. `/lottery/data-quality` now generates missing-issue repair plans, confirms provider-backed fixes, and shows before/after repair counts.
-- [ ] Integrate preferences into prediction page defaults.
-- [ ] Add visible data quality indicators on operational entry points.
+- [x] Integrate preferences into prediction page defaults. Prediction training uses default scale/replay count, auto-save can save the primary prediction as a ticket, and prediction-detail ticket saving uses the default ticket source.
+- [x] Add visible data quality indicators on operational entry points. `/lottery/sync` now reads the data-quality report and shows a warning link when issues exist.
 - [x] Add frontend API client methods for new Iteration 07 endpoints. Added sync-summary, provider probe, and provider probe-log client methods.
 - [x] Add backend tests for repair dry-run/confirm behavior. Covered dry-run no-save behavior, confirm save/reorder behavior, and controller endpoint binding.
 - [x] Run frontend build after operational page changes. `npm run build` passed after `/lottery/sync` and `/lottery/data-quality` updates.
