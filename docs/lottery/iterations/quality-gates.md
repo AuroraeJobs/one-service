@@ -13,6 +13,8 @@ Use these gates when finishing a lottery milestone.
 - Long-running training has visible status and does not start duplicate jobs.
 - List endpoints that can grow support pagination or have a documented limit.
 - Daily workflow actions return step-level status and do not hide long-running prediction training behind aggregate endpoints.
+- Strategy experiments and backtests persist enough input, parameters, and result evidence to be revisited later.
+- Export and maintenance endpoints have dry-run, preview, or bounded-output behavior where appropriate.
 
 ## Frontend
 
@@ -22,6 +24,7 @@ Use these gates when finishing a lottery milestone.
 - Prediction copy stays research-oriented and avoids guaranteed outcome wording.
 - Personal ticket and ledger pages show cost and outcome clearly.
 - Workbench drill-through links preserve useful filters in query parameters.
+- Experiment, backtest, alert, export, and audit pages keep research language restrained and evidence-oriented.
 
 ## Data
 
@@ -30,6 +33,7 @@ Use these gates when finishing a lottery milestone.
 - Issue number uniqueness is enforced or guarded by service logic.
 - Derived statistics can be recalculated after record sync.
 - Redis cache keys are invalidated or refreshed after source data changes.
+- Audit metadata is preserved for generated predictions, saved tickets, daily-run steps, experiments, backtests, and exports once those flows exist.
 
 ## Documentation
 

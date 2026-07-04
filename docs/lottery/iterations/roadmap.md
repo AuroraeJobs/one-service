@@ -33,7 +33,7 @@ lottery/records/*
 The intended product path is:
 
 ```text
-historical records -> stable sync -> statistics cockpit -> prediction replay -> personal tickets -> prize and ROI tracking -> provider and rule operations -> daily workflow workbench
+historical records -> stable sync -> statistics cockpit -> prediction replay -> personal tickets -> prize and ROI tracking -> provider and rule operations -> daily workflow workbench -> intelligence platform
 ```
 
 The module should become a daily-use lottery research cockpit inside the life data area, similar to how the stock module became an investment cockpit.
@@ -274,6 +274,66 @@ GET  /lottery/predictions?page=&pageSize=&resultState=&targetPeriod=&ruleId=
 GET  /lottery/tickets?page=&pageSize=&issue=&status=&source=&prizeGrade=&predictionSnapshotId=
 GET  /lottery/records/sync-logs?page=&pageSize=&status=
 GET  /lottery/providers/probe-logs?page=&pageSize=&provider=
+```
+
+### Iteration 10: Lottery Intelligence Platform
+
+Goal: evolve the lottery module from a daily workbench into a longer-running research platform with strategy experiments, replay labs, alerting, exportable evidence, and governance around risk and data quality.
+
+This is a long iteration and should be delivered in waves. Each wave can be implemented and pushed independently while preserving the overall direction.
+
+#### Wave 10A: Workbench Completion And Navigation Backbone
+
+- Finish Iteration 09 workbench and scalable list tasks if any remain.
+- Add stable drill-through links between workbench, prediction history, ticket pages, ledger, sync, and quality pages.
+- Add a compact "today state" model so the module can resume the daily flow after refresh.
+- Preserve all existing routes and keep `/lottery/workbench` as the daily entry point.
+
+#### Wave 10B: Strategy Experiment Lab
+
+- Add durable strategy experiment records that capture strategy name, parameters, replay window, input source, generated candidates, score distribution, and outcome summary.
+- Allow comparing multiple strategies without replacing the current default prediction rule.
+- Add experiment tags and notes so useful trials can be revisited.
+- Keep all strategy execution behind backend services; frontend should only submit project-owned experiment requests.
+
+#### Wave 10C: Backtest And Replay Evidence
+
+- Add paged backtest reports with per-issue replay rows, hit statistics, prize-grade distribution, stability score, and bankroll simulation.
+- Support replay windows such as latest 30, 100, 300, and custom issue ranges.
+- Connect backtest output to rule comparison and ledger source/rule performance.
+- Add export-friendly report snapshots for future PDF/CSV work.
+
+#### Wave 10D: Alerts, Calendar, And Daily Reminders
+
+- Add draw calendar awareness: next draw date, expected sync window, and unresolved pending steps.
+- Add in-app reminders for pending sync, pending prediction, pending ticket confirmation, and pending prize check.
+- Keep notifications local to the app until an explicit external notification provider is selected.
+- Track alert acknowledgement so repeated warnings are useful rather than noisy.
+
+#### Wave 10E: Portfolio-Style Governance
+
+- Add budget and exposure settings for the lottery module: weekly/monthly budget, max tickets per issue, and reminder thresholds.
+- Add warnings when planned or recorded tickets exceed configured limits.
+- Extend ledger views with rolling cost, rolling prize, net result, ROI, and drawdown-style summaries.
+- Keep copy restrained and outcome-focused; never frame predictions as guaranteed wins.
+
+#### Wave 10F: Export, Audit, And Maintenance
+
+- Add export endpoints for tickets, ledger rows, prediction snapshots, experiment reports, and sync/probe logs.
+- Add audit metadata for generated predictions, saved tickets, and daily-run steps.
+- Add maintenance views for stale caches, old logs, and oversized history collections.
+- Add quality gates for export integrity and audit-field preservation.
+
+Suggested endpoint groups:
+
+```text
+lottery/experiments/*
+lottery/backtests/*
+lottery/alerts/*
+lottery/calendar/*
+lottery/budget/*
+lottery/exports/*
+lottery/audit/*
 ```
 
 ## Storage Direction

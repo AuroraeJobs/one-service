@@ -25,6 +25,8 @@ The current lottery navigation already has a strong exploratory surface. The tar
   - 候选号码
   - 训练回放
   - 规则管理
+  - 策略实验
+  - 回测报告
 - 我的
   - 投注记录
   - 中奖核验
@@ -33,6 +35,8 @@ The current lottery navigation already has a strong exploratory surface. The tar
   - 数据同步
   - 数据质量
   - Provider
+  - 提醒
+  - 导出审计
   - 设置
 - 分析
   - 幻境
@@ -55,8 +59,14 @@ The current lottery navigation already has a strong exploratory surface. The tar
 /lottery/prediction
 /lottery/predictions/history
 /lottery/predictions/:id
+/lottery/experiments
+/lottery/experiments/:id
+/lottery/backtests
+/lottery/backtests/:id
 /lottery/tickets
 /lottery/ledger
+/lottery/alerts
+/lottery/exports
 /lottery/sync
 /lottery/settings
 /lottery/data-quality
@@ -144,6 +154,16 @@ Goal: make the lottery module usable as a daily cockpit rather than a set of sep
 - Add pagination and query-backed filters to growing prediction, ticket, sync-log, and provider-probe-log lists.
 - Preserve existing routes and deep links while adding workbench drill-through links.
 
+### V8: Intelligence Platform
+
+Goal: support a longer research loop with experiments, backtests, reminders, governance, export, and auditability.
+
+- Add strategy experiment and backtest report pages.
+- Add calendar/reminder pages for daily lottery workflow state.
+- Add budget/exposure governance on tickets and ledger.
+- Add export and audit surfaces for tickets, predictions, experiments, backtests, ledger rows, sync logs, and probe logs.
+- Keep all external-provider behavior behind backend services and preserve project-owned `lottery/*` frontend calls.
+
 ## API Boundary
 
 Frontend should only call:
@@ -165,6 +185,13 @@ lottery/providers/*
 lottery/preferences
 lottery/data-quality
 lottery/workbench
+lottery/experiments/*
+lottery/backtests/*
+lottery/alerts/*
+lottery/calendar/*
+lottery/budget/*
+lottery/exports/*
+lottery/audit/*
 ```
 
 Do not add browser-side calls to external lottery websites or data providers.

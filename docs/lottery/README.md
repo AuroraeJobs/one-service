@@ -57,6 +57,14 @@ Iteration 09 should start from `docs/lottery/iterations/checklist.md` and implem
 sync records -> inspect latest draw -> generate or attach prediction -> save tickets -> check prizes -> review ledger outcome
 ```
 
+## Long Iteration
+
+Iteration 10 is the longer platform roadmap after the workbench foundation. It should be delivered in waves:
+
+```text
+workbench backbone -> strategy experiments -> backtest evidence -> alerts/calendar -> budget governance -> export/audit/maintenance
+```
+
 ## Non-Negotiable Rules
 
 - Frontend calls project-owned APIs only; do not call third-party lottery data providers directly from the browser.

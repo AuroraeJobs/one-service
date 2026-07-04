@@ -287,6 +287,62 @@ Initial list filter targets:
 - Sync logs: status, started-time range.
 - Provider probe logs: provider, availability, checked-time range.
 
+## Intelligence Platform Contract
+
+Iteration 10 is a longer platform iteration that should be delivered in independent waves after the workbench foundation is usable.
+
+Strategy experiments are durable research records, not replacements for the active prediction rule. A `LotteryStrategyExperiment` should capture:
+
+```text
+id
+strategyName
+parameters
+replayWindow
+inputSource
+candidates
+scoreDistribution
+outcomeSummary
+tags
+notes
+createdAt
+updatedAt
+```
+
+Backtests should preserve enough evidence to audit a strategy later. A `LotteryBacktestReport` should capture:
+
+```text
+id
+experimentId
+ruleId
+window
+issueRange
+rows
+redHitAverage
+blueHitRate
+prizeDistribution
+stabilityScore
+bankrollSimulation
+createdAt
+```
+
+Alerts and calendar state are app-local workflow helpers. They should track next draw date, expected sync window, pending daily steps, acknowledgement state, and generated timestamps. External notifications should not be introduced until a provider is explicitly selected and documented.
+
+Portfolio-style governance extends preferences and ledger behavior with budget and exposure thresholds. The backend should flag budget and max-ticket issues without blocking ordinary CRUD unless a future explicit enforcement mode is added.
+
+Exports and audit trails should be reproducible. Export endpoints should record export type, filters, generated row count, generatedAt, and requester scope. Audit metadata should be attached to generated predictions, saved tickets, daily-run steps, strategy experiments, backtests, and exports.
+
+Suggested platform endpoint groups:
+
+```text
+lottery/experiments/*
+lottery/backtests/*
+lottery/alerts/*
+lottery/calendar/*
+lottery/budget/*
+lottery/exports/*
+lottery/audit/*
+```
+
 ## API Design Rules
 
 - Keep existing APIs compatible while adding new `lottery/*` APIs.
@@ -301,6 +357,8 @@ Initial list filter targets:
 - Support pagination for list/history endpoints that can grow.
 - New paged APIs should use `items`, `page`, `pageSize`, `total`, and `hasNext` consistently.
 - Add status/message fields for sync, provider, and training operations.
+- Long-running strategy experiments and backtests should return durable operation records or report IDs rather than only transient status text.
+- Export and maintenance endpoints should support dry-run or preview behavior when data loss or large output is possible.
 - Use millisecond timestamps for API/cache time fields.
 
 ## Frontend Rules
@@ -314,6 +372,7 @@ Initial list filter targets:
 - The data quality page should use a two-step repair flow: generate a backend dry-run plan first, then enable confirm only for provider-backed missing issues.
 - Prediction pages should read `LotteryPreference` for default training scale, replay count, automatic prediction ticket saving, and default ticket source. Operational entry points should surface data-quality warnings from the backend report instead of hiding them behind a separate page.
 - The workbench page should be the daily entry point and use drill-through links into records, predictions, tickets, ledger, sync, and data quality rather than replacing those specialized pages.
+- Experiment, backtest, alert, export, and audit pages should stay research- and evidence-oriented; they should not add promotional language or imply guaranteed outcomes.
 
 ## Verification Strategy
 

@@ -173,6 +173,60 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [ ] Run frontend build after workbench and list-page changes.
 - [ ] Review git status and diff before each commit, then commit and push.
 
+## Iteration 10: Lottery Intelligence Platform
+
+### Wave 10A: Workbench Completion And Navigation Backbone
+
+- [ ] Finish remaining Iteration 09 workbench and scalable-list tasks before adding higher-level platform features.
+- [ ] Add stable drill-through links between workbench, prediction history, ticket pages, ledger, sync, and data quality pages.
+- [ ] Add a compact daily state DTO so the module can show whether sync, prediction, ticket saving, and prize checking are complete for the current issue.
+- [ ] Preserve all existing lottery routes while making `/lottery/workbench` the daily entry point.
+
+### Wave 10B: Strategy Experiment Lab
+
+- [ ] Add durable strategy experiment model with strategy name, parameters, replay window, generated candidates, score distribution, and outcome summary.
+- [ ] Add `POST /lottery/experiments/run` for explicit experiment runs.
+- [ ] Add `GET /lottery/experiments` with pagination, tags, strategy, and date filters.
+- [ ] Add `GET /lottery/experiments/{id}` for experiment detail and candidate review.
+- [ ] Add experiment notes/tags so useful trials can be revisited.
+- [ ] Add backend tests for experiment persistence, parameter normalization, and paged search.
+- [ ] Add experiment lab frontend route and API client types.
+
+### Wave 10C: Backtest And Replay Evidence
+
+- [ ] Add durable backtest report model with replay rows, prize distribution, hit statistics, stability score, and bankroll simulation.
+- [ ] Add `POST /lottery/backtests/run` with preset windows and custom issue-range support.
+- [ ] Add `GET /lottery/backtests` and `GET /lottery/backtests/{id}`.
+- [ ] Connect backtest summaries to rule comparison and source/rule ledger performance.
+- [ ] Add frontend backtest report page with paged replay rows and chart summaries.
+- [ ] Add export-ready report snapshot fields for future CSV/PDF export.
+
+### Wave 10D: Alerts, Calendar, And Daily Reminders
+
+- [ ] Add draw calendar DTO with next draw date, expected sync window, and current issue state.
+- [ ] Add `GET /lottery/calendar` for upcoming draw and recent draw schedule context.
+- [ ] Add alert/reminder model for pending sync, pending prediction, pending ticket confirmation, and pending prize check.
+- [ ] Add alert acknowledgement endpoint and UI affordance.
+- [ ] Keep reminders in-app only until an explicit external notification provider is selected.
+
+### Wave 10E: Portfolio-Style Governance
+
+- [ ] Extend preferences with weekly/monthly budget, max tickets per issue, and reminder thresholds.
+- [ ] Add backend checks that flag planned or recorded tickets exceeding configured limits.
+- [ ] Extend ledger with rolling cost, rolling prize, net result, ROI, and drawdown-style summaries.
+- [ ] Add frontend budget and exposure settings.
+- [ ] Add restrained warning copy for budget/exposure state without promising outcomes.
+
+### Wave 10F: Export, Audit, And Maintenance
+
+- [ ] Add export endpoints for tickets, ledger rows, prediction snapshots, experiment reports, and sync/probe logs.
+- [ ] Add audit metadata for generated predictions, saved tickets, daily-run steps, experiments, and exports.
+- [ ] Add maintenance summary for stale caches, old logs, and oversized history collections.
+- [ ] Add cleanup/dry-run endpoints where safe and keep destructive maintenance confirm-only.
+- [ ] Add tests for export integrity, audit-field preservation, and maintenance dry-run behavior.
+- [ ] Update docs and run appropriate backend/frontend verification after each wave.
+- [ ] Commit and push each wave independently.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.
