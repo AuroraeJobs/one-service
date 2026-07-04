@@ -1,6 +1,6 @@
 {
   "target": "Iteration 18 Week 4 lottery closed-loop release evidence smoke",
-  "generatedAt": "2026-07-04T15:49:25.528Z",
+  "generatedAt": "2026-07-04T15:52:50.372Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",

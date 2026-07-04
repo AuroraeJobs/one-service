@@ -207,7 +207,7 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
   lottery: [
     { id: 'lottery-overview', moduleKey: 'lottery', path: '/lottery', label: '概览', icon: <TrophyOutlined />, accent: '#ff3b30' },
     { id: 'lottery-workbench', moduleKey: 'lottery', path: '/lottery/workbench', label: '工作台', icon: <DashboardOutlined />, accent: '#0071e3' },
-    { id: 'lottery-month-end', moduleKey: 'lottery', path: '/lottery/month-end', label: '月末', icon: <CalendarOutlined />, accent: '#ff9500' },
+    { id: 'lottery-mobile', moduleKey: 'lottery', path: '/lottery/mobile', label: '移动', icon: <MobileOutlined />, accent: '#ff9500' },
     {
       id: 'lottery-predictions',
       moduleKey: 'lottery',
@@ -224,81 +224,80 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
         { id: 'lottery-strategy-portfolios', moduleKey: 'lottery', path: '/lottery/strategy-portfolios', label: '组合', icon: <AppstoreOutlined />, accent: '#00c7be' },
         { id: 'lottery-simulator', moduleKey: 'lottery', path: '/lottery/simulator', label: '沙盘', icon: <DotChartOutlined />, accent: '#ff3b30' },
         { id: 'lottery-research-notebook', moduleKey: 'lottery', path: '/lottery/research/notebook', label: '笔记', icon: <FileTextOutlined />, accent: '#5856d6' },
-        { id: 'lottery-alerts', moduleKey: 'lottery', path: '/lottery/alerts', label: '提醒', icon: <BellOutlined />, accent: '#ff9500' },
         { id: 'lottery-prediction-history', moduleKey: 'lottery', path: '/lottery/predictions/history', label: '历史', icon: <HistoryOutlined />, accent: '#5856d6' }
       ]
     },
     {
-      id: 'lottery-ticket-packs',
+      id: 'lottery-execution',
       moduleKey: 'lottery',
       path: '/lottery/ticket-packs',
-      label: '票包',
+      label: '执行',
       icon: <SafetyCertificateOutlined />,
-      accent: '#0071e3'
+      accent: '#0071e3',
+      children: [
+        { id: 'lottery-ticket-packs', moduleKey: 'lottery', path: '/lottery/ticket-packs', label: '票包', icon: <SafetyCertificateOutlined />, accent: '#0071e3' },
+        { id: 'lottery-tickets', moduleKey: 'lottery', path: '/lottery/tickets', label: '票据', icon: <FileTextOutlined />, accent: '#34c759' },
+        { id: 'lottery-alerts', moduleKey: 'lottery', path: '/lottery/alerts', label: '提醒', icon: <BellOutlined />, accent: '#ff9500' },
+        { id: 'lottery-month-end', moduleKey: 'lottery', path: '/lottery/month-end', label: '月末', icon: <CalendarOutlined />, accent: '#ff9500' },
+        { id: 'lottery-ledger', moduleKey: 'lottery', path: '/lottery/ledger', label: '账本', icon: <PieChartOutlined />, accent: '#0071e3' }
+      ]
     },
     {
-      id: 'lottery-mobile',
-      moduleKey: 'lottery',
-      path: '/lottery/mobile',
-      label: '移动',
-      icon: <MobileOutlined />,
-      accent: '#ff9500'
-    },
-    {
-      id: 'lottery-outcomes',
+      id: 'lottery-review',
       moduleKey: 'lottery',
       path: '/lottery/outcomes',
-      label: '归因',
+      label: '复盘',
       icon: <BranchesOutlined />,
-      accent: '#34c759'
+      accent: '#34c759',
+      children: [
+        { id: 'lottery-outcomes', moduleKey: 'lottery', path: '/lottery/outcomes', label: '归因', icon: <BranchesOutlined />, accent: '#34c759' },
+        { id: 'lottery-recommendations', moduleKey: 'lottery', path: '/lottery/recommendations', label: '推荐', icon: <CompassOutlined />, accent: '#ff9500' },
+        { id: 'lottery-governance', moduleKey: 'lottery', path: '/lottery/governance', label: '治理', icon: <AuditOutlined />, accent: '#5856d6' },
+        { id: 'lottery-exports', moduleKey: 'lottery', path: '/lottery/exports', label: '导出', icon: <DownloadOutlined />, accent: '#ff9500' }
+      ]
     },
     {
-      id: 'lottery-recommendations',
+      id: 'lottery-data',
       moduleKey: 'lottery',
-      path: '/lottery/recommendations',
-      label: '推荐',
-      icon: <CompassOutlined />,
-      accent: '#ff9500'
+      path: '/lottery/records',
+      label: '数据',
+      icon: <DatabaseOutlined />,
+      accent: '#00c7be',
+      children: [
+        { id: 'lottery-records', moduleKey: 'lottery', path: '/lottery/records', label: '开奖', icon: <DatabaseOutlined />, accent: '#00c7be' },
+        { id: 'lottery-sync', moduleKey: 'lottery', path: '/lottery/sync', label: '同步', icon: <SyncOutlined />, accent: '#00c7be' },
+        { id: 'lottery-data-quality', moduleKey: 'lottery', path: '/lottery/data-quality', label: '质检', icon: <SafetyCertificateOutlined />, accent: '#34c759' },
+        { id: 'lottery-statistics-frequency', moduleKey: 'lottery', path: '/lottery/statistics?tab=frequency', label: '频率', icon: <BarChartOutlined />, accent: '#0071e3' },
+        { id: 'lottery-statistics-group', moduleKey: 'lottery', path: '/lottery/statistics?tab=group', label: '分组', icon: <DotChartOutlined />, accent: '#34c759' },
+        { id: 'lottery-statistics-distribution', moduleKey: 'lottery', path: '/lottery/statistics?tab=distribution', label: '分布', icon: <LineChartOutlined />, accent: '#5856d6' },
+        { id: 'lottery-astronauts', moduleKey: 'lottery', path: '/lottery/astronauts', label: '宇航员', icon: <UserOutlined />, accent: '#00c7be' }
+      ]
     },
     {
-      id: 'lottery-governance',
+      id: 'lottery-insights',
       moduleKey: 'lottery',
-      path: '/lottery/governance',
-      label: '治理',
-      icon: <AuditOutlined />,
-      accent: '#5856d6'
-    },
-    {
-      id: 'lottery-tickets',
-      moduleKey: 'lottery',
-      path: '/lottery/tickets',
-      label: '票据',
-      icon: <FileTextOutlined />,
-      accent: '#34c759'
-    },
-    {
-      id: 'lottery-ledger',
-      moduleKey: 'lottery',
-      path: '/lottery/ledger',
-      label: '账本',
-      icon: <PieChartOutlined />,
-      accent: '#0071e3'
-    },
-    {
-      id: 'lottery-exports',
-      moduleKey: 'lottery',
-      path: '/lottery/exports',
-      label: '导出',
-      icon: <DownloadOutlined />,
-      accent: '#ff9500'
-    },
-    {
-      id: 'lottery-sync',
-      moduleKey: 'lottery',
-      path: '/lottery/sync',
-      label: '同步',
-      icon: <SyncOutlined />,
-      accent: '#00c7be'
+      path: '/lottery/analysis?tab=illusion',
+      label: '图谱',
+      icon: <ExperimentOutlined />,
+      accent: '#5856d6',
+      children: [
+        { id: 'lottery-analysis-illusion', moduleKey: 'lottery', path: '/lottery/analysis?tab=illusion', label: '幻境', icon: <ExperimentOutlined />, accent: '#5856d6' },
+        { id: 'lottery-analysis-planet', moduleKey: 'lottery', path: '/lottery/analysis?tab=planet', label: '星球', icon: <DotChartOutlined />, accent: '#722ed1' },
+        { id: 'lottery-analysis-energy', moduleKey: 'lottery', path: '/lottery/analysis?tab=energy', label: '能量', icon: <ThunderboltOutlined />, accent: '#ff9500' },
+        { id: 'lottery-analysis-accumulate', moduleKey: 'lottery', path: '/lottery/analysis?tab=accumulate', label: '累计', icon: <LineChartOutlined />, accent: '#34c759' },
+        { id: 'lottery-analysis-collect', moduleKey: 'lottery', path: '/lottery/analysis?tab=collect', label: '集齐', icon: <DatabaseOutlined />, accent: '#00c7be' },
+        { id: 'lottery-analysis-position', moduleKey: 'lottery', path: '/lottery/analysis?tab=position', label: '位置', icon: <BarChartOutlined />, accent: '#af52de' },
+        { id: 'lottery-pixel-universe', moduleKey: 'lottery', path: '/lottery/pixel-universe', label: '宇宙', icon: <DotChartOutlined />, accent: '#ff3b30' },
+        { id: 'lottery-pixel-card', moduleKey: 'lottery', path: '/lottery/pixel-card', label: '像素', icon: <DotChartOutlined />, accent: '#00c7be' },
+        { id: 'lottery-pixel-stats', moduleKey: 'lottery', path: '/lottery/pixel-stats', label: '行列', icon: <BarChartOutlined />, accent: '#34c759' },
+        { id: 'lottery-taiji', moduleKey: 'lottery', path: '/lottery/taiji', label: '太极', icon: <DotChartOutlined />, accent: '#722ed1' },
+        { id: 'lottery-hexagram', moduleKey: 'lottery', path: '/lottery/hexagram', label: '卦象', icon: <ExperimentOutlined />, accent: '#ff9500' },
+        { id: 'lottery-space', moduleKey: 'lottery', path: '/lottery/space', label: '太空', icon: <ExperimentOutlined />, accent: '#5856d6' },
+        { id: 'lottery-parasite', moduleKey: 'lottery', path: '/lottery/parasite', label: '寄生草', icon: <GlobalOutlined />, accent: '#4caf50' },
+        { id: 'lottery-dingfengbo', moduleKey: 'lottery', path: '/lottery/dingfengbo', label: '定风波', icon: <CompassOutlined />, accent: '#1890ff' },
+        { id: 'lottery-autumn-beginning', moduleKey: 'lottery', path: '/lottery/autumn-beginning', label: '立秋', icon: <CalendarOutlined />, accent: '#ff9500' },
+        { id: 'lottery-winter-beginning', moduleKey: 'lottery', path: '/lottery/winter-beginning', label: '立冬', icon: <ClockCircleOutlined />, accent: '#0071e3' }
+      ]
     },
     {
       id: 'lottery-settings',
@@ -307,64 +306,6 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
       label: '设置',
       icon: <SettingOutlined />,
       accent: '#5856d6'
-    },
-    {
-      id: 'lottery-data-quality',
-      moduleKey: 'lottery',
-      path: '/lottery/data-quality',
-      label: '质检',
-      icon: <SafetyCertificateOutlined />,
-      accent: '#34c759'
-    },
-    {
-      id: 'lottery-statistics',
-      moduleKey: 'lottery',
-      path: '/lottery/statistics?tab=frequency',
-      label: '统计',
-      icon: <BarChartOutlined />,
-      accent: '#0071e3',
-      children: [
-        { id: 'lottery-statistics-frequency', moduleKey: 'lottery', path: '/lottery/statistics?tab=frequency', label: '频率', icon: <BarChartOutlined />, accent: '#0071e3' },
-        { id: 'lottery-statistics-group', moduleKey: 'lottery', path: '/lottery/statistics?tab=group', label: '分组', icon: <DotChartOutlined />, accent: '#34c759' },
-        { id: 'lottery-statistics-distribution', moduleKey: 'lottery', path: '/lottery/statistics?tab=distribution', label: '分布', icon: <LineChartOutlined />, accent: '#5856d6' },
-        { id: 'lottery-astronauts', moduleKey: 'lottery', path: '/lottery/astronauts', label: '宇航员', icon: <UserOutlined />, accent: '#00c7be' },
-        { id: 'lottery-parasite', moduleKey: 'lottery', path: '/lottery/parasite', label: '寄生草', icon: <GlobalOutlined />, accent: '#4caf50' },
-        { id: 'lottery-dingfengbo', moduleKey: 'lottery', path: '/lottery/dingfengbo', label: '定风波', icon: <CompassOutlined />, accent: '#1890ff' },
-        { id: 'lottery-autumn-beginning', moduleKey: 'lottery', path: '/lottery/autumn-beginning', label: '立秋', icon: <CalendarOutlined />, accent: '#ff9500' },
-        { id: 'lottery-winter-beginning', moduleKey: 'lottery', path: '/lottery/winter-beginning', label: '立冬', icon: <ClockCircleOutlined />, accent: '#0071e3' }
-      ]
-    },
-    {
-      id: 'lottery-symbols',
-      moduleKey: 'lottery',
-      path: '/lottery/analysis?tab=illusion',
-      label: '分析',
-      icon: <ExperimentOutlined />,
-      accent: '#5856d6',
-      children: [
-        { id: 'lottery-analysis-illusion', moduleKey: 'lottery', path: '/lottery/analysis?tab=illusion', label: '幻境', icon: <ExperimentOutlined />, accent: '#5856d6' },
-        { id: 'lottery-pixel-universe', moduleKey: 'lottery', path: '/lottery/pixel-universe', label: '宇宙', icon: <DotChartOutlined />, accent: '#ff3b30' },
-        { id: 'lottery-pixel-card', moduleKey: 'lottery', path: '/lottery/pixel-card', label: '像素', icon: <DotChartOutlined />, accent: '#00c7be' },
-        { id: 'lottery-pixel-stats', moduleKey: 'lottery', path: '/lottery/pixel-stats', label: '行列', icon: <BarChartOutlined />, accent: '#34c759' },
-        { id: 'lottery-taiji', moduleKey: 'lottery', path: '/lottery/taiji', label: '太极', icon: <DotChartOutlined />, accent: '#722ed1' },
-        { id: 'lottery-hexagram', moduleKey: 'lottery', path: '/lottery/hexagram', label: '卦象', icon: <ExperimentOutlined />, accent: '#ff9500' }
-      ]
-    },
-    {
-      id: 'lottery-track',
-      moduleKey: 'lottery',
-      path: '/lottery/analysis?tab=planet',
-      label: '轨迹',
-      icon: <DotChartOutlined />,
-      accent: '#722ed1',
-      children: [
-        { id: 'lottery-analysis-planet', moduleKey: 'lottery', path: '/lottery/analysis?tab=planet', label: '星球', icon: <DotChartOutlined />, accent: '#722ed1' },
-        { id: 'lottery-analysis-energy', moduleKey: 'lottery', path: '/lottery/analysis?tab=energy', label: '能量', icon: <ThunderboltOutlined />, accent: '#ff9500' },
-        { id: 'lottery-analysis-accumulate', moduleKey: 'lottery', path: '/lottery/analysis?tab=accumulate', label: '累计', icon: <LineChartOutlined />, accent: '#34c759' },
-        { id: 'lottery-analysis-collect', moduleKey: 'lottery', path: '/lottery/analysis?tab=collect', label: '集齐', icon: <DatabaseOutlined />, accent: '#00c7be' },
-        { id: 'lottery-analysis-position', moduleKey: 'lottery', path: '/lottery/analysis?tab=position', label: '位置', icon: <BarChartOutlined />, accent: '#af52de' },
-        { id: 'lottery-space', moduleKey: 'lottery', path: '/lottery/space', label: '太空', icon: <ExperimentOutlined />, accent: '#5856d6' }
-      ]
     }
   ],
   ai: [
