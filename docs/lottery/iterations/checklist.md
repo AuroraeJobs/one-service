@@ -264,13 +264,13 @@ Use this file as the durable task board for the lottery module. When a task is f
 
 ### Wave 11D: Reports, Export, Audit, And Frontend Polish
 
-- [ ] Add a frontend report builder for tickets, ledger, prediction, experiment, backtest, sync-log, and probe-log sections.
-- [ ] Add browser CSV download for existing `GET /lottery/exports/{type}` responses.
-- [ ] Add audit explorer filters for type, target, date range, and row count where available.
-- [ ] Improve maintenance preview with cache, log, and history grouping.
-- [ ] Add print-friendly report view for selected report sections.
-- [ ] Polish dense loading, empty, error, overflow, and responsive states across workbench, research, ticket, ledger, export, and alert pages.
-- [ ] Run `npm run build`, update docs, commit, and push.
+- [x] Add a frontend report builder for tickets, ledger, prediction, experiment, backtest, sync-log, and probe-log sections. `/lottery/exports` now lets users select multiple export sections and generate a combined report preview.
+- [x] Add browser CSV download for existing `GET /lottery/exports/{type}` responses. Single export results and report sections now download client-side CSV files from returned content.
+- [x] Add audit explorer filters for type, target, date range, and row count where available. Audit events now have current-page filters for event/type, target/message text, date range, and minimum row count.
+- [x] Improve maintenance preview with cache, log, and history grouping. Maintenance preview now summarizes cache, log, history, and other collection groups before the detailed tables.
+- [x] Add print-friendly report view for selected report sections. Report preview supports browser printing with print-only layout rules.
+- [x] Polish dense loading, empty, error, overflow, and responsive states across workbench, research, ticket, ledger, export, and alert pages. Export/audit/maintenance gained empty states, table scroll, responsive filters, and print layout while reusing the existing workbench/research/ticket/ledger/alert loading and empty-state patterns.
+- [x] Run `npm run build`, update docs, commit, and push.
 
 ## Documentation And Delivery
 

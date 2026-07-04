@@ -186,6 +186,8 @@ The ticket issue timeline combines all-ticket list data with `/lottery/ledger/is
 
 Prediction detail can batch-save the primary prediction and all candidate predictions through `POST /lottery/tickets/batch`; the ticket page can run `POST /lottery/tickets/check-prizes/latest` and display the returned summary before refreshing ticket rows and totals. Prediction history exposes result-status filtering and a latest-draw attachment action; prediction detail shows linked ticket count and can open the ticket page filtered by `predictionSnapshotId`, while linked ticket rows can jump back to the originating prediction snapshot.
 
+The export and maintenance frontend at `/lottery/exports` uses the existing `GET /lottery/exports/{type}`, `GET /lottery/audit/events`, and maintenance APIs to provide a report builder, client-side CSV download, audit filtering, maintenance grouping, and a print-friendly report preview. The browser download path uses the returned `LotteryExportResult.content` and `fileName`; it does not introduce browser-side provider calls or alternate export endpoints.
+
 Ticket queries accept `predictionSnapshotId` to support prediction-detail linkbacks. `POST /lottery/predictions/attach-latest-actual` reads the latest draw record, finds prediction snapshots whose `targetPeriod` matches that draw, attaches the normalized actual record, and recalculates primary and candidate results.
 
 The ticket page create/edit modal posts to the ticket CRUD APIs and accepts red numbers as space- or comma-separated input before converting them to the backend list format.

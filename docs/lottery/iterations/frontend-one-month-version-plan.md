@@ -101,6 +101,8 @@ Acceptance:
 
 ## Week 4: Reports, Export, Audit, And Frontend Polish
 
+Status: shipped in Wave 11D.
+
 Goal: turn the existing export/audit/maintenance foundation into usable frontend workflows.
 
 Deliverables:
@@ -117,7 +119,7 @@ Acceptance:
 - Users can generate and download CSV from the export page.
 - Users can build a frontend report preview without leaving the app.
 - Audit and maintenance surfaces are useful on desktop and readable on mobile.
-- `npm run build` passes.
+- `npm run build` passes. Verified after the Wave 11D export, report, audit, and maintenance frontend changes.
 
 ## Weekly Delivery Rules
 

@@ -1,7 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Empty, Input, Select, Space, Table, Tag } from 'antd';
+import { Alert, Button, Card, Checkbox, Empty, Input, Select, Space, Table, Tag, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { DownloadOutlined, ReloadOutlined, SafetyCertificateOutlined, ToolOutlined } from '@ant-design/icons';
+import {
+  DownloadOutlined,
+  FilterOutlined,
+  FileTextOutlined,
+  PrinterOutlined,
+  ReloadOutlined,
+  SafetyCertificateOutlined,
+  ToolOutlined
+} from '@ant-design/icons';
 import LifePageShell from './LifePageShell';
 import {
   lotteryExportApi,
@@ -22,6 +30,8 @@ const exportTypeOptions = [
   { label: '同步日志', value: 'sync-logs' },
   { label: '探测日志', value: 'probe-logs' }
 ];
+
+const defaultReportSections = ['tickets', 'ledger-issues', 'predictions'];
 
 const formatDateTime = (timestamp?: number) => {
   if (!timestamp) {
@@ -51,15 +61,59 @@ const toParams = (type: string, primaryFilter: string, limit: string) => {
   return params;
 };
 
+const exportTypeLabel = (type?: string) =>
+  exportTypeOptions.find(option => option.value === type)?.label || type || '-';
+
+const downloadCsv = (result?: LotteryExportResult) => {
+  if (!result?.content) {
+    message.warning('暂无可下载内容');
+    return;
+  }
+  const fileName = result.fileName || `${result.exportType || 'lottery-export'}.csv`;
+  const blob = new Blob([`\uFEFF${result.content}`], { type: 'text/csv;charset=utf-8;' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+};
+
+const csvPreview = (content?: string, maxLines = 10) => (content || '').split('\n').slice(0, maxLines).join('\n');
+
+const toDateStart = (value: string) => {
+  if (!value) {
+    return undefined;
+  }
+  return new Date(`${value}T00:00:00`).getTime();
+};
+
+const toDateEnd = (value: string) => {
+  if (!value) {
+    return undefined;
+  }
+  return new Date(`${value}T23:59:59`).getTime();
+};
+
 const LotteryExportMaintenancePage = () => {
   const [exportType, setExportType] = useState('tickets');
   const [primaryFilter, setPrimaryFilter] = useState('');
   const [limit, setLimit] = useState('500');
   const [result, setResult] = useState<LotteryExportResult>();
+  const [reportSections, setReportSections] = useState<string[]>(defaultReportSections);
+  const [reportResults, setReportResults] = useState<LotteryExportResult[]>([]);
+  const [reporting, setReporting] = useState(false);
   const [auditEvents, setAuditEvents] = useState<LotteryAuditEvent[]>([]);
   const [auditPage, setAuditPage] = useState(1);
   const [auditPageSize, setAuditPageSize] = useState(6);
   const [auditTotal, setAuditTotal] = useState(0);
+  const [auditTypeFilter, setAuditTypeFilter] = useState<string>();
+  const [auditTargetFilter, setAuditTargetFilter] = useState('');
+  const [auditStartDate, setAuditStartDate] = useState('');
+  const [auditEndDate, setAuditEndDate] = useState('');
+  const [auditMinRows, setAuditMinRows] = useState('');
   const [maintenance, setMaintenance] = useState<LotteryMaintenanceSummary>();
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -95,12 +149,37 @@ const LotteryExportMaintenancePage = () => {
     try {
       const data = await lotteryExportApi.export(exportType, toParams(exportType, primaryFilter, limit));
       setResult(data);
+      message.success(`已生成 ${exportTypeLabel(data.exportType)} ${data.rowCount || 0} 行`);
       await loadState();
     } catch (requestError) {
       console.error('导出彩票数据失败:', requestError);
       setError(requestError instanceof Error ? requestError.message : '导出彩票数据失败');
+      message.error('导出彩票数据失败');
     } finally {
       setExporting(false);
+    }
+  };
+
+  const buildReport = async () => {
+    if (!reportSections.length) {
+      message.warning('请选择报表区块');
+      return;
+    }
+    setReporting(true);
+    setError(undefined);
+    try {
+      const results = await Promise.all(reportSections.map(type => (
+        lotteryExportApi.export(type, toParams(type, primaryFilter, limit))
+      )));
+      setReportResults(results);
+      message.success(`已生成 ${results.length} 个报表区块`);
+      await loadState();
+    } catch (requestError) {
+      console.error('生成彩票报表失败:', requestError);
+      setError(requestError instanceof Error ? requestError.message : '生成彩票报表失败');
+      message.error('生成彩票报表失败');
+    } finally {
+      setReporting(false);
     }
   };
 
@@ -116,6 +195,53 @@ const LotteryExportMaintenancePage = () => {
       setDryRunning(false);
     }
   };
+
+  const clearAuditFilters = () => {
+    setAuditTypeFilter(undefined);
+    setAuditTargetFilter('');
+    setAuditStartDate('');
+    setAuditEndDate('');
+    setAuditMinRows('');
+  };
+
+  const filteredAuditEvents = useMemo(() => {
+    const startAt = toDateStart(auditStartDate);
+    const endAt = toDateEnd(auditEndDate);
+    const minRows = Number(auditMinRows || 0);
+    return auditEvents.filter(event => {
+      const targetText = `${event.targetType || ''} ${event.targetId || ''} ${event.message || ''}`.toLowerCase();
+      if (auditTypeFilter && event.targetType !== auditTypeFilter && event.eventType !== auditTypeFilter) {
+        return false;
+      }
+      if (auditTargetFilter.trim() && !targetText.includes(auditTargetFilter.trim().toLowerCase())) {
+        return false;
+      }
+      if (startAt && (!event.generatedAt || event.generatedAt < startAt)) {
+        return false;
+      }
+      if (endAt && (!event.generatedAt || event.generatedAt > endAt)) {
+        return false;
+      }
+      if (minRows > 0 && Number(event.rowCount || 0) < minRows) {
+        return false;
+      }
+      return true;
+    });
+  }, [auditEndDate, auditEvents, auditMinRows, auditStartDate, auditTargetFilter, auditTypeFilter]);
+
+  const maintenanceGroups = useMemo(() => {
+    const collections = maintenance?.collections || [];
+    const caches = maintenance?.caches || [];
+    const logCollections = collections.filter(item => /log|audit|probe|sync/i.test(item.collection || ''));
+    const historyCollections = collections.filter(item => /history|prediction|experiment|backtest|ticket|record/i.test(item.collection || ''));
+    const otherCollections = collections.filter(item => !logCollections.includes(item) && !historyCollections.includes(item));
+    return [
+      { key: 'cache', title: '缓存', count: caches.length, stale: caches.filter(item => !item.present || item.noExpiry).length },
+      { key: 'log', title: '日志', count: logCollections.length, stale: logCollections.reduce((sum, item) => sum + Number(item.staleCount || 0), 0) },
+      { key: 'history', title: '历史', count: historyCollections.length, stale: historyCollections.reduce((sum, item) => sum + Number(item.staleCount || 0), 0) },
+      { key: 'other', title: '其他', count: otherCollections.length, stale: otherCollections.reduce((sum, item) => sum + Number(item.staleCount || 0), 0) }
+    ];
+  }, [maintenance?.caches, maintenance?.collections]);
 
   const auditColumns: ColumnsType<LotteryAuditEvent> = [
     { title: '类型', dataIndex: 'targetType', key: 'targetType', render: value => <Tag color="blue">{value || '-'}</Tag> },
@@ -139,7 +265,11 @@ const LotteryExportMaintenancePage = () => {
     { title: '过期', dataIndex: 'noExpiry', key: 'noExpiry', render: value => <Tag color={value ? 'gold' : 'default'}>{value ? 'NO TTL' : 'TTL'}</Tag> }
   ];
 
-  const resultLines = useMemo(() => (result?.content || '').split('\n').slice(0, 12).join('\n'), [result?.content]);
+  const resultLines = useMemo(() => csvPreview(result?.content, 12), [result?.content]);
+  const reportTotalRows = useMemo(
+    () => reportResults.reduce((sum, item) => sum + Number(item.rowCount || 0), 0),
+    [reportResults]
+  );
 
   return (
     <LifePageShell
@@ -153,6 +283,9 @@ const LotteryExportMaintenancePage = () => {
           </Button>
           <Button icon={<ToolOutlined />} loading={dryRunning} onClick={runDryRun}>
             Dry-run
+          </Button>
+          <Button icon={<PrinterOutlined />} disabled={!reportResults.length} onClick={() => window.print()}>
+            打印报表
           </Button>
         </Space>
       }
@@ -170,8 +303,41 @@ const LotteryExportMaintenancePage = () => {
         </Space>
       </Card>
 
+      <Card
+        className="life-panel-card lottery-clean-panel"
+        title={<Space><FileTextOutlined />报表构建器</Space>}
+        extra={
+          <Space wrap>
+            <Tag color="blue">区块 {reportSections.length}</Tag>
+            <Button icon={<PrinterOutlined />} disabled={!reportResults.length} onClick={() => window.print()}>
+              打印
+            </Button>
+            <Button type="primary" icon={<FileTextOutlined />} loading={reporting} onClick={buildReport}>
+              生成报表
+            </Button>
+          </Space>
+        }
+      >
+        <div className="lottery-report-builder">
+          <Checkbox.Group
+            options={exportTypeOptions}
+            value={reportSections}
+            onChange={values => setReportSections(values.map(String))}
+          />
+          <Space wrap>
+            <span>共用筛选 {primaryFilter.trim() || '全部'}</span>
+            <span>行数上限 {Number(limit) > 0 ? Number(limit) : 500}</span>
+            <span>已生成 {reportResults.length} 个区块 / {reportTotalRows} 行</span>
+          </Space>
+        </div>
+      </Card>
+
       {result ? (
-        <Card className="life-panel-card lottery-clean-panel" title={<Space><DownloadOutlined />{result.fileName}</Space>}>
+        <Card
+          className="life-panel-card lottery-clean-panel"
+          title={<Space><DownloadOutlined />{result.fileName}</Space>}
+          extra={<Button size="small" icon={<DownloadOutlined />} onClick={() => downloadCsv(result)}>下载 CSV</Button>}
+        >
           <Space wrap size="large">
             <span>类型 {result.exportType}</span>
             <span>行数 {result.rowCount || 0}</span>
@@ -181,28 +347,112 @@ const LotteryExportMaintenancePage = () => {
         </Card>
       ) : null}
 
+      {reportResults.length ? (
+        <Card className="life-panel-card lottery-clean-panel lottery-report-print-area" title={<Space><FileTextOutlined />报表预览</Space>}>
+          <div className="lottery-report-section-grid">
+            {reportResults.map(section => (
+              <article className="lottery-report-section" key={`${section.exportType}-${section.generatedAt}`}>
+                <div className="lottery-report-section-head">
+                  <div>
+                    <strong>{exportTypeLabel(section.exportType)}</strong>
+                    <span>{section.fileName || '-'} · {section.rowCount || 0} 行 · {formatDateTime(section.generatedAt)}</span>
+                  </div>
+                  <Button size="small" icon={<DownloadOutlined />} onClick={() => downloadCsv(section)}>CSV</Button>
+                </div>
+                {section.content ? <pre className="lottery-export-preview">{csvPreview(section.content, 8)}</pre> : <Empty description="暂无数据" />}
+              </article>
+            ))}
+          </div>
+        </Card>
+      ) : null}
+
       <section className="lottery-workbench-main-grid">
-        <Card className="life-panel-card lottery-clean-panel" title={<Space><SafetyCertificateOutlined />审计事件</Space>}>
+        <Card
+          className="life-panel-card lottery-clean-panel"
+          title={<Space><SafetyCertificateOutlined />审计事件</Space>}
+          extra={<Tag>{filteredAuditEvents.length}/{auditEvents.length} 条</Tag>}
+        >
+          <div className="lottery-audit-filter-bar">
+            <Select
+              allowClear
+              placeholder="类型"
+              value={auditTypeFilter}
+              onChange={setAuditTypeFilter}
+              options={[
+                { label: '导出', value: 'EXPORT' },
+                ...exportTypeOptions
+              ]}
+              style={{ width: 140 }}
+            />
+            <Input
+              allowClear
+              prefix={<FilterOutlined />}
+              value={auditTargetFilter}
+              onChange={event => setAuditTargetFilter(event.target.value)}
+              placeholder="目标/消息"
+              style={{ width: 180 }}
+            />
+            <Input type="date" value={auditStartDate} onChange={event => setAuditStartDate(event.target.value)} style={{ width: 150 }} />
+            <Input type="date" value={auditEndDate} onChange={event => setAuditEndDate(event.target.value)} style={{ width: 150 }} />
+            <Input
+              value={auditMinRows}
+              onChange={event => setAuditMinRows(event.target.value)}
+              placeholder="最少行数"
+              style={{ width: 110 }}
+            />
+            <Button onClick={clearAuditFilters}>清除</Button>
+          </div>
           <Table
             rowKey={record => record.id || record.targetId || `${record.targetType}-${record.generatedAt}`}
             columns={auditColumns}
-            dataSource={auditEvents}
+            dataSource={filteredAuditEvents}
             loading={loading}
+            size="small"
+            locale={{ emptyText: <Empty description="暂无审计事件" /> }}
             pagination={{
               current: auditPage,
               pageSize: auditPageSize,
-              total: auditTotal,
+              total: auditTypeFilter || auditTargetFilter || auditStartDate || auditEndDate || auditMinRows ? filteredAuditEvents.length : auditTotal,
               showSizeChanger: true,
               onChange: (page, pageSize) => {
                 setAuditPage(page);
                 setAuditPageSize(pageSize);
               }
             }}
+            scroll={{ x: 680 }}
           />
         </Card>
         <Card className="life-panel-card lottery-clean-panel" title={<Space><ToolOutlined />维护预览</Space>}>
-          <Table rowKey={record => record.collection || ''} columns={maintenanceColumns} dataSource={maintenance?.collections || []} loading={loading || dryRunning} pagination={false} size="small" />
-          <Table className="lottery-maintenance-cache-table" rowKey={record => record.cacheKey || ''} columns={cacheColumns} dataSource={maintenance?.caches || []} loading={loading || dryRunning} pagination={false} size="small" />
+          <div className="lottery-maintenance-group-grid">
+            {maintenanceGroups.map(group => (
+              <span key={group.key}>
+                <small>{group.title}</small>
+                <strong>{group.count}</strong>
+                <em>需关注 {group.stale}</em>
+              </span>
+            ))}
+          </div>
+          <Table
+            rowKey={record => record.collection || ''}
+            columns={maintenanceColumns}
+            dataSource={maintenance?.collections || []}
+            loading={loading || dryRunning}
+            pagination={false}
+            size="small"
+            locale={{ emptyText: <Empty description="暂无集合状态" /> }}
+            scroll={{ x: 720 }}
+          />
+          <Table
+            className="lottery-maintenance-cache-table"
+            rowKey={record => record.cacheKey || ''}
+            columns={cacheColumns}
+            dataSource={maintenance?.caches || []}
+            loading={loading || dryRunning}
+            pagination={false}
+            size="small"
+            locale={{ emptyText: <Empty description="暂无缓存状态" /> }}
+            scroll={{ x: 620 }}
+          />
         </Card>
       </section>
     </LifePageShell>
