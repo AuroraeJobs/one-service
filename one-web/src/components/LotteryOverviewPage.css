@@ -275,6 +275,97 @@
   line-height: 1.6;
 }
 
+.lottery-workbench-status-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.lottery-workbench-status-card {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.lottery-workbench-status-card:hover {
+  border-color: var(--module-accent, #0071e3);
+  transform: translateY(-1px);
+}
+
+.lottery-workbench-status-card > span {
+  color: var(--module-accent, #0071e3);
+  font-size: 22px;
+}
+
+.lottery-workbench-status-card div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.lottery-workbench-status-card strong {
+  overflow: hidden;
+  color: var(--app-text);
+  font-size: 22px;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-workbench-status-card em {
+  color: var(--app-text);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.lottery-workbench-status-card small,
+.lottery-workbench-training > span,
+.lottery-workbench-generated {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.lottery-workbench-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+  gap: 16px;
+  margin-bottom: 16px;
+  align-items: start;
+}
+
+.lottery-workbench-prediction,
+.lottery-workbench-training {
+  display: grid;
+  gap: 14px;
+}
+
+.lottery-workbench-action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.lottery-workbench-action-grid .ant-btn {
+  justify-content: flex-start;
+}
+
+.lottery-workbench-generated {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
 .lottery-overview-status-alert {
   margin-bottom: 16px;
   border-radius: 8px;

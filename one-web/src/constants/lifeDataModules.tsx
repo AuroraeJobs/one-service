@@ -200,6 +200,7 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
   ],
   lottery: [
     { id: 'lottery-overview', moduleKey: 'lottery', path: '/lottery', label: '概览', icon: <TrophyOutlined />, accent: '#ff3b30' },
+    { id: 'lottery-workbench', moduleKey: 'lottery', path: '/lottery/workbench', label: '工作台', icon: <DashboardOutlined />, accent: '#0071e3' },
     {
       id: 'lottery-predictions',
       moduleKey: 'lottery',

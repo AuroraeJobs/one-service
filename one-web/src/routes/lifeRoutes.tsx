@@ -32,6 +32,7 @@ import LotteryPredictionPage from '../components/LotteryPredictionPage';
 import LotterySettingsPage from '../components/LotterySettingsPage';
 import LotterySyncOperationsPage from '../components/LotterySyncOperationsPage';
 import LotteryTicketPage from '../components/LotteryTicketPage';
+import LotteryWorkbenchPage from '../components/LotteryWorkbenchPage';
 import LotteryPixelCardPage from '../components/LotteryPixelCardPage';
 import LotteryPixelStatsPage from '../components/LotteryPixelStatsPage';
 import LotteryPixelUniversePage from '../components/LotteryPixelUniversePage';
@@ -73,6 +74,7 @@ export const createProtectedRoutes = (isTabVisible: boolean): ProtectedRouteConf
   { path: '/finance/salary', element: <HealthSummerSolsticePage /> },
   { path: '/lottery', element: <LotteryOverviewPage /> },
   { path: '/lottery/overview', element: <LotteryOverviewPage /> },
+  { path: '/lottery/workbench', element: <LotteryWorkbenchPage /> },
   { path: '/lottery/prediction', element: <LotteryPredictionPage /> },
   { path: '/lottery/predictions/history', element: <LotteryPredictionHistoryPage /> },
   { path: '/lottery/predictions/:id', element: <LotteryPredictionDetailPage /> },
