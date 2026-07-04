@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button, Space, message } from 'antd';
-import { DatabaseOutlined, ExperimentOutlined, HeartOutlined, HistoryOutlined, ReloadOutlined } from '@ant-design/icons';
+import {
+  DatabaseOutlined,
+  ExperimentOutlined,
+  FileTextOutlined,
+  HeartOutlined,
+  HistoryOutlined,
+  PieChartOutlined,
+  ReloadOutlined
+} from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import LotteryPredictionInsights from './lottery/LotteryPredictionInsights';
@@ -134,6 +142,12 @@ const LotteryPredictionPage = () => {
           </Button>
           <Button icon={<HistoryOutlined />} onClick={() => navigate('/lottery/predictions/history')}>
             历史
+          </Button>
+          <Button icon={<FileTextOutlined />} onClick={() => navigate('/lottery/tickets')}>
+            票据
+          </Button>
+          <Button icon={<PieChartOutlined />} onClick={() => navigate('/lottery/ledger')}>
+            账本
           </Button>
           <Button icon={<ReloadOutlined />} loading={loading} onClick={refreshRecords}>
             更新数据

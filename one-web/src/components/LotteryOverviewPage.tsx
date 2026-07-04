@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Empty, Space, Spin, Tag } from 'antd';
-import { BarChartOutlined, DatabaseOutlined, PieChartOutlined, ReloadOutlined } from '@ant-design/icons';
+import { BarChartOutlined, DatabaseOutlined, FileTextOutlined, PieChartOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { EChartsOption } from 'echarts';
 import ReactECharts from 'echarts-for-react';
 import { useNavigate } from 'react-router-dom';
@@ -194,6 +194,12 @@ const LotteryOverviewPage = () => {
           </Button>
           <Button icon={<PieChartOutlined />} onClick={() => navigate('/lottery/statistics?tab=frequency')}>
             统计分析
+          </Button>
+          <Button icon={<FileTextOutlined />} onClick={() => navigate('/lottery/tickets')}>
+            票据
+          </Button>
+          <Button icon={<PieChartOutlined />} onClick={() => navigate('/lottery/ledger')}>
+            账本
           </Button>
           <Button type="primary" icon={<DatabaseOutlined />} onClick={() => navigate('/lottery/records')}>
             开奖记录

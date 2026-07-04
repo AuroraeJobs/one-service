@@ -92,7 +92,7 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add issue ledger table. `/lottery/ledger` now loads `GET /lottery/ledger/issues` and renders issue-level cost, prize, net result, and ROI rows.
 - [x] Add monthly trend chart. `/lottery/ledger` now renders an ECharts monthly cost, prize, and net result trend from `GET /lottery/ledger/months`.
 - [x] Add source/rule performance chart. `/lottery/ledger` now loads source and rule performance rows and charts net result with hit rate.
-- [ ] Link overview and prediction pages to ticket and ledger pages.
+- [x] Link overview and prediction pages to ticket and ledger pages. Overview and prediction actions now navigate directly to `/lottery/tickets` and `/lottery/ledger`.
 - [ ] Add tests for summary math and filtering.
 
 ## Iteration 06: Provider, Settings, And Operations
