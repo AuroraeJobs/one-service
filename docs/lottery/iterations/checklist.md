@@ -454,11 +454,11 @@ Goal: spend the next month turning the lottery module from a frontend-operated o
 
 ### Week 4: Month-End Review, Release Governance, And Mobile Polish
 
-- [ ] Add month-end review dashboard that combines ledger results, tickets, decision outcomes, research notes, health score, and export evidence.
-- [ ] Add month-end report preset that can generate all required CSV/report sections from one saved review scope.
-- [ ] Extend route smoke and release readiness checks for health, notebook, reminders, and month-end review routes.
-- [ ] Review responsive layout for workbench, research notebook, reminders, month-end review, export, decision, and ticket pages.
-- [ ] Run month-end verification, update docs, commit, and push.
+- [x] Add month-end review dashboard that combines ledger results, tickets, decision outcomes, research notes, health score, and export evidence. Added `/lottery/month-end` with month-end score, ledger/ticket/decision/note/health/export metrics, issue review, release checks, and reminders.
+- [x] Add month-end report preset that can generate all required CSV/report sections from one saved review scope. Extended the export builder with a `月末治理包` preset covering ledger, tickets, decisions, settlement, budget, import, evidence, sync logs, and probe logs.
+- [x] Extend route smoke and release readiness checks for health, notebook, reminders, and month-end review routes. Smoke fixture now covers `/lottery/month-end`, and export release readiness includes month-end dashboard, reminder center, and strategy notebook checks.
+- [x] Review responsive layout for workbench, research notebook, reminders, month-end review, export, decision, and ticket pages. Added month-end dashboard responsive layout and folded it into existing mobile breakpoints used by the lottery workflow pages.
+- [x] Run month-end verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
 ## Documentation And Delivery
 

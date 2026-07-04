@@ -53,6 +53,11 @@ const reportPresets = [
     key: 'month-end',
     label: '月末复盘',
     sections: ['ledger-issues', 'tickets', 'decision-sets', 'decision-outcomes', 'settlement-reviews', 'rule-evidence', 'replay-evidence']
+  },
+  {
+    key: 'month-end-governance',
+    label: '月末治理包',
+    sections: ['ledger-issues', 'tickets', 'decision-sets', 'decision-outcomes', 'settlement-reviews', 'budget-prechecks', 'ticket-import-previews', 'rule-evidence', 'replay-evidence', 'sync-logs', 'probe-logs']
   }
 ];
 
@@ -323,21 +328,42 @@ const LotteryExportMaintenancePage = () => {
       key: 'month-end-report-presets',
       label: '月末报表预设',
       status: 'PASS',
-      message: '导出页提供复盘运营和月末复盘报表区块预设',
+      message: '导出页提供复盘运营、月末复盘和月末治理包报表区块预设',
       path: '/lottery/exports'
+    },
+    {
+      key: 'month-end-dashboard',
+      label: '月末复盘仪表盘',
+      status: 'PASS',
+      message: '/lottery/month-end 汇总账本、票据、决策、笔记、健康、提醒和导出证据',
+      path: '/lottery/month-end'
+    },
+    {
+      key: 'reminder-center',
+      label: '提醒中心',
+      status: 'PASS',
+      message: '工作台提醒中心覆盖到期、稍后、确认和直接处理入口',
+      path: '/lottery/workbench'
+    },
+    {
+      key: 'strategy-notebook',
+      label: '策略笔记',
+      status: 'PASS',
+      message: '策略笔记路由已纳入研究证据和月末复盘证据链',
+      path: '/lottery/research/notebook'
     },
     {
       key: 'api-contract',
       label: 'API 合约覆盖',
       status: 'PASS',
-      message: '新流程复用 lottery/predictions、lottery/tickets、lottery/ledger、lottery/exports 合约',
+      message: '新流程复用 lottery/predictions、lottery/tickets、lottery/ledger、lottery/reminders、lottery/exports 合约',
       path: '/lottery/exports'
     },
     {
       key: 'automated-route-smoke',
       label: '自动路由冒烟',
       status: 'PASS',
-      message: 'npm run lottery:smoke 使用 V12 fixture 校验工作台、决策、票据、研究和导出路由',
+      message: 'npm run lottery:smoke 校验工作台、决策、票据、研究、提醒、月末复盘和导出路由',
       path: '/lottery/exports'
     },
     {

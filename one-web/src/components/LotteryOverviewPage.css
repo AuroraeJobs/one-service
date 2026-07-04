@@ -1722,6 +1722,138 @@
   font-weight: 700;
 }
 
+.lottery-month-end-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 16px;
+  padding: 18px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+}
+
+.lottery-month-end-hero > div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.lottery-month-end-hero strong {
+  color: var(--app-text);
+  font-size: 34px;
+  line-height: 1;
+}
+
+.lottery-month-end-hero span {
+  color: var(--app-text);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.lottery-month-end-hero small {
+  overflow: hidden;
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-month-end-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.lottery-month-end-metric-grid button {
+  min-width: 0;
+  min-height: 148px;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+  color: var(--app-text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.lottery-month-end-metric-grid button:hover,
+.lottery-month-end-list button:hover {
+  border-color: var(--module-accent, #0071e3);
+  transform: translateY(-1px);
+}
+
+.lottery-month-end-metric-grid button > span {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(0, 113, 227, 0.1);
+  color: var(--module-accent, #0071e3);
+  font-size: 16px;
+}
+
+.lottery-month-end-metric-grid em,
+.lottery-month-end-list span,
+.lottery-month-end-list small {
+  overflow: hidden;
+  color: var(--app-text-muted);
+  font-size: 12px;
+  font-style: normal;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-month-end-metric-grid strong {
+  overflow: hidden;
+  color: var(--app-text);
+  font-size: 18px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-month-end-list {
+  display: grid;
+  gap: 8px;
+}
+
+.lottery-month-end-list button {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+  color: var(--app-text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.lottery-month-end-list strong {
+  color: var(--app-text);
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.lottery-month-end-list small {
+  grid-column: 2 / -1;
+}
+
 .lottery-notebook-editor {
   display: grid;
   gap: 10px;
@@ -4804,6 +4936,7 @@ button.lottery-latest-vs-card:hover {
   .lottery-report-section-grid,
   .lottery-maintenance-group-grid,
   .lottery-workbench-action-groups,
+  .lottery-month-end-metric-grid,
   .lottery-workbench-main-grid,
   .lottery-workbench-recent-grid,
   .lottery-workbench-runbook-grid,
@@ -4821,6 +4954,11 @@ button.lottery-latest-vs-card:hover {
   .lottery-workbench-daily-state {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .lottery-month-end-hero {
+    align-items: flex-start;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .lottery-workbench-reminder-item {
@@ -4856,6 +4994,7 @@ button.lottery-latest-vs-card:hover {
   .lottery-workbench-quick-rail,
   .lottery-workbench-action-groups,
   .lottery-workbench-health-summary,
+  .lottery-month-end-metric-grid,
   .lottery-notebook-editor-row,
   .lottery-notebook-grid,
   .lottery-workbench-issue-focus,

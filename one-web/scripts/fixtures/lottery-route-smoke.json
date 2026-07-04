@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 16 Week 3 lottery action reminders smoke",
+  "target": "Iteration 16 Week 4 lottery month-end review smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -48,6 +48,32 @@
             "dueCount": 1,
             "groups": ["开奖准备", "同步", "决策复盘"]
           }
+        }
+      }
+    },
+    {
+      "route": "/lottery/month-end",
+      "label": "月末复盘",
+      "component": "LotteryMonthEndReviewPage",
+      "componentFile": "src/components/LotteryMonthEndReviewPage.tsx",
+      "mockApis": [
+        "lotteryWorkbenchApi.summary",
+        "lotteryOperationsApi.health",
+        "lotteryLedgerApi.summary",
+        "lotteryLedgerApi.issues",
+        "lotteryTicketApi.summary",
+        "lotteryDecisionSetApi.outcomes",
+        "lotteryStrategyNoteApi.notes",
+        "lotteryReminderApi.summary",
+        "lotteryExportApi.auditEvents"
+      ],
+      "emptyStates": ["暂无期号复盘", "暂无研究证据", "暂无月末导出证据"],
+      "errorStates": ["读取彩票月末复盘失败"],
+      "fixtureData": {
+        "review": {
+          "score": 88,
+          "sections": ["ledger", "tickets", "decisions", "notes", "health", "exports"],
+          "releaseChecks": ["month-end-dashboard", "reminder-center", "strategy-notebook"]
         }
       }
     },

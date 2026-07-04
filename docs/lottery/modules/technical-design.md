@@ -470,6 +470,10 @@ POST /lottery/reminders/{key}/snooze
 
 Lottery preferences now include `reminderDrawWindowHours`, `reminderDefaultSnoozeMinutes`, and `monthEndExportChecklistEnabled`; the settings page owns these controls and the workbench uses them to decide when upcoming draw and month-end export reminders become actionable.
 
+V13 Week 4 adds the month-end review surface at `/lottery/month-end`. It is a frontend composition over existing project-owned APIs: workbench summary, operations health, ledger summary/issues, ticket summary, saved decision outcomes, strategy notes, reminder summary, and export audit events. The page computes a lightweight month-end score from health, ticket closure, decision warnings, export evidence, and active reminders, then links each metric back to the owning specialist page. It does not introduce a second reporting backend or duplicate ledger math.
+
+The export builder now exposes a `月末治理包` preset that combines ledger, tickets, decision sets, decision outcomes, settlement reviews, budget prechecks, ticket import previews, rule evidence, replay evidence, sync logs, and provider probe logs. Route smoke coverage includes the month-end page and verifies the reused API contract members; release readiness on `/lottery/exports` now lists month-end dashboard, reminder center, and strategy notebook coverage.
+
 Portfolio-style governance extends preferences and ledger behavior with budget and exposure thresholds. The backend flags budget and max-ticket issues without blocking ordinary CRUD unless a future explicit enforcement mode is added.
 
 Wave 10E extends `LotteryPreference` with `weeklyBudget`, `monthlyBudget`, `maxTicketsPerIssue`, and `budgetReminderPercent`. `GET /lottery/budget/status` reads preferences and recorded tickets to return weekly/monthly usage, max issue exposure, and restrained warning rows for the workbench and ticket page. `LotteryLedgerSummary` also includes rolling 30-day cost/prize/net/ROI plus max/current drawdown values for exposure review.

@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 16 Week 3 lottery action reminders smoke",
-  "generatedAt": "2026-07-04T13:59:47.569Z",
+  "target": "Iteration 16 Week 4 lottery month-end review smoke",
+  "generatedAt": "2026-07-04T14:06:36.482Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
-  "routeCount": 6,
-  "checkCount": 149,
+  "routeCount": 7,
+  "checkCount": 176,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
@@ -17,6 +17,14 @@
       "mockApiCount": 12,
       "emptyStateCount": 7,
       "errorStateCount": 4
+    },
+    {
+      "route": "/lottery/month-end",
+      "label": "月末复盘",
+      "component": "LotteryMonthEndReviewPage",
+      "mockApiCount": 9,
+      "emptyStateCount": 3,
+      "errorStateCount": 1
     },
     {
       "route": "/lottery/predictions/decision",
