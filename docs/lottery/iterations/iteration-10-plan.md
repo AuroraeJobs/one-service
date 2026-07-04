@@ -6,6 +6,8 @@ Turn the completed daily lottery workbench into a longer-running research platfo
 
 Iteration 10 should be delivered as independent waves. Each wave must keep existing API compatibility, update docs, run focused verification, then commit and push independently.
 
+For a one-month delivery view after Waves 10A and 10B, use `docs/lottery/iterations/one-month-version-plan.md`.
+
 ## Scope Principles
 
 - Keep `/lottery/workbench` as the daily entry point, not a replacement for specialist pages.

@@ -67,6 +67,8 @@ daily state backbone -> strategy experiments -> backtest evidence -> alerts/cale
 
 The detailed next-version plan lives in `docs/lottery/iterations/iteration-10-plan.md`. Start with Wave 10A only so the daily workflow can resume reliably before strategy experiments are added.
 
+The one-month delivery plan for the remaining platform work lives in `docs/lottery/iterations/one-month-version-plan.md`.
+
 ## Non-Negotiable Rules
 
 - Frontend calls project-owned APIs only; do not call third-party lottery data providers directly from the browser.
