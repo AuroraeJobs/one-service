@@ -65,6 +65,25 @@ class LotteryLedgerServiceTest {
     }
 
     @Test
+    void summaryKeepsRoiAtZeroWhenTotalCostIsZero() {
+        when(ticketRepository.findByUserIdOrderByPeriodDescCreatedAtDesc("default")).thenReturn(List.of(
+                LotteryTicket.builder()
+                        .cost(BigDecimal.ZERO)
+                        .prizeResult(LotteryPrizeResult.builder()
+                                .prizeAmount(0L)
+                                .winning(false)
+                                .build())
+                        .build()
+        ));
+
+        LotteryLedgerSummary summary = service.summary();
+
+        assertThat(summary.getTotalCost()).isEqualByComparingTo("0");
+        assertThat(summary.getNetResult()).isEqualByComparingTo("0.00");
+        assertThat(summary.getRoiPercent()).isEqualByComparingTo("0");
+    }
+
+    @Test
     void issuesGroupTicketsByIssueAndAggregateTotals() {
         when(ticketRepository.findByUserIdOrderByPeriodDescCreatedAtDesc("default")).thenReturn(List.of(
                 LotteryTicket.builder()

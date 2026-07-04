@@ -54,6 +54,18 @@ class LotteryTicketServiceTest {
     }
 
     @Test
+    void ticketsAppliesSecondaryFiltersAfterIssueQuery() {
+        when(repository.findByUserIdAndIssueOrderByCreatedAtDesc("default", "2026001")).thenReturn(List.of(
+                LotteryTicket.builder().id("a").status("CHECKED").source("PREDICTION").prizeGrade("FIFTH").build(),
+                LotteryTicket.builder().id("b").status("CHECKED").source("MANUAL").prizeGrade("FIFTH").build()
+        ));
+
+        List<LotteryTicket> tickets = service.tickets("2026001", "checked", "prediction", "fifth");
+
+        assertThat(tickets).extracting(LotteryTicket::getId).containsExactly("a");
+    }
+
+    @Test
     void saveTicketNormalizesNumbersAndDefaults() {
         ArgumentCaptor<LotteryTicket> captor = ArgumentCaptor.forClass(LotteryTicket.class);
         when(repository.save(captor.capture())).thenAnswer(invocation -> invocation.getArgument(0));
