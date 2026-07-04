@@ -175,12 +175,15 @@ Use this file as the durable task board for the lottery module. When a task is f
 
 ## Iteration 10: Lottery Intelligence Platform
 
-### Wave 10A: Workbench Completion And Navigation Backbone
+### Wave 10A: Daily State Backbone
 
-- [ ] Finish remaining Iteration 09 workbench and scalable-list tasks before adding higher-level platform features.
-- [ ] Add stable drill-through links between workbench, prediction history, ticket pages, ledger, sync, and data quality pages.
-- [ ] Add a compact daily state DTO so the module can show whether sync, prediction, ticket saving, and prize checking are complete for the current issue.
-- [ ] Preserve all existing lottery routes while making `/lottery/workbench` the daily entry point.
+- [x] Confirm Iteration 09 workbench and scalable-list tasks are complete before adding higher-level platform features.
+- [ ] Add stable query-backed drill-through links between workbench, prediction history, ticket pages, ledger, sync, and data quality pages.
+- [ ] Add a compact daily state DTO so the module can show whether sync, prediction review, ticket confirmation, prize checking, and quality repair are complete for the current issue.
+- [ ] Add `GET /lottery/workbench/daily-state` and cover service/controller state composition with tests.
+- [ ] Preserve all existing lottery routes while keeping `/lottery/workbench` the daily entry point.
+- [ ] Update workbench UI to show daily-state badges and route users into the right filtered specialist page.
+- [ ] Run focused Maven tests and `npm run build`, then commit and push Wave 10A independently.
 
 ### Wave 10B: Strategy Experiment Lab
 

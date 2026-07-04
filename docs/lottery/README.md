@@ -62,8 +62,10 @@ sync records -> inspect latest draw -> generate or attach prediction -> save tic
 Iteration 10 is the longer platform roadmap after the workbench foundation. It should be delivered in waves:
 
 ```text
-workbench backbone -> strategy experiments -> backtest evidence -> alerts/calendar -> budget governance -> export/audit/maintenance
+daily state backbone -> strategy experiments -> backtest evidence -> alerts/calendar -> budget governance -> export/audit/maintenance
 ```
+
+The detailed next-version plan lives in `docs/lottery/iterations/iteration-10-plan.md`. Start with Wave 10A only so the daily workflow can resume reliably before strategy experiments are added.
 
 ## Non-Negotiable Rules
 

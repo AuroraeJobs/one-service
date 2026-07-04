@@ -282,11 +282,12 @@ Goal: evolve the lottery module from a daily workbench into a longer-running res
 
 This is a long iteration and should be delivered in waves. Each wave can be implemented and pushed independently while preserving the overall direction.
 
-#### Wave 10A: Workbench Completion And Navigation Backbone
+#### Wave 10A: Daily State Backbone
 
-- Finish Iteration 09 workbench and scalable list tasks if any remain.
-- Add stable drill-through links between workbench, prediction history, ticket pages, ledger, sync, and quality pages.
-- Add a compact "today state" model so the module can resume the daily flow after refresh.
+- Add stable query-backed drill-through links between workbench, prediction history, ticket pages, ledger, sync, and quality pages.
+- Add a compact daily state model so the module can resume the daily flow after refresh.
+- Add `GET /lottery/workbench/daily-state` and keep state composition behind backend services.
+- Show daily-state badges on the workbench so the user can see whether sync, prediction review, ticket confirmation, prize check, or quality repair is pending for the current issue.
 - Preserve all existing routes and keep `/lottery/workbench` as the daily entry point.
 
 #### Wave 10B: Strategy Experiment Lab
