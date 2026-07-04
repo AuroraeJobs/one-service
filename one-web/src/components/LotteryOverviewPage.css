@@ -2505,6 +2505,90 @@
   align-items: center;
 }
 
+.lottery-recommendation-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.lottery-recommendation-summary article {
+  display: grid;
+  gap: 6px;
+  min-height: 82px;
+  padding: 16px;
+  border: 1px solid #edf0f5;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.lottery-recommendation-summary strong {
+  color: #111827;
+  font-size: 22px;
+  line-height: 1.1;
+}
+
+.lottery-recommendation-summary span {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.lottery-recommendation-board {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.lottery-recommendation-lane {
+  display: grid;
+  gap: 12px;
+}
+
+.lottery-recommendation-lane article {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #edf0f5;
+  border-radius: 8px;
+  background: #fbfcfe;
+}
+
+.lottery-recommendation-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.lottery-recommendation-card-head > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.lottery-recommendation-card-head strong {
+  color: #111827;
+}
+
+.lottery-recommendation-card-head span,
+.lottery-recommendation-lane p,
+.lottery-recommendation-meta {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.lottery-recommendation-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.lottery-recommendation-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .lottery-notebook-editor {
   display: grid;
   gap: 10px;
@@ -5665,6 +5749,8 @@ button.lottery-latest-vs-card:hover {
   .lottery-outcome-layout,
   .lottery-outcome-summary-grid,
   .lottery-outcome-card-grid,
+  .lottery-recommendation-summary,
+  .lottery-recommendation-board,
   .lottery-portfolio-score-row,
   .lottery-portfolio-evidence-editor-row,
   .lottery-notebook-editor-row,
@@ -5728,6 +5814,7 @@ button.lottery-latest-vs-card:hover {
   .lottery-ticket-pack-head,
   .lottery-governance-hero,
   .lottery-outcome-timeline button,
+  .lottery-recommendation-card-head,
   .lottery-simulator-candidate-list article {
     align-items: flex-start;
     flex-direction: column;

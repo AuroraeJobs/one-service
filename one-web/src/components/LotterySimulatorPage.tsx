@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Empty, Input, InputNumber, Select, Slider, Space, Spin, Tag, message } from 'antd';
 import {
   BarChartOutlined,
+  CompassOutlined,
   DownloadOutlined,
   FileTextOutlined,
   ImportOutlined,
@@ -132,6 +133,7 @@ const LotterySimulatorPage = () => {
       title="沙盘模拟"
       actions={
         <Space wrap>
+          <Button icon={<CompassOutlined />} onClick={() => navigate('/lottery/recommendations')}>推荐</Button>
           <Button icon={<ReloadOutlined />} onClick={loadPortfolios} loading={portfolioLoading}>刷新组合</Button>
           <Button type="primary" icon={<PlayCircleOutlined />} loading={loading} onClick={runSimulation}>运行沙盘</Button>
         </Space>

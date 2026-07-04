@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Empty, Input, Select, Space, Spin, Tag, message } from 'antd';
 import {
   BookOutlined,
+  CompassOutlined,
   FileAddOutlined,
   LinkOutlined,
   ReloadOutlined,
@@ -179,6 +180,7 @@ const LotteryResearchNotebookPage = () => {
         <Space wrap>
           <Button icon={<ReloadOutlined />} loading={loading} onClick={loadNotes}>刷新</Button>
           <Button icon={<SafetyCertificateOutlined />} onClick={() => navigate('/lottery/research')}>研究对比</Button>
+          <Button icon={<CompassOutlined />} onClick={() => navigate('/lottery/recommendations')}>推荐</Button>
         </Space>
       }
     >

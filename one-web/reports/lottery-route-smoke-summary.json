@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 18 Week 1 lottery outcome attribution smoke",
-  "generatedAt": "2026-07-04T15:18:55.779Z",
+  "target": "Iteration 18 Week 2 lottery recommendation lifecycle smoke",
+  "generatedAt": "2026-07-04T15:33:41.028Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
-  "routeCount": 12,
-  "checkCount": 261,
+  "routeCount": 13,
+  "checkCount": 276,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
@@ -73,6 +73,14 @@
       "mockApiCount": 2,
       "emptyStateCount": 7,
       "errorStateCount": 1
+    },
+    {
+      "route": "/lottery/recommendations",
+      "label": "推荐",
+      "component": "LotteryRecommendationPage",
+      "mockApiCount": 3,
+      "emptyStateCount": 4,
+      "errorStateCount": 3
     },
     {
       "route": "/lottery/governance",

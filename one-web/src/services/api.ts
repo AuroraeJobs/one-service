@@ -2207,6 +2207,33 @@ export interface LotteryOutcomeAttribution {
   generatedAt?: number;
 }
 
+export interface LotteryRecommendationStatusRequest {
+  lifecycleStatus?: string;
+  note?: string;
+}
+
+export interface LotteryRecommendation {
+  id?: string;
+  userId?: string;
+  targetType?: string;
+  targetId?: string;
+  title?: string;
+  recommendationState?: 'PROMOTE' | 'WATCH' | 'PAUSE' | 'RETIRE' | string;
+  lifecycleStatus?: 'OPEN' | 'APPLIED' | 'SNOOZED' | 'ARCHIVED' | string;
+  confidenceScore?: number;
+  evidenceAgeHours?: number;
+  expectedAction?: string;
+  evidenceSummary?: string;
+  path?: string;
+  reasons?: string[];
+  evidence?: LotteryStrategyNoteEvidence[];
+  archived?: boolean;
+  generatedAt?: number;
+  archivedAt?: number;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
 export interface LotteryTicketSummary {
   ticketCount?: number;
   checkedTicketCount?: number;
@@ -3006,6 +3033,21 @@ export const lotteryOutcomeApi = {
   },
   issue: (issue: string): Promise<LotteryOutcomeAttribution> => {
     return apiClient.get(`/lottery/outcomes/${issue}`);
+  }
+};
+
+export const lotteryRecommendationApi = {
+  recommendations: (params?: { recommendationState?: string; page?: number; pageSize?: number }): Promise<LotteryPageResponse<LotteryRecommendation>> => {
+    return apiClient.get('/lottery/recommendations', { params });
+  },
+  detail: (id: string): Promise<LotteryRecommendation> => {
+    return apiClient.get(`/lottery/recommendations/${id}`);
+  },
+  refresh: (params?: { limit?: number }): Promise<LotteryPageResponse<LotteryRecommendation>> => {
+    return apiClient.post('/lottery/recommendations/refresh', undefined, { params });
+  },
+  updateStatus: (id: string, request: LotteryRecommendationStatusRequest): Promise<LotteryRecommendation> => {
+    return apiClient.patch(`/lottery/recommendations/${id}/status`, request);
   }
 };
 

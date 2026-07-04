@@ -4,6 +4,7 @@ import { Alert, Button, Card, Empty, Input, Select, Space, Spin, Table, Tag, mes
 import type { ColumnsType } from 'antd/es/table';
 import {
   CheckCircleOutlined,
+  CompassOutlined,
   DownloadOutlined,
   FileAddOutlined,
   FilterOutlined,
@@ -754,6 +755,9 @@ const LotteryPredictionDecisionPage = () => {
           </Button>
           <Button icon={<FileAddOutlined />} onClick={() => navigate(notebookPathForDecisionOutcome(activeDecisionOutcome))}>
             写入笔记
+          </Button>
+          <Button icon={<CompassOutlined />} onClick={() => navigate('/lottery/recommendations')}>
+            推荐
           </Button>
           <Button icon={<PrinterOutlined />} onClick={() => window.print()}>
             打印

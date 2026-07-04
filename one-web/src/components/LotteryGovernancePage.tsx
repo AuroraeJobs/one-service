@@ -6,6 +6,7 @@ import {
   BellOutlined,
   BranchesOutlined,
   CheckCircleOutlined,
+  CompassOutlined,
   ExperimentOutlined,
   ReloadOutlined,
   SafetyCertificateOutlined,
@@ -207,6 +208,7 @@ const LotteryGovernancePage = () => {
       actions={
         <Space wrap>
           <Button icon={<BranchesOutlined />} onClick={() => navigate('/lottery/outcomes')}>归因</Button>
+          <Button icon={<CompassOutlined />} onClick={() => navigate('/lottery/recommendations')}>推荐</Button>
           <Button onClick={() => navigate('/lottery/settings')}>阈值设置</Button>
           <Button icon={<ReloadOutlined />} loading={loading} onClick={loadGovernance}>刷新</Button>
         </Space>

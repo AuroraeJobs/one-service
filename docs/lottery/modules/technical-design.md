@@ -538,6 +538,19 @@ GET /lottery/outcomes/{issue}
 
 The backend service writes `LOTTERY_OUTCOME_ATTRIBUTION` audit events when attribution is generated. The frontend route `/lottery/outcomes` shows recent issues, contribution cards, drift rows, prize distribution, and timeline handoffs into tickets, ticket packs, simulator, strategy portfolios, and decision board. Ticket settlement, month-end review, governance, and strategy portfolio pages link back to this route so post-draw review can start from the user's current workflow.
 
+V15 Week 2 turns attribution output into a recommendation lifecycle. `LotteryRecommendation` stores rule, portfolio, issue, and simulator targets with `PROMOTE`, `WATCH`, `PAUSE`, or `RETIRE` recommendation states, `OPEN`, `APPLIED`, `SNOOZED`, or `ARCHIVED` lifecycle status, confidence score, evidence age, expected action, reasons, linked evidence, handoff path, archive state, and audit metadata. The refresh service reads recent outcome attribution rows, upserts target-scoped recommendation records, and writes `LOTTERY_RECOMMENDATION_REFRESH` audit events. Status changes write `LOTTERY_RECOMMENDATION_STATUS` audit events and archive records when the lifecycle status becomes `ARCHIVED`.
+
+Recommendation endpoints:
+
+```text
+GET /lottery/recommendations
+GET /lottery/recommendations/{id}
+POST /lottery/recommendations/refresh
+PATCH /lottery/recommendations/{id}/status
+```
+
+The frontend route `/lottery/recommendations` presents promote/watch/pause/retire lanes with confidence, evidence age, expected action, reasons, refresh controls, and one-click lifecycle actions. Strategy portfolios, research notebook, governance, simulator, and prediction decision pages link into the recommendation board so lifecycle review can start from the work surface where stale evidence or strategy drift is discovered.
+
 Portfolio-style governance extends preferences and ledger behavior with budget and exposure thresholds. The backend flags budget and max-ticket issues without blocking ordinary CRUD unless a future explicit enforcement mode is added.
 
 Wave 10E extends `LotteryPreference` with `weeklyBudget`, `monthlyBudget`, `maxTicketsPerIssue`, and `budgetReminderPercent`. `GET /lottery/budget/status` reads preferences and recorded tickets to return weekly/monthly usage, max issue exposure, and restrained warning rows for the workbench and ticket page. `LotteryLedgerSummary` also includes rolling 30-day cost/prize/net/ROI plus max/current drawdown values for exposure review.

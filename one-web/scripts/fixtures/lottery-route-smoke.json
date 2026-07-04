@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 18 Week 1 lottery outcome attribution smoke",
+  "target": "Iteration 18 Week 2 lottery recommendation lifecycle smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -250,6 +250,40 @@
             "simulationDrifts": ["audit-fixture-1"]
           }
         ]
+      }
+    },
+    {
+      "route": "/lottery/recommendations",
+      "label": "推荐",
+      "component": "LotteryRecommendationPage",
+      "componentFile": "src/components/LotteryRecommendationPage.tsx",
+      "mockApis": [
+        "lotteryRecommendationApi.recommendations",
+        "lotteryRecommendationApi.refresh",
+        "lotteryRecommendationApi.updateStatus"
+      ],
+      "emptyStates": ["暂无推广推荐", "暂无观察推荐", "暂无暂停推荐", "暂无退役推荐"],
+      "errorStates": ["读取彩票推荐失败", "刷新彩票推荐失败", "更新彩票推荐失败"],
+      "fixtureData": {
+        "recommendations": {
+          "items": [
+            {
+              "id": "recommendation-fixture-1",
+              "targetType": "PORTFOLIO",
+              "targetId": "portfolio-fixture-1",
+              "title": "推广稳态组合",
+              "recommendationState": "PROMOTE",
+              "lifecycleStatus": "OPEN",
+              "confidenceScore": 84,
+              "evidenceAgeHours": 6,
+              "expectedAction": "提升组合权重",
+              "path": "/lottery/strategy-portfolios"
+            }
+          ],
+          "page": 1,
+          "pageSize": 20,
+          "total": 1
+        }
       }
     },
     {

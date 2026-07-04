@@ -244,6 +244,14 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
       accent: '#34c759'
     },
     {
+      id: 'lottery-recommendations',
+      moduleKey: 'lottery',
+      path: '/lottery/recommendations',
+      label: '推荐',
+      icon: <CompassOutlined />,
+      accent: '#ff9500'
+    },
+    {
       id: 'lottery-governance',
       moduleKey: 'lottery',
       path: '/lottery/governance',

@@ -510,11 +510,11 @@ Goal: turn the V14 execution workflow into a learning loop: every strategy, simu
 
 ### Week 2: Recommendation Calibration And Strategy Lifecycle
 
-- [ ] Add calibrated recommendation records that summarize whether a rule, portfolio, or simulator setting should be promoted, watched, paused, or retired.
-- [ ] Add backend lifecycle APIs for recommendation list/detail, status transitions, evidence refresh, and audit events.
-- [ ] Add `/lottery/recommendations` frontend lifecycle board with recommendation lanes, confidence, evidence age, expected action, and one-click handoffs.
-- [ ] Add lifecycle links into strategy portfolios, research notebook, governance, simulator, and decision board.
-- [ ] Run recommendation service/controller tests, frontend smoke/build, update docs, commit, and push.
+- [x] Add calibrated recommendation records that summarize whether a rule, portfolio, or simulator setting should be promoted, watched, paused, or retired. Added `LotteryRecommendation` with target metadata, lifecycle status, confidence, evidence age, expected action, reasons, evidence, audit metadata, and archived state.
+- [x] Add backend lifecycle APIs for recommendation list/detail, status transitions, evidence refresh, and audit events. Added `/lottery/recommendations`, `/lottery/recommendations/{id}`, `/lottery/recommendations/refresh`, and `/lottery/recommendations/{id}/status` backed by outcome attribution and audit events.
+- [x] Add `/lottery/recommendations` frontend lifecycle board with recommendation lanes, confidence, evidence age, expected action, and one-click handoffs. Added promote/watch/pause/retire lanes, refresh, status actions, evidence summaries, and target-path handoff buttons.
+- [x] Add lifecycle links into strategy portfolios, research notebook, governance, simulator, and decision board. Added recommendation handoffs from portfolio, notebook, governance, simulator, and prediction decision surfaces.
+- [x] Run recommendation service/controller tests, frontend smoke/build, update docs, commit, and push. Verification: focused Maven recommendation service/controller tests; `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
 ### Week 3: Mobile Command Flow And Batch Review
 
