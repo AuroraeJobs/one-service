@@ -1,11 +1,13 @@
 package com.one.record.service.impl;
 
 import com.one.record.lottery.LotteryRecordSyncSummary;
+import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.model.LotteryRecordSyncLog;
 import com.one.record.repository.LotteryRecordSyncLogRepository;
 import com.one.record.service.ILotteryRecordSyncLogService;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -80,6 +82,24 @@ public class LotteryRecordSyncLogService implements ILotteryRecordSyncLogService
     }
 
     @Override
+    public LotteryPageResponse<LotteryRecordSyncLog> findPage(String status,
+                                                              Long startedStartAt,
+                                                              Long startedEndAt,
+                                                              Integer page,
+                                                              Integer pageSize) {
+        int safePage = normalizePage(page);
+        int safePageSize = normalizePageSize(pageSize);
+        String safeStatus = StringUtils.hasText(status) ? status.trim().toUpperCase(Locale.ROOT) : null;
+        List<LotteryRecordSyncLog> filtered = repository.findAll(Sort.by(Sort.Direction.DESC, "startedAt"))
+                .stream()
+                .filter(log -> safeStatus == null || safeStatus.equals(log.getStatus()))
+                .filter(log -> startedStartAt == null || log.getStartedAt() != null && log.getStartedAt() >= startedStartAt)
+                .filter(log -> startedEndAt == null || log.getStartedAt() != null && log.getStartedAt() <= startedEndAt)
+                .toList();
+        return pageOf(filtered, safePage, safePageSize);
+    }
+
+    @Override
     public LotteryRecordSyncSummary summary(int limit) {
         List<LotteryRecordSyncLog> logs = repository.findByOrderByStartedAtDesc(PageRequest.of(0, normalizeLimit(limit)));
         LotteryRecordSyncLog latest = logs.isEmpty() ? null : logs.get(0);
@@ -116,6 +136,33 @@ public class LotteryRecordSyncLogService implements ILotteryRecordSyncLogService
             return DEFAULT_LIMIT;
         }
         return Math.min(limit, MAX_LIMIT);
+    }
+
+    private static int normalizePage(Integer page) {
+        if (page == null || page < 0) {
+            return 0;
+        }
+        return page;
+    }
+
+    private static int normalizePageSize(Integer pageSize) {
+        if (pageSize == null || pageSize <= 0) {
+            return DEFAULT_LIMIT;
+        }
+        return Math.min(pageSize, MAX_LIMIT);
+    }
+
+    private static LotteryPageResponse<LotteryRecordSyncLog> pageOf(List<LotteryRecordSyncLog> items, int page, int pageSize) {
+        int total = items == null ? 0 : items.size();
+        int from = Math.min(page * pageSize, total);
+        int to = Math.min(from + pageSize, total);
+        return LotteryPageResponse.<LotteryRecordSyncLog>builder()
+                .items(items == null ? List.of() : items.subList(from, to))
+                .page(page)
+                .pageSize(pageSize)
+                .total((long) total)
+                .hasNext(to < total)
+                .build();
     }
 
     private static int countStatus(List<LotteryRecordSyncLog> logs, String status) {

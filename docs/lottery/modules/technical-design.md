@@ -278,7 +278,7 @@ total
 hasNext
 ```
 
-Iteration 09 should migrate high-growth lottery lists first: prediction history, ticket list, record sync logs, and provider probe logs. Existing limit-based APIs should remain compatible during the migration so current pages do not break while new query-parameter-backed controls are added. Prediction history and ticket list use compatibility mappings: requests without `page` return the legacy array response, while requests with `page` return the shared pagination envelope.
+Iteration 09 should migrate high-growth lottery lists first: prediction history, ticket list, record sync logs, and provider probe logs. Existing limit-based APIs should remain compatible during the migration so current pages do not break while new query-parameter-backed controls are added. Prediction history, ticket list, sync logs, and provider probe logs use compatibility mappings: requests without `page` return the legacy array response, while requests with `page` return the shared pagination envelope.
 
 Initial list filter targets:
 

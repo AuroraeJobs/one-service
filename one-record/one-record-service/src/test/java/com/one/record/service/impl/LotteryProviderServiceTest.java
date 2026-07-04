@@ -10,6 +10,7 @@ import com.one.record.response.Record;
 import com.one.record.service.LotteryDrawProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 
@@ -100,6 +101,25 @@ class LotteryProviderServiceTest {
 
         assertThat(logs).hasSize(1);
         verify(repository).findByProviderOrderByCheckedAtDesc(eq("cwl"), any(Pageable.class));
+    }
+
+    @Test
+    void probeLogPageFiltersProviderSuccessAndTimeRange() {
+        LotteryProviderProbeLogRepository repository = mock(LotteryProviderProbeLogRepository.class);
+        when(repository.findAll(any(Sort.class))).thenReturn(List.of(
+                LotteryProviderProbeLog.builder().provider("cwl").success(true).checkedAt(100L).build(),
+                LotteryProviderProbeLog.builder().provider("cwl").success(false).checkedAt(200L).build(),
+                LotteryProviderProbeLog.builder().provider("backup").success(true).checkedAt(300L).build()
+        ));
+        LotteryProviderService service = service(List.of(provider("cwl")), new RecordProperties(), repository);
+
+        var page = service.probeLogPage(" CWL ", false, 150L, 250L, 0, 1);
+
+        assertThat(page.getItems()).hasSize(1);
+        assertThat(page.getItems().get(0).getProvider()).isEqualTo("cwl");
+        assertThat(page.getItems().get(0).getSuccess()).isFalse();
+        assertThat(page.getTotal()).isEqualTo(1);
+        assertThat(page.getHasNext()).isFalse();
     }
 
     private LotteryProviderService service(List<LotteryDrawProvider> providers) {

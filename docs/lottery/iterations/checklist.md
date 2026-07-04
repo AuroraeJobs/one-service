@@ -160,7 +160,7 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add pagination response envelope for lottery list endpoints that can grow. Added shared `LotteryPageResponse<T>` with `items`, `page`, `pageSize`, `total`, and `hasNext`.
 - [x] Add paged prediction history query with result-state, target-period, and rule filters while preserving existing limit-based compatibility. `GET /lottery/predictions?page=...` returns the paged envelope; no-page requests still return the legacy list.
 - [x] Add paged ticket query with issue, status, source, prize grade, prediction snapshot, and created-time filters while preserving existing list compatibility. `GET /lottery/tickets?page=...` returns the paged envelope; no-page requests still return the legacy list.
-- [ ] Add paged sync-log and provider-probe-log queries while preserving existing limit-based compatibility.
+- [x] Add paged sync-log and provider-probe-log queries while preserving existing limit-based compatibility. `GET /lottery/records/sync-logs?page=...` and `GET /lottery/providers/probe-logs?page=...` return the paged envelope; no-page requests still return legacy lists.
 - [x] Add frontend API client methods/types for workbench summary, daily-run, and paged list responses. Added workbench APIs, shared page response type, prediction history page client, and ticket page client.
 - [ ] Add `/lottery/workbench` route and navigation entry.
 - [ ] Build workbench UI with daily status cards, step-run action, data-quality warning, latest prediction/ticket/ledger sections, and drill-through links.
@@ -170,7 +170,7 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Update `docs/lottery/modules/technical-design.md` with workbench, daily-run, and pagination contracts.
 - [x] Update `docs/lottery/menu-and-version-plan.md` with workbench route/menu placement.
 - [x] Run focused backend tests for changed services/controllers. Workbench, prediction pagination, and ticket pagination service/controller tests passed.
-- [ ] Run frontend build after workbench and list-page changes. `npm run build` passes after workbench and paged-list API client changes; rerun after page UI changes.
+- [ ] Run frontend build after workbench and list-page changes. `npm run build` passes after workbench, prediction/ticket pagination, and sync/probe pagination API client changes; rerun after page UI changes.
 - [ ] Review git status and diff before each commit, then commit and push.
 
 ## Iteration 10: Lottery Intelligence Platform

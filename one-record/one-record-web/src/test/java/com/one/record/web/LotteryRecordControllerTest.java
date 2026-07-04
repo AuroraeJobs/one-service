@@ -1,6 +1,7 @@
 package com.one.record.web;
 
 import com.one.record.lottery.LotteryDraw;
+import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.lottery.LotteryRecordSyncSummary;
 import com.one.record.request.RecordRequest;
 import com.one.record.model.LotteryRecordSyncLog;
@@ -208,6 +209,37 @@ class LotteryRecordControllerTest {
                 .andExpect(jsonPath("$[0].savedCount").value(3));
 
         verify(syncLogService).findRecent("SUCCESS", 20);
+    }
+
+    @Test
+    void syncLogPageBindsFilters() throws Exception {
+        when(syncLogService.findPage("SUCCESS", 100L, 200L, 1, 10))
+                .thenReturn(LotteryPageResponse.<LotteryRecordSyncLog>builder()
+                        .items(List.of(LotteryRecordSyncLog.builder()
+                                .id("sync-1")
+                                .status("SUCCESS")
+                                .startedAt(120L)
+                                .build()))
+                        .page(1)
+                        .pageSize(10)
+                        .total(12L)
+                        .hasNext(true)
+                        .build());
+
+        mockMvc.perform(get("/lottery/records/sync-logs")
+                        .param("page", "1")
+                        .param("pageSize", "10")
+                        .param("status", "SUCCESS")
+                        .param("startedStartAt", "100")
+                        .param("startedEndAt", "200"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].id").value("sync-1"))
+                .andExpect(jsonPath("$.items[0].status").value("SUCCESS"))
+                .andExpect(jsonPath("$.page").value(1))
+                .andExpect(jsonPath("$.total").value(12))
+                .andExpect(jsonPath("$.hasNext").value(true));
+
+        verify(syncLogService).findPage("SUCCESS", 100L, 200L, 1, 10);
     }
 
     @Test

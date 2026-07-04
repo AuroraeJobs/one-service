@@ -362,6 +362,15 @@ export const lotteryRecordApi = {
   syncLogs: (params?: { status?: string; limit?: number }): Promise<LotteryRecordSyncLog[]> => {
     return apiClient.get('/lottery/records/sync-logs', { params });
   },
+  syncLogsPage: (params?: {
+    status?: string;
+    startedStartAt?: number;
+    startedEndAt?: number;
+    page?: number;
+    pageSize?: number;
+  }): Promise<LotteryPageResponse<LotteryRecordSyncLog>> => {
+    return apiClient.get('/lottery/records/sync-logs', { params });
+  },
   syncSummary: (params?: { limit?: number }): Promise<LotteryRecordSyncSummary> => {
     return apiClient.get('/lottery/records/sync-summary', { params });
   },
@@ -372,6 +381,16 @@ export const lotteryProviderApi = {
     return apiClient.get('/lottery/providers/probe', { params });
   },
   probeLogs: (params?: { provider?: string; limit?: number }): Promise<LotteryProviderProbeLog[]> => {
+    return apiClient.get('/lottery/providers/probe-logs', { params });
+  },
+  probeLogsPage: (params?: {
+    provider?: string;
+    success?: boolean;
+    checkedStartAt?: number;
+    checkedEndAt?: number;
+    page?: number;
+    pageSize?: number;
+  }): Promise<LotteryPageResponse<LotteryProviderProbeLog>> => {
     return apiClient.get('/lottery/providers/probe-logs', { params });
   },
 };

@@ -2,6 +2,7 @@ package com.one.record.web;
 
 import com.one.record.request.RecordRequest;
 import com.one.record.lottery.LotteryDraw;
+import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.lottery.LotteryRecordSyncSummary;
 import com.one.record.model.LotteryRecordSyncLog;
 import com.one.record.response.Record;
@@ -124,11 +125,22 @@ public class LotteryRecordController {
         return syncService.syncScheduled();
     }
 
-    @GetMapping("sync-logs")
+    @GetMapping(value = "sync-logs", params = "!page")
     @Operation(summary = "查询开奖记录同步日志", description = "查询最近的开奖记录同步日志，可按状态过滤")
     public List<LotteryRecordSyncLog> syncLogs(@RequestParam(value = "status", required = false) String status,
                                                @RequestParam(value = "limit", required = false, defaultValue = "50") int limit) {
         return syncLogService.findRecent(status, limit);
+    }
+
+    @GetMapping(value = "sync-logs", params = "page")
+    @Operation(summary = "分页查询开奖记录同步日志", description = "按分页、状态和开始时间范围查询开奖记录同步日志")
+    public LotteryPageResponse<LotteryRecordSyncLog> syncLogPage(
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "startedStartAt", required = false) Long startedStartAt,
+            @RequestParam(value = "startedEndAt", required = false) Long startedEndAt,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+            @RequestParam(value = "pageSize", required = false, defaultValue = "20") Integer pageSize) {
+        return syncLogService.findPage(status, startedStartAt, startedEndAt, page, pageSize);
     }
 
     @GetMapping("sync-summary")

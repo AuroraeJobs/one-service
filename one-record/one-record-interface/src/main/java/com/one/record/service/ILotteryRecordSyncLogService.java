@@ -1,6 +1,7 @@
 package com.one.record.service;
 
 import com.one.record.lottery.LotteryRecordSyncSummary;
+import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.model.LotteryRecordSyncLog;
 
 import java.util.List;
@@ -16,6 +17,8 @@ public interface ILotteryRecordSyncLogService {
     LotteryRecordSyncLog skipped(String jobName, String startIssue, String message);
 
     List<LotteryRecordSyncLog> findRecent(String status, int limit);
+
+    LotteryPageResponse<LotteryRecordSyncLog> findPage(String status, Long startedStartAt, Long startedEndAt, Integer page, Integer pageSize);
 
     LotteryRecordSyncSummary summary(int limit);
 }

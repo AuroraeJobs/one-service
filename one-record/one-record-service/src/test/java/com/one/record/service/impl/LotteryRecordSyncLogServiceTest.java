@@ -5,6 +5,7 @@ import com.one.record.model.LotteryRecordSyncLog;
 import com.one.record.repository.LotteryRecordSyncLogRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -57,6 +58,25 @@ class LotteryRecordSyncLogServiceTest {
         assertThat(summary.getSuccessRate()).isEqualByComparingTo(new BigDecimal("0.00"));
         assertThat(summary.getLatestStatus()).isNull();
         assertThat(summary.getAverageDurationMs()).isNull();
+    }
+
+    @Test
+    void findPageFiltersByStatusAndStartedRange() {
+        LotteryRecordSyncLogRepository repository = mock(LotteryRecordSyncLogRepository.class);
+        when(repository.findAll(any(Sort.class))).thenReturn(List.of(
+                log("manual-record-sync", "SUCCESS", 3, 100L, 120L),
+                log("scheduled-record-sync", "FAILED", 0, 200L, 220L),
+                log("scheduled-record-sync", "SUCCESS", 1, 300L, 320L)
+        ));
+        LotteryRecordSyncLogService service = new LotteryRecordSyncLogService(repository);
+
+        var page = service.findPage("success", 150L, 350L, 0, 1);
+
+        assertThat(page.getItems()).extracting(LotteryRecordSyncLog::getStartedAt).containsExactly(300L);
+        assertThat(page.getPage()).isZero();
+        assertThat(page.getPageSize()).isEqualTo(1);
+        assertThat(page.getTotal()).isEqualTo(1);
+        assertThat(page.getHasNext()).isFalse();
     }
 
     private static LotteryRecordSyncLog log(String jobName, String status, Integer savedCount, Long startedAt, Long finishedAt) {

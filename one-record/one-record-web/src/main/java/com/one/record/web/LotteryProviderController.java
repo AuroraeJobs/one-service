@@ -3,6 +3,7 @@ package com.one.record.web;
 import com.one.record.lottery.LotteryProviderConfig;
 import com.one.record.lottery.LotteryProviderHealth;
 import com.one.record.lottery.LotteryProviderProbeResult;
+import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.model.LotteryProviderProbeLog;
 import com.one.record.service.ILotteryProviderService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,10 +40,22 @@ public class LotteryProviderController {
         return service.probe(provider);
     }
 
-    @GetMapping("probe-logs")
+    @GetMapping(value = "probe-logs", params = "!page")
     @Operation(summary = "查询彩票 Provider 探测日志", description = "查询最近的彩票 provider 主动探测结果，可按 provider 过滤")
     public List<LotteryProviderProbeLog> probeLogs(@RequestParam(name = "provider", required = false) String provider,
                                                    @RequestParam(name = "limit", required = false, defaultValue = "20") int limit) {
         return service.probeLogs(provider, limit);
+    }
+
+    @GetMapping(value = "probe-logs", params = "page")
+    @Operation(summary = "分页查询彩票 Provider 探测日志", description = "按分页、provider、成功状态和探测时间范围查询 provider 探测日志")
+    public LotteryPageResponse<LotteryProviderProbeLog> probeLogPage(
+            @RequestParam(name = "provider", required = false) String provider,
+            @RequestParam(name = "success", required = false) Boolean success,
+            @RequestParam(name = "checkedStartAt", required = false) Long checkedStartAt,
+            @RequestParam(name = "checkedEndAt", required = false) Long checkedEndAt,
+            @RequestParam(name = "page", required = false, defaultValue = "0") Integer page,
+            @RequestParam(name = "pageSize", required = false, defaultValue = "20") Integer pageSize) {
+        return service.probeLogPage(provider, success, checkedStartAt, checkedEndAt, page, pageSize);
     }
 }

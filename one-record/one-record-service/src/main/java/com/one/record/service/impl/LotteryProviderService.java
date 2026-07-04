@@ -4,6 +4,7 @@ import com.one.record.configuration.RecordProperties;
 import com.one.record.lottery.LotteryProviderConfig;
 import com.one.record.lottery.LotteryProviderHealth;
 import com.one.record.lottery.LotteryProviderProbeResult;
+import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.model.LotteryProviderProbeLog;
 import com.one.record.repository.LotteryProviderProbeLogRepository;
 import com.one.record.response.Record;
@@ -12,6 +13,7 @@ import com.one.record.service.LotteryDrawProvider;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -121,6 +123,26 @@ public class LotteryProviderService implements ILotteryProviderService {
         return probeLogRepository.findByOrderByCheckedAtDesc(pageRequest);
     }
 
+    @Override
+    public LotteryPageResponse<LotteryProviderProbeLog> probeLogPage(String provider,
+                                                                     Boolean success,
+                                                                     Long checkedStartAt,
+                                                                     Long checkedEndAt,
+                                                                     Integer page,
+                                                                     Integer pageSize) {
+        int safePage = normalizePage(page);
+        int safePageSize = normalizePageSize(pageSize);
+        String safeProvider = StringUtils.hasText(provider) ? normalizeProviderName(provider) : null;
+        List<LotteryProviderProbeLog> filtered = probeLogRepository.findAll(Sort.by(Sort.Direction.DESC, "checkedAt"))
+                .stream()
+                .filter(log -> safeProvider == null || safeProvider.equals(normalizeProviderName(log.getProvider())))
+                .filter(log -> success == null || success.equals(log.getSuccess()))
+                .filter(log -> checkedStartAt == null || log.getCheckedAt() != null && log.getCheckedAt() >= checkedStartAt)
+                .filter(log -> checkedEndAt == null || log.getCheckedAt() != null && log.getCheckedAt() <= checkedEndAt)
+                .toList();
+        return pageOf(filtered, safePage, safePageSize);
+    }
+
     private List<String> registeredDrawProviders() {
         return drawProviders.stream()
                 .map(provider -> normalizeProviderName(provider.name()))
@@ -161,5 +183,34 @@ public class LotteryProviderService implements ILotteryProviderService {
             return DEFAULT_PROBE_LOG_LIMIT;
         }
         return Math.min(limit, MAX_PROBE_LOG_LIMIT);
+    }
+
+    private static int normalizePage(Integer page) {
+        if (page == null || page < 0) {
+            return 0;
+        }
+        return page;
+    }
+
+    private static int normalizePageSize(Integer pageSize) {
+        if (pageSize == null || pageSize <= 0) {
+            return DEFAULT_PROBE_LOG_LIMIT;
+        }
+        return Math.min(pageSize, MAX_PROBE_LOG_LIMIT);
+    }
+
+    private static LotteryPageResponse<LotteryProviderProbeLog> pageOf(List<LotteryProviderProbeLog> items,
+                                                                       int page,
+                                                                       int pageSize) {
+        int total = items == null ? 0 : items.size();
+        int from = Math.min(page * pageSize, total);
+        int to = Math.min(from + pageSize, total);
+        return LotteryPageResponse.<LotteryProviderProbeLog>builder()
+                .items(items == null ? List.of() : items.subList(from, to))
+                .page(page)
+                .pageSize(pageSize)
+                .total((long) total)
+                .hasNext(to < total)
+                .build();
     }
 }

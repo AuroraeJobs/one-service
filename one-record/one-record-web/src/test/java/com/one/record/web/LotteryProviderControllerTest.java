@@ -3,6 +3,7 @@ package com.one.record.web;
 import com.one.record.lottery.LotteryProviderConfig;
 import com.one.record.lottery.LotteryProviderHealth;
 import com.one.record.lottery.LotteryProviderProbeResult;
+import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.model.LotteryProviderProbeLog;
 import com.one.record.service.ILotteryProviderService;
 import org.junit.jupiter.api.BeforeEach;
@@ -110,5 +111,38 @@ class LotteryProviderControllerTest {
                 .andExpect(jsonPath("$[0].recordCount").value(33));
 
         verify(service).probeLogs("cwl", 10);
+    }
+
+    @Test
+    void probeLogPageBindsFilters() throws Exception {
+        when(service.probeLogPage("cwl", true, 100L, 200L, 1, 10))
+                .thenReturn(LotteryPageResponse.<LotteryProviderProbeLog>builder()
+                        .items(List.of(LotteryProviderProbeLog.builder()
+                                .provider("cwl")
+                                .success(true)
+                                .status("AVAILABLE")
+                                .checkedAt(120L)
+                                .build()))
+                        .page(1)
+                        .pageSize(10)
+                        .total(12L)
+                        .hasNext(true)
+                        .build());
+
+        mockMvc.perform(get("/lottery/providers/probe-logs")
+                        .param("page", "1")
+                        .param("pageSize", "10")
+                        .param("provider", "cwl")
+                        .param("success", "true")
+                        .param("checkedStartAt", "100")
+                        .param("checkedEndAt", "200"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].provider").value("cwl"))
+                .andExpect(jsonPath("$.items[0].success").value(true))
+                .andExpect(jsonPath("$.page").value(1))
+                .andExpect(jsonPath("$.total").value(12))
+                .andExpect(jsonPath("$.hasNext").value(true));
+
+        verify(service).probeLogPage("cwl", true, 100L, 200L, 1, 10);
     }
 }
