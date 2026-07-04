@@ -4,6 +4,7 @@ import { Alert, Button, Card, Empty, Input, Select, Space, Spin, Table, Tag, mes
 import type { ColumnsType } from 'antd/es/table';
 import {
   CheckCircleOutlined,
+  DownloadOutlined,
   FileAddOutlined,
   FilterOutlined,
   FolderOpenOutlined,
@@ -79,6 +80,29 @@ const resultOptions = [
   { label: '未中奖', value: 'MISSED' }
 ];
 
+const outcomeOptions = [
+  { label: '全部复盘', value: 'ALL' },
+  { label: '有命中', value: 'HIT' },
+  { label: '未命中', value: 'MISS' },
+  { label: '待开奖', value: 'PENDING' }
+];
+
+const conversionOptions = [
+  { label: '全部转票', value: 'ALL' },
+  { label: '已转票', value: 'CONVERTED' },
+  { label: '未转票', value: 'UNCONVERTED' },
+  { label: '待核奖', value: 'UNCHECKED' }
+];
+
+const outcomeAlertOptions = [
+  { label: '全部提醒', value: 'ALL' },
+  { label: '有提醒', value: 'WARNINGS' },
+  { label: '证据过期', value: 'STALE' },
+  { label: '规则波动', value: 'VOLATILE' },
+  { label: '样本少', value: 'UNDER_TESTED' },
+  { label: '无提醒', value: 'CLEAN' }
+];
+
 const sourceLabel = (source: DecisionCandidateRow['source']) => source === 'PRIMARY' ? '主预测' : '候选';
 
 const decisionSetStatusColor = (dirty: boolean) => dirty ? 'orange' : 'green';
@@ -108,6 +132,54 @@ const deltaText = (value?: number) => {
   }
   const sign = Number(value) > 0 ? '+' : '';
   return `${sign}${Number(value).toFixed(2)}`;
+};
+
+const decisionOutcomeState = (item: LotteryDecisionOutcomeItem) => {
+  if ((item.winningCandidateCount || 0) > 0 || (item.winningConvertedTicketCount || 0) > 0) {
+    return 'HIT';
+  }
+  if ((item.scoredCandidateCount || 0) > 0) {
+    return 'MISS';
+  }
+  return 'PENDING';
+};
+
+const matchesDecisionOutcomeFilter = (
+  item: LotteryDecisionOutcomeItem,
+  outcomeState: string,
+  conversionState: string,
+  alertState: string
+) => {
+  if (outcomeState !== 'ALL' && decisionOutcomeState(item) !== outcomeState) {
+    return false;
+  }
+  const convertedCount = item.convertedTicketCount || 0;
+  const checkedCount = item.checkedConvertedTicketCount || 0;
+  if (conversionState === 'CONVERTED' && convertedCount <= 0) {
+    return false;
+  }
+  if (conversionState === 'UNCONVERTED' && convertedCount > 0) {
+    return false;
+  }
+  if (conversionState === 'UNCHECKED' && (convertedCount <= 0 || checkedCount >= convertedCount)) {
+    return false;
+  }
+  if (alertState === 'WARNINGS' && (item.warningCount || 0) <= 0) {
+    return false;
+  }
+  if (alertState === 'STALE' && (item.staleEvidenceCount || 0) <= 0) {
+    return false;
+  }
+  if (alertState === 'VOLATILE' && (item.volatileEvidenceCount || 0) <= 0) {
+    return false;
+  }
+  if (alertState === 'UNDER_TESTED' && (item.underTestedEvidenceCount || 0) <= 0) {
+    return false;
+  }
+  if (alertState === 'CLEAN' && (item.warningCount || 0) > 0) {
+    return false;
+  }
+  return true;
 };
 
 const redOverlapCount = (left: string[] = [], right: string[] = []) => {
@@ -271,6 +343,9 @@ const LotteryPredictionDecisionPage = () => {
   const ruleName = searchParams.get('ruleName') || '';
   const evidenceState = searchParams.get('evidence') || 'ALL';
   const resultState = searchParams.get('resultState') || 'ALL';
+  const outcomeState = searchParams.get('outcomeState') || 'ALL';
+  const conversionState = searchParams.get('conversionState') || 'ALL';
+  const outcomeAlertState = searchParams.get('outcomeAlert') || 'ALL';
 
   const updateQuery = useCallback((patch: Record<string, string | number | undefined>) => {
     const next = new URLSearchParams(searchParams);
@@ -368,6 +443,11 @@ const LotteryPredictionDecisionPage = () => {
     return true;
   }), [decisionRows, evidenceState, resultState]);
 
+  const filteredDecisionOutcomes = useMemo(() => {
+    const items = decisionOutcomeSummary?.items || [];
+    return items.filter(item => matchesDecisionOutcomeFilter(item, outcomeState, conversionState, outcomeAlertState));
+  }, [conversionState, decisionOutcomeSummary?.items, outcomeAlertState, outcomeState]);
+
   const selectedRowSet = useMemo(() => new Set(selectedRowKeys.map(String)), [selectedRowKeys]);
   const selectedRows = useMemo(
     () => filteredRows.filter(row => selectedRowSet.has(row.key)),
@@ -380,11 +460,10 @@ const LotteryPredictionDecisionPage = () => {
   );
 
   const activeDecisionOutcome = useMemo<LotteryDecisionOutcomeItem | undefined>(() => {
-    const items = decisionOutcomeSummary?.items || [];
-    return items.find(item => item.decisionSetId === activeDecisionSetId)
-      || (targetIssue ? items.find(item => item.targetIssue === targetIssue) : undefined)
-      || items[0];
-  }, [activeDecisionSetId, decisionOutcomeSummary?.items, targetIssue]);
+    return filteredDecisionOutcomes.find(item => item.decisionSetId === activeDecisionSetId)
+      || (targetIssue ? filteredDecisionOutcomes.find(item => item.targetIssue === targetIssue) : undefined)
+      || filteredDecisionOutcomes[0];
+  }, [activeDecisionSetId, filteredDecisionOutcomes, targetIssue]);
 
   const defaultDecisionSetTitle = useMemo(() => {
     const selectedIssue = selectedRows[0]?.targetPeriod;
@@ -406,6 +485,23 @@ const LotteryPredictionDecisionPage = () => {
     const pending = filteredRows.filter(row => row.resultState === 'PENDING').length;
     return { stable, warning, converted, pending };
   }, [filteredRows]);
+
+  const outcomeSummary = useMemo(() => {
+    const totalCost = filteredDecisionOutcomes.reduce((sum, item) => sum + Number(item.totalCost || 0), 0);
+    const totalPrize = filteredDecisionOutcomes.reduce((sum, item) => sum + Number(item.totalPrize || 0), 0);
+    const warning = filteredDecisionOutcomes.reduce((sum, item) => sum + Number(item.warningCount || 0), 0);
+    const unchecked = filteredDecisionOutcomes.filter(item =>
+      (item.convertedTicketCount || 0) > (item.checkedConvertedTicketCount || 0)
+    ).length;
+    return {
+      count: filteredDecisionOutcomes.length,
+      hit: filteredDecisionOutcomes.filter(item => decisionOutcomeState(item) === 'HIT').length,
+      unchecked,
+      warning,
+      net: totalPrize - totalCost,
+      roi: totalCost > 0 ? ((totalPrize - totalCost) / totalCost) * 100 : 0
+    };
+  }, [filteredDecisionOutcomes]);
 
   const saveSelectedTickets = async () => {
     if (!selectedRows.length) {
@@ -729,6 +825,36 @@ const LotteryPredictionDecisionPage = () => {
         <Select value={resultState} options={resultOptions} onChange={value => updateDecisionQuery({ resultState: value })} />
       </section>
 
+      <section className="lottery-decision-outcome-filter-bar">
+        <Select
+          value={outcomeState}
+          options={outcomeOptions}
+          onChange={value => updateQuery({ outcomeState: value })}
+        />
+        <Select
+          value={conversionState}
+          options={conversionOptions}
+          onChange={value => updateQuery({ conversionState: value })}
+        />
+        <Select
+          value={outcomeAlertState}
+          options={outcomeAlertOptions}
+          onChange={value => updateQuery({ outcomeAlert: value })}
+        />
+        <Button
+          icon={<DownloadOutlined />}
+          onClick={() => {
+            const next = new URLSearchParams({ type: 'decision-outcomes' });
+            if (activeDecisionOutcome?.targetIssue) {
+              next.set('targetIssue', activeDecisionOutcome.targetIssue);
+            }
+            navigate(`/lottery/exports?${next.toString()}`);
+          }}
+        >
+          导出复盘
+        </Button>
+      </section>
+
       <section className="lottery-history-summary-grid">
         <Card className="life-panel-card lottery-clean-panel">
           <div className="lottery-history-summary-item">
@@ -766,6 +892,29 @@ const LotteryPredictionDecisionPage = () => {
             </div>
           </div>
         </Card>
+      </section>
+
+      <section className="lottery-decision-outcome-summary-grid">
+        <article>
+          <strong>{outcomeSummary.count}</strong>
+          <span>复盘决策集</span>
+          <Tag color={outcomeSummary.hit ? 'blue' : 'default'}>命中 {outcomeSummary.hit}</Tag>
+        </article>
+        <article>
+          <strong>{formatMoney(outcomeSummary.net)}</strong>
+          <span>筛选范围净结果</span>
+          <Tag color={outcomeSummary.roi > 0 ? 'green' : 'default'}>ROI {formatPercent(outcomeSummary.roi)}</Tag>
+        </article>
+        <article>
+          <strong>{outcomeSummary.unchecked}</strong>
+          <span>仍需核奖</span>
+          <Tag color={outcomeSummary.unchecked ? 'gold' : 'green'}>{outcomeSummary.unchecked ? '待处理' : '已处理'}</Tag>
+        </article>
+        <article>
+          <strong>{outcomeSummary.warning}</strong>
+          <span>证据提醒</span>
+          <Tag color={outcomeSummary.warning ? 'orange' : 'green'}>{outcomeSummary.warning ? '需复核' : '无提醒'}</Tag>
+        </article>
       </section>
 
       {activeDecisionOutcome ? (
@@ -813,8 +962,31 @@ const LotteryPredictionDecisionPage = () => {
               </article>
             ))}
           </div>
+          <div className="lottery-decision-outcome-list">
+            {filteredDecisionOutcomes.slice(0, 6).map(item => (
+              <button
+                type="button"
+                key={item.decisionSetId || `${item.title}-${item.targetIssue}`}
+                className={item.decisionSetId === activeDecisionOutcome.decisionSetId ? 'active' : undefined}
+                onClick={() => {
+                  if (item.decisionSetId) {
+                    setActiveDecisionSetId(item.decisionSetId);
+                  }
+                  updateQuery({ targetIssue: item.targetIssue });
+                }}
+              >
+                <strong>{item.title || item.targetIssue || '保存决策'}</strong>
+                <span>第 {item.targetIssue || '-'} 期 · 命中 {item.winningCandidateCount || 0}/{item.scoredCandidateCount || item.candidateCount || 0}</span>
+                <small>转票 {item.checkedConvertedTicketCount || 0}/{item.convertedTicketCount || 0} · 净 {formatMoney(item.netResult)} · 提醒 {item.warningCount || 0}</small>
+              </button>
+            ))}
+          </div>
         </Card>
-      ) : null}
+      ) : (
+        <Card className="life-panel-card lottery-clean-panel">
+          <Empty description="当前复盘筛选下暂无保存决策结果" />
+        </Card>
+      )}
 
       <section className="lottery-decision-brief-grid">
         <article>

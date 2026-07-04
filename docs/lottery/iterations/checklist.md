@@ -391,6 +391,39 @@ Goal: turn the guided frontend workflows from Iteration 13 into durable, auditab
 - [x] Surface outcome feedback on workbench, decision board, research report, and ticket settlement pages. Workbench recent work includes decision outcomes, the decision board shows saved-decision replay cards, research treats outcomes as `decision` evidence, and the ticket settlement card includes same-issue decision context.
 - [x] Run month-end verification, update docs, commit, and push. Verification: focused Maven tests for decision/ticket/export services and controller; `one-web npm run lottery:smoke`; `one-web npm run build`.
 
+## Iteration 15: Frontend Outcome Operations
+
+Goal: make the saved-decision outcome loop easier to operate from the frontend, with filterable review states, faster export handoff, and clearer daily follow-up queues.
+
+### Wave 15A: Decision Outcome Focus Filters
+
+- [x] Add URL-backed outcome filters on `/lottery/predictions/decision` for hit state, ticket conversion state, and evidence alert state. Decision board now filters saved-decision outcomes by hit/miss/pending, converted/unconverted/unchecked, and warning/stale/volatile/under-tested/clean states.
+- [x] Add a compact outcome operations summary for filtered saved decisions. The decision board now shows filtered count, hit count, net result, ROI, unchecked items, and evidence reminder totals.
+- [x] Add a selectable saved-outcome list so users can jump between matching decision sets without leaving the decision board. The active outcome card now includes a filtered list with issue, hit, conversion, net, and warning evidence.
+- [x] Add frontend handoff from decision outcomes to CSV export. The decision board opens `/lottery/exports` with `type=decision-outcomes`, and the export page initializes type/filter state from URL parameters.
+- [x] Run frontend smoke/build verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
+
+### Wave 15B: Workbench Follow-Up Queue
+
+- [ ] Add workbench follow-up grouping for unchecked converted tickets, stale evidence, and high-warning saved decisions.
+- [ ] Add quick actions from workbench outcome cards to decision board, ticket settlement, and export views with preserved issue context.
+- [ ] Add empty/error states that distinguish no saved decisions from no outcomes after filtering.
+- [ ] Run smoke/build verification, update docs, commit, and push.
+
+### Wave 15C: Research And Ticket Outcome Drilldowns
+
+- [ ] Add research-page presets for saved decision outcomes by rule/source delta, warning state, and ROI band.
+- [ ] Add ticket-page drilldowns from settlement review into matching saved-decision outcome candidates.
+- [ ] Add export report presets for outcome operation queues and month-end decision review.
+- [ ] Run focused frontend checks, update docs, commit, and push.
+
+### Wave 15D: Release Evidence And Month-End UX Polish
+
+- [ ] Extend route smoke fixtures/assertions for outcome filters, export URL initialization, and workbench follow-up links.
+- [ ] Add release-readiness evidence for V12 frontend outcome operations.
+- [ ] Review responsive layout for decision, export, workbench, research, and ticket pages.
+- [ ] Run month-end verification, update docs, commit, and push.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

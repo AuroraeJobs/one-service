@@ -1620,6 +1620,85 @@
   margin-bottom: 16px;
 }
 
+.lottery-decision-outcome-filter-bar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(140px, 180px)) auto;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.lottery-decision-outcome-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.lottery-decision-outcome-summary-grid article {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+  padding: 12px 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+}
+
+.lottery-decision-outcome-summary-grid strong {
+  color: var(--app-text);
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.lottery-decision-outcome-summary-grid span {
+  overflow: hidden;
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-decision-outcome-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.lottery-decision-outcome-list button {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lottery-decision-outcome-list button.active {
+  border-color: var(--module-accent, #0071e3);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--module-accent, #0071e3) 24%, transparent);
+}
+
+.lottery-decision-outcome-list strong,
+.lottery-decision-outcome-list span,
+.lottery-decision-outcome-list small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-decision-outcome-list span,
+.lottery-decision-outcome-list small {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
 .lottery-decision-brief-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -4562,6 +4641,9 @@ button.lottery-latest-vs-card:hover {
   .lottery-workbench-shortcut-grid,
   .lottery-decision-saved-bar,
   .lottery-decision-filter-bar,
+  .lottery-decision-outcome-filter-bar,
+  .lottery-decision-outcome-summary-grid,
+  .lottery-decision-outcome-list,
   .lottery-decision-brief-grid,
   .lottery-ticket-budget-grid,
   .lottery-ticket-settlement-metrics,

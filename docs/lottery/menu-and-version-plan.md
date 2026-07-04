@@ -199,6 +199,16 @@ Goal: make the guided decision workflow durable, auditable, and testable after t
 - Add decision outcome feedback after actual-result attachment, including candidate hit distribution, ticket conversion results, stale-evidence alerts, and report/export sections. The shipped 14D slice adds `/lottery/decision-sets/outcomes`, rule/source performance deltas, evidence alerts, frontend outcome cards on workbench/decision/research/ticket settlement pages, and CSV exports for saved decision sets, decision outcomes, import previews, budget prechecks, and settlement reviews.
 - Preserve the project-owned API boundary and keep all external provider work behind backend services.
 
+### V12: Frontend Outcome Operations
+
+Goal: make decision outcomes easier to operate from the frontend after the durable saved-decision loop is available.
+
+- Upgrade `/lottery/predictions/decision` into the primary outcome operations cockpit with URL-backed filters for hit state, ticket conversion state, and evidence alert state. The shipped 15A slice adds filtered saved-outcome metrics, a selectable outcome list, and a direct handoff into CSV export.
+- Add workbench follow-up queues for unchecked converted tickets, stale or volatile evidence, and high-warning saved decisions. Planned 15B links each queue item to the decision board, ticket settlement, or export page with preserved issue context.
+- Add research and ticket drilldowns for rule/source deltas, ROI bands, warning states, and settlement-linked candidates. Planned 15C keeps report-style evidence dense while avoiding provider calls from the browser.
+- Extend route smoke, release readiness, and responsive QA for the new frontend outcome operations. Planned 15D records the V12 gates and month-end frontend evidence.
+- Keep frontend copy focused on review, audit, and personal record keeping; no gambling-promotion copy.
+
 ## API Boundary
 
 Frontend should only call:

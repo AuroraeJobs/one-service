@@ -12,6 +12,7 @@ import {
   ThunderboltOutlined,
   ToolOutlined
 } from '@ant-design/icons';
+import { useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import {
   lotteryExportApi,
@@ -78,6 +79,9 @@ const toParams = (type: string, primaryFilter: string, limit: string) => {
 const exportTypeLabel = (type?: string) =>
   exportTypeOptions.find(option => option.value === type)?.label || type || '-';
 
+const isSupportedExportType = (value?: string | null) =>
+  Boolean(value && exportTypeOptions.some(option => option.value === value));
+
 const downloadCsv = (result?: LotteryExportResult) => {
   if (!result?.content) {
     message.warning('暂无可下载内容');
@@ -112,8 +116,14 @@ const toDateEnd = (value: string) => {
 };
 
 const LotteryExportMaintenancePage = () => {
-  const [exportType, setExportType] = useState('tickets');
-  const [primaryFilter, setPrimaryFilter] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [exportType, setExportType] = useState(() => {
+    const requestedType = searchParams.get('type');
+    return isSupportedExportType(requestedType) ? requestedType || 'tickets' : 'tickets';
+  });
+  const [primaryFilter, setPrimaryFilter] = useState(() =>
+    searchParams.get('targetIssue') || searchParams.get('issue') || searchParams.get('ruleName') || ''
+  );
   const [limit, setLimit] = useState('500');
   const [result, setResult] = useState<LotteryExportResult>();
   const [reportSections, setReportSections] = useState<string[]>(defaultReportSections);
@@ -133,6 +143,17 @@ const LotteryExportMaintenancePage = () => {
   const [exporting, setExporting] = useState(false);
   const [dryRunning, setDryRunning] = useState(false);
   const [error, setError] = useState<string>();
+
+  const updateExportType = (value: string) => {
+    setExportType(value);
+    const next = new URLSearchParams(searchParams);
+    if (value === 'tickets') {
+      next.delete('type');
+    } else {
+      next.set('type', value);
+    }
+    setSearchParams(next, { replace: true });
+  };
 
   const loadState = useCallback(async () => {
     setLoading(true);
@@ -359,7 +380,7 @@ const LotteryExportMaintenancePage = () => {
 
       <Card className="life-panel-card lottery-clean-panel">
         <Space wrap>
-          <Select value={exportType} onChange={setExportType} options={exportTypeOptions} style={{ width: 160 }} />
+          <Select value={exportType} onChange={updateExportType} options={exportTypeOptions} style={{ width: 160 }} />
           <Input allowClear value={primaryFilter} onChange={event => setPrimaryFilter(event.target.value)} placeholder="过滤值" style={{ width: 180 }} />
           <Input value={limit} onChange={event => setLimit(event.target.value)} placeholder="行数" style={{ width: 96 }} />
           <Button type="primary" icon={<DownloadOutlined />} loading={exporting} onClick={runExport}>
