@@ -37,6 +37,7 @@ Use these gates when finishing a lottery milestone.
 
 ## Documentation
 
+- Follow `docs/engineering/commit-and-versioning.md` for commit messages and release version changes.
 - Update `docs/lottery/iterations/checklist.md`.
 - Update `docs/lottery/modules/technical-design.md` for architecture or contract changes.
 - Update `docs/lottery/menu-and-version-plan.md` when routes or menu scope changes.

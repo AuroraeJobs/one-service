@@ -15,6 +15,7 @@ Last updated: 2026-07-03
 - Documentation is updated after each completed milestone.
 - Changes are reviewed with `git status --short` and `git diff --stat`.
 - Completed milestones are committed and pushed.
+- Future commits follow `docs/engineering/commit-and-versioning.md`.
 - Provider abstraction rule is still true.
 - MongoDB plus Redis storage rule is still true.
 
