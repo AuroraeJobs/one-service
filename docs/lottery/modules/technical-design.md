@@ -236,6 +236,8 @@ VOID
 
 `LotteryRecordSyncSummary` aggregates recent record sync logs. `GET /lottery/records/sync-summary?limit=50` returns status counts, success and failure rates, total saved count, latest status/message/issue range, latest and average duration, and last success/failure/skipped timestamps. The summary is derived from MongoDB sync logs and does not read Redis lock state directly.
 
+The draw provider client must not pass empty upstream responses into JSON parsing. HTTP failures, blank bodies, invalid JSON, and provider business failures are converted into readable sync failure messages such as `彩票开奖接口请求失败，HTTP 403` or `彩票开奖接口未返回内容`, so operations pages do not show low-level parser errors like `argument "content" is null`.
+
 ## Workbench Contract
 
 Iteration 09 introduces a daily workflow workbench under `/lottery/workbench`. The workbench is a composition layer over existing domain services, not a new source of lottery truth.

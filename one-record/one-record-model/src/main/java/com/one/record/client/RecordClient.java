@@ -67,13 +67,13 @@ public class RecordClient {
 
     public static List<Record> record(RecordRequest request) {
         RecordResponse response = get(request, RecordResponse.class);
-        return response.success() ? response.getResult() : null;
+        return recordsFromResponse(response);
     }
 
     public static <T> T get(Object request, Class<T> tClass) {
         Map<?, ?> params = JsonUtil.toObject(JsonUtil.toJson(request), Map.class);
         String response = get(params);
-        return JsonUtil.toObject(response, tClass);
+        return parseResponse(response, tClass);
     }
 
     public static String get(Map<?, ?> params) {
@@ -84,11 +84,18 @@ public class RecordClient {
     }
 
     public static String get(String url, String cookie) {
+        if (url == null || url.isBlank()) {
+            throw new IllegalStateException("彩票开奖接口请求地址为空");
+        }
         Request request = buildRequest(url, cookie);
         try {
             try (Response response = CLIENT.newCall(request).execute()) {
                 if (response.isRedirect()) {
-                    return get(response.header("Location"), response.header("Set-Cookie"));
+                    String location = response.header("Location");
+                    if (location == null || location.isBlank()) {
+                        throw new IllegalStateException("彩票开奖接口重定向地址为空");
+                    }
+                    return get(location, response.header("Set-Cookie"));
                 }
                 if (response.isSuccessful()) {
                     return Optional.ofNullable(response.body()).map(body -> {
@@ -100,11 +107,41 @@ public class RecordClient {
                     }).orElse(null);
                 } else {
                     log.error("\n> 请求失败, 错误码: {}", response.code());
+                    throw new IllegalStateException("彩票开奖接口请求失败，HTTP " + response.code());
                 }
             }
         } catch (IOException e) {
             log.error("\n> 请求异常, " + e.getMessage(), e);
+            throw new IllegalStateException("彩票开奖接口请求异常: " + e.getMessage(), e);
         }
-        return null;
+    }
+
+    static List<Record> recordsFromResponse(RecordResponse response) {
+        if (response == null) {
+            throw new IllegalStateException("彩票开奖接口响应为空");
+        }
+        if (!response.success()) {
+            String message = response.getMessage() == null || response.getMessage().isBlank()
+                    ? "state=" + response.getState()
+                    : response.getMessage();
+            throw new IllegalStateException("彩票开奖接口返回失败: " + message);
+        }
+        return response.getResult() == null ? List.of() : response.getResult();
+    }
+
+    static <T> T parseResponse(String response, Class<T> tClass) {
+        if (response == null || response.isBlank()) {
+            throw new IllegalStateException("彩票开奖接口未返回内容");
+        }
+        try {
+            return JsonUtil.toObject(response, tClass);
+        } catch (RuntimeException exception) {
+            throw new IllegalStateException("彩票开奖接口响应解析失败: " + abbreviate(response), exception);
+        }
+    }
+
+    private static String abbreviate(String value) {
+        String safeValue = value == null ? "" : value.replaceAll("\\s+", " ").trim();
+        return safeValue.length() <= 160 ? safeValue : safeValue.substring(0, 160) + "...";
     }
 }
