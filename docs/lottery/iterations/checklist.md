@@ -430,11 +430,11 @@ Goal: spend the next month turning the lottery module from a frontend-operated o
 
 ### Week 1: Data Health And Outcome Intelligence Foundation
 
-- [ ] Add a lottery health score model that combines provider freshness, record gaps, ticket settlement coverage, decision outcome completeness, stale evidence, and export evidence into one summary.
-- [ ] Add backend summary API for `/lottery/operations/health` with issue-level health contributors and action links.
-- [ ] Add a workbench health widget with drilldowns into sync, data quality, decision outcomes, tickets, and exports.
-- [ ] Add audit events for health-score generation, data-quality refresh, and manual health acknowledgement.
-- [ ] Run focused backend/frontend checks, update docs, commit, and push.
+- [x] Add a lottery health score model that combines provider freshness, record gaps, ticket settlement coverage, decision outcome completeness, stale evidence, and export evidence into one summary. Added weighted operations health contributors and summary score/status/message.
+- [x] Add backend summary API for `/lottery/operations/health` with issue-level health contributors and action links. Added `LotteryOperationsController`, `ILotteryOperationsService`, and `/lottery/operations/health/acknowledge`.
+- [x] Add a workbench health widget with drilldowns into sync, data quality, decision outcomes, tickets, and exports. Workbench now loads operations health, shows score/contributors, and links each contributor to its operational route.
+- [x] Add audit events for health-score generation, data-quality refresh, and manual health acknowledgement. Health generation and acknowledgement now write `LotteryAuditEvent` rows under `lottery-operations-health`.
+- [x] Run focused backend/frontend checks, update docs, commit, and push. Verification: focused Maven operations service/controller tests; `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
 ### Week 2: Strategy Notebook And Hypothesis Lab
 

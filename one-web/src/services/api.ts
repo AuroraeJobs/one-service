@@ -155,6 +155,30 @@ export interface LotteryMaintenanceSummary {
   generatedAt?: number;
 }
 
+export interface LotteryOperationsHealthContributor {
+  key?: string;
+  label?: string;
+  status?: string;
+  score?: number;
+  weight?: number;
+  message?: string;
+  path?: string;
+  pendingCount?: number;
+  updatedAt?: number;
+}
+
+export interface LotteryOperationsHealthSummary {
+  score?: number;
+  status?: string;
+  message?: string;
+  latestIssue?: string;
+  nextIssue?: string;
+  warningCount?: number;
+  pendingActionCount?: number;
+  contributors: LotteryOperationsHealthContributor[];
+  generatedAt?: number;
+}
+
 export interface LotteryPreference {
   id?: string;
   userId?: string;
@@ -2735,6 +2759,15 @@ export const lotteryWorkbenchApi = {
   },
   dailyRun: (): Promise<LotteryWorkbenchDailyRunResult> => {
     return apiClient.post('/lottery/workbench/daily-run');
+  }
+};
+
+export const lotteryOperationsApi = {
+  health: (): Promise<LotteryOperationsHealthSummary> => {
+    return apiClient.get('/lottery/operations/health');
+  },
+  acknowledgeHealth: (request?: { contributorKey?: string; note?: string }): Promise<LotteryOperationsHealthSummary> => {
+    return apiClient.post('/lottery/operations/health/acknowledge', request || {});
   }
 };
 

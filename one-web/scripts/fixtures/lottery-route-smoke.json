@@ -17,9 +17,11 @@
         "lotteryBudgetApi.status",
         "lotteryPreferenceApi.preference",
         "lotteryPreferenceApi.updatePreference",
+        "lotteryOperationsApi.health",
+        "lotteryOperationsApi.acknowledgeHealth",
         "lotteryTicketApi.checkLatestPrizes"
       ],
-      "emptyStates": ["暂无待办", "暂无预测快照", "暂无保存决策复盘结果", "暂无发布检查"],
+      "emptyStates": ["暂无待办", "暂无预测快照", "暂无保存决策复盘结果", "暂无发布检查", "运营健康", "暂无健康评分"],
       "errorStates": ["读取彩票工作台失败", "执行彩票日常任务失败"],
       "fixtureData": {
         "summary": {
@@ -32,6 +34,11 @@
             "items": [
               { "key": "frontend-route-smoke", "status": "PASS" }
             ]
+          },
+          "operationsHealth": {
+            "score": 92,
+            "status": "PASS",
+            "contributors": ["provider-freshness", "record-sync", "data-quality", "ticket-settlement", "decision-outcomes", "export-evidence"]
           }
         }
       }

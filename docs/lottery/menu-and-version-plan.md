@@ -213,7 +213,7 @@ Goal: make decision outcomes easier to operate from the frontend after the durab
 
 Goal: turn the outcome-operation cockpit into a repeatable monthly intelligence workflow with explainable health, traceable hypotheses, daily reminders, and one-pass month-end review.
 
-- Add lottery operations health scoring across provider freshness, record gaps, ticket settlement coverage, decision outcome completeness, stale evidence, and export evidence. Planned Week 1 ships `/lottery/operations/health`, workbench health widgets, and health audit events.
+- Add lottery operations health scoring across provider freshness, record gaps, ticket settlement coverage, decision outcome completeness, stale evidence, and export evidence. The shipped Week 1 slice adds `/lottery/operations/health`, `/lottery/operations/health/acknowledge`, workbench health widgets, and health audit events.
 - Add a strategy notebook and hypothesis lab so rules, assumptions, linked predictions, backtests, tickets, and saved decision outcomes can be reviewed together. Planned Week 2 ships notebook APIs and `/lottery/research/notebook`.
 - Add action reminders for upcoming draw windows, unsynced records, unconverted saved decisions, unchecked tickets, stale evidence, and missing month-end exports. Planned Week 3 ships reminder APIs, workbench reminder center, snooze/acknowledge actions, and settings thresholds.
 - Add month-end review and release governance for ledger results, tickets, outcomes, research notes, health score, and export evidence. Planned Week 4 ships the review dashboard, one-pass report preset, route smoke coverage, release readiness evidence, and responsive QA.
@@ -249,6 +249,7 @@ lottery/calendar/*
 lottery/budget/*
 lottery/exports/*
 lottery/audit/*
+lottery/operations/*
 ```
 
 Do not add browser-side calls to external lottery websites or data providers.

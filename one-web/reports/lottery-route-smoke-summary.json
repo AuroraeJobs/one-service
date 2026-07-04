@@ -1,12 +1,12 @@
 {
   "target": "Iteration 15D lottery V12 frontend outcome operations smoke",
-  "generatedAt": "2026-07-04T13:13:58.808Z",
+  "generatedAt": "2026-07-04T13:27:02.532Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 5,
-  "checkCount": 122,
+  "checkCount": 126,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
@@ -14,8 +14,8 @@
       "route": "/lottery/workbench",
       "label": "工作台",
       "component": "LotteryWorkbenchPage",
-      "mockApiCount": 7,
-      "emptyStateCount": 4,
+      "mockApiCount": 9,
+      "emptyStateCount": 6,
       "errorStateCount": 2
     },
     {

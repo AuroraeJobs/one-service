@@ -32,6 +32,7 @@ import {
   lotteryDecisionSetApi,
   lotteryExperimentApi,
   lotteryExportApi,
+  lotteryOperationsApi,
   lotteryPreferenceApi,
   lotteryPredictionApi,
   lotteryTicketApi,
@@ -43,6 +44,7 @@ import {
   type LotteryDailyStateItem,
   type LotteryDecisionOutcomeItem,
   type LotteryDecisionOutcomeSummary,
+  type LotteryOperationsHealthSummary,
   type LotteryPreference,
   type LotteryPredictionSnapshot,
   type LotteryStrategyExperiment,
@@ -76,6 +78,7 @@ interface LotteryRecentWorkLink {
 
 type WorkbenchWidgetKey =
   | 'status'
+  | 'health'
   | 'issueFocus'
   | 'actionQueue'
   | 'calendar'
@@ -131,6 +134,7 @@ const workbenchWidgetStorageKey = 'one:lottery:workbench:widgets:v1';
 
 const workbenchWidgetMeta: WorkbenchWidgetMeta[] = [
   { key: 'status', label: '状态总览', description: '开奖、同步、质量、票据、账本和发布检查' },
+  { key: 'health', label: '运营健康', description: 'Provider、同步、质量、票据、决策和导出健康评分' },
   { key: 'issueFocus', label: '期号焦点', description: '当前期、下一期、预测、票据、核验和账本结果' },
   { key: 'actionQueue', label: '行动队列', description: '同步、质量、预测回填、核验和发布待办' },
   { key: 'calendar', label: '开奖日历', description: '开奖日、同步窗口和提醒数量' },
@@ -388,6 +392,13 @@ const queueStatusColor = (status?: string) => {
   return 'default';
 };
 
+const operationsHealthColor = (status?: string) => {
+  if (status === 'PASS') return 'green';
+  if (status === 'WARNING') return 'gold';
+  if (status === 'FAILED') return 'red';
+  return 'default';
+};
+
 const isActionableState = (item?: LotteryDailyStateItem) =>
   Boolean(item && (item.status !== 'COMPLETE' || (item.pendingCount || 0) > 0));
 
@@ -411,6 +422,7 @@ const LotteryWorkbenchPage = () => {
   const [summary, setSummary] = useState<LotteryWorkbenchSummary>();
   const [calendar, setCalendar] = useState<LotteryCalendarState>();
   const [budgetStatus, setBudgetStatus] = useState<LotteryBudgetStatus>();
+  const [operationsHealth, setOperationsHealth] = useState<LotteryOperationsHealthSummary>();
   const [recentWork, setRecentWork] = useState<LotteryWorkbenchRecentWork>(createEmptyRecentWork);
   const [dailyRunResult, setDailyRunResult] = useState<LotteryWorkbenchDailyRunResult>();
   const [loading, setLoading] = useState(false);
@@ -490,15 +502,17 @@ const LotteryWorkbenchPage = () => {
     setLoading(true);
     setError(undefined);
     try {
-      const [data, calendarData, budgetData, recentWorkData] = await Promise.all([
+      const [data, calendarData, budgetData, healthData, recentWorkData] = await Promise.all([
         lotteryWorkbenchApi.summary(),
         lotteryCalendarApi.calendar(),
         lotteryBudgetApi.status(),
+        lotteryOperationsApi.health(),
         fetchRecentWork()
       ]);
       setSummary(data);
       setCalendar(calendarData);
       setBudgetStatus(budgetData);
+      setOperationsHealth(healthData);
       setRecentWork(recentWorkData);
     } catch (requestError) {
       console.error('读取彩票工作台失败:', requestError);
@@ -533,13 +547,15 @@ const LotteryWorkbenchPage = () => {
       const result = await lotteryWorkbenchApi.dailyRun();
       setDailyRunResult(result);
       setSummary(result.summary);
-      const [calendarData, budgetData, recentWorkData] = await Promise.all([
+      const [calendarData, budgetData, healthData, recentWorkData] = await Promise.all([
         lotteryCalendarApi.calendar(),
         lotteryBudgetApi.status(),
+        lotteryOperationsApi.health(),
         fetchRecentWork()
       ]);
       setCalendar(calendarData);
       setBudgetStatus(budgetData);
+      setOperationsHealth(healthData);
       setRecentWork(recentWorkData);
       message.success('日常任务已完成');
     } catch (requestError) {
@@ -564,6 +580,20 @@ const LotteryWorkbenchPage = () => {
       message.error('按最新开奖核验彩票失败');
     } finally {
       setCheckingPrize(false);
+    }
+  };
+
+  const acknowledgeHealth = async (contributorKey?: string) => {
+    try {
+      const result = await lotteryOperationsApi.acknowledgeHealth({
+        contributorKey,
+        note: contributorKey ? 'workbench contributor acknowledgement' : 'workbench health acknowledgement'
+      });
+      setOperationsHealth(result);
+      message.success('健康提醒已确认');
+    } catch (requestError) {
+      console.error('确认彩票运营健康提醒失败:', requestError);
+      message.error('确认健康提醒失败');
     }
   };
 
@@ -1114,6 +1144,53 @@ const LotteryWorkbenchPage = () => {
               </button>
             ))}
           </section>
+        );
+      case 'health':
+        return (
+          <Card
+            className="life-panel-card lottery-clean-panel lottery-workbench-health-card"
+            title="运营健康"
+            extra={
+              <Space wrap>
+                <Tag color={operationsHealthColor(operationsHealth?.status)}>{operationsHealth?.status || 'UNKNOWN'}</Tag>
+                <Button size="small" onClick={() => acknowledgeHealth()}>确认</Button>
+              </Space>
+            }
+          >
+            <div className="lottery-workbench-health-summary">
+              <Progress
+                type="circle"
+                percent={Math.max(0, Math.min(100, operationsHealth?.score || 0))}
+                size={84}
+                strokeColor={operationsHealth?.status === 'FAILED' ? '#ff4d4f' : operationsHealth?.status === 'WARNING' ? '#faad14' : '#52c41a'}
+              />
+              <div>
+                <strong>{operationsHealth?.message || '等待健康评分'}</strong>
+                <span>最近期号 {operationsHealth?.latestIssue || '-'} · 下一期 {operationsHealth?.nextIssue || '-'}</span>
+                <Space wrap>
+                  <Tag color={operationsHealth?.warningCount ? 'gold' : 'green'}>提醒 {operationsHealth?.warningCount || 0}</Tag>
+                  <Tag color={operationsHealth?.pendingActionCount ? 'orange' : 'green'}>待办 {operationsHealth?.pendingActionCount || 0}</Tag>
+                  <Tag>{formatDateTime(operationsHealth?.generatedAt)}</Tag>
+                </Space>
+              </div>
+            </div>
+            {(operationsHealth?.contributors || []).length ? (
+              <div className="lottery-workbench-health-list">
+                {(operationsHealth?.contributors || []).map(item => (
+                  <button key={item.key || item.label} type="button" onClick={() => item.path && navigate(item.path)}>
+                    <Tag color={operationsHealthColor(item.status)}>{item.status || 'UNKNOWN'}</Tag>
+                    <span>
+                      <strong>{item.label || item.key}</strong>
+                      <small>{item.message || '-'}</small>
+                    </span>
+                    <em>{item.score ?? 0}</em>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <Empty description="暂无健康评分" />
+            )}
+          </Card>
         );
       case 'issueFocus':
         return (
