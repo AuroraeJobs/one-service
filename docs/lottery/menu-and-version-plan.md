@@ -179,6 +179,16 @@ Goal: make the completed platform capabilities feel like a richer user-facing pr
 - Improve `/lottery/exports` with browser CSV download, report builder, audit filters, maintenance grouping, and print-friendly report views.
 - Preserve dense operational layouts and URL-backed filters so drill-through from workbench remains predictable.
 
+### V10: Guided Daily Decision Experience
+
+Goal: turn the lottery module into a guided daily workflow where users can move from data health, to prediction review, to ticket tracking, to result review without hunting through separate pages.
+
+- Upgrade `/lottery/workbench` with configurable daily widgets, issue focus, action queue state, and quick drill-throughs that remember the user's last working context.
+- Add a prediction decision board that compares saved candidates, rule evidence, replay drift, actual-result status, and ticket conversion state on one screen.
+- Add ticket import and budget UX helpers for paste preview, duplicate grouping, batch edits, exposure warnings, and issue-level settlement review.
+- Improve research/report pages with guided comparison presets, print/export-ready summary views, and clearer empty/error states for incomplete evidence.
+- Keep the experience operational and dense: no marketing-style landing pages, no browser-side provider calls, and no gambling-promotion copy.
+
 ## API Boundary
 
 Frontend should only call:

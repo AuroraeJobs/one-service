@@ -311,6 +311,46 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Polish frontend empty/error/loading states touched by this month. Workbench now shows runbook, operation, and release-check empty/default states without adding new navigation.
 - [x] Run month-end verification, update docs, commit, and push. Verification: focused Maven service tests, focused Maven web tests, and `one-web npm run build`.
 
+## Iteration 13: Guided Daily Decision Experience
+
+Goal: add more frontend workflow depth so the lottery module guides a daily user from health checks, to prediction comparison, to ticket action, to result review.
+
+### Wave 13A: Workbench Personalization And Action Queue
+
+- [ ] Add configurable workbench widget visibility/order persisted in browser-local state first, with room for backend preferences later.
+- [ ] Add an issue-focus strip that links latest draw, next target issue, pending predictions, ticket status, prize check, and ledger outcome.
+- [ ] Add a daily action queue panel that groups pending sync, data quality, prediction attachment, ticket prize check, and export/release warnings.
+- [ ] Add recent-work shortcuts for the last opened prediction, ticket issue, research comparison, export report, and maintenance page.
+- [ ] Polish responsive layout for the expanded workbench without nesting cards or hiding operational density.
+- [ ] Run frontend build, update docs, commit, and push.
+
+### Wave 13B: Prediction Decision Board
+
+- [ ] Add a prediction decision board view that compares latest prediction, saved snapshots, candidate sets, rule evidence, and replay drift.
+- [ ] Add candidate comparison controls for red/blue overlap, score, evidence tag, actual-result status, and ticket conversion state.
+- [ ] Add a guided pick builder that can select candidate rows and send them to ticket creation/import flows.
+- [ ] Add URL-backed filters and shareable state for selected target issue, rule group, and evidence status.
+- [ ] Add empty and warning states for under-tested, stale, or missing replay evidence before a candidate is trusted.
+- [ ] Run focused backend/frontend checks, update docs, commit, and push.
+
+### Wave 13C: Ticket Import, Batch Review, And Budget Guardrails
+
+- [ ] Add paste/import assistant UI for tickets with preview parsing, duplicate grouping, and invalid row explanations.
+- [ ] Add batch ticket actions for source, issue, stake, status, and delete/archive where existing APIs support it or can be safely extended.
+- [ ] Add budget exposure cards by issue and month with warnings before new tickets exceed configured limits.
+- [ ] Add issue settlement review that combines ticket rows, prize check output, ledger result, and prediction source.
+- [ ] Add mobile-first ticket review cards for imported rows, duplicate rows, and settlement rows.
+- [ ] Run focused ticket/ledger tests, frontend build, update docs, commit, and push.
+
+### Wave 13D: Research Reports And Release Readiness
+
+- [ ] Add guided research comparison presets for latest prediction, strongest rule, volatile rule, and ticket outcome review.
+- [ ] Add report-ready summary sections for prediction decision board, ticket settlement, budget exposure, and research comparison.
+- [ ] Add print/export polish for the new decision and settlement views.
+- [ ] Add release readiness checks for the new frontend flows, including route smoke checks and API contract coverage.
+- [ ] Update version docs, technical design notes, and iteration checklist with delivered scope and verification.
+- [ ] Run month-end verification, commit, and push.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.
