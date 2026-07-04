@@ -1749,6 +1749,14 @@ export interface LotteryTicketPrizeCheckSummary {
   generatedAt?: number;
 }
 
+export interface LotteryPageResponse<T> {
+  items: T[];
+  page?: number;
+  pageSize?: number;
+  total?: number;
+  hasNext?: boolean;
+}
+
 export interface LotteryLedgerSummary {
   ticketCount?: number;
   checkedTicketCount?: number;
@@ -1907,6 +1915,16 @@ export const lotteryPredictionApi = {
   history: (params?: { limit?: number }): Promise<LotteryPredictionSnapshot[]> => {
     return apiClient.get('/lottery/predictions', { params });
   },
+  historyPage: (params?: {
+    page?: number;
+    pageSize?: number;
+    resultState?: 'ALL' | 'PENDING' | 'WON' | 'MISSED' | string;
+    targetPeriod?: number;
+    ruleId?: string;
+    ruleName?: string;
+  }): Promise<LotteryPageResponse<LotteryPredictionSnapshot>> => {
+    return apiClient.get('/lottery/predictions', { params });
+  },
   detail: (id: string): Promise<LotteryPredictionSnapshot> => {
     return apiClient.get(`/lottery/predictions/${id}`);
   },
@@ -1941,6 +1959,19 @@ export const lotteryPredictionApi = {
 
 export const lotteryTicketApi = {
   tickets: (params?: { issue?: string; status?: string; source?: string; prizeGrade?: string; predictionSnapshotId?: string }): Promise<LotteryTicket[]> => {
+    return apiClient.get('/lottery/tickets', { params });
+  },
+  ticketsPage: (params?: {
+    issue?: string;
+    status?: string;
+    source?: string;
+    prizeGrade?: string;
+    predictionSnapshotId?: string;
+    createdStartAt?: number;
+    createdEndAt?: number;
+    page?: number;
+    pageSize?: number;
+  }): Promise<LotteryPageResponse<LotteryTicket>> => {
     return apiClient.get('/lottery/tickets', { params });
   },
   summary: (): Promise<LotteryTicketSummary> => {

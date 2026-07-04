@@ -11,6 +11,7 @@ import com.one.record.service.IRecordService;
 import com.one.record.training.LotteryActualRecord;
 import com.one.record.training.LotteryLatestPrediction;
 import com.one.record.training.LotteryPredictionCandidate;
+import com.one.record.training.LotteryPredictionResult;
 import com.one.record.training.LotteryReplayMetrics;
 import com.one.record.training.LotteryTrainingReport;
 import com.one.record.training.PredictionRuleConfig;
@@ -18,6 +19,7 @@ import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.util.List;
@@ -93,6 +95,44 @@ class LotteryTrainingServiceTest {
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
         verify(predictionSnapshotRepository).findByOrderByCreatedAtDesc(pageableCaptor.capture());
         assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(100);
+    }
+
+    @Test
+    void predictionHistoryPageFiltersAndPaginates() {
+        LotteryPredictionResult won = new LotteryPredictionResult();
+        won.setPrizeName("五等奖");
+        LotteryPredictionResult missed = new LotteryPredictionResult();
+        missed.setPrizeName("未中奖");
+        when(predictionSnapshotRepository.findAll(org.mockito.ArgumentMatchers.any(Sort.class))).thenReturn(List.of(
+                LotteryPredictionSnapshot.builder()
+                        .id("pending")
+                        .targetPeriod(2026002)
+                        .ruleId("rule-a")
+                        .ruleName("平衡规则")
+                        .build(),
+                LotteryPredictionSnapshot.builder()
+                        .id("won")
+                        .targetPeriod(2026002)
+                        .ruleId("rule-a")
+                        .ruleName("平衡规则")
+                        .result(won)
+                        .build(),
+                LotteryPredictionSnapshot.builder()
+                        .id("missed")
+                        .targetPeriod(2026003)
+                        .ruleId("rule-b")
+                        .ruleName("遗漏规则")
+                        .result(missed)
+                        .build()
+        ));
+
+        var page = service.predictionHistoryPage(0, 1, "won", 2026002, "rule-a", "平衡");
+
+        assertThat(page.getItems()).extracting(LotteryPredictionSnapshot::getId).containsExactly("won");
+        assertThat(page.getPage()).isZero();
+        assertThat(page.getPageSize()).isEqualTo(1);
+        assertThat(page.getTotal()).isEqualTo(1);
+        assertThat(page.getHasNext()).isFalse();
     }
 
     @Test

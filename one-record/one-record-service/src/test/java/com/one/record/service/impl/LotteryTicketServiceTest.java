@@ -85,6 +85,23 @@ class LotteryTicketServiceTest {
     }
 
     @Test
+    void ticketsPageFiltersByCreatedRangeAndPaginates() {
+        when(repository.findByUserIdOrderByPeriodDescCreatedAtDesc("default")).thenReturn(List.of(
+                LotteryTicket.builder().id("a").status("DRAFT").createdAt(100L).build(),
+                LotteryTicket.builder().id("b").status("DRAFT").createdAt(200L).build(),
+                LotteryTicket.builder().id("c").status("DRAFT").createdAt(300L).build()
+        ));
+
+        var page = service.ticketsPage(null, "draft", null, null, null, 150L, 350L, 0, 1);
+
+        assertThat(page.getItems()).extracting(LotteryTicket::getId).containsExactly("b");
+        assertThat(page.getPage()).isZero();
+        assertThat(page.getPageSize()).isEqualTo(1);
+        assertThat(page.getTotal()).isEqualTo(2);
+        assertThat(page.getHasNext()).isTrue();
+    }
+
+    @Test
     void saveTicketNormalizesNumbersAndDefaults() {
         ArgumentCaptor<LotteryTicket> captor = ArgumentCaptor.forClass(LotteryTicket.class);
         when(repository.save(captor.capture())).thenAnswer(invocation -> invocation.getArgument(0));

@@ -2,6 +2,7 @@ package com.one.record.service;
 
 import com.one.record.model.LotteryPredictionSnapshot;
 import com.one.record.model.LotteryPredictionRuleRecord;
+import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.training.LotteryActualRecord;
 import com.one.record.training.LotteryReplayMetrics;
 import com.one.record.training.LotteryRuleComparison;
@@ -33,6 +34,13 @@ public interface ILotteryTrainingService {
     LotteryActualRecord saveLatestActualRecord(LotteryActualRecord record);
 
     List<LotteryPredictionSnapshot> predictionHistory(Integer limit);
+
+    LotteryPageResponse<LotteryPredictionSnapshot> predictionHistoryPage(Integer page,
+                                                                         Integer pageSize,
+                                                                         String resultState,
+                                                                         Integer targetPeriod,
+                                                                         String ruleId,
+                                                                         String ruleName);
 
     LotteryPredictionSnapshot predictionDetail(String id);
 

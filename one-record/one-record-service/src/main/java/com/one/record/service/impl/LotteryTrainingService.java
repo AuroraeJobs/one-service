@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import com.one.common.util.JsonUtil;
 import com.one.record.file.RecordFile;
+import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.model.LotteryPredictionSnapshot;
 import com.one.record.model.LotteryPredictionRuleRecord;
 import com.one.record.model.LotteryTrainingReportRecord;
@@ -24,7 +25,9 @@ import com.one.record.training.PredictionRuleConfig;
 import com.one.record.util.LotteryDrawUtil;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -254,6 +257,29 @@ public class LotteryTrainingService implements ILotteryTrainingService {
     @Override
     public List<LotteryPredictionSnapshot> predictionHistory(Integer limit) {
         return predictionSnapshotRepository.findByOrderByCreatedAtDesc(PageRequest.of(0, normalizePredictionHistoryLimit(limit)));
+    }
+
+    @Override
+    public LotteryPageResponse<LotteryPredictionSnapshot> predictionHistoryPage(Integer page,
+                                                                               Integer pageSize,
+                                                                               String resultState,
+                                                                               Integer targetPeriod,
+                                                                               String ruleId,
+                                                                               String ruleName) {
+        int safePage = normalizePage(page);
+        int safePageSize = normalizePageSize(pageSize);
+        String safeResultState = normalizeOptional(resultState);
+        String safeRuleId = normalizeOptional(ruleId);
+        String safeRuleName = normalizeOptional(ruleName);
+        List<LotteryPredictionSnapshot> filtered = predictionSnapshotRepository
+                .findAll(Sort.by(Sort.Direction.DESC, "createdAt"))
+                .stream()
+                .filter(snapshot -> targetPeriod == null || targetPeriod.equals(snapshot.getTargetPeriod()))
+                .filter(snapshot -> safeRuleId == null || safeRuleId.equals(normalizeOptional(snapshot.getRuleId())))
+                .filter(snapshot -> safeRuleName == null || containsNormalized(snapshot.getRuleName(), safeRuleName))
+                .filter(snapshot -> matchesResultState(snapshot, safeResultState))
+                .toList();
+        return predictionPageOf(filtered, safePage, safePageSize);
     }
 
     @Override
@@ -540,6 +566,60 @@ public class LotteryTrainingService implements ILotteryTrainingService {
             return DEFAULT_PREDICTION_HISTORY_LIMIT;
         }
         return Math.min(limit, MAX_PREDICTION_HISTORY_LIMIT);
+    }
+
+    private static int normalizePage(Integer page) {
+        if (page == null || page < 0) {
+            return 0;
+        }
+        return page;
+    }
+
+    private static int normalizePageSize(Integer pageSize) {
+        if (pageSize == null || pageSize <= 0) {
+            return DEFAULT_PREDICTION_HISTORY_LIMIT;
+        }
+        return Math.min(pageSize, MAX_PREDICTION_HISTORY_LIMIT);
+    }
+
+    private static String normalizeOptional(String value) {
+        return StringUtils.hasText(value) ? value.trim().toUpperCase() : null;
+    }
+
+    private static boolean containsNormalized(String value, String expectedUppercase) {
+        return !StringUtils.hasText(expectedUppercase)
+                || StringUtils.hasText(value) && value.trim().toUpperCase().contains(expectedUppercase);
+    }
+
+    private static boolean matchesResultState(LotteryPredictionSnapshot snapshot, String resultState) {
+        if (resultState == null || "ALL".equals(resultState)) {
+            return true;
+        }
+        if ("PENDING".equals(resultState)) {
+            return snapshot.getResult() == null;
+        }
+        if ("WON".equals(resultState)) {
+            return snapshot.getResult() != null && !"未中奖".equals(snapshot.getResult().getPrizeName());
+        }
+        if ("MISSED".equals(resultState)) {
+            return snapshot.getResult() != null && "未中奖".equals(snapshot.getResult().getPrizeName());
+        }
+        return true;
+    }
+
+    private static LotteryPageResponse<LotteryPredictionSnapshot> predictionPageOf(List<LotteryPredictionSnapshot> items,
+                                                                                   int page,
+                                                                                   int pageSize) {
+        int total = items == null ? 0 : items.size();
+        int from = Math.min(page * pageSize, total);
+        int to = Math.min(from + pageSize, total);
+        return LotteryPageResponse.<LotteryPredictionSnapshot>builder()
+                .items(items == null ? List.of() : items.subList(from, to))
+                .page(page)
+                .pageSize(pageSize)
+                .total((long) total)
+                .hasNext(to < total)
+                .build();
     }
 
     private static int normalizeReplayMetricsWindow(Integer window) {

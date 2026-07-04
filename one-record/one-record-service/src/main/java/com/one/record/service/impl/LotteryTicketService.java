@@ -2,6 +2,7 @@ package com.one.record.service.impl;
 
 import com.one.common.exception.NotFoundException;
 import com.one.common.exception.ServiceException;
+import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.lottery.LotteryPrizeResult;
 import com.one.record.lottery.LotteryTicketBatchSaveRequest;
 import com.one.record.lottery.LotteryTicketBatchSaveResult;
@@ -56,6 +57,35 @@ public class LotteryTicketService implements ILotteryTicketService {
                 .filter(ticket -> safeSource == null || safeSource.equals(normalizeOptional(ticket.getSource())))
                 .filter(ticket -> safePrizeGrade == null || safePrizeGrade.equals(normalizeOptional(ticket.getPrizeGrade())))
                 .toList();
+    }
+
+    @Override
+    public LotteryPageResponse<LotteryTicket> ticketsPage(String issue,
+                                                         String status,
+                                                         String source,
+                                                         String prizeGrade,
+                                                         String predictionSnapshotId,
+                                                         Long createdStartAt,
+                                                         Long createdEndAt,
+                                                         Integer page,
+                                                         Integer pageSize) {
+        int safePage = normalizePage(page);
+        int safePageSize = normalizePageSize(pageSize);
+        List<LotteryTicket> filtered = tickets(issue, status, source, prizeGrade, predictionSnapshotId)
+                .stream()
+                .filter(ticket -> createdStartAt == null || ticket.getCreatedAt() != null && ticket.getCreatedAt() >= createdStartAt)
+                .filter(ticket -> createdEndAt == null || ticket.getCreatedAt() != null && ticket.getCreatedAt() <= createdEndAt)
+                .toList();
+        int total = filtered.size();
+        int from = Math.min(safePage * safePageSize, total);
+        int to = Math.min(from + safePageSize, total);
+        return LotteryPageResponse.<LotteryTicket>builder()
+                .items(filtered.subList(from, to))
+                .page(safePage)
+                .pageSize(safePageSize)
+                .total((long) total)
+                .hasNext(to < total)
+                .build();
     }
 
     @Override
@@ -289,5 +319,19 @@ public class LotteryTicketService implements ILotteryTicketService {
 
     private String normalizeOptional(String value) {
         return StringUtils.hasText(value) ? value.trim().toUpperCase() : null;
+    }
+
+    private int normalizePage(Integer page) {
+        if (page == null || page < 0) {
+            return 0;
+        }
+        return page;
+    }
+
+    private int normalizePageSize(Integer pageSize) {
+        if (pageSize == null || pageSize <= 0) {
+            return 20;
+        }
+        return Math.min(pageSize, 200);
     }
 }

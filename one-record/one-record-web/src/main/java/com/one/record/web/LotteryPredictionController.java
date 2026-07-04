@@ -2,6 +2,7 @@ package com.one.record.web;
 
 import com.one.record.model.LotteryPredictionRuleRecord;
 import com.one.record.model.LotteryPredictionSnapshot;
+import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.service.ILotteryTrainingService;
 import com.one.record.training.LotteryActualRecord;
 import com.one.record.training.LotteryReplayMetrics;
@@ -27,10 +28,22 @@ public class LotteryPredictionController {
 
     private final ILotteryTrainingService service;
 
-    @GetMapping
+    @GetMapping(params = "!page")
     @Operation(summary = "查询彩票预测历史", description = "查询最近保存的彩票预测快照")
     public List<LotteryPredictionSnapshot> history(@RequestParam(value = "limit", required = false, defaultValue = "20") Integer limit) {
         return service.predictionHistory(limit);
+    }
+
+    @GetMapping(params = "page")
+    @Operation(summary = "分页查询彩票预测历史", description = "按分页、结果状态、目标期号和规则过滤预测快照")
+    public LotteryPageResponse<LotteryPredictionSnapshot> historyPage(
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+            @RequestParam(value = "pageSize", required = false, defaultValue = "20") Integer pageSize,
+            @RequestParam(value = "resultState", required = false) String resultState,
+            @RequestParam(value = "targetPeriod", required = false) Integer targetPeriod,
+            @RequestParam(value = "ruleId", required = false) String ruleId,
+            @RequestParam(value = "ruleName", required = false) String ruleName) {
+        return service.predictionHistoryPage(page, pageSize, resultState, targetPeriod, ruleId, ruleName);
     }
 
     @GetMapping("rules")

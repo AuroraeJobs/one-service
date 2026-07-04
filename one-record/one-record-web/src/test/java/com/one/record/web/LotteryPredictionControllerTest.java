@@ -1,5 +1,6 @@
 package com.one.record.web;
 
+import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.model.LotteryPredictionRuleRecord;
 import com.one.record.model.LotteryPredictionSnapshot;
 import com.one.record.service.ILotteryTrainingService;
@@ -47,6 +48,37 @@ class LotteryPredictionControllerTest {
                 .andExpect(jsonPath("$[0].title").value("综合推荐"));
 
         verify(service).predictionHistory(10);
+    }
+
+    @Test
+    void historyPageBindsFilters() throws Exception {
+        when(service.predictionHistoryPage(1, 10, "WON", 2026002, "rule-a", "平衡"))
+                .thenReturn(LotteryPageResponse.<LotteryPredictionSnapshot>builder()
+                        .items(List.of(LotteryPredictionSnapshot.builder()
+                                .id("snapshot-1")
+                                .targetPeriod(2026002)
+                                .build()))
+                        .page(1)
+                        .pageSize(10)
+                        .total(12L)
+                        .hasNext(true)
+                        .build());
+
+        mockMvc.perform(get("/lottery/predictions")
+                        .param("page", "1")
+                        .param("pageSize", "10")
+                        .param("resultState", "WON")
+                        .param("targetPeriod", "2026002")
+                        .param("ruleId", "rule-a")
+                        .param("ruleName", "平衡"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].id").value("snapshot-1"))
+                .andExpect(jsonPath("$.page").value(1))
+                .andExpect(jsonPath("$.pageSize").value(10))
+                .andExpect(jsonPath("$.total").value(12))
+                .andExpect(jsonPath("$.hasNext").value(true));
+
+        verify(service).predictionHistoryPage(1, 10, "WON", 2026002, "rule-a", "平衡");
     }
 
     @Test

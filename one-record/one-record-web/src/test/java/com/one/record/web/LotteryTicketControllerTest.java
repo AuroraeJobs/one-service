@@ -2,6 +2,7 @@ package com.one.record.web;
 
 import com.one.record.model.LotteryTicket;
 import com.one.record.service.ILotteryTicketService;
+import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.lottery.LotteryTicketBatchSaveResult;
 import com.one.record.lottery.LotteryTicketPrizeCheckSummary;
 import com.one.record.lottery.LotteryTicketSummary;
@@ -53,6 +54,37 @@ class LotteryTicketControllerTest {
                 .andExpect(jsonPath("$[0].blueNumber").value("07"));
 
         verify(service).tickets("2026001", "CHECKED", "PREDICTION", "FIFTH", "snapshot-1");
+    }
+
+    @Test
+    void ticketsPageBindsFilters() throws Exception {
+        when(service.ticketsPage("2026001", "CHECKED", "PREDICTION", "FIFTH", "snapshot-1", 100L, 200L, 1, 10))
+                .thenReturn(LotteryPageResponse.<LotteryTicket>builder()
+                        .items(List.of(LotteryTicket.builder().id("ticket-1").issue("2026001").build()))
+                        .page(1)
+                        .pageSize(10)
+                        .total(12L)
+                        .hasNext(true)
+                        .build());
+
+        mockMvc.perform(get("/lottery/tickets")
+                        .param("page", "1")
+                        .param("pageSize", "10")
+                        .param("issue", "2026001")
+                        .param("status", "CHECKED")
+                        .param("source", "PREDICTION")
+                        .param("prizeGrade", "FIFTH")
+                        .param("predictionSnapshotId", "snapshot-1")
+                        .param("createdStartAt", "100")
+                        .param("createdEndAt", "200"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].id").value("ticket-1"))
+                .andExpect(jsonPath("$.page").value(1))
+                .andExpect(jsonPath("$.pageSize").value(10))
+                .andExpect(jsonPath("$.total").value(12))
+                .andExpect(jsonPath("$.hasNext").value(true));
+
+        verify(service).ticketsPage("2026001", "CHECKED", "PREDICTION", "FIFTH", "snapshot-1", 100L, 200L, 1, 10);
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.one.record.web;
 
 import com.one.record.model.LotteryTicket;
 import com.one.record.service.ILotteryTicketService;
+import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.lottery.LotteryTicketBatchSaveRequest;
 import com.one.record.lottery.LotteryTicketBatchSaveResult;
 import com.one.record.lottery.LotteryTicketPrizeCheckSummary;
@@ -32,7 +33,7 @@ public class LotteryTicketController {
 
     private final ILotteryTicketService service;
 
-    @GetMapping
+    @GetMapping(params = "!page")
     @Operation(summary = "查询彩票票据", description = "查询个人彩票票据，可按期号、状态、来源或奖级过滤")
     public List<LotteryTicket> tickets(@RequestParam(name = "issue", required = false) String issue,
                                        @RequestParam(name = "status", required = false) String status,
@@ -40,6 +41,20 @@ public class LotteryTicketController {
                                        @RequestParam(name = "prizeGrade", required = false) String prizeGrade,
                                        @RequestParam(name = "predictionSnapshotId", required = false) String predictionSnapshotId) {
         return service.tickets(issue, status, source, prizeGrade, predictionSnapshotId);
+    }
+
+    @GetMapping(params = "page")
+    @Operation(summary = "分页查询彩票票据", description = "查询个人彩票票据，可按分页、期号、状态、来源、奖级、预测快照和创建时间过滤")
+    public LotteryPageResponse<LotteryTicket> ticketsPage(@RequestParam(name = "issue", required = false) String issue,
+                                                          @RequestParam(name = "status", required = false) String status,
+                                                          @RequestParam(name = "source", required = false) String source,
+                                                          @RequestParam(name = "prizeGrade", required = false) String prizeGrade,
+                                                          @RequestParam(name = "predictionSnapshotId", required = false) String predictionSnapshotId,
+                                                          @RequestParam(name = "createdStartAt", required = false) Long createdStartAt,
+                                                          @RequestParam(name = "createdEndAt", required = false) Long createdEndAt,
+                                                          @RequestParam(name = "page", required = false, defaultValue = "0") Integer page,
+                                                          @RequestParam(name = "pageSize", required = false, defaultValue = "20") Integer pageSize) {
+        return service.ticketsPage(issue, status, source, prizeGrade, predictionSnapshotId, createdStartAt, createdEndAt, page, pageSize);
     }
 
     @GetMapping("summary")
