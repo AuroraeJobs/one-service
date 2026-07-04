@@ -396,6 +396,15 @@
   font-weight: 700;
 }
 
+.lottery-workbench-calendar-state {
+  margin-top: -4px;
+}
+
+.lottery-alert-list {
+  display: grid;
+  gap: 12px;
+}
+
 .lottery-workbench-main-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);

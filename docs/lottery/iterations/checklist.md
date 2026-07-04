@@ -206,11 +206,11 @@ Use this file as the durable task board for the lottery module. When a task is f
 
 ### Wave 10D: Alerts, Calendar, And Daily Reminders
 
-- [ ] Add draw calendar DTO with next draw date, expected sync window, and current issue state.
-- [ ] Add `GET /lottery/calendar` for upcoming draw and recent draw schedule context.
-- [ ] Add alert/reminder model for pending sync, pending prediction, pending ticket confirmation, and pending prize check.
-- [ ] Add alert acknowledgement endpoint and UI affordance.
-- [ ] Keep reminders in-app only until an explicit external notification provider is selected.
+- [x] Add draw calendar DTO with next draw date, expected sync window, and current issue state.
+- [x] Add `GET /lottery/calendar` for upcoming draw and recent draw schedule context.
+- [x] Add alert/reminder model for pending sync, pending prediction, pending ticket confirmation, and pending prize check.
+- [x] Add alert acknowledgement endpoint and UI affordance.
+- [x] Keep reminders in-app only until an explicit external notification provider is selected.
 
 ### Wave 10E: Portfolio-Style Governance
 

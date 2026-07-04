@@ -52,6 +52,8 @@ Acceptance:
 
 Goal: help the workbench explain what needs attention next.
 
+Status: shipped as Wave 10D. Calendar state and in-app reminders are backend-derived, support acknowledgement, and intentionally avoid external notification providers.
+
 Deliverables:
 
 - Add draw calendar DTO with next draw date, expected sync window, and current issue state.

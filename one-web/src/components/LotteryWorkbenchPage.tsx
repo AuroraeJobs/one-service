@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Empty, Progress, Space, Spin, Steps, Tag, message } from 'antd';
 import {
-  CheckCircleOutlined,
+  BellOutlined,
   ClockCircleOutlined,
   DatabaseOutlined,
   FileTextOutlined,
@@ -16,7 +16,9 @@ import { useNavigate } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import LotteryBalls from './lottery/LotteryBalls';
 import {
+  lotteryCalendarApi,
   lotteryWorkbenchApi,
+  type LotteryCalendarState,
   type LotteryDailyStateItem,
   type LotteryWorkbenchDailyRunResult,
   type LotteryWorkbenchStepResult,
@@ -76,6 +78,7 @@ const getQualityIssueCount = (summary?: LotteryWorkbenchSummary) => {
 const LotteryWorkbenchPage = () => {
   const navigate = useNavigate();
   const [summary, setSummary] = useState<LotteryWorkbenchSummary>();
+  const [calendar, setCalendar] = useState<LotteryCalendarState>();
   const [dailyRunResult, setDailyRunResult] = useState<LotteryWorkbenchDailyRunResult>();
   const [loading, setLoading] = useState(false);
   const [running, setRunning] = useState(false);
@@ -93,6 +96,8 @@ const LotteryWorkbenchPage = () => {
     try {
       const data = await lotteryWorkbenchApi.summary();
       setSummary(data);
+      const calendarData = await lotteryCalendarApi.calendar();
+      setCalendar(calendarData);
     } catch (requestError) {
       console.error('读取彩票工作台失败:', requestError);
       setError(requestError instanceof Error ? requestError.message : '读取彩票工作台失败');
@@ -112,6 +117,8 @@ const LotteryWorkbenchPage = () => {
       const result = await lotteryWorkbenchApi.dailyRun();
       setDailyRunResult(result);
       setSummary(result.summary);
+      const calendarData = await lotteryCalendarApi.calendar();
+      setCalendar(calendarData);
       message.success('日常任务已完成');
     } catch (requestError) {
       console.error('执行彩票日常任务失败:', requestError);
@@ -260,6 +267,21 @@ const LotteryWorkbenchPage = () => {
           </section>
         ) : null}
 
+        {calendar ? (
+          <section className="lottery-workbench-daily-state lottery-workbench-calendar-state">
+            <div>
+              <strong>{calendar.nextDrawDate || '-'} {calendar.drawWeekday || ''}</strong>
+              <span>同步窗口 {formatDateTime(calendar.expectedSyncStartAt)} - {formatDateTime(calendar.expectedSyncEndAt)}</span>
+            </div>
+            <Space wrap>
+              <Tag color={calendar.currentIssueState === 'BEFORE_DRAW' ? 'blue' : 'orange'}>{calendar.currentIssueState || 'UNKNOWN'}</Tag>
+              <Button size="small" icon={<BellOutlined />} onClick={() => navigate('/lottery/alerts')}>
+                提醒 {calendar.reminders?.length || 0}
+              </Button>
+            </Space>
+          </section>
+        ) : null}
+
         <section className="lottery-workbench-main-grid">
           <Card
             className="life-panel-card lottery-clean-panel"
@@ -347,8 +369,8 @@ const LotteryWorkbenchPage = () => {
               <Button icon={<SyncOutlined />} onClick={() => navigate(dailyState?.syncState?.path || '/lottery/sync')}>
                 同步日志
               </Button>
-              <Button icon={<CheckCircleOutlined />} onClick={() => navigate('/lottery/settings')}>
-                设置
+              <Button icon={<BellOutlined />} onClick={() => navigate('/lottery/alerts')}>
+                提醒
               </Button>
             </div>
           </Card>

@@ -390,7 +390,18 @@ GET  /lottery/backtests/{id}
 
 `GET /lottery/backtests` uses the shared pagination envelope and supports `strategyName`, `presetWindow`, and `experimentId` filters.
 
-Alerts and calendar state are app-local workflow helpers. They should track next draw date, expected sync window, pending daily steps, acknowledgement state, and generated timestamps. External notifications should not be introduced until a provider is explicitly selected and documented.
+Alerts and calendar state are app-local workflow helpers. They track next draw date, expected sync window, pending daily steps, acknowledgement state, and generated timestamps. External notifications should not be introduced until a provider is explicitly selected and documented.
+
+Wave 10D implements `LotteryCalendarState` and `LotteryReminderAcknowledgement`. Calendar state is derived from backend daily-state services and the latest draw, not browser-only date math. Reminders are generated for pending sync, prediction, ticket confirmation, and prize-check work. Acknowledgement is keyed by reminder key plus fingerprint, so an acknowledged reminder stays hidden until its underlying status, path, or pending count changes.
+
+Calendar and reminder endpoints:
+
+```text
+GET  /lottery/calendar
+POST /lottery/alerts/{key}/ack
+```
+
+The frontend uses `/lottery/alerts` as the in-app reminder page and shows the next draw window on the workbench.
 
 Portfolio-style governance extends preferences and ledger behavior with budget and exposure thresholds. The backend should flag budget and max-ticket issues without blocking ordinary CRUD unless a future explicit enforcement mode is added.
 

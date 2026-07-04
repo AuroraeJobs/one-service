@@ -1965,6 +1965,29 @@ export interface LotteryWorkbenchDailyRunResult {
   generatedAt?: number;
 }
 
+export interface LotteryCalendarReminder {
+  key?: string;
+  label?: string;
+  status?: string;
+  message?: string;
+  path?: string;
+  fingerprint?: string;
+  dueAt?: number;
+  acknowledged?: boolean;
+}
+
+export interface LotteryCalendarState {
+  latestIssue?: string;
+  nextIssue?: string;
+  nextDrawDate?: string;
+  drawWeekday?: string;
+  expectedSyncStartAt?: number;
+  expectedSyncEndAt?: number;
+  currentIssueState?: string;
+  reminders: LotteryCalendarReminder[];
+  generatedAt?: number;
+}
+
 export interface LotteryTrainingTimelineItem {
   period: number;
   predictedRedNumbers: string[];
@@ -2188,6 +2211,15 @@ export const lotteryWorkbenchApi = {
   },
   dailyRun: (): Promise<LotteryWorkbenchDailyRunResult> => {
     return apiClient.post('/lottery/workbench/daily-run');
+  }
+};
+
+export const lotteryCalendarApi = {
+  calendar: (): Promise<LotteryCalendarState> => {
+    return apiClient.get('/lottery/calendar');
+  },
+  acknowledge: (key: string, fingerprint: string): Promise<LotteryCalendarState> => {
+    return apiClient.post(`/lottery/alerts/${key}/ack`, { fingerprint });
   }
 };
 
