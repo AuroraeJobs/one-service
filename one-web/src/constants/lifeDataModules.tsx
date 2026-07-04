@@ -219,6 +219,7 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
         { id: 'lottery-backtests', moduleKey: 'lottery', path: '/lottery/backtests', label: '回测', icon: <BarChartOutlined />, accent: '#0071e3' },
         { id: 'lottery-research', moduleKey: 'lottery', path: '/lottery/research', label: '研究', icon: <PieChartOutlined />, accent: '#5856d6' },
         { id: 'lottery-strategy-portfolios', moduleKey: 'lottery', path: '/lottery/strategy-portfolios', label: '组合', icon: <AppstoreOutlined />, accent: '#00c7be' },
+        { id: 'lottery-simulator', moduleKey: 'lottery', path: '/lottery/simulator', label: '沙盘', icon: <DotChartOutlined />, accent: '#ff3b30' },
         { id: 'lottery-research-notebook', moduleKey: 'lottery', path: '/lottery/research/notebook', label: '笔记', icon: <FileTextOutlined />, accent: '#5856d6' },
         { id: 'lottery-alerts', moduleKey: 'lottery', path: '/lottery/alerts', label: '提醒', icon: <BellOutlined />, accent: '#ff9500' },
         { id: 'lottery-prediction-history', moduleKey: 'lottery', path: '/lottery/predictions/history', label: '历史', icon: <HistoryOutlined />, accent: '#5856d6' }

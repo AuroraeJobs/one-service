@@ -1923,6 +1923,44 @@ export interface LotteryStrategyPortfolioSummary {
   generatedAt?: number;
 }
 
+export interface LotterySimulationRequest {
+  targetIssue?: string;
+  budgetLimit?: number;
+  replayWindow?: number;
+  ruleWeights?: Record<string, number>;
+  portfolioIds?: string[];
+  candidateTickets?: Partial<LotteryTicket>[];
+}
+
+export interface LotterySimulationCandidate {
+  key?: string;
+  title?: string;
+  redNumbers: string[];
+  blueNumber: string;
+  quantity?: number;
+  cost?: number;
+  score?: number;
+  source?: string;
+  warning?: string;
+}
+
+export interface LotterySimulationResult {
+  targetIssue?: string;
+  candidateCount?: number;
+  proposedCost?: number;
+  budgetLimit?: number;
+  riskLevel?: 'LOW' | 'MEDIUM' | 'HIGH' | string;
+  roiReference?: number;
+  replayWindow?: number;
+  budgetPrecheck?: LotteryTicketBudgetPrecheckResult;
+  candidates: LotterySimulationCandidate[];
+  warnings: string[];
+  hitDistribution: Record<string, number>;
+  prizeDistribution: Record<string, number>;
+  portfolios: LotteryStrategyPortfolioSummary[];
+  generatedAt?: number;
+}
+
 export interface LotteryBacktestRunRequest {
   experimentId?: string;
   strategyName?: string;
@@ -2757,6 +2795,12 @@ export const lotteryStrategyPortfolioApi = {
   },
   archive: (id: string): Promise<LotteryStrategyPortfolioSummary> => {
     return apiClient.patch(`/lottery/strategy-portfolios/${id}/archive`);
+  }
+};
+
+export const lotterySimulationApi = {
+  run: (request: LotterySimulationRequest): Promise<LotterySimulationResult> => {
+    return apiClient.post('/lottery/simulations/run', request);
   }
 };
 

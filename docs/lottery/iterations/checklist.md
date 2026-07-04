@@ -474,11 +474,11 @@ Goal: turn the lottery intelligence cockpit into an execution-grade workflow clo
 
 ### Week 2: Simulation Sandbox And What-If Tickets
 
-- [ ] Add a simulation request model for hypothetical ticket packs, budget limits, rule weights, replay window, and target issue.
-- [ ] Add backend simulation API that compares projected cost, historical hit distribution, backtest summaries, decision evidence, and budget exposure without saving tickets.
-- [ ] Add `/lottery/simulator` frontend sandbox with sliders for weights/budget, candidate ticket previews, risk warnings, and comparison charts.
-- [ ] Add handoff from simulator to decision board, ticket import preview, strategy notebook, and export report builder.
-- [ ] Run simulation tests, route smoke/build verification, update docs, commit, and push.
+- [x] Add a simulation request model for hypothetical ticket packs, budget limits, rule weights, replay window, and target issue. Added `LotterySimulationRequest` with target issue, budget, replay, rule-weight, portfolio, and candidate-ticket inputs.
+- [x] Add backend simulation API that compares projected cost, historical hit distribution, backtest summaries, decision evidence, and budget exposure without saving tickets. Added `POST /lottery/simulations/run`, budget precheck reuse, latest prediction replay distributions, portfolio evidence summaries, risk warnings, and audit evidence.
+- [x] Add `/lottery/simulator` frontend sandbox with sliders for weights/budget, candidate ticket previews, risk warnings, and comparison charts. Added parameter sliders, ticket text parsing, result KPI cards, risk alerting, candidate previews, and distribution bars.
+- [x] Add handoff from simulator to decision board, ticket import preview, strategy notebook, and export report builder. Added direct route actions for decision, simulated ticket import preview, notebook evidence capture, and budget-precheck export context.
+- [x] Run simulation tests, route smoke/build verification, update docs, commit, and push. Verification: focused Maven simulation service/controller tests; `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
 ### Week 3: Guided Ticket Pack Execution
 

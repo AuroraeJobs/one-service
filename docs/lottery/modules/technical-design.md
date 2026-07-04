@@ -488,6 +488,16 @@ PATCH /lottery/strategy-portfolios/{id}/archive
 
 The frontend board at `/lottery/strategy-portfolios` is intentionally dense and operation-oriented: portfolio cards expose health, ROI, coverage, warning columns, allocation weights, evidence counts, and evidence-row handoffs back to research, experiments, backtests, decision outcomes, and notebook pages.
 
+V14 Week 2 adds a simulation sandbox for what-if ticket execution. `LotterySimulationRequest` accepts a target issue, budget limit, replay window, rule weights, portfolio IDs, and hypothetical candidate tickets. `LotterySimulationService` normalizes those tickets as `SIMULATION`/`DRAFT`, runs the existing ticket budget precheck, reads latest prediction replay distributions, loads strategy portfolio summaries as evidence context, and returns projected cost, risk level, warnings, candidate detail, hit/prize distributions, and portfolio summaries without saving tickets.
+
+Simulation endpoint:
+
+```text
+POST /lottery/simulations/run
+```
+
+The frontend sandbox at `/lottery/simulator` keeps the workflow operational: sliders tune rule weights, text input previews candidate tickets, result panels show budget exposure and replay distribution bars, and handoff buttons route into the decision board, ticket import preview, strategy notebook, and export builder.
+
 Portfolio-style governance extends preferences and ledger behavior with budget and exposure thresholds. The backend flags budget and max-ticket issues without blocking ordinary CRUD unless a future explicit enforcement mode is added.
 
 Wave 10E extends `LotteryPreference` with `weeklyBudget`, `monthlyBudget`, `maxTicketsPerIssue`, and `budgetReminderPercent`. `GET /lottery/budget/status` reads preferences and recorded tickets to return weekly/monthly usage, max issue exposure, and restrained warning rows for the workbench and ticket page. `LotteryLedgerSummary` also includes rolling 30-day cost/prize/net/ROI plus max/current drawdown values for exposure review.
