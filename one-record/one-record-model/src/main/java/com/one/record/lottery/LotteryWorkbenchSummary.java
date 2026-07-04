@@ -15,6 +15,8 @@ import java.io.Serializable;
 @AllArgsConstructor
 public class LotteryWorkbenchSummary implements Serializable {
 
+    private LotteryDailyState dailyState;
+
     private LotteryDraw latestDraw;
 
     private LotteryRecordSyncSummary latestSyncSummary;

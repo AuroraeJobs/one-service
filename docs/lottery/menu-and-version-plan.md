@@ -149,6 +149,7 @@ Goal: make the module maintainable.
 Goal: make the lottery module usable as a daily cockpit rather than a set of separate pages.
 
 - Add `/lottery/workbench` as the primary daily entry point.
+- Point the top-level lottery navigation entry to `/lottery/workbench` while preserving `/lottery` and `/lottery/overview`.
 - Summarize latest draw, sync health, data quality, latest prediction, pending tickets, latest prize checking, and ledger outcome.
 - Add a safe daily-run action that orchestrates bounded maintenance steps and reports step status.
 - Add pagination and query-backed filters to growing prediction, ticket, sync-log, and provider-probe-log lists.

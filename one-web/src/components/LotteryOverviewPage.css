@@ -341,6 +341,61 @@
   font-size: 12px;
 }
 
+.lottery-workbench-daily-state {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+}
+
+.lottery-workbench-daily-state > div {
+  display: grid;
+  gap: 3px;
+}
+
+.lottery-workbench-daily-state strong {
+  color: var(--app-text);
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.lottery-workbench-daily-state span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.lottery-workbench-state-chip {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface-elevated);
+  color: var(--app-text);
+  cursor: pointer;
+}
+
+.lottery-workbench-state-chip em {
+  min-width: 20px;
+  min-height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(255, 149, 0, 0.14);
+  color: #ad6800;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+
 .lottery-workbench-main-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);

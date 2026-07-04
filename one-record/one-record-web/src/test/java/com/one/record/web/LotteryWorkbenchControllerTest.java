@@ -2,6 +2,7 @@ package com.one.record.web;
 
 import com.one.record.lottery.LotteryDraw;
 import com.one.record.lottery.LotteryLedgerSummary;
+import com.one.record.lottery.LotteryDailyState;
 import com.one.record.lottery.LotteryWorkbenchDailyRunResult;
 import com.one.record.lottery.LotteryWorkbenchStepResult;
 import com.one.record.lottery.LotteryWorkbenchSummary;
@@ -78,5 +79,37 @@ class LotteryWorkbenchControllerTest {
                 .andExpect(jsonPath("$.generatedAt").value(200));
 
         verify(service).dailyRun();
+    }
+
+    @Test
+    void dailyStateDelegatesToService() throws Exception {
+        when(service.dailyState()).thenReturn(LotteryDailyState.builder()
+                .latestIssue("2026001")
+                .nextIssue("2026002")
+                .syncState(LotteryDailyState.DailyStateItem.builder()
+                        .key("sync")
+                        .status("COMPLETE")
+                        .path("/lottery/sync")
+                        .build())
+                .ticketState(LotteryDailyState.DailyStateItem.builder()
+                        .key("tickets")
+                        .status("PENDING")
+                        .pendingCount(1)
+                        .path("/lottery/tickets?issue=2026002")
+                        .build())
+                .pendingActions(List.of("tickets"))
+                .generatedAt(300L)
+                .build());
+
+        mockMvc.perform(get("/lottery/workbench/daily-state"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.latestIssue").value("2026001"))
+                .andExpect(jsonPath("$.nextIssue").value("2026002"))
+                .andExpect(jsonPath("$.syncState.status").value("COMPLETE"))
+                .andExpect(jsonPath("$.ticketState.pendingCount").value(1))
+                .andExpect(jsonPath("$.pendingActions[0]").value("tickets"))
+                .andExpect(jsonPath("$.generatedAt").value(300));
+
+        verify(service).dailyState();
     }
 }

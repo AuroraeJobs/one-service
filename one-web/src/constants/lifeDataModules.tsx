@@ -109,7 +109,7 @@ export const lifeDataModules: LifeDataModule[] = [
     title: '彩票研究',
     shortTitle: '彩票',
     description: '管理双色球历史开奖、下注记录、中奖记录和统计模型。',
-    path: '/lottery',
+    path: '/lottery/workbench',
     status: 'live',
     accent: '#ff3b30',
     icon: <TrophyOutlined />,
@@ -160,7 +160,7 @@ export const lifeDataModules: LifeDataModule[] = [
 
 export const lifeNavItems: LifeNavItem[] = [
   { path: '/overview', key: 'overview', label: '首页', icon: <DashboardOutlined /> },
-  { path: '/lottery', key: 'lottery', label: '彩票', icon: <TrophyOutlined /> },
+  { path: '/lottery/workbench', key: 'lottery', label: '彩票', icon: <TrophyOutlined /> },
   { path: '/investments', key: 'investment', label: '股票', icon: <StockOutlined /> },
   { path: '/finance/salary', key: 'finance', label: '钞票', icon: <MoneyCollectOutlined /> },
   { path: '/vehicle/charging', key: 'vehicle', label: '能源', icon: <CarOutlined /> },

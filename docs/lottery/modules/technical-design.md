@@ -237,6 +237,7 @@ Iteration 09 introduces a daily workflow workbench under `/lottery/workbench`. T
 `LotteryWorkbenchSummary` should include:
 
 ```text
+dailyState
 latestDraw
 latestSyncSummary
 dataQualitySummary
@@ -249,6 +250,20 @@ generatedAt
 ```
 
 `GET /lottery/workbench/summary` composes the latest records, sync summary, data quality, prediction status, ticket status, and ledger snapshot into one response for the daily page. It does not fetch external provider data directly and does not duplicate prize or prediction scoring logic.
+
+Iteration 10 adds `LotteryDailyState` and `GET /lottery/workbench/daily-state`. The daily state is a compact resumability contract for the current issue. It contains latest issue, next issue, latest prediction id, sync/prediction/ticket/prize-check/quality state items, pending action keys, and `generatedAt`. Each state item includes status, message, optional pending count, updated time, and a project-owned drill-through path.
+
+Daily state is derived from existing services:
+
+```text
+latest draw -> latestIssue and nextIssue
+sync summary -> sync state
+latest prediction -> prediction state
+ticket page query -> next-issue ticket and latest-issue prize-check state
+data-quality report -> quality state
+```
+
+It should not fetch external providers directly and should not replace specialized pages. The workbench uses daily state badges and links to route users into filtered prediction history, tickets, sync, ledger, and data-quality pages.
 
 `POST /lottery/workbench/daily-run` returns a list of step results:
 

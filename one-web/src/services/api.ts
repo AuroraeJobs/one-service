@@ -1840,7 +1840,31 @@ export interface LotteryWorkbenchStepResult {
   error?: string;
 }
 
+export interface LotteryDailyStateItem {
+  key?: string;
+  label?: string;
+  status?: 'COMPLETE' | 'PENDING' | 'WARNING' | string;
+  message?: string;
+  path?: string;
+  pendingCount?: number;
+  updatedAt?: number;
+}
+
+export interface LotteryDailyState {
+  latestIssue?: string;
+  nextIssue?: string;
+  latestPredictionId?: string;
+  syncState?: LotteryDailyStateItem;
+  predictionState?: LotteryDailyStateItem;
+  ticketState?: LotteryDailyStateItem;
+  prizeCheckState?: LotteryDailyStateItem;
+  qualityState?: LotteryDailyStateItem;
+  pendingActions: string[];
+  generatedAt?: number;
+}
+
 export interface LotteryWorkbenchSummary {
+  dailyState?: LotteryDailyState;
   latestDraw?: LotteryDraw;
   latestSyncSummary?: LotteryRecordSyncSummary;
   dataQualitySummary?: LotteryDataQualityReport;
@@ -2034,6 +2058,9 @@ export const lotteryLedgerApi = {
 export const lotteryWorkbenchApi = {
   summary: (): Promise<LotteryWorkbenchSummary> => {
     return apiClient.get('/lottery/workbench/summary');
+  },
+  dailyState: (): Promise<LotteryDailyState> => {
+    return apiClient.get('/lottery/workbench/daily-state');
   },
   dailyRun: (): Promise<LotteryWorkbenchDailyRunResult> => {
     return apiClient.post('/lottery/workbench/daily-run');

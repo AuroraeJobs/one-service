@@ -2,6 +2,7 @@ package com.one.record.web;
 
 import com.one.record.lottery.LotteryWorkbenchDailyRunResult;
 import com.one.record.lottery.LotteryWorkbenchSummary;
+import com.one.record.lottery.LotteryDailyState;
 import com.one.record.service.ILotteryWorkbenchService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
@@ -25,6 +26,12 @@ public class LotteryWorkbenchController {
     @Operation(summary = "查询彩票工作台摘要", description = "聚合最新开奖、同步、数据质量、预测、票据和收益状态")
     public LotteryWorkbenchSummary summary() {
         return service.summary();
+    }
+
+    @GetMapping("daily-state")
+    @Operation(summary = "查询彩票日常状态", description = "返回当前期同步、预测、票据、核奖和质检状态")
+    public LotteryDailyState dailyState() {
+        return service.dailyState();
     }
 
     @PostMapping("daily-run")

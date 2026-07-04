@@ -17,6 +17,7 @@ import LifePageShell from './LifePageShell';
 import LotteryBalls from './lottery/LotteryBalls';
 import {
   lotteryWorkbenchApi,
+  type LotteryDailyStateItem,
   type LotteryWorkbenchDailyRunResult,
   type LotteryWorkbenchStepResult,
   type LotteryWorkbenchSummary
@@ -57,6 +58,13 @@ const toStepStatus = (status?: string) => {
   return 'wait' as const;
 };
 
+const dailyStateColor = (status?: string) => {
+  if (status === 'COMPLETE') return 'green';
+  if (status === 'WARNING') return 'gold';
+  if (status === 'PENDING') return 'orange';
+  return 'default';
+};
+
 const getQualityIssueCount = (summary?: LotteryWorkbenchSummary) => {
   const report = summary?.dataQualitySummary;
   return (report?.missingIssueCount || 0)
@@ -74,6 +82,7 @@ const LotteryWorkbenchPage = () => {
   const [error, setError] = useState<string>();
 
   const qualityIssueCount = useMemo(() => getQualityIssueCount(summary), [summary]);
+  const dailyState = summary?.dailyState;
   const latestSyncStatus = summary?.latestSyncSummary?.latestStatus || 'UNKNOWN';
   const trainingStatus = summary?.trainingStatus;
   const trainingPercent = Math.max(0, Math.min(100, trainingStatus?.percent ?? 0));
@@ -128,7 +137,7 @@ const LotteryWorkbenchPage = () => {
       label: '同步状态',
       value: latestSyncStatus,
       detail: formatDateTime(summary?.latestSyncSummary?.latestFinishedAt),
-      path: '/lottery/sync'
+      path: dailyState?.syncState?.path || '/lottery/sync'
     },
     {
       key: 'quality',
@@ -136,7 +145,7 @@ const LotteryWorkbenchPage = () => {
       label: '质量问题',
       value: qualityIssueCount,
       detail: `${summary?.dataQualitySummary?.totalRecords ?? 0} 条记录`,
-      path: '/lottery/data-quality'
+      path: dailyState?.qualityState?.path || '/lottery/data-quality'
     },
     {
       key: 'ticket',
@@ -144,7 +153,7 @@ const LotteryWorkbenchPage = () => {
       label: '待核验票据',
       value: summary?.pendingTicketCount ?? 0,
       detail: `最近核验 ${summary?.latestPrizeCheckSummary?.checkedTicketCount ?? 0} 张`,
-      path: '/lottery/tickets'
+      path: dailyState?.prizeCheckState?.path || dailyState?.ticketState?.path || '/lottery/tickets'
     },
     {
       key: 'ledger',
@@ -155,6 +164,14 @@ const LotteryWorkbenchPage = () => {
       path: '/lottery/ledger'
     }
   ];
+
+  const dailyStateItems: LotteryDailyStateItem[] = [
+    dailyState?.syncState,
+    dailyState?.predictionState,
+    dailyState?.ticketState,
+    dailyState?.prizeCheckState,
+    dailyState?.qualityState
+  ].filter(Boolean) as LotteryDailyStateItem[];
 
   const stepItems = (dailyRunResult?.steps || []).map((step: LotteryWorkbenchStepResult) => ({
     title: step.step || '任务',
@@ -220,6 +237,29 @@ const LotteryWorkbenchPage = () => {
           ))}
         </section>
 
+        {dailyStateItems.length > 0 ? (
+          <section className="lottery-workbench-daily-state">
+            <div>
+              <strong>第 {dailyState?.latestIssue || '-'} 期</strong>
+              <span>下一期 {dailyState?.nextIssue || '-'}</span>
+            </div>
+            <Space wrap>
+              {dailyStateItems.map(item => (
+                <button
+                  key={item.key || item.label}
+                  type="button"
+                  className="lottery-workbench-state-chip"
+                  onClick={() => item.path && navigate(item.path)}
+                >
+                  <Tag color={dailyStateColor(item.status)}>{item.status || 'UNKNOWN'}</Tag>
+                  <span>{item.label || item.key}</span>
+                  {item.pendingCount ? <em>{item.pendingCount}</em> : null}
+                </button>
+              ))}
+            </Space>
+          </section>
+        ) : null}
+
         <section className="lottery-workbench-main-grid">
           <Card
             className="life-panel-card lottery-clean-panel"
@@ -231,7 +271,7 @@ const LotteryWorkbenchPage = () => {
                     详情
                   </Button>
                 ) : null}
-                <Button size="small" onClick={() => navigate('/lottery/predictions/history')}>
+                <Button size="small" onClick={() => navigate(dailyState?.predictionState?.path || '/lottery/predictions/history')}>
                   历史
                 </Button>
               </Space>
@@ -295,16 +335,16 @@ const LotteryWorkbenchPage = () => {
               <Button icon={<DatabaseOutlined />} onClick={() => navigate('/lottery/records')}>
                 开奖记录
               </Button>
-              <Button icon={<FileTextOutlined />} onClick={() => navigate('/lottery/tickets')}>
+              <Button icon={<FileTextOutlined />} onClick={() => navigate(dailyState?.ticketState?.path || '/lottery/tickets')}>
                 票据核验
               </Button>
               <Button icon={<PieChartOutlined />} onClick={() => navigate('/lottery/ledger')}>
                 账本
               </Button>
-              <Button icon={<SafetyCertificateOutlined />} onClick={() => navigate('/lottery/data-quality')}>
+              <Button icon={<SafetyCertificateOutlined />} onClick={() => navigate(dailyState?.qualityState?.path || '/lottery/data-quality')}>
                 质检
               </Button>
-              <Button icon={<SyncOutlined />} onClick={() => navigate('/lottery/sync')}>
+              <Button icon={<SyncOutlined />} onClick={() => navigate(dailyState?.syncState?.path || '/lottery/sync')}>
                 同步日志
               </Button>
               <Button icon={<CheckCircleOutlined />} onClick={() => navigate('/lottery/settings')}>
