@@ -1,5 +1,6 @@
 package com.one.record.service.impl;
 
+import com.one.record.lottery.LotteryIssueLedger;
 import com.one.record.lottery.LotteryLedgerSummary;
 import com.one.record.lottery.LotteryPrizeResult;
 import com.one.record.model.LotteryTicket;
@@ -10,7 +11,10 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @AllArgsConstructor
@@ -23,6 +27,50 @@ public class LotteryLedgerService implements ILotteryLedgerService {
     @Override
     public LotteryLedgerSummary summary() {
         List<LotteryTicket> tickets = ticketRepository.findByUserIdOrderByPeriodDescCreatedAtDesc(DEFAULT_USER_ID);
+        LedgerTotals totals = aggregate(tickets);
+        return LotteryLedgerSummary.builder()
+                .ticketCount(tickets.size())
+                .checkedTicketCount(totals.checkedCount())
+                .pendingTicketCount(tickets.size() - totals.checkedCount())
+                .winningTicketCount(totals.winningCount())
+                .totalCost(totals.totalCost())
+                .totalPrize(totals.totalPrize())
+                .netResult(totals.netResult())
+                .roiPercent(roiPercent(totals.netResult(), totals.totalCost()))
+                .generatedAt(System.currentTimeMillis())
+                .build();
+    }
+
+    @Override
+    public List<LotteryIssueLedger> issues() {
+        List<LotteryTicket> tickets = ticketRepository.findByUserIdOrderByPeriodDescCreatedAtDesc(DEFAULT_USER_ID);
+        Map<String, List<LotteryTicket>> groupedTickets = new LinkedHashMap<>();
+        for (LotteryTicket ticket : tickets) {
+            groupedTickets.computeIfAbsent(issueKey(ticket), ignored -> new ArrayList<>()).add(ticket);
+        }
+        return groupedTickets.values().stream()
+                .map(this::buildIssueLedger)
+                .toList();
+    }
+
+    private LotteryIssueLedger buildIssueLedger(List<LotteryTicket> tickets) {
+        LotteryTicket firstTicket = tickets.get(0);
+        LedgerTotals totals = aggregate(tickets);
+        return LotteryIssueLedger.builder()
+                .issue(firstTicket.getIssue())
+                .period(firstTicket.getPeriod())
+                .ticketCount(tickets.size())
+                .checkedTicketCount(totals.checkedCount())
+                .pendingTicketCount(tickets.size() - totals.checkedCount())
+                .winningTicketCount(totals.winningCount())
+                .totalCost(totals.totalCost())
+                .totalPrize(totals.totalPrize())
+                .netResult(totals.netResult())
+                .roiPercent(roiPercent(totals.netResult(), totals.totalCost()))
+                .build();
+    }
+
+    private LedgerTotals aggregate(List<LotteryTicket> tickets) {
         int checkedCount = 0;
         int winningCount = 0;
         BigDecimal totalCost = BigDecimal.ZERO;
@@ -38,18 +86,17 @@ public class LotteryLedgerService implements ILotteryLedgerService {
                 }
             }
         }
-        BigDecimal netResult = totalPrize.subtract(totalCost);
-        return LotteryLedgerSummary.builder()
-                .ticketCount(tickets.size())
-                .checkedTicketCount(checkedCount)
-                .pendingTicketCount(tickets.size() - checkedCount)
-                .winningTicketCount(winningCount)
-                .totalCost(totalCost)
-                .totalPrize(totalPrize)
-                .netResult(netResult)
-                .roiPercent(roiPercent(netResult, totalCost))
-                .generatedAt(System.currentTimeMillis())
-                .build();
+        return new LedgerTotals(checkedCount, winningCount, totalCost, totalPrize);
+    }
+
+    private String issueKey(LotteryTicket ticket) {
+        if (ticket.getIssue() != null && !ticket.getIssue().isBlank()) {
+            return ticket.getIssue();
+        }
+        if (ticket.getPeriod() != null) {
+            return String.valueOf(ticket.getPeriod());
+        }
+        return "UNKNOWN";
     }
 
     private BigDecimal prizeAmount(LotteryPrizeResult result) {
@@ -64,5 +111,17 @@ public class LotteryLedgerService implements ILotteryLedgerService {
             return BigDecimal.ZERO;
         }
         return netResult.multiply(BigDecimal.valueOf(100)).divide(totalCost, 2, RoundingMode.HALF_UP);
+    }
+
+    private record LedgerTotals(
+            int checkedCount,
+            int winningCount,
+            BigDecimal totalCost,
+            BigDecimal totalPrize
+    ) {
+
+        private BigDecimal netResult() {
+            return totalPrize.subtract(totalCost);
+        }
     }
 }

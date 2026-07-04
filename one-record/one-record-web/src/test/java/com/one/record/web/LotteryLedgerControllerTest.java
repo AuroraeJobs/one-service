@@ -1,5 +1,6 @@
 package com.one.record.web;
 
+import com.one.record.lottery.LotteryIssueLedger;
 import com.one.record.lottery.LotteryLedgerSummary;
 import com.one.record.service.ILotteryLedgerService;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,6 +9,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -46,5 +48,28 @@ class LotteryLedgerControllerTest {
                 .andExpect(jsonPath("$.roiPercent").value(66.67));
 
         verify(service).summary();
+    }
+
+    @Test
+    void issuesDelegatesToService() throws Exception {
+        when(service.issues()).thenReturn(List.of(LotteryIssueLedger.builder()
+                .issue("2026001")
+                .period(2026001L)
+                .ticketCount(2)
+                .totalCost(new BigDecimal("6"))
+                .totalPrize(new BigDecimal("10"))
+                .netResult(new BigDecimal("4"))
+                .roiPercent(new BigDecimal("66.67"))
+                .build()));
+
+        mockMvc.perform(get("/lottery/ledger/issues"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].issue").value("2026001"))
+                .andExpect(jsonPath("$[0].period").value(2026001))
+                .andExpect(jsonPath("$[0].ticketCount").value(2))
+                .andExpect(jsonPath("$[0].netResult").value(4))
+                .andExpect(jsonPath("$[0].roiPercent").value(66.67));
+
+        verify(service).issues();
     }
 }

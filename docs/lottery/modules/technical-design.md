@@ -200,6 +200,8 @@ VOID
 
 `LotteryLedgerSummary` is the first outcome ledger DTO. `GET /lottery/ledger/summary` reads personal tickets and aggregates ticket count, checked/pending count, winning count, total cost, total prize, net result, and ROI percent. Prize amounts are converted from stored cent values to display-scale decimal amounts.
 
+`LotteryIssueLedger` is the issue-level ledger DTO. `GET /lottery/ledger/issues` groups personal tickets by issue and returns per-issue ticket count, checked/pending count, winning count, total cost, total prize, net result, and ROI percent.
+
 ## API Design Rules
 
 - Keep existing APIs compatible while adding new `lottery/*` APIs.
