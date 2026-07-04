@@ -326,30 +326,30 @@ Goal: add more frontend workflow depth so the lottery module guides a daily user
 
 ### Wave 13B: Prediction Decision Board
 
-- [ ] Add a prediction decision board view that compares latest prediction, saved snapshots, candidate sets, rule evidence, and replay drift.
-- [ ] Add candidate comparison controls for red/blue overlap, score, evidence tag, actual-result status, and ticket conversion state.
-- [ ] Add a guided pick builder that can select candidate rows and send them to ticket creation/import flows.
-- [ ] Add URL-backed filters and shareable state for selected target issue, rule group, and evidence status.
-- [ ] Add empty and warning states for under-tested, stale, or missing replay evidence before a candidate is trusted.
-- [ ] Run focused backend/frontend checks, update docs, commit, and push.
+- [x] Add a prediction decision board view that compares latest prediction, saved snapshots, candidate sets, rule evidence, and replay drift. Added `/lottery/predictions/decision` using existing prediction, rule, replay, and ticket APIs.
+- [x] Add candidate comparison controls for red/blue overlap, score, evidence tag, actual-result status, and ticket conversion state. Decision rows show overlap, score, evidence, result state, and prediction-ticket conversion.
+- [x] Add a guided pick builder that can select candidate rows and send them to ticket creation/import flows. Selected rows can be saved as `PREDICTION` draft tickets through the existing batch ticket API.
+- [x] Add URL-backed filters and shareable state for selected target issue, rule group, and evidence status. Decision filters use `targetIssue`, `ruleName`, `evidence`, and `resultState` query parameters.
+- [x] Add empty and warning states for under-tested, stale, or missing replay evidence before a candidate is trusted. Added warning tags and page-level evidence warning alert.
+- [x] Run focused backend/frontend checks, update docs, commit, and push. Verification: frontend build; no backend contracts changed.
 
 ### Wave 13C: Ticket Import, Batch Review, And Budget Guardrails
 
-- [ ] Add paste/import assistant UI for tickets with preview parsing, duplicate grouping, and invalid row explanations.
-- [ ] Add batch ticket actions for source, issue, stake, status, and delete/archive where existing APIs support it or can be safely extended.
-- [ ] Add budget exposure cards by issue and month with warnings before new tickets exceed configured limits.
-- [ ] Add issue settlement review that combines ticket rows, prize check output, ledger result, and prediction source.
-- [ ] Add mobile-first ticket review cards for imported rows, duplicate rows, and settlement rows.
-- [ ] Run focused ticket/ledger tests, frontend build, update docs, commit, and push.
+- [x] Add paste/import assistant UI for tickets with preview parsing, duplicate grouping, and invalid row explanations. Existing import assistant now also has mobile preview cards and clearer duplicate/invalid summaries.
+- [x] Add batch ticket actions for source, issue, stake, status, and delete/archive where existing APIs support it or can be safely extended. Batch toolbar now updates issue, quantity, cost, status, source, note, and supports archive/delete.
+- [x] Add budget exposure cards by issue and month with warnings before new tickets exceed configured limits. Ticket page now shows recent issue/month exposure against configured limits.
+- [x] Add issue settlement review that combines ticket rows, prize check output, ledger result, and prediction source. Added settlement review card for the active issue with source distribution, ledger metrics, prize-check context, and ticket rows.
+- [x] Add mobile-first ticket review cards for imported rows, duplicate rows, and settlement rows. Import preview and settlement review now render compact mobile cards.
+- [x] Run focused ticket/ledger tests, frontend build, update docs, commit, and push. Verification: frontend build; existing ticket and ledger APIs were reused.
 
 ### Wave 13D: Research Reports And Release Readiness
 
-- [ ] Add guided research comparison presets for latest prediction, strongest rule, volatile rule, and ticket outcome review.
-- [ ] Add report-ready summary sections for prediction decision board, ticket settlement, budget exposure, and research comparison.
-- [ ] Add print/export polish for the new decision and settlement views.
-- [ ] Add release readiness checks for the new frontend flows, including route smoke checks and API contract coverage.
-- [ ] Update version docs, technical design notes, and iteration checklist with delivered scope and verification.
-- [ ] Run month-end verification, commit, and push.
+- [x] Add guided research comparison presets for latest prediction, strongest rule, volatile rule, and ticket outcome review. Research page now includes one-click presets and prediction evidence in the comparison model.
+- [x] Add report-ready summary sections for prediction decision board, ticket settlement, budget exposure, and research comparison. Added decision report area, ticket settlement report area, budget exposure cards, and research report summary.
+- [x] Add print/export polish for the new decision and settlement views. Decision, ticket settlement, and research summary support print-ready report areas.
+- [x] Add release readiness checks for the new frontend flows, including route smoke checks and API contract coverage. Export/maintenance page now includes frontend release readiness checks for the new routes and reused API contracts.
+- [x] Update version docs, technical design notes, and iteration checklist with delivered scope and verification. Version and technical design docs now describe 13B-13D.
+- [x] Run month-end verification, commit, and push. Verification: `one-web npm run build`.
 
 ## Documentation And Delivery
 

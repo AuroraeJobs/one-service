@@ -212,6 +212,7 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
       accent: '#ff9500',
       children: [
         { id: 'lottery-prediction-current', moduleKey: 'lottery', path: '/lottery/prediction', label: '当前', icon: <ThunderboltOutlined />, accent: '#ff9500' },
+        { id: 'lottery-prediction-decision', moduleKey: 'lottery', path: '/lottery/predictions/decision', label: '决策', icon: <SafetyCertificateOutlined />, accent: '#34c759' },
         { id: 'lottery-experiments', moduleKey: 'lottery', path: '/lottery/experiments', label: '实验', icon: <ExperimentOutlined />, accent: '#00c7be' },
         { id: 'lottery-backtests', moduleKey: 'lottery', path: '/lottery/backtests', label: '回测', icon: <BarChartOutlined />, accent: '#0071e3' },
         { id: 'lottery-research', moduleKey: 'lottery', path: '/lottery/research', label: '研究', icon: <PieChartOutlined />, accent: '#5856d6' },

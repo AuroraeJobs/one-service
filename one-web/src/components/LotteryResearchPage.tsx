@@ -3,6 +3,7 @@ import { Alert, Button, Card, Empty, Select, Space, Spin, Tag } from 'antd';
 import {
   BarChartOutlined,
   ExperimentOutlined,
+  FileTextOutlined,
   HistoryOutlined,
   LineChartOutlined,
   PieChartOutlined,
@@ -21,6 +22,7 @@ import {
   type LotteryBacktestReport,
   type LotteryBacktestSummary,
   type LotteryPerformanceLedger,
+  type LotteryPredictionSnapshot,
   type LotteryPredictionRuleRecord,
   type LotteryRuleEvidence,
   type LotteryRuleComparison,
@@ -29,7 +31,7 @@ import {
 import { lotteryDriftLabel, lotteryEvidenceColor, lotteryEvidenceLabel, lotteryReplayText } from '../utils/lotteryEvidence';
 import './LotteryOverviewPage.css';
 
-type EvidenceKind = 'experiment' | 'backtest' | 'rule' | 'performance';
+type EvidenceKind = 'prediction' | 'experiment' | 'backtest' | 'rule' | 'performance';
 
 interface EvidenceMetrics {
   rankScore?: number;
@@ -61,6 +63,7 @@ interface EvidenceItem {
 const itemSeparator = ';';
 
 const kindLabel: Record<EvidenceKind, string> = {
+  prediction: '预测',
   experiment: '实验',
   backtest: '回测',
   rule: '规则',
@@ -68,6 +71,7 @@ const kindLabel: Record<EvidenceKind, string> = {
 };
 
 const kindColor: Record<EvidenceKind, string> = {
+  prediction: 'volcano',
   experiment: 'cyan',
   backtest: 'blue',
   rule: 'gold',
@@ -105,6 +109,31 @@ const updateSelectedKeys = (searchParams: URLSearchParams, setSearchParams: (nex
 };
 
 const researchPathForKey = (key: string) => `/lottery/research?items=${encodeURIComponent(key)}`;
+
+const predictionToEvidence = (item: LotteryPredictionSnapshot): EvidenceItem | undefined => {
+  const key = item.id || String(item.targetPeriod || '');
+  if (!key) {
+    return undefined;
+  }
+  return {
+    key: `prediction:${key}`,
+    kind: 'prediction',
+    title: item.title || `第 ${item.targetPeriod || '-'} 期预测`,
+    subtitle: `${item.ruleName || item.ruleId || '未记录规则'} · 目标 ${item.targetPeriod || '-'}`,
+    path: item.id ? `/lottery/predictions/${item.id}` : '/lottery/predictions/history',
+    tags: ['预测', lotteryEvidenceLabel(item.evidence), item.result?.prizeName || '待开奖'].filter(Boolean),
+    metrics: {
+      rankScore: item.score,
+      bestScore: item.replaySummary?.bestScore,
+      averageRedHits: item.replaySummary?.recentAverageRedHits,
+      blueHitRate: item.replaySummary?.recentBlueHitRate,
+      replayCount: item.replaySummary?.replayWindow
+    },
+    prizeDistribution: item.replaySummary?.candidatePrizeDistribution || item.replaySummary?.prizeDistribution || {},
+    evidence: item.evidence,
+    replaySummary: item.replaySummary
+  };
+};
 
 const experimentToEvidence = (item: LotteryStrategyExperiment): EvidenceItem | undefined => {
   if (!item.id) {
@@ -329,6 +358,7 @@ const LotteryResearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [experiments, setExperiments] = useState<LotteryStrategyExperiment[]>([]);
   const [backtests, setBacktests] = useState<LotteryBacktestReport[]>([]);
+  const [predictions, setPredictions] = useState<LotteryPredictionSnapshot[]>([]);
   const [ruleComparison, setRuleComparison] = useState<LotteryRuleComparison>();
   const [sourcePerformance, setSourcePerformance] = useState<LotteryPerformanceLedger[]>([]);
   const [rulePerformance, setRulePerformance] = useState<LotteryPerformanceLedger[]>([]);
@@ -341,13 +371,15 @@ const LotteryResearchPage = () => {
     setLoading(true);
     setError(undefined);
     try {
-      const [experimentRows, backtestRows, ruleRows, sourceRows, ledgerRuleRows] = await Promise.all([
+      const [predictionRows, experimentRows, backtestRows, ruleRows, sourceRows, ledgerRuleRows] = await Promise.all([
+        lotteryPredictionApi.historyPage({ page: 1, pageSize: 8 }),
         lotteryExperimentApi.experiments({ page: 0, pageSize: 12 }),
         lotteryBacktestApi.reports({ page: 0, pageSize: 12 }),
         lotteryPredictionApi.compareRules({ limit: 12 }),
         lotteryLedgerApi.performance({ dimension: 'source' }),
         lotteryLedgerApi.performance({ dimension: 'rule' })
       ]);
+      setPredictions(predictionRows.items || []);
       setExperiments(experimentRows.items || []);
       setBacktests(backtestRows.items || []);
       setRuleComparison(ruleRows);
@@ -366,12 +398,13 @@ const LotteryResearchPage = () => {
   }, [loadResearch]);
 
   const evidenceItems = useMemo(() => [
+    ...predictions.map(predictionToEvidence).filter(Boolean),
     ...experiments.map(experimentToEvidence).filter(Boolean),
     ...backtests.map(backtestToEvidence).filter(Boolean),
     ...(ruleComparison?.rules || []).map(ruleToEvidence).filter(Boolean),
     ...sourcePerformance.map(performanceToEvidence).filter(Boolean),
     ...rulePerformance.map(performanceToEvidence).filter(Boolean)
-  ] as EvidenceItem[], [backtests, experiments, ruleComparison?.rules, rulePerformance, sourcePerformance]);
+  ] as EvidenceItem[], [backtests, experiments, predictions, ruleComparison?.rules, rulePerformance, sourcePerformance]);
 
   const defaultSelectedKeys = useMemo(() => {
     const backtestKeys = evidenceItems.filter(item => item.kind === 'backtest').slice(0, 2).map(item => item.key);
@@ -396,6 +429,21 @@ const LotteryResearchPage = () => {
   const outcomeOption = useMemo(() => createOutcomeOption(selectedItems), [selectedItems]);
   const prizeDistributionOption = useMemo(() => createPrizeDistributionOption(selectedItems), [selectedItems]);
   const hasPrizeDistribution = selectedItems.some(item => Object.keys(item.prizeDistribution || {}).length > 0);
+  const latestPredictionKey = evidenceItems.find(item => item.kind === 'prediction')?.key;
+  const strongestRuleKey = evidenceItems
+    .filter(item => item.kind === 'rule')
+    .sort((left, right) => Number(right.metrics.rankScore || right.metrics.bestScore || 0) - Number(left.metrics.rankScore || left.metrics.bestScore || 0))[0]?.key;
+  const volatileRuleKey = evidenceItems.find(item => item.kind === 'rule' && ['VOLATILE', 'STALE', 'UNDER_TESTED'].includes(item.evidence?.tag || ''))?.key;
+  const ticketOutcomeKeys = evidenceItems.filter(item => item.kind === 'performance').slice(0, 4).map(item => item.key);
+  const applyPreset = useCallback((keys: string[]) => {
+    updateSelectedKeys(searchParams, setSearchParams, keys.filter(Boolean));
+  }, [searchParams, setSearchParams]);
+  const reportSummary = useMemo(() => {
+    const bestScore = Math.max(...selectedItems.map(item => Number(item.metrics.bestScore || item.metrics.rankScore || 0)), 0);
+    const totalNet = selectedItems.reduce((sum, item) => sum + Number(item.metrics.netResult || 0), 0);
+    const evidenceWarnings = selectedItems.filter(item => ['VOLATILE', 'STALE', 'UNDER_TESTED'].includes(item.evidence?.tag || '')).length;
+    return { bestScore, totalNet, evidenceWarnings };
+  }, [selectedItems]);
 
   return (
     <LifePageShell
@@ -416,6 +464,9 @@ const LotteryResearchPage = () => {
           <Button icon={<PieChartOutlined />} onClick={() => navigate('/lottery/ledger')}>
             账本
           </Button>
+          <Button icon={<TrophyOutlined />} onClick={() => window.print()}>
+            打印
+          </Button>
         </Space>
       }
     >
@@ -429,6 +480,20 @@ const LotteryResearchPage = () => {
 
       <Card className="life-panel-card lottery-clean-panel">
         <Space direction="vertical" size={12} style={{ width: '100%' }}>
+          <Space wrap>
+            <Button size="small" disabled={!latestPredictionKey} onClick={() => latestPredictionKey && applyPreset([latestPredictionKey])}>
+              最新预测
+            </Button>
+            <Button size="small" disabled={!strongestRuleKey} onClick={() => strongestRuleKey && applyPreset([strongestRuleKey])}>
+              最强规则
+            </Button>
+            <Button size="small" disabled={!volatileRuleKey} onClick={() => volatileRuleKey && applyPreset([volatileRuleKey])}>
+              波动规则
+            </Button>
+            <Button size="small" disabled={!ticketOutcomeKeys.length} onClick={() => applyPreset(ticketOutcomeKeys)}>
+              票据结果
+            </Button>
+          </Space>
           <Select
             mode="multiple"
             allowClear
@@ -450,6 +515,29 @@ const LotteryResearchPage = () => {
             {ruleComparison?.replaySummary ? <Tag>{lotteryReplayText(ruleComparison.replaySummary)}</Tag> : null}
           </Space>
         </Space>
+      </Card>
+
+      <Card className="life-panel-card lottery-clean-panel lottery-research-report-summary lottery-report-print-area">
+        <div className="lottery-card-title-row">
+          <FileTextOutlined />
+          <div>
+            <h2>研究报告摘要</h2>
+            <p>选中 {selectedItems.length} 项证据，最高评分 {compactNumber(reportSummary.bestScore)}，账本净结果 {formatMoney(reportSummary.totalNet)}，证据提醒 {reportSummary.evidenceWarnings} 项。</p>
+          </div>
+        </div>
+        <div className="lottery-research-report-grid">
+          {selectedItems.slice(0, 6).map(item => (
+            <article key={`report-${item.key}`}>
+              <Tag color={kindColor[item.kind]}>{kindLabel[item.kind]}</Tag>
+              <strong>{item.title}</strong>
+              <span>{item.subtitle}</span>
+              <small>
+                评分 {compactNumber(item.metrics.bestScore || item.metrics.rankScore)} · 红球 {compactNumber(item.metrics.averageRedHits)} · ROI {formatPercent(item.metrics.roiPercent)}
+              </small>
+            </article>
+          ))}
+          {selectedItems.length === 0 ? <Empty description="选择证据后生成报告摘要" /> : null}
+        </div>
       </Card>
 
       <Spin spinning={loading}>

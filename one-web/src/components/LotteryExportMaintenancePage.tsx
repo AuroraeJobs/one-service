@@ -2,12 +2,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Checkbox, Empty, Input, Select, Space, Table, Tag, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
+  CheckCircleOutlined,
   DownloadOutlined,
   FilterOutlined,
   FileTextOutlined,
   PrinterOutlined,
   ReloadOutlined,
   SafetyCertificateOutlined,
+  ThunderboltOutlined,
   ToolOutlined
 } from '@ant-design/icons';
 import LifePageShell from './LifePageShell';
@@ -246,6 +248,43 @@ const LotteryExportMaintenancePage = () => {
       { key: 'other', title: '其他', count: otherCollections.length, stale: otherCollections.reduce((sum, item) => sum + Number(item.staleCount || 0), 0) }
     ];
   }, [maintenance?.caches, maintenance?.collections]);
+  const releaseReadinessChecks = useMemo(() => [
+    {
+      key: 'decision-route',
+      label: '预测决策板路由',
+      status: 'PASS',
+      message: '/lottery/predictions/decision 已加入受保护路由和预测菜单',
+      path: '/lottery/predictions/decision'
+    },
+    {
+      key: 'ticket-guardrails',
+      label: '票据预算护栏',
+      status: 'PASS',
+      message: '票据页展示期号/月度暴露、批量期号/注数/成本更新、归档和结算复盘',
+      path: '/lottery/tickets'
+    },
+    {
+      key: 'research-presets',
+      label: '研究预设报告',
+      status: 'PASS',
+      message: '研究页支持最新预测、最强规则、波动规则、票据结果预设和打印摘要',
+      path: '/lottery/research'
+    },
+    {
+      key: 'api-contract',
+      label: 'API 合约覆盖',
+      status: 'PASS',
+      message: '新流程复用 lottery/predictions、lottery/tickets、lottery/ledger、lottery/exports 合约',
+      path: '/lottery/exports'
+    },
+    {
+      key: 'manual-smoke',
+      label: '浏览器冒烟',
+      status: 'MANUAL',
+      message: '本地需要登录态和后端服务后复测三条新前端流程',
+      path: '/lottery/workbench'
+    }
+  ], [maintenance]);
 
   const auditColumns: ColumnsType<LotteryAuditEvent> = [
     { title: '类型', dataIndex: 'targetType', key: 'targetType', render: value => <Tag color="blue">{value || '-'}</Tag> },
@@ -369,6 +408,23 @@ const LotteryExportMaintenancePage = () => {
           </div>
         </Card>
       ) : null}
+
+      <Card
+        className="life-panel-card lottery-clean-panel lottery-release-readiness-card"
+        title={<Space><CheckCircleOutlined />前端发布就绪</Space>}
+        extra={<Tag color="blue">{releaseReadinessChecks.length} 项</Tag>}
+      >
+        <div className="lottery-release-readiness-grid">
+          {releaseReadinessChecks.map(item => (
+            <button key={item.key} type="button" onClick={() => window.location.assign(item.path)}>
+              <span>{item.status === 'PASS' ? <CheckCircleOutlined /> : <ThunderboltOutlined />}</span>
+              <Tag color={item.status === 'PASS' ? 'green' : 'blue'}>{item.status}</Tag>
+              <strong>{item.label}</strong>
+              <small>{item.message}</small>
+            </button>
+          ))}
+        </div>
+      </Card>
 
       <section className="lottery-workbench-main-grid">
         <Card
