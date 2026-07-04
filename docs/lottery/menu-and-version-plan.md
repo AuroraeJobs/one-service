@@ -173,7 +173,7 @@ Goal: support a longer research loop with experiments, backtests, reminders, gov
 
 Goal: make the completed platform capabilities feel like a richer user-facing product.
 
-- Upgrade `/lottery/workbench` with quick actions, recent-work shortcuts, saved view state, and richer daily widgets.
+- Upgrade `/lottery/workbench` with quick actions, recent-work shortcuts, saved view state, and richer daily widgets. The first shipped slice adds the quick-action rail and recent prediction, ticket, experiment, backtest, and export shortcuts; saved filter state remains a follow-up.
 - Add `/lottery/research` for side-by-side experiment, backtest, rule, and ledger evidence comparison.
 - Add ticket workflow power tools: bulk paste/import, duplicate preview, batch actions, issue timeline, and mobile-friendly cards.
 - Improve `/lottery/exports` with browser CSV download, report builder, audit filters, maintenance grouping, and print-friendly report views.

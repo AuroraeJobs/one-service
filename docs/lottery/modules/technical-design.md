@@ -251,6 +251,8 @@ generatedAt
 
 `GET /lottery/workbench/summary` composes the latest records, sync summary, data quality, prediction status, ticket status, and ledger snapshot into one response for the daily page. It does not fetch external provider data directly and does not duplicate prize or prediction scoring logic.
 
+Iteration 11 keeps the backend workbench contract unchanged and enriches the frontend composition. `/lottery/workbench` now loads the summary, calendar state, budget status, recent predictions, recent tickets, recent experiments, recent backtests, and recent export audit events in parallel through project-owned APIs. The page renders a compact quick-action rail for sync, prediction, ticket entry, latest prize checking, ledger review, alerts, and export. Recent-work shortcuts link to specialist pages with URL-backed filters where available, so the workbench remains a command center rather than a replacement for prediction history, ticket, experiment, backtest, and export pages.
+
 Iteration 10 adds `LotteryDailyState` and `GET /lottery/workbench/daily-state`. The daily state is a compact resumability contract for the current issue. It contains latest issue, next issue, latest prediction id, sync/prediction/ticket/prize-check/quality state items, pending action keys, and `generatedAt`. Each state item includes status, message, optional pending count, updated time, and a project-owned drill-through path.
 
 Daily state is derived from existing services:

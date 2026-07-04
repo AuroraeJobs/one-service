@@ -234,13 +234,13 @@ Use this file as the durable task board for the lottery module. When a task is f
 
 ### Wave 11A: Frontend Shell And Personalized Cockpit
 
-- [ ] Audit lottery routes, page titles, nav labels, and primary actions.
-- [ ] Add a compact quick-action rail or panel for sync, prediction, ticket save, prize check, ledger review, alerts, and export.
-- [ ] Upgrade `/lottery/workbench` widgets for daily state, recent prediction, pending tickets, alerts, budget warning, latest backtest, and latest ledger outcome.
+- [x] Audit lottery routes, page titles, nav labels, and primary actions. Reviewed `lifeRoutes.tsx`, `lifeDataModules.tsx`, and existing lottery action surfaces before keeping the first 11A slice centered on `/lottery/workbench`.
+- [x] Add a compact quick-action rail or panel for sync, prediction, ticket save, prize check, ledger review, alerts, and export. `/lottery/workbench` now has a seven-action rail and latest prize-check can run directly from the workbench.
+- [x] Upgrade `/lottery/workbench` widgets for daily state, recent prediction, pending tickets, alerts, budget warning, latest backtest, and latest ledger outcome. The workbench now keeps existing daily/budget/ledger widgets and adds recent prediction, ticket, experiment, backtest, and export shortcuts.
 - [ ] Add saved frontend view state for common filters and page sizes where query parameters already exist.
-- [ ] Add recent-work shortcuts for prediction snapshots, tickets, experiments, backtests, and exports.
-- [ ] Preserve URL-backed drill-through links from workbench to specialist pages.
-- [ ] Run `npm run build`, update docs, commit, and push.
+- [x] Add recent-work shortcuts for prediction snapshots, tickets, experiments, backtests, and exports.
+- [x] Preserve URL-backed drill-through links from workbench to specialist pages.
+- [x] Run `npm run build`, update docs, commit, and push. First 11A command-center slice built successfully; saved view-state work remains open.
 
 ### Wave 11B: Research Comparison Studio
 
