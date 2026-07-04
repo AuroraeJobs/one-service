@@ -436,7 +436,7 @@ sync-logs
 probe-logs
 ```
 
-The first export service applies explicit filters such as `issue`, `status`, `source`, `targetPeriod`, `ruleId`, `strategyName`, `presetWindow`, `provider`, and `limit` depending on export type. The export response and audit event both record the normalized filters and generated row count. `limit` is capped server-side for bounded API payloads.
+The first export service applies explicit filters such as `issue`, `status`, `source`, `targetPeriod`, `ruleId`, `strategyName`, `presetWindow`, `provider`, and `limit` depending on export type. The export response and audit event both record the normalized filters and generated row count. `limit` is capped server-side for bounded API payloads. `GET /lottery/audit/events` uses the shared pagination envelope with `items`, `page`, `pageSize`, `total`, and `hasNext`.
 
 `LotteryMaintenanceSummary` reports non-destructive maintenance previews for caches, old logs, and high-growth history collections. It includes `dryRun`, collection rows with total count, stale count, retention days, oversized count, cleanup support, cache rows with presence and TTL status, message, and generated time.
 

@@ -2,6 +2,7 @@ package com.one.record.service.impl;
 
 import com.one.record.lottery.LotteryExportResult;
 import com.one.record.lottery.LotteryIssueLedger;
+import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.model.LotteryAuditEvent;
 import com.one.record.model.LotteryBacktestReport;
 import com.one.record.model.LotteryPredictionSnapshot;
@@ -42,6 +43,8 @@ public class LotteryExportService implements ILotteryExportService {
     private static final int DEFAULT_LIMIT = 500;
 
     private static final int MAX_LIMIT = 2000;
+
+    private static final int MAX_PAGE_SIZE = 200;
 
     private final LotteryTicketRepository ticketRepository;
 
@@ -90,8 +93,18 @@ public class LotteryExportService implements ILotteryExportService {
     }
 
     @Override
-    public List<LotteryAuditEvent> auditEvents(Integer limit) {
-        return auditEventRepository.findByOrderByGeneratedAtDesc(PageRequest.of(0, normalizeLimit(limit)));
+    public LotteryPageResponse<LotteryAuditEvent> auditEvents(Integer page, Integer pageSize) {
+        int currentPage = normalizePage(page);
+        int currentPageSize = normalizePageSize(pageSize);
+        long total = auditEventRepository.count();
+        List<LotteryAuditEvent> items = auditEventRepository.findByOrderByGeneratedAtDesc(PageRequest.of(currentPage - 1, currentPageSize));
+        return LotteryPageResponse.<LotteryAuditEvent>builder()
+                .items(items)
+                .page(currentPage)
+                .pageSize(currentPageSize)
+                .total(total)
+                .hasNext((long) currentPage * currentPageSize < total)
+                .build();
     }
 
     private List<Map<String, String>> rows(String type, Map<String, String> filters) {
@@ -299,6 +312,20 @@ public class LotteryExportService implements ILotteryExportService {
             return DEFAULT_LIMIT;
         }
         return Math.min(limit, MAX_LIMIT);
+    }
+
+    private int normalizePage(Integer page) {
+        if (page == null || page <= 0) {
+            return 1;
+        }
+        return page;
+    }
+
+    private int normalizePageSize(Integer pageSize) {
+        if (pageSize == null || pageSize <= 0) {
+            return 20;
+        }
+        return Math.min(pageSize, MAX_PAGE_SIZE);
     }
 
     private Integer parseInt(String value) {

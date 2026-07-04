@@ -57,6 +57,9 @@ const LotteryExportMaintenancePage = () => {
   const [limit, setLimit] = useState('500');
   const [result, setResult] = useState<LotteryExportResult>();
   const [auditEvents, setAuditEvents] = useState<LotteryAuditEvent[]>([]);
+  const [auditPage, setAuditPage] = useState(1);
+  const [auditPageSize, setAuditPageSize] = useState(6);
+  const [auditTotal, setAuditTotal] = useState(0);
   const [maintenance, setMaintenance] = useState<LotteryMaintenanceSummary>();
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -68,10 +71,11 @@ const LotteryExportMaintenancePage = () => {
     setError(undefined);
     try {
       const [events, maintenanceSummary] = await Promise.all([
-        lotteryExportApi.auditEvents({ limit: 20 }),
+        lotteryExportApi.auditEvents({ page: auditPage, pageSize: auditPageSize }),
         lotteryExportApi.maintenanceSummary()
       ]);
-      setAuditEvents(events || []);
+      setAuditEvents(events?.items || []);
+      setAuditTotal(events?.total || 0);
       setMaintenance(maintenanceSummary);
     } catch (requestError) {
       console.error('读取彩票导出审计失败:', requestError);
@@ -79,7 +83,7 @@ const LotteryExportMaintenancePage = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [auditPage, auditPageSize]);
 
   useEffect(() => {
     loadState();
@@ -179,7 +183,22 @@ const LotteryExportMaintenancePage = () => {
 
       <section className="lottery-workbench-main-grid">
         <Card className="life-panel-card lottery-clean-panel" title={<Space><SafetyCertificateOutlined />审计事件</Space>}>
-          <Table rowKey={record => record.id || record.targetId || `${record.targetType}-${record.generatedAt}`} columns={auditColumns} dataSource={auditEvents} loading={loading} pagination={{ pageSize: 6 }} />
+          <Table
+            rowKey={record => record.id || record.targetId || `${record.targetType}-${record.generatedAt}`}
+            columns={auditColumns}
+            dataSource={auditEvents}
+            loading={loading}
+            pagination={{
+              current: auditPage,
+              pageSize: auditPageSize,
+              total: auditTotal,
+              showSizeChanger: true,
+              onChange: (page, pageSize) => {
+                setAuditPage(page);
+                setAuditPageSize(pageSize);
+              }
+            }}
+          />
         </Card>
         <Card className="life-panel-card lottery-clean-panel" title={<Space><ToolOutlined />维护预览</Space>}>
           <Table rowKey={record => record.collection || ''} columns={maintenanceColumns} dataSource={maintenance?.collections || []} loading={loading || dryRunning} pagination={false} size="small" />

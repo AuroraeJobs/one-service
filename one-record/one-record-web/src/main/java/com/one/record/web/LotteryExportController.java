@@ -1,6 +1,7 @@
 package com.one.record.web;
 
 import com.one.record.lottery.LotteryExportResult;
+import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.model.LotteryAuditEvent;
 import com.one.record.service.ILotteryExportService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -32,7 +32,8 @@ public class LotteryExportController {
 
     @GetMapping("audit/events")
     @Operation(summary = "查询彩票审计事件", description = "查询最近导出和平台审计事件")
-    public List<LotteryAuditEvent> auditEvents(@RequestParam(value = "limit", required = false, defaultValue = "20") Integer limit) {
-        return service.auditEvents(limit);
+    public LotteryPageResponse<LotteryAuditEvent> auditEvents(@RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+                                                             @RequestParam(value = "pageSize", required = false, defaultValue = "20") Integer pageSize) {
+        return service.auditEvents(page, pageSize);
     }
 }

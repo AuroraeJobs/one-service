@@ -2295,7 +2295,7 @@ export const lotteryExportApi = {
   export: (type: string, params?: Record<string, string | number | undefined>): Promise<LotteryExportResult> => {
     return apiClient.get(`/lottery/exports/${type}`, { params });
   },
-  auditEvents: (params?: { limit?: number }): Promise<LotteryAuditEvent[]> => {
+  auditEvents: (params?: { page?: number; pageSize?: number }): Promise<LotteryPageResponse<LotteryAuditEvent>> => {
     return apiClient.get('/lottery/audit/events', { params });
   },
   maintenanceSummary: (): Promise<LotteryMaintenanceSummary> => {

@@ -1,6 +1,7 @@
 package com.one.record.web;
 
 import com.one.record.lottery.LotteryExportResult;
+import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.model.LotteryAuditEvent;
 import com.one.record.service.ILotteryExportService;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,17 +52,26 @@ class LotteryExportControllerTest {
 
     @Test
     void auditEventsDelegatesToService() throws Exception {
-        when(service.auditEvents(10)).thenReturn(List.of(LotteryAuditEvent.builder()
-                .eventType("EXPORT")
-                .targetType("tickets")
-                .rowCount(1)
-                .build()));
+        when(service.auditEvents(2, 5)).thenReturn(LotteryPageResponse.<LotteryAuditEvent>builder()
+                .items(List.of(LotteryAuditEvent.builder()
+                        .eventType("EXPORT")
+                        .targetType("tickets")
+                        .rowCount(1)
+                        .build()))
+                .page(2)
+                .pageSize(5)
+                .total(6L)
+                .hasNext(false)
+                .build());
 
-        mockMvc.perform(get("/lottery/audit/events?limit=10"))
+        mockMvc.perform(get("/lottery/audit/events?page=2&pageSize=5"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].eventType").value("EXPORT"))
-                .andExpect(jsonPath("$[0].targetType").value("tickets"));
+                .andExpect(jsonPath("$.items[0].eventType").value("EXPORT"))
+                .andExpect(jsonPath("$.items[0].targetType").value("tickets"))
+                .andExpect(jsonPath("$.page").value(2))
+                .andExpect(jsonPath("$.pageSize").value(5))
+                .andExpect(jsonPath("$.total").value(6));
 
-        verify(service).auditEvents(10);
+        verify(service).auditEvents(2, 5);
     }
 }

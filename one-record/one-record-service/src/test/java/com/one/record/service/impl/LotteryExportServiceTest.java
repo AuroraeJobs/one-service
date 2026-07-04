@@ -2,6 +2,7 @@ package com.one.record.service.impl;
 
 import com.one.record.lottery.LotteryExportResult;
 import com.one.record.lottery.LotteryIssueLedger;
+import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.model.LotteryAuditEvent;
 import com.one.record.model.LotteryTicket;
 import com.one.record.repository.LotteryAuditEventRepository;
@@ -15,6 +16,7 @@ import com.one.record.service.ILotteryLedgerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
@@ -104,5 +106,21 @@ class LotteryExportServiceTest {
 
         assertThat(result.getRowCount()).isEqualTo(1);
         assertThat(result.getContent()).contains("2026079");
+    }
+
+    @Test
+    void auditEventsUsesSharedPageEnvelope() {
+        when(auditEventRepository.count()).thenReturn(11L);
+        when(auditEventRepository.findByOrderByGeneratedAtDesc(PageRequest.of(1, 5))).thenReturn(List.of(
+                LotteryAuditEvent.builder().eventType("EXPORT").targetType("tickets").build()
+        ));
+
+        LotteryPageResponse<LotteryAuditEvent> result = service.auditEvents(2, 5);
+
+        assertThat(result.getPage()).isEqualTo(2);
+        assertThat(result.getPageSize()).isEqualTo(5);
+        assertThat(result.getTotal()).isEqualTo(11L);
+        assertThat(result.getHasNext()).isTrue();
+        assertThat(result.getItems()).hasSize(1);
     }
 }
