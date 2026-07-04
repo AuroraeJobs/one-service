@@ -187,13 +187,13 @@ Use this file as the durable task board for the lottery module. When a task is f
 
 ### Wave 10B: Strategy Experiment Lab
 
-- [ ] Add durable strategy experiment model with strategy name, parameters, replay window, generated candidates, score distribution, and outcome summary.
-- [ ] Add `POST /lottery/experiments/run` for explicit experiment runs.
-- [ ] Add `GET /lottery/experiments` with pagination, tags, strategy, and date filters.
-- [ ] Add `GET /lottery/experiments/{id}` for experiment detail and candidate review.
-- [ ] Add experiment notes/tags so useful trials can be revisited.
-- [ ] Add backend tests for experiment persistence, parameter normalization, and paged search.
-- [ ] Add experiment lab frontend route and API client types.
+- [x] Add durable strategy experiment model with strategy name, parameters, replay window, generated candidates, score distribution, and outcome summary.
+- [x] Add `POST /lottery/experiments/run` for explicit experiment runs.
+- [x] Add `GET /lottery/experiments` with pagination, tags, strategy, and date filters.
+- [x] Add `GET /lottery/experiments/{id}` for experiment detail and candidate review.
+- [x] Add experiment notes/tags so useful trials can be revisited.
+- [x] Add backend tests for experiment persistence, parameter normalization, and paged search.
+- [x] Add experiment lab frontend route and API client types.
 
 ### Wave 10C: Backtest And Replay Evidence
 

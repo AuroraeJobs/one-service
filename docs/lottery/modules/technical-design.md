@@ -323,6 +323,37 @@ createdAt
 updatedAt
 ```
 
+Wave 10B implements `LotteryStrategyExperiment` in MongoDB with:
+
+```text
+strategyName
+scale
+replayWindow
+inputSource
+bestRule
+outcomeSummary
+scoreDistribution
+generatedCandidates
+latestPrediction
+tags
+notes
+createdAt
+updatedAt
+```
+
+Initial experiment runs reuse the existing training service so the experiment record can capture the same candidate and score evidence users already trust. If a future wave needs no-side-effect experiments, the training algorithm should be split into a pure replay component before adding a second execution path.
+
+Experiment endpoints:
+
+```text
+POST  /lottery/experiments/run
+GET   /lottery/experiments
+GET   /lottery/experiments/{id}
+PATCH /lottery/experiments/{id}
+```
+
+`GET /lottery/experiments` uses the shared pagination envelope and supports `strategyName`, `tag`, `createdStartAt`, and `createdEndAt` filters.
+
 Backtests should preserve enough evidence to audit a strategy later. A `LotteryBacktestReport` should capture:
 
 ```text

@@ -1668,6 +1668,37 @@ export interface LotteryPredictionRuleRecord {
   createdAt?: number;
 }
 
+export interface LotteryStrategyExperiment {
+  id?: string;
+  strategyName?: string;
+  scale?: string;
+  replayWindow?: number;
+  inputSource?: string;
+  bestRule?: PredictionRuleConfig;
+  outcomeSummary?: LotteryTrainingSummary;
+  scoreDistribution: Record<string, number>;
+  generatedCandidates: LotteryPredictionCandidate[];
+  latestPrediction?: LotteryLatestPrediction;
+  tags: string[];
+  notes?: string;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
+export interface LotteryExperimentRunRequest {
+  strategyName?: string;
+  replayWindow?: number;
+  scale?: 'fast' | 'standard' | 'deep' | string;
+  inputSource?: string;
+  tags?: string[];
+  notes?: string;
+}
+
+export interface LotteryExperimentUpdateRequest {
+  tags?: string[];
+  notes?: string;
+}
+
 export interface LotteryRuleComparison {
   rules: LotteryPredictionRuleRecord[];
   bestRuleId?: string;
@@ -1997,6 +2028,28 @@ export const lotteryPredictionApi = {
   },
   train: (params: { replayCount?: number; scale?: 'fast' | 'standard' | 'deep' }): Promise<LotteryTrainingStatus> => {
     return apiClient.post('/lottery/predictions/train', params);
+  }
+};
+
+export const lotteryExperimentApi = {
+  run: (request: LotteryExperimentRunRequest): Promise<LotteryStrategyExperiment> => {
+    return apiClient.post('/lottery/experiments/run', request);
+  },
+  experiments: (params?: {
+    page?: number;
+    pageSize?: number;
+    strategyName?: string;
+    tag?: string;
+    createdStartAt?: number;
+    createdEndAt?: number;
+  }): Promise<LotteryPageResponse<LotteryStrategyExperiment>> => {
+    return apiClient.get('/lottery/experiments', { params });
+  },
+  detail: (id: string): Promise<LotteryStrategyExperiment> => {
+    return apiClient.get(`/lottery/experiments/${id}`);
+  },
+  updateNotes: (id: string, request: LotteryExperimentUpdateRequest): Promise<LotteryStrategyExperiment> => {
+    return apiClient.patch(`/lottery/experiments/${id}`, request);
   }
 };
 
