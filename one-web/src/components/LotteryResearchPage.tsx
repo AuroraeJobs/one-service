@@ -116,6 +116,11 @@ const updateSelectedKeys = (searchParams: URLSearchParams, setSearchParams: (nex
 
 const researchPathForKey = (key: string) => `/lottery/research?items=${encodeURIComponent(key)}`;
 
+const decisionEvidenceKey = (item: LotteryDecisionOutcomeItem) => {
+  const key = item.decisionSetId || item.targetIssue || item.title;
+  return key ? `decision:${key}` : '';
+};
+
 const predictionToEvidence = (item: LotteryPredictionSnapshot): EvidenceItem | undefined => {
   const key = item.id || String(item.targetPeriod || '');
   if (!key) {
@@ -245,7 +250,7 @@ const performanceToEvidence = (item: LotteryPerformanceLedger): EvidenceItem | u
 };
 
 const decisionOutcomeToEvidence = (item: LotteryDecisionOutcomeItem): EvidenceItem | undefined => {
-  const key = item.decisionSetId || item.targetIssue || item.title;
+  const key = decisionEvidenceKey(item);
   if (!key) {
     return undefined;
   }
@@ -254,7 +259,7 @@ const decisionOutcomeToEvidence = (item: LotteryDecisionOutcomeItem): EvidenceIt
     ? { tag: 'VOLATILE', label: '需复核', message: `证据提醒 ${warningCount} 项` }
     : { tag: 'STABLE', label: '已复盘', message: '保存决策已完成基础复盘' };
   return {
-    key: `decision:${key}`,
+    key,
     kind: 'decision',
     title: item.title || `第 ${item.targetIssue || '-'} 期决策`,
     subtitle: `候选 ${item.candidateCount || 0} · 转票 ${item.convertedTicketCount || 0} · 净 ${formatMoney(item.netResult)}`,
@@ -475,6 +480,22 @@ const LotteryResearchPage = () => {
   const volatileRuleKey = evidenceItems.find(item => item.kind === 'rule' && ['VOLATILE', 'STALE', 'UNDER_TESTED'].includes(item.evidence?.tag || ''))?.key;
   const ticketOutcomeKeys = evidenceItems.filter(item => item.kind === 'performance').slice(0, 4).map(item => item.key);
   const decisionOutcomeKeys = evidenceItems.filter(item => item.kind === 'decision').slice(0, 4).map(item => item.key);
+  const decisionDeltaKeys = (decisionOutcomeSummary?.items || [])
+    .filter(item => Number(item.ruleDelta?.netResultDelta || 0) > 0 || Number(item.sourceDelta?.netResultDelta || 0) > 0)
+    .slice(0, 4)
+    .map(decisionEvidenceKey)
+    .filter(Boolean);
+  const decisionRoiKeys = [...(decisionOutcomeSummary?.items || [])]
+    .filter(item => item.roiPercent !== undefined && item.roiPercent !== null)
+    .sort((left, right) => Number(right.roiPercent || 0) - Number(left.roiPercent || 0))
+    .slice(0, 4)
+    .map(decisionEvidenceKey)
+    .filter(Boolean);
+  const decisionWarningKeys = (decisionOutcomeSummary?.items || [])
+    .filter(item => (item.warningCount || 0) > 0 || (item.staleEvidenceCount || 0) > 0 || (item.volatileEvidenceCount || 0) > 0)
+    .slice(0, 4)
+    .map(decisionEvidenceKey)
+    .filter(Boolean);
   const applyPreset = useCallback((keys: string[]) => {
     updateSelectedKeys(searchParams, setSearchParams, keys.filter(Boolean));
   }, [searchParams, setSearchParams]);
@@ -536,6 +557,15 @@ const LotteryResearchPage = () => {
             </Button>
             <Button size="small" disabled={!decisionOutcomeKeys.length} onClick={() => applyPreset(decisionOutcomeKeys)}>
               决策结果
+            </Button>
+            <Button size="small" disabled={!decisionDeltaKeys.length} onClick={() => applyPreset(decisionDeltaKeys)}>
+              决策差额
+            </Button>
+            <Button size="small" disabled={!decisionRoiKeys.length} onClick={() => applyPreset(decisionRoiKeys)}>
+              ROI 优先
+            </Button>
+            <Button size="small" disabled={!decisionWarningKeys.length} onClick={() => applyPreset(decisionWarningKeys)}>
+              预警复核
             </Button>
           </Space>
           <Select

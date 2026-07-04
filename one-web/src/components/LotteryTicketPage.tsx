@@ -613,6 +613,12 @@ const LotteryTicketPage = () => {
     const rows = (decisionOutcomeSummary?.items || []).filter(item => item.targetIssue === activeSettlementIssue);
     return {
       rows,
+      candidates: rows.flatMap(item => (item.candidates || []).map(candidate => ({
+        ...candidate,
+        decisionSetId: item.decisionSetId,
+        decisionTitle: item.title,
+        targetIssue: item.targetIssue
+      }))),
       candidateCount: rows.reduce((sum, item) => sum + Number(item.candidateCount || 0), 0),
       winningCandidateCount: rows.reduce((sum, item) => sum + Number(item.winningCandidateCount || 0), 0),
       convertedTicketCount: rows.reduce((sum, item) => sum + Number(item.convertedTicketCount || 0), 0),
@@ -1304,6 +1310,38 @@ const LotteryTicketPage = () => {
                 </article>
               ))}
             </div>
+            {settlementDecisionSummary.candidates.length ? (
+              <div className="lottery-ticket-decision-drilldown">
+                {settlementDecisionSummary.candidates.slice(0, 6).map(candidate => (
+                  <article key={`${candidate.decisionSetId || candidate.decisionTitle}-${candidate.candidateKey || candidate.candidateTitle}`}>
+                    <div>
+                      <strong>{candidate.candidateTitle || '决策候选'}</strong>
+                      <Tag color={candidate.winningTicketCount ? 'blue' : candidate.convertedTicketCount ? 'green' : 'default'}>
+                        {candidate.prizeName || '待开奖'}
+                      </Tag>
+                    </div>
+                    <LotteryBalls redNumbers={candidate.redNumbers || []} blueNumber={candidate.blueNumber || ''} />
+                    <span>
+                      红 {candidate.redHits ?? '-'}/6 · {candidate.blueHit ? '蓝中' : '蓝未中'} · 净 {formatMoney(candidate.netResult)}
+                    </span>
+                    <Space wrap>
+                      <Button
+                        size="small"
+                        icon={<LinkOutlined />}
+                        onClick={() => navigate(`/lottery/predictions/decision?targetIssue=${encodeURIComponent(candidate.targetIssue || activeSettlementIssue)}`)}
+                      >
+                        决策
+                      </Button>
+                      <Button size="small" onClick={() => updateQuery({ issue: candidate.targetIssue || activeSettlementIssue })}>
+                        票据
+                      </Button>
+                    </Space>
+                  </article>
+                ))}
+              </div>
+            ) : settlementDecisionSummary.rows.length ? (
+              <div className="lottery-ticket-empty-line">当前决策集暂无候选明细</div>
+            ) : null}
           </div>
         ) : (
           <Empty description="选择期号后查看结算复盘" />

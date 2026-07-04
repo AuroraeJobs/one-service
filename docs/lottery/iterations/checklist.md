@@ -412,10 +412,10 @@ Goal: make the saved-decision outcome loop easier to operate from the frontend, 
 
 ### Wave 15C: Research And Ticket Outcome Drilldowns
 
-- [ ] Add research-page presets for saved decision outcomes by rule/source delta, warning state, and ROI band.
-- [ ] Add ticket-page drilldowns from settlement review into matching saved-decision outcome candidates.
-- [ ] Add export report presets for outcome operation queues and month-end decision review.
-- [ ] Run focused frontend checks, update docs, commit, and push.
+- [x] Add research-page presets for saved decision outcomes by rule/source delta, warning state, and ROI band. Research page now includes decision delta, ROI priority, and warning review presets derived from saved decision outcomes.
+- [x] Add ticket-page drilldowns from settlement review into matching saved-decision outcome candidates. Ticket settlement review now lists same-issue decision candidates with direct decision and ticket actions.
+- [x] Add export report presets for outcome operation queues and month-end decision review. Export report builder now has outcome-operations and month-end report presets.
+- [x] Run focused frontend checks, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
 ### Wave 15D: Release Evidence And Month-End UX Polish
 

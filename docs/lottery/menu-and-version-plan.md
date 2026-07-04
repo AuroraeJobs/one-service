@@ -205,7 +205,7 @@ Goal: make decision outcomes easier to operate from the frontend after the durab
 
 - Upgrade `/lottery/predictions/decision` into the primary outcome operations cockpit with URL-backed filters for hit state, ticket conversion state, and evidence alert state. The shipped 15A slice adds filtered saved-outcome metrics, a selectable outcome list, and a direct handoff into CSV export.
 - Add workbench follow-up queues for unchecked converted tickets, stale or volatile evidence, and high-warning saved decisions. The shipped 15B slice derives decision follow-ups from saved outcomes, adds direct decision/ticket/export actions on workbench outcome cards, and clarifies saved-outcome empty states.
-- Add research and ticket drilldowns for rule/source deltas, ROI bands, warning states, and settlement-linked candidates. Planned 15C keeps report-style evidence dense while avoiding provider calls from the browser.
+- Add research and ticket drilldowns for rule/source deltas, ROI bands, warning states, and settlement-linked candidates. The shipped 15C slice adds research presets for decision delta, ROI priority, and warning review; ticket settlement candidate drilldowns; and export report presets for outcome operations and month-end review.
 - Extend route smoke, release readiness, and responsive QA for the new frontend outcome operations. Planned 15D records the V12 gates and month-end frontend evidence.
 - Keep frontend copy focused on review, audit, and personal record keeping; no gambling-promotion copy.
 

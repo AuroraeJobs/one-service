@@ -43,6 +43,19 @@ const exportTypeOptions = [
 
 const defaultReportSections = ['tickets', 'ledger-issues', 'predictions', 'decision-outcomes', 'budget-prechecks', 'settlement-reviews', 'rule-evidence', 'replay-evidence'];
 
+const reportPresets = [
+  {
+    key: 'outcome-operations',
+    label: '复盘运营',
+    sections: ['decision-outcomes', 'settlement-reviews', 'budget-prechecks', 'ticket-import-previews']
+  },
+  {
+    key: 'month-end',
+    label: '月末复盘',
+    sections: ['ledger-issues', 'tickets', 'decision-sets', 'decision-outcomes', 'settlement-reviews', 'rule-evidence', 'replay-evidence']
+  }
+];
+
 const formatDateTime = (timestamp?: number) => {
   if (!timestamp) {
     return '-';
@@ -405,6 +418,13 @@ const LotteryExportMaintenancePage = () => {
         }
       >
         <div className="lottery-report-builder">
+          <Space wrap className="lottery-report-preset-bar">
+            {reportPresets.map(preset => (
+              <Button key={preset.key} size="small" icon={<FilterOutlined />} onClick={() => setReportSections(preset.sections)}>
+                {preset.label}
+              </Button>
+            ))}
+          </Space>
           <Checkbox.Group
             options={exportTypeOptions}
             value={reportSections}
