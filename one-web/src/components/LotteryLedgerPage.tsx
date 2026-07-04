@@ -3,14 +3,22 @@ import { Alert, Button, Card, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
   DollarOutlined,
+  LineChartOutlined,
   PercentageOutlined,
   ReloadOutlined,
   RiseOutlined,
   TrophyOutlined,
   WalletOutlined
 } from '@ant-design/icons';
+import type { EChartsOption } from 'echarts';
+import ReactECharts from 'echarts-for-react';
 import LifePageShell from './LifePageShell';
-import { lotteryLedgerApi, type LotteryIssueLedger, type LotteryLedgerSummary } from '../services/api';
+import {
+  lotteryLedgerApi,
+  type LotteryIssueLedger,
+  type LotteryLedgerSummary,
+  type LotteryMonthlyLedger
+} from '../services/api';
 import './LotteryOverviewPage.css';
 
 const emptySummary: LotteryLedgerSummary = {
@@ -28,9 +36,58 @@ const formatMoney = (value?: number) => `¥${Number(value || 0).toFixed(2)}`;
 
 const formatPercent = (value?: number) => `${Number(value || 0).toFixed(2)}%`;
 
+const createMonthlyTrendOption = (months: LotteryMonthlyLedger[]): EChartsOption => {
+  const sortedMonths = [...months]
+    .filter(item => item.month && item.month !== 'UNKNOWN')
+    .sort((left, right) => String(left.month).localeCompare(String(right.month)));
+  const labels = sortedMonths.map(item => item.month || '');
+  return {
+    tooltip: { trigger: 'axis' },
+    legend: { top: 0, data: ['成本', '奖金', '净结果'] },
+    grid: { top: 48, right: 24, bottom: 28, left: 48 },
+    xAxis: {
+      type: 'category',
+      data: labels,
+      axisTick: { alignWithLabel: true },
+      axisLine: { lineStyle: { color: 'rgba(127, 127, 127, 0.2)' } }
+    },
+    yAxis: {
+      type: 'value',
+      axisLabel: { formatter: '¥{value}' },
+      splitLine: { lineStyle: { color: 'rgba(127, 127, 127, 0.12)' } }
+    },
+    series: [
+      {
+        name: '成本',
+        type: 'bar',
+        barMaxWidth: 28,
+        itemStyle: { color: '#ff9500' },
+        data: sortedMonths.map(item => Number(item.totalCost || 0))
+      },
+      {
+        name: '奖金',
+        type: 'bar',
+        barMaxWidth: 28,
+        itemStyle: { color: '#34c759' },
+        data: sortedMonths.map(item => Number(item.totalPrize || 0))
+      },
+      {
+        name: '净结果',
+        type: 'line',
+        smooth: true,
+        symbolSize: 7,
+        lineStyle: { color: '#0071e3', width: 3 },
+        itemStyle: { color: '#0071e3' },
+        data: sortedMonths.map(item => Number(item.netResult || 0))
+      }
+    ]
+  };
+};
+
 const LotteryLedgerPage = () => {
   const [summary, setSummary] = useState<LotteryLedgerSummary>(emptySummary);
   const [issues, setIssues] = useState<LotteryIssueLedger[]>([]);
+  const [months, setMonths] = useState<LotteryMonthlyLedger[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -42,16 +99,20 @@ const LotteryLedgerPage = () => {
     return ((summary.winningTicketCount || 0) * 100) / checkedCount;
   }, [summary.checkedTicketCount, summary.winningTicketCount]);
 
+  const monthlyTrendOption = useMemo(() => createMonthlyTrendOption(months), [months]);
+
   const loadSummary = useCallback(async () => {
     setLoading(true);
     setError(undefined);
     try {
-      const [ledgerSummary, issueRows] = await Promise.all([
+      const [ledgerSummary, issueRows, monthRows] = await Promise.all([
         lotteryLedgerApi.summary(),
-        lotteryLedgerApi.issues()
+        lotteryLedgerApi.issues(),
+        lotteryLedgerApi.months()
       ]);
       setSummary(ledgerSummary || emptySummary);
       setIssues(issueRows || []);
+      setMonths(monthRows || []);
     } catch (requestError) {
       console.error('获取彩票账本失败:', requestError);
       setError(requestError instanceof Error ? requestError.message : '获取彩票账本失败');
@@ -185,6 +246,10 @@ const LotteryLedgerPage = () => {
           <span>待开奖 {summary.pendingTicketCount || 0}</span>
           <span>中奖 {summary.winningTicketCount || 0}</span>
         </Space>
+      </Card>
+
+      <Card className="life-panel-card" title={<Space><LineChartOutlined />月度趋势</Space>}>
+        <ReactECharts option={monthlyTrendOption} style={{ height: 320, width: '100%' }} notMerge lazyUpdate />
       </Card>
 
       <Card className="life-panel-card" title="期次账本">
