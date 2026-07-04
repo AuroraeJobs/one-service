@@ -165,7 +165,7 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add `/lottery/workbench` route and navigation entry. Added protected route and lottery sub-navigation item after overview.
 - [x] Build workbench UI with daily status cards, step-run action, data-quality warning, latest prediction/ticket/ledger sections, and drill-through links.
 - [x] Add query-parameter-backed filters and pagination controls to prediction history. `/lottery/predictions/history` now uses the paged backend query and persists page, result state, target period, and rule filter in the URL.
-- [ ] Add query-parameter-backed filters and pagination controls to ticket list.
+- [x] Add query-parameter-backed filters and pagination controls to ticket list. `/lottery/tickets` now uses the paged backend query and persists issue, status, source, prize grade, prediction snapshot, page, and page size in the URL.
 - [ ] Add pagination controls to sync/probe history surfaces if their backend endpoints are migrated in this iteration.
 - [x] Update `docs/lottery/modules/technical-design.md` with workbench, daily-run, and pagination contracts.
 - [x] Update `docs/lottery/menu-and-version-plan.md` with workbench route/menu placement.

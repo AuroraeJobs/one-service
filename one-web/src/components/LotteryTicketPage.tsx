@@ -7,6 +7,7 @@ import LifePageShell from './LifePageShell';
 import LotteryBalls from './lottery/LotteryBalls';
 import {
   lotteryTicketApi,
+  type LotteryPageResponse,
   type LotteryTicket,
   type LotteryTicketPrizeCheckSummary,
   type LotteryTicketSummary
@@ -98,12 +99,8 @@ const LotteryTicketPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [form] = Form.useForm<TicketFormValues>();
   const [tickets, setTickets] = useState<LotteryTicket[]>([]);
+  const [pageResponse, setPageResponse] = useState<LotteryPageResponse<LotteryTicket>>();
   const [summary, setSummary] = useState<LotteryTicketSummary>(emptySummary);
-  const [issue, setIssue] = useState('');
-  const [predictionSnapshotId, setPredictionSnapshotId] = useState(searchParams.get('predictionSnapshotId') || '');
-  const [statusFilter, setStatusFilter] = useState<string>();
-  const [sourceFilter, setSourceFilter] = useState<string>();
-  const [prizeGradeFilter, setPrizeGradeFilter] = useState<string>();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [checkingLatest, setCheckingLatest] = useState(false);
@@ -112,27 +109,49 @@ const LotteryTicketPage = () => {
   const [editingTicket, setEditingTicket] = useState<LotteryTicket>();
   const [error, setError] = useState<string>();
 
+  const page = Math.max(1, Number(searchParams.get('page') || '1') || 1);
+  const pageSize = Math.max(1, Number(searchParams.get('pageSize') || '10') || 10);
+  const issue = searchParams.get('issue') || '';
+  const predictionSnapshotId = searchParams.get('predictionSnapshotId') || '';
+  const statusFilter = searchParams.get('status') || undefined;
+  const sourceFilter = searchParams.get('source') || undefined;
+  const prizeGradeFilter = searchParams.get('prizeGrade') || undefined;
+
+  const updateQuery = useCallback((patch: Record<string, string | number | undefined>, resetPage = true) => {
+    const next = new URLSearchParams(searchParams);
+    Object.entries(patch).forEach(([key, value]) => {
+      if (value === undefined || value === '') {
+        next.delete(key);
+      } else {
+        next.set(key, String(value));
+      }
+    });
+    if (resetPage && !Object.prototype.hasOwnProperty.call(patch, 'page')) {
+      next.delete('page');
+    }
+    setSearchParams(next);
+  }, [searchParams, setSearchParams]);
+
   const queryParams = useMemo(() => ({
     issue: issue.trim() || undefined,
     status: statusFilter,
     source: sourceFilter,
     prizeGrade: prizeGradeFilter,
-    predictionSnapshotId: predictionSnapshotId.trim() || undefined
-  }), [issue, predictionSnapshotId, prizeGradeFilter, sourceFilter, statusFilter]);
-
-  useEffect(() => {
-    setPredictionSnapshotId(searchParams.get('predictionSnapshotId') || '');
-  }, [searchParams]);
+    predictionSnapshotId: predictionSnapshotId.trim() || undefined,
+    page,
+    pageSize
+  }), [issue, page, pageSize, predictionSnapshotId, prizeGradeFilter, sourceFilter, statusFilter]);
 
   const loadTickets = useCallback(async () => {
     setLoading(true);
     setError(undefined);
     try {
       const [ticketItems, ticketSummary] = await Promise.all([
-        lotteryTicketApi.tickets(queryParams),
+        lotteryTicketApi.ticketsPage(queryParams),
         lotteryTicketApi.summary()
       ]);
-      setTickets(ticketItems);
+      setPageResponse(ticketItems);
+      setTickets(ticketItems.items || []);
       setSummary(ticketSummary || emptySummary);
     } catch (requestError) {
       console.error('获取彩票票据失败:', requestError);
@@ -239,8 +258,7 @@ const LotteryTicketPage = () => {
   };
 
   const clearPredictionSnapshotFilter = () => {
-    setPredictionSnapshotId('');
-    setSearchParams({});
+    updateQuery({ predictionSnapshotId: undefined });
   };
 
   const columns: ColumnsType<LotteryTicket> = [
@@ -333,7 +351,7 @@ const LotteryTicketPage = () => {
             prefix={<SearchOutlined />}
             placeholder="按期号筛选"
             value={issue}
-            onChange={event => setIssue(event.target.value)}
+            onChange={event => updateQuery({ issue: event.target.value })}
             style={{ width: 180 }}
           />
           <Input
@@ -341,14 +359,14 @@ const LotteryTicketPage = () => {
             prefix={<HistoryOutlined />}
             placeholder="预测快照"
             value={predictionSnapshotId}
-            onChange={event => setPredictionSnapshotId(event.target.value)}
+            onChange={event => updateQuery({ predictionSnapshotId: event.target.value })}
             style={{ width: 190 }}
           />
           <Select
             allowClear
             placeholder="状态"
             value={statusFilter}
-            onChange={setStatusFilter}
+            onChange={value => updateQuery({ status: value })}
             style={{ width: 120 }}
             options={[
               { label: '草稿', value: 'DRAFT' },
@@ -361,7 +379,7 @@ const LotteryTicketPage = () => {
             allowClear
             placeholder="来源"
             value={sourceFilter}
-            onChange={setSourceFilter}
+            onChange={value => updateQuery({ source: value })}
             style={{ width: 120 }}
             options={[
               { label: '手动', value: 'MANUAL' },
@@ -372,7 +390,7 @@ const LotteryTicketPage = () => {
             allowClear
             placeholder="奖级"
             value={prizeGradeFilter}
-            onChange={setPrizeGradeFilter}
+            onChange={value => updateQuery({ prizeGrade: value })}
             style={{ width: 130 }}
             options={[
               { label: '一等奖', value: 'FIRST' },
@@ -453,7 +471,14 @@ const LotteryTicketPage = () => {
           columns={columns}
           dataSource={tickets}
           loading={loading}
-          pagination={{ pageSize: 10 }}
+          pagination={{
+            current: page,
+            pageSize,
+            total: pageResponse?.total || 0,
+            showSizeChanger: true,
+            showTotal: total => `共 ${total} 条`,
+            onChange: (nextPage, nextPageSize) => updateQuery({ page: nextPage, pageSize: nextPageSize }, false)
+          }}
           scroll={{ x: 920 }}
         />
       </Card>
