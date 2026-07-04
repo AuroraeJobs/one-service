@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Alert, Button, Card, Descriptions, Empty, Input, Space, Spin, Tag, message } from 'antd';
-import { ArrowLeftOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, BarChartOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import LotteryBalls from './lottery/LotteryBalls';
@@ -88,6 +88,11 @@ const LotteryExperimentDetailPage = () => {
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/lottery/experiments')}>
             返回实验室
           </Button>
+          {id ? (
+            <Button icon={<BarChartOutlined />} onClick={() => navigate(`/lottery/research?items=experiment:${id}`)}>
+              加入对比
+            </Button>
+          ) : null}
           <Button icon={<ReloadOutlined />} loading={loading} onClick={loadDetail}>
             刷新
           </Button>

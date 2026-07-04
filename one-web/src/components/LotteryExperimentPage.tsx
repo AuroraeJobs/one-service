@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Form, Input, InputNumber, Modal, Pagination, Select, Space, Spin, Tag, message } from 'antd';
-import { ExperimentOutlined, HistoryOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
+import { BarChartOutlined, ExperimentOutlined, HistoryOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import {
@@ -126,6 +126,9 @@ const LotteryExperimentPage = () => {
           <Button type="primary" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>
             新建实验
           </Button>
+          <Button icon={<BarChartOutlined />} onClick={() => navigate('/lottery/research')}>
+            研究对比
+          </Button>
           <Input
             allowClear
             prefix={<SearchOutlined />}
@@ -202,6 +205,11 @@ const LotteryExperimentPage = () => {
                 </Space>
                 {experiment.notes ? <p>{experiment.notes}</p> : null}
                 <div className="lottery-history-card-actions">
+                  {experiment.id ? (
+                    <Button size="small" icon={<BarChartOutlined />} onClick={() => navigate(`/lottery/research?items=experiment:${experiment.id}`)}>
+                      加入对比
+                    </Button>
+                  ) : null}
                   <Button size="small" icon={<ExperimentOutlined />} onClick={() => navigate(`/lottery/experiments/${experiment.id}`)}>
                     查看详情
                   </Button>

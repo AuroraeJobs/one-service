@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Space, Tag, message } from 'antd';
 import {
+  BarChartOutlined,
   DatabaseOutlined,
   ExperimentOutlined,
   FileTextOutlined,
@@ -181,6 +182,9 @@ const LotteryPredictionPage = () => {
           </Button>
           <Button icon={<HistoryOutlined />} onClick={() => navigate('/lottery/predictions/history')}>
             历史
+          </Button>
+          <Button icon={<BarChartOutlined />} onClick={() => navigate('/lottery/research')}>
+            研究
           </Button>
           <Button icon={<FileTextOutlined />} onClick={() => navigate('/lottery/tickets')}>
             票据

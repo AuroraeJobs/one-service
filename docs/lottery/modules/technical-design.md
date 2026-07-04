@@ -255,6 +255,8 @@ Iteration 11 keeps the backend workbench contract unchanged and enriches the fro
 
 The first frontend personalization layer is intentionally browser-local. Prediction history, ticket list, and sync operations persist only their existing query parameters and page sizes in `localStorage`, then restore that state when the page is opened without explicit query parameters. Shared or bookmarked URLs remain authoritative, and clearing filters clears the saved state for that page. The workbench uses these saved paths as fallbacks when no daily-state drill-through path is more specific.
 
+Wave 11B adds `/lottery/research` as a frontend-only comparison studio. It composes existing experiment, backtest, prediction rule comparison, and ledger performance APIs into a normalized evidence model without adding backend contracts. The route stores selected comparison items in the `items` query parameter, supports deep links from experiment/backtest detail pages and the ledger performance panel, and shows compact ECharts views for stability/score, average red hits, blue hit rate, net result, ROI, hit rate, and prize distribution. Copy should remain evidence-oriented: historical replay and personal ledger evidence, not outcome promises.
+
 Iteration 10 adds `LotteryDailyState` and `GET /lottery/workbench/daily-state`. The daily state is a compact resumability contract for the current issue. It contains latest issue, next issue, latest prediction id, sync/prediction/ticket/prize-check/quality state items, pending action keys, and `generatedAt`. Each state item includes status, message, optional pending count, updated time, and a project-owned drill-through path.
 
 Daily state is derived from existing services:

@@ -119,6 +119,9 @@ const LotteryBacktestPage = () => {
           <Button type="primary" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>
             新建回测
           </Button>
+          <Button icon={<BarChartOutlined />} onClick={() => navigate('/lottery/research')}>
+            研究对比
+          </Button>
           <Input
             allowClear
             prefix={<SearchOutlined />}
@@ -196,6 +199,11 @@ const LotteryBacktestPage = () => {
                   <span>净值 {formatMoney(report.netResult)}</span>
                 </div>
                 <div className="lottery-history-card-actions">
+                  {report.id ? (
+                    <Button size="small" icon={<BarChartOutlined />} onClick={() => navigate(`/lottery/research?items=backtest:${report.id}`)}>
+                      加入对比
+                    </Button>
+                  ) : null}
                   <Button size="small" icon={<BarChartOutlined />} onClick={() => navigate(`/lottery/backtests/${report.id}`)}>
                     查看详情
                   </Button>

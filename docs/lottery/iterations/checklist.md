@@ -244,13 +244,13 @@ Use this file as the durable task board for the lottery module. When a task is f
 
 ### Wave 11B: Research Comparison Studio
 
-- [ ] Add a frontend research comparison route, proposed `/lottery/research`.
-- [ ] Build side-by-side comparison cards for selected experiments, backtests, rules, and ledger performance rows.
-- [ ] Add selectable compare sets from existing experiment, backtest, rule, and ledger pages.
-- [ ] Add compact charts for stability score, average red hits, blue hit rate, net result, ROI, and prize distribution.
-- [ ] Add deep links from experiment detail, backtest detail, rule comparison, and ledger performance into the comparison route.
-- [ ] Keep copy evidence-oriented and avoid outcome promises.
-- [ ] Run `npm run build`, update docs, commit, and push.
+- [x] Add a frontend research comparison route, proposed `/lottery/research`. Added the route, protected route entry, and lottery prediction submenu item.
+- [x] Build side-by-side comparison cards for selected experiments, backtests, rules, and ledger performance rows. The research page normalizes all four sources into evidence cards with matched backtest summaries when available.
+- [x] Add selectable compare sets from existing experiment, backtest, rule, and ledger pages. The research page uses URL-backed `items` selection and defaults to representative recent backtests/rules/performance rows.
+- [x] Add compact charts for stability score, average red hits, blue hit rate, net result, ROI, and prize distribution. Added ECharts metric, outcome, and stacked prize-distribution charts.
+- [x] Add deep links from experiment detail, backtest detail, rule comparison, and ledger performance into the comparison route. Experiment/backtest list/detail pages, prediction rule surface, and ledger performance panel now link into `/lottery/research`.
+- [x] Keep copy evidence-oriented and avoid outcome promises.
+- [x] Run `npm run build`, update docs, commit, and push.
 
 ### Wave 11C: Ticket Workflow Power Tools
 

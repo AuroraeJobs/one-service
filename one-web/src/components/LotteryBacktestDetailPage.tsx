@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Alert, Button, Card, Descriptions, Empty, Space, Spin, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { ArrowLeftOutlined, ReloadOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, BarChartOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import LotteryBalls from './lottery/LotteryBalls';
@@ -83,6 +83,11 @@ const LotteryBacktestDetailPage = () => {
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/lottery/backtests')}>
             返回回测
           </Button>
+          {id ? (
+            <Button icon={<BarChartOutlined />} onClick={() => navigate(`/lottery/research?items=backtest:${id}`)}>
+              加入对比
+            </Button>
+          ) : null}
           <Button icon={<ReloadOutlined />} loading={loading} onClick={loadDetail}>
             刷新
           </Button>

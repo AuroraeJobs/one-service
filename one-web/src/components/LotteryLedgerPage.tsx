@@ -13,6 +13,7 @@ import {
 } from '@ant-design/icons';
 import type { EChartsOption } from 'echarts';
 import ReactECharts from 'echarts-for-react';
+import { useNavigate } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import {
   lotteryLedgerApi,
@@ -39,6 +40,9 @@ const formatMoney = (value?: number) => `¥${Number(value || 0).toFixed(2)}`;
 const formatPercent = (value?: number) => `${Number(value || 0).toFixed(2)}%`;
 
 const hasBacktestSummary = (rows: LotteryPerformanceLedger[]) => rows.some(row => row.backtestSummary);
+
+const performanceCompareKey = (row: LotteryPerformanceLedger) =>
+  row.key ? `performance:${row.dimension || 'source'}:${row.key}` : undefined;
 
 const createMonthlyTrendOption = (months: LotteryMonthlyLedger[]): EChartsOption => {
   const sortedMonths = [...months]
@@ -138,6 +142,7 @@ const createPerformanceOption = (rows: LotteryPerformanceLedger[], title: string
 };
 
 const LotteryLedgerPage = () => {
+  const navigate = useNavigate();
   const [summary, setSummary] = useState<LotteryLedgerSummary>(emptySummary);
   const [issues, setIssues] = useState<LotteryIssueLedger[]>([]);
   const [months, setMonths] = useState<LotteryMonthlyLedger[]>([]);
@@ -162,6 +167,11 @@ const LotteryLedgerPage = () => {
     () => createPerformanceOption(activePerformanceRows, performanceDimension === 'source' ? '来源表现' : '规则表现'),
     [activePerformanceRows, performanceDimension]
   );
+  const activePerformanceCompareKeys = useMemo(() => activePerformanceRows
+    .map(performanceCompareKey)
+    .filter(Boolean)
+    .slice(0, 4)
+    .join(';'), [activePerformanceRows]);
 
   const loadSummary = useCallback(async () => {
     setLoading(true);
@@ -325,14 +335,24 @@ const LotteryLedgerPage = () => {
         className="life-panel-card"
         title={<Space><BarChartOutlined />来源/规则表现</Space>}
         extra={
-          <Space.Compact>
-            <Button type={performanceDimension === 'source' ? 'primary' : 'default'} onClick={() => setPerformanceDimension('source')}>
-              来源
+          <Space wrap>
+            <Space.Compact>
+              <Button type={performanceDimension === 'source' ? 'primary' : 'default'} onClick={() => setPerformanceDimension('source')}>
+                来源
+              </Button>
+              <Button type={performanceDimension === 'rule' ? 'primary' : 'default'} onClick={() => setPerformanceDimension('rule')}>
+                规则
+              </Button>
+            </Space.Compact>
+            <Button
+              size="small"
+              icon={<BarChartOutlined />}
+              disabled={!activePerformanceCompareKeys}
+              onClick={() => navigate(`/lottery/research?items=${encodeURIComponent(activePerformanceCompareKeys)}`)}
+            >
+              研究对比
             </Button>
-            <Button type={performanceDimension === 'rule' ? 'primary' : 'default'} onClick={() => setPerformanceDimension('rule')}>
-              规则
-            </Button>
-          </Space.Compact>
+          </Space>
         }
       >
         <ReactECharts option={performanceOption} style={{ height: 320, width: '100%' }} notMerge lazyUpdate />

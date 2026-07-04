@@ -59,6 +59,8 @@ Acceptance:
 
 Goal: make strategy experiments, backtests, rules, and ledger evidence easier to compare without reading multiple detail pages.
 
+Status: shipped. `/lottery/research` compares experiments, backtests, prediction rules, and ledger performance rows from existing APIs. Selection is URL-backed, cards show normalized evidence metrics, compact charts cover stability, average red hits, blue hit rate, net result, ROI, and prize distribution, and experiment/backtest/prediction/ledger surfaces link into the comparison page.
+
 Deliverables:
 
 - Add a frontend research comparison route, proposed `/lottery/research`.

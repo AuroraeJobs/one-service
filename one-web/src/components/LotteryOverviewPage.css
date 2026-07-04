@@ -515,6 +515,107 @@
   font-size: 12px;
 }
 
+.lottery-research-card-grid,
+.lottery-research-chart-grid {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.lottery-research-card-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.lottery-research-chart-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.lottery-research-card {
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+}
+
+.lottery-research-card-head {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lottery-research-card-head > div {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.lottery-research-card-head h2 {
+  overflow: hidden;
+  margin: 0;
+  color: var(--app-text);
+  font-size: 16px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-research-card-head span,
+.lottery-research-backtest-strip span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.lottery-research-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.lottery-research-metrics span {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding: 9px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-research-metrics strong {
+  overflow: hidden;
+  color: var(--app-text);
+  font-size: 16px;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-research-metrics small {
+  color: var(--app-text-muted);
+  font-size: 11px;
+}
+
+.lottery-research-backtest-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  border: 1px solid rgba(0, 113, 227, 0.16);
+  border-radius: 8px;
+  background: rgba(0, 113, 227, 0.08);
+}
+
+.lottery-research-backtest-strip > span:first-child,
+.lottery-research-backtest-strip > svg {
+  color: #0071e3;
+}
+
 .lottery-workbench-main-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
@@ -3412,7 +3513,9 @@ button.lottery-latest-vs-card:hover {
   .lottery-detail-candidate-grid,
   .lottery-history-summary-grid,
   .lottery-workbench-main-grid,
-  .lottery-workbench-recent-grid {
+  .lottery-workbench-recent-grid,
+  .lottery-research-card-grid,
+  .lottery-research-chart-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -3430,5 +3533,13 @@ button.lottery-latest-vs-card:hover {
   .lottery-workbench-quick-rail,
   .lottery-workbench-status-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lottery-research-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lottery-research-card-head {
+    flex-direction: column;
   }
 }
