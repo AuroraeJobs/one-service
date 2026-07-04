@@ -99,10 +99,10 @@ Use this file as the durable task board for the lottery module. When a task is f
 
 - [x] Add lottery provider health DTO. Added `LotteryProviderHealth` for registered draw provider status.
 - [x] Add provider config snapshot DTO. Added `LotteryProviderConfig` for active draw provider, registered providers, and scheduled sync state.
-- [ ] Add provider probe result DTO.
+- [x] Add provider probe result DTO. Added `LotteryProviderProbeResult` for provider availability, record count, duration, and message.
 - [x] Add `GET /lottery/providers/health`. Added provider service/controller endpoint with service and controller tests.
 - [x] Add `GET /lottery/providers/config`. Added provider config endpoint with service and controller tests.
-- [ ] Add `GET /lottery/providers/probe`.
+- [x] Add `GET /lottery/providers/probe`. Added provider probe endpoint with success, missing-provider, and failure-path tests.
 - [ ] Add `LotteryPreference` model.
 - [ ] Add `GET /lottery/preferences`.
 - [ ] Add `PUT /lottery/preferences`.

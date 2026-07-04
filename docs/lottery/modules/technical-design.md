@@ -212,6 +212,8 @@ VOID
 
 `LotteryProviderConfig` is a read-only provider configuration snapshot. `GET /lottery/providers/config` returns the active draw provider, registered draw providers, scheduled sync enabled state, and generation timestamp.
 
+`LotteryProviderProbeResult` records an active provider probe. `GET /lottery/providers/probe?provider=cwl` calls the selected draw provider's yearly fetch method and returns availability, record count, duration, message, and checked timestamp. Missing providers and provider exceptions are returned as structured probe results rather than unhandled errors.
+
 ## API Design Rules
 
 - Keep existing APIs compatible while adding new `lottery/*` APIs.

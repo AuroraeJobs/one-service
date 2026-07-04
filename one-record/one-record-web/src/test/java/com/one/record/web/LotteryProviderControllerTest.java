@@ -2,6 +2,7 @@ package com.one.record.web;
 
 import com.one.record.lottery.LotteryProviderConfig;
 import com.one.record.lottery.LotteryProviderHealth;
+import com.one.record.lottery.LotteryProviderProbeResult;
 import com.one.record.service.ILotteryProviderService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -66,5 +67,27 @@ class LotteryProviderControllerTest {
                 .andExpect(jsonPath("$.scheduledSyncEnabled").value(true));
 
         verify(service).config();
+    }
+
+    @Test
+    void probeDelegatesToService() throws Exception {
+        when(service.probe("cwl")).thenReturn(LotteryProviderProbeResult.builder()
+                .category("draw")
+                .provider("cwl")
+                .success(true)
+                .status("AVAILABLE")
+                .recordCount(12)
+                .durationMs(30L)
+                .checkedAt(100L)
+                .build());
+
+        mockMvc.perform(get("/lottery/providers/probe").param("provider", "cwl"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.provider").value("cwl"))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.status").value("AVAILABLE"))
+                .andExpect(jsonPath("$.recordCount").value(12));
+
+        verify(service).probe("cwl");
     }
 }
