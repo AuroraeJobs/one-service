@@ -3,15 +3,27 @@ package com.one.record.service.impl;
 import com.one.common.exception.NotFoundException;
 import com.one.common.exception.ServiceException;
 import com.one.record.lottery.LotteryAuditMetadata;
+import com.one.record.lottery.LotteryBudgetStatus;
 import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.lottery.LotteryPrizeResult;
+import com.one.record.lottery.LotteryTicketBudgetPrecheckRequest;
+import com.one.record.lottery.LotteryTicketBudgetPrecheckResult;
 import com.one.record.lottery.LotteryTicketBatchSaveRequest;
 import com.one.record.lottery.LotteryTicketBatchSaveResult;
+import com.one.record.lottery.LotteryTicketBulkOperationResult;
+import com.one.record.lottery.LotteryTicketBulkPatchRequest;
+import com.one.record.lottery.LotteryTicketImportPreviewRequest;
+import com.one.record.lottery.LotteryTicketImportPreviewResult;
+import com.one.record.lottery.LotteryTicketImportPreviewRow;
 import com.one.record.lottery.LotteryTicketPrizeCheckSummary;
 import com.one.record.lottery.LotteryTicketSummary;
+import com.one.record.model.LotteryAuditEvent;
+import com.one.record.model.LotteryPreference;
 import com.one.record.model.LotteryTicket;
+import com.one.record.repository.LotteryAuditEventRepository;
 import com.one.record.repository.LotteryTicketRepository;
 import com.one.record.service.ILotteryTicketService;
+import com.one.record.service.ILotteryPreferenceService;
 import com.one.record.service.IRecordService;
 import com.one.record.training.LotteryActualRecord;
 import com.one.record.util.LotteryDrawUtil;
@@ -21,10 +33,22 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.DayOfWeek;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.regex.MatchResult;
+import java.util.regex.Pattern;
 
 @Service
 @AllArgsConstructor
@@ -36,9 +60,17 @@ public class LotteryTicketService implements ILotteryTicketService {
 
     private static final String DEFAULT_SOURCE = "MANUAL";
 
+    private static final int MAX_IMPORT_LINES = 300;
+
+    private static final Pattern NUMBER_PATTERN = Pattern.compile("\\d+");
+
     private final LotteryTicketRepository repository;
 
     private final IRecordService recordService;
+
+    private final ILotteryPreferenceService preferenceService;
+
+    private final LotteryAuditEventRepository auditEventRepository;
 
     @Override
     public List<LotteryTicket> tickets(String issue, String status, String source, String prizeGrade, String predictionSnapshotId) {
@@ -110,25 +142,77 @@ public class LotteryTicketService implements ILotteryTicketService {
     }
 
     @Override
+    public LotteryTicketImportPreviewResult importPreview(LotteryTicketImportPreviewRequest request) {
+        List<String> lines = importLines(request == null ? null : request.getContent());
+        Set<String> seenKeys = new LinkedHashSet<>();
+        List<LotteryTicketImportPreviewRow> rows = new ArrayList<>();
+        for (int index = 0; index < lines.size(); index++) {
+            rows.add(previewImportLine(request, lines.get(index), index + 1, seenKeys));
+        }
+        List<LotteryTicket> validTickets = rows.stream()
+                .filter(row -> "VALID".equals(row.getStatus()))
+                .map(LotteryTicketImportPreviewRow::getTicket)
+                .filter(Objects::nonNull)
+                .toList();
+        LotteryTicketBudgetPrecheckResult budgetPrecheck = budgetPrecheckInternal(validTickets, rows.size());
+        saveAuditEvent("TICKET_IMPORT_PREVIEW", "tickets-import", null, rows.size(), Map.of(
+                "validCount", String.valueOf(validTickets.size()),
+                "invalidCount", String.valueOf(countRows(rows, "INVALID")),
+                "duplicateExistingCount", String.valueOf(countRows(rows, "DUPLICATE_EXISTING")),
+                "duplicateRequestCount", String.valueOf(countRows(rows, "DUPLICATE_REQUEST"))
+        ), "Previewed lottery ticket import");
+        return LotteryTicketImportPreviewResult.builder()
+                .requestedCount(rows.size())
+                .validCount(validTickets.size())
+                .invalidCount(countRows(rows, "INVALID"))
+                .duplicateExistingCount(countRows(rows, "DUPLICATE_EXISTING"))
+                .duplicateRequestCount(countRows(rows, "DUPLICATE_REQUEST"))
+                .rows(rows)
+                .budgetPrecheck(budgetPrecheck)
+                .generatedAt(System.currentTimeMillis())
+                .build();
+    }
+
+    @Override
+    public LotteryTicketBudgetPrecheckResult budgetPrecheck(LotteryTicketBudgetPrecheckRequest request) {
+        List<LotteryTicket> tickets = request == null || request.getTickets() == null ? List.of() : request.getTickets();
+        List<LotteryTicket> normalized = tickets.stream()
+                .map(this::newTicket)
+                .toList();
+        return budgetPrecheckInternal(normalized, tickets.size());
+    }
+
+    @Override
     public LotteryTicketBatchSaveResult saveTickets(LotteryTicketBatchSaveRequest request) {
         List<LotteryTicket> tickets = request == null || request.getTickets() == null ? List.of() : request.getTickets();
+        List<LotteryTicket> ticketsToSave = new ArrayList<>();
         List<LotteryTicket> savedTickets = new ArrayList<>();
         List<LotteryTicket> duplicateTickets = new ArrayList<>();
         for (LotteryTicket ticket : tickets) {
             LotteryTicket normalized = newTicket(ticket);
             LotteryTicket duplicate = duplicateOf(normalized);
-            if (duplicate != null || duplicateInBatch(savedTickets, normalized)) {
+            if (duplicate != null || duplicateInBatch(ticketsToSave, normalized)) {
                 duplicateTickets.add(duplicate == null ? normalized : duplicate);
                 continue;
             }
-            savedTickets.add(repository.save(normalized));
+            ticketsToSave.add(normalized);
         }
+        LotteryTicketBudgetPrecheckResult budgetPrecheck = budgetPrecheckInternal(ticketsToSave, tickets.size());
+        for (LotteryTicket ticket : ticketsToSave) {
+            savedTickets.add(repository.save(ticket));
+        }
+        saveAuditEvent("TICKET_BATCH_SAVE", "tickets", null, savedTickets.size(), Map.of(
+                "requestedCount", String.valueOf(tickets.size()),
+                "duplicateCount", String.valueOf(duplicateTickets.size()),
+                "budgetStatus", budgetPrecheck.getStatus()
+        ), "Saved lottery tickets batch");
         return LotteryTicketBatchSaveResult.builder()
                 .requestedCount(tickets.size())
                 .savedCount(savedTickets.size())
                 .duplicateCount(duplicateTickets.size())
                 .savedTickets(savedTickets)
                 .duplicateTickets(duplicateTickets)
+                .budgetPrecheck(budgetPrecheck)
                 .generatedAt(System.currentTimeMillis())
                 .build();
     }
@@ -147,10 +231,117 @@ public class LotteryTicketService implements ILotteryTicketService {
     }
 
     @Override
+    public LotteryTicketBulkOperationResult bulkUpdateTickets(LotteryTicketBulkPatchRequest request) {
+        List<String> ids = normalizeIds(request == null ? null : request.getIds());
+        if (ids.isEmpty()) {
+            return emptyBulkResult(0);
+        }
+        List<String> missingIds = new ArrayList<>();
+        List<LotteryTicket> updated = new ArrayList<>();
+        Long now = System.currentTimeMillis();
+        for (String id : ids) {
+            LotteryTicket ticket = repository.findByIdAndUserId(id, DEFAULT_USER_ID).orElse(null);
+            if (ticket == null) {
+                missingIds.add(id);
+                continue;
+            }
+            applyPatch(ticket, request, now, "ticket-bulk-update");
+            updated.add(ticket);
+        }
+        List<LotteryTicket> saved = updated.isEmpty() ? List.of() : repository.saveAll(updated);
+        saveAuditEvent("TICKET_BULK_UPDATE", "tickets", null, saved.size(), Map.of(
+                "requestedCount", String.valueOf(ids.size()),
+                "missingCount", String.valueOf(missingIds.size())
+        ), "Bulk updated lottery tickets");
+        return LotteryTicketBulkOperationResult.builder()
+                .requestedCount(ids.size())
+                .updatedCount(saved.size())
+                .archivedCount(0)
+                .deletedCount(0)
+                .missingIds(missingIds)
+                .tickets(saved)
+                .generatedAt(now)
+                .build();
+    }
+
+    @Override
+    public LotteryTicketBulkOperationResult archiveTickets(LotteryTicketBulkPatchRequest request) {
+        List<String> ids = normalizeIds(request == null ? null : request.getIds());
+        if (ids.isEmpty()) {
+            return emptyBulkResult(0);
+        }
+        List<String> missingIds = new ArrayList<>();
+        List<LotteryTicket> archived = new ArrayList<>();
+        Long now = System.currentTimeMillis();
+        for (String id : ids) {
+            LotteryTicket ticket = repository.findByIdAndUserId(id, DEFAULT_USER_ID).orElse(null);
+            if (ticket == null) {
+                missingIds.add(id);
+                continue;
+            }
+            ticket.setStatus("VOID");
+            ticket.setUpdatedAt(now);
+            ticket.setAuditMetadata(updateAudit(ticket.getAuditMetadata(), "ticket-bulk-archive", now));
+            archived.add(ticket);
+        }
+        List<LotteryTicket> saved = archived.isEmpty() ? List.of() : repository.saveAll(archived);
+        saveAuditEvent("TICKET_BULK_ARCHIVE", "tickets", null, saved.size(), Map.of(
+                "requestedCount", String.valueOf(ids.size()),
+                "missingCount", String.valueOf(missingIds.size())
+        ), "Archived lottery tickets");
+        return LotteryTicketBulkOperationResult.builder()
+                .requestedCount(ids.size())
+                .updatedCount(saved.size())
+                .archivedCount(saved.size())
+                .deletedCount(0)
+                .missingIds(missingIds)
+                .tickets(saved)
+                .generatedAt(now)
+                .build();
+    }
+
+    @Override
     public void deleteTicket(String id) {
         LotteryTicket existing = repository.findByIdAndUserId(id, DEFAULT_USER_ID)
                 .orElseThrow(() -> new NotFoundException("彩票票据不存在: {}", id));
         repository.deleteById(existing.getId());
+        saveAuditEvent("TICKET_DELETE", "tickets", existing.getId(), 1, Map.of(
+                "issue", value(existing.getIssue())
+        ), "Deleted lottery ticket");
+    }
+
+    @Override
+    public LotteryTicketBulkOperationResult deleteTickets(LotteryTicketBulkPatchRequest request) {
+        List<String> ids = normalizeIds(request == null ? null : request.getIds());
+        if (ids.isEmpty()) {
+            return emptyBulkResult(0);
+        }
+        List<String> missingIds = new ArrayList<>();
+        List<LotteryTicket> deleted = new ArrayList<>();
+        for (String id : ids) {
+            LotteryTicket ticket = repository.findByIdAndUserId(id, DEFAULT_USER_ID).orElse(null);
+            if (ticket == null) {
+                missingIds.add(id);
+                continue;
+            }
+            deleted.add(ticket);
+        }
+        if (!deleted.isEmpty()) {
+            repository.deleteAll(deleted);
+        }
+        saveAuditEvent("TICKET_BULK_DELETE", "tickets", null, deleted.size(), Map.of(
+                "requestedCount", String.valueOf(ids.size()),
+                "missingCount", String.valueOf(missingIds.size())
+        ), "Bulk deleted lottery tickets");
+        return LotteryTicketBulkOperationResult.builder()
+                .requestedCount(ids.size())
+                .updatedCount(0)
+                .archivedCount(0)
+                .deletedCount(deleted.size())
+                .missingIds(missingIds)
+                .tickets(List.of())
+                .generatedAt(System.currentTimeMillis())
+                .build();
     }
 
     @Override
@@ -252,6 +443,278 @@ public class LotteryTicketService implements ILotteryTicketService {
                 .build();
     }
 
+    private List<String> importLines(String content) {
+        if (!StringUtils.hasText(content)) {
+            return List.of();
+        }
+        return content.lines()
+                .map(String::trim)
+                .filter(StringUtils::hasText)
+                .limit(MAX_IMPORT_LINES)
+                .toList();
+    }
+
+    private LotteryTicketImportPreviewRow previewImportLine(LotteryTicketImportPreviewRequest request,
+                                                            String line,
+                                                            int lineNumber,
+                                                            Set<String> seenKeys) {
+        List<String> tokens = NUMBER_PATTERN.matcher(line)
+                .results()
+                .map(MatchResult::group)
+                .toList();
+        String issue = trimToNull(request == null ? null : request.getDefaultIssue());
+        List<String> numberTokens = tokens;
+        if (tokens.size() >= 8 && tokens.get(0).length() >= 5) {
+            issue = tokens.get(0);
+            numberTokens = tokens.subList(1, tokens.size());
+        } else if (tokens.size() >= 9 && tokens.get(0).length() == 4 && tokens.get(1).length() <= 3) {
+            issue = tokens.get(0) + String.format("%03d", Integer.parseInt(tokens.get(1)));
+            numberTokens = tokens.subList(2, tokens.size());
+        }
+
+        List<String> messages = new ArrayList<>();
+        boolean invalid = false;
+        if (!StringUtils.hasText(issue)) {
+            messages.add("缺少期号，可先在页面筛选期号或每行带期号");
+            invalid = true;
+        }
+        if (numberTokens.size() < 7) {
+            messages.add("需要 6 个红球和 1 个蓝球");
+            invalid = true;
+        }
+        if (numberTokens.size() > 7) {
+            messages.add("已忽略第 7 个之后的额外号码");
+        }
+
+        List<String> redNumbers = List.of();
+        String blueNumber = null;
+        if (numberTokens.size() >= 6) {
+            try {
+                redNumbers = LotteryDrawUtil.normalizeRedNumbers(numberTokens.subList(0, 6));
+            } catch (IllegalArgumentException exception) {
+                messages.add(exception.getMessage());
+                invalid = true;
+            }
+        }
+        if (numberTokens.size() >= 7) {
+            try {
+                blueNumber = LotteryDrawUtil.normalizeBlueNumber(numberTokens.get(6));
+            } catch (IllegalArgumentException exception) {
+                messages.add(exception.getMessage());
+                invalid = true;
+            }
+        }
+
+        LotteryTicket ticket = null;
+        String duplicateGroupKey = null;
+        String duplicateTicketId = null;
+        String status = invalid ? "INVALID" : "VALID";
+        if (!invalid) {
+            ticket = importPreviewTicket(request, issue, redNumbers, blueNumber);
+            duplicateGroupKey = duplicateKey(ticket);
+            LotteryTicket duplicate = duplicateOf(ticket);
+            if (duplicate != null) {
+                status = "DUPLICATE_EXISTING";
+                duplicateTicketId = duplicate.getId();
+                messages.add("已有相同票据");
+            } else if (seenKeys.contains(duplicateGroupKey)) {
+                status = "DUPLICATE_REQUEST";
+                messages.add("本次导入内重复");
+            } else {
+                seenKeys.add(duplicateGroupKey);
+            }
+        }
+
+        return LotteryTicketImportPreviewRow.builder()
+                .key(lineNumber + "-" + line)
+                .lineNumber(lineNumber)
+                .raw(line)
+                .issue(issue)
+                .redNumbers(redNumbers)
+                .blueNumber(blueNumber)
+                .status(status)
+                .messages(messages)
+                .duplicateGroupKey(duplicateGroupKey)
+                .duplicateTicketId(duplicateTicketId)
+                .ticket(ticket)
+                .build();
+    }
+
+    private LotteryTicket importPreviewTicket(LotteryTicketImportPreviewRequest request,
+                                              String issue,
+                                              List<String> redNumbers,
+                                              String blueNumber) {
+        LotteryTicket source = LotteryTicket.builder()
+                .issue(issue)
+                .redNumbers(redNumbers)
+                .blueNumber(blueNumber)
+                .quantity(request == null || request.getDefaultQuantity() == null ? 1 : request.getDefaultQuantity())
+                .cost(request == null ? null : request.getDefaultCost())
+                .source(request == null ? null : request.getDefaultSource())
+                .status(request == null ? null : request.getDefaultStatus())
+                .note(StringUtils.hasText(request == null ? null : request.getNote()) ? request.getNote().trim() : "批量导入")
+                .build();
+        LotteryTicket target = LotteryTicket.builder()
+                .userId(DEFAULT_USER_ID)
+                .build();
+        copyTicket(source, target);
+        return target;
+    }
+
+    private int countRows(List<LotteryTicketImportPreviewRow> rows, String status) {
+        return (int) rows.stream()
+                .filter(row -> status.equals(row.getStatus()))
+                .count();
+    }
+
+    private LotteryTicketBudgetPrecheckResult budgetPrecheckInternal(List<LotteryTicket> proposedTickets, int requestedCount) {
+        Long now = System.currentTimeMillis();
+        LotteryPreference preference = preferenceService.preference();
+        List<LotteryTicket> existingTickets = repository.findByUserIdOrderByPeriodDescCreatedAtDesc(DEFAULT_USER_ID);
+        long weekStart = startOfWeek(now);
+        long monthStart = startOfMonth(now);
+        BigDecimal weeklyCost = costSince(existingTickets, weekStart);
+        BigDecimal monthlyCost = costSince(existingTickets, monthStart);
+        BigDecimal proposedCost = proposedTickets.stream()
+                .map(this::cost)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal projectedWeeklyCost = weeklyCost.add(proposedCost);
+        BigDecimal projectedMonthlyCost = monthlyCost.add(proposedCost);
+        List<LotteryTicketBudgetPrecheckResult.IssueExposure> issueExposures = issueExposures(existingTickets, proposedTickets);
+        List<LotteryBudgetStatus.Warning> warnings = new ArrayList<>();
+        addBudgetWarning(warnings, "weekly-budget", "保存后本周投入接近或超过预算", projectedWeeklyCost, preference.getWeeklyBudget(), preference.getBudgetReminderPercent(), "/lottery/ledger");
+        addBudgetWarning(warnings, "monthly-budget", "保存后本月投入接近或超过预算", projectedMonthlyCost, preference.getMonthlyBudget(), preference.getBudgetReminderPercent(), "/lottery/ledger");
+        Integer maxTickets = preference.getMaxTicketsPerIssue();
+        if (maxTickets != null && maxTickets > 0) {
+            issueExposures.stream()
+                    .filter(exposure -> exposure.getProjectedTicketCount() != null && exposure.getProjectedTicketCount() > maxTickets)
+                    .forEach(exposure -> warnings.add(LotteryBudgetStatus.Warning.builder()
+                            .key("max-tickets-per-issue")
+                            .level("OVER")
+                            .message("第 " + exposure.getIssue() + " 期保存后票据数量超过上限 " + maxTickets)
+                            .path("/lottery/tickets?issue=" + exposure.getIssue())
+                            .build()));
+        }
+        return LotteryTicketBudgetPrecheckResult.builder()
+                .requestedCount(requestedCount)
+                .proposedTicketCount(proposedTickets.size())
+                .proposedCost(proposedCost)
+                .weeklyBudget(preference.getWeeklyBudget())
+                .monthlyBudget(preference.getMonthlyBudget())
+                .maxTicketsPerIssue(preference.getMaxTicketsPerIssue())
+                .budgetReminderPercent(preference.getBudgetReminderPercent())
+                .weeklyCost(weeklyCost)
+                .monthlyCost(monthlyCost)
+                .projectedWeeklyCost(projectedWeeklyCost)
+                .projectedMonthlyCost(projectedMonthlyCost)
+                .weeklyUsagePercent(percent(projectedWeeklyCost, preference.getWeeklyBudget()))
+                .monthlyUsagePercent(percent(projectedMonthlyCost, preference.getMonthlyBudget()))
+                .status(warnings.isEmpty() ? "OK" : warnings.stream().anyMatch(warning -> "OVER".equals(warning.getLevel())) ? "OVER" : "WARNING")
+                .issueExposures(issueExposures)
+                .warnings(warnings)
+                .generatedAt(now)
+                .build();
+    }
+
+    private List<LotteryTicketBudgetPrecheckResult.IssueExposure> issueExposures(List<LotteryTicket> existingTickets,
+                                                                                 List<LotteryTicket> proposedTickets) {
+        Map<String, Integer> currentCounts = new LinkedHashMap<>();
+        for (LotteryTicket ticket : existingTickets) {
+            currentCounts.put(issueKey(ticket), currentCounts.getOrDefault(issueKey(ticket), 0) + safeQuantity(ticket));
+        }
+        Map<String, LotteryTicketBudgetPrecheckResult.IssueExposure> exposures = new LinkedHashMap<>();
+        for (LotteryTicket ticket : proposedTickets) {
+            String issue = issueKey(ticket);
+            LotteryTicketBudgetPrecheckResult.IssueExposure current = exposures.get(issue);
+            if (current == null) {
+                current = LotteryTicketBudgetPrecheckResult.IssueExposure.builder()
+                        .issue(issue)
+                        .currentTicketCount(currentCounts.getOrDefault(issue, 0))
+                        .proposedTicketCount(0)
+                        .projectedTicketCount(currentCounts.getOrDefault(issue, 0))
+                        .proposedCost(BigDecimal.ZERO)
+                        .build();
+            }
+            int proposedQuantity = safeQuantity(ticket);
+            current.setProposedTicketCount(current.getProposedTicketCount() + proposedQuantity);
+            current.setProjectedTicketCount(current.getProjectedTicketCount() + proposedQuantity);
+            current.setProposedCost(current.getProposedCost().add(cost(ticket)));
+            exposures.put(issue, current);
+        }
+        return new ArrayList<>(exposures.values());
+    }
+
+    private void addBudgetWarning(List<LotteryBudgetStatus.Warning> warnings,
+                                  String key,
+                                  String message,
+                                  BigDecimal cost,
+                                  BigDecimal budget,
+                                  Integer thresholdPercent,
+                                  String path) {
+        if (budget == null || budget.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+        BigDecimal usage = percent(cost, budget);
+        int threshold = thresholdPercent == null ? 80 : thresholdPercent;
+        if (usage.compareTo(BigDecimal.valueOf(threshold)) >= 0) {
+            warnings.add(LotteryBudgetStatus.Warning.builder()
+                    .key(key)
+                    .level(usage.compareTo(BigDecimal.valueOf(100)) >= 0 ? "OVER" : "WARNING")
+                    .message(message + "（" + usage + "%）")
+                    .path(path)
+                    .build());
+        }
+    }
+
+    private void applyPatch(LotteryTicket ticket, LotteryTicketBulkPatchRequest request, long now, String action) {
+        if (StringUtils.hasText(request.getIssue())) {
+            ticket.setIssue(request.getIssue().trim());
+            ticket.setPeriod(parsePeriod(ticket.getIssue()));
+        }
+        if (request.getQuantity() != null) {
+            ticket.setQuantity(request.getQuantity() <= 0 ? 1 : request.getQuantity());
+        }
+        if (request.getCost() != null) {
+            ticket.setCost(request.getCost().compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : request.getCost());
+        }
+        if (StringUtils.hasText(request.getStatus())) {
+            ticket.setStatus(request.getStatus().trim().toUpperCase(Locale.ROOT));
+        }
+        if (StringUtils.hasText(request.getSource())) {
+            ticket.setSource(request.getSource().trim().toUpperCase(Locale.ROOT));
+        }
+        if (Boolean.TRUE.equals(request.getClearNote())) {
+            ticket.setNote(null);
+        } else if (StringUtils.hasText(request.getNote())) {
+            ticket.setNote(request.getNote().trim());
+        }
+        ticket.setUpdatedAt(now);
+        ticket.setAuditMetadata(updateAudit(ticket.getAuditMetadata(), action, now));
+    }
+
+    private List<String> normalizeIds(List<String> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return ids.stream()
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .distinct()
+                .toList();
+    }
+
+    private LotteryTicketBulkOperationResult emptyBulkResult(int requestedCount) {
+        return LotteryTicketBulkOperationResult.builder()
+                .requestedCount(requestedCount)
+                .updatedCount(0)
+                .archivedCount(0)
+                .deletedCount(0)
+                .missingIds(List.of())
+                .tickets(List.of())
+                .generatedAt(System.currentTimeMillis())
+                .build();
+    }
+
     private void copyTicket(LotteryTicket source, LotteryTicket target) {
         target.setIssue(trimToNull(source.getIssue()));
         target.setPeriod(resolvePeriod(source));
@@ -304,6 +767,65 @@ public class LotteryTicketService implements ILotteryTicketService {
                 && java.util.Objects.equals(left.getBlueNumber(), right.getBlueNumber());
     }
 
+    private BigDecimal costSince(List<LotteryTicket> tickets, long startAt) {
+        return tickets.stream()
+                .filter(ticket -> timestamp(ticket) >= startAt)
+                .map(this::cost)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private BigDecimal cost(LotteryTicket ticket) {
+        return ticket.getCost() == null ? BigDecimal.ZERO : ticket.getCost();
+    }
+
+    private int safeQuantity(LotteryTicket ticket) {
+        Integer quantity = ticket.getQuantity();
+        return quantity == null || quantity <= 0 ? 1 : quantity;
+    }
+
+    private long timestamp(LotteryTicket ticket) {
+        Long timestamp = ticket.getCreatedAt() == null ? ticket.getUpdatedAt() : ticket.getCreatedAt();
+        return timestamp == null ? System.currentTimeMillis() : timestamp;
+    }
+
+    private long startOfWeek(long now) {
+        LocalDate today = Instant.ofEpochMilli(now).atZone(ZoneId.systemDefault()).toLocalDate();
+        return today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+                .atStartOfDay(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli();
+    }
+
+    private long startOfMonth(long now) {
+        LocalDate today = Instant.ofEpochMilli(now).atZone(ZoneId.systemDefault()).toLocalDate();
+        return today.withDayOfMonth(1)
+                .atStartOfDay(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli();
+    }
+
+    private BigDecimal percent(BigDecimal value, BigDecimal base) {
+        if (base == null || base.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO;
+        }
+        return value.multiply(BigDecimal.valueOf(100)).divide(base, 2, RoundingMode.HALF_UP);
+    }
+
+    private String issueKey(LotteryTicket ticket) {
+        if (StringUtils.hasText(ticket.getIssue())) {
+            return ticket.getIssue().trim();
+        }
+        return ticket.getPeriod() == null ? "UNKNOWN" : String.valueOf(ticket.getPeriod());
+    }
+
+    private String duplicateKey(LotteryTicket ticket) {
+        if (ticket == null || !StringUtils.hasText(ticket.getIssue()) || ticket.getRedNumbers() == null || ticket.getRedNumbers().isEmpty()
+                || !StringUtils.hasText(ticket.getBlueNumber())) {
+            return null;
+        }
+        return ticket.getIssue() + "|" + String.join(",", ticket.getRedNumbers()) + "|" + ticket.getBlueNumber();
+    }
+
     private Long resolvePeriod(LotteryTicket ticket) {
         if (ticket.getPeriod() != null && ticket.getPeriod() > 0) {
             return ticket.getPeriod();
@@ -313,6 +835,17 @@ public class LotteryTicketService implements ILotteryTicketService {
         }
         try {
             return Long.parseLong(ticket.getIssue().trim());
+        } catch (NumberFormatException exception) {
+            return null;
+        }
+    }
+
+    private Long parsePeriod(String issue) {
+        if (!StringUtils.hasText(issue)) {
+            return null;
+        }
+        try {
+            return Long.parseLong(issue.trim());
         } catch (NumberFormatException exception) {
             return null;
         }
@@ -359,5 +892,27 @@ public class LotteryTicketService implements ILotteryTicketService {
         existing.setRequesterScope(DEFAULT_USER_ID);
         existing.setUpdatedAt(updatedAt);
         return existing;
+    }
+
+    private void saveAuditEvent(String eventType,
+                                String targetType,
+                                String targetId,
+                                Integer rowCount,
+                                Map<String, String> filters,
+                                String message) {
+        auditEventRepository.save(LotteryAuditEvent.builder()
+                .eventType(eventType)
+                .targetType(targetType)
+                .targetId(targetId)
+                .requesterScope(DEFAULT_USER_ID)
+                .filters(filters == null ? new LinkedHashMap<>() : filters)
+                .rowCount(rowCount)
+                .message(message)
+                .generatedAt(System.currentTimeMillis())
+                .build());
+    }
+
+    private String value(String value) {
+        return value == null ? "" : value;
     }
 }

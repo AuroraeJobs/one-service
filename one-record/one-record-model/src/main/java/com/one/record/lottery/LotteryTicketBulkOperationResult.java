@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,21 +14,21 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class LotteryTicketBatchSaveResult {
+public class LotteryTicketBulkOperationResult implements Serializable {
 
     private Integer requestedCount;
 
-    private Integer savedCount;
+    private Integer updatedCount;
 
-    private Integer duplicateCount;
+    private Integer archivedCount;
+
+    private Integer deletedCount;
 
     @Builder.Default
-    private List<LotteryTicket> savedTickets = new ArrayList<>();
+    private List<String> missingIds = new ArrayList<>();
 
     @Builder.Default
-    private List<LotteryTicket> duplicateTickets = new ArrayList<>();
-
-    private LotteryTicketBudgetPrecheckResult budgetPrecheck;
+    private List<LotteryTicket> tickets = new ArrayList<>();
 
     private Long generatedAt;
 }

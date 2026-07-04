@@ -1992,6 +1992,7 @@ export interface LotteryTicketBatchSaveResult {
   duplicateCount?: number;
   savedTickets: LotteryTicket[];
   duplicateTickets: LotteryTicket[];
+  budgetPrecheck?: LotteryTicketBudgetPrecheckResult;
   generatedAt?: number;
 }
 
@@ -2000,6 +2001,80 @@ export interface LotteryTicketPrizeCheckSummary {
   checkedTicketCount?: number;
   winningTicketCount?: number;
   totalPrizeAmount?: number;
+  generatedAt?: number;
+}
+
+export interface LotteryTicketBudgetPrecheckIssueExposure {
+  issue?: string;
+  currentTicketCount?: number;
+  proposedTicketCount?: number;
+  projectedTicketCount?: number;
+  proposedCost?: number;
+}
+
+export interface LotteryTicketBudgetPrecheckResult {
+  requestedCount?: number;
+  proposedTicketCount?: number;
+  proposedCost?: number;
+  weeklyBudget?: number;
+  monthlyBudget?: number;
+  maxTicketsPerIssue?: number;
+  budgetReminderPercent?: number;
+  weeklyCost?: number;
+  monthlyCost?: number;
+  projectedWeeklyCost?: number;
+  projectedMonthlyCost?: number;
+  weeklyUsagePercent?: number;
+  monthlyUsagePercent?: number;
+  status?: 'OK' | 'WARNING' | 'OVER' | string;
+  issueExposures: LotteryTicketBudgetPrecheckIssueExposure[];
+  warnings: LotteryBudgetWarning[];
+  generatedAt?: number;
+}
+
+export interface LotteryTicketImportPreviewRow {
+  key?: string;
+  lineNumber?: number;
+  raw?: string;
+  issue?: string;
+  redNumbers: string[];
+  blueNumber?: string;
+  status?: 'VALID' | 'INVALID' | 'DUPLICATE_EXISTING' | 'DUPLICATE_REQUEST' | string;
+  messages: string[];
+  duplicateGroupKey?: string;
+  duplicateTicketId?: string;
+  ticket?: Partial<LotteryTicket>;
+}
+
+export interface LotteryTicketImportPreviewResult {
+  requestedCount?: number;
+  validCount?: number;
+  invalidCount?: number;
+  duplicateExistingCount?: number;
+  duplicateRequestCount?: number;
+  rows: LotteryTicketImportPreviewRow[];
+  budgetPrecheck?: LotteryTicketBudgetPrecheckResult;
+  generatedAt?: number;
+}
+
+export interface LotteryTicketBulkPatchRequest {
+  ids: string[];
+  issue?: string;
+  quantity?: number;
+  cost?: number;
+  status?: string;
+  source?: string;
+  note?: string;
+  clearNote?: boolean;
+}
+
+export interface LotteryTicketBulkOperationResult {
+  requestedCount?: number;
+  updatedCount?: number;
+  archivedCount?: number;
+  deletedCount?: number;
+  missingIds: string[];
+  tickets: LotteryTicket[];
   generatedAt?: number;
 }
 
@@ -2453,14 +2528,37 @@ export const lotteryTicketApi = {
   saveTicket: (ticket: Partial<LotteryTicket>): Promise<LotteryTicket> => {
     return apiClient.post('/lottery/tickets', ticket);
   },
+  importPreview: (request: {
+    content?: string;
+    defaultIssue?: string;
+    defaultQuantity?: number;
+    defaultCost?: number;
+    defaultSource?: string;
+    defaultStatus?: string;
+    note?: string;
+  }): Promise<LotteryTicketImportPreviewResult> => {
+    return apiClient.post('/lottery/tickets/import/preview', request);
+  },
+  budgetPrecheck: (request: { tickets: Partial<LotteryTicket>[] }): Promise<LotteryTicketBudgetPrecheckResult> => {
+    return apiClient.post('/lottery/tickets/budget/precheck', request);
+  },
   saveTickets: (tickets: Partial<LotteryTicket>[]): Promise<LotteryTicketBatchSaveResult> => {
     return apiClient.post('/lottery/tickets/batch', { tickets });
   },
   updateTicket: (id: string, ticket: Partial<LotteryTicket>): Promise<LotteryTicket> => {
     return apiClient.put(`/lottery/tickets/${id}`, ticket);
   },
+  bulkUpdateTickets: (request: LotteryTicketBulkPatchRequest): Promise<LotteryTicketBulkOperationResult> => {
+    return apiClient.patch('/lottery/tickets/bulk', request);
+  },
+  archiveTickets: (ids: string[]): Promise<LotteryTicketBulkOperationResult> => {
+    return apiClient.patch('/lottery/tickets/bulk/archive', { ids });
+  },
   deleteTicket: (id: string): Promise<void> => {
     return apiClient.delete(`/lottery/tickets/${id}`);
+  },
+  deleteTickets: (ids: string[]): Promise<LotteryTicketBulkOperationResult> => {
+    return apiClient.post('/lottery/tickets/bulk/delete', { ids });
   },
   checkPrizes: (actualRecord: LotteryActualRecord): Promise<LotteryTicket[]> => {
     return apiClient.post('/lottery/tickets/check-prizes', actualRecord);

@@ -31,6 +31,7 @@ import {
   type LotteryReplayMetrics,
   type LotteryRuleComparison,
   type LotteryRuleEvidence,
+  type LotteryTicketBudgetPrecheckResult,
   type LotteryTicket
 } from '../services/api';
 import { lotteryDriftLabel, lotteryEvidenceColor, lotteryEvidenceLabel, lotteryReplayText } from '../utils/lotteryEvidence';
@@ -79,6 +80,9 @@ const resultOptions = [
 const sourceLabel = (source: DecisionCandidateRow['source']) => source === 'PRIMARY' ? '主预测' : '候选';
 
 const decisionSetStatusColor = (dirty: boolean) => dirty ? 'orange' : 'green';
+
+const budgetPrecheckMessages = (result?: LotteryTicketBudgetPrecheckResult) =>
+  (result?.warnings || []).map(item => item.message).filter(Boolean).join('；');
 
 const formatTime = (value?: number) => {
   if (!value) {
@@ -238,6 +242,7 @@ const LotteryPredictionDecisionPage = () => {
   const [activeDecisionSetId, setActiveDecisionSetId] = useState<string>();
   const [decisionSetTitle, setDecisionSetTitle] = useState('');
   const [decisionSetNote, setDecisionSetNote] = useState('');
+  const [ticketBudgetPrecheck, setTicketBudgetPrecheck] = useState<LotteryTicketBudgetPrecheckResult>();
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingDecisionSets, setLoadingDecisionSets] = useState(false);
@@ -389,7 +394,7 @@ const LotteryPredictionDecisionPage = () => {
     setSavingTickets(true);
     setError(undefined);
     try {
-      const result = await lotteryTicketApi.saveTickets(selectedRows.map(row => ({
+      const ticketPayload = selectedRows.map(row => ({
         issue: String(row.targetPeriod),
         redNumbers: row.redNumbers,
         blueNumber: row.blueNumber,
@@ -399,7 +404,17 @@ const LotteryPredictionDecisionPage = () => {
         status: 'DRAFT',
         predictionSnapshotId: row.snapshotId,
         note: `决策板转票：${row.snapshotTitle} / ${row.candidateTitle}`
-      })));
+      }));
+      const precheck = await lotteryTicketApi.budgetPrecheck({ tickets: ticketPayload });
+      setTicketBudgetPrecheck(precheck);
+      const warnings = budgetPrecheckMessages(precheck);
+      if (warnings) {
+        message.warning(warnings);
+      }
+      const result = await lotteryTicketApi.saveTickets(ticketPayload);
+      if (result.budgetPrecheck) {
+        setTicketBudgetPrecheck(result.budgetPrecheck);
+      }
       message.success(`已保存 ${result.savedCount || 0} 注，跳过重复 ${result.duplicateCount || 0} 注`);
       if (activeDecisionSetId) {
         setDecisionDirty(true);
@@ -614,6 +629,14 @@ const LotteryPredictionDecisionPage = () => {
         showIcon
         message="决策板只汇总历史预测、回放、规则证据和个人票据状态，用于复盘和记录，不代表结果承诺。"
       />
+      {budgetPrecheckMessages(ticketBudgetPrecheck) ? (
+        <Alert
+          className="lottery-overview-status-alert"
+          type={ticketBudgetPrecheck?.status === 'OVER' ? 'error' : 'warning'}
+          showIcon
+          message={budgetPrecheckMessages(ticketBudgetPrecheck)}
+        />
+      ) : null}
 
       <section className="lottery-decision-saved-bar">
         <Select

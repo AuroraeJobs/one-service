@@ -3,7 +3,11 @@ package com.one.record.web;
 import com.one.record.model.LotteryTicket;
 import com.one.record.service.ILotteryTicketService;
 import com.one.record.lottery.LotteryPageResponse;
+import com.one.record.lottery.LotteryTicketBudgetPrecheckResult;
 import com.one.record.lottery.LotteryTicketBatchSaveResult;
+import com.one.record.lottery.LotteryTicketBulkOperationResult;
+import com.one.record.lottery.LotteryTicketImportPreviewResult;
+import com.one.record.lottery.LotteryTicketImportPreviewRow;
 import com.one.record.lottery.LotteryTicketPrizeCheckSummary;
 import com.one.record.lottery.LotteryTicketSummary;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -124,6 +129,47 @@ class LotteryTicketControllerTest {
     }
 
     @Test
+    void importPreviewDelegatesToService() throws Exception {
+        when(service.importPreview(org.mockito.ArgumentMatchers.any())).thenReturn(LotteryTicketImportPreviewResult.builder()
+                .requestedCount(1)
+                .validCount(1)
+                .rows(List.of(LotteryTicketImportPreviewRow.builder()
+                        .lineNumber(1)
+                        .status("VALID")
+                        .ticket(LotteryTicket.builder().issue("2026001").build())
+                        .build()))
+                .build());
+
+        mockMvc.perform(post("/lottery/tickets/import/preview")
+                        .contentType("application/json")
+                        .content("{\"content\":\"2026001 01 02 03 04 05 06 07\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.requestedCount").value(1))
+                .andExpect(jsonPath("$.validCount").value(1))
+                .andExpect(jsonPath("$.rows[0].status").value("VALID"));
+
+        verify(service).importPreview(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void budgetPrecheckDelegatesToService() throws Exception {
+        when(service.budgetPrecheck(org.mockito.ArgumentMatchers.any())).thenReturn(LotteryTicketBudgetPrecheckResult.builder()
+                .requestedCount(1)
+                .proposedTicketCount(1)
+                .status("WARNING")
+                .build());
+
+        mockMvc.perform(post("/lottery/tickets/budget/precheck")
+                        .contentType("application/json")
+                        .content("{\"tickets\":[{\"issue\":\"2026001\",\"redNumbers\":[\"01\",\"02\",\"03\",\"04\",\"05\",\"06\"],\"blueNumber\":\"07\"}]}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.requestedCount").value(1))
+                .andExpect(jsonPath("$.status").value("WARNING"));
+
+        verify(service).budgetPrecheck(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
     void updateTicketDelegatesToService() throws Exception {
         when(service.updateTicket(org.mockito.ArgumentMatchers.eq("ticket-1"), org.mockito.ArgumentMatchers.any(LotteryTicket.class)))
                 .thenReturn(LotteryTicket.builder().id("ticket-1").status("BOUGHT").build());
@@ -138,11 +184,66 @@ class LotteryTicketControllerTest {
     }
 
     @Test
+    void bulkUpdateTicketsDelegatesToService() throws Exception {
+        when(service.bulkUpdateTickets(org.mockito.ArgumentMatchers.any())).thenReturn(LotteryTicketBulkOperationResult.builder()
+                .requestedCount(2)
+                .updatedCount(2)
+                .tickets(List.of(LotteryTicket.builder().id("ticket-1").status("BOUGHT").build()))
+                .build());
+
+        mockMvc.perform(patch("/lottery/tickets/bulk")
+                        .contentType("application/json")
+                        .content("{\"ids\":[\"ticket-1\",\"ticket-2\"],\"status\":\"BOUGHT\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.requestedCount").value(2))
+                .andExpect(jsonPath("$.updatedCount").value(2))
+                .andExpect(jsonPath("$.tickets[0].status").value("BOUGHT"));
+
+        verify(service).bulkUpdateTickets(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void archiveTicketsDelegatesToService() throws Exception {
+        when(service.archiveTickets(org.mockito.ArgumentMatchers.any())).thenReturn(LotteryTicketBulkOperationResult.builder()
+                .requestedCount(1)
+                .updatedCount(1)
+                .archivedCount(1)
+                .build());
+
+        mockMvc.perform(patch("/lottery/tickets/bulk/archive")
+                        .contentType("application/json")
+                        .content("{\"ids\":[\"ticket-1\"]}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.archivedCount").value(1));
+
+        verify(service).archiveTickets(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
     void deleteTicketDelegatesToService() throws Exception {
         mockMvc.perform(delete("/lottery/tickets/ticket-1"))
                 .andExpect(status().isOk());
 
         verify(service).deleteTicket("ticket-1");
+    }
+
+    @Test
+    void deleteTicketsDelegatesToService() throws Exception {
+        when(service.deleteTickets(org.mockito.ArgumentMatchers.any())).thenReturn(LotteryTicketBulkOperationResult.builder()
+                .requestedCount(2)
+                .deletedCount(1)
+                .missingIds(List.of("missing"))
+                .build());
+
+        mockMvc.perform(post("/lottery/tickets/bulk/delete")
+                        .contentType("application/json")
+                        .content("{\"ids\":[\"ticket-1\",\"missing\"]}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.requestedCount").value(2))
+                .andExpect(jsonPath("$.deletedCount").value(1))
+                .andExpect(jsonPath("$.missingIds[0]").value("missing"));
+
+        verify(service).deleteTickets(org.mockito.ArgumentMatchers.any());
     }
 
     @Test

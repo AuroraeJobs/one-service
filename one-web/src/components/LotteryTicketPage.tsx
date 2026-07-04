@@ -27,6 +27,8 @@ import {
   type LotteryPageResponse,
   type LotteryTicket,
   type LotteryTicketBatchSaveResult,
+  type LotteryTicketBudgetPrecheckResult,
+  type LotteryTicketImportPreviewResult,
   type LotteryTicketPrizeCheckSummary,
   type LotteryTicketSummary
 } from '../services/api';
@@ -286,6 +288,16 @@ const previewStatusColor = (status: BulkTicketPreviewRow['status']) => {
   return 'gold';
 };
 
+const normalizePreviewStatus = (status?: string): BulkTicketPreviewRow['status'] => {
+  if (status === 'VALID' || status === 'INVALID' || status === 'DUPLICATE_EXISTING' || status === 'DUPLICATE_REQUEST') {
+    return status;
+  }
+  return 'INVALID';
+};
+
+const budgetPrecheckMessages = (result?: LotteryTicketBudgetPrecheckResult) =>
+  (result?.warnings || []).map(item => item.message).filter(Boolean).join('；');
+
 const emptySummary: LotteryTicketSummary = {
   ticketCount: 0,
   checkedTicketCount: 0,
@@ -508,6 +520,8 @@ const LotteryTicketPage = () => {
   const [bulkSaving, setBulkSaving] = useState(false);
   const [bulkReferenceLoading, setBulkReferenceLoading] = useState(false);
   const [bulkReferenceTickets, setBulkReferenceTickets] = useState<LotteryTicket[]>([]);
+  const [bulkPreviewLoading, setBulkPreviewLoading] = useState(false);
+  const [bulkPreviewResult, setBulkPreviewResult] = useState<LotteryTicketImportPreviewResult>();
   const [bulkImportResult, setBulkImportResult] = useState<LotteryTicketBatchSaveResult>();
 
   useLotterySavedViewState(lotteryViewStateKeys.tickets, searchParams, setSearchParams, ticketViewKeys);
@@ -555,10 +569,26 @@ const LotteryTicketPage = () => {
       .map(ticketDuplicateKey)
       .filter(Boolean) as string[]
   ), [allTickets, bulkReferenceTickets]);
-  const bulkPreviewRows = useMemo(
+  const localBulkPreviewRows = useMemo(
     () => parseBulkTicketRows(bulkText, issue, existingTicketKeys),
     [bulkText, existingTicketKeys, issue]
   );
+  const bulkPreviewRows = useMemo(() => {
+    if (!bulkPreviewResult) {
+      return localBulkPreviewRows;
+    }
+    return (bulkPreviewResult.rows || []).map((row, index) => ({
+      key: row.key || `${row.lineNumber || index}-${row.raw || ''}`,
+      lineNumber: row.lineNumber || index + 1,
+      raw: row.raw || '',
+      issue: row.issue,
+      redNumbers: row.redNumbers || [],
+      blueNumber: row.blueNumber,
+      status: normalizePreviewStatus(row.status),
+      messages: row.messages || [],
+      ticket: row.ticket
+    }));
+  }, [bulkPreviewResult, localBulkPreviewRows]);
   const validBulkPreviewRows = useMemo(
     () => bulkPreviewRows.filter(row => row.status === 'VALID' && row.ticket),
     [bulkPreviewRows]
@@ -710,6 +740,7 @@ const LotteryTicketPage = () => {
   const openBulkImportModal = async () => {
     setBulkModalOpen(true);
     setBulkText('');
+    setBulkPreviewResult(undefined);
     setBulkImportResult(undefined);
     setBulkReferenceTickets(allTickets);
     setBulkReferenceLoading(true);
@@ -724,8 +755,43 @@ const LotteryTicketPage = () => {
     }
   };
 
+  const previewBulkTickets = async () => {
+    if (!bulkText.trim()) {
+      message.warning('请先粘贴票据内容');
+      return undefined;
+    }
+    setBulkPreviewLoading(true);
+    setError(undefined);
+    try {
+      const result = await lotteryTicketApi.importPreview({
+        content: bulkText,
+        defaultIssue: issue.trim() || undefined,
+        defaultQuantity: 1,
+        defaultCost: 2,
+        defaultSource: 'MANUAL',
+        defaultStatus: 'DRAFT',
+        note: '批量导入'
+      });
+      setBulkPreviewResult(result);
+      setBulkImportResult(undefined);
+      return result;
+    } catch (requestError) {
+      console.error('预览批量导入票据失败:', requestError);
+      setError(requestError instanceof Error ? requestError.message : '预览批量导入票据失败');
+      message.error('预览批量导入票据失败');
+      return undefined;
+    } finally {
+      setBulkPreviewLoading(false);
+    }
+  };
+
   const saveBulkTickets = async () => {
-    const payload = validBulkPreviewRows
+    const preview = bulkPreviewResult || await previewBulkTickets();
+    if (!preview) {
+      return;
+    }
+    const payload = (preview.rows || [])
+      .filter(row => row.status === 'VALID' && row.ticket)
       .map(row => row.ticket)
       .filter(Boolean) as Partial<LotteryTicket>[];
     if (!payload.length) {
@@ -738,9 +804,14 @@ const LotteryTicketPage = () => {
       const result = await lotteryTicketApi.saveTickets(payload);
       setBulkImportResult(result);
       message.success(`已保存 ${result.savedCount || 0} 注，跳过重复 ${result.duplicateCount || 0} 注`);
+      const warnings = budgetPrecheckMessages(result.budgetPrecheck);
+      if (warnings) {
+        message.warning(warnings);
+      }
       await loadTickets();
       const referenceTickets = await lotteryTicketApi.tickets();
       setBulkReferenceTickets(referenceTickets || []);
+      setBulkPreviewResult(undefined);
     } catch (requestError) {
       console.error('批量保存彩票票据失败:', requestError);
       setError(requestError instanceof Error ? requestError.message : '批量保存彩票票据失败');
@@ -764,16 +835,16 @@ const LotteryTicketPage = () => {
     setBatchSaving(true);
     setError(undefined);
     try {
-      await Promise.all(selectedTickets.map(ticket => lotteryTicketApi.updateTicket(ticket.id || '', {
-        ...ticket,
-        issue: trimmedIssue || ticket.issue,
-        quantity: batchQuantity ?? ticket.quantity,
-        cost: batchCost ?? ticket.cost,
-        status: batchStatus || ticket.status,
-        source: batchSource || ticket.source,
-        note: trimmedNote || ticket.note
-      })));
-      message.success(`已更新 ${selectedTickets.length} 注票据`);
+      const result = await lotteryTicketApi.bulkUpdateTickets({
+        ids: selectedTickets.map(ticket => ticket.id).filter(Boolean) as string[],
+        issue: trimmedIssue || undefined,
+        quantity: batchQuantity,
+        cost: batchCost,
+        status: batchStatus,
+        source: batchSource,
+        note: trimmedNote || undefined
+      });
+      message.success(`已更新 ${result.updatedCount || 0} 注票据`);
       setBatchStatus(undefined);
       setBatchSource(undefined);
       setBatchIssue('');
@@ -798,11 +869,8 @@ const LotteryTicketPage = () => {
     setBatchDeleting(true);
     setError(undefined);
     try {
-      await Promise.all(selectedTickets.map(ticket => lotteryTicketApi.updateTicket(ticket.id || '', {
-        ...ticket,
-        status: 'VOID'
-      })));
-      message.success(`已归档 ${selectedTickets.length} 注票据`);
+      const result = await lotteryTicketApi.archiveTickets(selectedTickets.map(ticket => ticket.id).filter(Boolean) as string[]);
+      message.success(`已归档 ${result.archivedCount || 0} 注票据`);
       setSelectedRowKeys([]);
       await loadTickets();
     } catch (requestError) {
@@ -822,8 +890,8 @@ const LotteryTicketPage = () => {
     setBatchDeleting(true);
     setError(undefined);
     try {
-      await Promise.all(selectedTickets.map(ticket => lotteryTicketApi.deleteTicket(ticket.id || '')));
-      message.success(`已删除 ${selectedTickets.length} 注票据`);
+      const result = await lotteryTicketApi.deleteTickets(selectedTickets.map(ticket => ticket.id).filter(Boolean) as string[]);
+      message.success(`已删除 ${result.deletedCount || 0} 注票据`);
       setSelectedRowKeys([]);
       await loadTickets();
     } catch (requestError) {
@@ -1368,7 +1436,7 @@ const LotteryTicketPage = () => {
         cancelText="关闭"
         width={960}
         confirmLoading={bulkSaving}
-        okButtonProps={{ disabled: !validBulkPreviewRows.length || bulkReferenceLoading }}
+        okButtonProps={{ disabled: !validBulkPreviewRows.length || bulkReferenceLoading || bulkPreviewLoading }}
         onOk={saveBulkTickets}
         onCancel={() => setBulkModalOpen(false)}
       >
@@ -1383,22 +1451,33 @@ const LotteryTicketPage = () => {
             value={bulkText}
             onChange={event => {
               setBulkText(event.target.value);
+              setBulkPreviewResult(undefined);
               setBulkImportResult(undefined);
             }}
             placeholder={'2026079 01 02 03 04 05 06 + 07\n2026079, 08, 10, 12, 16, 22, 31, 09'}
           />
           <Space wrap>
+            <Button icon={<SearchOutlined />} loading={bulkPreviewLoading} onClick={previewBulkTickets}>
+              后端预览
+            </Button>
             <Tag color="green">可保存 {validBulkPreviewRows.length}</Tag>
             <Tag color="gold">重复 {bulkPreviewRows.filter(row => row.status === 'DUPLICATE_EXISTING' || row.status === 'DUPLICATE_REQUEST').length}</Tag>
             <Tag color="red">需修正 {bulkPreviewRows.filter(row => row.status === 'INVALID').length}</Tag>
-            <Tag>已对比 {bulkReferenceTickets.length || allTickets.length} 注已有票据</Tag>
+            <Tag>{bulkPreviewResult ? '后端已确认' : `本地预览 · 已对比 ${bulkReferenceTickets.length || allTickets.length} 注已有票据`}</Tag>
             {bulkReferenceLoading ? <Tag color="processing">正在读取已有票据</Tag> : null}
           </Space>
+          {budgetPrecheckMessages(bulkPreviewResult?.budgetPrecheck) ? (
+            <Alert
+              type={bulkPreviewResult?.budgetPrecheck?.status === 'OVER' ? 'error' : 'warning'}
+              showIcon
+              message={budgetPrecheckMessages(bulkPreviewResult?.budgetPrecheck)}
+            />
+          ) : null}
           {bulkImportResult ? (
             <Alert
-              type="success"
+              type={budgetPrecheckMessages(bulkImportResult.budgetPrecheck) ? 'warning' : 'success'}
               showIcon
-              message={`本次请求 ${bulkImportResult.requestedCount || 0} 注，保存 ${bulkImportResult.savedCount || 0} 注，后端跳过重复 ${bulkImportResult.duplicateCount || 0} 注。`}
+              message={`本次请求 ${bulkImportResult.requestedCount || 0} 注，保存 ${bulkImportResult.savedCount || 0} 注，后端跳过重复 ${bulkImportResult.duplicateCount || 0} 注。${budgetPrecheckMessages(bulkImportResult.budgetPrecheck) ? ` ${budgetPrecheckMessages(bulkImportResult.budgetPrecheck)}` : ''}`}
             />
           ) : null}
           <Table

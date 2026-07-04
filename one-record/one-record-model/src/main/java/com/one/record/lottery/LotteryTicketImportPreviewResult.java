@@ -1,11 +1,11 @@
 package com.one.record.lottery;
 
-import com.one.record.model.LotteryTicket;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,19 +13,20 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class LotteryTicketBatchSaveResult {
+public class LotteryTicketImportPreviewResult implements Serializable {
 
     private Integer requestedCount;
 
-    private Integer savedCount;
+    private Integer validCount;
 
-    private Integer duplicateCount;
+    private Integer invalidCount;
+
+    private Integer duplicateExistingCount;
+
+    private Integer duplicateRequestCount;
 
     @Builder.Default
-    private List<LotteryTicket> savedTickets = new ArrayList<>();
-
-    @Builder.Default
-    private List<LotteryTicket> duplicateTickets = new ArrayList<>();
+    private List<LotteryTicketImportPreviewRow> rows = new ArrayList<>();
 
     private LotteryTicketBudgetPrecheckResult budgetPrecheck;
 

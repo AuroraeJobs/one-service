@@ -366,12 +366,12 @@ Goal: turn the guided frontend workflows from Iteration 13 into durable, auditab
 
 ### Wave 14B: Server-Side Ticket Import And Batch Guardrails
 
-- [ ] Add a server-side ticket import preview endpoint with normalized rows, invalid reasons, duplicate grouping, and proposed save payloads.
-- [ ] Add bulk ticket patch/archive endpoints so batch issue, quantity, cost, source, status, and note changes do not require many full-row `PUT` calls.
-- [ ] Add budget pre-check for proposed ticket imports and selected decision-set conversions before saving tickets.
-- [ ] Add audit events for import preview, confirmed import, bulk update, archive, and delete actions.
-- [ ] Update the ticket page and decision board to use preview/pre-check results and show backend-confirmed warnings.
-- [ ] Run focused ticket/import/budget tests, frontend build, update docs, commit, and push.
+- [x] Add a server-side ticket import preview endpoint with normalized rows, invalid reasons, duplicate grouping, and proposed save payloads. Added `POST /lottery/tickets/import/preview` with backend-normalized rows and proposed tickets.
+- [x] Add bulk ticket patch/archive endpoints so batch issue, quantity, cost, source, status, and note changes do not require many full-row `PUT` calls. Added sparse bulk update, archive, and delete APIs.
+- [x] Add budget pre-check for proposed ticket imports and selected decision-set conversions before saving tickets. Added `POST /lottery/tickets/budget/precheck` and batch-save precheck output.
+- [x] Add audit events for import preview, confirmed import, bulk update, archive, and delete actions. Ticket service now records `LotteryAuditEvent` rows for those operations.
+- [x] Update the ticket page and decision board to use preview/pre-check results and show backend-confirmed warnings. Ticket import uses backend preview/precheck; decision board prechecks selected candidates before saving tickets.
+- [x] Run focused ticket/import/budget tests, frontend build, update docs, commit, and push. Verification: focused Maven ticket service/controller tests; `one-web npm run build`.
 
 ### Wave 14C: Automated Route Smoke And Release Evidence
 
