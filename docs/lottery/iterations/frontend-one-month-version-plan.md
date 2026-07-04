@@ -79,6 +79,8 @@ Acceptance:
 
 ## Week 3: Ticket Workflow Power Tools
 
+Status: shipped in Wave 11C.
+
 Goal: make ticket entry, review, and closing faster for real daily usage.
 
 Deliverables:
@@ -95,7 +97,7 @@ Acceptance:
 - Users can paste multiple tickets, inspect normalization, and save valid rows in one flow.
 - Duplicate rows are visible before save.
 - Ticket page remains usable on mobile width without table text overlap.
-- `npm run build` passes.
+- `npm run build` passes. Verified after the Wave 11C ticket workflow changes.
 
 ## Week 4: Reports, Export, Audit, And Frontend Polish
 

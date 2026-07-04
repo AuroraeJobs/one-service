@@ -254,13 +254,13 @@ Use this file as the durable task board for the lottery module. When a task is f
 
 ### Wave 11C: Ticket Workflow Power Tools
 
-- [ ] Add bulk ticket paste/import UI with preview before save.
-- [ ] Add duplicate preview for existing matches and in-request duplicates.
-- [ ] Add safe batch actions for source, status, note, and delete.
-- [ ] Add issue timeline view grouping tickets, predictions, prize checks, and ledger result by issue.
-- [ ] Add mobile-friendly card layout for ticket rows and prize-check results.
-- [ ] Add stronger ticket shortcuts from prediction detail, workbench, and ledger issue rows.
-- [ ] Run `npm run build`, update docs, commit, and push.
+- [x] Add bulk ticket paste/import UI with preview before save. Ticket page now opens a paste modal, parses common issue/red/blue formats, normalizes rows, and previews them before batch save.
+- [x] Add duplicate preview for existing matches and in-request duplicates. Bulk preview compares against existing saved tickets and marks duplicate rows within the pasted batch.
+- [x] Add safe batch actions for source, status, note, and delete. Ticket list supports row selection with batch status/source/note updates and confirm-protected batch deletion.
+- [x] Add issue timeline view grouping tickets, predictions, prize checks, and ledger result by issue. Ticket page now summarizes recent issues with ticket count, prediction-linked count, checked/pending counts, winners, net result, and ROI.
+- [x] Add mobile-friendly card layout for ticket rows and prize-check results. Ticket rows switch from table to cards on narrow screens, and latest prize-check output has a compact result card.
+- [x] Add stronger ticket shortcuts from prediction detail, workbench, and ledger issue rows. Prediction detail and workbench already link to ticket filters; ledger issue rows now expose a ticket shortcut for each issue.
+- [x] Run `npm run build`, update docs, commit, and push.
 
 ### Wave 11D: Reports, Export, Audit, And Frontend Polish
 

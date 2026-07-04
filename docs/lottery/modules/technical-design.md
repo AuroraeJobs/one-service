@@ -180,6 +180,10 @@ updatedAt
 
 The frontend ticket list page at `/lottery/tickets` reads ticket list and summary APIs together, shows issue filtering, status/prize tags, generated numbers, cost, and prize outcome.
 
+The ticket page also provides workflow power tools for operational use. Bulk import accepts pasted rows with either explicit issue numbers or the current issue filter, previews normalized red/blue numbers, and marks invalid rows, already-saved duplicates, and duplicates inside the pasted batch before sending only valid rows to `POST /lottery/tickets/batch`. Batch row actions reuse the existing update/delete APIs; because `PUT /lottery/tickets/{id}` copies a complete ticket payload, the frontend sends the selected ticket's existing fields plus changed source/status/note values rather than a sparse patch.
+
+The ticket issue timeline combines all-ticket list data with `/lottery/ledger/issues` to show per-issue ticket count, prediction-linked tickets, checked/pending prize-check state, winning count, net result, and ROI. The same page now renders a mobile card layout for ticket rows and a compact latest-prize-check result card, while ledger issue rows link back to `/lottery/tickets?issue=...`.
+
 Prediction detail can batch-save the primary prediction and all candidate predictions through `POST /lottery/tickets/batch`; the ticket page can run `POST /lottery/tickets/check-prizes/latest` and display the returned summary before refreshing ticket rows and totals. Prediction history exposes result-status filtering and a latest-draw attachment action; prediction detail shows linked ticket count and can open the ticket page filtered by `predictionSnapshotId`, while linked ticket rows can jump back to the originating prediction snapshot.
 
 Ticket queries accept `predictionSnapshotId` to support prediction-detail linkbacks. `POST /lottery/predictions/attach-latest-actual` reads the latest draw record, finds prediction snapshots whose `targetPeriod` matches that draw, attaches the normalized actual record, and recalculates primary and candidate results.

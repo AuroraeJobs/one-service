@@ -1,16 +1,31 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Form, Input, InputNumber, Modal, Popconfirm, Select, Space, Table, Tag } from 'antd';
+import type { Key } from 'react';
+import { Alert, Button, Card, Checkbox, Form, Input, InputNumber, Modal, Popconfirm, Select, Space, Table, Tag, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { DeleteOutlined, EditOutlined, HistoryOutlined, PlusOutlined, ReloadOutlined, SearchOutlined, TrophyOutlined } from '@ant-design/icons';
+import {
+  CheckCircleOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  FileAddOutlined,
+  HistoryOutlined,
+  LinkOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+  SearchOutlined,
+  TrophyOutlined
+} from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import LotteryBalls from './lottery/LotteryBalls';
 import {
   lotteryBudgetApi,
+  lotteryLedgerApi,
   lotteryTicketApi,
   type LotteryBudgetStatus,
+  type LotteryIssueLedger,
   type LotteryPageResponse,
   type LotteryTicket,
+  type LotteryTicketBatchSaveResult,
   type LotteryTicketPrizeCheckSummary,
   type LotteryTicketSummary
 } from '../services/api';
@@ -44,12 +59,147 @@ interface TicketFormValues {
   note?: string;
 }
 
+interface BulkTicketPreviewRow {
+  key: string;
+  lineNumber: number;
+  raw: string;
+  issue?: string;
+  redNumbers: string[];
+  blueNumber?: string;
+  status: 'VALID' | 'INVALID' | 'DUPLICATE_EXISTING' | 'DUPLICATE_REQUEST';
+  messages: string[];
+  ticket?: Partial<LotteryTicket>;
+}
+
+interface IssueTimelineRow {
+  issue: string;
+  ticketCount: number;
+  predictionCount: number;
+  checkedCount: number;
+  pendingCount: number;
+  winningCount: number;
+  totalCost: number;
+  totalPrize: number;
+  netResult: number;
+  roiPercent: number;
+  latestUpdatedAt?: number;
+}
+
 const splitNumbers = (value?: string) =>
   (value || '')
     .split(/[\s,，]+/)
     .map(item => item.trim())
     .filter(Boolean)
     .map(item => item.padStart(2, '0'));
+
+const normalizeBallNumber = (value?: string) => {
+  if (!value || !/^\d+$/.test(value)) {
+    return '';
+  }
+  return String(Number(value)).padStart(2, '0');
+};
+
+const ticketDuplicateKey = (ticket?: Pick<LotteryTicket, 'issue' | 'redNumbers' | 'blueNumber'>) => {
+  const issue = ticket?.issue?.trim();
+  const redNumbers = ticket?.redNumbers || [];
+  const blueNumber = ticket?.blueNumber?.trim();
+  if (!issue || redNumbers.length !== 6 || !blueNumber) {
+    return undefined;
+  }
+  const normalizedRed = [...redNumbers]
+    .map(item => normalizeBallNumber(item))
+    .filter(Boolean)
+    .sort((left, right) => Number(left) - Number(right));
+  if (normalizedRed.length !== 6) {
+    return undefined;
+  }
+  return `${issue}|${normalizedRed.join(',')}|${normalizeBallNumber(blueNumber)}`;
+};
+
+const parseBulkTicketRows = (
+  text: string,
+  defaultIssue: string,
+  existingTicketKeys: Set<string>
+): BulkTicketPreviewRow[] => {
+  const seenKeys = new Set<string>();
+  return text
+    .split(/\r?\n/)
+    .map((raw, index): BulkTicketPreviewRow | undefined => {
+      const line = raw.trim();
+      if (!line) {
+        return undefined;
+      }
+      const tokens: string[] = Array.from(line.matchAll(/\d+/g), match => match[0]);
+      const messages: string[] = [];
+      let issue = defaultIssue.trim();
+      let numberTokens: string[] = tokens;
+      if (tokens.length >= 8 && (tokens[0] || '').length >= 5) {
+        issue = tokens[0] || '';
+        numberTokens = tokens.slice(1);
+      } else if (tokens.length >= 9 && (tokens[0] || '').length === 4 && (tokens[1] || '').length <= 3) {
+        issue = `${tokens[0] || ''}${(tokens[1] || '').padStart(3, '0')}`;
+        numberTokens = tokens.slice(2);
+      }
+      if (numberTokens.length > 7) {
+        messages.push('已忽略第 7 个之后的额外号码');
+      }
+      const redNumbers = numberTokens.slice(0, 6).map(normalizeBallNumber).filter(Boolean);
+      const blueNumber = normalizeBallNumber(numberTokens[6]);
+      if (!issue) {
+        messages.push('缺少期号，可先在页面筛选期号或每行带期号');
+      }
+      if (redNumbers.length !== 6 || !blueNumber) {
+        messages.push('需要 6 个红球和 1 个蓝球');
+      }
+      const redSet = new Set(redNumbers);
+      if (redSet.size !== redNumbers.length) {
+        messages.push('红球不能重复');
+      }
+      const redOutOfRange = redNumbers.some(item => Number(item) < 1 || Number(item) > 33);
+      if (redOutOfRange) {
+        messages.push('红球范围应为 01-33');
+      }
+      if (blueNumber && (Number(blueNumber) < 1 || Number(blueNumber) > 16)) {
+        messages.push('蓝球范围应为 01-16');
+      }
+      const normalizedRed = [...redNumbers].sort((left, right) => Number(left) - Number(right));
+      const ticket = issue && normalizedRed.length === 6 && blueNumber ? {
+        issue,
+        redNumbers: normalizedRed,
+        blueNumber,
+        quantity: 1,
+        cost: 2,
+        source: 'MANUAL',
+        status: 'DRAFT',
+        note: '批量导入'
+      } : undefined;
+      const duplicateKey = ticketDuplicateKey(ticket);
+      let status: BulkTicketPreviewRow['status'] = messages.length ? 'INVALID' : 'VALID';
+      if (!messages.length && duplicateKey) {
+        if (existingTicketKeys.has(duplicateKey)) {
+          status = 'DUPLICATE_EXISTING';
+          messages.push('已有相同票据');
+        } else if (seenKeys.has(duplicateKey)) {
+          status = 'DUPLICATE_REQUEST';
+          messages.push('本次粘贴内重复');
+        } else {
+          seenKeys.add(duplicateKey);
+        }
+      }
+      return {
+        key: `${index}-${line}`,
+        lineNumber: index + 1,
+        raw: line,
+        issue,
+        redNumbers: normalizedRed,
+        blueNumber,
+        status,
+        messages,
+        ticket
+      };
+    })
+    .filter(Boolean) as BulkTicketPreviewRow[];
+};
 
 const formatTime = (value?: number) => {
   if (!value) {
@@ -88,6 +238,26 @@ const statusColor = (status?: string) => {
   return 'gold';
 };
 
+const previewStatusLabel = (status: BulkTicketPreviewRow['status']) => {
+  const labels: Record<BulkTicketPreviewRow['status'], string> = {
+    VALID: '可保存',
+    INVALID: '需修正',
+    DUPLICATE_EXISTING: '已存在',
+    DUPLICATE_REQUEST: '本次重复'
+  };
+  return labels[status];
+};
+
+const previewStatusColor = (status: BulkTicketPreviewRow['status']) => {
+  if (status === 'VALID') {
+    return 'green';
+  }
+  if (status === 'INVALID') {
+    return 'red';
+  }
+  return 'gold';
+};
+
 const emptySummary: LotteryTicketSummary = {
   ticketCount: 0,
   checkedTicketCount: 0,
@@ -99,13 +269,96 @@ const emptySummary: LotteryTicketSummary = {
   prizeDistribution: {}
 };
 
+const issueKey = (ticket: LotteryTicket) => ticket.issue || (ticket.period ? String(ticket.period) : '');
+
+const buildIssueTimelineRows = (
+  allTickets: LotteryTicket[],
+  issueLedgers: LotteryIssueLedger[]
+): IssueTimelineRow[] => {
+  const ledgerByIssue = new Map<string, LotteryIssueLedger>();
+  issueLedgers.forEach(ledger => {
+    const issue = ledger.issue || (ledger.period ? String(ledger.period) : '');
+    if (issue) {
+      ledgerByIssue.set(issue, ledger);
+    }
+  });
+  const grouped = new Map<string, IssueTimelineRow>();
+  allTickets.forEach(ticket => {
+    const issue = issueKey(ticket);
+    if (!issue) {
+      return;
+    }
+    const current = grouped.get(issue) || {
+      issue,
+      ticketCount: 0,
+      predictionCount: 0,
+      checkedCount: 0,
+      pendingCount: 0,
+      winningCount: 0,
+      totalCost: 0,
+      totalPrize: 0,
+      netResult: 0,
+      roiPercent: 0,
+      latestUpdatedAt: undefined
+    };
+    current.ticketCount += 1;
+    current.predictionCount += ticket.predictionSnapshotId ? 1 : 0;
+    current.checkedCount += ticket.status === 'CHECKED' ? 1 : 0;
+    current.pendingCount += ticket.status === 'CHECKED' ? 0 : 1;
+    current.winningCount += ticket.prizeResult?.winning ? 1 : 0;
+    current.totalCost += Number(ticket.cost || 0);
+    current.totalPrize += Number(ticket.prizeResult?.prizeAmount || 0) / 100;
+    current.latestUpdatedAt = Math.max(current.latestUpdatedAt || 0, ticket.updatedAt || ticket.createdAt || 0);
+    grouped.set(issue, current);
+  });
+  issueLedgers.forEach(ledger => {
+    const issue = ledger.issue || (ledger.period ? String(ledger.period) : '');
+    if (!issue || grouped.has(issue)) {
+      return;
+    }
+    grouped.set(issue, {
+      issue,
+      ticketCount: ledger.ticketCount || 0,
+      predictionCount: 0,
+      checkedCount: ledger.checkedTicketCount || 0,
+      pendingCount: ledger.pendingTicketCount || 0,
+      winningCount: ledger.winningTicketCount || 0,
+      totalCost: Number(ledger.totalCost || 0),
+      totalPrize: Number(ledger.totalPrize || 0),
+      netResult: Number(ledger.netResult || 0),
+      roiPercent: Number(ledger.roiPercent || 0)
+    });
+  });
+  return Array.from(grouped.values())
+    .map(row => {
+      const ledger = ledgerByIssue.get(row.issue);
+      const totalCost = Number(ledger?.totalCost ?? row.totalCost ?? 0);
+      const totalPrize = Number(ledger?.totalPrize ?? row.totalPrize ?? 0);
+      return {
+        ...row,
+        ticketCount: ledger?.ticketCount ?? row.ticketCount,
+        checkedCount: ledger?.checkedTicketCount ?? row.checkedCount,
+        pendingCount: ledger?.pendingTicketCount ?? row.pendingCount,
+        winningCount: ledger?.winningTicketCount ?? row.winningCount,
+        totalCost,
+        totalPrize,
+        netResult: Number(ledger?.netResult ?? (totalPrize - totalCost)),
+        roiPercent: Number(ledger?.roiPercent ?? (totalCost ? ((totalPrize - totalCost) * 100) / totalCost : 0))
+      };
+    })
+    .sort((left, right) => right.issue.localeCompare(left.issue))
+    .slice(0, 8);
+};
+
 const LotteryTicketPage = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [form] = Form.useForm<TicketFormValues>();
   const [tickets, setTickets] = useState<LotteryTicket[]>([]);
+  const [allTickets, setAllTickets] = useState<LotteryTicket[]>([]);
   const [pageResponse, setPageResponse] = useState<LotteryPageResponse<LotteryTicket>>();
   const [summary, setSummary] = useState<LotteryTicketSummary>(emptySummary);
+  const [issueLedgers, setIssueLedgers] = useState<LotteryIssueLedger[]>([]);
   const [budgetStatus, setBudgetStatus] = useState<LotteryBudgetStatus>();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -114,6 +367,18 @@ const LotteryTicketPage = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTicket, setEditingTicket] = useState<LotteryTicket>();
   const [error, setError] = useState<string>();
+  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([]);
+  const [batchStatus, setBatchStatus] = useState<string>();
+  const [batchSource, setBatchSource] = useState<string>();
+  const [batchNote, setBatchNote] = useState('');
+  const [batchSaving, setBatchSaving] = useState(false);
+  const [batchDeleting, setBatchDeleting] = useState(false);
+  const [bulkModalOpen, setBulkModalOpen] = useState(false);
+  const [bulkText, setBulkText] = useState('');
+  const [bulkSaving, setBulkSaving] = useState(false);
+  const [bulkReferenceLoading, setBulkReferenceLoading] = useState(false);
+  const [bulkReferenceTickets, setBulkReferenceTickets] = useState<LotteryTicket[]>([]);
+  const [bulkImportResult, setBulkImportResult] = useState<LotteryTicketBatchSaveResult>();
 
   useLotterySavedViewState(lotteryViewStateKeys.tickets, searchParams, setSearchParams, ticketViewKeys);
 
@@ -150,19 +415,46 @@ const LotteryTicketPage = () => {
     pageSize
   }), [issue, page, pageSize, predictionSnapshotId, prizeGradeFilter, sourceFilter, statusFilter]);
 
+  const selectedTicketKeys = useMemo(() => new Set(selectedRowKeys.map(String)), [selectedRowKeys]);
+  const selectedTickets = useMemo(
+    () => tickets.filter(ticket => ticket.id && selectedTicketKeys.has(ticket.id)),
+    [selectedTicketKeys, tickets]
+  );
+  const existingTicketKeys = useMemo(() => new Set(
+    (bulkReferenceTickets.length ? bulkReferenceTickets : allTickets)
+      .map(ticketDuplicateKey)
+      .filter(Boolean) as string[]
+  ), [allTickets, bulkReferenceTickets]);
+  const bulkPreviewRows = useMemo(
+    () => parseBulkTicketRows(bulkText, issue, existingTicketKeys),
+    [bulkText, existingTicketKeys, issue]
+  );
+  const validBulkPreviewRows = useMemo(
+    () => bulkPreviewRows.filter(row => row.status === 'VALID' && row.ticket),
+    [bulkPreviewRows]
+  );
+  const issueTimelineRows = useMemo(
+    () => buildIssueTimelineRows(allTickets, issueLedgers),
+    [allTickets, issueLedgers]
+  );
+
   const loadTickets = useCallback(async () => {
     setLoading(true);
     setError(undefined);
     try {
-      const [ticketItems, ticketSummary, budgetData] = await Promise.all([
+      const [ticketItems, ticketSummary, budgetData, issueRows, allTicketRows] = await Promise.all([
         lotteryTicketApi.ticketsPage(queryParams),
         lotteryTicketApi.summary(),
-        lotteryBudgetApi.status()
+        lotteryBudgetApi.status(),
+        lotteryLedgerApi.issues(),
+        lotteryTicketApi.tickets()
       ]);
       setPageResponse(ticketItems);
       setTickets(ticketItems.items || []);
+      setAllTickets(allTicketRows || ticketItems.items || []);
       setSummary(ticketSummary || emptySummary);
       setBudgetStatus(budgetData);
+      setIssueLedgers(issueRows || []);
     } catch (requestError) {
       console.error('获取彩票票据失败:', requestError);
       setError(requestError instanceof Error ? requestError.message : '获取彩票票据失败');
@@ -174,6 +466,11 @@ const LotteryTicketPage = () => {
   useEffect(() => {
     loadTickets();
   }, [loadTickets]);
+
+  useEffect(() => {
+    const currentIds = new Set(tickets.map(ticket => ticket.id).filter(Boolean) as string[]);
+    setSelectedRowKeys(keys => keys.filter(key => currentIds.has(String(key))));
+  }, [tickets]);
 
   const openCreateModal = useCallback(() => {
     setEditingTicket(undefined);
@@ -271,6 +568,115 @@ const LotteryTicketPage = () => {
     updateQuery({ predictionSnapshotId: undefined });
   };
 
+  const openBulkImportModal = async () => {
+    setBulkModalOpen(true);
+    setBulkText('');
+    setBulkImportResult(undefined);
+    setBulkReferenceTickets(allTickets);
+    setBulkReferenceLoading(true);
+    try {
+      const referenceTickets = await lotteryTicketApi.tickets();
+      setBulkReferenceTickets(referenceTickets || []);
+    } catch (requestError) {
+      console.warn('读取已有票据用于重复预览失败:', requestError);
+      setBulkReferenceTickets(allTickets);
+    } finally {
+      setBulkReferenceLoading(false);
+    }
+  };
+
+  const saveBulkTickets = async () => {
+    const payload = validBulkPreviewRows
+      .map(row => row.ticket)
+      .filter(Boolean) as Partial<LotteryTicket>[];
+    if (!payload.length) {
+      message.warning('没有可保存的票据');
+      return;
+    }
+    setBulkSaving(true);
+    setError(undefined);
+    try {
+      const result = await lotteryTicketApi.saveTickets(payload);
+      setBulkImportResult(result);
+      message.success(`已保存 ${result.savedCount || 0} 注，跳过重复 ${result.duplicateCount || 0} 注`);
+      await loadTickets();
+      const referenceTickets = await lotteryTicketApi.tickets();
+      setBulkReferenceTickets(referenceTickets || []);
+    } catch (requestError) {
+      console.error('批量保存彩票票据失败:', requestError);
+      setError(requestError instanceof Error ? requestError.message : '批量保存彩票票据失败');
+      message.error('批量保存彩票票据失败');
+    } finally {
+      setBulkSaving(false);
+    }
+  };
+
+  const updateSelectedTickets = async () => {
+    if (!selectedTickets.length) {
+      message.warning('请先选择票据');
+      return;
+    }
+    const trimmedNote = batchNote.trim();
+    if (!batchStatus && !batchSource && !trimmedNote) {
+      message.warning('请选择要批量更新的状态、来源或备注');
+      return;
+    }
+    setBatchSaving(true);
+    setError(undefined);
+    try {
+      await Promise.all(selectedTickets.map(ticket => lotteryTicketApi.updateTicket(ticket.id || '', {
+        ...ticket,
+        status: batchStatus || ticket.status,
+        source: batchSource || ticket.source,
+        note: trimmedNote || ticket.note
+      })));
+      message.success(`已更新 ${selectedTickets.length} 注票据`);
+      setBatchStatus(undefined);
+      setBatchSource(undefined);
+      setBatchNote('');
+      await loadTickets();
+    } catch (requestError) {
+      console.error('批量更新彩票票据失败:', requestError);
+      setError(requestError instanceof Error ? requestError.message : '批量更新彩票票据失败');
+      message.error('批量更新彩票票据失败');
+    } finally {
+      setBatchSaving(false);
+    }
+  };
+
+  const deleteSelectedTickets = async () => {
+    if (!selectedTickets.length) {
+      message.warning('请先选择票据');
+      return;
+    }
+    setBatchDeleting(true);
+    setError(undefined);
+    try {
+      await Promise.all(selectedTickets.map(ticket => lotteryTicketApi.deleteTicket(ticket.id || '')));
+      message.success(`已删除 ${selectedTickets.length} 注票据`);
+      setSelectedRowKeys([]);
+      await loadTickets();
+    } catch (requestError) {
+      console.error('批量删除彩票票据失败:', requestError);
+      setError(requestError instanceof Error ? requestError.message : '批量删除彩票票据失败');
+      message.error('批量删除彩票票据失败');
+    } finally {
+      setBatchDeleting(false);
+    }
+  };
+
+  const toggleTicketSelection = (ticket: LotteryTicket, checked: boolean) => {
+    if (!ticket.id) {
+      return;
+    }
+    setSelectedRowKeys(keys => {
+      if (checked) {
+        return keys.includes(ticket.id as Key) ? keys : [...keys, ticket.id as Key];
+      }
+      return keys.filter(key => key !== ticket.id);
+    });
+  };
+
   const columns: ColumnsType<LotteryTicket> = [
     {
       title: '期号',
@@ -343,6 +749,45 @@ const LotteryTicketPage = () => {
     }
   ];
 
+  const bulkPreviewColumns: ColumnsType<BulkTicketPreviewRow> = [
+    {
+      title: '行',
+      dataIndex: 'lineNumber',
+      key: 'lineNumber',
+      width: 56
+    },
+    {
+      title: '状态',
+      dataIndex: 'status',
+      key: 'status',
+      width: 104,
+      render: value => <Tag color={previewStatusColor(value)}>{previewStatusLabel(value)}</Tag>
+    },
+    {
+      title: '期号',
+      dataIndex: 'issue',
+      key: 'issue',
+      width: 110,
+      render: value => value || '-'
+    },
+    {
+      title: '号码',
+      key: 'numbers',
+      render: (_, record) => (
+        record.redNumbers.length && record.blueNumber
+          ? <LotteryBalls redNumbers={record.redNumbers} blueNumber={record.blueNumber} />
+          : <span className="stock-quote-code">{record.raw}</span>
+      )
+    },
+    {
+      title: '提示',
+      key: 'messages',
+      render: (_, record) => (
+        <span className="stock-quote-code">{record.messages.length ? record.messages.join('；') : '格式正常'}</span>
+      )
+    }
+  ];
+
   return (
     <LifePageShell
       className="lottery-prediction-page"
@@ -352,6 +797,9 @@ const LotteryTicketPage = () => {
         <Space wrap>
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
             新增票据
+          </Button>
+          <Button icon={<FileAddOutlined />} onClick={openBulkImportModal}>
+            批量导入
           </Button>
           <Button icon={<TrophyOutlined />} loading={checkingLatest} onClick={checkLatestPrizes}>
             最新核奖
@@ -427,6 +875,14 @@ const LotteryTicketPage = () => {
           message={`第 ${latestCheckSummary.issue || '-'} 期已核奖 ${latestCheckSummary.checkedTicketCount || 0} 注，中奖 ${latestCheckSummary.winningTicketCount || 0} 注，奖金 ${formatPrizeAmount(latestCheckSummary.totalPrizeAmount)}`}
         />
       ) : null}
+      {latestCheckSummary ? (
+        <div className="lottery-ticket-prize-check-card">
+          <span>核奖期号<strong>{latestCheckSummary.issue || '-'}</strong></span>
+          <span>已核验<strong>{latestCheckSummary.checkedTicketCount || 0}</strong></span>
+          <span>中奖<strong>{latestCheckSummary.winningTicketCount || 0}</strong></span>
+          <span>奖金<strong>{formatPrizeAmount(latestCheckSummary.totalPrizeAmount)}</strong></span>
+        </div>
+      ) : null}
       {predictionSnapshotId.trim() ? (
         <Alert
           className="lottery-overview-status-alert"
@@ -484,9 +940,102 @@ const LotteryTicketPage = () => {
         </Card>
       </section>
 
+      <Card
+        className="life-panel-card"
+        title={<Space><HistoryOutlined />期号时间线</Space>}
+        extra={<Button size="small" icon={<LinkOutlined />} onClick={() => navigate('/lottery/ledger')}>账本</Button>}
+      >
+        {issueTimelineRows.length ? (
+          <div className="lottery-ticket-timeline">
+            {issueTimelineRows.map(row => (
+              <article className="lottery-ticket-timeline-row" key={row.issue}>
+                <div>
+                  <strong>第 {row.issue} 期</strong>
+                  <span>{formatTime(row.latestUpdatedAt)} 更新</span>
+                </div>
+                <div className="lottery-ticket-timeline-metrics">
+                  <span><small>票据</small><strong>{row.ticketCount}</strong></span>
+                  <span><small>预测关联</small><strong>{row.predictionCount}</strong></span>
+                  <span><small>已核/待核</small><strong>{row.checkedCount}/{row.pendingCount}</strong></span>
+                  <span><small>中奖</small><strong>{row.winningCount}</strong></span>
+                  <span><small>净结果</small><strong>{formatMoney(row.netResult)}</strong></span>
+                  <span><small>ROI</small><strong>{Number(row.roiPercent || 0).toFixed(2)}%</strong></span>
+                </div>
+                <Space wrap>
+                  <Button size="small" onClick={() => updateQuery({ issue: row.issue })}>看票据</Button>
+                  <Button size="small" icon={<LinkOutlined />} onClick={() => navigate('/lottery/ledger')}>账本</Button>
+                </Space>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="lottery-ticket-empty-line">暂无可汇总的期号票据</div>
+        )}
+      </Card>
+
       <Card className="life-panel-card">
+        <div className="lottery-ticket-batch-toolbar">
+          <Space wrap>
+            <Tag color={selectedTickets.length ? 'blue' : 'default'}>已选 {selectedTickets.length} 注</Tag>
+            <Select
+              allowClear
+              placeholder="批量状态"
+              value={batchStatus}
+              onChange={setBatchStatus}
+              style={{ width: 132 }}
+              options={[
+                { label: '草稿', value: 'DRAFT' },
+                { label: '已购买', value: 'BOUGHT' },
+                { label: '已兑奖', value: 'CHECKED' },
+                { label: '作废', value: 'VOID' }
+              ]}
+            />
+            <Select
+              allowClear
+              placeholder="批量来源"
+              value={batchSource}
+              onChange={setBatchSource}
+              style={{ width: 132 }}
+              options={[
+                { label: '手动', value: 'MANUAL' },
+                { label: '预测', value: 'PREDICTION' }
+              ]}
+            />
+            <Input
+              allowClear
+              placeholder="批量备注"
+              value={batchNote}
+              onChange={event => setBatchNote(event.target.value)}
+              style={{ width: 220 }}
+            />
+            <Button
+              icon={<CheckCircleOutlined />}
+              loading={batchSaving}
+              disabled={!selectedTickets.length}
+              onClick={updateSelectedTickets}
+            >
+              更新选中
+            </Button>
+            <Popconfirm
+              title={`删除选中的 ${selectedTickets.length} 注票据？`}
+              okText="删除"
+              cancelText="取消"
+              disabled={!selectedTickets.length}
+              onConfirm={deleteSelectedTickets}
+            >
+              <Button danger icon={<DeleteOutlined />} loading={batchDeleting} disabled={!selectedTickets.length}>
+                删除选中
+              </Button>
+            </Popconfirm>
+          </Space>
+        </div>
         <Table
+          className="lottery-ticket-desktop-table"
           rowKey={record => record.id || `${record.issue}-${record.blueNumber}-${record.createdAt}`}
+          rowSelection={{
+            selectedRowKeys,
+            onChange: nextKeys => setSelectedRowKeys(nextKeys)
+          }}
           columns={columns}
           dataSource={tickets}
           loading={loading}
@@ -500,7 +1049,95 @@ const LotteryTicketPage = () => {
           }}
           scroll={{ x: 920 }}
         />
+        <div className="lottery-ticket-mobile-list">
+          {tickets.map(ticket => (
+            <article className="lottery-ticket-mobile-card" key={ticket.id || `${ticket.issue}-${ticket.blueNumber}-${ticket.createdAt}`}>
+              <div className="lottery-ticket-mobile-card-head">
+                <Checkbox
+                  checked={ticket.id ? selectedTicketKeys.has(ticket.id) : false}
+                  disabled={!ticket.id}
+                  onChange={event => toggleTicketSelection(ticket, event.target.checked)}
+                />
+                <div>
+                  <strong>第 {ticket.issue || ticket.period || '-'} 期</strong>
+                  <span>{ticket.source || 'MANUAL'} · {formatTime(ticket.updatedAt || ticket.createdAt)}</span>
+                </div>
+                <Tag color={statusColor(ticket.status)}>{statusLabel(ticket.status)}</Tag>
+              </div>
+              <LotteryBalls redNumbers={ticket.redNumbers || []} blueNumber={ticket.blueNumber || ''} />
+              <div className="lottery-ticket-mobile-stats">
+                <span><small>注数</small><strong>{ticket.quantity || 1}</strong></span>
+                <span><small>成本</small><strong>{formatMoney(ticket.cost)}</strong></span>
+                <span><small>兑奖</small><strong>{ticket.prizeResult?.prizeName || ticket.prizeGrade || '待开奖'}</strong></span>
+                <span><small>命中</small><strong>{ticket.prizeResult ? `红 ${ticket.prizeResult.redHits ?? '-'}/蓝${ticket.prizeResult.blueHit ? '中' : '未中'}` : '-'}</strong></span>
+              </div>
+              {ticket.note ? <p>{ticket.note}</p> : null}
+              <Space wrap>
+                {ticket.predictionSnapshotId ? (
+                  <Button size="small" icon={<HistoryOutlined />} onClick={() => navigate(`/lottery/predictions/${ticket.predictionSnapshotId}`)}>
+                    预测
+                  </Button>
+                ) : null}
+                <Button size="small" icon={<EditOutlined />} onClick={() => openEditModal(ticket)}>编辑</Button>
+                <Popconfirm title="删除票据？" okText="删除" cancelText="取消" onConfirm={() => deleteTicket(ticket.id)}>
+                  <Button size="small" danger icon={<DeleteOutlined />}>删除</Button>
+                </Popconfirm>
+              </Space>
+            </article>
+          ))}
+        </div>
       </Card>
+
+      <Modal
+        title="批量导入票据"
+        open={bulkModalOpen}
+        okText="保存可用票据"
+        cancelText="关闭"
+        width={960}
+        confirmLoading={bulkSaving}
+        okButtonProps={{ disabled: !validBulkPreviewRows.length || bulkReferenceLoading }}
+        onOk={saveBulkTickets}
+        onCancel={() => setBulkModalOpen(false)}
+      >
+        <Space direction="vertical" size={12} style={{ width: '100%' }}>
+          <Alert
+            type="info"
+            showIcon
+            message={`每行一注，可写“2026079 01 02 03 04 05 06 + 07”；不写期号时会使用当前筛选期号${issue ? ` ${issue}` : ''}。`}
+          />
+          <Input.TextArea
+            rows={7}
+            value={bulkText}
+            onChange={event => {
+              setBulkText(event.target.value);
+              setBulkImportResult(undefined);
+            }}
+            placeholder={'2026079 01 02 03 04 05 06 + 07\n2026079, 08, 10, 12, 16, 22, 31, 09'}
+          />
+          <Space wrap>
+            <Tag color="green">可保存 {validBulkPreviewRows.length}</Tag>
+            <Tag color="gold">重复 {bulkPreviewRows.filter(row => row.status === 'DUPLICATE_EXISTING' || row.status === 'DUPLICATE_REQUEST').length}</Tag>
+            <Tag color="red">需修正 {bulkPreviewRows.filter(row => row.status === 'INVALID').length}</Tag>
+            <Tag>已对比 {bulkReferenceTickets.length || allTickets.length} 注已有票据</Tag>
+            {bulkReferenceLoading ? <Tag color="processing">正在读取已有票据</Tag> : null}
+          </Space>
+          {bulkImportResult ? (
+            <Alert
+              type="success"
+              showIcon
+              message={`本次请求 ${bulkImportResult.requestedCount || 0} 注，保存 ${bulkImportResult.savedCount || 0} 注，后端跳过重复 ${bulkImportResult.duplicateCount || 0} 注。`}
+            />
+          ) : null}
+          <Table
+            rowKey="key"
+            size="small"
+            columns={bulkPreviewColumns}
+            dataSource={bulkPreviewRows}
+            pagination={{ pageSize: 6, hideOnSinglePage: true }}
+            scroll={{ x: 780 }}
+          />
+        </Space>
+      </Modal>
 
       <Modal
         title={editingTicket ? '编辑票据' : '新增票据'}

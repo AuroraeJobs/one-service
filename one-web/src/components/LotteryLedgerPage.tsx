@@ -4,6 +4,7 @@ import type { ColumnsType } from 'antd/es/table';
 import {
   DollarOutlined,
   BarChartOutlined,
+  FileTextOutlined,
   LineChartOutlined,
   PercentageOutlined,
   ReloadOutlined,
@@ -251,6 +252,20 @@ const LotteryLedgerPage = () => {
       key: 'roiPercent',
       align: 'right',
       render: value => <Tag color={Number(value || 0) >= 0 ? 'green' : 'red'}>{formatPercent(value)}</Tag>
+    },
+    {
+      title: '操作',
+      key: 'actions',
+      fixed: 'right',
+      render: (_, record) => (
+        <Button
+          size="small"
+          icon={<FileTextOutlined />}
+          onClick={() => navigate(record.issue ? `/lottery/tickets?issue=${record.issue}` : '/lottery/tickets')}
+        >
+          票据
+        </Button>
+      )
     }
   ];
 
@@ -376,7 +391,7 @@ const LotteryLedgerPage = () => {
           dataSource={issues}
           loading={loading}
           pagination={{ pageSize: 10 }}
-          scroll={{ x: 760 }}
+          scroll={{ x: 860 }}
         />
       </Card>
     </LifePageShell>

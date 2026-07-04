@@ -211,3 +211,5 @@ lottery/audit/*
 ```
 
 Do not add browser-side calls to external lottery websites or data providers.
+
+Ticket workflow enhancements, including paste import preview, duplicate checks, batch row actions, and issue drill-throughs, must stay on the project-owned `lottery/tickets/*` and `lottery/ledger/*` APIs.
