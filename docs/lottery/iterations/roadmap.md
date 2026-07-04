@@ -337,6 +337,36 @@ lottery/exports/*
 lottery/audit/*
 ```
 
+### Iteration 11: Frontend Experience And Power Tools
+
+Goal: turn the completed backend/platform foundation into a richer user-facing lottery product. This iteration is frontend-led and should make daily operation, research comparison, ticket management, report building, and export/audit review feel complete.
+
+Deliverables:
+
+- Upgrade `/lottery/workbench` into the practical daily command center with quick actions, recent-work shortcuts, saved view state, and richer widgets.
+- Add a research comparison route for experiments, backtests, rules, and ledger evidence.
+- Add ticket workflow power tools: bulk paste/import, duplicate preview, batch actions, issue timeline, and mobile-friendly cards.
+- Improve export, audit, and maintenance pages with browser downloads, report preview, filtering, and print-friendly layouts.
+- Polish dense frontend states across workbench, research, tickets, ledger, export, alerts, and maintenance.
+
+Frontend-first rules:
+
+- Reuse existing `lottery/*` APIs first.
+- Add backend only for narrow read-only gaps or bounded summaries.
+- Keep filters URL-backed where they drive drill-through workflows.
+- Keep research language evidence-oriented and restrained.
+
+Planned route additions or upgrades:
+
+```text
+/lottery/workbench
+/lottery/research
+/lottery/tickets
+/lottery/ledger
+/lottery/exports
+/lottery/alerts
+```
+
 ## Storage Direction
 
 MongoDB durable data:

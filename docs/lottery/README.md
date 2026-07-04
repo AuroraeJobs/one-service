@@ -29,6 +29,7 @@ mvn -version
 - [Roadmap](iterations/roadmap.md): module direction and phased plan.
 - [Checklist](iterations/checklist.md): durable task board.
 - [Quality gates](iterations/quality-gates.md): verification rules for backend, frontend, and data behavior.
+- [Frontend one-month plan](iterations/frontend-one-month-version-plan.md): next month frontend-led experience and power-tool plan.
 
 ## Module Docs
 
@@ -51,10 +52,10 @@ Live capabilities already present in the codebase:
 
 ## Next Iteration
 
-Iteration 09 should start from `docs/lottery/iterations/checklist.md` and implement the daily workflow workbench plus scalable list governance. The planned flow is:
+Iteration 11 should start from `docs/lottery/iterations/checklist.md` and implement the frontend-led experience and power-tool plan. The planned user flow is:
 
 ```text
-sync records -> inspect latest draw -> generate or attach prediction -> save tickets -> check prizes -> review ledger outcome
+open workbench -> choose next action -> compare research evidence -> manage tickets quickly -> build report/export evidence
 ```
 
 ## Long Iteration
@@ -65,9 +66,7 @@ Iteration 10 is the longer platform roadmap after the workbench foundation. It s
 daily state backbone -> strategy experiments -> backtest evidence -> alerts/calendar -> budget governance -> export/audit/maintenance
 ```
 
-The detailed next-version plan lives in `docs/lottery/iterations/iteration-10-plan.md`. Start with Wave 10A only so the daily workflow can resume reliably before strategy experiments are added.
-
-The one-month delivery plan for the remaining platform work lives in `docs/lottery/iterations/one-month-version-plan.md`.
+Iteration 10 has completed the platform foundation. The next one-month delivery plan lives in `docs/lottery/iterations/frontend-one-month-version-plan.md` and deliberately prioritizes frontend functionality.
 
 ## Non-Negotiable Rules
 

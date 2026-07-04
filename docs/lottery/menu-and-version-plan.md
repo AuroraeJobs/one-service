@@ -27,6 +27,7 @@ The current lottery navigation already has a strong exploratory surface. The tar
   - 规则管理
   - 策略实验
   - 回测报告
+  - 研究对比
 - 我的
   - 投注记录
   - 中奖核验
@@ -63,6 +64,7 @@ The current lottery navigation already has a strong exploratory surface. The tar
 /lottery/experiments/:id
 /lottery/backtests
 /lottery/backtests/:id
+/lottery/research
 /lottery/tickets
 /lottery/ledger
 /lottery/alerts
@@ -167,6 +169,16 @@ Goal: support a longer research loop with experiments, backtests, reminders, gov
 - Add non-destructive maintenance preview and cleanup dry-run operations behind the export/audit surface.
 - Keep all external-provider behavior behind backend services and preserve project-owned `lottery/*` frontend calls.
 
+### V9: Frontend Experience And Power Tools
+
+Goal: make the completed platform capabilities feel like a richer user-facing product.
+
+- Upgrade `/lottery/workbench` with quick actions, recent-work shortcuts, saved view state, and richer daily widgets.
+- Add `/lottery/research` for side-by-side experiment, backtest, rule, and ledger evidence comparison.
+- Add ticket workflow power tools: bulk paste/import, duplicate preview, batch actions, issue timeline, and mobile-friendly cards.
+- Improve `/lottery/exports` with browser CSV download, report builder, audit filters, maintenance grouping, and print-friendly report views.
+- Preserve dense operational layouts and URL-backed filters so drill-through from workbench remains predictable.
+
 ## API Boundary
 
 Frontend should only call:
@@ -190,6 +202,7 @@ lottery/data-quality
 lottery/workbench
 lottery/experiments/*
 lottery/backtests/*
+lottery/research/*
 lottery/alerts/*
 lottery/calendar/*
 lottery/budget/*

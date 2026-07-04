@@ -230,6 +230,48 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Update docs and run appropriate backend/frontend verification after each wave.
 - [x] Commit and push each wave independently.
 
+## Iteration 11: Frontend Experience And Power Tools
+
+### Wave 11A: Frontend Shell And Personalized Cockpit
+
+- [ ] Audit lottery routes, page titles, nav labels, and primary actions.
+- [ ] Add a compact quick-action rail or panel for sync, prediction, ticket save, prize check, ledger review, alerts, and export.
+- [ ] Upgrade `/lottery/workbench` widgets for daily state, recent prediction, pending tickets, alerts, budget warning, latest backtest, and latest ledger outcome.
+- [ ] Add saved frontend view state for common filters and page sizes where query parameters already exist.
+- [ ] Add recent-work shortcuts for prediction snapshots, tickets, experiments, backtests, and exports.
+- [ ] Preserve URL-backed drill-through links from workbench to specialist pages.
+- [ ] Run `npm run build`, update docs, commit, and push.
+
+### Wave 11B: Research Comparison Studio
+
+- [ ] Add a frontend research comparison route, proposed `/lottery/research`.
+- [ ] Build side-by-side comparison cards for selected experiments, backtests, rules, and ledger performance rows.
+- [ ] Add selectable compare sets from existing experiment, backtest, rule, and ledger pages.
+- [ ] Add compact charts for stability score, average red hits, blue hit rate, net result, ROI, and prize distribution.
+- [ ] Add deep links from experiment detail, backtest detail, rule comparison, and ledger performance into the comparison route.
+- [ ] Keep copy evidence-oriented and avoid outcome promises.
+- [ ] Run `npm run build`, update docs, commit, and push.
+
+### Wave 11C: Ticket Workflow Power Tools
+
+- [ ] Add bulk ticket paste/import UI with preview before save.
+- [ ] Add duplicate preview for existing matches and in-request duplicates.
+- [ ] Add safe batch actions for source, status, note, and delete.
+- [ ] Add issue timeline view grouping tickets, predictions, prize checks, and ledger result by issue.
+- [ ] Add mobile-friendly card layout for ticket rows and prize-check results.
+- [ ] Add stronger ticket shortcuts from prediction detail, workbench, and ledger issue rows.
+- [ ] Run `npm run build`, update docs, commit, and push.
+
+### Wave 11D: Reports, Export, Audit, And Frontend Polish
+
+- [ ] Add a frontend report builder for tickets, ledger, prediction, experiment, backtest, sync-log, and probe-log sections.
+- [ ] Add browser CSV download for existing `GET /lottery/exports/{type}` responses.
+- [ ] Add audit explorer filters for type, target, date range, and row count where available.
+- [ ] Improve maintenance preview with cache, log, and history grouping.
+- [ ] Add print-friendly report view for selected report sections.
+- [ ] Polish dense loading, empty, error, overflow, and responsive states across workbench, research, ticket, ledger, export, and alert pages.
+- [ ] Run `npm run build`, update docs, commit, and push.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.
