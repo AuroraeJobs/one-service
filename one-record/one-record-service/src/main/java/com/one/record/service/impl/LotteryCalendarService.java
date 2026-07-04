@@ -9,6 +9,7 @@ import com.one.record.service.ILotteryCalendarService;
 import com.one.record.service.ILotteryWorkbenchService;
 import com.one.record.service.IRecordService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -36,6 +37,7 @@ public class LotteryCalendarService implements ILotteryCalendarService {
 
     private final Clock clock;
 
+    @Autowired
     public LotteryCalendarService(IRecordService recordService,
                                   ILotteryWorkbenchService workbenchService,
                                   LotteryReminderAcknowledgementRepository acknowledgementRepository) {
