@@ -1,11 +1,15 @@
 package com.one.record.service.impl;
 
 import com.one.record.lottery.LotteryDataQualityReport;
+import com.one.record.lottery.LotteryDataQualityRepairRequest;
+import com.one.record.lottery.LotteryDataQualityRepairResult;
 import com.one.record.response.Record;
 import com.one.record.service.ILotteryDataQualityService;
 import com.one.record.service.IRecordService;
+import com.one.record.service.LotteryDrawProvider;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
@@ -25,7 +29,13 @@ public class LotteryDataQualityService implements ILotteryDataQualityService {
 
     private static final int SAMPLE_LIMIT = 50;
 
+    private static final int DEFAULT_REPAIR_LIMIT = 50;
+
+    private static final int MAX_REPAIR_LIMIT = 200;
+
     private final IRecordService recordService;
+
+    private final LotteryDrawProvider lotteryDrawProvider;
 
     @Override
     public LotteryDataQualityReport report() {
@@ -58,6 +68,54 @@ public class LotteryDataQualityService implements ILotteryDataQualityService {
                 .build();
     }
 
+    @Override
+    public LotteryDataQualityRepairResult dryRunMissingIssuesRepair(LotteryDataQualityRepairRequest request) {
+        return repairMissingIssues(request, true);
+    }
+
+    @Override
+    public LotteryDataQualityRepairResult confirmMissingIssuesRepair(LotteryDataQualityRepairRequest request) {
+        return repairMissingIssues(request, false);
+    }
+
+    private LotteryDataQualityRepairResult repairMissingIssues(LotteryDataQualityRepairRequest request, boolean dryRun) {
+        List<Record> currentRecords = recordService.findAll();
+        List<String> currentMissingIssues = missingIssues(currentRecords);
+        List<String> requestedIssues = requestedIssues(request, currentMissingIssues);
+        Map<String, Record> providerRecords = fetchProviderRecords(requestedIssues);
+        List<String> repairableIssues = requestedIssues.stream()
+                .filter(providerRecords::containsKey)
+                .toList();
+        List<String> skippedIssues = requestedIssues.stream()
+                .filter(issue -> !providerRecords.containsKey(issue))
+                .toList();
+
+        if (!dryRun && !repairableIssues.isEmpty()) {
+            List<Record> repairedRecords = repairableIssues.stream()
+                    .map(providerRecords::get)
+                    .toList();
+            recordService.saveAll(reorderedRecords(currentRecords, repairedRecords));
+        }
+
+        int missingAfter = dryRun ? currentMissingIssues.size() : Math.max(0, currentMissingIssues.size() - repairableIssues.size());
+        return LotteryDataQualityRepairResult.builder()
+                .repairType("MISSING_ISSUES")
+                .dryRun(dryRun)
+                .missingBefore(currentMissingIssues.size())
+                .missingAfter(missingAfter)
+                .requestedIssueCount(requestedIssues.size())
+                .repairableIssueCount(repairableIssues.size())
+                .repairedIssueCount(dryRun ? 0 : repairableIssues.size())
+                .skippedIssueCount(skippedIssues.size())
+                .requestedIssues(requestedIssues)
+                .repairableIssues(repairableIssues)
+                .repairedIssues(dryRun ? List.of() : repairableIssues)
+                .skippedIssues(skippedIssues)
+                .message(repairMessage(dryRun, repairableIssues.size(), skippedIssues.size()))
+                .generatedAt(System.currentTimeMillis())
+                .build();
+    }
+
     private List<String> duplicateIssues(List<Record> records) {
         Map<String, Long> issueCounts = records.stream()
                 .map(Record::getCode)
@@ -68,6 +126,51 @@ public class LotteryDataQualityService implements ILotteryDataQualityService {
                 .map(Map.Entry::getKey)
                 .sorted()
                 .toList();
+    }
+
+    private List<String> requestedIssues(LotteryDataQualityRepairRequest request, List<String> currentMissingIssues) {
+        int limit = normalizeRepairLimit(request == null ? null : request.getLimit());
+        List<String> requestIssues = request == null ? List.of() : request.getIssues();
+        List<String> sourceIssues = CollectionUtils.isEmpty(requestIssues) ? currentMissingIssues : requestIssues;
+        return sourceIssues.stream()
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .filter(issue -> issue.matches("\\d{7}"))
+                .distinct()
+                .sorted()
+                .limit(limit)
+                .toList();
+    }
+
+    private Map<String, Record> fetchProviderRecords(List<String> requestedIssues) {
+        if (requestedIssues.isEmpty()) {
+            return Map.of();
+        }
+        Set<String> requestedIssueSet = new HashSet<>(requestedIssues);
+        return lotteryDrawProvider.fetchYearlyRecords().stream()
+                .filter(record -> record != null && requestedIssueSet.contains(record.getCode()))
+                .collect(Collectors.toMap(Record::getCode, record -> record, (left, right) -> left, LinkedHashMap::new));
+    }
+
+    private List<Record> reorderedRecords(List<Record> currentRecords, List<Record> repairedRecords) {
+        Map<String, Record> recordsByIssue = new LinkedHashMap<>();
+        currentRecords.stream()
+                .filter(record -> record != null && StringUtils.hasText(record.getCode()))
+                .forEach(record -> recordsByIssue.putIfAbsent(record.getCode(), record));
+        repairedRecords.stream()
+                .filter(record -> record != null && StringUtils.hasText(record.getCode()))
+                .forEach(record -> recordsByIssue.putIfAbsent(record.getCode(), record));
+        List<Record> records = recordsByIssue.values().stream()
+                .sorted(Comparator.comparing(Record::getCode))
+                .toList();
+        for (int index = 0; index < records.size(); index++) {
+            Record record = records.get(index);
+            record.setLine(index + 1L);
+            if (StringUtils.hasText(record.getDate()) && record.getDate().length() > 10) {
+                record.setDate(record.date());
+            }
+        }
+        return records;
     }
 
     private List<String> missingIssues(List<Record> records) {
@@ -149,6 +252,20 @@ public class LotteryDataQualityService implements ILotteryDataQualityService {
 
     private List<String> limit(List<String> values) {
         return values.stream().limit(SAMPLE_LIMIT).toList();
+    }
+
+    private static int normalizeRepairLimit(Integer limit) {
+        if (limit == null || limit <= 0) {
+            return DEFAULT_REPAIR_LIMIT;
+        }
+        return Math.min(limit, MAX_REPAIR_LIMIT);
+    }
+
+    private static String repairMessage(boolean dryRun, int repairableCount, int skippedCount) {
+        if (dryRun) {
+            return "缺失期号修复计划已生成，可修复 " + repairableCount + " 项，跳过 " + skippedCount + " 项";
+        }
+        return "缺失期号修复完成，已修复 " + repairableCount + " 项，跳过 " + skippedCount + " 项";
     }
 
     private record IssueParts(String year, int sequence) {

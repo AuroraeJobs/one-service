@@ -220,6 +220,8 @@ VOID
 
 `LotteryDataQualityReport` summarizes record quality checks. `GET /lottery/data-quality` scans current records for missing issue numbers within each year, duplicate issues, malformed red/blue numbers, and draw dates later than today. Response lists are capped to sample-sized issue lists for UI display.
 
+`LotteryDataQualityRepairRequest` and `LotteryDataQualityRepairResult` power conservative repair flows. `POST /lottery/data-quality/repair/missing-issues/dry-run` computes missing issue repairability from the configured draw provider without writing data. `POST /lottery/data-quality/repair/missing-issues/confirm` writes only provider-backed missing issues, then reorders saved records by issue and reassigns line numbers. Malformed and duplicate records stay report-only until a trusted refetch can prove exact replacement data.
+
 `LotteryRecordSyncSummary` aggregates recent record sync logs. `GET /lottery/records/sync-summary?limit=50` returns status counts, success and failure rates, total saved count, latest status/message/issue range, latest and average duration, and last success/failure/skipped timestamps. The summary is derived from MongoDB sync logs and does not read Redis lock state directly.
 
 ## API Design Rules

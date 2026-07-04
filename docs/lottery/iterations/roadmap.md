@@ -213,7 +213,7 @@ Deliverables:
 - Persist provider probe history and expose recent probe logs.
 - Add record sync summary aggregation from MongoDB sync logs.
 - Add dry-run and confirm flows for missing issue repair.
-- Keep malformed and duplicate record repair conservative: report first, rewrite only when a trusted refetch can prove the replacement.
+- Keep malformed and duplicate record repair conservative: report first, rewrite only when a trusted refetch can prove the replacement. The first backend repair slice only writes provider-backed missing issues.
 - Add provider/sync summary cards to lottery operations pages.
 - Wire lottery preferences into prediction defaults and ticket-save behavior.
 - Surface data quality warnings on operational entry points.

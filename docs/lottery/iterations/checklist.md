@@ -118,17 +118,17 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add provider probe log endpoint. Added `GET /lottery/providers/probe-logs` with optional `provider` and `limit`.
 - [x] Add record sync summary DTO. Added `LotteryRecordSyncSummary` for recent sync status counts, rates, saved count, latest status, issue range, and duration metrics.
 - [x] Add `GET /lottery/records/sync-summary`. Aggregates recent MongoDB sync logs with a capped server-side limit.
-- [ ] Add data quality repair request/result DTOs.
-- [ ] Add data quality missing-issue repair dry-run endpoint.
-- [ ] Add data quality missing-issue repair confirm endpoint.
-- [ ] Add conservative malformed/duplicate repair report behavior.
+- [x] Add data quality repair request/result DTOs. Added `LotteryDataQualityRepairRequest` and `LotteryDataQualityRepairResult`.
+- [x] Add data quality missing-issue repair dry-run endpoint. Added `POST /lottery/data-quality/repair/missing-issues/dry-run`.
+- [x] Add data quality missing-issue repair confirm endpoint. Added `POST /lottery/data-quality/repair/missing-issues/confirm`.
+- [x] Add conservative malformed/duplicate repair report behavior. Iteration 07 repair only writes provider-backed missing issues; malformed and duplicate records remain report-only until trusted replacement rules are added.
 - [x] Add provider operations panel to `/lottery/sync` or `/lottery/settings`. `/lottery/sync` now has a provider probe action and recent probe-log table.
 - [x] Add sync summary cards to `/lottery/sync`. Added recent success/failure/saved/duration cards and a latest sync summary strip.
 - [ ] Add data quality repair UI with dry-run, confirm, and before/after report.
 - [ ] Integrate preferences into prediction page defaults.
 - [ ] Add visible data quality indicators on operational entry points.
 - [x] Add frontend API client methods for new Iteration 07 endpoints. Added sync-summary, provider probe, and provider probe-log client methods.
-- [ ] Add backend tests for repair dry-run/confirm behavior.
+- [x] Add backend tests for repair dry-run/confirm behavior. Covered dry-run no-save behavior, confirm save/reorder behavior, and controller endpoint binding.
 - [x] Run frontend build after operational page changes. `npm run build` passed after `/lottery/sync` updates.
 
 ## Documentation And Delivery
