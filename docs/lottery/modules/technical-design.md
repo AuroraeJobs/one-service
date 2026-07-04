@@ -214,15 +214,20 @@ VOID
 
 `LotteryProviderProbeResult` records an active provider probe. `GET /lottery/providers/probe?provider=cwl` calls the selected draw provider's yearly fetch method and returns availability, record count, duration, message, and checked timestamp. Missing providers and provider exceptions are returned as structured probe results rather than unhandled errors.
 
+`LotteryProviderProbeLog` stores durable provider probe history in `lottery_provider_probe_logs`. `GET /lottery/providers/probe-logs?provider=cwl&limit=20` returns recent probe outcomes ordered by check time descending, so operations pages can show provider stability after reloads.
+
 `LotteryPreference` stores default-user lottery preferences in `lottery_preferences`. `GET /lottery/preferences` returns saved preferences or a default fallback, and `PUT /lottery/preferences` normalizes training scale, replay count, auto-save behavior, and default ticket source before saving.
 
 `LotteryDataQualityReport` summarizes record quality checks. `GET /lottery/data-quality` scans current records for missing issue numbers within each year, duplicate issues, malformed red/blue numbers, and draw dates later than today. Response lists are capped to sample-sized issue lists for UI display.
+
+`LotteryRecordSyncSummary` aggregates recent record sync logs. `GET /lottery/records/sync-summary?limit=50` returns status counts, success and failure rates, total saved count, latest status/message/issue range, latest and average duration, and last success/failure/skipped timestamps. The summary is derived from MongoDB sync logs and does not read Redis lock state directly.
 
 ## API Design Rules
 
 - Keep existing APIs compatible while adding new `lottery/*` APIs.
 - New record work should prefer `/lottery/records/*`; existing `/record/*` endpoints are legacy-compatible wrappers until callers are migrated.
 - Record sync returns a persisted operation log so frontend pages can show status, saved count, issue range, and failure message.
+- Record sync summary is calculated from the same persisted logs, with `limit` capped server-side.
 - Record sync status values include `RUNNING`, `SUCCESS`, `FAILED`, and `SKIPPED`; `SKIPPED` means another sync already holds the Redis lock.
 - Scheduled record sync is implemented by `LotteryRecordScheduledSync`, disabled by default through `hello.record.scheduled-sync-enabled`, and shares the same sync service, lock, and logs as manual sync.
 - `RecordUpdater` filters provider results before persistence: records at or before the current last issue are skipped, duplicate issue codes in the same fetch are ignored, and new records receive sequential line numbers from the last persisted record.

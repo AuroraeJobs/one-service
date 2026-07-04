@@ -111,9 +111,29 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add data quality check endpoint. Added `GET /lottery/data-quality` for missing issues, duplicates, malformed numbers, and future dates.
 - [x] Add data quality UI for missing issues, duplicates, malformed numbers, and future dates. Added `/lottery/data-quality` summary cards and issue sample lists.
 
+## Iteration 07: Operational Hardening And Data Quality Repair
+
+- [x] Add provider probe log model. Added `LotteryProviderProbeLog` persisted in `lottery_provider_probe_logs`.
+- [x] Persist provider probe results. `GET /lottery/providers/probe` now writes durable probe history without changing probe response semantics.
+- [x] Add provider probe log endpoint. Added `GET /lottery/providers/probe-logs` with optional `provider` and `limit`.
+- [x] Add record sync summary DTO. Added `LotteryRecordSyncSummary` for recent sync status counts, rates, saved count, latest status, issue range, and duration metrics.
+- [x] Add `GET /lottery/records/sync-summary`. Aggregates recent MongoDB sync logs with a capped server-side limit.
+- [ ] Add data quality repair request/result DTOs.
+- [ ] Add data quality missing-issue repair dry-run endpoint.
+- [ ] Add data quality missing-issue repair confirm endpoint.
+- [ ] Add conservative malformed/duplicate repair report behavior.
+- [ ] Add provider operations panel to `/lottery/sync` or `/lottery/settings`.
+- [ ] Add sync summary cards to `/lottery/sync`.
+- [ ] Add data quality repair UI with dry-run, confirm, and before/after report.
+- [ ] Integrate preferences into prediction page defaults.
+- [ ] Add visible data quality indicators on operational entry points.
+- [ ] Add frontend API client methods for new Iteration 07 endpoints.
+- [ ] Add backend tests for repair dry-run/confirm behavior.
+- [ ] Run frontend build after operational page changes.
+
 ## Documentation And Delivery
 
-- [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, and data quality contracts.
+- [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, and sync-summary contracts.
 - [x] Update `docs/lottery/menu-and-version-plan.md` when menu scope changes. Updated route and API boundary plan for ticket, ledger, sync, settings, and quality pages.
 - [x] Keep `docs/lottery/iterations/checklist.md` current after each milestone. Checklist reflects Iterations 01-06 completion.
 - [x] Run backend tests for changed services/controllers. Ran focused Maven tests for changed backend services/controllers after each backend milestone.

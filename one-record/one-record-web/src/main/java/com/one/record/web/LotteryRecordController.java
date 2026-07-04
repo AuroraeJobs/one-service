@@ -2,6 +2,7 @@ package com.one.record.web;
 
 import com.one.record.request.RecordRequest;
 import com.one.record.lottery.LotteryDraw;
+import com.one.record.lottery.LotteryRecordSyncSummary;
 import com.one.record.model.LotteryRecordSyncLog;
 import com.one.record.response.Record;
 import com.one.record.response.RecordYearCount;
@@ -128,6 +129,12 @@ public class LotteryRecordController {
     public List<LotteryRecordSyncLog> syncLogs(@RequestParam(value = "status", required = false) String status,
                                                @RequestParam(value = "limit", required = false, defaultValue = "50") int limit) {
         return syncLogService.findRecent(status, limit);
+    }
+
+    @GetMapping("sync-summary")
+    @Operation(summary = "查询开奖记录同步摘要", description = "聚合最近的开奖记录同步日志，返回状态计数、成功率、最近结果和耗时指标")
+    public LotteryRecordSyncSummary syncSummary(@RequestParam(value = "limit", required = false, defaultValue = "50") int limit) {
+        return syncLogService.summary(limit);
     }
 
     private static boolean hasFilter(RecordRequest request) {

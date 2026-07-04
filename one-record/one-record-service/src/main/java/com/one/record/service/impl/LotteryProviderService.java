@@ -4,11 +4,16 @@ import com.one.record.configuration.RecordProperties;
 import com.one.record.lottery.LotteryProviderConfig;
 import com.one.record.lottery.LotteryProviderHealth;
 import com.one.record.lottery.LotteryProviderProbeResult;
+import com.one.record.model.LotteryProviderProbeLog;
+import com.one.record.repository.LotteryProviderProbeLogRepository;
 import com.one.record.response.Record;
 import com.one.record.service.ILotteryProviderService;
 import com.one.record.service.LotteryDrawProvider;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.Comparator;
 import java.util.List;
@@ -19,13 +24,20 @@ import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class LotteryProviderService implements ILotteryProviderService {
 
     private static final String ACTIVE_DRAW_PROVIDER = "cwl";
 
+    private static final int DEFAULT_PROBE_LOG_LIMIT = 20;
+
+    private static final int MAX_PROBE_LOG_LIMIT = 200;
+
     private final List<LotteryDrawProvider> drawProviders;
 
     private final RecordProperties recordProperties;
+
+    private final LotteryProviderProbeLogRepository probeLogRepository;
 
     @Override
     public List<LotteryProviderHealth> health() {
@@ -62,7 +74,7 @@ public class LotteryProviderService implements ILotteryProviderService {
         LotteryDrawProvider drawProvider = providerMap.get(providerName);
         Long checkedAt = System.currentTimeMillis();
         if (drawProvider == null) {
-            return LotteryProviderProbeResult.builder()
+            return saveProbeResult(LotteryProviderProbeResult.builder()
                     .category("draw")
                     .provider(providerName)
                     .success(false)
@@ -71,12 +83,12 @@ public class LotteryProviderService implements ILotteryProviderService {
                     .recordCount(0)
                     .durationMs(0L)
                     .checkedAt(checkedAt)
-                    .build();
+                    .build());
         }
         long startedAt = System.currentTimeMillis();
         try {
             List<Record> records = drawProvider.fetchYearlyRecords();
-            return LotteryProviderProbeResult.builder()
+            return saveProbeResult(LotteryProviderProbeResult.builder()
                     .category("draw")
                     .provider(providerName)
                     .success(true)
@@ -85,9 +97,9 @@ public class LotteryProviderService implements ILotteryProviderService {
                     .recordCount(records == null ? 0 : records.size())
                     .durationMs(System.currentTimeMillis() - startedAt)
                     .checkedAt(checkedAt)
-                    .build();
+                    .build());
         } catch (RuntimeException exception) {
-            return LotteryProviderProbeResult.builder()
+            return saveProbeResult(LotteryProviderProbeResult.builder()
                     .category("draw")
                     .provider(providerName)
                     .success(false)
@@ -96,8 +108,17 @@ public class LotteryProviderService implements ILotteryProviderService {
                     .recordCount(0)
                     .durationMs(System.currentTimeMillis() - startedAt)
                     .checkedAt(checkedAt)
-                    .build();
+                    .build());
         }
+    }
+
+    @Override
+    public List<LotteryProviderProbeLog> probeLogs(String provider, int limit) {
+        PageRequest pageRequest = PageRequest.of(0, normalizeLimit(limit));
+        if (StringUtils.hasText(provider)) {
+            return probeLogRepository.findByProviderOrderByCheckedAtDesc(normalizeProviderName(provider), pageRequest);
+        }
+        return probeLogRepository.findByOrderByCheckedAtDesc(pageRequest);
     }
 
     private List<String> registeredDrawProviders() {
@@ -115,5 +136,30 @@ public class LotteryProviderService implements ILotteryProviderService {
 
     private String normalizeProviderName(String providerName) {
         return providerName == null ? "" : providerName.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private LotteryProviderProbeResult saveProbeResult(LotteryProviderProbeResult result) {
+        try {
+            probeLogRepository.save(LotteryProviderProbeLog.builder()
+                    .category(result.getCategory())
+                    .provider(result.getProvider())
+                    .success(result.getSuccess())
+                    .status(result.getStatus())
+                    .message(result.getMessage())
+                    .recordCount(result.getRecordCount())
+                    .durationMs(result.getDurationMs())
+                    .checkedAt(result.getCheckedAt())
+                    .build());
+        } catch (RuntimeException exception) {
+            log.warn("Failed to save lottery provider probe log, provider={}", result.getProvider(), exception);
+        }
+        return result;
+    }
+
+    private static int normalizeLimit(int limit) {
+        if (limit <= 0) {
+            return DEFAULT_PROBE_LOG_LIMIT;
+        }
+        return Math.min(limit, MAX_PROBE_LOG_LIMIT);
     }
 }

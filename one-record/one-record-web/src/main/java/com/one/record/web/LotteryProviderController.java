@@ -3,6 +3,7 @@ package com.one.record.web;
 import com.one.record.lottery.LotteryProviderConfig;
 import com.one.record.lottery.LotteryProviderHealth;
 import com.one.record.lottery.LotteryProviderProbeResult;
+import com.one.record.model.LotteryProviderProbeLog;
 import com.one.record.service.ILotteryProviderService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
@@ -36,5 +37,12 @@ public class LotteryProviderController {
     @Operation(summary = "探测彩票 Provider", description = "对指定或默认彩票开奖 provider 执行一次远程拉取探测")
     public LotteryProviderProbeResult probe(@RequestParam(name = "provider", required = false) String provider) {
         return service.probe(provider);
+    }
+
+    @GetMapping("probe-logs")
+    @Operation(summary = "查询彩票 Provider 探测日志", description = "查询最近的彩票 provider 主动探测结果，可按 provider 过滤")
+    public List<LotteryProviderProbeLog> probeLogs(@RequestParam(name = "provider", required = false) String provider,
+                                                   @RequestParam(name = "limit", required = false, defaultValue = "20") int limit) {
+        return service.probeLogs(provider, limit);
     }
 }

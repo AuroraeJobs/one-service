@@ -1,5 +1,6 @@
 package com.one.record.service;
 
+import com.one.record.lottery.LotteryRecordSyncSummary;
 import com.one.record.model.LotteryRecordSyncLog;
 
 import java.util.List;
@@ -15,4 +16,6 @@ public interface ILotteryRecordSyncLogService {
     LotteryRecordSyncLog skipped(String jobName, String startIssue, String message);
 
     List<LotteryRecordSyncLog> findRecent(String status, int limit);
+
+    LotteryRecordSyncSummary summary(int limit);
 }

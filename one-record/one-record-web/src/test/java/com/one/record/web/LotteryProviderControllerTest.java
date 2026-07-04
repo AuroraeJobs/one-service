@@ -3,6 +3,7 @@ package com.one.record.web;
 import com.one.record.lottery.LotteryProviderConfig;
 import com.one.record.lottery.LotteryProviderHealth;
 import com.one.record.lottery.LotteryProviderProbeResult;
+import com.one.record.model.LotteryProviderProbeLog;
 import com.one.record.service.ILotteryProviderService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -89,5 +90,25 @@ class LotteryProviderControllerTest {
                 .andExpect(jsonPath("$.recordCount").value(12));
 
         verify(service).probe("cwl");
+    }
+
+    @Test
+    void probeLogsDelegateToService() throws Exception {
+        when(service.probeLogs("cwl", 10)).thenReturn(List.of(LotteryProviderProbeLog.builder()
+                .provider("cwl")
+                .status("AVAILABLE")
+                .recordCount(33)
+                .checkedAt(100L)
+                .build()));
+
+        mockMvc.perform(get("/lottery/providers/probe-logs")
+                        .param("provider", "cwl")
+                        .param("limit", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].provider").value("cwl"))
+                .andExpect(jsonPath("$[0].status").value("AVAILABLE"))
+                .andExpect(jsonPath("$[0].recordCount").value(33));
+
+        verify(service).probeLogs("cwl", 10);
     }
 }

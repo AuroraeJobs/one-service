@@ -1,6 +1,7 @@
 package com.one.record.web;
 
 import com.one.record.lottery.LotteryDraw;
+import com.one.record.lottery.LotteryRecordSyncSummary;
 import com.one.record.request.RecordRequest;
 import com.one.record.model.LotteryRecordSyncLog;
 import com.one.record.response.Record;
@@ -207,5 +208,25 @@ class LotteryRecordControllerTest {
                 .andExpect(jsonPath("$[0].savedCount").value(3));
 
         verify(syncLogService).findRecent("SUCCESS", 20);
+    }
+
+    @Test
+    void syncSummaryBindsLimit() throws Exception {
+        when(syncLogService.summary(20)).thenReturn(LotteryRecordSyncSummary.builder()
+                .totalCount(2)
+                .successCount(1)
+                .failedCount(1)
+                .savedCount(3)
+                .latestStatus("SUCCESS")
+                .build());
+
+        mockMvc.perform(get("/lottery/records/sync-summary").param("limit", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalCount").value(2))
+                .andExpect(jsonPath("$.successCount").value(1))
+                .andExpect(jsonPath("$.failedCount").value(1))
+                .andExpect(jsonPath("$.latestStatus").value("SUCCESS"));
+
+        verify(syncLogService).summary(20);
     }
 }

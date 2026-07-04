@@ -204,6 +204,29 @@ PUT  /lottery/preferences
 POST /lottery/data-quality/check
 ```
 
+### Iteration 07: Operational Hardening And Data Quality Repair
+
+Goal: turn the operations pages from passive inspection into actionable repair and observability workflows.
+
+Deliverables:
+
+- Persist provider probe history and expose recent probe logs.
+- Add record sync summary aggregation from MongoDB sync logs.
+- Add dry-run and confirm flows for missing issue repair.
+- Keep malformed and duplicate record repair conservative: report first, rewrite only when a trusted refetch can prove the replacement.
+- Add provider/sync summary cards to lottery operations pages.
+- Wire lottery preferences into prediction defaults and ticket-save behavior.
+- Surface data quality warnings on operational entry points.
+
+Suggested endpoints:
+
+```text
+GET  /lottery/providers/probe-logs
+GET  /lottery/records/sync-summary
+POST /lottery/data-quality/repair/missing-issues
+POST /lottery/data-quality/repair/malformed-records
+```
+
 ## Storage Direction
 
 MongoDB durable data:
@@ -217,6 +240,7 @@ lottery_training_reports
 lottery_tickets
 lottery_prize_results
 lottery_preferences
+lottery_provider_probe_logs
 lottery_astronauts
 ```
 
