@@ -2,7 +2,9 @@ package com.one.record.service.impl;
 
 import com.one.record.model.LotteryPredictionSnapshot;
 import com.one.record.model.LotteryPredictionRuleRecord;
+import com.one.record.model.LotteryBacktestReport;
 import com.one.record.model.LotteryTrainingReportRecord;
+import com.one.record.repository.LotteryBacktestReportRepository;
 import com.one.record.repository.LotteryPredictionRuleRepository;
 import com.one.record.repository.LotteryPredictionSnapshotRepository;
 import com.one.record.repository.LotteryTrainingReportRepository;
@@ -26,6 +28,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -38,6 +41,8 @@ class LotteryTrainingServiceTest {
 
     private LotteryPredictionRuleRepository predictionRuleRepository;
 
+    private LotteryBacktestReportRepository backtestReportRepository;
+
     private IRecordService recordService;
 
     private LotteryTrainingService service;
@@ -47,9 +52,10 @@ class LotteryTrainingServiceTest {
         predictionSnapshotRepository = mock(LotteryPredictionSnapshotRepository.class);
         trainingReportRepository = mock(LotteryTrainingReportRepository.class);
         predictionRuleRepository = mock(LotteryPredictionRuleRepository.class);
+        backtestReportRepository = mock(LotteryBacktestReportRepository.class);
         recordService = mock(IRecordService.class);
         service = new LotteryTrainingService(mock(StringRedisTemplate.class), predictionSnapshotRepository,
-                trainingReportRepository, predictionRuleRepository, recordService);
+                trainingReportRepository, predictionRuleRepository, backtestReportRepository, recordService);
     }
 
     @Test
@@ -256,6 +262,16 @@ class LotteryTrainingServiceTest {
                         LotteryPredictionRuleRecord.builder().ruleId("a").ruleName("A").rankScore(10).build(),
                         LotteryPredictionRuleRecord.builder().ruleId("b").ruleName("B").rankScore(20).build()
                 ));
+        when(backtestReportRepository.findAll(any(Sort.class))).thenReturn(List.of(
+                LotteryBacktestReport.builder()
+                        .id("bt-b")
+                        .strategyName("B")
+                        .presetWindow("latest-30")
+                        .replayCount(30)
+                        .stabilityScore(86)
+                        .createdAt(200L)
+                        .build()
+        ));
 
         var comparison = service.comparePredictionRules(20);
 
@@ -263,6 +279,8 @@ class LotteryTrainingServiceTest {
         assertThat(comparison.getBestRuleId()).isEqualTo("b");
         assertThat(comparison.getBestRuleName()).isEqualTo("B");
         assertThat(comparison.getBestRankScore()).isEqualTo(20);
+        assertThat(comparison.getBestBacktestSummary().getBacktestId()).isEqualTo("bt-b");
+        assertThat(comparison.getRules().get(1).getBacktestSummary().getStabilityScore()).isEqualTo(86);
         assertThat(comparison.getGeneratedAt()).isNotNull();
     }
 

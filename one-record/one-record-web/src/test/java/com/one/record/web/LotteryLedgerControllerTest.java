@@ -1,5 +1,6 @@
 package com.one.record.web;
 
+import com.one.record.lottery.LotteryBacktestSummary;
 import com.one.record.lottery.LotteryIssueLedger;
 import com.one.record.lottery.LotteryLedgerSummary;
 import com.one.record.lottery.LotteryMonthlyLedger;
@@ -109,6 +110,10 @@ class LotteryLedgerControllerTest {
                 .netResult(new BigDecimal("1"))
                 .roiPercent(new BigDecimal("25.00"))
                 .hitRatePercent(new BigDecimal("50.00"))
+                .backtestSummary(LotteryBacktestSummary.builder()
+                        .backtestId("bt-rule")
+                        .stabilityScore(91)
+                        .build())
                 .build()));
 
         mockMvc.perform(get("/lottery/ledger/performance").param("dimension", "rule"))
@@ -117,7 +122,9 @@ class LotteryLedgerControllerTest {
                 .andExpect(jsonPath("$[0].key").value("rule-best"))
                 .andExpect(jsonPath("$[0].name").value("最佳规则"))
                 .andExpect(jsonPath("$[0].roiPercent").value(25.00))
-                .andExpect(jsonPath("$[0].hitRatePercent").value(50.00));
+                .andExpect(jsonPath("$[0].hitRatePercent").value(50.00))
+                .andExpect(jsonPath("$[0].backtestSummary.backtestId").value("bt-rule"))
+                .andExpect(jsonPath("$[0].backtestSummary.stabilityScore").value(91));
 
         verify(service).performance("rule");
     }

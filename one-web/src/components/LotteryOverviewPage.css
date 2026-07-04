@@ -422,6 +422,22 @@
   margin-top: 14px;
 }
 
+.lottery-ledger-backtest-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.lottery-ledger-backtest-strip span {
+  padding: 6px 10px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+  color: var(--app-text-secondary);
+  font-size: 12px;
+}
+
 .lottery-workbench-main-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);

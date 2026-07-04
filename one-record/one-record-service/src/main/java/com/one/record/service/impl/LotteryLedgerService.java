@@ -5,12 +5,15 @@ import com.one.record.lottery.LotteryLedgerSummary;
 import com.one.record.lottery.LotteryMonthlyLedger;
 import com.one.record.lottery.LotteryPerformanceLedger;
 import com.one.record.lottery.LotteryPrizeResult;
+import com.one.record.lottery.LotteryBacktestSummary;
 import com.one.record.model.LotteryPredictionSnapshot;
 import com.one.record.model.LotteryTicket;
+import com.one.record.repository.LotteryBacktestReportRepository;
 import com.one.record.repository.LotteryPredictionSnapshotRepository;
 import com.one.record.repository.LotteryTicketRepository;
 import com.one.record.service.ILotteryLedgerService;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -40,6 +43,8 @@ public class LotteryLedgerService implements ILotteryLedgerService {
     private final LotteryTicketRepository ticketRepository;
 
     private final LotteryPredictionSnapshotRepository predictionSnapshotRepository;
+
+    private final LotteryBacktestReportRepository backtestReportRepository;
 
     @Override
     public LotteryLedgerSummary summary() {
@@ -95,12 +100,15 @@ public class LotteryLedgerService implements ILotteryLedgerService {
         String safeDimension = normalizeDimension(dimension);
         List<LotteryTicket> tickets = ticketRepository.findByUserIdOrderByPeriodDescCreatedAtDesc(DEFAULT_USER_ID);
         Map<String, LotteryPredictionSnapshot> snapshots = "RULE".equals(safeDimension) ? snapshotMap(tickets) : Map.of();
+        Map<String, LotteryBacktestSummary> backtestSummaries = LotteryBacktestSummarySupport.latestByKey(
+                backtestReportRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"))
+        );
         Map<PerformanceKey, List<LotteryTicket>> groupedTickets = new LinkedHashMap<>();
         for (LotteryTicket ticket : tickets) {
             groupedTickets.computeIfAbsent(performanceKey(safeDimension, ticket, snapshots), ignored -> new ArrayList<>()).add(ticket);
         }
         return groupedTickets.entrySet().stream()
-                .map(entry -> buildPerformanceLedger(entry.getKey(), entry.getValue()))
+                .map(entry -> buildPerformanceLedger(entry.getKey(), entry.getValue(), backtestSummaries))
                 .toList();
     }
 
@@ -121,7 +129,9 @@ public class LotteryLedgerService implements ILotteryLedgerService {
                 .build();
     }
 
-    private LotteryPerformanceLedger buildPerformanceLedger(PerformanceKey key, List<LotteryTicket> tickets) {
+    private LotteryPerformanceLedger buildPerformanceLedger(PerformanceKey key,
+                                                            List<LotteryTicket> tickets,
+                                                            Map<String, LotteryBacktestSummary> backtestSummaries) {
         LedgerTotals totals = aggregate(tickets);
         return LotteryPerformanceLedger.builder()
                 .dimension(key.dimension())
@@ -136,6 +146,7 @@ public class LotteryLedgerService implements ILotteryLedgerService {
                 .netResult(totals.netResult())
                 .roiPercent(roiPercent(totals.netResult(), totals.totalCost()))
                 .hitRatePercent(hitRatePercent(totals.winningCount(), totals.checkedCount()))
+                .backtestSummary(LotteryBacktestSummarySupport.find(backtestSummaries, key.name(), key.key()))
                 .build();
     }
 

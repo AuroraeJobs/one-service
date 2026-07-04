@@ -126,7 +126,7 @@ Training reports should include:
 
 `LotteryTrainingReportRecord` stores completed training reports in Mongo at `lottery_training_reports`. The existing Redis `lottery:training:last` cache remains a fast compatibility path, while durable records preserve replay count, generation, best result, learned rule, latest prediction, candidates, timeline, and actual-result context for future history and comparison pages.
 
-`LotteryPredictionRuleRecord` stores learned prediction rule versions in Mongo at `lottery_prediction_rules`. Rule records capture rule id/name, generation, replay count, rank score, config, summary, and learned flag. `GET /lottery/predictions/rules` returns recent rule versions, and `GET /lottery/predictions/rules/compare` identifies the best ranked rule among that window for comparison UI.
+`LotteryPredictionRuleRecord` stores learned prediction rule versions in Mongo at `lottery_prediction_rules`. Rule records capture rule id/name, generation, replay count, rank score, config, summary, and learned flag. `GET /lottery/predictions/rules` returns recent rule versions, and `GET /lottery/predictions/rules/compare` identifies the best ranked rule among that window for comparison UI. Rule comparison also attaches a matched `LotteryBacktestSummary` when a latest backtest report has a `strategyName` matching the rule name or rule id.
 
 `GET /lottery/predictions/replay-metrics` reads the latest durable training report timeline and aggregates score, red-hit average, blue-hit rate, best score, and prize distribution for a requested historical window.
 
@@ -210,7 +210,7 @@ VOID
 
 `LotteryMonthlyLedger` is the monthly outcome trend DTO. `GET /lottery/ledger/months` groups personal tickets by creation month in `yyyy-MM` format and returns monthly ticket count, checked/pending count, winning count, total cost, total prize, net result, and ROI percent.
 
-`LotteryPerformanceLedger` powers source and rule performance views. `GET /lottery/ledger/performance?dimension=source|rule` groups personal tickets by source by default; with `dimension=rule`, prediction tickets resolve `predictionSnapshotId` to snapshot `ruleId` and `ruleName` when available. Each row returns cost, prize, net result, ROI percent, and hit-rate percent.
+`LotteryPerformanceLedger` powers source and rule performance views. `GET /lottery/ledger/performance?dimension=source|rule` groups personal tickets by source by default; with `dimension=rule`, prediction tickets resolve `predictionSnapshotId` to snapshot `ruleId` and `ruleName` when available. Each row returns cost, prize, net result, ROI percent, hit-rate percent, and an optional matched `LotteryBacktestSummary` for source/rule keys that have a same-name backtest.
 
 ## Provider Operations Contract
 
@@ -378,7 +378,7 @@ bankrollSimulation
 createdAt
 ```
 
-Wave 10C implements the first durable backtest loop with a baseline previous-draw replay strategy. A run stores the generated replay rows, prize hit distribution, cost/prize/net summary, and bankroll points so the report detail can be audited later without re-running the job. `presetWindow` keeps the user-facing period choice, while `requestedWindow` records the numeric window used for custom runs and future exports.
+Wave 10C implements the first durable backtest loop with a baseline previous-draw replay strategy. A run stores the generated replay rows, prize hit distribution, cost/prize/net summary, and bankroll points so the report detail can be audited later without re-running the job. `presetWindow` keeps the user-facing period choice, while `requestedWindow` records the numeric window used for custom runs and future exports. The latest backtest summary for a matching `strategyName` is attached to rule comparison and ledger source/rule performance rows so research evidence can be reviewed beside live ticket outcomes.
 
 Backtest endpoints:
 

@@ -2,6 +2,7 @@ package com.one.record.model;
 
 import com.one.record.training.LotteryTrainingReport;
 import com.one.record.training.PredictionRuleConfig;
+import com.one.record.lottery.LotteryBacktestSummary;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -32,6 +33,8 @@ public class LotteryPredictionRuleRecord {
     private PredictionRuleConfig config;
 
     private LotteryTrainingReport.TrainingSummary summary;
+
+    private LotteryBacktestSummary backtestSummary;
 
     private Boolean learned;
 

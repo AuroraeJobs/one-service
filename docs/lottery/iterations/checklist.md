@@ -200,7 +200,7 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add durable backtest report model with replay rows, prize distribution, hit statistics, stability score, and bankroll simulation.
 - [x] Add `POST /lottery/backtests/run` with preset windows and custom issue-range support.
 - [x] Add `GET /lottery/backtests` and `GET /lottery/backtests/{id}`.
-- [ ] Connect backtest summaries to rule comparison and source/rule ledger performance.
+- [x] Connect backtest summaries to rule comparison and source/rule ledger performance. Rule comparison and ledger performance rows now expose matched `LotteryBacktestSummary` by strategy/rule/source keys.
 - [x] Add frontend backtest report page with paged replay rows and chart summaries.
 - [x] Add export-ready report snapshot fields for future CSV/PDF export.
 

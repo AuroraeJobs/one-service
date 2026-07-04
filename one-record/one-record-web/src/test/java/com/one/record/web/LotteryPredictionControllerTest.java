@@ -1,5 +1,6 @@
 package com.one.record.web;
 
+import com.one.record.lottery.LotteryBacktestSummary;
 import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.model.LotteryPredictionRuleRecord;
 import com.one.record.model.LotteryPredictionSnapshot;
@@ -151,12 +152,18 @@ class LotteryPredictionControllerTest {
                 .bestRuleId("rule-1")
                 .bestRuleName("规则一")
                 .bestRankScore(99)
+                .bestBacktestSummary(LotteryBacktestSummary.builder()
+                        .backtestId("bt-1")
+                        .stabilityScore(88)
+                        .build())
                 .build());
 
         mockMvc.perform(get("/lottery/predictions/rules/compare").param("limit", "5"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.bestRuleId").value("rule-1"))
-                .andExpect(jsonPath("$.bestRankScore").value(99));
+                .andExpect(jsonPath("$.bestRankScore").value(99))
+                .andExpect(jsonPath("$.bestBacktestSummary.backtestId").value("bt-1"))
+                .andExpect(jsonPath("$.bestBacktestSummary.stabilityScore").value(88));
 
         verify(service).comparePredictionRules(5);
     }

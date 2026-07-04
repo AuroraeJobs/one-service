@@ -1718,6 +1718,7 @@ export interface LotteryPredictionRuleRecord {
   rankScore?: number;
   config?: PredictionRuleConfig;
   summary?: LotteryTrainingSummary;
+  backtestSummary?: LotteryBacktestSummary;
   learned?: boolean;
   createdAt?: number;
 }
@@ -1758,6 +1759,25 @@ export interface LotteryBacktestReplayRow {
 export interface LotteryBacktestBankrollPoint {
   issue?: string;
   balance?: number;
+}
+
+export interface LotteryBacktestSummary {
+  backtestId?: string;
+  strategyName?: string;
+  presetWindow?: string;
+  issueStart?: string;
+  issueEnd?: string;
+  replayCount?: number;
+  averageRedHits?: number;
+  blueHitRate?: number;
+  bestScore?: number;
+  stabilityScore?: number;
+  totalCost?: number;
+  totalPrize?: number;
+  netResult?: number;
+  roiPercent?: number;
+  prizeDistribution: Record<string, number>;
+  createdAt?: number;
 }
 
 export interface LotteryBacktestReport {
@@ -1810,6 +1830,7 @@ export interface LotteryRuleComparison {
   bestRuleId?: string;
   bestRuleName?: string;
   bestRankScore?: number;
+  bestBacktestSummary?: LotteryBacktestSummary;
   generatedAt?: number;
 }
 
@@ -1992,6 +2013,7 @@ export interface LotteryPerformanceLedger {
   netResult?: number;
   roiPercent?: number;
   hitRatePercent?: number;
+  backtestSummary?: LotteryBacktestSummary;
 }
 
 export interface LotteryWorkbenchStepResult {

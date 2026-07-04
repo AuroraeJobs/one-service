@@ -5,10 +5,12 @@ import lombok.extern.slf4j.Slf4j;
 import com.one.common.util.JsonUtil;
 import com.one.record.file.RecordFile;
 import com.one.record.lottery.LotteryAuditMetadata;
+import com.one.record.lottery.LotteryBacktestSummary;
 import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.model.LotteryPredictionSnapshot;
 import com.one.record.model.LotteryPredictionRuleRecord;
 import com.one.record.model.LotteryTrainingReportRecord;
+import com.one.record.repository.LotteryBacktestReportRepository;
 import com.one.record.repository.LotteryPredictionRuleRepository;
 import com.one.record.repository.LotteryPredictionSnapshotRepository;
 import com.one.record.repository.LotteryTrainingReportRepository;
@@ -80,6 +82,8 @@ public class LotteryTrainingService implements ILotteryTrainingService {
 
     private final LotteryPredictionRuleRepository predictionRuleRepository;
 
+    private final LotteryBacktestReportRepository backtestReportRepository;
+
     private final IRecordService recordService;
 
     private final AtomicBoolean trainingRunning = new AtomicBoolean(false);
@@ -96,11 +100,13 @@ public class LotteryTrainingService implements ILotteryTrainingService {
                                   LotteryPredictionSnapshotRepository predictionSnapshotRepository,
                                   LotteryTrainingReportRepository trainingReportRepository,
                                   LotteryPredictionRuleRepository predictionRuleRepository,
+                                  LotteryBacktestReportRepository backtestReportRepository,
                                   IRecordService recordService) {
         this.redisTemplate = redisTemplate;
         this.predictionSnapshotRepository = predictionSnapshotRepository;
         this.trainingReportRepository = trainingReportRepository;
         this.predictionRuleRepository = predictionRuleRepository;
+        this.backtestReportRepository = backtestReportRepository;
         this.recordService = recordService;
     }
 
@@ -338,6 +344,10 @@ public class LotteryTrainingService implements ILotteryTrainingService {
     @Override
     public LotteryRuleComparison comparePredictionRules(Integer limit) {
         List<LotteryPredictionRuleRecord> rules = predictionRules(limit);
+        Map<String, LotteryBacktestSummary> backtestSummaries = LotteryBacktestSummarySupport.latestByKey(
+                backtestReportRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"))
+        );
+        rules.forEach(rule -> rule.setBacktestSummary(LotteryBacktestSummarySupport.find(backtestSummaries, rule.getRuleName(), rule.getRuleId())));
         LotteryPredictionRuleRecord best = rules.stream()
                 .filter(rule -> rule.getRankScore() != null)
                 .max(Comparator.comparingInt(LotteryPredictionRuleRecord::getRankScore))
@@ -347,6 +357,7 @@ public class LotteryTrainingService implements ILotteryTrainingService {
                 .bestRuleId(best == null ? null : best.getRuleId())
                 .bestRuleName(best == null ? null : best.getRuleName())
                 .bestRankScore(best == null ? null : best.getRankScore())
+                .bestBacktestSummary(best == null ? null : best.getBacktestSummary())
                 .generatedAt(System.currentTimeMillis())
                 .build();
     }

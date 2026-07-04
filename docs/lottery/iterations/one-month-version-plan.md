@@ -27,7 +27,7 @@ Deferred unless the month finishes early:
 
 Goal: make strategy quality visible through durable, repeatable replay evidence.
 
-Status: shipped as the first Wave 10C slice. Remaining follow-up is to connect backtest summaries into rule comparison and source/rule ledger performance once those comparison surfaces are expanded.
+Status: shipped. The first slice delivered durable reports, and the follow-up connected matched backtest summaries into rule comparison and source/rule ledger performance.
 
 Deliverables:
 
@@ -118,7 +118,6 @@ Acceptance:
 
 Month-end split:
 
-- The remaining Wave 10C integration item, connecting backtest summaries into rule comparison and source/rule ledger performance, is explicitly deferred to the next comparison-surface iteration.
 - Week 4 intentionally stops at non-destructive maintenance foundations; destructive cleanup remains out of scope until a confirm-only flow and retention policy are selected.
 
 ## Weekly Delivery Rules
@@ -133,7 +132,7 @@ Month-end split:
 
 ## Month-End Release Criteria
 
-- Waves 10C, 10D, 10E, and the non-destructive foundation of 10F are complete or explicitly split into a follow-up plan. The only Wave 10C split is the rule-comparison/ledger-performance integration noted above.
+- Waves 10C, 10D, 10E, and the non-destructive foundation of 10F are complete or explicitly split into a follow-up plan.
 - All newly added growing lists use the shared pagination envelope.
 - All new frontend routes are reachable from lottery navigation.
 - No existing lottery routes are removed.

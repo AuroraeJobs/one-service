@@ -38,6 +38,8 @@ const formatMoney = (value?: number) => `¥${Number(value || 0).toFixed(2)}`;
 
 const formatPercent = (value?: number) => `${Number(value || 0).toFixed(2)}%`;
 
+const hasBacktestSummary = (rows: LotteryPerformanceLedger[]) => rows.some(row => row.backtestSummary);
+
 const createMonthlyTrendOption = (months: LotteryMonthlyLedger[]): EChartsOption => {
   const sortedMonths = [...months]
     .filter(item => item.month && item.month !== 'UNKNOWN')
@@ -155,6 +157,7 @@ const LotteryLedgerPage = () => {
 
   const monthlyTrendOption = useMemo(() => createMonthlyTrendOption(months), [months]);
   const activePerformanceRows = performanceDimension === 'source' ? sourcePerformance : rulePerformance;
+  const activePerformanceHasBacktest = useMemo(() => hasBacktestSummary(activePerformanceRows), [activePerformanceRows]);
   const performanceOption = useMemo(
     () => createPerformanceOption(activePerformanceRows, performanceDimension === 'source' ? '来源表现' : '规则表现'),
     [activePerformanceRows, performanceDimension]
@@ -333,6 +336,17 @@ const LotteryLedgerPage = () => {
         }
       >
         <ReactECharts option={performanceOption} style={{ height: 320, width: '100%' }} notMerge lazyUpdate />
+        {activePerformanceHasBacktest ? (
+          <div className="lottery-ledger-backtest-strip">
+            {activePerformanceRows
+              .filter(row => row.backtestSummary)
+              .map(row => (
+                <span key={`${row.dimension}-${row.key}`}>
+                  {row.name || row.key}: 回测稳定 {row.backtestSummary?.stabilityScore ?? 0} · 红球均值 {row.backtestSummary?.averageRedHits ?? 0} · 蓝球率 {formatPercent(row.backtestSummary?.blueHitRate)} · 净值 {formatMoney(row.backtestSummary?.netResult)}
+                </span>
+              ))}
+          </div>
+        ) : null}
       </Card>
 
       <Card className="life-panel-card" title="期次账本">

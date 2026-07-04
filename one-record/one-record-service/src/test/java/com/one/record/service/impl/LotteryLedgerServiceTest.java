@@ -5,12 +5,15 @@ import com.one.record.lottery.LotteryLedgerSummary;
 import com.one.record.lottery.LotteryMonthlyLedger;
 import com.one.record.lottery.LotteryPerformanceLedger;
 import com.one.record.lottery.LotteryPrizeResult;
+import com.one.record.model.LotteryBacktestReport;
 import com.one.record.model.LotteryPredictionSnapshot;
 import com.one.record.model.LotteryTicket;
+import com.one.record.repository.LotteryBacktestReportRepository;
 import com.one.record.repository.LotteryPredictionSnapshotRepository;
 import com.one.record.repository.LotteryTicketRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -18,6 +21,7 @@ import java.time.ZoneId;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -27,13 +31,16 @@ class LotteryLedgerServiceTest {
 
     private LotteryPredictionSnapshotRepository predictionSnapshotRepository;
 
+    private LotteryBacktestReportRepository backtestReportRepository;
+
     private LotteryLedgerService service;
 
     @BeforeEach
     void setUp() {
         ticketRepository = mock(LotteryTicketRepository.class);
         predictionSnapshotRepository = mock(LotteryPredictionSnapshotRepository.class);
-        service = new LotteryLedgerService(ticketRepository, predictionSnapshotRepository);
+        backtestReportRepository = mock(LotteryBacktestReportRepository.class);
+        service = new LotteryLedgerService(ticketRepository, predictionSnapshotRepository, backtestReportRepository);
     }
 
     @Test
@@ -249,6 +256,17 @@ class LotteryLedgerServiceTest {
                         .ruleName("最佳规则")
                         .build()
         ));
+        when(backtestReportRepository.findAll(any(Sort.class))).thenReturn(List.of(
+                LotteryBacktestReport.builder()
+                        .id("bt-rule")
+                        .strategyName("最佳规则")
+                        .presetWindow("latest-30")
+                        .stabilityScore(91)
+                        .netResult(new BigDecimal("-20"))
+                        .totalCost(new BigDecimal("60"))
+                        .createdAt(100L)
+                        .build()
+        ));
 
         List<LotteryPerformanceLedger> performance = service.performance("rule");
 
@@ -257,6 +275,8 @@ class LotteryLedgerServiceTest {
         assertThat(performance.get(0).getKey()).isEqualTo("rule-best");
         assertThat(performance.get(0).getName()).isEqualTo("最佳规则");
         assertThat(performance.get(0).getHitRatePercent()).isEqualByComparingTo("100.00");
+        assertThat(performance.get(0).getBacktestSummary().getBacktestId()).isEqualTo("bt-rule");
+        assertThat(performance.get(0).getBacktestSummary().getRoiPercent()).isEqualByComparingTo("-33.33");
         assertThat(performance.get(1).getKey()).isEqualTo("MANUAL");
     }
 

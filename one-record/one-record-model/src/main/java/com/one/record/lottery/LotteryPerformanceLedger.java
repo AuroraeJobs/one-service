@@ -37,4 +37,6 @@ public class LotteryPerformanceLedger implements Serializable {
     private BigDecimal roiPercent;
 
     private BigDecimal hitRatePercent;
+
+    private LotteryBacktestSummary backtestSummary;
 }

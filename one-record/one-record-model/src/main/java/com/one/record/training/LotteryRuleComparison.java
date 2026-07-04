@@ -1,5 +1,6 @@
 package com.one.record.training;
 
+import com.one.record.lottery.LotteryBacktestSummary;
 import com.one.record.model.LotteryPredictionRuleRecord;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,6 +25,8 @@ public class LotteryRuleComparison implements Serializable {
     private String bestRuleName;
 
     private Integer bestRankScore;
+
+    private LotteryBacktestSummary bestBacktestSummary;
 
     private Long generatedAt;
 }
