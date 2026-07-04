@@ -13,4 +13,9 @@ public interface LotteryTicketRepository extends MongoRepository<LotteryTicket, 
     List<LotteryTicket> findByUserIdAndIssueOrderByCreatedAtDesc(String userId, String issue);
 
     Optional<LotteryTicket> findByIdAndUserId(String id, String userId);
+
+    Optional<LotteryTicket> findFirstByUserIdAndIssueAndRedNumbersAndBlueNumber(String userId,
+                                                                                String issue,
+                                                                                List<String> redNumbers,
+                                                                                String blueNumber);
 }

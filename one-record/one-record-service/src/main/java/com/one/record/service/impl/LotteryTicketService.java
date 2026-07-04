@@ -3,10 +3,14 @@ package com.one.record.service.impl;
 import com.one.common.exception.NotFoundException;
 import com.one.common.exception.ServiceException;
 import com.one.record.lottery.LotteryPrizeResult;
+import com.one.record.lottery.LotteryTicketBatchSaveRequest;
+import com.one.record.lottery.LotteryTicketBatchSaveResult;
+import com.one.record.lottery.LotteryTicketPrizeCheckSummary;
 import com.one.record.lottery.LotteryTicketSummary;
 import com.one.record.model.LotteryTicket;
 import com.one.record.repository.LotteryTicketRepository;
 import com.one.record.service.ILotteryTicketService;
+import com.one.record.service.IRecordService;
 import com.one.record.training.LotteryActualRecord;
 import com.one.record.util.LotteryDrawUtil;
 import com.one.record.util.LotteryPrizeCalculator;
@@ -15,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +35,8 @@ public class LotteryTicketService implements ILotteryTicketService {
     private static final String DEFAULT_SOURCE = "MANUAL";
 
     private final LotteryTicketRepository repository;
+
+    private final IRecordService recordService;
 
     @Override
     public List<LotteryTicket> tickets(String issue, String status, String source, String prizeGrade) {
@@ -61,7 +68,35 @@ public class LotteryTicketService implements ILotteryTicketService {
                 .updatedAt(now)
                 .build();
         copyTicket(ticket, target);
+        LotteryTicket duplicate = duplicateOf(target);
+        if (duplicate != null) {
+            return duplicate;
+        }
         return repository.save(target);
+    }
+
+    @Override
+    public LotteryTicketBatchSaveResult saveTickets(LotteryTicketBatchSaveRequest request) {
+        List<LotteryTicket> tickets = request == null || request.getTickets() == null ? List.of() : request.getTickets();
+        List<LotteryTicket> savedTickets = new ArrayList<>();
+        List<LotteryTicket> duplicateTickets = new ArrayList<>();
+        for (LotteryTicket ticket : tickets) {
+            LotteryTicket normalized = newTicket(ticket);
+            LotteryTicket duplicate = duplicateOf(normalized);
+            if (duplicate != null || duplicateInBatch(savedTickets, normalized)) {
+                duplicateTickets.add(duplicate == null ? normalized : duplicate);
+                continue;
+            }
+            savedTickets.add(repository.save(normalized));
+        }
+        return LotteryTicketBatchSaveResult.builder()
+                .requestedCount(tickets.size())
+                .savedCount(savedTickets.size())
+                .duplicateCount(duplicateTickets.size())
+                .savedTickets(savedTickets)
+                .duplicateTickets(duplicateTickets)
+                .generatedAt(System.currentTimeMillis())
+                .build();
     }
 
     @Override
@@ -85,6 +120,10 @@ public class LotteryTicketService implements ILotteryTicketService {
 
     @Override
     public List<LotteryTicket> checkPrizes(LotteryActualRecord actualRecord) {
+        return checkPrizes(actualRecord, false);
+    }
+
+    private List<LotteryTicket> checkPrizes(LotteryActualRecord actualRecord, boolean pendingOnly) {
         if (actualRecord == null || actualRecord.getPeriod() <= 0) {
             throw new ServiceException("兑奖开奖期号不能为空");
         }
@@ -92,6 +131,11 @@ public class LotteryTicketService implements ILotteryTicketService {
         String actualBlueNumber = LotteryDrawUtil.normalizeBlueNumber(actualRecord.getBlueNumber());
         List<LotteryTicket> tickets = repository.findByUserIdAndIssueOrderByCreatedAtDesc(
                 DEFAULT_USER_ID, String.valueOf(actualRecord.getPeriod()));
+        if (pendingOnly) {
+            tickets = tickets.stream()
+                    .filter(ticket -> !"CHECKED".equals(normalizeOptional(ticket.getStatus())))
+                    .toList();
+        }
         Long now = System.currentTimeMillis();
         for (LotteryTicket ticket : tickets) {
             LotteryPrizeResult result = LotteryPrizeCalculator.calculate(
@@ -102,6 +146,37 @@ public class LotteryTicketService implements ILotteryTicketService {
             ticket.setUpdatedAt(now);
         }
         return repository.saveAll(tickets);
+    }
+
+    @Override
+    public LotteryTicketPrizeCheckSummary checkLatestPrizes() {
+        com.one.record.response.Record latest = recordService.findLast();
+        if (latest == null || !StringUtils.hasText(latest.getCode())) {
+            throw new ServiceException("暂无最新开奖记录，无法核奖");
+        }
+        LotteryActualRecord actualRecord = new LotteryActualRecord();
+        actualRecord.setPeriod((int) Long.parseLong(latest.getCode()));
+        actualRecord.setRedNumbers(LotteryDrawUtil.normalizeRedNumbers(latest.getRed()));
+        actualRecord.setBlueNumber(LotteryDrawUtil.normalizeBlueNumber(latest.getBlue()));
+        List<LotteryTicket> checked = checkPrizes(actualRecord, true).stream()
+                .filter(ticket -> ticket.getPrizeResult() != null)
+                .toList();
+        long totalPrizeAmount = checked.stream()
+                .map(LotteryTicket::getPrizeResult)
+                .map(LotteryPrizeResult::getPrizeAmount)
+                .filter(amount -> amount != null)
+                .mapToLong(Long::longValue)
+                .sum();
+        int winningCount = (int) checked.stream()
+                .filter(ticket -> Boolean.TRUE.equals(ticket.getPrizeResult().getWinning()))
+                .count();
+        return LotteryTicketPrizeCheckSummary.builder()
+                .issue(latest.getCode())
+                .checkedTicketCount(checked.size())
+                .winningTicketCount(winningCount)
+                .totalPrizeAmount(totalPrizeAmount)
+                .generatedAt(System.currentTimeMillis())
+                .build();
     }
 
     @Override
@@ -154,6 +229,42 @@ public class LotteryTicketService implements ILotteryTicketService {
         target.setPrizeResult(source.getPrizeResult());
         target.setPredictionSnapshotId(trimToNull(source.getPredictionSnapshotId()));
         target.setNote(trimToNull(source.getNote()));
+    }
+
+    private LotteryTicket newTicket(LotteryTicket ticket) {
+        if (ticket == null) {
+            throw new ServiceException("彩票票据不能为空");
+        }
+        Long now = System.currentTimeMillis();
+        LotteryTicket target = LotteryTicket.builder()
+                .userId(DEFAULT_USER_ID)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+        copyTicket(ticket, target);
+        return target;
+    }
+
+    private LotteryTicket duplicateOf(LotteryTicket ticket) {
+        if (ticket == null || !StringUtils.hasText(ticket.getIssue()) || ticket.getRedNumbers() == null
+                || ticket.getRedNumbers().isEmpty() || !StringUtils.hasText(ticket.getBlueNumber())) {
+            return null;
+        }
+        java.util.Optional<LotteryTicket> duplicate = repository.findFirstByUserIdAndIssueAndRedNumbersAndBlueNumber(
+                DEFAULT_USER_ID, ticket.getIssue(), ticket.getRedNumbers(), ticket.getBlueNumber());
+        return duplicate == null ? null : duplicate.orElse(null);
+    }
+
+    private boolean duplicateInBatch(List<LotteryTicket> savedTickets, LotteryTicket ticket) {
+        return savedTickets.stream()
+                .anyMatch(saved -> sameTicketNumbers(saved, ticket));
+    }
+
+    private boolean sameTicketNumbers(LotteryTicket left, LotteryTicket right) {
+        return left != null && right != null
+                && java.util.Objects.equals(left.getIssue(), right.getIssue())
+                && java.util.Objects.equals(left.getRedNumbers(), right.getRedNumbers())
+                && java.util.Objects.equals(left.getBlueNumber(), right.getBlueNumber());
     }
 
     private Long resolvePeriod(LotteryTicket ticket) {

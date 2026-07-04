@@ -227,6 +227,28 @@ POST /lottery/data-quality/repair/missing-issues
 POST /lottery/data-quality/repair/malformed-records
 ```
 
+### Iteration 08: Prediction Automation And Ticket Closure
+
+Goal: connect predictions, personal tickets, prize checking, and outcome views into a repeatable usage loop.
+
+Deliverables:
+
+- Add duplicate-safe batch ticket saving for prediction candidates.
+- Add latest-draw prize checking with an operation summary.
+- Add frontend actions to save primary and candidate predictions as tickets.
+- Add a ticket page action to check pending tickets against the latest draw.
+- Show prediction result status and ticket linkage across prediction history, prediction detail, and ticket pages.
+- Attach latest actual results to matching prediction snapshots where the backend can prove the period match.
+
+Suggested endpoints:
+
+```text
+POST /lottery/tickets/batch
+POST /lottery/tickets/check-prizes/latest
+GET  /lottery/tickets?predictionSnapshotId=
+POST /lottery/predictions/attach-latest-actual
+```
+
 ## Storage Direction
 
 MongoDB durable data:

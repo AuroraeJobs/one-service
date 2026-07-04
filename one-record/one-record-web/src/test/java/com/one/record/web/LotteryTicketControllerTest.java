@@ -2,6 +2,8 @@ package com.one.record.web;
 
 import com.one.record.model.LotteryTicket;
 import com.one.record.service.ILotteryTicketService;
+import com.one.record.lottery.LotteryTicketBatchSaveResult;
+import com.one.record.lottery.LotteryTicketPrizeCheckSummary;
 import com.one.record.lottery.LotteryTicketSummary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -67,6 +69,28 @@ class LotteryTicketControllerTest {
     }
 
     @Test
+    void saveTicketsDelegatesToService() throws Exception {
+        when(service.saveTickets(org.mockito.ArgumentMatchers.any()))
+                .thenReturn(LotteryTicketBatchSaveResult.builder()
+                        .requestedCount(2)
+                        .savedCount(1)
+                        .duplicateCount(1)
+                        .savedTickets(List.of(LotteryTicket.builder().id("ticket-1").issue("2026001").build()))
+                        .build());
+
+        mockMvc.perform(post("/lottery/tickets/batch")
+                        .contentType("application/json")
+                        .content("{\"tickets\":[{\"issue\":\"2026001\",\"redNumbers\":[\"01\",\"02\",\"03\",\"04\",\"05\",\"06\"],\"blueNumber\":\"07\"}]}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.requestedCount").value(2))
+                .andExpect(jsonPath("$.savedCount").value(1))
+                .andExpect(jsonPath("$.duplicateCount").value(1))
+                .andExpect(jsonPath("$.savedTickets[0].id").value("ticket-1"));
+
+        verify(service).saveTickets(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
     void updateTicketDelegatesToService() throws Exception {
         when(service.updateTicket(org.mockito.ArgumentMatchers.eq("ticket-1"), org.mockito.ArgumentMatchers.any(LotteryTicket.class)))
                 .thenReturn(LotteryTicket.builder().id("ticket-1").status("BOUGHT").build());
@@ -123,5 +147,24 @@ class LotteryTicketControllerTest {
                 .andExpect(jsonPath("$[0].status").value("CHECKED"));
 
         verify(service).checkPrizes(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void checkLatestPrizesDelegatesToService() throws Exception {
+        when(service.checkLatestPrizes()).thenReturn(LotteryTicketPrizeCheckSummary.builder()
+                .issue("2026001")
+                .checkedTicketCount(2)
+                .winningTicketCount(1)
+                .totalPrizeAmount(1000L)
+                .build());
+
+        mockMvc.perform(post("/lottery/tickets/check-prizes/latest"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.issue").value("2026001"))
+                .andExpect(jsonPath("$.checkedTicketCount").value(2))
+                .andExpect(jsonPath("$.winningTicketCount").value(1))
+                .andExpect(jsonPath("$.totalPrizeAmount").value(1000));
+
+        verify(service).checkLatestPrizes();
     }
 }

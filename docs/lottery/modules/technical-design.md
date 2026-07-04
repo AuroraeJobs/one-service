@@ -176,6 +176,8 @@ updatedAt
 
 `POST /lottery/tickets/check-prizes` accepts an actual draw, finds tickets for that draw period, calculates prize results, and writes the checked status back to each ticket. `GET /lottery/tickets/summary` aggregates counts, cost, prize amount, status distribution, and prize distribution.
 
+`LotteryTicketBatchSaveRequest` and `LotteryTicketBatchSaveResult` support duplicate-safe batch ticket creation. `POST /lottery/tickets/batch` normalizes each requested ticket and skips duplicates by default user, issue, normalized red numbers, and blue number. `LotteryTicketPrizeCheckSummary` powers `POST /lottery/tickets/check-prizes/latest`, which reads the latest draw record, checks pending tickets for that issue, and returns checked count, winning count, and total prize amount.
+
 The frontend ticket list page at `/lottery/tickets` reads ticket list and summary APIs together, shows issue filtering, status/prize tags, generated numbers, cost, and prize outcome.
 
 The ticket page create/edit modal posts to the ticket CRUD APIs and accepts red numbers as space- or comma-separated input before converting them to the backend list format.

@@ -2,6 +2,9 @@ package com.one.record.web;
 
 import com.one.record.model.LotteryTicket;
 import com.one.record.service.ILotteryTicketService;
+import com.one.record.lottery.LotteryTicketBatchSaveRequest;
+import com.one.record.lottery.LotteryTicketBatchSaveResult;
+import com.one.record.lottery.LotteryTicketPrizeCheckSummary;
 import com.one.record.lottery.LotteryTicketSummary;
 import com.one.record.training.LotteryActualRecord;
 import io.swagger.v3.oas.annotations.Operation;
@@ -51,6 +54,13 @@ public class LotteryTicketController {
         return service.saveTicket(ticket);
     }
 
+    @PostMapping("batch")
+    @Operation(summary = "批量新增彩票票据", description = "批量保存预测候选或手动票据，同一期同号码会跳过重复保存")
+    public LotteryTicketBatchSaveResult saveTickets(@RequestBody LotteryTicketBatchSaveRequest request) {
+        log.info("Saving lottery tickets batch: {}", request);
+        return service.saveTickets(request);
+    }
+
     @PutMapping("{id}")
     @Operation(summary = "更新彩票票据", description = "按票据 ID 更新个人彩票票据")
     public LotteryTicket updateTicket(@PathVariable("id") String id, @RequestBody LotteryTicket ticket) {
@@ -70,5 +80,12 @@ public class LotteryTicketController {
     public List<LotteryTicket> checkPrizes(@RequestBody LotteryActualRecord actualRecord) {
         log.info("Checking lottery ticket prizes: {}", actualRecord);
         return service.checkPrizes(actualRecord);
+    }
+
+    @PostMapping("check-prizes/latest")
+    @Operation(summary = "按最新开奖记录核奖", description = "使用最新开奖记录核验同一期待开奖票据，并返回核奖摘要")
+    public LotteryTicketPrizeCheckSummary checkLatestPrizes() {
+        log.info("Checking latest lottery ticket prizes");
+        return service.checkLatestPrizes();
     }
 }

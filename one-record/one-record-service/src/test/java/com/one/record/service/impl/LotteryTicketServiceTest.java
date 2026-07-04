@@ -2,9 +2,14 @@ package com.one.record.service.impl;
 
 import com.one.common.exception.NotFoundException;
 import com.one.record.lottery.LotteryPrizeResult;
+import com.one.record.lottery.LotteryTicketBatchSaveRequest;
+import com.one.record.lottery.LotteryTicketBatchSaveResult;
+import com.one.record.lottery.LotteryTicketPrizeCheckSummary;
 import com.one.record.lottery.LotteryTicketSummary;
 import com.one.record.model.LotteryTicket;
 import com.one.record.repository.LotteryTicketRepository;
+import com.one.record.response.Record;
+import com.one.record.service.IRecordService;
 import com.one.record.training.LotteryActualRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,12 +29,15 @@ class LotteryTicketServiceTest {
 
     private LotteryTicketRepository repository;
 
+    private IRecordService recordService;
+
     private LotteryTicketService service;
 
     @BeforeEach
     void setUp() {
         repository = mock(LotteryTicketRepository.class);
-        service = new LotteryTicketService(repository);
+        recordService = mock(IRecordService.class);
+        service = new LotteryTicketService(repository, recordService);
     }
 
     @Test
@@ -89,6 +97,49 @@ class LotteryTicketServiceTest {
         assertThat(saved.getStatus()).isEqualTo("DRAFT");
         assertThat(saved.getCreatedAt()).isNotNull();
         assertThat(saved.getUpdatedAt()).isNotNull();
+    }
+
+    @Test
+    void saveTicketReturnsExistingDuplicateWhenSameIssueAndNumbersExist() {
+        LotteryTicket existing = LotteryTicket.builder().id("existing").issue("2026001").build();
+        when(repository.findFirstByUserIdAndIssueAndRedNumbersAndBlueNumber(
+                "default", "2026001", List.of("01", "02", "03", "04", "05", "06"), "07"))
+                .thenReturn(Optional.of(existing));
+
+        LotteryTicket saved = service.saveTicket(LotteryTicket.builder()
+                .issue("2026001")
+                .redNumbers(List.of("06", "05", "04", "03", "02", "01"))
+                .blueNumber("7")
+                .build());
+
+        assertThat(saved.getId()).isEqualTo("existing");
+        verify(repository, org.mockito.Mockito.never()).save(org.mockito.ArgumentMatchers.any(LotteryTicket.class));
+    }
+
+    @Test
+    void saveTicketsSkipsExistingAndInBatchDuplicates() {
+        when(repository.findFirstByUserIdAndIssueAndRedNumbersAndBlueNumber(
+                "default", "2026001", List.of("01", "02", "03", "04", "05", "06"), "07"))
+                .thenReturn(Optional.empty());
+        when(repository.findFirstByUserIdAndIssueAndRedNumbersAndBlueNumber(
+                "default", "2026001", List.of("01", "02", "03", "04", "05", "08"), "09"))
+                .thenReturn(Optional.of(LotteryTicket.builder().id("existing").issue("2026001").build()));
+        when(repository.save(org.mockito.ArgumentMatchers.any(LotteryTicket.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        LotteryTicketBatchSaveResult result = service.saveTickets(LotteryTicketBatchSaveRequest.builder()
+                .tickets(List.of(
+                        ticket("2026001", List.of("01", "02", "03", "04", "05", "06"), "07"),
+                        ticket("2026001", List.of("06", "05", "04", "03", "02", "01"), "07"),
+                        ticket("2026001", List.of("01", "02", "03", "04", "05", "08"), "09")
+                ))
+                .build());
+
+        assertThat(result.getRequestedCount()).isEqualTo(3);
+        assertThat(result.getSavedCount()).isEqualTo(1);
+        assertThat(result.getDuplicateCount()).isEqualTo(2);
+        assertThat(result.getSavedTickets()).hasSize(1);
+        assertThat(result.getDuplicateTickets()).hasSize(2);
     }
 
     @Test
@@ -153,6 +204,41 @@ class LotteryTicketServiceTest {
     }
 
     @Test
+    void checkLatestPrizesUsesLatestRecordAndOnlyPendingTickets() {
+        Record latest = new Record();
+        latest.setCode("2026001");
+        latest.setRed("01,02,03,04,05,06");
+        latest.setBlue("07");
+        when(recordService.findLast()).thenReturn(latest);
+        when(repository.findByUserIdAndIssueOrderByCreatedAtDesc("default", "2026001"))
+                .thenReturn(List.of(
+                        LotteryTicket.builder()
+                                .id("pending")
+                                .issue("2026001")
+                                .status("DRAFT")
+                                .redNumbers(List.of("01", "02", "03", "04", "08", "09"))
+                                .blueNumber("07")
+                                .build(),
+                        LotteryTicket.builder()
+                                .id("checked")
+                                .issue("2026001")
+                                .status("CHECKED")
+                                .redNumbers(List.of("01", "02", "03", "04", "05", "06"))
+                                .blueNumber("07")
+                                .build()
+                ));
+        when(repository.saveAll(org.mockito.ArgumentMatchers.anyList()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        LotteryTicketPrizeCheckSummary summary = service.checkLatestPrizes();
+
+        assertThat(summary.getIssue()).isEqualTo("2026001");
+        assertThat(summary.getCheckedTicketCount()).isEqualTo(1);
+        assertThat(summary.getWinningTicketCount()).isEqualTo(1);
+        assertThat(summary.getTotalPrizeAmount()).isEqualTo(20000L);
+    }
+
+    @Test
     void summaryAggregatesTickets() {
         when(repository.findByUserIdOrderByPeriodDescCreatedAtDesc("default")).thenReturn(List.of(
                 LotteryTicket.builder()
@@ -181,5 +267,14 @@ class LotteryTicketServiceTest {
         assertThat(summary.getStatusDistribution()).containsEntry("CHECKED", 1).containsEntry("DRAFT", 1);
         assertThat(summary.getPrizeDistribution()).containsEntry("FIFTH", 1);
         assertThat(summary.getGeneratedAt()).isNotNull();
+    }
+
+    private static LotteryTicket ticket(String issue, List<String> redNumbers, String blueNumber) {
+        return LotteryTicket.builder()
+                .issue(issue)
+                .redNumbers(redNumbers)
+                .blueNumber(blueNumber)
+                .source("PREDICTION")
+                .build();
     }
 }

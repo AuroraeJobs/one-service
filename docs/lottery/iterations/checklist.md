@@ -131,9 +131,26 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add backend tests for repair dry-run/confirm behavior. Covered dry-run no-save behavior, confirm save/reorder behavior, and controller endpoint binding.
 - [x] Run frontend build after operational page changes. `npm run build` passed after `/lottery/sync` and `/lottery/data-quality` updates.
 
+## Iteration 08: Prediction Automation And Ticket Closure
+
+- [x] Add ticket batch-save request/result DTOs. Added `LotteryTicketBatchSaveRequest` and `LotteryTicketBatchSaveResult`.
+- [x] Add ticket prize-check summary DTO. Added `LotteryTicketPrizeCheckSummary`.
+- [x] Add ticket duplicate detection. Single-ticket and batch saves now treat same issue plus normalized red/blue numbers as idempotent for the default user.
+- [x] Add `POST /lottery/tickets/batch`. Batch saving skips existing and in-request duplicate tickets.
+- [x] Add `POST /lottery/tickets/check-prizes/latest`. Uses the latest draw record to check pending tickets for that issue and returns a summary.
+- [x] Add backend tests for batch save, duplicate skip, and latest prize-check summary.
+- [ ] Add frontend API client methods for batch ticket save and latest prize-check summary.
+- [ ] Add one-click save of prediction primary plus candidate numbers.
+- [ ] Add latest-draw prize-check action to `/lottery/tickets`.
+- [ ] Add prediction history result-status filtering.
+- [ ] Add prediction detail saved-ticket count or linkback.
+- [ ] Add ticket page linkback to prediction snapshot when `predictionSnapshotId` exists.
+- [ ] Add prediction actual-result attachment from latest draw where matching snapshots exist.
+- [ ] Update frontend build after Iteration 08 page changes.
+
 ## Documentation And Delivery
 
-- [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, and sync-summary contracts.
+- [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.
 - [x] Update `docs/lottery/menu-and-version-plan.md` when menu scope changes. Updated route and API boundary plan for ticket, ledger, sync, settings, and quality pages.
 - [x] Keep `docs/lottery/iterations/checklist.md` current after each milestone. Checklist reflects Iterations 01-06 completion.
 - [x] Run backend tests for changed services/controllers. Ran focused Maven tests for changed backend services/controllers after each backend milestone.
