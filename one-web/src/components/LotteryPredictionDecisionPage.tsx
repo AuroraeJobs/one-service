@@ -6,10 +6,13 @@ import {
   CheckCircleOutlined,
   FileAddOutlined,
   FilterOutlined,
+  FolderOpenOutlined,
   HistoryOutlined,
+  InboxOutlined,
   PrinterOutlined,
   ReloadOutlined,
   SafetyCertificateOutlined,
+  SaveOutlined,
   ThunderboltOutlined,
   WarningOutlined
 } from '@ant-design/icons';
@@ -17,8 +20,11 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import LotteryBalls from './lottery/LotteryBalls';
 import {
+  lotteryDecisionSetApi,
   lotteryPredictionApi,
   lotteryTicketApi,
+  type LotteryDecisionCandidateSelection,
+  type LotteryDecisionSet,
   type LotteryPageResponse,
   type LotteryPredictionCandidate,
   type LotteryPredictionSnapshot,
@@ -71,6 +77,8 @@ const resultOptions = [
 ];
 
 const sourceLabel = (source: DecisionCandidateRow['source']) => source === 'PRIMARY' ? '主预测' : '候选';
+
+const decisionSetStatusColor = (dirty: boolean) => dirty ? 'orange' : 'green';
 
 const formatTime = (value?: number) => {
   if (!value) {
@@ -194,6 +202,30 @@ const buildDecisionRows = (
   });
 };
 
+const decisionRowToSelection = (row: DecisionCandidateRow): LotteryDecisionCandidateSelection => ({
+  key: row.key,
+  snapshotId: row.snapshotId,
+  snapshotTitle: row.snapshotTitle,
+  candidateTitle: row.candidateTitle,
+  source: row.source,
+  targetPeriod: row.targetPeriod,
+  ruleId: row.ruleId,
+  ruleName: row.ruleName,
+  redNumbers: row.redNumbers,
+  blueNumber: row.blueNumber,
+  score: row.score,
+  evidence: row.evidence,
+  replayText: row.replayText,
+  driftLabel: row.driftLabel,
+  resultLabel: row.resultLabel,
+  resultState: row.resultState,
+  redOverlap: row.redOverlap,
+  blueOverlap: row.blueOverlap,
+  ticketCount: row.ticketCount,
+  ticketState: row.ticketState,
+  warning: row.warning
+});
+
 const LotteryPredictionDecisionPage = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -202,9 +234,17 @@ const LotteryPredictionDecisionPage = () => {
   const [ruleComparison, setRuleComparison] = useState<LotteryRuleComparison>();
   const [replayMetrics, setReplayMetrics] = useState<LotteryReplayMetrics>();
   const [predictionTickets, setPredictionTickets] = useState<LotteryTicket[]>([]);
+  const [decisionSets, setDecisionSets] = useState<LotteryDecisionSet[]>([]);
+  const [activeDecisionSetId, setActiveDecisionSetId] = useState<string>();
+  const [decisionSetTitle, setDecisionSetTitle] = useState('');
+  const [decisionSetNote, setDecisionSetNote] = useState('');
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingDecisionSets, setLoadingDecisionSets] = useState(false);
+  const [savingDecisionSet, setSavingDecisionSet] = useState(false);
+  const [archivingDecisionSet, setArchivingDecisionSet] = useState(false);
   const [savingTickets, setSavingTickets] = useState(false);
+  const [decisionDirty, setDecisionDirty] = useState(false);
   const [error, setError] = useState<string>();
 
   const targetIssue = searchParams.get('targetIssue') || '';
@@ -223,6 +263,30 @@ const LotteryPredictionDecisionPage = () => {
     });
     setSearchParams(next);
   }, [searchParams, setSearchParams]);
+
+  const markDecisionDirty = useCallback(() => {
+    if (activeDecisionSetId) {
+      setDecisionDirty(true);
+    }
+  }, [activeDecisionSetId]);
+
+  const updateDecisionQuery = useCallback((patch: Record<string, string | number | undefined>) => {
+    markDecisionDirty();
+    updateQuery(patch);
+  }, [markDecisionDirty, updateQuery]);
+
+  const loadDecisionSets = useCallback(async () => {
+    setLoadingDecisionSets(true);
+    try {
+      const response = await lotteryDecisionSetApi.decisionSets({ page: 1, pageSize: 30 });
+      setDecisionSets(response.items || []);
+    } catch (requestError) {
+      console.error('读取已保存决策集失败:', requestError);
+      message.warning('已使用当前页面状态，暂未读取到已保存决策集');
+    } finally {
+      setLoadingDecisionSets(false);
+    }
+  }, []);
 
   const loadDecision = useCallback(async () => {
     setLoading(true);
@@ -258,6 +322,10 @@ const LotteryPredictionDecisionPage = () => {
     loadDecision();
   }, [loadDecision]);
 
+  useEffect(() => {
+    loadDecisionSets();
+  }, [loadDecisionSets]);
+
   const decisionRows = useMemo(
     () => buildDecisionRows(predictions, predictionTickets),
     [predictionTickets, predictions]
@@ -281,6 +349,24 @@ const LotteryPredictionDecisionPage = () => {
     () => filteredRows.filter(row => selectedRowSet.has(row.key)),
     [filteredRows, selectedRowSet]
   );
+
+  const activeDecisionSet = useMemo(
+    () => decisionSets.find(item => item.id === activeDecisionSetId),
+    [activeDecisionSetId, decisionSets]
+  );
+
+  const defaultDecisionSetTitle = useMemo(() => {
+    const selectedIssue = selectedRows[0]?.targetPeriod;
+    if (targetIssue) {
+      return `第 ${targetIssue} 期决策集`;
+    }
+    return selectedIssue ? `第 ${selectedIssue} 期决策集` : '预测决策集';
+  }, [selectedRows, targetIssue]);
+
+  const decisionSetOptions = useMemo(() => decisionSets.map(item => ({
+    label: item.title || item.targetIssue || item.id || '未命名决策集',
+    value: item.id || ''
+  })).filter(item => item.value), [decisionSets]);
 
   const summary = useMemo(() => {
     const stable = filteredRows.filter(row => row.evidence?.tag === 'STABLE').length;
@@ -315,7 +401,11 @@ const LotteryPredictionDecisionPage = () => {
         note: `决策板转票：${row.snapshotTitle} / ${row.candidateTitle}`
       })));
       message.success(`已保存 ${result.savedCount || 0} 注，跳过重复 ${result.duplicateCount || 0} 注`);
-      setSelectedRowKeys([]);
+      if (activeDecisionSetId) {
+        setDecisionDirty(true);
+      } else {
+        setSelectedRowKeys([]);
+      }
       await loadDecision();
     } catch (requestError) {
       console.error('保存决策候选为票据失败:', requestError);
@@ -323,6 +413,99 @@ const LotteryPredictionDecisionPage = () => {
       message.error('保存决策候选失败');
     } finally {
       setSavingTickets(false);
+    }
+  };
+
+  const buildDecisionSetPayload = () => {
+    const selectedIssue = selectedRows[0]?.targetPeriod;
+    return {
+      title: decisionSetTitle.trim() || defaultDecisionSetTitle,
+      targetIssue: targetIssue || (selectedIssue ? String(selectedIssue) : undefined),
+      targetPeriod: selectedIssue,
+      ruleName: ruleName.trim() || selectedRows[0]?.ruleName,
+      evidenceState,
+      resultState,
+      conversionState: selectedRows.some(row => row.ticketCount > 0) ? 'PARTIALLY_CONVERTED' : 'DRAFT',
+      note: decisionSetNote.trim() || undefined,
+      selectedCandidates: selectedRows.map(decisionRowToSelection)
+    };
+  };
+
+  const saveDecisionSet = async () => {
+    if (!selectedRows.length) {
+      message.warning('请先选择要保存的候选号码');
+      return;
+    }
+    setSavingDecisionSet(true);
+    setError(undefined);
+    try {
+      const payload = buildDecisionSetPayload();
+      const saved = activeDecisionSetId
+        ? await lotteryDecisionSetApi.updateDecisionSet(activeDecisionSetId, payload)
+        : await lotteryDecisionSetApi.createDecisionSet(payload);
+      setActiveDecisionSetId(saved.id);
+      setDecisionSetTitle(saved.title || payload.title || '');
+      setDecisionSetNote(saved.note || '');
+      setDecisionDirty(false);
+      await loadDecisionSets();
+      message.success(activeDecisionSetId ? '决策集已更新' : '决策集已保存');
+    } catch (requestError) {
+      console.error('保存决策集失败:', requestError);
+      setError(requestError instanceof Error ? requestError.message : '保存决策集失败');
+      message.error('保存决策集失败');
+    } finally {
+      setSavingDecisionSet(false);
+    }
+  };
+
+  const applyDecisionSet = (id?: string) => {
+    if (!id) {
+      setActiveDecisionSetId(undefined);
+      setDecisionSetTitle('');
+      setDecisionSetNote('');
+      setDecisionDirty(false);
+      return;
+    }
+    const decisionSet = decisionSets.find(item => item.id === id);
+    if (!decisionSet) {
+      return;
+    }
+    setActiveDecisionSetId(decisionSet.id);
+    setDecisionSetTitle(decisionSet.title || '');
+    setDecisionSetNote(decisionSet.note || '');
+    setSelectedRowKeys((decisionSet.selectedCandidates || [])
+      .map(item => item.key)
+      .filter((key): key is string => Boolean(key)));
+    setDecisionDirty(false);
+    updateQuery({
+      targetIssue: decisionSet.targetIssue,
+      ruleName: decisionSet.ruleName,
+      evidence: decisionSet.evidenceState,
+      resultState: decisionSet.resultState
+    });
+  };
+
+  const archiveDecisionSet = async () => {
+    if (!activeDecisionSetId) {
+      message.warning('请先选择已保存决策集');
+      return;
+    }
+    setArchivingDecisionSet(true);
+    setError(undefined);
+    try {
+      await lotteryDecisionSetApi.archiveDecisionSet(activeDecisionSetId);
+      setActiveDecisionSetId(undefined);
+      setDecisionSetTitle('');
+      setDecisionSetNote('');
+      setDecisionDirty(false);
+      await loadDecisionSets();
+      message.success('决策集已归档');
+    } catch (requestError) {
+      console.error('归档决策集失败:', requestError);
+      setError(requestError instanceof Error ? requestError.message : '归档决策集失败');
+      message.error('归档决策集失败');
+    } finally {
+      setArchivingDecisionSet(false);
     }
   };
 
@@ -432,23 +615,69 @@ const LotteryPredictionDecisionPage = () => {
         message="决策板只汇总历史预测、回放、规则证据和个人票据状态，用于复盘和记录，不代表结果承诺。"
       />
 
+      <section className="lottery-decision-saved-bar">
+        <Select
+          allowClear
+          suffixIcon={<FolderOpenOutlined />}
+          loading={loadingDecisionSets}
+          placeholder="已保存决策集"
+          value={activeDecisionSetId}
+          options={decisionSetOptions}
+          onChange={value => applyDecisionSet(value || undefined)}
+        />
+        <Input
+          allowClear
+          prefix={<SaveOutlined />}
+          placeholder={defaultDecisionSetTitle}
+          value={decisionSetTitle}
+          onChange={event => {
+            setDecisionSetTitle(event.target.value);
+            markDecisionDirty();
+          }}
+        />
+        <Input
+          allowClear
+          placeholder="备注"
+          value={decisionSetNote}
+          onChange={event => {
+            setDecisionSetNote(event.target.value);
+            markDecisionDirty();
+          }}
+        />
+        <Space wrap>
+          <Button icon={<SaveOutlined />} loading={savingDecisionSet} onClick={saveDecisionSet}>
+            保存决策集
+          </Button>
+          <Button icon={<InboxOutlined />} disabled={!activeDecisionSetId} loading={archivingDecisionSet} onClick={archiveDecisionSet}>
+            归档
+          </Button>
+          {activeDecisionSet ? (
+            <Tag color={decisionSetStatusColor(decisionDirty)}>
+              {decisionDirty ? '有未保存变更' : (activeDecisionSet.conversionState || '已保存')}
+            </Tag>
+          ) : (
+            <Tag>未保存</Tag>
+          )}
+        </Space>
+      </section>
+
       <section className="lottery-decision-filter-bar">
         <Input
           allowClear
           prefix={<FilterOutlined />}
           placeholder="目标期号"
           value={targetIssue}
-          onChange={event => updateQuery({ targetIssue: event.target.value })}
+          onChange={event => updateDecisionQuery({ targetIssue: event.target.value })}
         />
         <Input
           allowClear
           prefix={<SafetyCertificateOutlined />}
           placeholder="规则名称"
           value={ruleName}
-          onChange={event => updateQuery({ ruleName: event.target.value })}
+          onChange={event => updateDecisionQuery({ ruleName: event.target.value })}
         />
-        <Select value={evidenceState} options={evidenceOptions} onChange={value => updateQuery({ evidence: value })} />
-        <Select value={resultState} options={resultOptions} onChange={value => updateQuery({ resultState: value })} />
+        <Select value={evidenceState} options={evidenceOptions} onChange={value => updateDecisionQuery({ evidence: value })} />
+        <Select value={resultState} options={resultOptions} onChange={value => updateDecisionQuery({ resultState: value })} />
       </section>
 
       <section className="lottery-history-summary-grid">
@@ -532,7 +761,10 @@ const LotteryPredictionDecisionPage = () => {
               rowKey="key"
               rowSelection={{
                 selectedRowKeys,
-                onChange: keys => setSelectedRowKeys(keys)
+                onChange: keys => {
+                  setSelectedRowKeys(keys);
+                  markDecisionDirty();
+                }
               }}
               columns={columns}
               dataSource={filteredRows}

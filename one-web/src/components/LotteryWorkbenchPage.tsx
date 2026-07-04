@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Alert, Button, Card, Empty, Progress, Space, Spin, Steps, Tag, Tooltip, message } from 'antd';
 import {
   BarChartOutlined,
@@ -31,6 +31,7 @@ import {
   lotteryCalendarApi,
   lotteryExperimentApi,
   lotteryExportApi,
+  lotteryPreferenceApi,
   lotteryPredictionApi,
   lotteryTicketApi,
   lotteryWorkbenchApi,
@@ -39,6 +40,7 @@ import {
   type LotteryBudgetStatus,
   type LotteryCalendarState,
   type LotteryDailyStateItem,
+  type LotteryPreference,
   type LotteryPredictionSnapshot,
   type LotteryStrategyExperiment,
   type LotteryTicket,
@@ -85,6 +87,8 @@ interface WorkbenchWidgetMeta {
   label: string;
   description: string;
 }
+
+type WorkbenchPreferenceSyncState = 'LOCAL' | 'LOADING' | 'SAVING' | 'SYNCED';
 
 interface WorkbenchFocusItem {
   key: string;
@@ -187,6 +191,40 @@ const writeWorkbenchWidgetSettings = (settings: WorkbenchWidgetSetting[]) => {
     widgets: settings,
     updatedAt: Date.now()
   }));
+};
+
+const workbenchSettingsFromPreference = (
+  preference: LotteryPreference,
+  fallback: WorkbenchWidgetSetting[]
+) => {
+  const order = preference.workbenchWidgetOrder || [];
+  const hidden = new Set(preference.hiddenWorkbenchWidgets || []);
+  if (!order.length && !hidden.size) {
+    return fallback;
+  }
+  return normalizeWorkbenchWidgetSettings([
+    ...order.map(key => ({ key: key as WorkbenchWidgetKey, visible: !hidden.has(key) })),
+    ...workbenchWidgetMeta.map(item => ({ key: item.key, visible: !hidden.has(item.key) }))
+  ]);
+};
+
+const workbenchSettingsToPreferencePatch = (settings: WorkbenchWidgetSetting[]) => ({
+  workbenchWidgetOrder: settings.map(item => item.key),
+  hiddenWorkbenchWidgets: settings.filter(item => !item.visible).map(item => item.key)
+});
+
+const workbenchPreferenceSyncColor = (state: WorkbenchPreferenceSyncState) => {
+  if (state === 'SYNCED') return 'green';
+  if (state === 'SAVING') return 'processing';
+  if (state === 'LOADING') return 'blue';
+  return 'gold';
+};
+
+const workbenchPreferenceSyncLabel = (state: WorkbenchPreferenceSyncState) => {
+  if (state === 'SYNCED') return '已同步';
+  if (state === 'SAVING') return '保存中';
+  if (state === 'LOADING') return '读取中';
+  return '本地';
 };
 
 const moveWorkbenchWidget = (
@@ -343,6 +381,9 @@ const LotteryWorkbenchPage = () => {
   const [error, setError] = useState<string>();
   const [showWidgetConfig, setShowWidgetConfig] = useState(false);
   const [widgetSettings, setWidgetSettings] = useState<WorkbenchWidgetSetting[]>(readWorkbenchWidgetSettings);
+  const [widgetPreferenceReady, setWidgetPreferenceReady] = useState(false);
+  const [widgetPreferenceSync, setWidgetPreferenceSync] = useState<WorkbenchPreferenceSyncState>('LOCAL');
+  const preferenceRef = useRef<LotteryPreference | undefined>(undefined);
 
   const qualityIssueCount = useMemo(() => getQualityIssueCount(summary), [summary]);
   const dailyState = summary?.dailyState;
@@ -358,7 +399,54 @@ const LotteryWorkbenchPage = () => {
 
   useEffect(() => {
     writeWorkbenchWidgetSettings(widgetSettings);
-  }, [widgetSettings]);
+    if (!widgetPreferenceReady) {
+      return;
+    }
+    const handle = window.setTimeout(() => {
+      setWidgetPreferenceSync('SAVING');
+      lotteryPreferenceApi.updatePreference({
+        ...(preferenceRef.current || {}),
+        ...workbenchSettingsToPreferencePatch(widgetSettings)
+      }).then(savedPreference => {
+        preferenceRef.current = savedPreference;
+        setWidgetPreferenceSync('SYNCED');
+      }).catch(requestError => {
+        console.error('保存彩票工作台布局偏好失败:', requestError);
+        setWidgetPreferenceSync('LOCAL');
+      });
+    }, 400);
+    return () => window.clearTimeout(handle);
+  }, [widgetPreferenceReady, widgetSettings]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setWidgetPreferenceSync('LOADING');
+    lotteryPreferenceApi.preference().then(preference => {
+      if (cancelled) {
+        return;
+      }
+      preferenceRef.current = preference;
+      setWidgetSettings(current => {
+        const next = workbenchSettingsFromPreference(preference, current);
+        writeWorkbenchWidgetSettings(next);
+        return next;
+      });
+      setWidgetPreferenceSync('SYNCED');
+    }).catch(requestError => {
+      if (cancelled) {
+        return;
+      }
+      console.error('读取彩票工作台布局偏好失败，继续使用本地布局:', requestError);
+      setWidgetPreferenceSync('LOCAL');
+    }).finally(() => {
+      if (!cancelled) {
+        setWidgetPreferenceReady(true);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const loadSummary = useCallback(async () => {
     setLoading(true);
@@ -1250,6 +1338,9 @@ const LotteryWorkbenchPage = () => {
             <div>
               <strong>工作台布局</strong>
               <span>{visibleWidgetSettings.length}/{widgetSettings.length} 个组件已显示</span>
+              <Tag color={workbenchPreferenceSyncColor(widgetPreferenceSync)}>
+                {workbenchPreferenceSyncLabel(widgetPreferenceSync)}
+              </Tag>
             </div>
             <Button size="small" onClick={resetWidgetSettings}>
               重置

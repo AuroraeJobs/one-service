@@ -8,6 +8,7 @@ import org.mockito.ArgumentCaptor;
 
 import java.util.Optional;
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -37,6 +38,8 @@ class LotteryPreferenceServiceTest {
         assertThat(preference.getAutoSavePredictions()).isFalse();
         assertThat(preference.getDefaultTicketSource()).isEqualTo("MANUAL");
         assertThat(preference.getBudgetReminderPercent()).isEqualTo(80);
+        assertThat(preference.getWorkbenchWidgetOrder()).isEmpty();
+        assertThat(preference.getHiddenWorkbenchWidgets()).isEmpty();
         assertThat(preference.getCreatedAt()).isNotNull();
     }
 
@@ -55,6 +58,8 @@ class LotteryPreferenceServiceTest {
                 .monthlyBudget(BigDecimal.ZERO)
                 .maxTicketsPerIssue(0)
                 .budgetReminderPercent(120)
+                .workbenchWidgetOrder(List.of("daily-state", " tickets ", "daily-state", ""))
+                .hiddenWorkbenchWidgets(List.of("release", " "))
                 .build());
 
         assertThat(saved).isSameAs(captor.getValue());
@@ -67,6 +72,8 @@ class LotteryPreferenceServiceTest {
         assertThat(saved.getMonthlyBudget()).isNull();
         assertThat(saved.getMaxTicketsPerIssue()).isNull();
         assertThat(saved.getBudgetReminderPercent()).isEqualTo(100);
+        assertThat(saved.getWorkbenchWidgetOrder()).containsExactly("daily-state", "tickets");
+        assertThat(saved.getHiddenWorkbenchWidgets()).containsExactly("release");
         assertThat(saved.getUpdatedAt()).isNotNull();
     }
 }

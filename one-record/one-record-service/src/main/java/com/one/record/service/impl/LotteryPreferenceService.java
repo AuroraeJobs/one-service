@@ -9,6 +9,8 @@ import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @AllArgsConstructor
@@ -44,6 +46,8 @@ public class LotteryPreferenceService implements ILotteryPreferenceService {
         target.setMonthlyBudget(normalizeBudget(preference == null ? null : preference.getMonthlyBudget()));
         target.setMaxTicketsPerIssue(normalizePositiveInteger(preference == null ? null : preference.getMaxTicketsPerIssue()));
         target.setBudgetReminderPercent(normalizeReminderPercent(preference == null ? null : preference.getBudgetReminderPercent()));
+        target.setWorkbenchWidgetOrder(normalizeWidgetKeys(preference == null ? null : preference.getWorkbenchWidgetOrder()));
+        target.setHiddenWorkbenchWidgets(normalizeWidgetKeys(preference == null ? null : preference.getHiddenWorkbenchWidgets()));
         target.setUpdatedAt(now);
         return repository.save(target);
     }
@@ -63,6 +67,8 @@ public class LotteryPreferenceService implements ILotteryPreferenceService {
                 .monthlyBudget(null)
                 .maxTicketsPerIssue(null)
                 .budgetReminderPercent(DEFAULT_BUDGET_REMINDER_PERCENT)
+                .workbenchWidgetOrder(List.of())
+                .hiddenWorkbenchWidgets(List.of())
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
@@ -96,5 +102,17 @@ public class LotteryPreferenceService implements ILotteryPreferenceService {
             return DEFAULT_BUDGET_REMINDER_PERCENT;
         }
         return Math.min(100, value);
+    }
+
+    private List<String> normalizeWidgetKeys(List<String> widgetKeys) {
+        if (widgetKeys == null || widgetKeys.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return widgetKeys.stream()
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .distinct()
+                .limit(30)
+                .toList();
     }
 }

@@ -357,12 +357,12 @@ Goal: turn the guided frontend workflows from Iteration 13 into durable, auditab
 
 ### Wave 14A: Shared Preferences And Saved Decision Sets
 
-- [ ] Add backend-backed workbench preference storage for widget visibility/order while preserving browser-local fallback.
-- [ ] Add saved decision-set records for selected prediction candidates, rule/evidence context, target issue, and conversion state.
-- [ ] Add APIs to list, create, update, and archive saved decision sets under project-owned `lottery/*` routes.
-- [ ] Update `/lottery/predictions/decision` to save/load decision sets and show unsaved-change state.
-- [ ] Add audit events for saved decision set create/update/archive actions.
-- [ ] Run focused backend/frontend checks, update docs, commit, and push.
+- [x] Add backend-backed workbench preference storage for widget visibility/order while preserving browser-local fallback. `LotteryPreference` now stores widget order/hidden keys; `/lottery/workbench` reads/writes preferences and still keeps local fallback state.
+- [x] Add saved decision-set records for selected prediction candidates, rule/evidence context, target issue, and conversion state. Added `LotteryDecisionSet` and `LotteryDecisionCandidateSelection`.
+- [x] Add APIs to list, create, update, and archive saved decision sets under project-owned `lottery/*` routes. Added `/lottery/decision-sets` list/create/update/archive APIs.
+- [x] Update `/lottery/predictions/decision` to save/load decision sets and show unsaved-change state. Decision board now has saved-set selection, title/note editing, save, archive, and dirty-state tags.
+- [x] Add audit events for saved decision set create/update/archive actions. `LotteryDecisionSetService` writes `LotteryAuditEvent` rows for each mutation.
+- [x] Run focused backend/frontend checks, update docs, commit, and push. Verification: focused Maven tests for preference/decision-set service and controller; `one-web npm run build`.
 
 ### Wave 14B: Server-Side Ticket Import And Batch Guardrails
 

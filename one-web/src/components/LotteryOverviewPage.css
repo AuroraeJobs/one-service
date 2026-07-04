@@ -1601,6 +1601,18 @@
   justify-content: flex-end;
 }
 
+.lottery-decision-saved-bar {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(180px, 1fr) minmax(180px, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+}
+
 .lottery-decision-filter-bar {
   display: grid;
   grid-template-columns: minmax(150px, 1fr) minmax(160px, 1fr) minmax(140px, 180px) minmax(140px, 180px);
@@ -4548,6 +4560,7 @@ button.lottery-latest-vs-card:hover {
   .lottery-workbench-action-groups,
   .lottery-workbench-issue-focus,
   .lottery-workbench-shortcut-grid,
+  .lottery-decision-saved-bar,
   .lottery-decision-filter-bar,
   .lottery-decision-brief-grid,
   .lottery-ticket-budget-grid,

@@ -166,6 +166,8 @@ export interface LotteryPreference {
   monthlyBudget?: number;
   maxTicketsPerIssue?: number;
   budgetReminderPercent?: number;
+  workbenchWidgetOrder?: string[];
+  hiddenWorkbenchWidgets?: string[];
   createdAt?: number;
   updatedAt?: number;
 }
@@ -2001,6 +2003,50 @@ export interface LotteryTicketPrizeCheckSummary {
   generatedAt?: number;
 }
 
+export interface LotteryDecisionCandidateSelection {
+  key?: string;
+  snapshotId?: string;
+  snapshotTitle?: string;
+  candidateTitle?: string;
+  source?: 'PRIMARY' | 'CANDIDATE' | string;
+  targetPeriod?: number;
+  ruleId?: string;
+  ruleName?: string;
+  redNumbers: string[];
+  blueNumber?: string;
+  score?: number;
+  evidence?: LotteryRuleEvidence;
+  replayText?: string;
+  driftLabel?: string;
+  resultLabel?: string;
+  resultState?: 'PENDING' | 'WON' | 'MISSED' | string;
+  redOverlap?: number;
+  blueOverlap?: boolean;
+  ticketCount?: number;
+  ticketState?: string;
+  warning?: string;
+  convertedTicketIds?: string[];
+}
+
+export interface LotteryDecisionSet {
+  id?: string;
+  userId?: string;
+  title?: string;
+  targetIssue?: string;
+  targetPeriod?: number;
+  ruleName?: string;
+  evidenceState?: string;
+  resultState?: string;
+  status?: string;
+  conversionState?: string;
+  note?: string;
+  selectedCandidates: LotteryDecisionCandidateSelection[];
+  archived?: boolean;
+  archivedAt?: number;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
 export interface LotteryPageResponse<T> {
   items: T[];
   page?: number;
@@ -2421,6 +2467,21 @@ export const lotteryTicketApi = {
   },
   checkLatestPrizes: (): Promise<LotteryTicketPrizeCheckSummary> => {
     return apiClient.post('/lottery/tickets/check-prizes/latest');
+  }
+};
+
+export const lotteryDecisionSetApi = {
+  decisionSets: (params?: { includeArchived?: boolean; page?: number; pageSize?: number }): Promise<LotteryPageResponse<LotteryDecisionSet>> => {
+    return apiClient.get('/lottery/decision-sets', { params });
+  },
+  createDecisionSet: (decisionSet: Partial<LotteryDecisionSet>): Promise<LotteryDecisionSet> => {
+    return apiClient.post('/lottery/decision-sets', decisionSet);
+  },
+  updateDecisionSet: (id: string, decisionSet: Partial<LotteryDecisionSet>): Promise<LotteryDecisionSet> => {
+    return apiClient.put(`/lottery/decision-sets/${id}`, decisionSet);
+  },
+  archiveDecisionSet: (id: string): Promise<LotteryDecisionSet> => {
+    return apiClient.patch(`/lottery/decision-sets/${id}/archive`);
   }
 };
 

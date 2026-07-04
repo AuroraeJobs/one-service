@@ -1,6 +1,8 @@
 package com.one.record.model;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,6 +38,12 @@ public class LotteryPreference {
     private Integer maxTicketsPerIssue;
 
     private Integer budgetReminderPercent;
+
+    @Builder.Default
+    private List<String> workbenchWidgetOrder = new ArrayList<>();
+
+    @Builder.Default
+    private List<String> hiddenWorkbenchWidgets = new ArrayList<>();
 
     private Long createdAt;
 
