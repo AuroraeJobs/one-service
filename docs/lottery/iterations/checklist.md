@@ -109,7 +109,7 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add sync operations page with logs, retry, and scheduled trigger. Added `/lottery/sync` with log filters and manual, retry, and scheduled sync actions.
 - [x] Add settings page for preferences and training defaults. Added `/lottery/settings` with preference loading and saving for training scale, replay count, auto-save, and ticket source.
 - [x] Add data quality check endpoint. Added `GET /lottery/data-quality` for missing issues, duplicates, malformed numbers, and future dates.
-- [ ] Add data quality UI for missing issues, duplicates, malformed numbers, and future dates.
+- [x] Add data quality UI for missing issues, duplicates, malformed numbers, and future dates. Added `/lottery/data-quality` summary cards and issue sample lists.
 
 ## Documentation And Delivery
 

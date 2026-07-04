@@ -245,6 +245,14 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
       accent: '#5856d6'
     },
     {
+      id: 'lottery-data-quality',
+      moduleKey: 'lottery',
+      path: '/lottery/data-quality',
+      label: '质检',
+      icon: <SafetyCertificateOutlined />,
+      accent: '#34c759'
+    },
+    {
       id: 'lottery-statistics',
       moduleKey: 'lottery',
       path: '/lottery/statistics?tab=frequency',

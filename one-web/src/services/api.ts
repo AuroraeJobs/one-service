@@ -61,6 +61,19 @@ export interface LotteryPreference {
   updatedAt?: number;
 }
 
+export interface LotteryDataQualityReport {
+  totalRecords?: number;
+  missingIssueCount?: number;
+  duplicateIssueCount?: number;
+  malformedRecordCount?: number;
+  futureDateCount?: number;
+  missingIssues: string[];
+  duplicateIssues: string[];
+  malformedIssues: string[];
+  futureDateIssues: string[];
+  generatedAt?: number;
+}
+
 export interface LotteryDraw {
   id?: string;
   issue?: string;
@@ -316,6 +329,12 @@ export const lotteryPreferenceApi = {
   },
   updatePreference: (preference: Partial<LotteryPreference>): Promise<LotteryPreference> => {
     return apiClient.put('/lottery/preferences', preference);
+  }
+};
+
+export const lotteryDataQualityApi = {
+  report: (): Promise<LotteryDataQualityReport> => {
+    return apiClient.get('/lottery/data-quality');
   }
 };
 
