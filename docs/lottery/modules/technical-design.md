@@ -214,6 +214,8 @@ VOID
 
 `LotteryProviderProbeResult` records an active provider probe. `GET /lottery/providers/probe?provider=cwl` calls the selected draw provider's yearly fetch method and returns availability, record count, duration, message, and checked timestamp. Missing providers and provider exceptions are returned as structured probe results rather than unhandled errors.
 
+`LotteryPreference` stores default-user lottery preferences in `lottery_preferences`. `GET /lottery/preferences` returns saved preferences or a default fallback, and `PUT /lottery/preferences` normalizes training scale, replay count, auto-save behavior, and default ticket source before saving.
+
 ## API Design Rules
 
 - Keep existing APIs compatible while adding new `lottery/*` APIs.

@@ -103,9 +103,9 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add `GET /lottery/providers/health`. Added provider service/controller endpoint with service and controller tests.
 - [x] Add `GET /lottery/providers/config`. Added provider config endpoint with service and controller tests.
 - [x] Add `GET /lottery/providers/probe`. Added provider probe endpoint with success, missing-provider, and failure-path tests.
-- [ ] Add `LotteryPreference` model.
-- [ ] Add `GET /lottery/preferences`.
-- [ ] Add `PUT /lottery/preferences`.
+- [x] Add `LotteryPreference` model. Added default-user lottery preference document for training and ticket defaults.
+- [x] Add `GET /lottery/preferences`. Added preference lookup endpoint with default fallback.
+- [x] Add `PUT /lottery/preferences`. Added preference update endpoint with normalization and tests.
 - [ ] Add sync operations page with logs, retry, and scheduled trigger.
 - [ ] Add settings page for preferences and training defaults.
 - [ ] Add data quality check endpoint.
