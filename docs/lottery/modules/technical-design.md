@@ -359,17 +359,36 @@ Backtests should preserve enough evidence to audit a strategy later. A `LotteryB
 ```text
 id
 experimentId
-ruleId
-window
-issueRange
+strategyName
+presetWindow
+requestedWindow
+issueStart
+issueEnd
+replayCount
 rows
-redHitAverage
+averageRedHits
 blueHitRate
+bestScore
 prizeDistribution
 stabilityScore
+totalCost
+totalPrize
+netResult
 bankrollSimulation
 createdAt
 ```
+
+Wave 10C implements the first durable backtest loop with a baseline previous-draw replay strategy. A run stores the generated replay rows, prize hit distribution, cost/prize/net summary, and bankroll points so the report detail can be audited later without re-running the job. `presetWindow` keeps the user-facing period choice, while `requestedWindow` records the numeric window used for custom runs and future exports.
+
+Backtest endpoints:
+
+```text
+POST /lottery/backtests/run
+GET  /lottery/backtests
+GET  /lottery/backtests/{id}
+```
+
+`GET /lottery/backtests` uses the shared pagination envelope and supports `strategyName`, `presetWindow`, and `experimentId` filters.
 
 Alerts and calendar state are app-local workflow helpers. They should track next draw date, expected sync window, pending daily steps, acknowledgement state, and generated timestamps. External notifications should not be introduced until a provider is explicitly selected and documented.
 

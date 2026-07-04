@@ -27,6 +27,8 @@ Deferred unless the month finishes early:
 
 Goal: make strategy quality visible through durable, repeatable replay evidence.
 
+Status: shipped as the first Wave 10C slice. Remaining follow-up is to connect backtest summaries into rule comparison and source/rule ledger performance once those comparison surfaces are expanded.
+
 Deliverables:
 
 - Add `LotteryBacktestReport` durable model.

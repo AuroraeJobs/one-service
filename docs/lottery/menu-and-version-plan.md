@@ -160,7 +160,7 @@ Goal: make the lottery module usable as a daily cockpit rather than a set of sep
 Goal: support a longer research loop with experiments, backtests, reminders, governance, export, and auditability.
 
 - Add strategy experiment pages at `/lottery/experiments` and `/lottery/experiments/:id`.
-- Add backtest report pages.
+- Add backtest report pages at `/lottery/backtests` and `/lottery/backtests/:id`.
 - Add calendar/reminder pages for daily lottery workflow state.
 - Add budget/exposure governance on tickets and ledger.
 - Add export and audit surfaces for tickets, predictions, experiments, backtests, ledger rows, sync logs, and probe logs.

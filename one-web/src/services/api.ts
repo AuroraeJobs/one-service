@@ -1685,6 +1685,58 @@ export interface LotteryStrategyExperiment {
   updatedAt?: number;
 }
 
+export interface LotteryBacktestReplayRow {
+  issue?: string;
+  drawDate?: string;
+  predictedRedNumbers: string[];
+  predictedBlueNumber?: string;
+  actualRedNumbers: string[];
+  actualBlueNumber?: string;
+  redHits?: number;
+  blueHit?: boolean;
+  prizeName?: string;
+  score?: number;
+  cost?: number;
+  prize?: number;
+  netResult?: number;
+}
+
+export interface LotteryBacktestBankrollPoint {
+  issue?: string;
+  balance?: number;
+}
+
+export interface LotteryBacktestReport {
+  id?: string;
+  experimentId?: string;
+  strategyName?: string;
+  presetWindow?: string;
+  requestedWindow?: number;
+  issueStart?: string;
+  issueEnd?: string;
+  replayCount?: number;
+  averageRedHits?: number;
+  blueHitRate?: number;
+  bestScore?: number;
+  stabilityScore?: number;
+  totalCost?: number;
+  totalPrize?: number;
+  netResult?: number;
+  prizeDistribution: Record<string, number>;
+  rows: LotteryBacktestReplayRow[];
+  bankrollSimulation: LotteryBacktestBankrollPoint[];
+  createdAt?: number;
+}
+
+export interface LotteryBacktestRunRequest {
+  experimentId?: string;
+  strategyName?: string;
+  presetWindow?: string;
+  window?: number;
+  issueStart?: string;
+  issueEnd?: string;
+}
+
 export interface LotteryExperimentRunRequest {
   strategyName?: string;
   replayWindow?: number;
@@ -2050,6 +2102,25 @@ export const lotteryExperimentApi = {
   },
   updateNotes: (id: string, request: LotteryExperimentUpdateRequest): Promise<LotteryStrategyExperiment> => {
     return apiClient.patch(`/lottery/experiments/${id}`, request);
+  }
+};
+
+export const lotteryBacktestApi = {
+  run: (request: LotteryBacktestRunRequest): Promise<LotteryBacktestReport> => {
+    return apiClient.post('/lottery/backtests/run', request);
+  },
+  reports: (params?: {
+    page?: number;
+    pageSize?: number;
+    strategyName?: string;
+    presetWindow?: string;
+    createdStartAt?: number;
+    createdEndAt?: number;
+  }): Promise<LotteryPageResponse<LotteryBacktestReport>> => {
+    return apiClient.get('/lottery/backtests', { params });
+  },
+  detail: (id: string): Promise<LotteryBacktestReport> => {
+    return apiClient.get(`/lottery/backtests/${id}`);
   }
 };
 

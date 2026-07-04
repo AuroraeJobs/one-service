@@ -24,6 +24,8 @@ import LifeOverviewPage from '../components/LifeOverviewPage';
 import LotteryOverviewPage from '../components/LotteryOverviewPage';
 import LotteryAstronautPage from '../components/LotteryAstronautPage';
 import LotteryAstronautVoyagePage from '../components/LotteryAstronautVoyagePage';
+import LotteryBacktestDetailPage from '../components/LotteryBacktestDetailPage';
+import LotteryBacktestPage from '../components/LotteryBacktestPage';
 import LotteryDataQualityPage from '../components/LotteryDataQualityPage';
 import LotteryLedgerPage from '../components/LotteryLedgerPage';
 import LotteryExperimentDetailPage from '../components/LotteryExperimentDetailPage';
@@ -80,6 +82,8 @@ export const createProtectedRoutes = (isTabVisible: boolean): ProtectedRouteConf
   { path: '/lottery/prediction', element: <LotteryPredictionPage /> },
   { path: '/lottery/experiments', element: <LotteryExperimentPage /> },
   { path: '/lottery/experiments/:id', element: <LotteryExperimentDetailPage /> },
+  { path: '/lottery/backtests', element: <LotteryBacktestPage /> },
+  { path: '/lottery/backtests/:id', element: <LotteryBacktestDetailPage /> },
   { path: '/lottery/predictions/history', element: <LotteryPredictionHistoryPage /> },
   { path: '/lottery/predictions/:id', element: <LotteryPredictionDetailPage /> },
   { path: '/lottery/tickets', element: <LotteryTicketPage /> },
