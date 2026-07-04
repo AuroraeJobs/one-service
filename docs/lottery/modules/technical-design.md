@@ -206,6 +206,10 @@ VOID
 
 `LotteryPerformanceLedger` powers source and rule performance views. `GET /lottery/ledger/performance?dimension=source|rule` groups personal tickets by source by default; with `dimension=rule`, prediction tickets resolve `predictionSnapshotId` to snapshot `ruleId` and `ruleName` when available. Each row returns cost, prize, net result, ROI percent, and hit-rate percent.
 
+## Provider Operations Contract
+
+`LotteryProviderHealth` is the first provider operations DTO. `GET /lottery/providers/health` reports registered lottery draw providers, whether each provider is active, and the status check timestamp. The first implementation exposes registered local provider state only; active remote probing is tracked separately by the provider probe endpoint.
+
 ## API Design Rules
 
 - Keep existing APIs compatible while adding new `lottery/*` APIs.
