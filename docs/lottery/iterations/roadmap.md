@@ -391,6 +391,28 @@ Planned endpoint or surface upgrades:
 /lottery/audit
 ```
 
+### Iteration 18: Adaptive Review And Mobile Execution
+
+Goal: close the loop after guided strategy execution. The module should not only execute portfolios, simulations, and ticket packs; it should attribute outcomes back to evidence, calibrate next recommendations, and expose a compact mobile command flow for daily review.
+
+Deliverables:
+
+- Add issue-level outcome attribution across portfolios, simulations, decisions, ticket packs, tickets, and actual draw results.
+- Add calibrated recommendation lifecycle for promoting, watching, pausing, or retiring rules, portfolios, and simulator settings.
+- Add a compact `/lottery/mobile` command surface for next-draw actions, pending approvals, stale evidence, settlement gaps, and release blockers.
+- Add closed-loop report presets and release evidence for attribution, recommendation lifecycle, mobile command flow, and V15 governance.
+- Keep the same provider isolation: outcome/recommendation/mobile surfaces consume project-owned `lottery/*` APIs and do not call external lottery providers from the browser.
+
+Planned route additions or upgrades:
+
+```text
+/lottery/outcomes
+/lottery/recommendations
+/lottery/mobile
+/lottery/governance
+/lottery/exports
+```
+
 ## Storage Direction
 
 MongoDB durable data:

@@ -496,6 +496,42 @@ Goal: turn the lottery intelligence cockpit into an execution-grade workflow clo
 - [x] Review responsive/mobile layout for strategy portfolio board, simulator, ticket packs, governance, workbench, and month-end pages. Added responsive governance grid rules and kept strategy portfolio, simulator, ticket-pack, workbench, and month-end mobile grids covered in shared CSS breakpoints.
 - [x] Run V14 verification, update docs, commit, and push. Verification: focused Maven preference tests; `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
+## Iteration 18: V15 Adaptive Review And Mobile Execution
+
+Goal: turn the V14 execution workflow into a learning loop: every strategy, simulation, ticket pack, and draw result should feed back into calibrated recommendations, mobile-friendly review, and release-ready operational evidence.
+
+### Week 1: Outcome Attribution And Calibration
+
+- [ ] Add an attribution model that connects draw outcomes back to strategy portfolios, simulations, decision sets, ticket packs, and saved tickets.
+- [ ] Add backend attribution APIs for issue-level outcome attribution, portfolio contribution, simulation-vs-result drift, and ticket-pack execution result summaries.
+- [ ] Add `/lottery/outcomes` frontend page with issue timeline, attribution cards, portfolio contribution table, and drilldowns into tickets, packs, simulations, and decisions.
+- [ ] Add outcome handoffs from ticket settlement, month-end review, governance, and strategy portfolio pages.
+- [ ] Run attribution service/controller tests, route smoke/build verification, update docs, commit, and push.
+
+### Week 2: Recommendation Calibration And Strategy Lifecycle
+
+- [ ] Add calibrated recommendation records that summarize whether a rule, portfolio, or simulator setting should be promoted, watched, paused, or retired.
+- [ ] Add backend lifecycle APIs for recommendation list/detail, status transitions, evidence refresh, and audit events.
+- [ ] Add `/lottery/recommendations` frontend lifecycle board with recommendation lanes, confidence, evidence age, expected action, and one-click handoffs.
+- [ ] Add lifecycle links into strategy portfolios, research notebook, governance, simulator, and decision board.
+- [ ] Run recommendation service/controller tests, frontend smoke/build, update docs, commit, and push.
+
+### Week 3: Mobile Command Flow And Batch Review
+
+- [ ] Add mobile-oriented summaries for today, next draw, pending approvals, stale evidence, settlement gaps, and release blockers.
+- [ ] Add backend compact summary API only if existing workbench/governance responses are too heavy for mobile command flow.
+- [ ] Add `/lottery/mobile` frontend command page with compact cards, segmented views, large touch targets, and batch review actions for reminders, packs, and outcomes.
+- [ ] Add mobile entry points from workbench, alerts, governance, ticket packs, and monthly review while preserving desktop routes.
+- [ ] Run mobile route smoke/build verification, responsive layout review, update docs, commit, and push.
+
+### Week 4: Closed-Loop Reports, Evidence Packs, And Release Readiness
+
+- [ ] Add closed-loop report presets for outcome attribution, recommendation lifecycle, mobile command flow, and V15 governance evidence.
+- [ ] Extend export/audit surfaces with V15 evidence filters, report sections, and release-readiness rows.
+- [ ] Extend route smoke coverage for outcomes, recommendations, mobile command flow, and updated release evidence.
+- [ ] Review responsive/mobile layout for outcomes, recommendations, mobile command flow, governance, ticket packs, and export pages.
+- [ ] Run V15 verification, update docs, commit, and push.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

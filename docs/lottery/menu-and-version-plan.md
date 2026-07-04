@@ -229,6 +229,16 @@ Goal: make lottery execution feel closer to the stock module's portfolio/analysi
 - Add governance dashboards and settings for strategy portfolio health, simulation risk, ticket-pack exposure, evidence freshness, and stale approvals. The shipped Week 4 slice adds `/lottery/governance`, threshold preferences, V14 route smoke/release readiness coverage, and responsive governance polish.
 - Preserve provider isolation and project-owned API boundaries: browser code stays on `record/*` and `lottery/*`, simulations do not call external providers directly, and all execution actions write audit evidence.
 
+### V15: Adaptive Review And Mobile Execution
+
+Goal: make the V14 execution loop self-improving and easier to operate on mobile: outcomes should be attributed back to the evidence that produced them, recommendations should move through a lifecycle, and daily actions should be reviewable from compact command surfaces.
+
+- Add outcome attribution across strategy portfolios, simulations, saved decisions, ticket packs, saved tickets, and actual draw results. Planned Week 1 ships attribution APIs, `/lottery/outcomes`, issue timelines, contribution tables, and settlement/governance handoffs.
+- Add calibrated recommendation lifecycle for promoting, watching, pausing, or retiring rules, portfolios, and simulator settings. Planned Week 2 ships recommendation records, lifecycle APIs, `/lottery/recommendations`, confidence/evidence views, and strategy/research/governance handoffs.
+- Add a mobile command flow that compresses today, next draw, pending approvals, stale evidence, settlement gaps, and release blockers into touch-friendly cards. Planned Week 3 ships `/lottery/mobile`, batch review actions, and entry points from workbench, alerts, governance, ticket packs, and month-end review.
+- Add closed-loop reports and release evidence for attribution, recommendations, mobile command flow, and V15 governance. Planned Week 4 ships export presets, audit filters, route smoke coverage, release-readiness rows, and responsive polish.
+- Preserve project-owned API boundaries: frontend routes continue to call `lottery/*` and reuse existing workbench/governance/ticket-pack/report APIs before adding narrow backend summaries.
+
 ## API Boundary
 
 Frontend should only call:
