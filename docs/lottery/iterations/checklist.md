@@ -107,7 +107,7 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add `GET /lottery/preferences`. Added preference lookup endpoint with default fallback.
 - [x] Add `PUT /lottery/preferences`. Added preference update endpoint with normalization and tests.
 - [x] Add sync operations page with logs, retry, and scheduled trigger. Added `/lottery/sync` with log filters and manual, retry, and scheduled sync actions.
-- [ ] Add settings page for preferences and training defaults.
+- [x] Add settings page for preferences and training defaults. Added `/lottery/settings` with preference loading and saving for training scale, replay count, auto-save, and ticket source.
 - [ ] Add data quality check endpoint.
 - [ ] Add data quality UI for missing issues, duplicates, malformed numbers, and future dates.
 

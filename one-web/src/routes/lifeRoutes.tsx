@@ -28,6 +28,7 @@ import LotteryLedgerPage from '../components/LotteryLedgerPage';
 import LotteryPredictionDetailPage from '../components/LotteryPredictionDetailPage';
 import LotteryPredictionHistoryPage from '../components/LotteryPredictionHistoryPage';
 import LotteryPredictionPage from '../components/LotteryPredictionPage';
+import LotterySettingsPage from '../components/LotterySettingsPage';
 import LotterySyncOperationsPage from '../components/LotterySyncOperationsPage';
 import LotteryTicketPage from '../components/LotteryTicketPage';
 import LotteryPixelCardPage from '../components/LotteryPixelCardPage';
@@ -77,6 +78,7 @@ export const createProtectedRoutes = (isTabVisible: boolean): ProtectedRouteConf
   { path: '/lottery/tickets', element: <LotteryTicketPage /> },
   { path: '/lottery/ledger', element: <LotteryLedgerPage /> },
   { path: '/lottery/sync', element: <LotterySyncOperationsPage /> },
+  { path: '/lottery/settings', element: <LotterySettingsPage /> },
   { path: '/lottery/astronauts', element: <LotteryAstronautPage /> },
   { path: '/lottery/astronauts/:camp/:number', element: <LotteryAstronautVoyagePage /> },
   { path: '/lottery/records', element: <RecordList /> },

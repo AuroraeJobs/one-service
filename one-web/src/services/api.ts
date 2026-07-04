@@ -50,6 +50,17 @@ export interface LotteryRecordSyncLog {
   finishedAt?: number;
 }
 
+export interface LotteryPreference {
+  id?: string;
+  userId?: string;
+  defaultTrainingScale?: string;
+  defaultReplayCount?: number;
+  autoSavePredictions?: boolean;
+  defaultTicketSource?: string;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
 export interface LotteryDraw {
   id?: string;
   issue?: string;
@@ -297,6 +308,15 @@ export const lotteryStatisticsApi = {
   }> => {
     return apiClient.get('/lottery/statistics/distribution');
   },
+};
+
+export const lotteryPreferenceApi = {
+  preference: (): Promise<LotteryPreference> => {
+    return apiClient.get('/lottery/preferences');
+  },
+  updatePreference: (preference: Partial<LotteryPreference>): Promise<LotteryPreference> => {
+    return apiClient.put('/lottery/preferences', preference);
+  }
 };
 
 export interface StockQuote {
