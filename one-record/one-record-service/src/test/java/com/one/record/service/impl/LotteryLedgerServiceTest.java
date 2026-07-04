@@ -40,6 +40,7 @@ class LotteryLedgerServiceTest {
     void summaryAggregatesCostPrizeNetAndRoi() {
         when(ticketRepository.findByUserIdOrderByPeriodDescCreatedAtDesc("default")).thenReturn(List.of(
                 LotteryTicket.builder()
+                        .createdAt(timestamp(2026, 7, 4))
                         .cost(new BigDecimal("4"))
                         .prizeResult(LotteryPrizeResult.builder()
                                 .prizeAmount(1000L)
@@ -47,6 +48,7 @@ class LotteryLedgerServiceTest {
                                 .build())
                         .build(),
                 LotteryTicket.builder()
+                        .createdAt(timestamp(2026, 7, 4))
                         .cost(new BigDecimal("2"))
                         .build()
         ));
@@ -61,6 +63,12 @@ class LotteryLedgerServiceTest {
         assertThat(summary.getTotalPrize()).isEqualByComparingTo("10.00");
         assertThat(summary.getNetResult()).isEqualByComparingTo("4.00");
         assertThat(summary.getRoiPercent()).isEqualByComparingTo("66.67");
+        assertThat(summary.getRollingThirtyDayCost()).isEqualByComparingTo("6");
+        assertThat(summary.getRollingThirtyDayPrize()).isEqualByComparingTo("10.00");
+        assertThat(summary.getRollingThirtyDayNetResult()).isEqualByComparingTo("4.00");
+        assertThat(summary.getRollingThirtyDayRoiPercent()).isEqualByComparingTo("66.67");
+        assertThat(summary.getMaxDrawdown()).isEqualByComparingTo("2.00");
+        assertThat(summary.getCurrentDrawdown()).isEqualByComparingTo("2.00");
         assertThat(summary.getGeneratedAt()).isNotNull();
     }
 
@@ -250,6 +258,33 @@ class LotteryLedgerServiceTest {
         assertThat(performance.get(0).getName()).isEqualTo("最佳规则");
         assertThat(performance.get(0).getHitRatePercent()).isEqualByComparingTo("100.00");
         assertThat(performance.get(1).getKey()).isEqualTo("MANUAL");
+    }
+
+    @Test
+    void summaryCalculatesDrawdownFromChronologicalEquity() {
+        when(ticketRepository.findByUserIdOrderByPeriodDescCreatedAtDesc("default")).thenReturn(List.of(
+                LotteryTicket.builder()
+                        .createdAt(timestamp(2026, 7, 3))
+                        .cost(new BigDecimal("2"))
+                        .prizeResult(LotteryPrizeResult.builder().prizeAmount(0L).winning(false).build())
+                        .build(),
+                LotteryTicket.builder()
+                        .createdAt(timestamp(2026, 7, 2))
+                        .cost(new BigDecimal("2"))
+                        .prizeResult(LotteryPrizeResult.builder().prizeAmount(1000L).winning(true).build())
+                        .build(),
+                LotteryTicket.builder()
+                        .createdAt(timestamp(2026, 7, 1))
+                        .cost(new BigDecimal("2"))
+                        .prizeResult(LotteryPrizeResult.builder().prizeAmount(0L).winning(false).build())
+                        .build()
+        ));
+
+        LotteryLedgerSummary summary = service.summary();
+
+        assertThat(summary.getNetResult()).isEqualByComparingTo("4.00");
+        assertThat(summary.getMaxDrawdown()).isEqualByComparingTo("2.00");
+        assertThat(summary.getCurrentDrawdown()).isEqualByComparingTo("2.00");
     }
 
     private long timestamp(int year, int month, int day) {

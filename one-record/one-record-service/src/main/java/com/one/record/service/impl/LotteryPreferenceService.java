@@ -7,6 +7,9 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 @Service
 @AllArgsConstructor
 public class LotteryPreferenceService implements ILotteryPreferenceService {
@@ -18,6 +21,8 @@ public class LotteryPreferenceService implements ILotteryPreferenceService {
     private static final int DEFAULT_REPLAY_COUNT = 0;
 
     private static final String DEFAULT_TICKET_SOURCE = "MANUAL";
+
+    private static final int DEFAULT_BUDGET_REMINDER_PERCENT = 80;
 
     private final LotteryPreferenceRepository repository;
 
@@ -35,6 +40,10 @@ public class LotteryPreferenceService implements ILotteryPreferenceService {
         target.setDefaultReplayCount(normalizeReplayCount(preference == null ? null : preference.getDefaultReplayCount()));
         target.setAutoSavePredictions(preference != null && Boolean.TRUE.equals(preference.getAutoSavePredictions()));
         target.setDefaultTicketSource(normalizeTicketSource(preference == null ? null : preference.getDefaultTicketSource()));
+        target.setWeeklyBudget(normalizeBudget(preference == null ? null : preference.getWeeklyBudget()));
+        target.setMonthlyBudget(normalizeBudget(preference == null ? null : preference.getMonthlyBudget()));
+        target.setMaxTicketsPerIssue(normalizePositiveInteger(preference == null ? null : preference.getMaxTicketsPerIssue()));
+        target.setBudgetReminderPercent(normalizeReminderPercent(preference == null ? null : preference.getBudgetReminderPercent()));
         target.setUpdatedAt(now);
         return repository.save(target);
     }
@@ -50,6 +59,10 @@ public class LotteryPreferenceService implements ILotteryPreferenceService {
                 .defaultReplayCount(DEFAULT_REPLAY_COUNT)
                 .autoSavePredictions(false)
                 .defaultTicketSource(DEFAULT_TICKET_SOURCE)
+                .weeklyBudget(null)
+                .monthlyBudget(null)
+                .maxTicketsPerIssue(null)
+                .budgetReminderPercent(DEFAULT_BUDGET_REMINDER_PERCENT)
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
@@ -65,5 +78,23 @@ public class LotteryPreferenceService implements ILotteryPreferenceService {
 
     private String normalizeTicketSource(String source) {
         return StringUtils.hasText(source) ? source.trim().toUpperCase() : DEFAULT_TICKET_SOURCE;
+    }
+
+    private BigDecimal normalizeBudget(BigDecimal value) {
+        if (value == null || value.compareTo(BigDecimal.ZERO) <= 0) {
+            return null;
+        }
+        return value.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private Integer normalizePositiveInteger(Integer value) {
+        return value == null || value <= 0 ? null : value;
+    }
+
+    private Integer normalizeReminderPercent(Integer value) {
+        if (value == null || value <= 0) {
+            return DEFAULT_BUDGET_REMINDER_PERCENT;
+        }
+        return Math.min(100, value);
     }
 }

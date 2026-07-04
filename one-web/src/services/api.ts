@@ -96,6 +96,10 @@ export interface LotteryPreference {
   defaultReplayCount?: number;
   autoSavePredictions?: boolean;
   defaultTicketSource?: string;
+  weeklyBudget?: number;
+  monthlyBudget?: number;
+  maxTicketsPerIssue?: number;
+  budgetReminderPercent?: number;
   createdAt?: number;
   updatedAt?: number;
 }
@@ -1868,6 +1872,12 @@ export interface LotteryLedgerSummary {
   totalPrize?: number;
   netResult?: number;
   roiPercent?: number;
+  rollingThirtyDayCost?: number;
+  rollingThirtyDayPrize?: number;
+  rollingThirtyDayNetResult?: number;
+  rollingThirtyDayRoiPercent?: number;
+  maxDrawdown?: number;
+  currentDrawdown?: number;
   generatedAt?: number;
 }
 
@@ -1882,6 +1892,29 @@ export interface LotteryIssueLedger {
   totalPrize?: number;
   netResult?: number;
   roiPercent?: number;
+}
+
+export interface LotteryBudgetWarning {
+  key?: string;
+  level?: string;
+  message?: string;
+  path?: string;
+}
+
+export interface LotteryBudgetStatus {
+  weeklyBudget?: number;
+  monthlyBudget?: number;
+  maxTicketsPerIssue?: number;
+  budgetReminderPercent?: number;
+  weeklyCost?: number;
+  monthlyCost?: number;
+  maxIssueTicketCount?: number;
+  maxIssue?: string;
+  weeklyUsagePercent?: number;
+  monthlyUsagePercent?: number;
+  status?: string;
+  warnings: LotteryBudgetWarning[];
+  generatedAt?: number;
 }
 
 export interface LotteryMonthlyLedger {
@@ -2199,6 +2232,12 @@ export const lotteryLedgerApi = {
   },
   performance: (params?: { dimension?: 'source' | 'rule' }): Promise<LotteryPerformanceLedger[]> => {
     return apiClient.get('/lottery/ledger/performance', { params });
+  }
+};
+
+export const lotteryBudgetApi = {
+  status: (): Promise<LotteryBudgetStatus> => {
+    return apiClient.get('/lottery/budget/status');
   }
 };
 

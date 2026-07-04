@@ -16,8 +16,10 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -43,6 +45,8 @@ public class LotteryLedgerService implements ILotteryLedgerService {
     public LotteryLedgerSummary summary() {
         List<LotteryTicket> tickets = ticketRepository.findByUserIdOrderByPeriodDescCreatedAtDesc(DEFAULT_USER_ID);
         LedgerTotals totals = aggregate(tickets);
+        LedgerTotals rollingTotals = aggregate(rollingTickets(tickets, 30));
+        Drawdown drawdown = drawdown(tickets);
         return LotteryLedgerSummary.builder()
                 .ticketCount(tickets.size())
                 .checkedTicketCount(totals.checkedCount())
@@ -52,6 +56,12 @@ public class LotteryLedgerService implements ILotteryLedgerService {
                 .totalPrize(totals.totalPrize())
                 .netResult(totals.netResult())
                 .roiPercent(roiPercent(totals.netResult(), totals.totalCost()))
+                .rollingThirtyDayCost(rollingTotals.totalCost())
+                .rollingThirtyDayPrize(rollingTotals.totalPrize())
+                .rollingThirtyDayNetResult(rollingTotals.netResult())
+                .rollingThirtyDayRoiPercent(roiPercent(rollingTotals.netResult(), rollingTotals.totalCost()))
+                .maxDrawdown(drawdown.maxDrawdown())
+                .currentDrawdown(drawdown.currentDrawdown())
                 .generatedAt(System.currentTimeMillis())
                 .build();
     }
@@ -163,6 +173,45 @@ public class LotteryLedgerService implements ILotteryLedgerService {
         return new LedgerTotals(checkedCount, winningCount, totalCost, totalPrize);
     }
 
+    private List<LotteryTicket> rollingTickets(List<LotteryTicket> tickets, int days) {
+        long startAt = LocalDate.now()
+                .minus(days - 1L, ChronoUnit.DAYS)
+                .atStartOfDay(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli();
+        return tickets.stream()
+                .filter(ticket -> {
+                    Long timestamp = timestamp(ticket);
+                    return timestamp != null && timestamp >= startAt;
+                })
+                .toList();
+    }
+
+    private Drawdown drawdown(List<LotteryTicket> tickets) {
+        List<LotteryTicket> chronological = tickets.stream()
+                .sorted(Comparator.comparingLong(ticket -> {
+                    Long timestamp = timestamp(ticket);
+                    return timestamp == null ? 0L : timestamp;
+                }))
+                .toList();
+        BigDecimal equity = BigDecimal.ZERO;
+        BigDecimal peak = BigDecimal.ZERO;
+        BigDecimal maxDrawdown = BigDecimal.ZERO;
+        BigDecimal currentDrawdown = BigDecimal.ZERO;
+        for (LotteryTicket ticket : chronological) {
+            equity = equity.add(prizeAmount(ticket.getPrizeResult()))
+                    .subtract(ticket.getCost() == null ? BigDecimal.ZERO : ticket.getCost());
+            if (equity.compareTo(peak) > 0) {
+                peak = equity;
+            }
+            currentDrawdown = peak.subtract(equity);
+            if (currentDrawdown.compareTo(maxDrawdown) > 0) {
+                maxDrawdown = currentDrawdown;
+            }
+        }
+        return new Drawdown(maxDrawdown, currentDrawdown);
+    }
+
     private String issueKey(LotteryTicket ticket) {
         if (ticket.getIssue() != null && !ticket.getIssue().isBlank()) {
             return ticket.getIssue();
@@ -174,7 +223,7 @@ public class LotteryLedgerService implements ILotteryLedgerService {
     }
 
     private String monthKey(LotteryTicket ticket) {
-        Long timestamp = ticket.getCreatedAt() == null ? ticket.getUpdatedAt() : ticket.getCreatedAt();
+        Long timestamp = timestamp(ticket);
         if (timestamp == null || timestamp <= 0) {
             return "UNKNOWN";
         }
@@ -238,10 +287,14 @@ public class LotteryLedgerService implements ILotteryLedgerService {
     }
 
     private BigDecimal prizeAmount(LotteryPrizeResult result) {
-        if (result.getPrizeAmount() == null) {
+        if (result == null || result.getPrizeAmount() == null) {
             return BigDecimal.ZERO;
         }
         return BigDecimal.valueOf(result.getPrizeAmount()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+    }
+
+    private Long timestamp(LotteryTicket ticket) {
+        return ticket.getCreatedAt() == null ? ticket.getUpdatedAt() : ticket.getCreatedAt();
     }
 
     private BigDecimal roiPercent(BigDecimal netResult, BigDecimal totalCost) {
@@ -272,5 +325,8 @@ public class LotteryLedgerService implements ILotteryLedgerService {
     }
 
     private record PerformanceKey(String dimension, String key, String name) {
+    }
+
+    private record Drawdown(BigDecimal maxDrawdown, BigDecimal currentDrawdown) {
     }
 }

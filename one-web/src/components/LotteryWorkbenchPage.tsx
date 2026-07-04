@@ -17,7 +17,9 @@ import LifePageShell from './LifePageShell';
 import LotteryBalls from './lottery/LotteryBalls';
 import {
   lotteryCalendarApi,
+  lotteryBudgetApi,
   lotteryWorkbenchApi,
+  type LotteryBudgetStatus,
   type LotteryCalendarState,
   type LotteryDailyStateItem,
   type LotteryWorkbenchDailyRunResult,
@@ -79,6 +81,7 @@ const LotteryWorkbenchPage = () => {
   const navigate = useNavigate();
   const [summary, setSummary] = useState<LotteryWorkbenchSummary>();
   const [calendar, setCalendar] = useState<LotteryCalendarState>();
+  const [budgetStatus, setBudgetStatus] = useState<LotteryBudgetStatus>();
   const [dailyRunResult, setDailyRunResult] = useState<LotteryWorkbenchDailyRunResult>();
   const [loading, setLoading] = useState(false);
   const [running, setRunning] = useState(false);
@@ -96,8 +99,12 @@ const LotteryWorkbenchPage = () => {
     try {
       const data = await lotteryWorkbenchApi.summary();
       setSummary(data);
-      const calendarData = await lotteryCalendarApi.calendar();
+      const [calendarData, budgetData] = await Promise.all([
+        lotteryCalendarApi.calendar(),
+        lotteryBudgetApi.status()
+      ]);
       setCalendar(calendarData);
+      setBudgetStatus(budgetData);
     } catch (requestError) {
       console.error('读取彩票工作台失败:', requestError);
       setError(requestError instanceof Error ? requestError.message : '读取彩票工作台失败');
@@ -117,8 +124,12 @@ const LotteryWorkbenchPage = () => {
       const result = await lotteryWorkbenchApi.dailyRun();
       setDailyRunResult(result);
       setSummary(result.summary);
-      const calendarData = await lotteryCalendarApi.calendar();
+      const [calendarData, budgetData] = await Promise.all([
+        lotteryCalendarApi.calendar(),
+        lotteryBudgetApi.status()
+      ]);
       setCalendar(calendarData);
+      setBudgetStatus(budgetData);
       message.success('日常任务已完成');
     } catch (requestError) {
       console.error('执行彩票日常任务失败:', requestError);
@@ -225,6 +236,19 @@ const LotteryWorkbenchPage = () => {
           action={
             <Button size="small" icon={<WarningOutlined />} onClick={() => navigate('/lottery/data-quality')}>
               查看
+            </Button>
+          }
+        />
+      ) : null}
+      {budgetStatus?.warnings?.length ? (
+        <Alert
+          className="lottery-overview-status-alert"
+          type="warning"
+          showIcon
+          message={budgetStatus.warnings.map(item => item.message).join('；')}
+          action={
+            <Button size="small" onClick={() => navigate('/lottery/settings')}>
+              设置
             </Button>
           }
         />

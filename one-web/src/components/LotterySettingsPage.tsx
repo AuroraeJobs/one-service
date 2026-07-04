@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Button, Card, Form, InputNumber, Select, Switch, message } from 'antd';
+import { Alert, Button, Card, Form, InputNumber, Select, Space, Switch, message } from 'antd';
 import { SaveOutlined } from '@ant-design/icons';
 import LifePageShell from './LifePageShell';
 import { lotteryPreferenceApi, type LotteryPreference } from '../services/api';
@@ -63,7 +63,8 @@ const LotterySettingsPage = () => {
           defaultTrainingScale: 'standard',
           defaultReplayCount: 0,
           autoSavePredictions: false,
-          defaultTicketSource: 'MANUAL'
+          defaultTicketSource: 'MANUAL',
+          budgetReminderPercent: 80
         }}>
           <Form.Item name="defaultTrainingScale" label="训练规模">
             <Select
@@ -88,6 +89,22 @@ const LotterySettingsPage = () => {
           <Form.Item name="autoSavePredictions" label="自动保存预测票据" valuePropName="checked">
             <Switch />
           </Form.Item>
+          <Space.Compact block>
+            <Form.Item name="weeklyBudget" label="每周预算" style={{ width: '50%' }}>
+              <InputNumber min={0} precision={2} prefix="¥" style={{ width: '100%' }} />
+            </Form.Item>
+            <Form.Item name="monthlyBudget" label="每月预算" style={{ width: '50%' }}>
+              <InputNumber min={0} precision={2} prefix="¥" style={{ width: '100%' }} />
+            </Form.Item>
+          </Space.Compact>
+          <Space.Compact block>
+            <Form.Item name="maxTicketsPerIssue" label="单期票据上限" style={{ width: '50%' }}>
+              <InputNumber min={1} precision={0} style={{ width: '100%' }} />
+            </Form.Item>
+            <Form.Item name="budgetReminderPercent" label="提醒阈值" style={{ width: '50%' }}>
+              <InputNumber min={1} max={100} precision={0} addonAfter="%" style={{ width: '100%' }} />
+            </Form.Item>
+          </Space.Compact>
         </Form>
       </Card>
     </LifePageShell>

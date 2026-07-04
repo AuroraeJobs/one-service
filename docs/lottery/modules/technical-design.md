@@ -403,7 +403,15 @@ POST /lottery/alerts/{key}/ack
 
 The frontend uses `/lottery/alerts` as the in-app reminder page and shows the next draw window on the workbench.
 
-Portfolio-style governance extends preferences and ledger behavior with budget and exposure thresholds. The backend should flag budget and max-ticket issues without blocking ordinary CRUD unless a future explicit enforcement mode is added.
+Portfolio-style governance extends preferences and ledger behavior with budget and exposure thresholds. The backend flags budget and max-ticket issues without blocking ordinary CRUD unless a future explicit enforcement mode is added.
+
+Wave 10E extends `LotteryPreference` with `weeklyBudget`, `monthlyBudget`, `maxTicketsPerIssue`, and `budgetReminderPercent`. `GET /lottery/budget/status` reads preferences and recorded tickets to return weekly/monthly usage, max issue exposure, and restrained warning rows for the workbench and ticket page. `LotteryLedgerSummary` also includes rolling 30-day cost/prize/net/ROI plus max/current drawdown values for exposure review.
+
+Budget endpoint:
+
+```text
+GET /lottery/budget/status
+```
 
 Exports and audit trails should be reproducible. Export endpoints should record export type, filters, generated row count, generatedAt, and requester scope. Audit metadata should be attached to generated predictions, saved tickets, daily-run steps, strategy experiments, backtests, and exports.
 

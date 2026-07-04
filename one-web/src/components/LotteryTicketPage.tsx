@@ -6,7 +6,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import LotteryBalls from './lottery/LotteryBalls';
 import {
+  lotteryBudgetApi,
   lotteryTicketApi,
+  type LotteryBudgetStatus,
   type LotteryPageResponse,
   type LotteryTicket,
   type LotteryTicketPrizeCheckSummary,
@@ -101,6 +103,7 @@ const LotteryTicketPage = () => {
   const [tickets, setTickets] = useState<LotteryTicket[]>([]);
   const [pageResponse, setPageResponse] = useState<LotteryPageResponse<LotteryTicket>>();
   const [summary, setSummary] = useState<LotteryTicketSummary>(emptySummary);
+  const [budgetStatus, setBudgetStatus] = useState<LotteryBudgetStatus>();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [checkingLatest, setCheckingLatest] = useState(false);
@@ -146,13 +149,15 @@ const LotteryTicketPage = () => {
     setLoading(true);
     setError(undefined);
     try {
-      const [ticketItems, ticketSummary] = await Promise.all([
+      const [ticketItems, ticketSummary, budgetData] = await Promise.all([
         lotteryTicketApi.ticketsPage(queryParams),
-        lotteryTicketApi.summary()
+        lotteryTicketApi.summary(),
+        lotteryBudgetApi.status()
       ]);
       setPageResponse(ticketItems);
       setTickets(ticketItems.items || []);
       setSummary(ticketSummary || emptySummary);
+      setBudgetStatus(budgetData);
     } catch (requestError) {
       console.error('获取彩票票据失败:', requestError);
       setError(requestError instanceof Error ? requestError.message : '获取彩票票据失败');
@@ -424,6 +429,15 @@ const LotteryTicketPage = () => {
           showIcon
           message={`正在查看预测快照 ${predictionSnapshotId.trim()} 的票据`}
           action={<Button size="small" onClick={clearPredictionSnapshotFilter}>清除</Button>}
+        />
+      ) : null}
+      {budgetStatus?.warnings?.length ? (
+        <Alert
+          className="lottery-overview-status-alert"
+          type="warning"
+          showIcon
+          message={budgetStatus.warnings.map(item => item.message).join('；')}
+          action={<Button size="small" onClick={() => navigate('/lottery/settings')}>预算设置</Button>}
         />
       ) : null}
       <section className="lottery-history-summary-grid">

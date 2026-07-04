@@ -1,5 +1,7 @@
 package com.one.record.model;
 
+import java.math.BigDecimal;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -26,6 +28,14 @@ public class LotteryPreference {
     private Boolean autoSavePredictions;
 
     private String defaultTicketSource;
+
+    private BigDecimal weeklyBudget;
+
+    private BigDecimal monthlyBudget;
+
+    private Integer maxTicketsPerIssue;
+
+    private Integer budgetReminderPercent;
 
     private Long createdAt;
 

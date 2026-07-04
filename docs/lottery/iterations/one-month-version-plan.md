@@ -75,6 +75,8 @@ Acceptance:
 
 Goal: add restrained governance around ticket volume and ledger exposure.
 
+Status: shipped as Wave 10E. Budget settings, backend warning status, workbench/ticket warnings, and rolling ledger exposure fields are implemented without blocking ticket CRUD.
+
 Deliverables:
 
 - Extend lottery preferences with weekly budget, monthly budget, max tickets per issue, and reminder thresholds.

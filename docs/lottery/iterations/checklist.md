@@ -214,11 +214,11 @@ Use this file as the durable task board for the lottery module. When a task is f
 
 ### Wave 10E: Portfolio-Style Governance
 
-- [ ] Extend preferences with weekly/monthly budget, max tickets per issue, and reminder thresholds.
-- [ ] Add backend checks that flag planned or recorded tickets exceeding configured limits.
-- [ ] Extend ledger with rolling cost, rolling prize, net result, ROI, and drawdown-style summaries.
-- [ ] Add frontend budget and exposure settings.
-- [ ] Add restrained warning copy for budget/exposure state without promising outcomes.
+- [x] Extend preferences with weekly/monthly budget, max tickets per issue, and reminder thresholds.
+- [x] Add backend checks that flag planned or recorded tickets exceeding configured limits.
+- [x] Extend ledger with rolling cost, rolling prize, net result, ROI, and drawdown-style summaries.
+- [x] Add frontend budget and exposure settings.
+- [x] Add restrained warning copy for budget/exposure state without promising outcomes.
 
 ### Wave 10F: Export, Audit, And Maintenance
 

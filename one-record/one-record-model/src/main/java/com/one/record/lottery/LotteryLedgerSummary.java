@@ -30,5 +30,17 @@ public class LotteryLedgerSummary implements Serializable {
 
     private BigDecimal roiPercent;
 
+    private BigDecimal rollingThirtyDayCost;
+
+    private BigDecimal rollingThirtyDayPrize;
+
+    private BigDecimal rollingThirtyDayNetResult;
+
+    private BigDecimal rollingThirtyDayRoiPercent;
+
+    private BigDecimal maxDrawdown;
+
+    private BigDecimal currentDrawdown;
+
     private Long generatedAt;
 }

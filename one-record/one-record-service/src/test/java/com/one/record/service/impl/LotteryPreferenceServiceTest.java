@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.util.Optional;
+import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -35,6 +36,7 @@ class LotteryPreferenceServiceTest {
         assertThat(preference.getDefaultReplayCount()).isEqualTo(0);
         assertThat(preference.getAutoSavePredictions()).isFalse();
         assertThat(preference.getDefaultTicketSource()).isEqualTo("MANUAL");
+        assertThat(preference.getBudgetReminderPercent()).isEqualTo(80);
         assertThat(preference.getCreatedAt()).isNotNull();
     }
 
@@ -49,6 +51,10 @@ class LotteryPreferenceServiceTest {
                 .defaultReplayCount(-1)
                 .autoSavePredictions(true)
                 .defaultTicketSource(" prediction ")
+                .weeklyBudget(new BigDecimal("19.995"))
+                .monthlyBudget(BigDecimal.ZERO)
+                .maxTicketsPerIssue(0)
+                .budgetReminderPercent(120)
                 .build());
 
         assertThat(saved).isSameAs(captor.getValue());
@@ -57,6 +63,10 @@ class LotteryPreferenceServiceTest {
         assertThat(saved.getDefaultReplayCount()).isEqualTo(0);
         assertThat(saved.getAutoSavePredictions()).isTrue();
         assertThat(saved.getDefaultTicketSource()).isEqualTo("PREDICTION");
+        assertThat(saved.getWeeklyBudget()).isEqualByComparingTo("20.00");
+        assertThat(saved.getMonthlyBudget()).isNull();
+        assertThat(saved.getMaxTicketsPerIssue()).isNull();
+        assertThat(saved.getBudgetReminderPercent()).isEqualTo(100);
         assertThat(saved.getUpdatedAt()).isNotNull();
     }
 }

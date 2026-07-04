@@ -308,6 +308,9 @@ const LotteryLedgerPage = () => {
           <span>已兑奖 {summary.checkedTicketCount || 0}</span>
           <span>待开奖 {summary.pendingTicketCount || 0}</span>
           <span>中奖 {summary.winningTicketCount || 0}</span>
+          <span>30日净值 {formatMoney(summary.rollingThirtyDayNetResult)}</span>
+          <span>最大回撤 {formatMoney(summary.maxDrawdown)}</span>
+          <span>当前回撤 {formatMoney(summary.currentDrawdown)}</span>
         </Space>
       </Card>
 
