@@ -438,11 +438,11 @@ Goal: spend the next month turning the lottery module from a frontend-operated o
 
 ### Week 2: Strategy Notebook And Hypothesis Lab
 
-- [ ] Add strategy-notebook records for rule hypotheses, expected behavior, linked predictions, linked backtests, and saved decision outcomes.
-- [ ] Add APIs to list, create, update, archive, and attach evidence to strategy notes under project-owned `lottery/*` routes.
-- [ ] Add `/lottery/research/notebook` frontend view with hypothesis cards, evidence attachments, status filters, and comparison shortcuts.
-- [ ] Add research-page and decision-board actions to attach selected evidence or saved decisions into a notebook entry.
-- [ ] Run focused service/controller tests, frontend build, update docs, commit, and push.
+- [x] Add strategy-notebook records for rule hypotheses, expected behavior, linked predictions, linked backtests, and saved decision outcomes. Added `LotteryStrategyNote` and evidence attachment rows in `lottery_strategy_notes`.
+- [x] Add APIs to list, create, update, archive, and attach evidence to strategy notes under project-owned `lottery/*` routes. Added `/lottery/strategy-notes` list/create/update/archive plus evidence attachment API with audit events.
+- [x] Add `/lottery/research/notebook` frontend view with hypothesis cards, evidence attachments, status filters, and comparison shortcuts. Notebook page now supports status filtering, note creation, evidence display, archive, and pending evidence attachment.
+- [x] Add research-page and decision-board actions to attach selected evidence or saved decisions into a notebook entry. Research and decision pages now open notebook with URL-backed evidence payloads.
+- [x] Run focused service/controller tests, frontend build, update docs, commit, and push. Verification: focused Maven strategy-note service/controller tests; `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
 ### Week 3: Action Reminders And Daily Workflow Automation
 

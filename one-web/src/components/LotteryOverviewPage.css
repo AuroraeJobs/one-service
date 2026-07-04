@@ -1711,6 +1711,98 @@
   font-weight: 700;
 }
 
+.lottery-notebook-editor {
+  display: grid;
+  gap: 10px;
+}
+
+.lottery-notebook-editor-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) minmax(140px, 180px) auto;
+  gap: 10px;
+}
+
+.lottery-notebook-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.lottery-notebook-card {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+}
+
+.lottery-notebook-card-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+}
+
+.lottery-notebook-card-head > div {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.lottery-notebook-card-head strong {
+  overflow: hidden;
+  color: var(--app-text);
+  font-size: 16px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-notebook-card-head span,
+.lottery-notebook-card small,
+.lottery-notebook-evidence-list > span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.lottery-notebook-card p {
+  margin: 0;
+  color: var(--app-text);
+  line-height: 1.5;
+}
+
+.lottery-notebook-evidence-list {
+  display: grid;
+  gap: 6px;
+}
+
+.lottery-notebook-evidence-list button {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+  padding: 7px 8px;
+  border: 1px solid var(--app-border);
+  border-radius: 7px;
+  background: var(--app-surface-elevated);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lottery-notebook-evidence-list button:hover {
+  border-color: var(--module-accent, #0071e3);
+}
+
+.lottery-notebook-evidence-list button span {
+  overflow: hidden;
+  color: var(--app-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .lottery-decision-saved-bar {
   display: grid;
   grid-template-columns: minmax(180px, 240px) minmax(180px, 1fr) minmax(180px, 1fr) auto;
@@ -4749,6 +4841,8 @@ button.lottery-latest-vs-card:hover {
   .lottery-workbench-quick-rail,
   .lottery-workbench-action-groups,
   .lottery-workbench-health-summary,
+  .lottery-notebook-editor-row,
+  .lottery-notebook-grid,
   .lottery-workbench-issue-focus,
   .lottery-workbench-shortcut-grid,
   .lottery-decision-saved-bar,

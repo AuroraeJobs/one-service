@@ -134,6 +134,20 @@ const deltaText = (value?: number) => {
   return `${sign}${Number(value).toFixed(2)}`;
 };
 
+const notebookPathForDecisionOutcome = (item?: LotteryDecisionOutcomeItem) => {
+  const search = new URLSearchParams({
+    evidenceKey: item?.decisionSetId ? `decision:${item.decisionSetId}` : `decision:${item?.targetIssue || 'latest'}`,
+    evidenceType: 'DECISION',
+    evidenceTitle: item?.title || item?.targetIssue || '保存决策复盘',
+    path: item?.targetIssue ? `/lottery/predictions/decision?targetIssue=${item.targetIssue}` : '/lottery/predictions/decision',
+    title: `${item?.title || item?.targetIssue || '保存决策'} 假设`
+  });
+  if (item?.targetIssue) {
+    search.set('targetIssue', item.targetIssue);
+  }
+  return `/lottery/research/notebook?${search.toString()}`;
+};
+
 const decisionOutcomeState = (item: LotteryDecisionOutcomeItem) => {
   if ((item.winningCandidateCount || 0) > 0 || (item.winningConvertedTicketCount || 0) > 0) {
     return 'HIT';
@@ -737,6 +751,9 @@ const LotteryPredictionDecisionPage = () => {
           </Button>
           <Button icon={<HistoryOutlined />} onClick={() => navigate('/lottery/predictions/history')}>
             历史
+          </Button>
+          <Button icon={<FileAddOutlined />} onClick={() => navigate(notebookPathForDecisionOutcome(activeDecisionOutcome))}>
+            写入笔记
           </Button>
           <Button icon={<PrinterOutlined />} onClick={() => window.print()}>
             打印

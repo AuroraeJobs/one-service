@@ -214,7 +214,7 @@ Goal: make decision outcomes easier to operate from the frontend after the durab
 Goal: turn the outcome-operation cockpit into a repeatable monthly intelligence workflow with explainable health, traceable hypotheses, daily reminders, and one-pass month-end review.
 
 - Add lottery operations health scoring across provider freshness, record gaps, ticket settlement coverage, decision outcome completeness, stale evidence, and export evidence. The shipped Week 1 slice adds `/lottery/operations/health`, `/lottery/operations/health/acknowledge`, workbench health widgets, and health audit events.
-- Add a strategy notebook and hypothesis lab so rules, assumptions, linked predictions, backtests, tickets, and saved decision outcomes can be reviewed together. Planned Week 2 ships notebook APIs and `/lottery/research/notebook`.
+- Add a strategy notebook and hypothesis lab so rules, assumptions, linked predictions, backtests, tickets, and saved decision outcomes can be reviewed together. The shipped Week 2 slice adds `lottery_strategy_notes`, `/lottery/strategy-notes`, `/lottery/research/notebook`, and evidence handoff from research/decision pages.
 - Add action reminders for upcoming draw windows, unsynced records, unconverted saved decisions, unchecked tickets, stale evidence, and missing month-end exports. Planned Week 3 ships reminder APIs, workbench reminder center, snooze/acknowledge actions, and settings thresholds.
 - Add month-end review and release governance for ledger results, tickets, outcomes, research notes, health score, and export evidence. Planned Week 4 ships the review dashboard, one-pass report preset, route smoke coverage, release readiness evidence, and responsive QA.
 - Preserve the same project-owned API boundary: browser code stays on `record/*` and `lottery/*`, and provider/network work stays behind backend services.
@@ -250,6 +250,7 @@ lottery/budget/*
 lottery/exports/*
 lottery/audit/*
 lottery/operations/*
+lottery/strategy-notes/*
 ```
 
 Do not add browser-side calls to external lottery websites or data providers.

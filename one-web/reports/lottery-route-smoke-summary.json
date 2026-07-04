@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 15D lottery V12 frontend outcome operations smoke",
-  "generatedAt": "2026-07-04T13:27:02.532Z",
+  "target": "Iteration 16 Week 2 lottery strategy notebook smoke",
+  "generatedAt": "2026-07-04T13:48:35.953Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
-  "routeCount": 5,
-  "checkCount": 126,
+  "routeCount": 6,
+  "checkCount": 143,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
@@ -41,6 +41,14 @@
       "mockApiCount": 6,
       "emptyStateCount": 6,
       "errorStateCount": 1
+    },
+    {
+      "route": "/lottery/research/notebook",
+      "label": "策略笔记",
+      "component": "LotteryResearchNotebookPage",
+      "mockApiCount": 4,
+      "emptyStateCount": 3,
+      "errorStateCount": 4
     },
     {
       "route": "/lottery/exports",

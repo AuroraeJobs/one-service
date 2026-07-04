@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 15D lottery V12 frontend outcome operations smoke",
+  "target": "Iteration 16 Week 2 lottery strategy notebook smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -130,6 +130,34 @@
         "comparison": {
           "selectedItems": [],
           "presets": ["latestPrediction", "strongestRule", "volatileRule", "ticketOutcome", "decisionDelta", "decisionRoi", "decisionWarning"]
+        }
+      }
+    },
+    {
+      "route": "/lottery/research/notebook",
+      "label": "策略笔记",
+      "component": "LotteryResearchNotebookPage",
+      "componentFile": "src/components/LotteryResearchNotebookPage.tsx",
+      "mockApis": [
+        "lotteryStrategyNoteApi.notes",
+        "lotteryStrategyNoteApi.create",
+        "lotteryStrategyNoteApi.archive",
+        "lotteryStrategyNoteApi.attachEvidence"
+      ],
+      "emptyStates": ["暂无策略笔记", "待挂载证据", "策略笔记标题"],
+      "errorStates": ["读取彩票策略笔记失败", "创建彩票策略笔记失败", "挂载策略笔记证据失败", "归档彩票策略笔记失败"],
+      "fixtureData": {
+        "notes": {
+          "items": [
+            {
+              "id": "note-fixture-1",
+              "title": "稳态蓝球假设",
+              "status": "ACTIVE"
+            }
+          ],
+          "page": 1,
+          "pageSize": 30,
+          "total": 1
         }
       }
     },

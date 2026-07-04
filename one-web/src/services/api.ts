@@ -2250,6 +2250,32 @@ export interface LotteryDecisionOutcomeSummary {
   generatedAt?: number;
 }
 
+export interface LotteryStrategyNoteEvidence {
+  evidenceKey?: string;
+  evidenceType?: string;
+  title?: string;
+  sourceId?: string;
+  path?: string;
+  attachedAt?: number;
+}
+
+export interface LotteryStrategyNote {
+  id?: string;
+  userId?: string;
+  title?: string;
+  hypothesis?: string;
+  expectedBehavior?: string;
+  ruleName?: string;
+  targetIssue?: string;
+  status?: string;
+  tags: string[];
+  evidence: LotteryStrategyNoteEvidence[];
+  archived?: boolean;
+  archivedAt?: number;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
 export interface LotteryPageResponse<T> {
   items: T[];
   page?: number;
@@ -2711,6 +2737,24 @@ export const lotteryDecisionSetApi = {
   },
   archiveDecisionSet: (id: string): Promise<LotteryDecisionSet> => {
     return apiClient.patch(`/lottery/decision-sets/${id}/archive`);
+  }
+};
+
+export const lotteryStrategyNoteApi = {
+  notes: (params?: { includeArchived?: boolean; status?: string; page?: number; pageSize?: number }): Promise<LotteryPageResponse<LotteryStrategyNote>> => {
+    return apiClient.get('/lottery/strategy-notes', { params });
+  },
+  create: (note: Partial<LotteryStrategyNote>): Promise<LotteryStrategyNote> => {
+    return apiClient.post('/lottery/strategy-notes', note);
+  },
+  update: (id: string, note: Partial<LotteryStrategyNote>): Promise<LotteryStrategyNote> => {
+    return apiClient.put(`/lottery/strategy-notes/${id}`, note);
+  },
+  archive: (id: string): Promise<LotteryStrategyNote> => {
+    return apiClient.patch(`/lottery/strategy-notes/${id}/archive`);
+  },
+  attachEvidence: (id: string, evidence: LotteryStrategyNoteEvidence): Promise<LotteryStrategyNote> => {
+    return apiClient.post(`/lottery/strategy-notes/${id}/evidence`, { evidence });
   }
 };
 

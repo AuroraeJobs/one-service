@@ -116,6 +116,20 @@ const updateSelectedKeys = (searchParams: URLSearchParams, setSearchParams: (nex
 
 const researchPathForKey = (key: string) => `/lottery/research?items=${encodeURIComponent(key)}`;
 
+const notebookPathForEvidence = (item?: EvidenceItem) => {
+  if (!item) {
+    return '/lottery/research/notebook';
+  }
+  const search = new URLSearchParams({
+    evidenceKey: item.key,
+    evidenceType: item.kind.toUpperCase(),
+    evidenceTitle: item.title,
+    path: item.path,
+    title: `${item.title} 假设`
+  });
+  return `/lottery/research/notebook?${search.toString()}`;
+};
+
 const decisionEvidenceKey = (item: LotteryDecisionOutcomeItem) => {
   const key = item.decisionSetId || item.targetIssue || item.title;
   return key ? `decision:${key}` : '';
@@ -506,6 +520,7 @@ const LotteryResearchPage = () => {
       + selectedItems.reduce((sum, item) => sum + Number(item.metrics.warningCount || 0), 0);
     return { bestScore, totalNet, evidenceWarnings };
   }, [selectedItems]);
+  const notebookEvidenceItem = selectedItems[0];
 
   return (
     <LifePageShell
@@ -528,6 +543,9 @@ const LotteryResearchPage = () => {
           </Button>
           <Button icon={<TrophyOutlined />} onClick={() => window.print()}>
             打印
+          </Button>
+          <Button icon={<FileTextOutlined />} onClick={() => navigate(notebookPathForEvidence(notebookEvidenceItem))}>
+            写入笔记
           </Button>
         </Space>
       }
