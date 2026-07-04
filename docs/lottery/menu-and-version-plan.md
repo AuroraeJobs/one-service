@@ -165,7 +165,7 @@ Goal: support a longer research loop with experiments, backtests, reminders, gov
 - Add backtest report pages at `/lottery/backtests` and `/lottery/backtests/:id`.
 - Add calendar/reminder pages for daily lottery workflow state at `/lottery/alerts`.
 - Add budget/exposure governance on tickets and ledger.
-- Add export and audit surfaces for tickets, predictions, experiments, backtests, ledger rows, sync logs, and probe logs at `/lottery/exports`.
+- Add export and audit surfaces for tickets, predictions, experiments, backtests, rule evidence, replay evidence, ledger rows, sync logs, and probe logs at `/lottery/exports`.
 - Add non-destructive maintenance preview and cleanup dry-run operations behind the export/audit surface.
 - Keep all external-provider behavior behind backend services and preserve project-owned `lottery/*` frontend calls.
 
@@ -174,7 +174,7 @@ Goal: support a longer research loop with experiments, backtests, reminders, gov
 Goal: make the completed platform capabilities feel like a richer user-facing product.
 
 - Upgrade `/lottery/workbench` with quick actions, recent-work shortcuts, saved view state, and richer daily widgets. The shipped 11A slice adds the quick-action rail, recent prediction/ticket/experiment/backtest/export shortcuts, and browser-local saved filter state for key growing lists.
-- Add `/lottery/research` for side-by-side experiment, backtest, rule, and ledger evidence comparison. The shipped 11B slice exposes the route, navigation item, URL-backed selection, charts, and deep links from experiment, backtest, prediction, and ledger surfaces.
+- Add `/lottery/research` for side-by-side experiment, backtest, rule, replay, and ledger evidence comparison. The shipped 11B slice exposes the route, navigation item, URL-backed selection, charts, and deep links from experiment, backtest, prediction, and ledger surfaces; 12C adds visible rule evidence quality and replay drift summaries.
 - Add ticket workflow power tools: bulk paste/import, duplicate preview, batch actions, issue timeline, and mobile-friendly cards.
 - Improve `/lottery/exports` with browser CSV download, report builder, audit filters, maintenance grouping, and print-friendly report views.
 - Preserve dense operational layouts and URL-backed filters so drill-through from workbench remains predictable.

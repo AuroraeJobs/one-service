@@ -126,15 +126,15 @@ Training reports should include:
 
 `LotteryTrainingReportRecord` stores completed training reports in Mongo at `lottery_training_reports`. The existing Redis `lottery:training:last` cache remains a fast compatibility path, while durable records preserve replay count, generation, best result, learned rule, latest prediction, candidates, timeline, and actual-result context for future history and comparison pages.
 
-`LotteryPredictionRuleRecord` stores learned prediction rule versions in Mongo at `lottery_prediction_rules`. Rule records capture rule id/name, generation, replay count, rank score, config, summary, and learned flag. `GET /lottery/predictions/rules` returns recent rule versions, and `GET /lottery/predictions/rules/compare` identifies the best ranked rule among that window for comparison UI. Rule comparison also attaches a matched `LotteryBacktestSummary` when a latest backtest report has a `strategyName` matching the rule name or rule id.
+`LotteryPredictionRuleRecord` stores learned prediction rule versions in Mongo at `lottery_prediction_rules`. Rule records capture rule id/name, generation, replay count, rank score, config, summary, learned flag, `LotteryRuleEvidence`, and `LotteryReplaySummary`. `GET /lottery/predictions/rules` returns recent rule versions with evidence tags, and `GET /lottery/predictions/rules/compare` identifies the best ranked rule among that window for comparison UI. Rule comparison also attaches a matched `LotteryBacktestSummary` when a latest backtest report has a `strategyName` matching the rule name or rule id.
 
-`GET /lottery/predictions/replay-metrics` reads the latest durable training report timeline and aggregates score, red-hit average, blue-hit rate, best score, and prize distribution for a requested historical window.
+`GET /lottery/predictions/replay-metrics` reads the latest durable training report timeline and aggregates score, red-hit average, blue-hit rate, best score, prize distribution, red-hit distribution, candidate hit distribution, rule version, and recent-window drift against the previous same-sized baseline window. The prediction and rule evidence APIs use `LotteryRuleEvidence` tags: `STABLE`, `VOLATILE`, `STALE`, or `UNDER_TESTED`.
 
 Training operations expose both legacy `/lottery/training/status|cancel|retry` and prediction namespace `/lottery/predictions/training/status|cancel|retry` endpoints. Cancellation is cooperative: the API marks the active training run as cancelled, and candidate replay or rolling timeline loops stop at the next cancellation check. Retry reuses the last requested replay count and scale.
 
-The frontend prediction history page at `/lottery/predictions/history` reads `GET /lottery/predictions` and presents recent durable snapshots with rule metadata, generated numbers, result state, and candidate counts.
+The frontend prediction history page at `/lottery/predictions/history` reads `GET /lottery/predictions` and presents recent durable snapshots with rule metadata, generated numbers, result state, candidate counts, evidence tags, and replay summary text.
 
-The frontend prediction detail page at `/lottery/predictions/:id` reads `GET /lottery/predictions/{id}` and displays the saved primary prediction, candidate predictions, rule metadata, scores, actual draw, and hit results.
+The frontend prediction detail page at `/lottery/predictions/:id` reads `GET /lottery/predictions/{id}` and displays the saved primary prediction, candidate predictions, rule metadata, scores, actual draw, hit results, evidence reasons, and primary/candidate hit distributions.
 
 ## Statistics Contract
 
@@ -188,7 +188,7 @@ Prediction detail can batch-save the primary prediction and all candidate predic
 
 The export and maintenance frontend at `/lottery/exports` uses the existing `GET /lottery/exports/{type}`, `GET /lottery/audit/events`, and maintenance APIs to provide a report builder, client-side CSV download, audit filtering, maintenance grouping, and a print-friendly report preview. The browser download path uses the returned `LotteryExportResult.content` and `fileName`; it does not introduce browser-side provider calls or alternate export endpoints.
 
-Ticket queries accept `predictionSnapshotId` to support prediction-detail linkbacks. `POST /lottery/predictions/attach-latest-actual` reads the latest draw record, finds prediction snapshots whose `targetPeriod` matches that draw, attaches the normalized actual record, and recalculates primary and candidate results.
+Ticket queries accept `predictionSnapshotId` to support prediction-detail linkbacks. `POST /lottery/predictions/attach-latest-actual` reads the latest draw record, finds prediction snapshots whose `targetPeriod` matches that draw, attaches the normalized actual record, and recalculates primary and candidate results. `LotteryRecordSyncService` now runs the same latest-actual attachment after a successful record sync so eligible prediction snapshots are updated automatically when new draw data arrives.
 
 The ticket page create/edit modal posts to the ticket CRUD APIs and accepts red numbers as space- or comma-separated input before converting them to the backend list format.
 
@@ -446,11 +446,13 @@ ledger-issues
 predictions
 experiments
 backtests
+rule-evidence
+replay-evidence
 sync-logs
 probe-logs
 ```
 
-The first export service applies explicit filters such as `issue`, `status`, `source`, `targetPeriod`, `ruleId`, `strategyName`, `presetWindow`, `provider`, and `limit` depending on export type. The export response and audit event both record the normalized filters and generated row count. `limit` is capped server-side for bounded API payloads. `GET /lottery/audit/events` uses the shared pagination envelope with `items`, `page`, `pageSize`, `total`, and `hasNext`.
+The first export service applies explicit filters such as `issue`, `status`, `source`, `targetPeriod`, `ruleId`, `strategyName`, `presetWindow`, `ruleName`, `window`, `provider`, and `limit` depending on export type. Prediction exports include evidence and actual-hit columns. `rule-evidence` exports rule comparison evidence rows, and `replay-evidence` exports the latest replay drift summary. The export response and audit event both record the normalized filters and generated row count. `limit` is capped server-side for bounded API payloads. `GET /lottery/audit/events` uses the shared pagination envelope with `items`, `page`, `pageSize`, `total`, and `hasNext`.
 
 `LotteryMaintenanceSummary` reports non-destructive maintenance previews for caches, old logs, and high-growth history collections. It includes `dryRun`, collection rows with total count, stale count, retention days, oversized count, cleanup support, cache rows with presence and TTL status, message, and generated time.
 

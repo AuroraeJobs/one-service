@@ -295,12 +295,12 @@ Use this file as the durable task board for the lottery module. When a task is f
 
 ### Wave 12C: Prediction Evidence And Rule Intelligence
 
-- [ ] Automatically attach latest actual results to eligible prediction snapshots after sync.
-- [ ] Add replay summary for candidates, hit distribution, rule version, and recent-window drift.
-- [ ] Add rule evidence tags for stable, volatile, stale, and under-tested rules.
-- [ ] Improve frontend comparison states so evidence quality is visible before a rule is trusted.
-- [ ] Add export or report sections for replay and rule evidence.
-- [ ] Run focused prediction/replay tests, frontend build if changed, update docs, commit, and push.
+- [x] Automatically attach latest actual results to eligible prediction snapshots after sync. `LotteryRecordSyncService` now runs latest-actual prediction attachment after successful record sync and records the attachment count in the sync message.
+- [x] Add replay summary for candidates, hit distribution, rule version, and recent-window drift. Added `LotteryReplaySummary` for snapshot candidate distribution, rule version context, red-hit distribution, and recent-vs-baseline drift.
+- [x] Add rule evidence tags for stable, volatile, stale, and under-tested rules. Added `LotteryRuleEvidence` and conservative server-side classification for rule comparison, replay metrics, and prediction snapshots.
+- [x] Improve frontend comparison states so evidence quality is visible before a rule is trusted. Prediction history/detail and research comparison now show evidence tags, scores, reasons, and replay summaries.
+- [x] Add export or report sections for replay and rule evidence. Added `rule-evidence` and `replay-evidence` export types and included them in the frontend report builder.
+- [x] Run focused prediction/replay tests, frontend build if changed, update docs, commit, and push.
 
 ### Wave 12D: Daily Automation And Release Hardening
 

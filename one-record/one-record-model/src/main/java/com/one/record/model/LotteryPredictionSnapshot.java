@@ -4,6 +4,8 @@ import com.one.record.lottery.LotteryAuditMetadata;
 import com.one.record.training.LotteryActualRecord;
 import com.one.record.training.LotteryPredictionCandidate;
 import com.one.record.training.LotteryPredictionResult;
+import com.one.record.training.LotteryReplaySummary;
+import com.one.record.training.LotteryRuleEvidence;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -46,6 +48,10 @@ public class LotteryPredictionSnapshot {
     private LotteryActualRecord actualRecord;
 
     private LotteryPredictionResult result;
+
+    private LotteryRuleEvidence evidence;
+
+    private LotteryReplaySummary replaySummary;
 
     @Builder.Default
     private List<LotteryPredictionCandidate> candidates = new ArrayList<>();

@@ -22,9 +22,11 @@ import {
   type LotteryBacktestSummary,
   type LotteryPerformanceLedger,
   type LotteryPredictionRuleRecord,
+  type LotteryRuleEvidence,
   type LotteryRuleComparison,
   type LotteryStrategyExperiment
 } from '../services/api';
+import { lotteryDriftLabel, lotteryEvidenceColor, lotteryEvidenceLabel, lotteryReplayText } from '../utils/lotteryEvidence';
 import './LotteryOverviewPage.css';
 
 type EvidenceKind = 'experiment' | 'backtest' | 'rule' | 'performance';
@@ -52,6 +54,8 @@ interface EvidenceItem {
   metrics: EvidenceMetrics;
   prizeDistribution: Record<string, number>;
   backtestSummary?: LotteryBacktestSummary;
+  evidence?: LotteryRuleEvidence;
+  replaySummary?: LotteryPredictionRuleRecord['replaySummary'];
 }
 
 const itemSeparator = ';';
@@ -159,7 +163,7 @@ const ruleToEvidence = (item: LotteryPredictionRuleRecord): EvidenceItem | undef
     title: item.ruleName || item.ruleId || '规则记录',
     subtitle: `代数 ${item.generation || '-'} · 回放 ${item.replayCount || 0}`,
     path: researchPathForKey(`rule:${key}`),
-    tags: ['规则', item.learned ? 'learned' : 'candidate'].filter(Boolean),
+    tags: ['规则', lotteryEvidenceLabel(item.evidence), item.learned ? 'learned' : 'candidate'].filter(Boolean),
     metrics: {
       rankScore: item.rankScore,
       bestScore: item.summary?.bestScore || backtest?.bestScore,
@@ -171,7 +175,9 @@ const ruleToEvidence = (item: LotteryPredictionRuleRecord): EvidenceItem | undef
       replayCount: item.replayCount || backtest?.replayCount
     },
     prizeDistribution: backtest?.prizeDistribution || item.summary?.prizeDistribution || {},
-    backtestSummary: backtest
+    backtestSummary: backtest,
+    evidence: item.evidence,
+    replaySummary: item.replaySummary
   };
 };
 
@@ -435,7 +441,13 @@ const LotteryResearchPage = () => {
           <Space wrap>
             <Tag color="blue">已选 {selectedItems.length}</Tag>
             {ruleComparison?.bestRuleName ? <Tag color="gold">当前最佳规则 {ruleComparison.bestRuleName}</Tag> : null}
+            {ruleComparison?.bestEvidence ? (
+              <Tag color={lotteryEvidenceColor(ruleComparison.bestEvidence.tag)}>
+                {lotteryEvidenceLabel(ruleComparison.bestEvidence)} · {ruleComparison.bestEvidence.score ?? '-'} 分
+              </Tag>
+            ) : null}
             {ruleComparison?.bestBacktestSummary ? <Tag color="cyan">规则已匹配回测摘要</Tag> : null}
+            {ruleComparison?.replaySummary ? <Tag>{lotteryReplayText(ruleComparison.replaySummary)}</Tag> : null}
           </Space>
         </Space>
       </Card>
@@ -472,6 +484,21 @@ const LotteryResearchPage = () => {
                     <span><strong>{formatPercent(item.metrics.roiPercent)}</strong><small>ROI</small></span>
                     <span><strong>{formatPercent(item.metrics.hitRatePercent)}</strong><small>命中率</small></span>
                   </div>
+                  {item.evidence ? (
+                    <div className="lottery-research-evidence-strip">
+                      <Tag color={lotteryEvidenceColor(item.evidence.tag)}>{lotteryEvidenceLabel(item.evidence)}</Tag>
+                      <span>证据分 {item.evidence.score ?? '-'}</span>
+                      <span>{item.evidence.message || lotteryReplayText(item.replaySummary)}</span>
+                    </div>
+                  ) : null}
+                  {item.replaySummary ? (
+                    <div className="lottery-research-backtest-strip">
+                      <LineChartOutlined />
+                      <span>
+                        {lotteryReplayText(item.replaySummary)} · 漂移 {lotteryDriftLabel(item.replaySummary.driftLabel)}
+                      </span>
+                    </div>
+                  ) : null}
                   {item.backtestSummary ? (
                     <div className="lottery-research-backtest-strip">
                       <TrophyOutlined />

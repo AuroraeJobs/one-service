@@ -27,11 +27,13 @@ const exportTypeOptions = [
   { label: '预测快照', value: 'predictions' },
   { label: '策略实验', value: 'experiments' },
   { label: '回测报告', value: 'backtests' },
+  { label: '规则证据', value: 'rule-evidence' },
+  { label: '回放证据', value: 'replay-evidence' },
   { label: '同步日志', value: 'sync-logs' },
   { label: '探测日志', value: 'probe-logs' }
 ];
 
-const defaultReportSections = ['tickets', 'ledger-issues', 'predictions'];
+const defaultReportSections = ['tickets', 'ledger-issues', 'predictions', 'rule-evidence', 'replay-evidence'];
 
 const formatDateTime = (timestamp?: number) => {
   if (!timestamp) {
@@ -56,6 +58,8 @@ const toParams = (type: string, primaryFilter: string, limit: string) => {
   if (type === 'tickets' || type === 'ledger-issues') params.issue = value;
   if (type === 'predictions') params.targetPeriod = value;
   if (type === 'experiments' || type === 'backtests') params.strategyName = value;
+  if (type === 'rule-evidence') params.ruleName = value;
+  if (type === 'replay-evidence') params.window = Number(value) > 0 ? Number(value) : undefined;
   if (type === 'sync-logs') params.status = value;
   if (type === 'probe-logs') params.provider = value;
   return params;

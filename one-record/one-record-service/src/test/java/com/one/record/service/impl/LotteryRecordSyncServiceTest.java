@@ -2,17 +2,20 @@ package com.one.record.service.impl;
 
 import com.one.record.model.LotteryRecordSyncLog;
 import com.one.record.client.RecordClientException;
+import com.one.record.model.LotteryPredictionSnapshot;
 import com.one.record.response.Record;
 import com.one.record.service.ILotteryRecordSyncLogService;
 import com.one.record.service.IRecordService;
 import com.one.record.service.IRecordUpdate;
 import com.one.record.service.ILotteryStatisticsService;
+import com.one.record.service.ILotteryTrainingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
 import java.time.Duration;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -34,6 +37,8 @@ class LotteryRecordSyncServiceTest {
 
     private ILotteryStatisticsService statisticsService;
 
+    private ILotteryTrainingService trainingService;
+
     private StringRedisTemplate redisTemplate;
 
     private ValueOperations<String, String> valueOperations;
@@ -46,11 +51,12 @@ class LotteryRecordSyncServiceTest {
         recordUpdate = mock(IRecordUpdate.class);
         syncLogService = mock(ILotteryRecordSyncLogService.class);
         statisticsService = mock(ILotteryStatisticsService.class);
+        trainingService = mock(ILotteryTrainingService.class);
         redisTemplate = mock(StringRedisTemplate.class);
         valueOperations = mockValueOperations();
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.setIfAbsent(anyString(), anyString(), any(Duration.class))).thenReturn(true);
-        service = new LotteryRecordSyncService(recordService, recordUpdate, syncLogService, statisticsService, redisTemplate);
+        service = new LotteryRecordSyncService(recordService, recordUpdate, syncLogService, statisticsService, trainingService, redisTemplate);
     }
 
     @SuppressWarnings("unchecked")
@@ -66,14 +72,18 @@ class LotteryRecordSyncServiceTest {
         LotteryRecordSyncLog success = LotteryRecordSyncLog.builder().id("sync-1").status("SUCCESS").savedCount(2).build();
         when(recordService.findLast()).thenReturn(before, after);
         when(syncLogService.start("manual-record-sync", "2026001")).thenReturn(running);
-        when(syncLogService.success(running, "2026003", 2, "新增 2 期开奖记录")).thenReturn(success);
+        when(trainingService.attachLatestActualToMatchingPredictions()).thenReturn(List.of(
+                LotteryPredictionSnapshot.builder().id("snapshot-1").build()
+        ));
+        when(syncLogService.success(running, "2026003", 2, "新增 2 期开奖记录，回填 1 条预测结果")).thenReturn(success);
 
         LotteryRecordSyncLog result = service.syncManually();
 
         assertThat(result.getStatus()).isEqualTo("SUCCESS");
         verify(recordUpdate).update();
         verify(statisticsService).invalidateCache();
-        verify(syncLogService).success(running, "2026003", 2, "新增 2 期开奖记录");
+        verify(trainingService).attachLatestActualToMatchingPredictions();
+        verify(syncLogService).success(running, "2026003", 2, "新增 2 期开奖记录，回填 1 条预测结果");
         verify(redisTemplate).delete("lottery:records:sync:lock");
     }
 
@@ -90,6 +100,7 @@ class LotteryRecordSyncServiceTest {
 
         assertThat(result.getSavedCount()).isZero();
         verify(statisticsService, never()).invalidateCache();
+        verify(trainingService).attachLatestActualToMatchingPredictions();
         verify(syncLogService).success(running, "2026001", 0, "没有新的开奖记录");
     }
 
@@ -124,6 +135,7 @@ class LotteryRecordSyncServiceTest {
         assertThat(result.getStatus()).isEqualTo("SKIPPED");
         verify(recordUpdate, never()).update();
         verify(statisticsService, never()).invalidateCache();
+        verify(trainingService, never()).attachLatestActualToMatchingPredictions();
         verify(redisTemplate, never()).delete(anyString());
     }
 
@@ -141,6 +153,7 @@ class LotteryRecordSyncServiceTest {
                 .hasMessageContaining("provider unavailable");
 
         verify(syncLogService).failure(running, failure);
+        verify(trainingService, never()).attachLatestActualToMatchingPredictions();
         verify(redisTemplate).delete("lottery:records:sync:lock");
     }
 

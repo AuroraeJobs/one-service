@@ -28,5 +28,9 @@ public class LotteryRuleComparison implements Serializable {
 
     private LotteryBacktestSummary bestBacktestSummary;
 
+    private LotteryRuleEvidence bestEvidence;
+
+    private LotteryReplaySummary replaySummary;
+
     private Long generatedAt;
 }

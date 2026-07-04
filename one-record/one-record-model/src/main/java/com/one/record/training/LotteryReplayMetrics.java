@@ -34,5 +34,9 @@ public class LotteryReplayMetrics implements Serializable {
     @Builder.Default
     private Map<String, Integer> prizeDistribution = new LinkedHashMap<>();
 
+    private LotteryRuleEvidence evidence;
+
+    private LotteryReplaySummary replaySummary;
+
     private Long generatedAt;
 }

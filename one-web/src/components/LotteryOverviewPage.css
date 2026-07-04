@@ -99,7 +99,7 @@
 
 .lottery-history-summary-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
   margin-bottom: 16px;
 }
@@ -198,6 +198,20 @@
 .lottery-detail-actual-card span {
   color: var(--app-text-muted);
   font-size: 13px;
+}
+
+.lottery-evidence-strip {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.lottery-evidence-distribution {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .lottery-detail-candidate-grid {
@@ -839,6 +853,20 @@
   border: 1px solid rgba(0, 113, 227, 0.16);
   border-radius: 8px;
   background: rgba(0, 113, 227, 0.08);
+}
+
+.lottery-research-evidence-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 9px 10px;
+  border: 1px solid rgba(52, 199, 89, 0.18);
+  border-radius: 8px;
+  background: rgba(52, 199, 89, 0.08);
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .lottery-research-backtest-strip > span:first-child,

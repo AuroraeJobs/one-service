@@ -24,6 +24,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -171,6 +172,8 @@ class LotteryTrainingServiceTest {
         assertThat(result.getResult().isBlueHit()).isTrue();
         assertThat(result.getCandidates().get(0).getResult().getRedHits()).isEqualTo(3);
         assertThat(result.getCandidates().get(0).getResult().isBlueHit()).isFalse();
+        assertThat(result.getEvidence().getTag()).isEqualTo("STABLE");
+        assertThat(result.getReplaySummary().getCandidateRedHitDistribution()).containsEntry("3红", 1);
         assertThat(result.getUpdatedAt()).isGreaterThan(100L);
     }
 
@@ -251,6 +254,8 @@ class LotteryTrainingServiceTest {
         assertThat(record.getReplayCount()).isEqualTo(30);
         assertThat(record.getRankScore()).isEqualTo(900);
         assertThat(record.getSummary().getAverageScore()).isEqualTo(88.8);
+        assertThat(record.getEvidence()).isNotNull();
+        assertThat(record.getReplaySummary().getReplayWindow()).isEqualTo(30);
         assertThat(record.getLearned()).isTrue();
         assertThat(record.getCreatedAt()).isNotNull();
     }
@@ -268,8 +273,10 @@ class LotteryTrainingServiceTest {
                         .strategyName("B")
                         .presetWindow("latest-30")
                         .replayCount(30)
+                        .averageRedHits(new BigDecimal("2.8"))
+                        .blueHitRate(new BigDecimal("12"))
                         .stabilityScore(86)
-                        .createdAt(200L)
+                        .createdAt(System.currentTimeMillis())
                         .build()
         ));
 
@@ -281,6 +288,8 @@ class LotteryTrainingServiceTest {
         assertThat(comparison.getBestRankScore()).isEqualTo(20);
         assertThat(comparison.getBestBacktestSummary().getBacktestId()).isEqualTo("bt-b");
         assertThat(comparison.getRules().get(1).getBacktestSummary().getStabilityScore()).isEqualTo(86);
+        assertThat(comparison.getBestEvidence().getTag()).isEqualTo("STABLE");
+        assertThat(comparison.getRules().get(1).getReplaySummary().getRecentAverageRedHits()).isEqualTo(2.8);
         assertThat(comparison.getGeneratedAt()).isNotNull();
     }
 
@@ -329,6 +338,11 @@ class LotteryTrainingServiceTest {
         assertThat(metrics.getBlueHitRate()).isEqualTo(50);
         assertThat(metrics.getBestScore()).isEqualTo(150);
         assertThat(metrics.getPrizeDistribution()).containsEntry("五等奖", 1).containsEntry("四等奖", 1);
+        assertThat(metrics.getReplaySummary().getBaselineWindow()).isEqualTo(1);
+        assertThat(metrics.getReplaySummary().getAverageRedHitsDrift()).isEqualTo(1.5);
+        assertThat(metrics.getReplaySummary().getBlueHitRateDrift()).isEqualTo(50);
+        assertThat(metrics.getReplaySummary().getRedHitDistribution()).containsEntry("3红", 1).containsEntry("4红", 1);
+        assertThat(metrics.getEvidence().getTag()).isEqualTo("UNDER_TESTED");
     }
 
     @Test
@@ -341,6 +355,7 @@ class LotteryTrainingServiceTest {
         assertThat(metrics.getRequestedWindow()).isEqualTo(12);
         assertThat(metrics.getActualWindow()).isZero();
         assertThat(metrics.getPrizeDistribution()).isEmpty();
+        assertThat(metrics.getEvidence().getTag()).isEqualTo("UNDER_TESTED");
         assertThat(metrics.getGeneratedAt()).isNotNull();
     }
 

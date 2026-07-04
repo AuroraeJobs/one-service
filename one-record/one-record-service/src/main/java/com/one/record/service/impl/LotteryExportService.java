@@ -6,6 +6,7 @@ import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.model.LotteryAuditEvent;
 import com.one.record.model.LotteryBacktestReport;
 import com.one.record.model.LotteryPredictionSnapshot;
+import com.one.record.model.LotteryPredictionRuleRecord;
 import com.one.record.model.LotteryProviderProbeLog;
 import com.one.record.model.LotteryRecordSyncLog;
 import com.one.record.model.LotteryStrategyExperiment;
@@ -19,6 +20,10 @@ import com.one.record.repository.LotteryStrategyExperimentRepository;
 import com.one.record.repository.LotteryTicketRepository;
 import com.one.record.service.ILotteryExportService;
 import com.one.record.service.ILotteryLedgerService;
+import com.one.record.service.ILotteryTrainingService;
+import com.one.record.training.LotteryReplayMetrics;
+import com.one.record.training.LotteryReplaySummary;
+import com.one.record.training.LotteryRuleEvidence;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -61,6 +66,8 @@ public class LotteryExportService implements ILotteryExportService {
     private final LotteryAuditEventRepository auditEventRepository;
 
     private final ILotteryLedgerService ledgerService;
+
+    private final ILotteryTrainingService trainingService;
 
     @Override
     public LotteryExportResult export(String type, Map<String, String> filters) {
@@ -116,6 +123,8 @@ public class LotteryExportService implements ILotteryExportService {
             case "backtests" -> backtestRows(filters);
             case "sync-logs" -> syncLogRows(filters);
             case "probe-logs" -> probeLogRows(filters);
+            case "rule-evidence" -> ruleEvidenceRows(filters);
+            case "replay-evidence" -> replayEvidenceRows(filters);
             default -> throw new IllegalArgumentException("不支持的导出类型: " + type);
         };
     }
@@ -176,9 +185,78 @@ public class LotteryExportService implements ILotteryExportService {
                         "score", value(snapshot.getScore()),
                         "redNumbers", String.join(" ", snapshot.getRedNumbers() == null ? List.of() : snapshot.getRedNumbers()),
                         "blueNumber", value(snapshot.getBlueNumber()),
+                        "evidenceTag", evidenceTag(snapshot.getEvidence()),
+                        "evidenceScore", value(snapshot.getEvidence() == null ? null : snapshot.getEvidence().getScore()),
+                        "evidenceMessage", value(snapshot.getEvidence() == null ? null : snapshot.getEvidence().getMessage()),
+                        "actualPeriod", value(snapshot.getActualRecord() == null ? null : snapshot.getActualRecord().getPeriod()),
+                        "primaryRedHits", value(snapshot.getResult() == null ? null : snapshot.getResult().getRedHits()),
+                        "primaryBlueHit", value(snapshot.getResult() == null ? null : snapshot.getResult().isBlueHit()),
                         "createdAt", value(snapshot.getCreatedAt())
                 ))
                 .toList(), filters);
+    }
+
+    private List<Map<String, String>> ruleEvidenceRows(Map<String, String> filters) {
+        String ruleName = upper(filters.get("ruleName"));
+        return limit(trainingService.comparePredictionRules(normalizeLimit(parseInt(filters.get("limit"))))
+                .getRules()
+                .stream()
+                .filter(rule -> !hasText(ruleName) || containsUpper(rule.getRuleName(), ruleName) || containsUpper(rule.getRuleId(), ruleName))
+                .map(rule -> {
+                    LotteryRuleEvidence evidence = rule.getEvidence();
+                    LotteryReplaySummary replay = rule.getReplaySummary();
+                    return row(
+                            "id", value(rule.getId()),
+                            "ruleId", value(rule.getRuleId()),
+                            "ruleName", value(rule.getRuleName()),
+                            "generation", value(rule.getGeneration()),
+                            "replayCount", value(rule.getReplayCount()),
+                            "rankScore", value(rule.getRankScore()),
+                            "evidenceTag", evidenceTag(evidence),
+                            "evidenceLabel", value(evidence == null ? null : evidence.getLabel()),
+                            "evidenceScore", value(evidence == null ? null : evidence.getScore()),
+                            "evidenceMessage", value(evidence == null ? null : evidence.getMessage()),
+                            "evidenceReasons", reasons(evidence),
+                            "stabilityScore", value(rule.getBacktestSummary() == null ? null : rule.getBacktestSummary().getStabilityScore()),
+                            "averageRedHits", value(replay == null ? null : replay.getRecentAverageRedHits()),
+                            "blueHitRate", value(replay == null ? null : replay.getRecentBlueHitRate()),
+                            "prizeDistribution", value(replay == null ? null : replay.getPrizeDistribution()),
+                            "createdAt", value(rule.getCreatedAt())
+                    );
+                })
+                .toList(), filters);
+    }
+
+    private List<Map<String, String>> replayEvidenceRows(Map<String, String> filters) {
+        Integer window = parseInt(filters.get("window"));
+        LotteryReplayMetrics metrics = trainingService.replayMetrics(window);
+        LotteryReplaySummary replay = metrics.getReplaySummary();
+        LotteryRuleEvidence evidence = metrics.getEvidence();
+        return List.of(row(
+                "requestedWindow", value(metrics.getRequestedWindow()),
+                "actualWindow", value(metrics.getActualWindow()),
+                "reportReplayCount", value(metrics.getReportReplayCount()),
+                "generation", value(metrics.getGeneration()),
+                "ruleId", value(replay == null ? null : replay.getRuleId()),
+                "ruleName", value(replay == null ? null : replay.getRuleName()),
+                "recentAverageScore", value(replay == null ? null : replay.getRecentAverageScore()),
+                "averageScoreDrift", value(replay == null ? null : replay.getAverageScoreDrift()),
+                "recentAverageRedHits", value(replay == null ? null : replay.getRecentAverageRedHits()),
+                "averageRedHitsDrift", value(replay == null ? null : replay.getAverageRedHitsDrift()),
+                "recentBlueHitRate", value(replay == null ? null : replay.getRecentBlueHitRate()),
+                "blueHitRateDrift", value(replay == null ? null : replay.getBlueHitRateDrift()),
+                "driftLabel", value(replay == null ? null : replay.getDriftLabel()),
+                "evidenceTag", evidenceTag(evidence),
+                "evidenceLabel", value(evidence == null ? null : evidence.getLabel()),
+                "evidenceScore", value(evidence == null ? null : evidence.getScore()),
+                "evidenceMessage", value(evidence == null ? null : evidence.getMessage()),
+                "evidenceReasons", reasons(evidence),
+                "prizeDistribution", value(replay == null ? null : replay.getPrizeDistribution()),
+                "redHitDistribution", value(replay == null ? null : replay.getRedHitDistribution()),
+                "candidatePrizeDistribution", value(replay == null ? null : replay.getCandidatePrizeDistribution()),
+                "candidateRedHitDistribution", value(replay == null ? null : replay.getCandidateRedHitDistribution()),
+                "generatedAt", value(metrics.getGeneratedAt())
+        ));
     }
 
     private List<Map<String, String>> experimentRows(Map<String, String> filters) {
@@ -368,6 +446,14 @@ public class LotteryExportService implements ILotteryExportService {
 
     private String value(Object value) {
         return value == null ? "" : String.valueOf(value);
+    }
+
+    private String evidenceTag(LotteryRuleEvidence evidence) {
+        return evidence == null ? "" : value(evidence.getTag());
+    }
+
+    private String reasons(LotteryRuleEvidence evidence) {
+        return evidence == null || evidence.getReasons() == null ? "" : String.join(" | ", evidence.getReasons());
     }
 
     private String money(BigDecimal value) {

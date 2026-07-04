@@ -1737,6 +1737,8 @@ export interface LotteryLatestPrediction {
 
 export interface LotteryPredictionSnapshot extends LotteryLatestPrediction {
   id?: string;
+  evidence?: LotteryRuleEvidence;
+  replaySummary?: LotteryReplaySummary;
   createdAt?: number;
   updatedAt?: number;
 }
@@ -1751,6 +1753,8 @@ export interface LotteryPredictionRuleRecord {
   config?: PredictionRuleConfig;
   summary?: LotteryTrainingSummary;
   backtestSummary?: LotteryBacktestSummary;
+  evidence?: LotteryRuleEvidence;
+  replaySummary?: LotteryReplaySummary;
   learned?: boolean;
   createdAt?: number;
 }
@@ -1863,6 +1867,43 @@ export interface LotteryRuleComparison {
   bestRuleName?: string;
   bestRankScore?: number;
   bestBacktestSummary?: LotteryBacktestSummary;
+  bestEvidence?: LotteryRuleEvidence;
+  replaySummary?: LotteryReplaySummary;
+  generatedAt?: number;
+}
+
+export interface LotteryRuleEvidence {
+  tag?: 'STABLE' | 'VOLATILE' | 'STALE' | 'UNDER_TESTED' | string;
+  label?: string;
+  message?: string;
+  score?: number;
+  reasons?: string[];
+  generatedAt?: number;
+}
+
+export interface LotteryReplaySummary {
+  ruleId?: string;
+  ruleName?: string;
+  ruleGeneration?: number;
+  replayWindow?: number;
+  baselineWindow?: number;
+  candidateCount?: number;
+  scoredCandidateCount?: number;
+  recentAverageScore?: number;
+  baselineAverageScore?: number;
+  averageScoreDrift?: number;
+  recentAverageRedHits?: number;
+  baselineAverageRedHits?: number;
+  averageRedHitsDrift?: number;
+  recentBlueHitRate?: number;
+  baselineBlueHitRate?: number;
+  blueHitRateDrift?: number;
+  bestScore?: number;
+  driftLabel?: string;
+  prizeDistribution: Record<string, number>;
+  redHitDistribution: Record<string, number>;
+  candidatePrizeDistribution: Record<string, number>;
+  candidateRedHitDistribution: Record<string, number>;
   generatedAt?: number;
 }
 
@@ -1876,6 +1917,8 @@ export interface LotteryReplayMetrics {
   blueHitRate?: number;
   bestScore?: number;
   prizeDistribution: Record<string, number>;
+  evidence?: LotteryRuleEvidence;
+  replaySummary?: LotteryReplaySummary;
   generatedAt?: number;
 }
 

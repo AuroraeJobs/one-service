@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Empty, Input, Pagination, Select, Space, Spin, Tag, message } from 'antd';
-import { ExperimentOutlined, HistoryOutlined, ReloadOutlined, ThunderboltOutlined, TrophyOutlined } from '@ant-design/icons';
+import { ExperimentOutlined, HistoryOutlined, ReloadOutlined, SafetyCertificateOutlined, ThunderboltOutlined, TrophyOutlined } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import { lotteryPredictionApi, type LotteryPageResponse, type LotteryPredictionSnapshot } from '../services/api';
+import { lotteryEvidenceColor, lotteryEvidenceLabel, lotteryReplayText } from '../utils/lotteryEvidence';
 import { lotteryViewStateKeys, useLotterySavedViewState } from '../utils/lotteryViewState';
 import './LotteryOverviewPage.css';
 
@@ -41,6 +42,12 @@ const resultTone = (prediction: LotteryPredictionSnapshot) => {
     </Tag>
   );
 };
+
+const evidenceTone = (prediction: LotteryPredictionSnapshot) => (
+  <Tag color={lotteryEvidenceColor(prediction.evidence?.tag)}>
+    {lotteryEvidenceLabel(prediction.evidence)}
+  </Tag>
+);
 
 const LotteryPredictionHistoryPage = () => {
   const navigate = useNavigate();
@@ -106,8 +113,9 @@ const LotteryPredictionHistoryPage = () => {
   const summary = useMemo(() => {
     const withActual = predictions.filter(item => item.result).length;
     const won = predictions.filter(item => item.result && item.result.prizeName !== '未中奖').length;
+    const trusted = predictions.filter(item => item.evidence?.tag === 'STABLE').length;
     const latest = predictions[0];
-    return { withActual, won, latest };
+    return { withActual, won, trusted, latest };
   }, [predictions]);
 
   const attachLatestActual = async () => {
@@ -199,6 +207,15 @@ const LotteryPredictionHistoryPage = () => {
             </div>
           </div>
         </Card>
+        <Card className="life-panel-card lottery-clean-panel">
+          <div className="lottery-history-summary-item">
+            <SafetyCertificateOutlined />
+            <div>
+              <strong>{summary.trusted}</strong>
+              <span>稳定证据</span>
+            </div>
+          </div>
+        </Card>
       </section>
 
       <Card className="life-panel-card lottery-prediction-panel">
@@ -223,13 +240,17 @@ const LotteryPredictionHistoryPage = () => {
                         基于第 {prediction.basedOnPeriod || '-'} 期 · 目标第 {prediction.targetPeriod || '-'} 期 · {formatTime(prediction.createdAt)}
                       </span>
                     </div>
-                    {resultTone(prediction)}
+                    <Space wrap size={4}>
+                      {evidenceTone(prediction)}
+                      {resultTone(prediction)}
+                    </Space>
                   </div>
                   {numberBalls(prediction.redNumbers, prediction.blueNumber)}
                   <div className="lottery-prediction-tags">
                     <span>评分 {prediction.score ?? '-'}</span>
                     <span>{prediction.ruleName || prediction.ruleId || '未记录规则'}</span>
                     <span>候选 {prediction.candidates?.length || 0} 组</span>
+                    <span>{lotteryReplayText(prediction.replaySummary)}</span>
                   </div>
                   {prediction.reason ? <p>{prediction.reason}</p> : null}
                   {prediction.id ? (

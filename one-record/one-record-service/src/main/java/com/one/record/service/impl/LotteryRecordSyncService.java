@@ -2,20 +2,25 @@ package com.one.record.service.impl;
 
 import com.one.common.exception.ServiceException;
 import com.one.record.model.LotteryRecordSyncLog;
+import com.one.record.model.LotteryPredictionSnapshot;
 import com.one.record.response.Record;
 import com.one.record.service.ILotteryRecordSyncLogService;
 import com.one.record.service.ILotteryRecordSyncService;
 import com.one.record.service.ILotteryStatisticsService;
+import com.one.record.service.ILotteryTrainingService;
 import com.one.record.service.IRecordService;
 import com.one.record.service.IRecordUpdate;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.List;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class LotteryRecordSyncService implements ILotteryRecordSyncService {
 
     private static final String MANUAL_JOB_NAME = "manual-record-sync";
@@ -33,6 +38,8 @@ public class LotteryRecordSyncService implements ILotteryRecordSyncService {
     private final ILotteryRecordSyncLogService syncLogService;
 
     private final ILotteryStatisticsService statisticsService;
+
+    private final ILotteryTrainingService trainingService;
 
     private final StringRedisTemplate redisTemplate;
 
@@ -60,14 +67,36 @@ public class LotteryRecordSyncService implements ILotteryRecordSyncService {
             if (savedCount > 0) {
                 statisticsService.invalidateCache();
             }
+            int attachedPredictionCount = attachLatestActualPredictions();
             return syncLogService.success(syncLog, after == null ? null : after.getCode(), savedCount,
-                    savedCount > 0 ? "新增 " + savedCount + " 期开奖记录" : "没有新的开奖记录");
+                    successMessage(savedCount, attachedPredictionCount));
         } catch (RuntimeException exception) {
             syncLogService.failure(syncLog, exception);
             throw exception;
         } finally {
             releaseLock();
         }
+    }
+
+    private int attachLatestActualPredictions() {
+        try {
+            List<LotteryPredictionSnapshot> updated = trainingService.attachLatestActualToMatchingPredictions();
+            return updated == null ? 0 : updated.size();
+        } catch (RuntimeException exception) {
+            log.warn("开奖记录同步后回填预测结果失败", exception);
+            return -1;
+        }
+    }
+
+    private String successMessage(int savedCount, int attachedPredictionCount) {
+        String message = savedCount > 0 ? "新增 " + savedCount + " 期开奖记录" : "没有新的开奖记录";
+        if (attachedPredictionCount > 0) {
+            return message + "，回填 " + attachedPredictionCount + " 条预测结果";
+        }
+        if (attachedPredictionCount < 0) {
+            return message + "，预测回填失败，需手动重试";
+        }
+        return message;
     }
 
     private boolean acquireLock() {

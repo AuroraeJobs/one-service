@@ -1,6 +1,8 @@
 package com.one.record.model;
 
 import com.one.record.training.LotteryTrainingReport;
+import com.one.record.training.LotteryReplaySummary;
+import com.one.record.training.LotteryRuleEvidence;
 import com.one.record.training.PredictionRuleConfig;
 import com.one.record.lottery.LotteryBacktestSummary;
 import lombok.AllArgsConstructor;
@@ -35,6 +37,10 @@ public class LotteryPredictionRuleRecord {
     private LotteryTrainingReport.TrainingSummary summary;
 
     private LotteryBacktestSummary backtestSummary;
+
+    private LotteryRuleEvidence evidence;
+
+    private LotteryReplaySummary replaySummary;
 
     private Boolean learned;
 

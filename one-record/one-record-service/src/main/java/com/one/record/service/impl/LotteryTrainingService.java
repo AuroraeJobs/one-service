@@ -21,6 +21,8 @@ import com.one.record.training.LotteryLatestPrediction;
 import com.one.record.training.LotteryPredictionCandidate;
 import com.one.record.training.LotteryPredictionResult;
 import com.one.record.training.LotteryReplayMetrics;
+import com.one.record.training.LotteryReplaySummary;
+import com.one.record.training.LotteryRuleEvidence;
 import com.one.record.training.LotteryRuleComparison;
 import com.one.record.training.LotteryTrainingReport;
 import com.one.record.training.LotteryTrainingStatus;
@@ -32,6 +34,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -73,6 +76,24 @@ public class LotteryTrainingService implements ILotteryTrainingService {
     private static final int DEFAULT_PREDICTION_HISTORY_LIMIT = 20;
 
     private static final int MAX_PREDICTION_HISTORY_LIMIT = 100;
+
+    private static final int MIN_EVIDENCE_REPLAY_COUNT = 20;
+
+    private static final int STABLE_REPLAY_COUNT = 30;
+
+    private static final int STABLE_STABILITY_SCORE = 75;
+
+    private static final int VOLATILE_STABILITY_SCORE = 55;
+
+    private static final double STABLE_AVERAGE_RED_HITS = 2.6;
+
+    private static final double VOLATILE_AVERAGE_RED_HITS = 2.0;
+
+    private static final int STABLE_BLUE_HIT_RATE = 8;
+
+    private static final int VOLATILE_BLUE_HIT_RATE = 5;
+
+    private static final long STALE_EVIDENCE_MILLIS = 30L * 24 * 60 * 60 * 1000;
 
     private final StringRedisTemplate redisTemplate;
 
@@ -311,6 +332,8 @@ public class LotteryTrainingService implements ILotteryTrainingService {
                 candidate.setResult(scorePrediction(candidate.getRedNumbers(), candidate.getBlueNumber(), normalized));
             }
         }
+        snapshot.setReplaySummary(snapshotReplaySummary(snapshot, System.currentTimeMillis()));
+        snapshot.setEvidence(predictionEvidence(snapshot, System.currentTimeMillis()));
         snapshot.setUpdatedAt(System.currentTimeMillis());
         snapshot.setAuditMetadata(updateAudit(snapshot.getAuditMetadata(), "prediction-attach-actual", snapshot.getUpdatedAt()));
         return predictionSnapshotRepository.save(snapshot);
@@ -338,16 +361,18 @@ public class LotteryTrainingService implements ILotteryTrainingService {
 
     @Override
     public List<LotteryPredictionRuleRecord> predictionRules(Integer limit) {
-        return predictionRuleRepository.findByOrderByCreatedAtDesc(PageRequest.of(0, normalizePredictionHistoryLimit(limit)));
+        List<LotteryPredictionRuleRecord> rules = predictionRuleRepository.findByOrderByCreatedAtDesc(PageRequest.of(0, normalizePredictionHistoryLimit(limit)));
+        Map<String, LotteryBacktestSummary> backtestSummaries = LotteryBacktestSummarySupport.latestByKey(
+                backtestReportRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"))
+        );
+        long now = System.currentTimeMillis();
+        rules.forEach(rule -> enrichRuleEvidence(rule, backtestSummaries, now));
+        return rules;
     }
 
     @Override
     public LotteryRuleComparison comparePredictionRules(Integer limit) {
         List<LotteryPredictionRuleRecord> rules = predictionRules(limit);
-        Map<String, LotteryBacktestSummary> backtestSummaries = LotteryBacktestSummarySupport.latestByKey(
-                backtestReportRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"))
-        );
-        rules.forEach(rule -> rule.setBacktestSummary(LotteryBacktestSummarySupport.find(backtestSummaries, rule.getRuleName(), rule.getRuleId())));
         LotteryPredictionRuleRecord best = rules.stream()
                 .filter(rule -> rule.getRankScore() != null)
                 .max(Comparator.comparingInt(LotteryPredictionRuleRecord::getRankScore))
@@ -358,52 +383,40 @@ public class LotteryTrainingService implements ILotteryTrainingService {
                 .bestRuleName(best == null ? null : best.getRuleName())
                 .bestRankScore(best == null ? null : best.getRankScore())
                 .bestBacktestSummary(best == null ? null : best.getBacktestSummary())
+                .bestEvidence(best == null ? null : best.getEvidence())
+                .replaySummary(latestReplaySummary(30))
                 .generatedAt(System.currentTimeMillis())
                 .build();
     }
 
     @Override
     public LotteryReplayMetrics replayMetrics(Integer window) {
-        LotteryTrainingReportRecord report = trainingReportRepository.findByOrderByCreatedAtDesc(PageRequest.of(0, 1))
-                .stream()
-                .findFirst()
-                .orElse(null);
+        int safeWindow = normalizeReplayMetricsWindow(window);
+        LotteryTrainingReportRecord report = latestTrainingReport();
         if (report == null || report.getTimeline() == null || report.getTimeline().isEmpty()) {
+            LotteryReplaySummary summary = emptyReplaySummary(safeWindow, System.currentTimeMillis());
             return LotteryReplayMetrics.builder()
-                    .requestedWindow(normalizeReplayMetricsWindow(window))
+                    .requestedWindow(safeWindow)
                     .actualWindow(0)
                     .prizeDistribution(new LinkedHashMap<>())
+                    .evidence(replayEvidence(summary, System.currentTimeMillis()))
+                    .replaySummary(summary)
                     .generatedAt(System.currentTimeMillis())
                     .build();
         }
-        int safeWindow = normalizeReplayMetricsWindow(window);
-        List<LotteryTrainingReport.TrainingTimelineItem> timeline = report.getTimeline();
-        List<LotteryTrainingReport.TrainingTimelineItem> windowItems = timeline.subList(Math.max(0, timeline.size() - safeWindow), timeline.size());
-        int totalScore = 0;
-        int totalRedHits = 0;
-        int blueHits = 0;
-        int bestScore = 0;
-        Map<String, Integer> prizeDistribution = new LinkedHashMap<>();
-        for (LotteryTrainingReport.TrainingTimelineItem item : windowItems) {
-            totalScore += item.getScore();
-            totalRedHits += item.getRedHits();
-            if (item.isBlueHit()) {
-                blueHits += 1;
-            }
-            bestScore = Math.max(bestScore, item.getScore());
-            prizeDistribution.put(item.getPrizeName(), prizeDistribution.getOrDefault(item.getPrizeName(), 0) + 1);
-        }
-        int actualWindow = windowItems.size();
+        LotteryReplaySummary summary = buildReplaySummary(report, safeWindow, System.currentTimeMillis());
         return LotteryReplayMetrics.builder()
                 .requestedWindow(safeWindow)
-                .actualWindow(actualWindow)
+                .actualWindow(summary.getReplayWindow())
                 .reportReplayCount(report.getReplayCount())
                 .generation(report.getGeneration())
-                .averageScore(roundOne((double) totalScore / actualWindow))
-                .averageRedHits(roundOne((double) totalRedHits / actualWindow))
-                .blueHitRate((int) Math.round((double) blueHits * 100 / actualWindow))
-                .bestScore(bestScore)
-                .prizeDistribution(prizeDistribution)
+                .averageScore(summary.getRecentAverageScore())
+                .averageRedHits(summary.getRecentAverageRedHits())
+                .blueHitRate(summary.getRecentBlueHitRate())
+                .bestScore(summary.getBestScore())
+                .prizeDistribution(summary.getPrizeDistribution())
+                .evidence(replayEvidence(summary, System.currentTimeMillis()))
+                .replaySummary(summary)
                 .generatedAt(System.currentTimeMillis())
                 .build();
     }
@@ -430,6 +443,8 @@ public class LotteryTrainingService implements ILotteryTrainingService {
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
+        snapshot.setReplaySummary(snapshotReplaySummary(snapshot, now));
+        snapshot.setEvidence(predictionEvidence(snapshot, now));
         return predictionSnapshotRepository.save(snapshot);
     }
 
@@ -493,6 +508,9 @@ public class LotteryTrainingService implements ILotteryTrainingService {
                 .learned(learned)
                 .createdAt(System.currentTimeMillis())
                 .build();
+        long now = System.currentTimeMillis();
+        record.setReplaySummary(ruleReplaySummary(record, now));
+        record.setEvidence(ruleEvidence(record, now));
         return predictionRuleRepository.save(record);
     }
 
@@ -560,6 +578,387 @@ public class LotteryTrainingService implements ILotteryTrainingService {
         result.setPrizeName(prize(redHits, blueHit));
         result.setScore(redHits * 12 + (blueHit ? 10 : 0));
         return result;
+    }
+
+    private LotteryTrainingReportRecord latestTrainingReport() {
+        return trainingReportRepository.findByOrderByCreatedAtDesc(PageRequest.of(0, 1))
+                .stream()
+                .findFirst()
+                .orElse(null);
+    }
+
+    private LotteryReplaySummary latestReplaySummary(Integer window) {
+        int safeWindow = normalizeReplayMetricsWindow(window);
+        LotteryTrainingReportRecord report = latestTrainingReport();
+        if (report == null || report.getTimeline() == null || report.getTimeline().isEmpty()) {
+            return emptyReplaySummary(safeWindow, System.currentTimeMillis());
+        }
+        return buildReplaySummary(report, safeWindow, System.currentTimeMillis());
+    }
+
+    private LotteryReplaySummary emptyReplaySummary(int requestedWindow, long now) {
+        return LotteryReplaySummary.builder()
+                .replayWindow(0)
+                .baselineWindow(0)
+                .candidateCount(0)
+                .scoredCandidateCount(0)
+                .driftLabel("UNKNOWN")
+                .prizeDistribution(new LinkedHashMap<>())
+                .redHitDistribution(new LinkedHashMap<>())
+                .candidatePrizeDistribution(new LinkedHashMap<>())
+                .candidateRedHitDistribution(new LinkedHashMap<>())
+                .generatedAt(now)
+                .build();
+    }
+
+    private LotteryReplaySummary buildReplaySummary(LotteryTrainingReportRecord report, int requestedWindow, long now) {
+        List<LotteryTrainingReport.TrainingTimelineItem> timeline = report.getTimeline() == null ? List.of() : report.getTimeline();
+        if (timeline.isEmpty()) {
+            return emptyReplaySummary(requestedWindow, now);
+        }
+        int windowEnd = timeline.size();
+        int windowStart = Math.max(0, windowEnd - requestedWindow);
+        int baselineStart = Math.max(0, windowStart - requestedWindow);
+        ReplayWindowStats recent = summarizeTimeline(timeline.subList(windowStart, windowEnd));
+        ReplayWindowStats baseline = summarizeTimeline(timeline.subList(baselineStart, windowStart));
+        LotteryLatestPrediction prediction = report.getLatestPrediction();
+        List<LotteryPredictionCandidate> candidates = prediction == null || prediction.getCandidates() == null
+                ? List.of()
+                : prediction.getCandidates();
+        Double averageScoreDrift = baseline.actualWindow == 0 ? null : roundOne(recent.averageScore() - baseline.averageScore());
+        Double averageRedHitsDrift = baseline.actualWindow == 0 ? null : roundOne(recent.averageRedHits() - baseline.averageRedHits());
+        Integer blueHitRateDrift = baseline.actualWindow == 0 ? null : recent.blueHitRate() - baseline.blueHitRate();
+        return LotteryReplaySummary.builder()
+                .ruleId(report.getLearnedRule() == null ? prediction == null ? null : prediction.getRuleId() : report.getLearnedRule().getId())
+                .ruleName(report.getLearnedRule() == null ? prediction == null ? null : prediction.getRuleName() : report.getLearnedRule().getName())
+                .ruleGeneration(report.getGeneration())
+                .replayWindow(recent.actualWindow)
+                .baselineWindow(baseline.actualWindow)
+                .candidateCount(candidates.size())
+                .scoredCandidateCount((int) candidates.stream().filter(candidate -> candidate.getResult() != null).count())
+                .recentAverageScore(recent.averageScore())
+                .baselineAverageScore(baseline.actualWindow == 0 ? null : baseline.averageScore())
+                .averageScoreDrift(averageScoreDrift)
+                .recentAverageRedHits(recent.averageRedHits())
+                .baselineAverageRedHits(baseline.actualWindow == 0 ? null : baseline.averageRedHits())
+                .averageRedHitsDrift(averageRedHitsDrift)
+                .recentBlueHitRate(recent.blueHitRate())
+                .baselineBlueHitRate(baseline.actualWindow == 0 ? null : baseline.blueHitRate())
+                .blueHitRateDrift(blueHitRateDrift)
+                .bestScore(recent.bestScore)
+                .driftLabel(driftLabel(averageRedHitsDrift, blueHitRateDrift))
+                .prizeDistribution(recent.prizeDistribution)
+                .redHitDistribution(recent.redHitDistribution)
+                .candidatePrizeDistribution(candidatePrizeDistribution(candidates))
+                .candidateRedHitDistribution(candidateRedHitDistribution(candidates))
+                .generatedAt(now)
+                .build();
+    }
+
+    private ReplayWindowStats summarizeTimeline(List<LotteryTrainingReport.TrainingTimelineItem> items) {
+        ReplayWindowStats stats = new ReplayWindowStats();
+        stats.actualWindow = items == null ? 0 : items.size();
+        if (items == null) {
+            return stats;
+        }
+        for (LotteryTrainingReport.TrainingTimelineItem item : items) {
+            stats.totalScore += item.getScore();
+            stats.totalRedHits += item.getRedHits();
+            if (item.isBlueHit()) {
+                stats.blueHits += 1;
+            }
+            stats.bestScore = Math.max(stats.bestScore, item.getScore());
+            increment(stats.prizeDistribution, item.getPrizeName());
+            increment(stats.redHitDistribution, item.getRedHits() + "红");
+        }
+        return stats;
+    }
+
+    private void enrichRuleEvidence(LotteryPredictionRuleRecord rule,
+                                    Map<String, LotteryBacktestSummary> backtestSummaries,
+                                    long now) {
+        if (rule == null) {
+            return;
+        }
+        rule.setBacktestSummary(LotteryBacktestSummarySupport.find(backtestSummaries, rule.getRuleName(), rule.getRuleId()));
+        rule.setReplaySummary(ruleReplaySummary(rule, now));
+        rule.setEvidence(ruleEvidence(rule, now));
+    }
+
+    private LotteryReplaySummary ruleReplaySummary(LotteryPredictionRuleRecord rule, long now) {
+        LotteryTrainingReport.TrainingSummary summary = rule.getSummary();
+        LotteryBacktestSummary backtest = rule.getBacktestSummary();
+        Map<String, Integer> prizeDistribution = backtest != null && backtest.getPrizeDistribution() != null
+                && !backtest.getPrizeDistribution().isEmpty()
+                ? new LinkedHashMap<>(backtest.getPrizeDistribution())
+                : summary == null || summary.getPrizeDistribution() == null ? new LinkedHashMap<>() : new LinkedHashMap<>(summary.getPrizeDistribution());
+        return LotteryReplaySummary.builder()
+                .ruleId(rule.getRuleId())
+                .ruleName(rule.getRuleName())
+                .ruleGeneration(rule.getGeneration())
+                .replayWindow(firstPositive(rule.getReplayCount(), backtest == null ? null : backtest.getReplayCount(), summary == null ? null : summary.getTotal()))
+                .recentAverageScore(summary == null ? null : summary.getAverageScore())
+                .recentAverageRedHits(firstDouble(decimal(backtest == null ? null : backtest.getAverageRedHits()), summary == null ? null : summary.getAverageRedHits()))
+                .recentBlueHitRate(firstPositive(percent(backtest == null ? null : backtest.getBlueHitRate()), summary == null ? null : summary.getBlueHitRate()))
+                .bestScore(firstPositive(backtest == null ? null : backtest.getBestScore(), summary == null ? null : summary.getBestScore()))
+                .driftLabel("UNKNOWN")
+                .prizeDistribution(prizeDistribution)
+                .redHitDistribution(new LinkedHashMap<>())
+                .candidatePrizeDistribution(new LinkedHashMap<>())
+                .candidateRedHitDistribution(new LinkedHashMap<>())
+                .generatedAt(now)
+                .build();
+    }
+
+    private LotteryReplaySummary snapshotReplaySummary(LotteryPredictionSnapshot snapshot, long now) {
+        List<LotteryPredictionCandidate> candidates = snapshot.getCandidates() == null ? List.of() : snapshot.getCandidates();
+        Map<String, Integer> prizeDistribution = new LinkedHashMap<>();
+        Map<String, Integer> redHitDistribution = new LinkedHashMap<>();
+        if (snapshot.getResult() != null) {
+            increment(prizeDistribution, snapshot.getResult().getPrizeName());
+            increment(redHitDistribution, snapshot.getResult().getRedHits() + "红");
+        }
+        return LotteryReplaySummary.builder()
+                .ruleId(snapshot.getRuleId())
+                .ruleName(snapshot.getRuleName())
+                .candidateCount(candidates.size())
+                .scoredCandidateCount((int) candidates.stream().filter(candidate -> candidate.getResult() != null).count())
+                .prizeDistribution(prizeDistribution)
+                .redHitDistribution(redHitDistribution)
+                .candidatePrizeDistribution(candidatePrizeDistribution(candidates))
+                .candidateRedHitDistribution(candidateRedHitDistribution(candidates))
+                .driftLabel("UNKNOWN")
+                .generatedAt(now)
+                .build();
+    }
+
+    private LotteryRuleEvidence ruleEvidence(LotteryPredictionRuleRecord rule, long now) {
+        LotteryTrainingReport.TrainingSummary summary = rule.getSummary();
+        LotteryBacktestSummary backtest = rule.getBacktestSummary();
+        Integer replayCount = firstPositive(rule.getReplayCount(), backtest == null ? null : backtest.getReplayCount(), summary == null ? null : summary.getTotal());
+        Integer stabilityScore = backtest == null ? null : backtest.getStabilityScore();
+        Double averageRedHits = firstDouble(decimal(backtest == null ? null : backtest.getAverageRedHits()), summary == null ? null : summary.getAverageRedHits());
+        Integer blueHitRate = firstPositive(percent(backtest == null ? null : backtest.getBlueHitRate()), summary == null ? null : summary.getBlueHitRate());
+        List<String> reasons = new ArrayList<>();
+        if (replayCount == null || replayCount < MIN_EVIDENCE_REPLAY_COUNT) {
+            reasons.add("回放样本少于 " + MIN_EVIDENCE_REPLAY_COUNT + " 期");
+            return evidence("UNDER_TESTED", "样本不足", "规则证据仍在积累，暂不建议作为主规则单独采用。", 35, reasons, now);
+        }
+        if (isStale(rule.getCreatedAt(), now) || backtest != null && isStale(backtest.getCreatedAt(), now)) {
+            reasons.add("规则或匹配回测超过 30 天未刷新");
+            return evidence("STALE", "证据陈旧", "规则证据已过期，需要重新训练或回测后再比较。", 45, reasons, now);
+        }
+        if (stabilityScore != null && stabilityScore < VOLATILE_STABILITY_SCORE) {
+            reasons.add("稳定分低于 " + VOLATILE_STABILITY_SCORE);
+        }
+        if (averageRedHits != null && averageRedHits < VOLATILE_AVERAGE_RED_HITS) {
+            reasons.add("平均红球命中低于 " + VOLATILE_AVERAGE_RED_HITS);
+        }
+        if (blueHitRate != null && blueHitRate < VOLATILE_BLUE_HIT_RATE) {
+            reasons.add("蓝球命中率低于 " + VOLATILE_BLUE_HIT_RATE + "%");
+        }
+        if (!reasons.isEmpty()) {
+            return evidence("VOLATILE", "波动偏高", "规则近期表现波动，适合继续观察或降权使用。", evidenceScore(stabilityScore, averageRedHits, blueHitRate, replayCount), reasons, now);
+        }
+        boolean stable = replayCount >= STABLE_REPLAY_COUNT
+                && (stabilityScore != null && stabilityScore >= STABLE_STABILITY_SCORE
+                || averageRedHits != null && averageRedHits >= STABLE_AVERAGE_RED_HITS
+                && blueHitRate != null && blueHitRate >= STABLE_BLUE_HIT_RATE);
+        if (stable) {
+            if (stabilityScore != null) {
+                reasons.add("稳定分 " + stabilityScore);
+            }
+            if (averageRedHits != null) {
+                reasons.add("平均红球 " + averageRedHits);
+            }
+            return evidence("STABLE", "稳定", "规则有足够回放和稳定性证据，可以进入重点比较。", evidenceScore(stabilityScore, averageRedHits, blueHitRate, replayCount), reasons, now);
+        }
+        reasons.add("核心指标未达到稳定阈值");
+        return evidence("VOLATILE", "波动偏高", "规则尚未形成稳定优势，建议继续与其他规则对比。", evidenceScore(stabilityScore, averageRedHits, blueHitRate, replayCount), reasons, now);
+    }
+
+    private LotteryRuleEvidence predictionEvidence(LotteryPredictionSnapshot snapshot, long now) {
+        if (snapshot.getResult() == null) {
+            return evidence("UNDER_TESTED", "待开奖", "目标期尚未回填实际开奖号，命中证据未生成。", 30, List.of("缺少实际开奖号"), now);
+        }
+        int bestRedHits = snapshot.getResult().getRedHits();
+        boolean hasPrize = !"未中奖".equals(snapshot.getResult().getPrizeName());
+        for (LotteryPredictionCandidate candidate : snapshot.getCandidates() == null ? List.<LotteryPredictionCandidate>of() : snapshot.getCandidates()) {
+            if (candidate.getResult() == null) {
+                continue;
+            }
+            bestRedHits = Math.max(bestRedHits, candidate.getResult().getRedHits());
+            hasPrize = hasPrize || !"未中奖".equals(candidate.getResult().getPrizeName());
+        }
+        if (hasPrize || bestRedHits >= 3) {
+            return evidence("STABLE", "有命中证据", "主预测或候选组已经形成可复盘命中证据。", 70 + Math.min(bestRedHits, 6) * 4, List.of("最佳红球命中 " + bestRedHits + "/6"), now);
+        }
+        return evidence("VOLATILE", "命中偏弱", "本期预测回填后命中偏弱，建议降低该规则权重。", 45, List.of("最佳红球命中 " + bestRedHits + "/6"), now);
+    }
+
+    private LotteryRuleEvidence replayEvidence(LotteryReplaySummary summary, long now) {
+        Integer replayWindow = summary.getReplayWindow();
+        if (replayWindow == null || replayWindow < MIN_EVIDENCE_REPLAY_COUNT) {
+            return evidence("UNDER_TESTED", "样本不足", "回放窗口不足，漂移信号仅作提示。", 35, List.of("回放窗口 " + (replayWindow == null ? 0 : replayWindow)), now);
+        }
+        List<String> reasons = new ArrayList<>();
+        if (summary.getAverageRedHitsDrift() != null && summary.getAverageRedHitsDrift() < -0.5) {
+            reasons.add("平均红球较基线下降 " + summary.getAverageRedHitsDrift());
+        }
+        if (summary.getBlueHitRateDrift() != null && summary.getBlueHitRateDrift() < -15) {
+            reasons.add("蓝球率较基线下降 " + summary.getBlueHitRateDrift() + "%");
+        }
+        if (summary.getRecentAverageRedHits() != null && summary.getRecentAverageRedHits() < VOLATILE_AVERAGE_RED_HITS) {
+            reasons.add("最近平均红球低于 " + VOLATILE_AVERAGE_RED_HITS);
+        }
+        if (!reasons.isEmpty()) {
+            return evidence("VOLATILE", "窗口波动", "最近回放窗口出现走弱或波动，需要谨慎采用。", 50, reasons, now);
+        }
+        return evidence("STABLE", "窗口稳定", "最近回放窗口未见明显走弱，可以继续纳入规则对比。", 78, List.of("漂移 " + summary.getDriftLabel()), now);
+    }
+
+    private LotteryRuleEvidence evidence(String tag,
+                                         String label,
+                                         String message,
+                                         int score,
+                                         List<String> reasons,
+                                         long now) {
+        return LotteryRuleEvidence.builder()
+                .tag(tag)
+                .label(label)
+                .message(message)
+                .score(score)
+                .reasons(reasons == null ? List.of() : new ArrayList<>(reasons))
+                .generatedAt(now)
+                .build();
+    }
+
+    private Map<String, Integer> candidatePrizeDistribution(List<LotteryPredictionCandidate> candidates) {
+        Map<String, Integer> distribution = new LinkedHashMap<>();
+        if (candidates == null) {
+            return distribution;
+        }
+        for (LotteryPredictionCandidate candidate : candidates) {
+            if (candidate.getResult() != null) {
+                increment(distribution, candidate.getResult().getPrizeName());
+            }
+        }
+        return distribution;
+    }
+
+    private Map<String, Integer> candidateRedHitDistribution(List<LotteryPredictionCandidate> candidates) {
+        Map<String, Integer> distribution = new LinkedHashMap<>();
+        if (candidates == null) {
+            return distribution;
+        }
+        for (LotteryPredictionCandidate candidate : candidates) {
+            if (candidate.getResult() != null) {
+                increment(distribution, candidate.getResult().getRedHits() + "红");
+            }
+        }
+        return distribution;
+    }
+
+    private static void increment(Map<String, Integer> distribution, String key) {
+        String safeKey = StringUtils.hasText(key) ? key : "未记录";
+        distribution.put(safeKey, distribution.getOrDefault(safeKey, 0) + 1);
+    }
+
+    private static String driftLabel(Double redHitDrift, Integer blueHitRateDrift) {
+        double red = redHitDrift == null ? 0D : redHitDrift;
+        int blue = blueHitRateDrift == null ? 0 : blueHitRateDrift;
+        if (redHitDrift == null && blueHitRateDrift == null) {
+            return "UNKNOWN";
+        }
+        if (red > 0.3 || blue > 10) {
+            return "IMPROVING";
+        }
+        if (red < -0.3 || blue < -10) {
+            return "DROPPING";
+        }
+        return "FLAT";
+    }
+
+    private static boolean isStale(Long timestamp, long now) {
+        return timestamp != null && now - timestamp > STALE_EVIDENCE_MILLIS;
+    }
+
+    private static int evidenceScore(Integer stabilityScore, Double averageRedHits, Integer blueHitRate, Integer replayCount) {
+        int score = 40;
+        if (stabilityScore != null) {
+            score += Math.min(30, stabilityScore / 3);
+        }
+        if (averageRedHits != null) {
+            score += Math.min(20, (int) Math.round(averageRedHits * 5));
+        }
+        if (blueHitRate != null) {
+            score += Math.min(10, blueHitRate / 2);
+        }
+        if (replayCount != null && replayCount >= STABLE_REPLAY_COUNT) {
+            score += 8;
+        }
+        return Math.min(100, score);
+    }
+
+    private static Integer firstPositive(Integer... values) {
+        if (values == null) {
+            return null;
+        }
+        for (Integer value : values) {
+            if (value != null && value > 0) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    private static Double firstDouble(Double... values) {
+        if (values == null) {
+            return null;
+        }
+        for (Double value : values) {
+            if (value != null) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    private static Double decimal(BigDecimal value) {
+        return value == null ? null : value.doubleValue();
+    }
+
+    private static Integer percent(BigDecimal value) {
+        return value == null ? null : value.setScale(0, java.math.RoundingMode.HALF_UP).intValue();
+    }
+
+    private static class ReplayWindowStats {
+
+        private int actualWindow;
+
+        private int totalScore;
+
+        private int totalRedHits;
+
+        private int blueHits;
+
+        private int bestScore;
+
+        private final Map<String, Integer> prizeDistribution = new LinkedHashMap<>();
+
+        private final Map<String, Integer> redHitDistribution = new LinkedHashMap<>();
+
+        private Double averageScore() {
+            return actualWindow == 0 ? null : roundOne((double) totalScore / actualWindow);
+        }
+
+        private Double averageRedHits() {
+            return actualWindow == 0 ? null : roundOne((double) totalRedHits / actualWindow);
+        }
+
+        private Integer blueHitRate() {
+            return actualWindow == 0 ? null : (int) Math.round((double) blueHits * 100 / actualWindow);
+        }
     }
 
     private LotteryActualRecord normalizeActualRecord(LotteryActualRecord record) {
@@ -1536,7 +1935,7 @@ public class LotteryTrainingService implements ILotteryTrainingService {
         return Math.max(1, Math.min(replayCount, Math.min(max, historicalReplayCount)));
     }
 
-    private double roundOne(double value) {
+    private static double roundOne(double value) {
         return Math.round(value * 10.0) / 10.0;
     }
 

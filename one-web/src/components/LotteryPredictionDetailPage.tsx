@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Descriptions, Empty, Space, Spin, Tag, message } from 'antd';
-import { ArrowLeftOutlined, HistoryOutlined, ReloadOutlined, TrophyOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, HistoryOutlined, ReloadOutlined, SafetyCertificateOutlined, TrophyOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import LotteryBalls from './lottery/LotteryBalls';
@@ -13,6 +13,7 @@ import {
   type LotteryPreference,
   type LotteryTicket
 } from '../services/api';
+import { lotteryDriftLabel, lotteryEvidenceColor, lotteryEvidenceLabel, lotteryReplayText } from '../utils/lotteryEvidence';
 import './LotteryOverviewPage.css';
 
 const formatTime = (value?: number) => {
@@ -236,6 +237,7 @@ const LotteryPredictionDetailPage = () => {
                 <span>{prediction.ruleName || prediction.ruleId || '未记录规则'}</span>
                 <span>{formatTime(prediction.createdAt)}</span>
                 <span>已存票据 {linkedTickets.length}</span>
+                <span>{lotteryEvidenceLabel(prediction.evidence)}</span>
               </div>
               {prediction.reason ? <p>{prediction.reason}</p> : null}
               <div className="lottery-detail-result-line">
@@ -276,15 +278,22 @@ const LotteryPredictionDetailPage = () => {
 
             <Card className="life-panel-card lottery-prediction-panel">
               <div className="lottery-card-title-row">
-                <HistoryOutlined />
+                <SafetyCertificateOutlined />
                 <div>
-                  <h2>规则与结果</h2>
-                  <p>查看规则、保存时间和实际开奖反馈。</p>
+                  <h2>规则证据</h2>
+                  <p>{prediction.evidence?.message || '查看规则、保存时间和实际开奖反馈。'}</p>
                 </div>
               </div>
+              <Space wrap className="lottery-evidence-strip">
+                <Tag color={lotteryEvidenceColor(prediction.evidence?.tag)}>{lotteryEvidenceLabel(prediction.evidence)}</Tag>
+                <Tag color="blue">证据分 {prediction.evidence?.score ?? '-'}</Tag>
+                <Tag>{lotteryDriftLabel(prediction.replaySummary?.driftLabel)}</Tag>
+              </Space>
               <Descriptions column={1} size="small" bordered>
                 <Descriptions.Item label="规则 ID">{prediction.ruleId || '-'}</Descriptions.Item>
                 <Descriptions.Item label="规则名称">{prediction.ruleName || '-'}</Descriptions.Item>
+                <Descriptions.Item label="证据原因">{prediction.evidence?.reasons?.join('；') || '-'}</Descriptions.Item>
+                <Descriptions.Item label="回放摘要">{lotteryReplayText(prediction.replaySummary)}</Descriptions.Item>
                 <Descriptions.Item label="创建时间">{formatTime(prediction.createdAt)}</Descriptions.Item>
                 <Descriptions.Item label="更新时间">{formatTime(prediction.updatedAt)}</Descriptions.Item>
                 <Descriptions.Item label="实际期号">{prediction.actualRecord?.period || '-'}</Descriptions.Item>
@@ -298,6 +307,10 @@ const LotteryPredictionDetailPage = () => {
                 ) : (
                   <span>尚未回填实际开奖结果</span>
                 )}
+              </div>
+              <div className="lottery-evidence-distribution">
+                <span>主预测命中分布：{Object.entries(prediction.replaySummary?.redHitDistribution || {}).map(([key, value]) => `${key} ${value}`).join(' · ') || '-'}</span>
+                <span>候选命中分布：{Object.entries(prediction.replaySummary?.candidateRedHitDistribution || {}).map(([key, value]) => `${key} ${value}`).join(' · ') || '-'}</span>
               </div>
             </Card>
 

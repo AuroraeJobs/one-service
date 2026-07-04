@@ -4,6 +4,7 @@ import com.one.record.lottery.LotteryExportResult;
 import com.one.record.lottery.LotteryIssueLedger;
 import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.model.LotteryAuditEvent;
+import com.one.record.model.LotteryPredictionRuleRecord;
 import com.one.record.model.LotteryTicket;
 import com.one.record.repository.LotteryAuditEventRepository;
 import com.one.record.repository.LotteryBacktestReportRepository;
@@ -13,6 +14,9 @@ import com.one.record.repository.LotteryRecordSyncLogRepository;
 import com.one.record.repository.LotteryStrategyExperimentRepository;
 import com.one.record.repository.LotteryTicketRepository;
 import com.one.record.service.ILotteryLedgerService;
+import com.one.record.service.ILotteryTrainingService;
+import com.one.record.training.LotteryRuleComparison;
+import com.one.record.training.LotteryRuleEvidence;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -37,6 +41,8 @@ class LotteryExportServiceTest {
 
     private ILotteryLedgerService ledgerService;
 
+    private ILotteryTrainingService trainingService;
+
     private LotteryExportService service;
 
     @BeforeEach
@@ -44,6 +50,7 @@ class LotteryExportServiceTest {
         ticketRepository = mock(LotteryTicketRepository.class);
         auditEventRepository = mock(LotteryAuditEventRepository.class);
         ledgerService = mock(ILotteryLedgerService.class);
+        trainingService = mock(ILotteryTrainingService.class);
         service = new LotteryExportService(
                 ticketRepository,
                 mock(LotteryPredictionSnapshotRepository.class),
@@ -52,7 +59,8 @@ class LotteryExportServiceTest {
                 mock(LotteryRecordSyncLogRepository.class),
                 mock(LotteryProviderProbeLogRepository.class),
                 auditEventRepository,
-                ledgerService
+                ledgerService,
+                trainingService
         );
         when(auditEventRepository.save(any(LotteryAuditEvent.class))).thenAnswer(invocation -> invocation.getArgument(0));
     }
@@ -106,6 +114,33 @@ class LotteryExportServiceTest {
 
         assertThat(result.getRowCount()).isEqualTo(1);
         assertThat(result.getContent()).contains("2026079");
+    }
+
+    @Test
+    void exportRuleEvidenceUsesTrainingComparison() {
+        when(trainingService.comparePredictionRules(10)).thenReturn(LotteryRuleComparison.builder()
+                .rules(List.of(LotteryPredictionRuleRecord.builder()
+                        .id("record-1")
+                        .ruleId("rule-1")
+                        .ruleName("稳态规则")
+                        .rankScore(88)
+                        .evidence(LotteryRuleEvidence.builder()
+                                .tag("STABLE")
+                                .label("稳定")
+                                .score(82)
+                                .message("证据稳定")
+                                .reasons(List.of("稳定分 86"))
+                                .build())
+                        .build()))
+                .build());
+
+        LotteryExportResult result = service.export("rule-evidence", Map.of("limit", "10"));
+
+        assertThat(result.getExportType()).isEqualTo("rule-evidence");
+        assertThat(result.getRowCount()).isEqualTo(1);
+        assertThat(result.getContent()).contains("ruleId,ruleName");
+        assertThat(result.getContent()).contains("STABLE");
+        assertThat(result.getContent()).contains("稳定分 86");
     }
 
     @Test
