@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 17 Week 2 lottery simulator smoke",
-  "generatedAt": "2026-07-04T14:26:17.208Z",
+  "target": "Iteration 17 Week 3 lottery ticket pack smoke",
+  "generatedAt": "2026-07-04T14:38:33.222Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
-  "routeCount": 9,
-  "checkCount": 204,
+  "routeCount": 10,
+  "checkCount": 225,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
@@ -57,6 +57,14 @@
       "mockApiCount": 9,
       "emptyStateCount": 4,
       "errorStateCount": 5
+    },
+    {
+      "route": "/lottery/ticket-packs",
+      "label": "票包",
+      "component": "LotteryTicketPackPage",
+      "mockApiCount": 6,
+      "emptyStateCount": 3,
+      "errorStateCount": 4
     },
     {
       "route": "/lottery/research",

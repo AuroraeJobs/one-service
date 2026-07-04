@@ -716,6 +716,13 @@ const LotteryWorkbenchPage = () => {
       onClick: () => navigate(dailyState?.ticketState?.path || '/lottery/tickets?status=DRAFT')
     },
     {
+      key: 'ticket-pack',
+      icon: <SafetyCertificateOutlined />,
+      label: '票包',
+      detail: '待审批执行',
+      onClick: () => navigate('/lottery/ticket-packs')
+    },
+    {
       key: 'check',
       icon: <CheckCircleOutlined />,
       label: '核验',

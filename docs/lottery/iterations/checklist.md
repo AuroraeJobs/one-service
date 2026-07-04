@@ -482,11 +482,11 @@ Goal: turn the lottery intelligence cockpit into an execution-grade workflow clo
 
 ### Week 3: Guided Ticket Pack Execution
 
-- [ ] Add a ticket-pack draft model that can be generated from saved decisions, simulator output, or portfolio allocation.
-- [ ] Add backend APIs for ticket-pack preview, budget precheck, approval, save-as-tickets, archive, and audit trail.
-- [ ] Add `/lottery/ticket-packs` frontend execution page with draft packs, approval checklist, conflict detection, batch save, and issue handoff.
-- [ ] Add workbench and reminder-center actions for pending ticket packs, overdue approval, and post-draw settlement.
-- [ ] Run ticket-pack service/controller tests, frontend smoke/build, update docs, commit, and push.
+- [x] Add a ticket-pack draft model that can be generated from saved decisions, simulator output, or portfolio allocation. Added `LotteryTicketPack` and `LotteryTicketPackItem` with source type/source ID, approval state, budget precheck, saved ticket IDs, warnings, and audit metadata.
+- [x] Add backend APIs for ticket-pack preview, budget precheck, approval, save-as-tickets, archive, and audit trail. Added `/lottery/ticket-packs` list/preview/create/approve/save-tickets/archive with decision-set generation, ticket budget precheck reuse, batch-save reuse, and audit events.
+- [x] Add `/lottery/ticket-packs` frontend execution page with draft packs, approval checklist, conflict detection, batch save, and issue handoff. Added ticket-pack page with manual/decision source inputs, precheck panel, approval/save/archive actions, warning display, and ticket-page handoff.
+- [x] Add workbench and reminder-center actions for pending ticket packs, overdue approval, and post-draw settlement. Added workbench quick action, reminder-center ticket-pack queue action, and navigation entry for pending ticket-pack execution.
+- [x] Run ticket-pack service/controller tests, frontend smoke/build, update docs, commit, and push. Verification: focused Maven ticket-pack service/controller tests; `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
 ### Week 4: Governance Dashboard, Mobile Polish, And Release Evidence
 

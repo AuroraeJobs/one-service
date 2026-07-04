@@ -498,6 +498,21 @@ POST /lottery/simulations/run
 
 The frontend sandbox at `/lottery/simulator` keeps the workflow operational: sliders tune rule weights, text input previews candidate tickets, result panels show budget exposure and replay distribution bars, and handoff buttons route into the decision board, ticket import preview, strategy notebook, and export builder.
 
+V14 Week 3 adds guided ticket-pack execution. `LotteryTicketPack` is the review boundary between decision/simulation evidence and durable `LotteryTicket` rows. It stores source type/source ID, target issue, draft items, approval state, budget precheck, warnings, saved ticket IDs, and audit metadata. Decision-set packs can be generated from saved decision candidates; simulator and portfolio packs can submit candidate items directly.
+
+Ticket-pack endpoints:
+
+```text
+GET   /lottery/ticket-packs
+POST  /lottery/ticket-packs/preview
+POST  /lottery/ticket-packs
+PATCH /lottery/ticket-packs/{id}/approve
+POST  /lottery/ticket-packs/{id}/save-tickets
+PATCH /lottery/ticket-packs/{id}/archive
+```
+
+`LotteryTicketPackService` reuses the existing ticket budget precheck for preview and approval, then reuses ticket batch-save for the final save-as-tickets action. Every preview, create, approve, save, and archive action writes a `LotteryAuditEvent` under `lottery-ticket-pack`. The frontend execution board at `/lottery/ticket-packs` shows pending approvals, conflict/warning rows, budget status, candidate balls, and handoff into `/lottery/tickets`; the workbench quick-action rail links directly to the ticket-pack queue.
+
 Portfolio-style governance extends preferences and ledger behavior with budget and exposure thresholds. The backend flags budget and max-ticket issues without blocking ordinary CRUD unless a future explicit enforcement mode is added.
 
 Wave 10E extends `LotteryPreference` with `weeklyBudget`, `monthlyBudget`, `maxTicketsPerIssue`, and `budgetReminderPercent`. `GET /lottery/budget/status` reads preferences and recorded tickets to return weekly/monthly usage, max issue exposure, and restrained warning rows for the workbench and ticket page. `LotteryLedgerSummary` also includes rolling 30-day cost/prize/net/ROI plus max/current drawdown values for exposure review.

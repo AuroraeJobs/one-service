@@ -2095,6 +2095,42 @@ export interface LotteryTicket {
   updatedAt?: number;
 }
 
+export interface LotteryTicketPackItem {
+  key?: string;
+  title?: string;
+  redNumbers: string[];
+  blueNumber: string;
+  quantity?: number;
+  cost?: number;
+  source?: string;
+  predictionSnapshotId?: string;
+  decisionSetId?: string;
+  portfolioId?: string;
+  note?: string;
+  warnings?: string[];
+}
+
+export interface LotteryTicketPack {
+  id?: string;
+  userId?: string;
+  title?: string;
+  targetIssue?: string;
+  sourceType?: 'MANUAL' | 'DECISION_SET' | 'SIMULATION' | 'PORTFOLIO' | string;
+  sourceId?: string;
+  status?: 'DRAFT' | 'APPROVED' | 'SAVED' | 'ARCHIVED' | string;
+  approvalState?: 'PENDING' | 'APPROVED' | string;
+  archived?: boolean;
+  approvedAt?: number;
+  savedAt?: number;
+  archivedAt?: number;
+  items: LotteryTicketPackItem[];
+  budgetPrecheck?: LotteryTicketBudgetPrecheckResult;
+  savedTicketIds?: string[];
+  warnings?: string[];
+  createdAt?: number;
+  updatedAt?: number;
+}
+
 export interface LotteryTicketSummary {
   ticketCount?: number;
   checkedTicketCount?: number;
@@ -2864,6 +2900,27 @@ export const lotteryTicketApi = {
   },
   checkLatestPrizes: (): Promise<LotteryTicketPrizeCheckSummary> => {
     return apiClient.post('/lottery/tickets/check-prizes/latest');
+  }
+};
+
+export const lotteryTicketPackApi = {
+  ticketPacks: (params?: { includeArchived?: boolean; page?: number; pageSize?: number }): Promise<LotteryPageResponse<LotteryTicketPack>> => {
+    return apiClient.get('/lottery/ticket-packs', { params });
+  },
+  preview: (ticketPack: Partial<LotteryTicketPack>): Promise<LotteryTicketPack> => {
+    return apiClient.post('/lottery/ticket-packs/preview', ticketPack);
+  },
+  create: (ticketPack: Partial<LotteryTicketPack>): Promise<LotteryTicketPack> => {
+    return apiClient.post('/lottery/ticket-packs', ticketPack);
+  },
+  approve: (id: string): Promise<LotteryTicketPack> => {
+    return apiClient.patch(`/lottery/ticket-packs/${id}/approve`);
+  },
+  saveAsTickets: (id: string): Promise<LotteryTicketPack> => {
+    return apiClient.post(`/lottery/ticket-packs/${id}/save-tickets`);
+  },
+  archive: (id: string): Promise<LotteryTicketPack> => {
+    return apiClient.patch(`/lottery/ticket-packs/${id}/archive`);
   }
 };
 

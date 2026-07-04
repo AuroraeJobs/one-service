@@ -2169,6 +2169,130 @@
   gap: 10px;
 }
 
+.lottery-ticket-pack-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.lottery-ticket-pack-summary article {
+  display: grid;
+  gap: 6px;
+  min-height: 82px;
+  padding: 16px;
+  border: 1px solid #edf0f5;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.lottery-ticket-pack-summary strong {
+  color: #111827;
+  font-size: 22px;
+  line-height: 1.1;
+}
+
+.lottery-ticket-pack-summary span {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.lottery-ticket-pack-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.lottery-ticket-pack-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.lottery-ticket-pack-form label {
+  display: grid;
+  gap: 8px;
+  color: #5f6673;
+  font-size: 13px;
+}
+
+.lottery-ticket-pack-form span {
+  color: #1f2937;
+  font-weight: 700;
+}
+
+.lottery-ticket-pack-actions {
+  margin-top: 14px;
+}
+
+.lottery-ticket-pack-preview,
+.lottery-ticket-pack-item-list,
+.lottery-ticket-pack-list {
+  display: grid;
+  gap: 12px;
+}
+
+.lottery-ticket-pack-budget-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #edf0f5;
+  border-radius: 8px;
+  background: #fbfcfe;
+}
+
+.lottery-ticket-pack-budget-row strong {
+  color: #111827;
+  font-size: 20px;
+}
+
+.lottery-ticket-pack-item-list article,
+.lottery-ticket-pack-list > article {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #edf0f5;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.lottery-ticket-pack-item-list article {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.lottery-ticket-pack-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.lottery-ticket-pack-head > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.lottery-ticket-pack-head strong {
+  color: #111827;
+}
+
+.lottery-ticket-pack-head span {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.lottery-ticket-pack-mini-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .lottery-notebook-editor {
   display: grid;
   gap: 10px;
@@ -5321,6 +5445,8 @@ button.lottery-latest-vs-card:hover {
   .lottery-simulator-grid,
   .lottery-simulator-results-grid,
   .lottery-simulator-summary-grid,
+  .lottery-ticket-pack-grid,
+  .lottery-ticket-pack-summary,
   .lottery-portfolio-score-row,
   .lottery-portfolio-evidence-editor-row,
   .lottery-notebook-editor-row,
@@ -5374,11 +5500,14 @@ button.lottery-latest-vs-card:hover {
   }
 
   .lottery-simulator-form,
+  .lottery-ticket-pack-form,
+  .lottery-ticket-pack-item-list article,
   .lottery-simulator-candidate-list article {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .lottery-simulator-preview > div,
+  .lottery-ticket-pack-head,
   .lottery-simulator-candidate-list article {
     align-items: flex-start;
     flex-direction: column;

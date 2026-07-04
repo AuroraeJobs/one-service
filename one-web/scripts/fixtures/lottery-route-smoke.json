@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 17 Week 2 lottery simulator smoke",
+  "target": "Iteration 17 Week 3 lottery ticket pack smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -194,6 +194,38 @@
             }
           ],
           "duplicateGroups": []
+        }
+      }
+    },
+    {
+      "route": "/lottery/ticket-packs",
+      "label": "票包",
+      "component": "LotteryTicketPackPage",
+      "componentFile": "src/components/LotteryTicketPackPage.tsx",
+      "mockApis": [
+        "lotteryTicketPackApi.ticketPacks",
+        "lotteryTicketPackApi.preview",
+        "lotteryTicketPackApi.create",
+        "lotteryTicketPackApi.approve",
+        "lotteryTicketPackApi.saveAsTickets",
+        "lotteryTicketPackApi.archive"
+      ],
+      "emptyStates": ["暂无票包草稿", "暂无票包预检", "暂无可执行票据"],
+      "errorStates": ["读取彩票票包失败", "预览彩票票包失败", "创建彩票票包失败", "执行彩票票包动作失败"],
+      "fixtureData": {
+        "ticketPacks": {
+          "items": [
+            {
+              "id": "pack-fixture-1",
+              "title": "2026068 执行票包",
+              "targetIssue": "2026068",
+              "status": "DRAFT",
+              "approvalState": "PENDING"
+            }
+          ],
+          "page": 1,
+          "pageSize": 20,
+          "total": 1
         }
       }
     },

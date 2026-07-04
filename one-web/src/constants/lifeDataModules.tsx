@@ -226,6 +226,14 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
       ]
     },
     {
+      id: 'lottery-ticket-packs',
+      moduleKey: 'lottery',
+      path: '/lottery/ticket-packs',
+      label: '票包',
+      icon: <SafetyCertificateOutlined />,
+      accent: '#0071e3'
+    },
+    {
       id: 'lottery-tickets',
       moduleKey: 'lottery',
       path: '/lottery/tickets',
