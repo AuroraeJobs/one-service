@@ -141,6 +141,12 @@
   gap: 12px;
 }
 
+.lottery-list-pagination {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
 .lottery-history-card {
   min-width: 0;
   display: grid;

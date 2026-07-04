@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Empty, Select, Space, Spin, Tag, message } from 'antd';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Alert, Button, Card, Empty, Input, Pagination, Select, Space, Spin, Tag, message } from 'antd';
 import { ExperimentOutlined, HistoryOutlined, ReloadOutlined, ThunderboltOutlined, TrophyOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
-import { lotteryPredictionApi, type LotteryPredictionSnapshot } from '../services/api';
+import { lotteryPredictionApi, type LotteryPageResponse, type LotteryPredictionSnapshot } from '../services/api';
 import './LotteryOverviewPage.css';
 
 const formatTime = (value?: number) => {
@@ -41,18 +41,50 @@ const resultTone = (prediction: LotteryPredictionSnapshot) => {
 
 const LotteryPredictionHistoryPage = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [predictions, setPredictions] = useState<LotteryPredictionSnapshot[]>([]);
-  const [resultFilter, setResultFilter] = useState('all');
+  const [pageResponse, setPageResponse] = useState<LotteryPageResponse<LotteryPredictionSnapshot>>();
   const [loading, setLoading] = useState(true);
   const [attachingLatest, setAttachingLatest] = useState(false);
   const [error, setError] = useState<string>();
 
-  const loadHistory = async () => {
+  const page = Math.max(1, Number(searchParams.get('page') || '1') || 1);
+  const pageSize = Math.max(1, Number(searchParams.get('pageSize') || '10') || 10);
+  const resultState = searchParams.get('resultState') || 'ALL';
+  const targetPeriodValue = searchParams.get('targetPeriod') || '';
+  const ruleName = searchParams.get('ruleName') || '';
+  const ruleId = searchParams.get('ruleId') || '';
+
+  const updateQuery = useCallback((patch: Record<string, string | number | undefined>, resetPage = true) => {
+    const next = new URLSearchParams(searchParams);
+    Object.entries(patch).forEach(([key, value]) => {
+      if (value === undefined || value === '' || value === 'ALL') {
+        next.delete(key);
+      } else {
+        next.set(key, String(value));
+      }
+    });
+    if (resetPage && !Object.prototype.hasOwnProperty.call(patch, 'page')) {
+      next.delete('page');
+    }
+    setSearchParams(next);
+  }, [searchParams, setSearchParams]);
+
+  const loadHistory = useCallback(async () => {
     setLoading(true);
     setError(undefined);
     try {
-      const items = await lotteryPredictionApi.history({ limit: 50 });
-      setPredictions(items);
+      const targetPeriod = Number(targetPeriodValue);
+      const response = await lotteryPredictionApi.historyPage({
+        page,
+        pageSize,
+        resultState,
+        targetPeriod: Number.isFinite(targetPeriod) && targetPeriod > 0 ? targetPeriod : undefined,
+        ruleId: ruleId.trim() || undefined,
+        ruleName: ruleName.trim() || undefined
+      });
+      setPageResponse(response);
+      setPredictions(response.items || []);
     } catch (requestError) {
       console.error('读取彩票预测历史失败:', requestError);
       setError('预测历史读取失败，请检查后端服务');
@@ -60,24 +92,11 @@ const LotteryPredictionHistoryPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, pageSize, resultState, ruleId, ruleName, targetPeriodValue]);
 
   useEffect(() => {
     loadHistory();
-  }, []);
-
-  const filteredPredictions = useMemo(() => predictions.filter(prediction => {
-    if (resultFilter === 'pending') {
-      return !prediction.result;
-    }
-    if (resultFilter === 'won') {
-      return prediction.result && prediction.result.prizeName !== '未中奖';
-    }
-    if (resultFilter === 'missed') {
-      return prediction.result?.prizeName === '未中奖';
-    }
-    return true;
-  }), [predictions, resultFilter]);
+  }, [loadHistory]);
 
   const summary = useMemo(() => {
     const withActual = predictions.filter(item => item.result).length;
@@ -116,15 +135,29 @@ const LotteryPredictionHistoryPage = () => {
             回填最新开奖
           </Button>
           <Select
-            value={resultFilter}
-            onChange={setResultFilter}
+            value={resultState}
+            onChange={value => updateQuery({ resultState: value })}
             style={{ width: 130 }}
             options={[
-              { label: '全部', value: 'all' },
-              { label: '待开奖', value: 'pending' },
-              { label: '已中奖', value: 'won' },
-              { label: '未中奖', value: 'missed' }
+              { label: '全部', value: 'ALL' },
+              { label: '待开奖', value: 'PENDING' },
+              { label: '已中奖', value: 'WON' },
+              { label: '未中奖', value: 'MISSED' }
             ]}
+          />
+          <Input
+            allowClear
+            placeholder="目标期号"
+            value={targetPeriodValue}
+            onChange={event => updateQuery({ targetPeriod: event.target.value })}
+            style={{ width: 140 }}
+          />
+          <Input
+            allowClear
+            placeholder="规则名称"
+            value={ruleName}
+            onChange={event => updateQuery({ ruleName: event.target.value })}
+            style={{ width: 150 }}
           />
           <Button icon={<ReloadOutlined />} loading={loading} onClick={loadHistory}>
             刷新
@@ -139,7 +172,7 @@ const LotteryPredictionHistoryPage = () => {
             <HistoryOutlined />
             <div>
               <strong>{predictions.length}</strong>
-              <span>历史快照</span>
+              <span>当前页快照</span>
             </div>
           </div>
         </Card>
@@ -168,15 +201,15 @@ const LotteryPredictionHistoryPage = () => {
           <HistoryOutlined />
           <div>
             <h2>最近预测快照</h2>
-            <p>最新目标期 {summary.latest?.targetPeriod || '暂无'}，更新时间 {formatTime(summary.latest?.updatedAt || summary.latest?.createdAt)}</p>
+            <p>共 {pageResponse?.total ?? 0} 条，最新目标期 {summary.latest?.targetPeriod || '暂无'}，更新时间 {formatTime(summary.latest?.updatedAt || summary.latest?.createdAt)}</p>
           </div>
         </div>
         <Spin spinning={loading}>
-          {filteredPredictions.length === 0 && !loading ? (
+          {predictions.length === 0 && !loading ? (
             <Empty description="暂无预测历史" />
           ) : (
             <div className="lottery-history-list">
-              {filteredPredictions.map(prediction => (
+              {predictions.map(prediction => (
                 <article className="lottery-history-card" key={prediction.id || `${prediction.targetPeriod}-${prediction.title}`}>
                   <div className="lottery-prediction-card-head">
                     <div>
@@ -206,6 +239,15 @@ const LotteryPredictionHistoryPage = () => {
             </div>
           )}
         </Spin>
+        <Pagination
+          className="lottery-list-pagination"
+          current={page}
+          pageSize={pageSize}
+          total={pageResponse?.total || 0}
+          showSizeChanger
+          showTotal={total => `共 ${total} 条`}
+          onChange={(nextPage, nextPageSize) => updateQuery({ page: nextPage, pageSize: nextPageSize }, false)}
+        />
       </Card>
     </LifePageShell>
   );
