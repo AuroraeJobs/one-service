@@ -229,6 +229,14 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
       accent: '#0071e3'
     },
     {
+      id: 'lottery-sync',
+      moduleKey: 'lottery',
+      path: '/lottery/sync',
+      label: '同步',
+      icon: <SyncOutlined />,
+      accent: '#00c7be'
+    },
+    {
       id: 'lottery-statistics',
       moduleKey: 'lottery',
       path: '/lottery/statistics?tab=frequency',

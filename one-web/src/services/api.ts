@@ -268,6 +268,12 @@ export const lotteryRecordApi = {
   sync: (): Promise<LotteryRecordSyncLog> => {
     return apiClient.post('/lottery/records/sync');
   },
+  retrySync: (): Promise<LotteryRecordSyncLog> => {
+    return apiClient.post('/lottery/records/sync/retry');
+  },
+  scheduledSync: (): Promise<LotteryRecordSyncLog> => {
+    return apiClient.post('/lottery/records/sync/scheduled');
+  },
   syncLogs: (params?: { status?: string; limit?: number }): Promise<LotteryRecordSyncLog[]> => {
     return apiClient.get('/lottery/records/sync-logs', { params });
   },
