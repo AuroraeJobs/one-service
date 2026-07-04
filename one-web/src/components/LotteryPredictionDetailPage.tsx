@@ -10,7 +10,8 @@ import {
   lotteryTicketApi,
   type LotteryPredictionCandidate,
   type LotteryPredictionSnapshot,
-  type LotteryPreference
+  type LotteryPreference,
+  type LotteryTicket
 } from '../services/api';
 import './LotteryOverviewPage.css';
 
@@ -46,7 +47,26 @@ const LotteryPredictionDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [savingTicketKey, setSavingTicketKey] = useState<string>();
   const [batchSaving, setBatchSaving] = useState(false);
+  const [linkedTickets, setLinkedTickets] = useState<LotteryTicket[]>([]);
+  const [linkedTicketsLoading, setLinkedTicketsLoading] = useState(false);
   const [error, setError] = useState<string>();
+
+  const loadLinkedTickets = async (snapshotId?: string) => {
+    if (!snapshotId) {
+      setLinkedTickets([]);
+      return;
+    }
+    setLinkedTicketsLoading(true);
+    try {
+      const items = await lotteryTicketApi.tickets({ predictionSnapshotId: snapshotId });
+      setLinkedTickets(items || []);
+    } catch (requestError) {
+      console.warn('读取预测关联票据失败:', requestError);
+      setLinkedTickets([]);
+    } finally {
+      setLinkedTicketsLoading(false);
+    }
+  };
 
   const loadDetail = async () => {
     if (!id) {
@@ -64,6 +84,7 @@ const LotteryPredictionDetailPage = () => {
         return;
       }
       setPrediction(item);
+      await loadLinkedTickets(item.id);
     } catch (requestError) {
       console.error('读取彩票预测详情失败:', requestError);
       setError('预测详情读取失败，请检查后端服务');
@@ -114,6 +135,7 @@ const LotteryPredictionDetailPage = () => {
         note: `${title} · 预测评分 ${score ?? '-'}`
       });
       message.success('已保存为彩票票据');
+      await loadLinkedTickets(prediction.id);
     } catch (requestError) {
       console.error('保存预测票据失败:', requestError);
       setError(requestError instanceof Error ? requestError.message : '保存预测票据失败');
@@ -161,6 +183,7 @@ const LotteryPredictionDetailPage = () => {
         note: `${ticket.title} · 预测评分 ${ticket.score ?? '-'}`
       })));
       message.success(`已保存 ${result.savedCount || 0} 注，跳过重复 ${result.duplicateCount || 0} 注`);
+      await loadLinkedTickets(prediction.id);
     } catch (requestError) {
       console.error('批量保存预测票据失败:', requestError);
       setError(requestError instanceof Error ? requestError.message : '批量保存预测票据失败');
@@ -212,6 +235,7 @@ const LotteryPredictionDetailPage = () => {
                 <span>评分 {prediction.score ?? '-'}</span>
                 <span>{prediction.ruleName || prediction.ruleId || '未记录规则'}</span>
                 <span>{formatTime(prediction.createdAt)}</span>
+                <span>已存票据 {linkedTickets.length}</span>
               </div>
               {prediction.reason ? <p>{prediction.reason}</p> : null}
               <div className="lottery-detail-result-line">
@@ -237,6 +261,16 @@ const LotteryPredictionDetailPage = () => {
                 >
                   保存全部候选
                 </Button>
+                {prediction.id ? (
+                  <Button
+                    size="small"
+                    loading={linkedTicketsLoading}
+                    icon={<HistoryOutlined />}
+                    onClick={() => navigate(`/lottery/tickets?predictionSnapshotId=${prediction.id}`)}
+                  >
+                    查看票据
+                  </Button>
+                ) : null}
               </div>
             </Card>
 

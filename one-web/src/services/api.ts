@@ -1883,6 +1883,9 @@ export const lotteryPredictionApi = {
   attachActual: (id: string, record: LotteryActualRecord): Promise<LotteryPredictionSnapshot> => {
     return apiClient.post(`/lottery/predictions/${id}/actual`, record);
   },
+  attachLatestActual: (): Promise<LotteryPredictionSnapshot[]> => {
+    return apiClient.post('/lottery/predictions/attach-latest-actual');
+  },
   rules: (params?: { limit?: number }): Promise<LotteryPredictionRuleRecord[]> => {
     return apiClient.get('/lottery/predictions/rules', { params });
   },
@@ -1907,7 +1910,7 @@ export const lotteryPredictionApi = {
 };
 
 export const lotteryTicketApi = {
-  tickets: (params?: { issue?: string; status?: string; source?: string; prizeGrade?: string }): Promise<LotteryTicket[]> => {
+  tickets: (params?: { issue?: string; status?: string; source?: string; prizeGrade?: string; predictionSnapshotId?: string }): Promise<LotteryTicket[]> => {
     return apiClient.get('/lottery/tickets', { params });
   },
   summary: (): Promise<LotteryTicketSummary> => {

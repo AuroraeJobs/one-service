@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Form, Input, InputNumber, Modal, Popconfirm, Select, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SearchOutlined, TrophyOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditOutlined, HistoryOutlined, PlusOutlined, ReloadOutlined, SearchOutlined, TrophyOutlined } from '@ant-design/icons';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import LotteryBalls from './lottery/LotteryBalls';
 import {
@@ -93,10 +94,13 @@ const emptySummary: LotteryTicketSummary = {
 };
 
 const LotteryTicketPage = () => {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [form] = Form.useForm<TicketFormValues>();
   const [tickets, setTickets] = useState<LotteryTicket[]>([]);
   const [summary, setSummary] = useState<LotteryTicketSummary>(emptySummary);
   const [issue, setIssue] = useState('');
+  const [predictionSnapshotId, setPredictionSnapshotId] = useState(searchParams.get('predictionSnapshotId') || '');
   const [statusFilter, setStatusFilter] = useState<string>();
   const [sourceFilter, setSourceFilter] = useState<string>();
   const [prizeGradeFilter, setPrizeGradeFilter] = useState<string>();
@@ -112,8 +116,13 @@ const LotteryTicketPage = () => {
     issue: issue.trim() || undefined,
     status: statusFilter,
     source: sourceFilter,
-    prizeGrade: prizeGradeFilter
-  }), [issue, prizeGradeFilter, sourceFilter, statusFilter]);
+    prizeGrade: prizeGradeFilter,
+    predictionSnapshotId: predictionSnapshotId.trim() || undefined
+  }), [issue, predictionSnapshotId, prizeGradeFilter, sourceFilter, statusFilter]);
+
+  useEffect(() => {
+    setPredictionSnapshotId(searchParams.get('predictionSnapshotId') || '');
+  }, [searchParams]);
 
   const loadTickets = useCallback(async () => {
     setLoading(true);
@@ -229,6 +238,11 @@ const LotteryTicketPage = () => {
     }
   };
 
+  const clearPredictionSnapshotFilter = () => {
+    setPredictionSnapshotId('');
+    setSearchParams({});
+  };
+
   const columns: ColumnsType<LotteryTicket> = [
     {
       title: '期号',
@@ -285,6 +299,13 @@ const LotteryTicketPage = () => {
       fixed: 'right',
       render: (_, record) => (
         <Space>
+          {record.predictionSnapshotId ? (
+            <Button
+              size="small"
+              icon={<HistoryOutlined />}
+              onClick={() => navigate(`/lottery/predictions/${record.predictionSnapshotId}`)}
+            />
+          ) : null}
           <Button size="small" icon={<EditOutlined />} onClick={() => openEditModal(record)} />
           <Popconfirm title="删除票据？" okText="删除" cancelText="取消" onConfirm={() => deleteTicket(record.id)}>
             <Button size="small" danger icon={<DeleteOutlined />} />
@@ -314,6 +335,14 @@ const LotteryTicketPage = () => {
             value={issue}
             onChange={event => setIssue(event.target.value)}
             style={{ width: 180 }}
+          />
+          <Input
+            allowClear
+            prefix={<HistoryOutlined />}
+            placeholder="预测快照"
+            value={predictionSnapshotId}
+            onChange={event => setPredictionSnapshotId(event.target.value)}
+            style={{ width: 190 }}
           />
           <Select
             allowClear
@@ -368,6 +397,15 @@ const LotteryTicketPage = () => {
           type="success"
           showIcon
           message={`第 ${latestCheckSummary.issue || '-'} 期已核奖 ${latestCheckSummary.checkedTicketCount || 0} 注，中奖 ${latestCheckSummary.winningTicketCount || 0} 注，奖金 ${formatPrizeAmount(latestCheckSummary.totalPrizeAmount)}`}
+        />
+      ) : null}
+      {predictionSnapshotId.trim() ? (
+        <Alert
+          className="lottery-overview-status-alert"
+          type="info"
+          showIcon
+          message={`正在查看预测快照 ${predictionSnapshotId.trim()} 的票据`}
+          action={<Button size="small" onClick={clearPredictionSnapshotFilter}>清除</Button>}
         />
       ) : null}
       <section className="lottery-history-summary-grid">

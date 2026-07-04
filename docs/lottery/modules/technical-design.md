@@ -180,13 +180,13 @@ updatedAt
 
 The frontend ticket list page at `/lottery/tickets` reads ticket list and summary APIs together, shows issue filtering, status/prize tags, generated numbers, cost, and prize outcome.
 
-Prediction detail can batch-save the primary prediction and all candidate predictions through `POST /lottery/tickets/batch`; the ticket page can run `POST /lottery/tickets/check-prizes/latest` and display the returned summary before refreshing ticket rows and totals.
+Prediction detail can batch-save the primary prediction and all candidate predictions through `POST /lottery/tickets/batch`; the ticket page can run `POST /lottery/tickets/check-prizes/latest` and display the returned summary before refreshing ticket rows and totals. Prediction history exposes result-status filtering and a latest-draw attachment action; prediction detail shows linked ticket count and can open the ticket page filtered by `predictionSnapshotId`, while linked ticket rows can jump back to the originating prediction snapshot.
 
 Ticket queries accept `predictionSnapshotId` to support prediction-detail linkbacks. `POST /lottery/predictions/attach-latest-actual` reads the latest draw record, finds prediction snapshots whose `targetPeriod` matches that draw, attaches the normalized actual record, and recalculates primary and candidate results.
 
 The ticket page create/edit modal posts to the ticket CRUD APIs and accepts red numbers as space- or comma-separated input before converting them to the backend list format.
 
-Ticket list filtering supports `issue`, `status`, `source`, and `prizeGrade` on `GET /lottery/tickets`, with the frontend exposing matching controls on the ticket page.
+Ticket list filtering supports `issue`, `status`, `source`, `prizeGrade`, and `predictionSnapshotId` on `GET /lottery/tickets`, with the frontend exposing matching controls on the ticket page.
 
 Prediction detail can save the primary prediction or candidate predictions as draft tickets with `source=PREDICTION` and `predictionSnapshotId` linked to the originating snapshot.
 

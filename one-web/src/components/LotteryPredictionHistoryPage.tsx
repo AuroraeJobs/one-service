@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Empty, Space, Spin, Tag, message } from 'antd';
-import { ExperimentOutlined, HistoryOutlined, ReloadOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import { Alert, Button, Card, Empty, Select, Space, Spin, Tag, message } from 'antd';
+import { ExperimentOutlined, HistoryOutlined, ReloadOutlined, ThunderboltOutlined, TrophyOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import { lotteryPredictionApi, type LotteryPredictionSnapshot } from '../services/api';
@@ -42,7 +42,9 @@ const resultTone = (prediction: LotteryPredictionSnapshot) => {
 const LotteryPredictionHistoryPage = () => {
   const navigate = useNavigate();
   const [predictions, setPredictions] = useState<LotteryPredictionSnapshot[]>([]);
+  const [resultFilter, setResultFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [attachingLatest, setAttachingLatest] = useState(false);
   const [error, setError] = useState<string>();
 
   const loadHistory = async () => {
@@ -64,12 +66,41 @@ const LotteryPredictionHistoryPage = () => {
     loadHistory();
   }, []);
 
+  const filteredPredictions = useMemo(() => predictions.filter(prediction => {
+    if (resultFilter === 'pending') {
+      return !prediction.result;
+    }
+    if (resultFilter === 'won') {
+      return prediction.result && prediction.result.prizeName !== '未中奖';
+    }
+    if (resultFilter === 'missed') {
+      return prediction.result?.prizeName === '未中奖';
+    }
+    return true;
+  }), [predictions, resultFilter]);
+
   const summary = useMemo(() => {
     const withActual = predictions.filter(item => item.result).length;
     const won = predictions.filter(item => item.result && item.result.prizeName !== '未中奖').length;
     const latest = predictions[0];
     return { withActual, won, latest };
   }, [predictions]);
+
+  const attachLatestActual = async () => {
+    setAttachingLatest(true);
+    setError(undefined);
+    try {
+      const updated = await lotteryPredictionApi.attachLatestActual();
+      message.success(`已回填 ${updated.length || 0} 条预测`);
+      await loadHistory();
+    } catch (requestError) {
+      console.error('回填最新开奖结果失败:', requestError);
+      setError(requestError instanceof Error ? requestError.message : '回填最新开奖结果失败');
+      message.error('回填最新开奖结果失败');
+    } finally {
+      setAttachingLatest(false);
+    }
+  };
 
   return (
     <LifePageShell
@@ -81,6 +112,20 @@ const LotteryPredictionHistoryPage = () => {
           <Button type="primary" icon={<ExperimentOutlined />} onClick={() => navigate('/lottery/prediction')}>
             训练预测
           </Button>
+          <Button icon={<TrophyOutlined />} loading={attachingLatest} onClick={attachLatestActual}>
+            回填最新开奖
+          </Button>
+          <Select
+            value={resultFilter}
+            onChange={setResultFilter}
+            style={{ width: 130 }}
+            options={[
+              { label: '全部', value: 'all' },
+              { label: '待开奖', value: 'pending' },
+              { label: '已中奖', value: 'won' },
+              { label: '未中奖', value: 'missed' }
+            ]}
+          />
           <Button icon={<ReloadOutlined />} loading={loading} onClick={loadHistory}>
             刷新
           </Button>
@@ -127,11 +172,11 @@ const LotteryPredictionHistoryPage = () => {
           </div>
         </div>
         <Spin spinning={loading}>
-          {predictions.length === 0 && !loading ? (
+          {filteredPredictions.length === 0 && !loading ? (
             <Empty description="暂无预测历史" />
           ) : (
             <div className="lottery-history-list">
-              {predictions.map(prediction => (
+              {filteredPredictions.map(prediction => (
                 <article className="lottery-history-card" key={prediction.id || `${prediction.targetPeriod}-${prediction.title}`}>
                   <div className="lottery-prediction-card-head">
                     <div>
