@@ -1,6 +1,6 @@
 # Lottery Module Roadmap
 
-Last updated: 2026-07-03
+Last updated: 2026-07-04
 
 ## Purpose
 
@@ -33,7 +33,7 @@ lottery/records/*
 The intended product path is:
 
 ```text
-historical records -> stable sync -> statistics cockpit -> prediction replay -> personal tickets -> prize and ROI tracking -> provider and rule operations
+historical records -> stable sync -> statistics cockpit -> prediction replay -> personal tickets -> prize and ROI tracking -> provider and rule operations -> daily workflow workbench
 ```
 
 The module should become a daily-use lottery research cockpit inside the life data area, similar to how the stock module became an investment cockpit.
@@ -247,6 +247,33 @@ POST /lottery/tickets/batch
 POST /lottery/tickets/check-prizes/latest
 GET  /lottery/tickets?predictionSnapshotId=
 POST /lottery/predictions/attach-latest-actual
+```
+
+### Iteration 09: Daily Workflow And Scalable Lists
+
+Goal: turn the completed lottery capabilities into a daily-use workflow and make growing history lists safe to use over time.
+
+Deliverables:
+
+- Add a daily workbench route that summarizes latest draw, record sync state, data quality, latest prediction, pending tickets, latest prize-check result, and ledger outcome.
+- Add a backend workbench summary DTO so the frontend does not stitch operational state from many unrelated pages.
+- Add a backend daily workflow action that can run safe daily steps in order: sync records, attach latest actual results to matching predictions, check latest pending tickets, and return a step-by-step operation summary.
+- Keep prediction generation as an explicit user action when it may be long-running; the workbench should link to training and surface current training status rather than hiding long jobs behind a silent aggregate call.
+- Add pagination envelopes to growing list endpoints, starting with prediction history, tickets, sync logs, and provider probe logs.
+- Expand prediction and ticket filters for daily review: result state, target issue, rule id/name, created-time range, ticket status, prize state, and source.
+- Add frontend list controls that preserve filters in query parameters where useful, especially workbench drill-through links.
+- Connect workbench cards to records, prediction detail/history, tickets, ledger, sync, and data-quality pages.
+- Update quality gates so new list endpoints either support pagination or have an explicit bounded limit.
+
+Suggested endpoints:
+
+```text
+GET  /lottery/workbench/summary
+POST /lottery/workbench/daily-run
+GET  /lottery/predictions?page=&pageSize=&resultState=&targetPeriod=&ruleId=
+GET  /lottery/tickets?page=&pageSize=&issue=&status=&source=&prizeGrade=&predictionSnapshotId=
+GET  /lottery/records/sync-logs?page=&pageSize=&status=
+GET  /lottery/providers/probe-logs?page=&pageSize=&provider=
 ```
 
 ## Storage Direction

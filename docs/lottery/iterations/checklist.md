@@ -149,6 +149,30 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add prediction actual-result attachment from latest draw where matching snapshots exist. Added `POST /lottery/predictions/attach-latest-actual`.
 - [x] Update frontend build after Iteration 08 page changes. `npm run build` passed after batch-save, latest prize-check, history filters, and ticket linkback UI changes.
 
+## Iteration 09: Daily Workflow And Scalable Lists
+
+- [ ] Add workbench summary DTO. It should include latest draw, latest sync summary, data quality status, latest prediction, pending ticket count, latest prize-check summary, and ledger snapshot.
+- [ ] Add `GET /lottery/workbench/summary`. The endpoint should compose existing services without duplicating provider parsing or lottery scoring logic.
+- [ ] Add daily workflow step/result DTOs. Each step should return name, status, message, startedAt, finishedAt, and relevant counts.
+- [ ] Add `POST /lottery/workbench/daily-run`. It should run safe bounded steps: record sync, latest-actual prediction attachment, latest pending-ticket prize check, and summary refresh.
+- [ ] Keep long-running prediction training explicit. Workbench should show status and link to training rather than silently starting an expensive training run.
+- [ ] Add backend tests for workbench summary composition and daily-run step status behavior.
+- [ ] Add pagination response envelope for lottery list endpoints that can grow. Prefer a shared DTO with `items`, `page`, `pageSize`, `total`, and `hasNext`.
+- [ ] Add paged prediction history query with result-state, target-period, and rule filters while preserving existing limit-based compatibility.
+- [ ] Add paged ticket query with issue, status, source, prize grade, prediction snapshot, and created-time filters while preserving existing list compatibility.
+- [ ] Add paged sync-log and provider-probe-log queries while preserving existing limit-based compatibility.
+- [ ] Add frontend API client methods/types for workbench summary, daily-run, and paged list responses.
+- [ ] Add `/lottery/workbench` route and navigation entry.
+- [ ] Build workbench UI with daily status cards, step-run action, data-quality warning, latest prediction/ticket/ledger sections, and drill-through links.
+- [ ] Add query-parameter-backed filters and pagination controls to prediction history.
+- [ ] Add query-parameter-backed filters and pagination controls to ticket list.
+- [ ] Add pagination controls to sync/probe history surfaces if their backend endpoints are migrated in this iteration.
+- [ ] Update `docs/lottery/modules/technical-design.md` with workbench, daily-run, and pagination contracts.
+- [ ] Update `docs/lottery/menu-and-version-plan.md` with workbench route/menu placement.
+- [ ] Run focused backend tests for changed services/controllers.
+- [ ] Run frontend build after workbench and list-page changes.
+- [ ] Review git status and diff before each commit, then commit and push.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

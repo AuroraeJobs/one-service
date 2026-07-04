@@ -1,6 +1,6 @@
 # Lottery Documentation Index
 
-Last updated: 2026-07-03
+Last updated: 2026-07-04
 
 This folder is the durable planning home for the lottery module. It follows the same working style as `docs/stock`: keep roadmap, iteration checklist, module design, and menu/version planning together so future work can continue from a clear task board.
 
@@ -43,8 +43,19 @@ Live capabilities already present in the codebase:
 - Lottery overview with recent draws, yearly counts, frequency cards, and AI panel.
 - Prediction page backed by `lottery/training/*` APIs.
 - Rule training, latest prediction, and latest actual record stored through Redis-backed service state.
+- Durable prediction history, prediction detail, personal tickets, latest prize checking, and ticket linkbacks.
+- Ledger pages for cost, prize, net result, ROI, issue-level outcomes, monthly outcomes, and source/rule performance.
+- Operations pages for sync summary, provider probe history, settings, and data quality repair.
 - Astronaut naming, voyage records, and voyage counts through `lottery/astronauts/*`.
 - Statistics and analysis routes including frequency, group, distribution, pixel views, Taiji, space, and hexagram pages.
+
+## Next Iteration
+
+Iteration 09 should start from `docs/lottery/iterations/checklist.md` and implement the daily workflow workbench plus scalable list governance. The planned flow is:
+
+```text
+sync records -> inspect latest draw -> generate or attach prediction -> save tickets -> check prizes -> review ledger outcome
+```
 
 ## Non-Negotiable Rules
 

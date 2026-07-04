@@ -1,6 +1,6 @@
 # Lottery Technical Design
 
-Last updated: 2026-07-03
+Last updated: 2026-07-04
 
 ## Module Shape
 
@@ -230,6 +230,63 @@ VOID
 
 `LotteryRecordSyncSummary` aggregates recent record sync logs. `GET /lottery/records/sync-summary?limit=50` returns status counts, success and failure rates, total saved count, latest status/message/issue range, latest and average duration, and last success/failure/skipped timestamps. The summary is derived from MongoDB sync logs and does not read Redis lock state directly.
 
+## Workbench Contract
+
+Iteration 09 introduces a daily workflow workbench under `/lottery/workbench`. The workbench should be a composition layer over existing domain services, not a new source of lottery truth.
+
+`LotteryWorkbenchSummary` should include:
+
+```text
+latestDraw
+latestSyncSummary
+dataQualitySummary
+latestPrediction
+trainingStatus
+pendingTicketCount
+latestPrizeCheckSummary
+ledgerSummary
+generatedAt
+```
+
+`GET /lottery/workbench/summary` composes the latest records, sync summary, data quality, prediction status, ticket status, and ledger snapshot into one response for the daily page. It should not fetch external provider data directly and should not duplicate prize or prediction scoring logic.
+
+`POST /lottery/workbench/daily-run` returns a list of step results:
+
+```text
+step
+status
+message
+startedAt
+finishedAt
+savedCount
+checkedCount
+updatedCount
+error
+```
+
+The daily run is intentionally bounded. Safe steps are record sync, latest actual attachment for matching prediction snapshots, latest pending-ticket prize checking, and summary/cache refresh. Prediction training remains explicit because it can be long-running; the workbench should surface current training status and link to the prediction page instead of silently starting training.
+
+## Pagination Contract
+
+Growing list APIs should support a shared pagination envelope:
+
+```text
+items
+page
+pageSize
+total
+hasNext
+```
+
+Iteration 09 should migrate high-growth lottery lists first: prediction history, ticket list, record sync logs, and provider probe logs. Existing limit-based APIs should remain compatible during the migration so current pages do not break while new query-parameter-backed controls are added.
+
+Initial list filter targets:
+
+- Predictions: result state, target period, rule id, rule name, created-time range.
+- Tickets: issue, status, source, prize grade, prediction snapshot id, created-time range.
+- Sync logs: status, started-time range.
+- Provider probe logs: provider, availability, checked-time range.
+
 ## API Design Rules
 
 - Keep existing APIs compatible while adding new `lottery/*` APIs.
@@ -242,6 +299,7 @@ VOID
 - Return normalized project DTOs only.
 - Use explicit filters rather than overloading vague request bodies.
 - Support pagination for list/history endpoints that can grow.
+- New paged APIs should use `items`, `page`, `pageSize`, `total`, and `hasNext` consistently.
 - Add status/message fields for sync, provider, and training operations.
 - Use millisecond timestamps for API/cache time fields.
 
@@ -255,6 +313,7 @@ VOID
 - The sync operations page should read backend summaries and provider probe logs rather than recalculating operational health only in the browser.
 - The data quality page should use a two-step repair flow: generate a backend dry-run plan first, then enable confirm only for provider-backed missing issues.
 - Prediction pages should read `LotteryPreference` for default training scale, replay count, automatic prediction ticket saving, and default ticket source. Operational entry points should surface data-quality warnings from the backend report instead of hiding them behind a separate page.
+- The workbench page should be the daily entry point and use drill-through links into records, predictions, tickets, ledger, sync, and data quality rather than replacing those specialized pages.
 
 ## Verification Strategy
 

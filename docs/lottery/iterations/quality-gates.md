@@ -1,6 +1,6 @@
 # Lottery Quality Gates
 
-Last updated: 2026-07-03
+Last updated: 2026-07-04
 
 Use these gates when finishing a lottery milestone.
 
@@ -12,6 +12,7 @@ Use these gates when finishing a lottery milestone.
 - Provider failures return controlled status/messages instead of leaking low-level exceptions.
 - Long-running training has visible status and does not start duplicate jobs.
 - List endpoints that can grow support pagination or have a documented limit.
+- Daily workflow actions return step-level status and do not hide long-running prediction training behind aggregate endpoints.
 
 ## Frontend
 
@@ -20,6 +21,7 @@ Use these gates when finishing a lottery milestone.
 - Dense chart/table pages fit mobile and desktop layouts.
 - Prediction copy stays research-oriented and avoids guaranteed outcome wording.
 - Personal ticket and ledger pages show cost and outcome clearly.
+- Workbench drill-through links preserve useful filters in query parameters.
 
 ## Data
 

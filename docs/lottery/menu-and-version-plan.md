@@ -8,6 +8,7 @@ The current lottery navigation already has a strong exploratory surface. The tar
 
 ```text
 彩票
+- 工作台
 - 概览
 - 开奖
   - 开奖记录
@@ -49,6 +50,7 @@ The current lottery navigation already has a strong exploratory surface. The tar
 
 ```text
 /lottery
+/lottery/workbench
 /lottery/overview
 /lottery/prediction
 /lottery/predictions/history
@@ -132,6 +134,16 @@ Goal: make the module maintainable.
 - Add sync retry, scheduled trigger actions, sync summary cards, and provider probe-log inspection.
 - Add data quality checks and repair workflows where safe.
 
+### V7: Daily Workflow And Scalable Lists
+
+Goal: make the lottery module usable as a daily cockpit rather than a set of separate pages.
+
+- Add `/lottery/workbench` as the primary daily entry point.
+- Summarize latest draw, sync health, data quality, latest prediction, pending tickets, latest prize checking, and ledger outcome.
+- Add a safe daily-run action that orchestrates bounded maintenance steps and reports step status.
+- Add pagination and query-backed filters to growing prediction, ticket, sync-log, and provider-probe-log lists.
+- Preserve existing routes and deep links while adding workbench drill-through links.
+
 ## API Boundary
 
 Frontend should only call:
@@ -152,6 +164,7 @@ lottery/ledger/*
 lottery/providers/*
 lottery/preferences
 lottery/data-quality
+lottery/workbench
 ```
 
 Do not add browser-side calls to external lottery websites or data providers.
