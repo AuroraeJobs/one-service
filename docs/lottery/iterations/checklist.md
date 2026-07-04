@@ -424,6 +424,42 @@ Goal: make the saved-decision outcome loop easier to operate from the frontend, 
 - [x] Review responsive layout for decision, export, workbench, research, and ticket pages. CSS now keeps decision outcome grids, ticket decision drilldowns, report sections, release cards, and report builder controls single-column on narrow screens.
 - [x] Run month-end verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
+## Iteration 16: V13 Monthly Intelligence Automation
+
+Goal: spend the next month turning the lottery module from a frontend-operated outcome cockpit into a repeatable intelligence and automation workflow: data health should be explainable, hypotheses should be traceable, reminders should lead users to the next action, and month-end review should be auditable without manual assembly.
+
+### Week 1: Data Health And Outcome Intelligence Foundation
+
+- [ ] Add a lottery health score model that combines provider freshness, record gaps, ticket settlement coverage, decision outcome completeness, stale evidence, and export evidence into one summary.
+- [ ] Add backend summary API for `/lottery/operations/health` with issue-level health contributors and action links.
+- [ ] Add a workbench health widget with drilldowns into sync, data quality, decision outcomes, tickets, and exports.
+- [ ] Add audit events for health-score generation, data-quality refresh, and manual health acknowledgement.
+- [ ] Run focused backend/frontend checks, update docs, commit, and push.
+
+### Week 2: Strategy Notebook And Hypothesis Lab
+
+- [ ] Add strategy-notebook records for rule hypotheses, expected behavior, linked predictions, linked backtests, and saved decision outcomes.
+- [ ] Add APIs to list, create, update, archive, and attach evidence to strategy notes under project-owned `lottery/*` routes.
+- [ ] Add `/lottery/research/notebook` frontend view with hypothesis cards, evidence attachments, status filters, and comparison shortcuts.
+- [ ] Add research-page and decision-board actions to attach selected evidence or saved decisions into a notebook entry.
+- [ ] Run focused service/controller tests, frontend build, update docs, commit, and push.
+
+### Week 3: Action Reminders And Daily Workflow Automation
+
+- [ ] Add reminder rules for upcoming draw windows, unsynced records, unconverted saved decisions, unchecked tickets, stale evidence, and missing month-end exports.
+- [ ] Add backend reminder summary API and acknowledgement/snooze endpoints with audit events.
+- [ ] Add workbench reminder center with grouped daily actions, due state, snooze, acknowledgement, and direct route handoff.
+- [ ] Add settings page controls for reminder thresholds, default snooze duration, and month-end export checklist preferences.
+- [ ] Run smoke/build verification, update docs, commit, and push.
+
+### Week 4: Month-End Review, Release Governance, And Mobile Polish
+
+- [ ] Add month-end review dashboard that combines ledger results, tickets, decision outcomes, research notes, health score, and export evidence.
+- [ ] Add month-end report preset that can generate all required CSV/report sections from one saved review scope.
+- [ ] Extend route smoke and release readiness checks for health, notebook, reminders, and month-end review routes.
+- [ ] Review responsive layout for workbench, research notebook, reminders, month-end review, export, decision, and ticket pages.
+- [ ] Run month-end verification, update docs, commit, and push.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

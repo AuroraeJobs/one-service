@@ -206,8 +206,18 @@ Goal: make decision outcomes easier to operate from the frontend after the durab
 - Upgrade `/lottery/predictions/decision` into the primary outcome operations cockpit with URL-backed filters for hit state, ticket conversion state, and evidence alert state. The shipped 15A slice adds filtered saved-outcome metrics, a selectable outcome list, and a direct handoff into CSV export.
 - Add workbench follow-up queues for unchecked converted tickets, stale or volatile evidence, and high-warning saved decisions. The shipped 15B slice derives decision follow-ups from saved outcomes, adds direct decision/ticket/export actions on workbench outcome cards, and clarifies saved-outcome empty states.
 - Add research and ticket drilldowns for rule/source deltas, ROI bands, warning states, and settlement-linked candidates. The shipped 15C slice adds research presets for decision delta, ROI priority, and warning review; ticket settlement candidate drilldowns; and export report presets for outcome operations and month-end review.
-- Extend route smoke, release readiness, and responsive QA for the new frontend outcome operations. Planned 15D records the V12 gates and month-end frontend evidence.
+- Extend route smoke, release readiness, and responsive QA for the new frontend outcome operations. The shipped 15D slice records V12 route smoke, release readiness, and month-end frontend evidence.
 - Keep frontend copy focused on review, audit, and personal record keeping; no gambling-promotion copy.
+
+### V13: Monthly Intelligence Automation
+
+Goal: turn the outcome-operation cockpit into a repeatable monthly intelligence workflow with explainable health, traceable hypotheses, daily reminders, and one-pass month-end review.
+
+- Add lottery operations health scoring across provider freshness, record gaps, ticket settlement coverage, decision outcome completeness, stale evidence, and export evidence. Planned Week 1 ships `/lottery/operations/health`, workbench health widgets, and health audit events.
+- Add a strategy notebook and hypothesis lab so rules, assumptions, linked predictions, backtests, tickets, and saved decision outcomes can be reviewed together. Planned Week 2 ships notebook APIs and `/lottery/research/notebook`.
+- Add action reminders for upcoming draw windows, unsynced records, unconverted saved decisions, unchecked tickets, stale evidence, and missing month-end exports. Planned Week 3 ships reminder APIs, workbench reminder center, snooze/acknowledge actions, and settings thresholds.
+- Add month-end review and release governance for ledger results, tickets, outcomes, research notes, health score, and export evidence. Planned Week 4 ships the review dashboard, one-pass report preset, route smoke coverage, release readiness evidence, and responsive QA.
+- Preserve the same project-owned API boundary: browser code stays on `record/*` and `lottery/*`, and provider/network work stays behind backend services.
 
 ## API Boundary
 
