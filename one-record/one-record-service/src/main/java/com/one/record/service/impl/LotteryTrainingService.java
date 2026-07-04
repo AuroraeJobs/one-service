@@ -11,6 +11,7 @@ import com.one.record.repository.LotteryPredictionRuleRepository;
 import com.one.record.repository.LotteryPredictionSnapshotRepository;
 import com.one.record.repository.LotteryTrainingReportRepository;
 import com.one.record.service.ILotteryTrainingService;
+import com.one.record.service.IRecordService;
 import com.one.record.training.LotteryActualRecord;
 import com.one.record.training.LotteryLatestPrediction;
 import com.one.record.training.LotteryPredictionCandidate;
@@ -20,6 +21,7 @@ import com.one.record.training.LotteryRuleComparison;
 import com.one.record.training.LotteryTrainingReport;
 import com.one.record.training.LotteryTrainingStatus;
 import com.one.record.training.PredictionRuleConfig;
+import com.one.record.util.LotteryDrawUtil;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
@@ -74,6 +76,8 @@ public class LotteryTrainingService implements ILotteryTrainingService {
 
     private final LotteryPredictionRuleRepository predictionRuleRepository;
 
+    private final IRecordService recordService;
+
     private final AtomicBoolean trainingRunning = new AtomicBoolean(false);
 
     private final AtomicBoolean trainingCancelRequested = new AtomicBoolean(false);
@@ -87,11 +91,13 @@ public class LotteryTrainingService implements ILotteryTrainingService {
     public LotteryTrainingService(StringRedisTemplate redisTemplate,
                                   LotteryPredictionSnapshotRepository predictionSnapshotRepository,
                                   LotteryTrainingReportRepository trainingReportRepository,
-                                  LotteryPredictionRuleRepository predictionRuleRepository) {
+                                  LotteryPredictionRuleRepository predictionRuleRepository,
+                                  IRecordService recordService) {
         this.redisTemplate = redisTemplate;
         this.predictionSnapshotRepository = predictionSnapshotRepository;
         this.trainingReportRepository = trainingReportRepository;
         this.predictionRuleRepository = predictionRuleRepository;
+        this.recordService = recordService;
     }
 
     @Override
@@ -274,6 +280,26 @@ public class LotteryTrainingService implements ILotteryTrainingService {
         }
         snapshot.setUpdatedAt(System.currentTimeMillis());
         return predictionSnapshotRepository.save(snapshot);
+    }
+
+    @Override
+    public List<LotteryPredictionSnapshot> attachLatestActualToMatchingPredictions() {
+        com.one.record.response.Record latest = recordService.findLast();
+        if (latest == null || latest.getCode() == null || latest.getCode().trim().isEmpty()) {
+            return List.of();
+        }
+        LotteryActualRecord actualRecord = new LotteryActualRecord();
+        actualRecord.setPeriod((int) Long.parseLong(latest.getCode().trim()));
+        actualRecord.setRedNumbers(LotteryDrawUtil.normalizeRedNumbers(latest.getRed()));
+        actualRecord.setBlueNumber(LotteryDrawUtil.normalizeBlueNumber(latest.getBlue()));
+        List<LotteryPredictionSnapshot> snapshots = predictionSnapshotRepository.findByTargetPeriodOrderByCreatedAtDesc(actualRecord.getPeriod());
+        List<LotteryPredictionSnapshot> updated = new ArrayList<>();
+        for (LotteryPredictionSnapshot snapshot : snapshots) {
+            updated.add(attachPredictionActual(snapshot.getId(), actualRecord));
+        }
+        return updated.stream()
+                .filter(snapshot -> snapshot != null)
+                .toList();
     }
 
     @Override

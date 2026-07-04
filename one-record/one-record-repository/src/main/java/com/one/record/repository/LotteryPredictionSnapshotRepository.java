@@ -11,4 +11,6 @@ import java.util.List;
 public interface LotteryPredictionSnapshotRepository extends MongoRepository<LotteryPredictionSnapshot, String> {
 
     List<LotteryPredictionSnapshot> findByOrderByCreatedAtDesc(Pageable pageable);
+
+    List<LotteryPredictionSnapshot> findByTargetPeriodOrderByCreatedAtDesc(Integer targetPeriod);
 }

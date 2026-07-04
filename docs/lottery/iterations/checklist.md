@@ -143,9 +143,10 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add one-click save of prediction primary plus candidate numbers. Prediction detail can now save the primary prediction and all candidates in one batch, with backend duplicate skipping.
 - [x] Add latest-draw prize-check action to `/lottery/tickets`. Ticket page can run latest-draw prize checking and displays the returned summary.
 - [ ] Add prediction history result-status filtering.
-- [ ] Add prediction detail saved-ticket count or linkback.
+- [x] Add prediction detail saved-ticket count or linkback backend support. `GET /lottery/tickets` now accepts `predictionSnapshotId` for snapshot-linked ticket lookup.
+- [ ] Add prediction detail saved-ticket count or linkback UI.
 - [ ] Add ticket page linkback to prediction snapshot when `predictionSnapshotId` exists.
-- [ ] Add prediction actual-result attachment from latest draw where matching snapshots exist.
+- [x] Add prediction actual-result attachment from latest draw where matching snapshots exist. Added `POST /lottery/predictions/attach-latest-actual`.
 - [x] Update frontend build after Iteration 08 page changes. `npm run build` passed after batch-save and latest prize-check UI changes.
 
 ## Documentation And Delivery

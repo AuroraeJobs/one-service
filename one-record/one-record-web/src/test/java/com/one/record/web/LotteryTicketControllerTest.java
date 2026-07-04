@@ -36,7 +36,7 @@ class LotteryTicketControllerTest {
 
     @Test
     void ticketsBindsIssueFilter() throws Exception {
-        when(service.tickets("2026001", "CHECKED", "PREDICTION", "FIFTH")).thenReturn(List.of(LotteryTicket.builder()
+        when(service.tickets("2026001", "CHECKED", "PREDICTION", "FIFTH", "snapshot-1")).thenReturn(List.of(LotteryTicket.builder()
                 .id("ticket-1")
                 .issue("2026001")
                 .blueNumber("07")
@@ -46,12 +46,13 @@ class LotteryTicketControllerTest {
                         .param("issue", "2026001")
                         .param("status", "CHECKED")
                         .param("source", "PREDICTION")
-                        .param("prizeGrade", "FIFTH"))
+                        .param("prizeGrade", "FIFTH")
+                        .param("predictionSnapshotId", "snapshot-1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value("ticket-1"))
                 .andExpect(jsonPath("$[0].blueNumber").value("07"));
 
-        verify(service).tickets("2026001", "CHECKED", "PREDICTION", "FIFTH");
+        verify(service).tickets("2026001", "CHECKED", "PREDICTION", "FIFTH", "snapshot-1");
     }
 
     @Test

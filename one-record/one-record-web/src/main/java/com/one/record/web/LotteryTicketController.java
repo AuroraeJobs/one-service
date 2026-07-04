@@ -37,8 +37,9 @@ public class LotteryTicketController {
     public List<LotteryTicket> tickets(@RequestParam(name = "issue", required = false) String issue,
                                        @RequestParam(name = "status", required = false) String status,
                                        @RequestParam(name = "source", required = false) String source,
-                                       @RequestParam(name = "prizeGrade", required = false) String prizeGrade) {
-        return service.tickets(issue, status, source, prizeGrade);
+                                       @RequestParam(name = "prizeGrade", required = false) String prizeGrade,
+                                       @RequestParam(name = "predictionSnapshotId", required = false) String predictionSnapshotId) {
+        return service.tickets(issue, status, source, prizeGrade, predictionSnapshotId);
     }
 
     @GetMapping("summary")

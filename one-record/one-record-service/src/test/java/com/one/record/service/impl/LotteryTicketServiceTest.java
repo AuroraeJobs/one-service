@@ -44,7 +44,7 @@ class LotteryTicketServiceTest {
     void ticketsFiltersByIssueWhenProvided() {
         when(repository.findByUserIdAndIssueOrderByCreatedAtDesc("default", "2026001")).thenReturn(List.of());
 
-        service.tickets(" 2026001 ", null, null, null);
+        service.tickets(" 2026001 ", null, null, null, null);
 
         verify(repository).findByUserIdAndIssueOrderByCreatedAtDesc("default", "2026001");
     }
@@ -56,7 +56,7 @@ class LotteryTicketServiceTest {
                 LotteryTicket.builder().id("b").status("DRAFT").source("MANUAL").prizeGrade("NONE").build()
         ));
 
-        List<LotteryTicket> tickets = service.tickets(null, "checked", "prediction", "fifth");
+        List<LotteryTicket> tickets = service.tickets(null, "checked", "prediction", "fifth", null);
 
         assertThat(tickets).extracting(LotteryTicket::getId).containsExactly("a");
     }
@@ -68,7 +68,18 @@ class LotteryTicketServiceTest {
                 LotteryTicket.builder().id("b").status("CHECKED").source("MANUAL").prizeGrade("FIFTH").build()
         ));
 
-        List<LotteryTicket> tickets = service.tickets("2026001", "checked", "prediction", "fifth");
+        List<LotteryTicket> tickets = service.tickets("2026001", "checked", "prediction", "fifth", null);
+
+        assertThat(tickets).extracting(LotteryTicket::getId).containsExactly("a");
+    }
+
+    @Test
+    void ticketsCanQueryByPredictionSnapshotId() {
+        when(repository.findByUserIdAndPredictionSnapshotIdOrderByCreatedAtDesc("default", "snapshot-1")).thenReturn(List.of(
+                LotteryTicket.builder().id("a").predictionSnapshotId("snapshot-1").build()
+        ));
+
+        List<LotteryTicket> tickets = service.tickets(null, null, null, null, " snapshot-1 ");
 
         assertThat(tickets).extracting(LotteryTicket::getId).containsExactly("a");
     }

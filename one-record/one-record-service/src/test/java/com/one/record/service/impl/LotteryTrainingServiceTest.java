@@ -6,6 +6,8 @@ import com.one.record.model.LotteryTrainingReportRecord;
 import com.one.record.repository.LotteryPredictionRuleRepository;
 import com.one.record.repository.LotteryPredictionSnapshotRepository;
 import com.one.record.repository.LotteryTrainingReportRepository;
+import com.one.record.response.Record;
+import com.one.record.service.IRecordService;
 import com.one.record.training.LotteryActualRecord;
 import com.one.record.training.LotteryLatestPrediction;
 import com.one.record.training.LotteryPredictionCandidate;
@@ -34,6 +36,8 @@ class LotteryTrainingServiceTest {
 
     private LotteryPredictionRuleRepository predictionRuleRepository;
 
+    private IRecordService recordService;
+
     private LotteryTrainingService service;
 
     @BeforeEach
@@ -41,8 +45,9 @@ class LotteryTrainingServiceTest {
         predictionSnapshotRepository = mock(LotteryPredictionSnapshotRepository.class);
         trainingReportRepository = mock(LotteryTrainingReportRepository.class);
         predictionRuleRepository = mock(LotteryPredictionRuleRepository.class);
+        recordService = mock(IRecordService.class);
         service = new LotteryTrainingService(mock(StringRedisTemplate.class), predictionSnapshotRepository,
-                trainingReportRepository, predictionRuleRepository);
+                trainingReportRepository, predictionRuleRepository, recordService);
     }
 
     @Test
@@ -121,6 +126,34 @@ class LotteryTrainingServiceTest {
         assertThat(result.getCandidates().get(0).getResult().getRedHits()).isEqualTo(3);
         assertThat(result.getCandidates().get(0).getResult().isBlueHit()).isFalse();
         assertThat(result.getUpdatedAt()).isGreaterThan(100L);
+    }
+
+    @Test
+    void attachLatestActualScoresMatchingSnapshots() {
+        Record latest = new Record();
+        latest.setCode("2026002");
+        latest.setRed("01,02,03,09,10,11");
+        latest.setBlue("07");
+        LotteryPredictionSnapshot snapshot = LotteryPredictionSnapshot.builder()
+                .id("snapshot-1")
+                .targetPeriod(2026002)
+                .redNumbers(List.of("01", "02", "03", "04", "05", "06"))
+                .blueNumber("07")
+                .createdAt(100L)
+                .updatedAt(100L)
+                .build();
+        when(recordService.findLast()).thenReturn(latest);
+        when(predictionSnapshotRepository.findByTargetPeriodOrderByCreatedAtDesc(2026002)).thenReturn(List.of(snapshot));
+        when(predictionSnapshotRepository.findById("snapshot-1")).thenReturn(Optional.of(snapshot));
+        when(predictionSnapshotRepository.save(org.mockito.ArgumentMatchers.any(LotteryPredictionSnapshot.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        List<LotteryPredictionSnapshot> updated = service.attachLatestActualToMatchingPredictions();
+
+        assertThat(updated).hasSize(1);
+        assertThat(updated.get(0).getActualRecord().getPeriod()).isEqualTo(2026002);
+        assertThat(updated.get(0).getResult().getRedHits()).isEqualTo(3);
+        assertThat(updated.get(0).getResult().isBlueHit()).isTrue();
     }
 
     @Test

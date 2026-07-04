@@ -39,12 +39,14 @@ public class LotteryTicketService implements ILotteryTicketService {
     private final IRecordService recordService;
 
     @Override
-    public List<LotteryTicket> tickets(String issue, String status, String source, String prizeGrade) {
+    public List<LotteryTicket> tickets(String issue, String status, String source, String prizeGrade, String predictionSnapshotId) {
         String safeStatus = normalizeOptional(status);
         String safeSource = normalizeOptional(source);
         String safePrizeGrade = normalizeOptional(prizeGrade);
         List<LotteryTicket> items;
-        if (StringUtils.hasText(issue)) {
+        if (StringUtils.hasText(predictionSnapshotId)) {
+            items = repository.findByUserIdAndPredictionSnapshotIdOrderByCreatedAtDesc(DEFAULT_USER_ID, predictionSnapshotId.trim());
+        } else if (StringUtils.hasText(issue)) {
             items = repository.findByUserIdAndIssueOrderByCreatedAtDesc(DEFAULT_USER_ID, issue.trim());
         } else {
             items = repository.findByUserIdOrderByPeriodDescCreatedAtDesc(DEFAULT_USER_ID);

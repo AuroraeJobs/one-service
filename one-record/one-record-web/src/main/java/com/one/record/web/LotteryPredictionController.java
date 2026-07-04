@@ -82,6 +82,12 @@ public class LotteryPredictionController {
         return service.attachPredictionActual(id, record);
     }
 
+    @PostMapping("attach-latest-actual")
+    @Operation(summary = "按最新开奖记录回填预测结果", description = "使用最新开奖记录匹配目标期号相同的预测快照并重算命中结果")
+    public List<LotteryPredictionSnapshot> attachLatestActual() {
+        return service.attachLatestActualToMatchingPredictions();
+    }
+
     @PostMapping("train")
     @Operation(summary = "启动彩票预测训练", description = "在预测命名空间启动训练任务；兼容 lottery/training/start")
     public LotteryTrainingStatus train(@RequestBody LotteryTrainingRequest request) {

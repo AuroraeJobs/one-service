@@ -83,6 +83,21 @@ class LotteryPredictionControllerTest {
     }
 
     @Test
+    void attachLatestActualDelegatesToTrainingService() throws Exception {
+        when(service.attachLatestActualToMatchingPredictions()).thenReturn(List.of(LotteryPredictionSnapshot.builder()
+                .id("snapshot-1")
+                .targetPeriod(2026002)
+                .build()));
+
+        mockMvc.perform(post("/lottery/predictions/attach-latest-actual"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value("snapshot-1"))
+                .andExpect(jsonPath("$[0].targetPeriod").value(2026002));
+
+        verify(service).attachLatestActualToMatchingPredictions();
+    }
+
+    @Test
     void rulesBindsLimit() throws Exception {
         when(service.predictionRules(5)).thenReturn(List.of(LotteryPredictionRuleRecord.builder()
                 .ruleId("rule-1")

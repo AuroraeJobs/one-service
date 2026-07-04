@@ -38,6 +38,8 @@ public interface ILotteryTrainingService {
 
     LotteryPredictionSnapshot attachPredictionActual(String id, LotteryActualRecord record);
 
+    List<LotteryPredictionSnapshot> attachLatestActualToMatchingPredictions();
+
     List<LotteryPredictionRuleRecord> predictionRules(Integer limit);
 
     LotteryRuleComparison comparePredictionRules(Integer limit);

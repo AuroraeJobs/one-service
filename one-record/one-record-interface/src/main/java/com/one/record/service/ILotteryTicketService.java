@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface ILotteryTicketService {
 
-    List<LotteryTicket> tickets(String issue, String status, String source, String prizeGrade);
+    List<LotteryTicket> tickets(String issue, String status, String source, String prizeGrade, String predictionSnapshotId);
 
     LotteryTicket saveTicket(LotteryTicket ticket);
 
