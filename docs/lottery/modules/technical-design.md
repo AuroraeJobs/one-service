@@ -232,7 +232,7 @@ VOID
 
 ## Workbench Contract
 
-Iteration 09 introduces a daily workflow workbench under `/lottery/workbench`. The workbench should be a composition layer over existing domain services, not a new source of lottery truth.
+Iteration 09 introduces a daily workflow workbench under `/lottery/workbench`. The workbench is a composition layer over existing domain services, not a new source of lottery truth.
 
 `LotteryWorkbenchSummary` should include:
 
@@ -248,7 +248,7 @@ ledgerSummary
 generatedAt
 ```
 
-`GET /lottery/workbench/summary` composes the latest records, sync summary, data quality, prediction status, ticket status, and ledger snapshot into one response for the daily page. It should not fetch external provider data directly and should not duplicate prize or prediction scoring logic.
+`GET /lottery/workbench/summary` composes the latest records, sync summary, data quality, prediction status, ticket status, and ledger snapshot into one response for the daily page. It does not fetch external provider data directly and does not duplicate prize or prediction scoring logic.
 
 `POST /lottery/workbench/daily-run` returns a list of step results:
 
@@ -264,7 +264,7 @@ updatedCount
 error
 ```
 
-The daily run is intentionally bounded. Safe steps are record sync, latest actual attachment for matching prediction snapshots, latest pending-ticket prize checking, and summary/cache refresh. Prediction training remains explicit because it can be long-running; the workbench should surface current training status and link to the prediction page instead of silently starting training.
+The daily run is intentionally bounded. Safe steps are record sync, latest actual attachment for matching prediction snapshots, latest pending-ticket prize checking, and statistics summary refresh. Each step returns its own status, timestamps, counts, and error message if it fails. Prediction training remains explicit because it can be long-running; the workbench surfaces current training status instead of silently starting training.
 
 ## Pagination Contract
 

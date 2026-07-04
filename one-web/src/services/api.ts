@@ -1801,6 +1801,36 @@ export interface LotteryPerformanceLedger {
   hitRatePercent?: number;
 }
 
+export interface LotteryWorkbenchStepResult {
+  step?: string;
+  status?: string;
+  message?: string;
+  startedAt?: number;
+  finishedAt?: number;
+  savedCount?: number;
+  checkedCount?: number;
+  updatedCount?: number;
+  error?: string;
+}
+
+export interface LotteryWorkbenchSummary {
+  latestDraw?: LotteryDraw;
+  latestSyncSummary?: LotteryRecordSyncSummary;
+  dataQualitySummary?: LotteryDataQualityReport;
+  latestPrediction?: LotteryPredictionSnapshot;
+  trainingStatus?: LotteryTrainingStatus;
+  pendingTicketCount?: number;
+  latestPrizeCheckSummary?: LotteryTicketPrizeCheckSummary;
+  ledgerSummary?: LotteryLedgerSummary;
+  generatedAt?: number;
+}
+
+export interface LotteryWorkbenchDailyRunResult {
+  steps: LotteryWorkbenchStepResult[];
+  summary?: LotteryWorkbenchSummary;
+  generatedAt?: number;
+}
+
 export interface LotteryTrainingTimelineItem {
   period: number;
   predictedRedNumbers: string[];
@@ -1948,6 +1978,15 @@ export const lotteryLedgerApi = {
   },
   performance: (params?: { dimension?: 'source' | 'rule' }): Promise<LotteryPerformanceLedger[]> => {
     return apiClient.get('/lottery/ledger/performance', { params });
+  }
+};
+
+export const lotteryWorkbenchApi = {
+  summary: (): Promise<LotteryWorkbenchSummary> => {
+    return apiClient.get('/lottery/workbench/summary');
+  },
+  dailyRun: (): Promise<LotteryWorkbenchDailyRunResult> => {
+    return apiClient.post('/lottery/workbench/daily-run');
   }
 };
 
