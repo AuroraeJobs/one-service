@@ -1,5 +1,6 @@
 package com.one.record.web;
 
+import com.one.record.lottery.LotteryDecisionOutcomeSummary;
 import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.model.LotteryDecisionCandidateSelection;
 import com.one.record.model.LotteryDecisionSet;
@@ -56,6 +57,22 @@ class LotteryDecisionSetControllerTest {
                 .andExpect(jsonPath("$.hasNext").value(true));
 
         verify(service).decisionSets(true, 2, 5);
+    }
+
+    @Test
+    void outcomeSummaryDelegatesToService() throws Exception {
+        when(service.outcomeSummary(false, 12)).thenReturn(LotteryDecisionOutcomeSummary.builder()
+                .savedDecisionSetCount(2)
+                .candidateCount(5)
+                .build());
+
+        mockMvc.perform(get("/lottery/decision-sets/outcomes")
+                        .param("limit", "12"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.savedDecisionSetCount").value(2))
+                .andExpect(jsonPath("$.candidateCount").value(5));
+
+        verify(service).outcomeSummary(false, 12);
     }
 
     @Test

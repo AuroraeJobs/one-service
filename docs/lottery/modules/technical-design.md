@@ -285,6 +285,10 @@ Iteration 13D adds report and release-readiness surfaces without changing backen
 
 Iteration 14C adds a lightweight frontend route smoke gate for the guided workflow. `npm run lottery:smoke` reads `one-web/scripts/fixtures/lottery-route-smoke.json`, validates protected route registration, lottery navigation, component API call points, fixture-backed empty/error text, and controlled console-error handling for `/lottery/workbench`, `/lottery/predictions/decision`, `/lottery/tickets`, `/lottery/research`, and `/lottery/exports`. It writes `one-web/reports/lottery-route-smoke-summary.json` as local release evidence and does not require live provider access. Authenticated browser QA still requires a local login session and backend service; proxy-related provider failures such as HTTP 403 are handled as sync/provider health evidence rather than route-smoke failures.
 
+Iteration 14D adds a computed outcome contract for saved decisions. `GET /lottery/decision-sets/outcomes?limit=...&includeArchived=false` aggregates saved decision sets, attached prediction actual records, converted prediction tickets, and ledger performance into `LotteryDecisionOutcomeSummary`. Candidate outcome rows separate hit evidence from financial results: red/blue hits and prize labels come from attached actual results when available, while cost/prize/net/ROI come only from matched converted tickets. Each decision outcome item also includes rule/source deltas against existing ledger performance, candidate hit and prize distributions, stale/volatile/under-tested warning counts, and evidence alert messages.
+
+Frontend outcome surfaces are intentionally report-like. `/lottery/workbench` shows decision outcomes as recent work, `/lottery/predictions/decision` shows the active or latest saved decision outcome with candidate cards, `/lottery/research` treats outcomes as a `decision` evidence kind for comparison and print summaries, and `/lottery/tickets` folds same-issue decision context into the settlement review. These surfaces remain evidence-oriented and do not imply future results.
+
 Wave 11B adds `/lottery/research` as a frontend-only comparison studio. It composes existing experiment, backtest, prediction rule comparison, and ledger performance APIs into a normalized evidence model without adding backend contracts. The route stores selected comparison items in the `items` query parameter, supports deep links from experiment/backtest detail pages and the ledger performance panel, and shows compact ECharts views for stability/score, average red hits, blue hit rate, net result, ROI, hit rate, and prize distribution. Copy should remain evidence-oriented: historical replay and personal ledger evidence, not outcome promises.
 
 Iteration 10 adds `LotteryDailyState` and `GET /lottery/workbench/daily-state`. The daily state is a compact resumability contract for the current issue. It contains latest issue, next issue, latest prediction id, sync/prediction/ticket/prize-check/quality state items, pending action keys, and `generatedAt`. Each state item includes status, message, optional pending count, updated time, and a project-owned drill-through path.
@@ -481,11 +485,16 @@ experiments
 backtests
 rule-evidence
 replay-evidence
+decision-sets
+decision-outcomes
+ticket-import-previews
+budget-prechecks
+settlement-reviews
 sync-logs
 probe-logs
 ```
 
-The first export service applies explicit filters such as `issue`, `status`, `source`, `targetPeriod`, `ruleId`, `strategyName`, `presetWindow`, `ruleName`, `window`, `provider`, and `limit` depending on export type. Prediction exports include evidence and actual-hit columns. `rule-evidence` exports rule comparison evidence rows, and `replay-evidence` exports the latest replay drift summary. The export response and audit event both record the normalized filters and generated row count. `limit` is capped server-side for bounded API payloads. `GET /lottery/audit/events` uses the shared pagination envelope with `items`, `page`, `pageSize`, `total`, and `hasNext`.
+The first export service applies explicit filters such as `issue`, `status`, `source`, `targetPeriod`, `targetIssue`, `ruleId`, `strategyName`, `presetWindow`, `ruleName`, `window`, `provider`, and `limit` depending on export type. Prediction exports include evidence and actual-hit columns. `rule-evidence` exports rule comparison evidence rows, `replay-evidence` exports the latest replay drift summary, and the 14D decision exports flatten saved decision sets, candidate outcomes, ticket-import audit events, budget-precheck audit events, and settlement rows. The export response and audit event both record the normalized filters and generated row count. `limit` is capped server-side for bounded API payloads. `GET /lottery/audit/events` uses the shared pagination envelope with `items`, `page`, `pageSize`, `total`, and `hasNext`.
 
 `LotteryMaintenanceSummary` reports non-destructive maintenance previews for caches, old logs, repair/export audit rows, replay evidence, and high-growth history collections. It includes `dryRun`, collection rows with total count, stale count, retention days, oversized count, cleanup support, cache rows with presence and TTL status, message, and generated time. Wave 12D covers `lottery_record_sync_logs`, `lottery_provider_probe_logs`, `lottery_audit_events`, `lottery_prediction_rules`, `lottery_training_reports`, `lottery_prediction_snapshots`, `lottery_strategy_experiments`, and `lottery_backtest_reports`.
 

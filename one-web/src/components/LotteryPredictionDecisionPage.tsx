@@ -24,6 +24,8 @@ import {
   lotteryPredictionApi,
   lotteryTicketApi,
   type LotteryDecisionCandidateSelection,
+  type LotteryDecisionOutcomeItem,
+  type LotteryDecisionOutcomeSummary,
   type LotteryDecisionSet,
   type LotteryPageResponse,
   type LotteryPredictionCandidate,
@@ -94,6 +96,18 @@ const formatTime = (value?: number) => {
     hour: '2-digit',
     minute: '2-digit'
   }).format(new Date(value));
+};
+
+const formatMoney = (value?: number) => `¥${Number(value || 0).toFixed(2)}`;
+
+const formatPercent = (value?: number) => `${Number(value || 0).toFixed(2)}%`;
+
+const deltaText = (value?: number) => {
+  if (value === undefined || value === null) {
+    return '暂无基准';
+  }
+  const sign = Number(value) > 0 ? '+' : '';
+  return `${sign}${Number(value).toFixed(2)}`;
 };
 
 const redOverlapCount = (left: string[] = [], right: string[] = []) => {
@@ -239,6 +253,7 @@ const LotteryPredictionDecisionPage = () => {
   const [replayMetrics, setReplayMetrics] = useState<LotteryReplayMetrics>();
   const [predictionTickets, setPredictionTickets] = useState<LotteryTicket[]>([]);
   const [decisionSets, setDecisionSets] = useState<LotteryDecisionSet[]>([]);
+  const [decisionOutcomeSummary, setDecisionOutcomeSummary] = useState<LotteryDecisionOutcomeSummary>();
   const [activeDecisionSetId, setActiveDecisionSetId] = useState<string>();
   const [decisionSetTitle, setDecisionSetTitle] = useState('');
   const [decisionSetNote, setDecisionSetNote] = useState('');
@@ -283,8 +298,12 @@ const LotteryPredictionDecisionPage = () => {
   const loadDecisionSets = useCallback(async () => {
     setLoadingDecisionSets(true);
     try {
-      const response = await lotteryDecisionSetApi.decisionSets({ page: 1, pageSize: 30 });
+      const [response, outcomes] = await Promise.all([
+        lotteryDecisionSetApi.decisionSets({ page: 1, pageSize: 30 }),
+        lotteryDecisionSetApi.outcomes({ limit: 30 })
+      ]);
       setDecisionSets(response.items || []);
+      setDecisionOutcomeSummary(outcomes);
     } catch (requestError) {
       console.error('读取已保存决策集失败:', requestError);
       message.warning('已使用当前页面状态，暂未读取到已保存决策集');
@@ -359,6 +378,13 @@ const LotteryPredictionDecisionPage = () => {
     () => decisionSets.find(item => item.id === activeDecisionSetId),
     [activeDecisionSetId, decisionSets]
   );
+
+  const activeDecisionOutcome = useMemo<LotteryDecisionOutcomeItem | undefined>(() => {
+    const items = decisionOutcomeSummary?.items || [];
+    return items.find(item => item.decisionSetId === activeDecisionSetId)
+      || (targetIssue ? items.find(item => item.targetIssue === targetIssue) : undefined)
+      || items[0];
+  }, [activeDecisionSetId, decisionOutcomeSummary?.items, targetIssue]);
 
   const defaultDecisionSetTitle = useMemo(() => {
     const selectedIssue = selectedRows[0]?.targetPeriod;
@@ -741,6 +767,54 @@ const LotteryPredictionDecisionPage = () => {
           </div>
         </Card>
       </section>
+
+      {activeDecisionOutcome ? (
+        <Card
+          className="life-panel-card lottery-clean-panel lottery-report-print-area"
+          title={<Space><SafetyCertificateOutlined />保存决策复盘</Space>}
+          extra={<Tag color={activeDecisionOutcome.warningCount ? 'gold' : 'green'}>{activeDecisionOutcome.title || '最近决策'}</Tag>}
+        >
+          <div className="lottery-decision-brief-grid">
+            <article>
+              <strong>{activeDecisionOutcome.bestRedHits ?? '-'}/6</strong>
+              <span>最佳红球命中 · 蓝球命中 {activeDecisionOutcome.blueHitCount || 0}</span>
+              <Tag color={activeDecisionOutcome.winningCandidateCount ? 'blue' : 'default'}>候选中奖 {activeDecisionOutcome.winningCandidateCount || 0}</Tag>
+            </article>
+            <article>
+              <strong>{activeDecisionOutcome.checkedConvertedTicketCount || 0}/{activeDecisionOutcome.convertedTicketCount || 0}</strong>
+              <span>已转票核奖 · 中奖票 {activeDecisionOutcome.winningConvertedTicketCount || 0}</span>
+              <Tag color="green">净 {formatMoney(activeDecisionOutcome.netResult)}</Tag>
+            </article>
+            <article>
+              <strong>{formatPercent(activeDecisionOutcome.roiPercent)}</strong>
+              <span>决策 ROI · 规则差额 {deltaText(activeDecisionOutcome.ruleDelta?.netResultDelta)}</span>
+              <Tag color={activeDecisionOutcome.sourceDelta?.netResultDelta && activeDecisionOutcome.sourceDelta.netResultDelta > 0 ? 'blue' : 'default'}>
+                来源差额 {deltaText(activeDecisionOutcome.sourceDelta?.netResultDelta)}
+              </Tag>
+            </article>
+          </div>
+          <div className="lottery-research-report-grid">
+            {(activeDecisionOutcome.candidates || []).slice(0, 6).map(candidate => (
+              <article key={candidate.candidateKey || `${candidate.candidateTitle}-${candidate.blueNumber}`}>
+                <Tag color={lotteryEvidenceColor(candidate.evidenceTag)}>{candidate.evidenceTag || 'MISSING'}</Tag>
+                <strong>{candidate.candidateTitle || '候选号码'}</strong>
+                <span>红 {candidate.redHits ?? '-'}/6 · {candidate.blueHit ? '蓝中' : '蓝未中'} · {candidate.prizeName || '待开奖'}</span>
+                <small>
+                  转票 {candidate.checkedTicketCount || 0}/{candidate.convertedTicketCount || 0} · 净 {formatMoney(candidate.netResult)}
+                </small>
+              </article>
+            ))}
+            {(activeDecisionOutcome.evidenceAlerts || []).slice(0, 4).map(alert => (
+              <article key={`alert-${alert}`}>
+                <Tag color="orange">提醒</Tag>
+                <strong>{alert}</strong>
+                <span>保存决策集证据需要复核</span>
+                <small>过期/波动/样本不足会在这里聚合。</small>
+              </article>
+            ))}
+          </div>
+        </Card>
+      ) : null}
 
       <section className="lottery-decision-brief-grid">
         <article>

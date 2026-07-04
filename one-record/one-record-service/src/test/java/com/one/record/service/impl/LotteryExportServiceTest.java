@@ -1,18 +1,24 @@
 package com.one.record.service.impl;
 
+import com.one.record.lottery.LotteryDecisionCandidateOutcome;
+import com.one.record.lottery.LotteryDecisionOutcomeItem;
+import com.one.record.lottery.LotteryDecisionOutcomeSummary;
 import com.one.record.lottery.LotteryExportResult;
 import com.one.record.lottery.LotteryIssueLedger;
 import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.model.LotteryAuditEvent;
+import com.one.record.model.LotteryDecisionSet;
 import com.one.record.model.LotteryPredictionRuleRecord;
 import com.one.record.model.LotteryTicket;
 import com.one.record.repository.LotteryAuditEventRepository;
 import com.one.record.repository.LotteryBacktestReportRepository;
+import com.one.record.repository.LotteryDecisionSetRepository;
 import com.one.record.repository.LotteryPredictionSnapshotRepository;
 import com.one.record.repository.LotteryProviderProbeLogRepository;
 import com.one.record.repository.LotteryRecordSyncLogRepository;
 import com.one.record.repository.LotteryStrategyExperimentRepository;
 import com.one.record.repository.LotteryTicketRepository;
+import com.one.record.service.ILotteryDecisionSetService;
 import com.one.record.service.ILotteryLedgerService;
 import com.one.record.service.ILotteryTrainingService;
 import com.one.record.training.LotteryRuleComparison;
@@ -39,9 +45,13 @@ class LotteryExportServiceTest {
 
     private LotteryAuditEventRepository auditEventRepository;
 
+    private LotteryDecisionSetRepository decisionSetRepository;
+
     private ILotteryLedgerService ledgerService;
 
     private ILotteryTrainingService trainingService;
+
+    private ILotteryDecisionSetService decisionSetService;
 
     private LotteryExportService service;
 
@@ -49,10 +59,13 @@ class LotteryExportServiceTest {
     void setUp() {
         ticketRepository = mock(LotteryTicketRepository.class);
         auditEventRepository = mock(LotteryAuditEventRepository.class);
+        decisionSetRepository = mock(LotteryDecisionSetRepository.class);
         ledgerService = mock(ILotteryLedgerService.class);
         trainingService = mock(ILotteryTrainingService.class);
+        decisionSetService = mock(ILotteryDecisionSetService.class);
         service = new LotteryExportService(
                 ticketRepository,
+                decisionSetRepository,
                 mock(LotteryPredictionSnapshotRepository.class),
                 mock(LotteryStrategyExperimentRepository.class),
                 mock(LotteryBacktestReportRepository.class),
@@ -60,7 +73,8 @@ class LotteryExportServiceTest {
                 mock(LotteryProviderProbeLogRepository.class),
                 auditEventRepository,
                 ledgerService,
-                trainingService
+                trainingService,
+                decisionSetService
         );
         when(auditEventRepository.save(any(LotteryAuditEvent.class))).thenAnswer(invocation -> invocation.getArgument(0));
     }
@@ -141,6 +155,76 @@ class LotteryExportServiceTest {
         assertThat(result.getContent()).contains("ruleId,ruleName");
         assertThat(result.getContent()).contains("STABLE");
         assertThat(result.getContent()).contains("稳定分 86");
+    }
+
+    @Test
+    void exportDecisionSetsUsesSavedDecisionRecords() {
+        when(decisionSetRepository.findAll(any(Sort.class))).thenReturn(List.of(LotteryDecisionSet.builder()
+                .id("decision-1")
+                .title("复盘决策")
+                .targetIssue("2026068")
+                .ruleName("稳态规则")
+                .conversionState("PARTIALLY_CONVERTED")
+                .selectedCandidates(List.of())
+                .build()));
+
+        LotteryExportResult result = service.export("decision-sets", Map.of("targetIssue", "2026068"));
+
+        assertThat(result.getExportType()).isEqualTo("decision-sets");
+        assertThat(result.getRowCount()).isEqualTo(1);
+        assertThat(result.getContent()).contains("decision-1,复盘决策,2026068,稳态规则");
+    }
+
+    @Test
+    void exportDecisionOutcomesFlattensCandidateRows() {
+        when(decisionSetService.outcomeSummary(null, 10)).thenReturn(LotteryDecisionOutcomeSummary.builder()
+                .items(List.of(LotteryDecisionOutcomeItem.builder()
+                        .decisionSetId("decision-1")
+                        .title("复盘决策")
+                        .targetIssue("2026068")
+                        .candidates(List.of(LotteryDecisionCandidateOutcome.builder()
+                                .candidateKey("candidate-1")
+                                .candidateTitle("主预测")
+                                .ruleName("稳态规则")
+                                .redNumbers(List.of("01", "02", "03", "04", "05", "06"))
+                                .blueNumber("07")
+                                .redHits(3)
+                                .blueHit(true)
+                                .prizeName("五等奖")
+                                .resultState("WON")
+                                .totalCost(new BigDecimal("2"))
+                                .totalPrize(new BigDecimal("10"))
+                                .netResult(new BigDecimal("8"))
+                                .warnings(List.of("规则波动"))
+                                .build()))
+                        .build()))
+                .build());
+
+        LotteryExportResult result = service.export("decision-outcomes", Map.of("limit", "10"));
+
+        assertThat(result.getExportType()).isEqualTo("decision-outcomes");
+        assertThat(result.getRowCount()).isEqualTo(1);
+        assertThat(result.getContent()).contains("candidate-1");
+        assertThat(result.getContent()).contains("规则波动");
+    }
+
+    @Test
+    void exportBudgetPrechecksUsesAuditEvidence() {
+        when(auditEventRepository.findAll(any(Sort.class))).thenReturn(List.of(LotteryAuditEvent.builder()
+                .eventType("TICKET_BUDGET_PRECHECK")
+                .targetType("tickets-budget")
+                .filters(Map.of("budgetStatus", "WARNING", "proposedTicketCount", "2"))
+                .rowCount(2)
+                .message("Prechecked lottery ticket budget")
+                .generatedAt(100L)
+                .build()));
+
+        LotteryExportResult result = service.export("budget-prechecks", Map.of("status", "WARNING"));
+
+        assertThat(result.getExportType()).isEqualTo("budget-prechecks");
+        assertThat(result.getRowCount()).isEqualTo(1);
+        assertThat(result.getContent()).contains("WARNING");
+        assertThat(result.getContent()).contains("proposedTicketCount");
     }
 
     @Test

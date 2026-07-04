@@ -31,11 +31,16 @@ const exportTypeOptions = [
   { label: '回测报告', value: 'backtests' },
   { label: '规则证据', value: 'rule-evidence' },
   { label: '回放证据', value: 'replay-evidence' },
+  { label: '决策集', value: 'decision-sets' },
+  { label: '决策结果', value: 'decision-outcomes' },
+  { label: '导入预览', value: 'ticket-import-previews' },
+  { label: '预算预检', value: 'budget-prechecks' },
+  { label: '结算复盘', value: 'settlement-reviews' },
   { label: '同步日志', value: 'sync-logs' },
   { label: '探测日志', value: 'probe-logs' }
 ];
 
-const defaultReportSections = ['tickets', 'ledger-issues', 'predictions', 'rule-evidence', 'replay-evidence'];
+const defaultReportSections = ['tickets', 'ledger-issues', 'predictions', 'decision-outcomes', 'budget-prechecks', 'settlement-reviews', 'rule-evidence', 'replay-evidence'];
 
 const formatDateTime = (timestamp?: number) => {
   if (!timestamp) {
@@ -60,6 +65,9 @@ const toParams = (type: string, primaryFilter: string, limit: string) => {
   if (type === 'tickets' || type === 'ledger-issues') params.issue = value;
   if (type === 'predictions') params.targetPeriod = value;
   if (type === 'experiments' || type === 'backtests') params.strategyName = value;
+  if (type === 'decision-sets' || type === 'decision-outcomes') params.targetIssue = value;
+  if (type === 'settlement-reviews') params.issue = value;
+  if (type === 'budget-prechecks') params.status = value;
   if (type === 'rule-evidence') params.ruleName = value;
   if (type === 'replay-evidence') params.window = Number(value) > 0 ? Number(value) : undefined;
   if (type === 'sync-logs') params.status = value;
@@ -282,6 +290,13 @@ const LotteryExportMaintenancePage = () => {
       label: '自动路由冒烟',
       status: 'PASS',
       message: 'npm run lottery:smoke 使用 fixture 校验工作台、决策、票据、研究和导出路由',
+      path: '/lottery/exports'
+    },
+    {
+      key: 'decision-outcome-export',
+      label: '决策复盘证据',
+      status: 'PASS',
+      message: '导出页已覆盖决策集、决策结果、导入预览、预算预检和结算复盘 CSV',
       path: '/lottery/exports'
     },
     {

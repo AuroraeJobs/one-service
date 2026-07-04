@@ -13,6 +13,7 @@
       "mockApis": [
         "lotteryWorkbenchApi.summary",
         "lotteryCalendarApi.calendar",
+        "lotteryDecisionSetApi.outcomes",
         "lotteryBudgetApi.status",
         "lotteryPreferenceApi.preference",
         "lotteryPreferenceApi.updatePreference",
@@ -45,6 +46,7 @@
         "lotteryDecisionSetApi.createDecisionSet",
         "lotteryDecisionSetApi.updateDecisionSet",
         "lotteryDecisionSetApi.archiveDecisionSet",
+        "lotteryDecisionSetApi.outcomes",
         "lotteryPredictionApi.historyPage",
         "lotteryPredictionApi.compareRules",
         "lotteryPredictionApi.replayMetrics",
@@ -81,6 +83,7 @@
         "lotteryTicketApi.bulkUpdateTickets",
         "lotteryTicketApi.archiveTickets",
         "lotteryTicketApi.deleteTickets",
+        "lotteryDecisionSetApi.outcomes",
         "lotteryBudgetApi.status",
         "lotteryLedgerApi.issues"
       ],
@@ -111,6 +114,7 @@
         "lotteryExperimentApi.experiments",
         "lotteryBacktestApi.reports",
         "lotteryPredictionApi.compareRules",
+        "lotteryDecisionSetApi.outcomes",
         "lotteryLedgerApi.performance"
       ],
       "emptyStates": ["选择证据后生成报告摘要", "暂无可比较证据，先运行策略实验、回测或积累票据账本。", "请选择至少两项证据进行对比。"],

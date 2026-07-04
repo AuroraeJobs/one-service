@@ -1,11 +1,20 @@
 package com.one.record.service.impl;
 
+import com.one.record.lottery.LotteryDecisionOutcomeSummary;
 import com.one.record.lottery.LotteryPageResponse;
+import com.one.record.lottery.LotteryPerformanceLedger;
+import com.one.record.lottery.LotteryPrizeResult;
 import com.one.record.model.LotteryAuditEvent;
 import com.one.record.model.LotteryDecisionCandidateSelection;
 import com.one.record.model.LotteryDecisionSet;
+import com.one.record.model.LotteryPredictionSnapshot;
+import com.one.record.model.LotteryTicket;
 import com.one.record.repository.LotteryAuditEventRepository;
 import com.one.record.repository.LotteryDecisionSetRepository;
+import com.one.record.repository.LotteryPredictionSnapshotRepository;
+import com.one.record.repository.LotteryTicketRepository;
+import com.one.record.service.ILotteryLedgerService;
+import com.one.record.training.LotteryActualRecord;
 import com.one.record.training.LotteryRuleEvidence;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,13 +36,22 @@ class LotteryDecisionSetServiceTest {
 
     private LotteryAuditEventRepository auditEventRepository;
 
+    private LotteryTicketRepository ticketRepository;
+
+    private LotteryPredictionSnapshotRepository predictionSnapshotRepository;
+
+    private ILotteryLedgerService ledgerService;
+
     private LotteryDecisionSetService service;
 
     @BeforeEach
     void setUp() {
         repository = mock(LotteryDecisionSetRepository.class);
         auditEventRepository = mock(LotteryAuditEventRepository.class);
-        service = new LotteryDecisionSetService(repository, auditEventRepository);
+        ticketRepository = mock(LotteryTicketRepository.class);
+        predictionSnapshotRepository = mock(LotteryPredictionSnapshotRepository.class);
+        ledgerService = mock(ILotteryLedgerService.class);
+        service = new LotteryDecisionSetService(repository, auditEventRepository, ticketRepository, predictionSnapshotRepository, ledgerService);
         when(repository.save(any(LotteryDecisionSet.class))).thenAnswer(invocation -> {
             LotteryDecisionSet decisionSet = invocation.getArgument(0);
             if (decisionSet.getId() == null) {
@@ -42,6 +60,9 @@ class LotteryDecisionSetServiceTest {
             return decisionSet;
         });
         when(auditEventRepository.save(any(LotteryAuditEvent.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(ticketRepository.findByUserIdOrderByPeriodDescCreatedAtDesc("default")).thenReturn(List.of());
+        when(ledgerService.performance("RULE")).thenReturn(List.of());
+        when(ledgerService.performance("SOURCE")).thenReturn(List.of());
     }
 
     @Test
@@ -93,6 +114,85 @@ class LotteryDecisionSetServiceTest {
         assertThat(auditCaptor.getValue().getEventType()).isEqualTo("DECISION_SET_CREATE");
         assertThat(auditCaptor.getValue().getTargetType()).isEqualTo("decision-set");
         assertThat(auditCaptor.getValue().getRowCount()).isEqualTo(1);
+    }
+
+    @Test
+    void outcomeSummaryAggregatesCandidateHitsTicketsAndEvidenceWarnings() {
+        LotteryDecisionSet decisionSet = LotteryDecisionSet.builder()
+                .id("decision-1")
+                .title("第 2026068 期决策")
+                .targetIssue("2026068")
+                .ruleName("稳态规则")
+                .conversionState("PARTIALLY_CONVERTED")
+                .selectedCandidates(List.of(LotteryDecisionCandidateSelection.builder()
+                        .key("candidate-1")
+                        .snapshotId("snapshot-1")
+                        .candidateTitle("主预测")
+                        .ruleName("稳态规则")
+                        .targetPeriod(2026068)
+                        .redNumbers(List.of("01", "02", "03", "04", "05", "06"))
+                        .blueNumber("07")
+                        .evidence(LotteryRuleEvidence.builder().tag("VOLATILE").build())
+                        .warning("规则波动，谨慎转票")
+                        .build()))
+                .build();
+        LotteryActualRecord actual = new LotteryActualRecord();
+        actual.setPeriod(2026068);
+        actual.setRedNumbers(List.of("01", "02", "03", "08", "09", "10"));
+        actual.setBlueNumber("07");
+        when(repository.countByUserIdAndArchivedFalse("default")).thenReturn(1L);
+        when(repository.findByUserIdAndArchivedFalseOrderByUpdatedAtDesc("default", PageRequest.of(0, 30)))
+                .thenReturn(List.of(decisionSet));
+        when(predictionSnapshotRepository.findAllById(List.of("snapshot-1"))).thenReturn(List.of(
+                LotteryPredictionSnapshot.builder().id("snapshot-1").actualRecord(actual).build()
+        ));
+        when(ticketRepository.findByUserIdOrderByPeriodDescCreatedAtDesc("default")).thenReturn(List.of(
+                LotteryTicket.builder()
+                        .id("ticket-1")
+                        .issue("2026068")
+                        .predictionSnapshotId("snapshot-1")
+                        .redNumbers(List.of("01", "02", "03", "04", "05", "06"))
+                        .blueNumber("07")
+                        .source("PREDICTION")
+                        .cost(new java.math.BigDecimal("2"))
+                        .prizeResult(LotteryPrizeResult.builder()
+                                .redHits(3)
+                                .blueHit(true)
+                                .prizeName("五等奖")
+                                .prizeAmount(1000L)
+                                .winning(true)
+                                .build())
+                        .build()
+        ));
+        when(ledgerService.performance("RULE")).thenReturn(List.of(LotteryPerformanceLedger.builder()
+                .dimension("RULE")
+                .key("稳态规则")
+                .name("稳态规则")
+                .ticketCount(10)
+                .netResult(new java.math.BigDecimal("-20"))
+                .roiPercent(new java.math.BigDecimal("-50"))
+                .hitRatePercent(new java.math.BigDecimal("10"))
+                .build()));
+
+        LotteryDecisionOutcomeSummary summary = service.outcomeSummary(false, 30);
+
+        assertThat(summary.getSavedDecisionSetCount()).isEqualTo(1);
+        assertThat(summary.getCandidateCount()).isEqualTo(1);
+        assertThat(summary.getScoredCandidateCount()).isEqualTo(1);
+        assertThat(summary.getWinningCandidateCount()).isEqualTo(1);
+        assertThat(summary.getConvertedTicketCount()).isEqualTo(1);
+        assertThat(summary.getTotalCost()).isEqualByComparingTo("2");
+        assertThat(summary.getTotalPrize()).isEqualByComparingTo("10");
+        assertThat(summary.getBestRedHits()).isEqualTo(3);
+        assertThat(summary.getVolatileEvidenceCount()).isEqualTo(1);
+        assertThat(summary.getItems()).singleElement()
+                .satisfies(item -> {
+                    assertThat(item.getPrizeDistribution()).containsEntry("五等奖", 1);
+                    assertThat(item.getHitDistribution()).containsEntry("3红", 1);
+                    assertThat(item.getRuleDelta().getNetResultDelta()).isEqualByComparingTo("28");
+                    assertThat(item.getCandidates()).singleElement()
+                            .satisfies(candidate -> assertThat(candidate.getWarnings()).contains("规则波动，谨慎转票"));
+                });
     }
 
     @Test

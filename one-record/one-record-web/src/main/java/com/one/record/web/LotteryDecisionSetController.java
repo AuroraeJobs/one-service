@@ -1,5 +1,6 @@
 package com.one.record.web;
 
+import com.one.record.lottery.LotteryDecisionOutcomeSummary;
 import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.model.LotteryDecisionSet;
 import com.one.record.service.ILotteryDecisionSetService;
@@ -29,6 +30,14 @@ public class LotteryDecisionSetController {
             @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
             @RequestParam(value = "pageSize", required = false, defaultValue = "20") Integer pageSize) {
         return service.decisionSets(includeArchived, page, pageSize);
+    }
+
+    @GetMapping("outcomes")
+    @Operation(summary = "汇总彩票决策集复盘结果", description = "聚合已保存决策集的候选命中、转票结果、证据提醒和账本绩效对比")
+    public LotteryDecisionOutcomeSummary outcomeSummary(
+            @RequestParam(value = "includeArchived", required = false, defaultValue = "false") Boolean includeArchived,
+            @RequestParam(value = "limit", required = false, defaultValue = "30") Integer limit) {
+        return service.outcomeSummary(includeArchived, limit);
     }
 
     @PostMapping

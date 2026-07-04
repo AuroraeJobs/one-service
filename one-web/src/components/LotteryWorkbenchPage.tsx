@@ -29,6 +29,7 @@ import {
   lotteryBacktestApi,
   lotteryBudgetApi,
   lotteryCalendarApi,
+  lotteryDecisionSetApi,
   lotteryExperimentApi,
   lotteryExportApi,
   lotteryPreferenceApi,
@@ -40,6 +41,7 @@ import {
   type LotteryBudgetStatus,
   type LotteryCalendarState,
   type LotteryDailyStateItem,
+  type LotteryDecisionOutcomeSummary,
   type LotteryPreference,
   type LotteryPredictionSnapshot,
   type LotteryStrategyExperiment,
@@ -57,6 +59,7 @@ interface LotteryWorkbenchRecentWork {
   experiments: LotteryStrategyExperiment[];
   backtests: LotteryBacktestReport[];
   exports: LotteryAuditEvent[];
+  decisionOutcomes?: LotteryDecisionOutcomeSummary;
 }
 
 interface LotteryRecentWorkLink {
@@ -246,13 +249,17 @@ const moveWorkbenchWidget = (
 const settledItems = <T,>(result: PromiseSettledResult<{ items?: T[] }>) =>
   result.status === 'fulfilled' ? result.value.items || [] : [];
 
+const settledValue = <T,>(result: PromiseSettledResult<T>): T | undefined =>
+  result.status === 'fulfilled' ? result.value : undefined;
+
 const fetchRecentWork = async (): Promise<LotteryWorkbenchRecentWork> => {
-  const [predictions, tickets, experiments, backtests, exports] = await Promise.allSettled([
+  const [predictions, tickets, experiments, backtests, exports, decisionOutcomes] = await Promise.allSettled([
     lotteryPredictionApi.historyPage({ page: 1, pageSize: 3 }),
     lotteryTicketApi.ticketsPage({ page: 1, pageSize: 3 }),
     lotteryExperimentApi.experiments({ page: 1, pageSize: 3 }),
     lotteryBacktestApi.reports({ page: 1, pageSize: 3 }),
-    lotteryExportApi.auditEvents({ page: 1, pageSize: 3 })
+    lotteryExportApi.auditEvents({ page: 1, pageSize: 3 }),
+    lotteryDecisionSetApi.outcomes({ limit: 3 })
   ]);
 
   return {
@@ -260,7 +267,8 @@ const fetchRecentWork = async (): Promise<LotteryWorkbenchRecentWork> => {
     tickets: settledItems<LotteryTicket>(tickets),
     experiments: settledItems<LotteryStrategyExperiment>(experiments),
     backtests: settledItems<LotteryBacktestReport>(backtests),
-    exports: settledItems<LotteryAuditEvent>(exports)
+    exports: settledItems<LotteryAuditEvent>(exports),
+    decisionOutcomes: settledValue<LotteryDecisionOutcomeSummary>(decisionOutcomes)
   };
 };
 
@@ -269,7 +277,8 @@ const createEmptyRecentWork = (): LotteryWorkbenchRecentWork => ({
   tickets: [],
   experiments: [],
   backtests: [],
-  exports: []
+  exports: [],
+  decisionOutcomes: undefined
 });
 
 const formatDateTime = (timestamp?: number) => {
@@ -873,6 +882,18 @@ const LotteryWorkbenchPage = () => {
           title: `第 ${item.issue || item.period || '-'} 期`,
           detail: `${item.source || 'MANUAL'} · ${item.status || 'UNKNOWN'} · ${formatDateTime(item.updatedAt || item.createdAt)}`,
           path: item.issue ? `/lottery/tickets?issue=${item.issue}` : savedTicketsPath
+        }))
+      },
+      {
+        key: 'decision-outcomes',
+        icon: <SafetyCertificateOutlined />,
+        title: '决策复盘',
+        path: '/lottery/predictions/decision',
+        items: (recentWork.decisionOutcomes?.items || []).slice(0, 3).map(item => ({
+          key: item.decisionSetId || `decision-${item.targetIssue}-${item.updatedAt}`,
+          title: item.title || `第 ${item.targetIssue || '-'} 期决策`,
+          detail: `候选 ${item.candidateCount || 0} · 中 ${item.winningCandidateCount || 0} · 净 ${formatCurrency(item.netResult)}`,
+          path: item.targetIssue ? `/lottery/predictions/decision?targetIssue=${item.targetIssue}` : '/lottery/predictions/decision'
         }))
       },
       {

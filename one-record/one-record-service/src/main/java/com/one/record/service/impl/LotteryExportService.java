@@ -1,10 +1,14 @@
 package com.one.record.service.impl;
 
+import com.one.record.lottery.LotteryDecisionCandidateOutcome;
+import com.one.record.lottery.LotteryDecisionOutcomeItem;
+import com.one.record.lottery.LotteryDecisionOutcomeSummary;
 import com.one.record.lottery.LotteryExportResult;
 import com.one.record.lottery.LotteryIssueLedger;
 import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.model.LotteryAuditEvent;
 import com.one.record.model.LotteryBacktestReport;
+import com.one.record.model.LotteryDecisionSet;
 import com.one.record.model.LotteryPredictionSnapshot;
 import com.one.record.model.LotteryPredictionRuleRecord;
 import com.one.record.model.LotteryProviderProbeLog;
@@ -13,11 +17,13 @@ import com.one.record.model.LotteryStrategyExperiment;
 import com.one.record.model.LotteryTicket;
 import com.one.record.repository.LotteryAuditEventRepository;
 import com.one.record.repository.LotteryBacktestReportRepository;
+import com.one.record.repository.LotteryDecisionSetRepository;
 import com.one.record.repository.LotteryPredictionSnapshotRepository;
 import com.one.record.repository.LotteryProviderProbeLogRepository;
 import com.one.record.repository.LotteryRecordSyncLogRepository;
 import com.one.record.repository.LotteryStrategyExperimentRepository;
 import com.one.record.repository.LotteryTicketRepository;
+import com.one.record.service.ILotteryDecisionSetService;
 import com.one.record.service.ILotteryExportService;
 import com.one.record.service.ILotteryLedgerService;
 import com.one.record.service.ILotteryTrainingService;
@@ -53,6 +59,8 @@ public class LotteryExportService implements ILotteryExportService {
 
     private final LotteryTicketRepository ticketRepository;
 
+    private final LotteryDecisionSetRepository decisionSetRepository;
+
     private final LotteryPredictionSnapshotRepository predictionSnapshotRepository;
 
     private final LotteryStrategyExperimentRepository experimentRepository;
@@ -68,6 +76,8 @@ public class LotteryExportService implements ILotteryExportService {
     private final ILotteryLedgerService ledgerService;
 
     private final ILotteryTrainingService trainingService;
+
+    private final ILotteryDecisionSetService decisionSetService;
 
     @Override
     public LotteryExportResult export(String type, Map<String, String> filters) {
@@ -125,6 +135,11 @@ public class LotteryExportService implements ILotteryExportService {
             case "probe-logs" -> probeLogRows(filters);
             case "rule-evidence" -> ruleEvidenceRows(filters);
             case "replay-evidence" -> replayEvidenceRows(filters);
+            case "decision-sets" -> decisionSetRows(filters);
+            case "decision-outcomes" -> decisionOutcomeRows(filters);
+            case "ticket-import-previews" -> ticketImportPreviewRows(filters);
+            case "budget-prechecks" -> budgetPrecheckRows(filters);
+            case "settlement-reviews" -> settlementReviewRows(filters);
             default -> throw new IllegalArgumentException("不支持的导出类型: " + type);
         };
     }
@@ -259,6 +274,123 @@ public class LotteryExportService implements ILotteryExportService {
         ));
     }
 
+    private List<Map<String, String>> decisionSetRows(Map<String, String> filters) {
+        String targetIssue = filters.get("targetIssue");
+        String ruleName = upper(filters.get("ruleName"));
+        return limit(decisionSetRepository.findAll(Sort.by(Sort.Direction.DESC, "updatedAt")).stream()
+                .filter(item -> !hasText(targetIssue) || targetIssue.equals(item.getTargetIssue()))
+                .filter(item -> !hasText(ruleName) || containsUpper(item.getRuleName(), ruleName) || containsUpper(item.getTitle(), ruleName))
+                .map(item -> row(
+                        "id", value(item.getId()),
+                        "title", value(item.getTitle()),
+                        "targetIssue", value(item.getTargetIssue()),
+                        "ruleName", value(item.getRuleName()),
+                        "candidateCount", value(item.getSelectedCandidates() == null ? 0 : item.getSelectedCandidates().size()),
+                        "conversionState", value(item.getConversionState()),
+                        "status", value(item.getStatus()),
+                        "archived", value(item.getArchived()),
+                        "createdAt", value(item.getCreatedAt()),
+                        "updatedAt", value(item.getUpdatedAt())
+                ))
+                .toList(), filters);
+    }
+
+    private List<Map<String, String>> decisionOutcomeRows(Map<String, String> filters) {
+        LotteryDecisionOutcomeSummary summary = decisionSetService.outcomeSummary(bool(filters.get("includeArchived")), parseInt(filters.get("limit")));
+        String targetIssue = filters.get("targetIssue");
+        String ruleName = upper(filters.get("ruleName"));
+        return limit(summary.getItems().stream()
+                .filter(item -> !hasText(targetIssue) || targetIssue.equals(item.getTargetIssue()))
+                .filter(item -> !hasText(ruleName) || containsUpper(item.getRuleName(), ruleName) || containsUpper(item.getTitle(), ruleName))
+                .flatMap(item -> item.getCandidates().stream().map(candidate -> decisionOutcomeRow(item, candidate)))
+                .toList(), filters);
+    }
+
+    private Map<String, String> decisionOutcomeRow(LotteryDecisionOutcomeItem item,
+                                                   LotteryDecisionCandidateOutcome candidate) {
+        return row(
+                "decisionSetId", value(item.getDecisionSetId()),
+                "title", value(item.getTitle()),
+                "targetIssue", value(item.getTargetIssue()),
+                "ruleName", value(candidate.getRuleName()),
+                "candidateKey", value(candidate.getCandidateKey()),
+                "candidateTitle", value(candidate.getCandidateTitle()),
+                "source", value(candidate.getSource()),
+                "redNumbers", String.join(" ", candidate.getRedNumbers() == null ? List.of() : candidate.getRedNumbers()),
+                "blueNumber", value(candidate.getBlueNumber()),
+                "evidenceTag", value(candidate.getEvidenceTag()),
+                "driftLabel", value(candidate.getDriftLabel()),
+                "redHits", value(candidate.getRedHits()),
+                "blueHit", value(candidate.getBlueHit()),
+                "prizeName", value(candidate.getPrizeName()),
+                "resultState", value(candidate.getResultState()),
+                "convertedTicketCount", value(candidate.getConvertedTicketCount()),
+                "checkedTicketCount", value(candidate.getCheckedTicketCount()),
+                "winningTicketCount", value(candidate.getWinningTicketCount()),
+                "totalCost", money(candidate.getTotalCost()),
+                "totalPrize", money(candidate.getTotalPrize()),
+                "netResult", money(candidate.getNetResult()),
+                "warnings", String.join(" | ", candidate.getWarnings() == null ? List.of() : candidate.getWarnings())
+        );
+    }
+
+    private List<Map<String, String>> ticketImportPreviewRows(Map<String, String> filters) {
+        return auditRows(filters, "TICKET_IMPORT_PREVIEW").stream()
+                .map(event -> row(
+                        "id", value(event.getId()),
+                        "eventType", value(event.getEventType()),
+                        "validCount", filterValue(event, "validCount"),
+                        "invalidCount", filterValue(event, "invalidCount"),
+                        "duplicateExistingCount", filterValue(event, "duplicateExistingCount"),
+                        "duplicateRequestCount", filterValue(event, "duplicateRequestCount"),
+                        "rowCount", value(event.getRowCount()),
+                        "message", value(event.getMessage()),
+                        "generatedAt", value(event.getGeneratedAt())
+                ))
+                .toList();
+    }
+
+    private List<Map<String, String>> budgetPrecheckRows(Map<String, String> filters) {
+        return limit(auditEventRepository.findAll(Sort.by(Sort.Direction.DESC, "generatedAt")).stream()
+                .filter(event -> "TICKET_BUDGET_PRECHECK".equals(event.getEventType())
+                        || "TICKET_BATCH_SAVE".equals(event.getEventType())
+                        || event.getFilters() != null && event.getFilters().containsKey("budgetStatus"))
+                .filter(event -> !hasText(filters.get("status")) || upper(filters.get("status")).equals(upper(filterValue(event, "budgetStatus"))))
+                .map(event -> row(
+                        "id", value(event.getId()),
+                        "eventType", value(event.getEventType()),
+                        "budgetStatus", filterValue(event, "budgetStatus"),
+                        "requestedCount", filterValue(event, "requestedCount"),
+                        "proposedTicketCount", filterValue(event, "proposedTicketCount"),
+                        "proposedCost", filterValue(event, "proposedCost"),
+                        "weeklyUsagePercent", filterValue(event, "weeklyUsagePercent"),
+                        "monthlyUsagePercent", filterValue(event, "monthlyUsagePercent"),
+                        "rowCount", value(event.getRowCount()),
+                        "message", value(event.getMessage()),
+                        "generatedAt", value(event.getGeneratedAt())
+                ))
+                .toList(), filters);
+    }
+
+    private List<Map<String, String>> settlementReviewRows(Map<String, String> filters) {
+        String issue = filters.get("issue");
+        return limit(ledgerService.issues().stream()
+                .filter(item -> !hasText(issue) || issue.equals(item.getIssue()))
+                .map(item -> row(
+                        "issue", value(item.getIssue()),
+                        "period", value(item.getPeriod()),
+                        "ticketCount", value(item.getTicketCount()),
+                        "checkedTicketCount", value(item.getCheckedTicketCount()),
+                        "pendingTicketCount", value(item.getPendingTicketCount()),
+                        "winningTicketCount", value(item.getWinningTicketCount()),
+                        "totalCost", money(item.getTotalCost()),
+                        "totalPrize", money(item.getTotalPrize()),
+                        "netResult", money(item.getNetResult()),
+                        "roiPercent", money(item.getRoiPercent())
+                ))
+                .toList(), filters);
+    }
+
     private List<Map<String, String>> experimentRows(Map<String, String> filters) {
         String strategyName = upper(filters.get("strategyName"));
         return limit(experimentRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt")).stream()
@@ -339,6 +471,17 @@ public class LotteryExportService implements ILotteryExportService {
                         "checkedAt", value(log.getCheckedAt())
                 ))
                 .toList(), filters);
+    }
+
+    private List<LotteryAuditEvent> auditRows(Map<String, String> filters, String eventType) {
+        return limitAudit(auditEventRepository.findAll(Sort.by(Sort.Direction.DESC, "generatedAt")).stream()
+                .filter(event -> eventType.equals(event.getEventType()))
+                .toList(), filters);
+    }
+
+    private List<LotteryAuditEvent> limitAudit(List<LotteryAuditEvent> rows, Map<String, String> filters) {
+        int limit = normalizeLimit(parseInt(filters.get("limit")));
+        return rows.size() <= limit ? rows : rows.subList(0, limit);
     }
 
     private List<Map<String, String>> limit(List<Map<String, String>> rows, Map<String, String> filters) {
@@ -428,6 +571,10 @@ public class LotteryExportService implements ILotteryExportService {
         }
     }
 
+    private Boolean bool(String value) {
+        return hasText(value) ? Boolean.parseBoolean(value.trim()) : null;
+    }
+
     private String upper(String value) {
         return hasText(value) ? value.trim().toUpperCase(Locale.ROOT) : null;
     }
@@ -454,6 +601,10 @@ public class LotteryExportService implements ILotteryExportService {
 
     private String reasons(LotteryRuleEvidence evidence) {
         return evidence == null || evidence.getReasons() == null ? "" : String.join(" | ", evidence.getReasons());
+    }
+
+    private String filterValue(LotteryAuditEvent event, String key) {
+        return event == null || event.getFilters() == null ? "" : value(event.getFilters().get(key));
     }
 
     private String money(BigDecimal value) {

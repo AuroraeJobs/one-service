@@ -16,11 +16,14 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import {
   lotteryBacktestApi,
+  lotteryDecisionSetApi,
   lotteryExperimentApi,
   lotteryLedgerApi,
   lotteryPredictionApi,
   type LotteryBacktestReport,
   type LotteryBacktestSummary,
+  type LotteryDecisionOutcomeItem,
+  type LotteryDecisionOutcomeSummary,
   type LotteryPerformanceLedger,
   type LotteryPredictionSnapshot,
   type LotteryPredictionRuleRecord,
@@ -31,7 +34,7 @@ import {
 import { lotteryDriftLabel, lotteryEvidenceColor, lotteryEvidenceLabel, lotteryReplayText } from '../utils/lotteryEvidence';
 import './LotteryOverviewPage.css';
 
-type EvidenceKind = 'prediction' | 'experiment' | 'backtest' | 'rule' | 'performance';
+type EvidenceKind = 'prediction' | 'experiment' | 'backtest' | 'rule' | 'performance' | 'decision';
 
 interface EvidenceMetrics {
   rankScore?: number;
@@ -44,6 +47,7 @@ interface EvidenceMetrics {
   hitRatePercent?: number;
   ticketCount?: number;
   replayCount?: number;
+  warningCount?: number;
 }
 
 interface EvidenceItem {
@@ -67,7 +71,8 @@ const kindLabel: Record<EvidenceKind, string> = {
   experiment: '实验',
   backtest: '回测',
   rule: '规则',
-  performance: '表现'
+  performance: '表现',
+  decision: '决策'
 };
 
 const kindColor: Record<EvidenceKind, string> = {
@@ -75,7 +80,8 @@ const kindColor: Record<EvidenceKind, string> = {
   experiment: 'cyan',
   backtest: 'blue',
   rule: 'gold',
-  performance: 'purple'
+  performance: 'purple',
+  decision: 'magenta'
 };
 
 const formatMoney = (value?: number) => `¥${Number(value || 0).toFixed(2)}`;
@@ -238,6 +244,35 @@ const performanceToEvidence = (item: LotteryPerformanceLedger): EvidenceItem | u
   };
 };
 
+const decisionOutcomeToEvidence = (item: LotteryDecisionOutcomeItem): EvidenceItem | undefined => {
+  const key = item.decisionSetId || item.targetIssue || item.title;
+  if (!key) {
+    return undefined;
+  }
+  const warningCount = Number(item.warningCount || 0);
+  const evidence: LotteryRuleEvidence = warningCount > 0
+    ? { tag: 'VOLATILE', label: '需复核', message: `证据提醒 ${warningCount} 项` }
+    : { tag: 'STABLE', label: '已复盘', message: '保存决策已完成基础复盘' };
+  return {
+    key: `decision:${key}`,
+    kind: 'decision',
+    title: item.title || `第 ${item.targetIssue || '-'} 期决策`,
+    subtitle: `候选 ${item.candidateCount || 0} · 转票 ${item.convertedTicketCount || 0} · 净 ${formatMoney(item.netResult)}`,
+    path: item.targetIssue ? `/lottery/predictions/decision?targetIssue=${item.targetIssue}` : '/lottery/predictions/decision',
+    tags: ['决策', item.conversionState || 'DRAFT', warningCount ? '需复核' : '已复盘'].filter(Boolean),
+    metrics: {
+      averageRedHits: item.bestRedHits,
+      netResult: item.netResult,
+      roiPercent: item.roiPercent,
+      hitRatePercent: item.hitRatePercent,
+      ticketCount: item.convertedTicketCount,
+      warningCount
+    },
+    prizeDistribution: item.prizeDistribution || {},
+    evidence
+  };
+};
+
 const compactNumber = (value?: number) => {
   if (value === undefined || value === null) {
     return '-';
@@ -360,6 +395,7 @@ const LotteryResearchPage = () => {
   const [backtests, setBacktests] = useState<LotteryBacktestReport[]>([]);
   const [predictions, setPredictions] = useState<LotteryPredictionSnapshot[]>([]);
   const [ruleComparison, setRuleComparison] = useState<LotteryRuleComparison>();
+  const [decisionOutcomeSummary, setDecisionOutcomeSummary] = useState<LotteryDecisionOutcomeSummary>();
   const [sourcePerformance, setSourcePerformance] = useState<LotteryPerformanceLedger[]>([]);
   const [rulePerformance, setRulePerformance] = useState<LotteryPerformanceLedger[]>([]);
   const [loading, setLoading] = useState(false);
@@ -371,13 +407,14 @@ const LotteryResearchPage = () => {
     setLoading(true);
     setError(undefined);
     try {
-      const [predictionRows, experimentRows, backtestRows, ruleRows, sourceRows, ledgerRuleRows] = await Promise.all([
+      const [predictionRows, experimentRows, backtestRows, ruleRows, sourceRows, ledgerRuleRows, decisionOutcomes] = await Promise.all([
         lotteryPredictionApi.historyPage({ page: 1, pageSize: 8 }),
         lotteryExperimentApi.experiments({ page: 0, pageSize: 12 }),
         lotteryBacktestApi.reports({ page: 0, pageSize: 12 }),
         lotteryPredictionApi.compareRules({ limit: 12 }),
         lotteryLedgerApi.performance({ dimension: 'source' }),
-        lotteryLedgerApi.performance({ dimension: 'rule' })
+        lotteryLedgerApi.performance({ dimension: 'rule' }),
+        lotteryDecisionSetApi.outcomes({ limit: 12 })
       ]);
       setPredictions(predictionRows.items || []);
       setExperiments(experimentRows.items || []);
@@ -385,6 +422,7 @@ const LotteryResearchPage = () => {
       setRuleComparison(ruleRows);
       setSourcePerformance(sourceRows || []);
       setRulePerformance(ledgerRuleRows || []);
+      setDecisionOutcomeSummary(decisionOutcomes);
     } catch (requestError) {
       console.error('读取彩票研究对比失败:', requestError);
       setError(requestError instanceof Error ? requestError.message : '读取彩票研究对比失败');
@@ -401,10 +439,11 @@ const LotteryResearchPage = () => {
     ...predictions.map(predictionToEvidence).filter(Boolean),
     ...experiments.map(experimentToEvidence).filter(Boolean),
     ...backtests.map(backtestToEvidence).filter(Boolean),
+    ...(decisionOutcomeSummary?.items || []).map(decisionOutcomeToEvidence).filter(Boolean),
     ...(ruleComparison?.rules || []).map(ruleToEvidence).filter(Boolean),
     ...sourcePerformance.map(performanceToEvidence).filter(Boolean),
     ...rulePerformance.map(performanceToEvidence).filter(Boolean)
-  ] as EvidenceItem[], [backtests, experiments, predictions, ruleComparison?.rules, rulePerformance, sourcePerformance]);
+  ] as EvidenceItem[], [backtests, decisionOutcomeSummary?.items, experiments, predictions, ruleComparison?.rules, rulePerformance, sourcePerformance]);
 
   const defaultSelectedKeys = useMemo(() => {
     const backtestKeys = evidenceItems.filter(item => item.kind === 'backtest').slice(0, 2).map(item => item.key);
@@ -435,13 +474,15 @@ const LotteryResearchPage = () => {
     .sort((left, right) => Number(right.metrics.rankScore || right.metrics.bestScore || 0) - Number(left.metrics.rankScore || left.metrics.bestScore || 0))[0]?.key;
   const volatileRuleKey = evidenceItems.find(item => item.kind === 'rule' && ['VOLATILE', 'STALE', 'UNDER_TESTED'].includes(item.evidence?.tag || ''))?.key;
   const ticketOutcomeKeys = evidenceItems.filter(item => item.kind === 'performance').slice(0, 4).map(item => item.key);
+  const decisionOutcomeKeys = evidenceItems.filter(item => item.kind === 'decision').slice(0, 4).map(item => item.key);
   const applyPreset = useCallback((keys: string[]) => {
     updateSelectedKeys(searchParams, setSearchParams, keys.filter(Boolean));
   }, [searchParams, setSearchParams]);
   const reportSummary = useMemo(() => {
     const bestScore = Math.max(...selectedItems.map(item => Number(item.metrics.bestScore || item.metrics.rankScore || 0)), 0);
     const totalNet = selectedItems.reduce((sum, item) => sum + Number(item.metrics.netResult || 0), 0);
-    const evidenceWarnings = selectedItems.filter(item => ['VOLATILE', 'STALE', 'UNDER_TESTED'].includes(item.evidence?.tag || '')).length;
+    const evidenceWarnings = selectedItems.filter(item => ['VOLATILE', 'STALE', 'UNDER_TESTED'].includes(item.evidence?.tag || '')).length
+      + selectedItems.reduce((sum, item) => sum + Number(item.metrics.warningCount || 0), 0);
     return { bestScore, totalNet, evidenceWarnings };
   }, [selectedItems]);
 
@@ -492,6 +533,9 @@ const LotteryResearchPage = () => {
             </Button>
             <Button size="small" disabled={!ticketOutcomeKeys.length} onClick={() => applyPreset(ticketOutcomeKeys)}>
               票据结果
+            </Button>
+            <Button size="small" disabled={!decisionOutcomeKeys.length} onClick={() => applyPreset(decisionOutcomeKeys)}>
+              决策结果
             </Button>
           </Space>
           <Select

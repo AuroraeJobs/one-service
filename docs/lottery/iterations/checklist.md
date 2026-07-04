@@ -384,12 +384,12 @@ Goal: turn the guided frontend workflows from Iteration 13 into durable, auditab
 
 ### Wave 14D: Decision Outcome Feedback Loop
 
-- [ ] Add saved decision-set outcome comparison after actual draw attachment, including candidate hit distribution and ticket conversion results.
-- [ ] Add rule/source performance deltas comparing saved decision sets against existing backtest and ledger evidence.
-- [ ] Add drift and stale-evidence alerts when a saved decision set was created from volatile, stale, or under-tested rules.
-- [ ] Add export/report sections for saved decision sets, import previews, budget pre-checks, and settlement reviews.
-- [ ] Surface outcome feedback on workbench, decision board, research report, and ticket settlement pages.
-- [ ] Run month-end verification, update docs, commit, and push.
+- [x] Add saved decision-set outcome comparison after actual draw attachment, including candidate hit distribution and ticket conversion results. Added `GET /lottery/decision-sets/outcomes` with candidate hit distribution, prize distribution, converted-ticket counts, checked/winning ticket counts, cost, prize, net, ROI, and hit-rate summaries.
+- [x] Add rule/source performance deltas comparing saved decision sets against existing backtest and ledger evidence. Decision outcome items now include rule/source deltas against `lottery/ledger/performance` benchmarks, including net, ROI, hit-rate, and matched backtest stability context when available.
+- [x] Add drift and stale-evidence alerts when a saved decision set was created from volatile, stale, or under-tested rules. Candidate outcome rows preserve saved evidence tags and aggregate stale, volatile, under-tested, missing-result, unconverted, and unchecked-ticket warnings.
+- [x] Add export/report sections for saved decision sets, import previews, budget pre-checks, and settlement reviews. Added CSV export types `decision-sets`, `decision-outcomes`, `ticket-import-previews`, `budget-prechecks`, and `settlement-reviews`; budget precheck requests now write audit evidence.
+- [x] Surface outcome feedback on workbench, decision board, research report, and ticket settlement pages. Workbench recent work includes decision outcomes, the decision board shows saved-decision replay cards, research treats outcomes as `decision` evidence, and the ticket settlement card includes same-issue decision context.
+- [x] Run month-end verification, update docs, commit, and push. Verification: focused Maven tests for decision/ticket/export services and controller; `one-web npm run lottery:smoke`; `one-web npm run build`.
 
 ## Documentation And Delivery
 

@@ -23,6 +23,7 @@ Use these gates when finishing a lottery milestone.
 - Dense chart/table pages fit mobile and desktop layouts.
 - Prediction copy stays research-oriented and avoids guaranteed outcome wording.
 - Personal ticket and ledger pages show cost and outcome clearly.
+- Saved decision outcomes separate candidate hit evidence from converted-ticket financial results.
 - Workbench drill-through links preserve useful filters in query parameters.
 - Experiment, backtest, alert, export, and audit pages keep research language restrained and evidence-oriented.
 - Run `npm run lottery:smoke` in `one-web` after changing `/lottery/workbench`, `/lottery/predictions/decision`, `/lottery/tickets`, `/lottery/research`, or `/lottery/exports`; this fixture smoke does not require live provider access.

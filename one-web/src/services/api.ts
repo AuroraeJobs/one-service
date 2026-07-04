@@ -2122,6 +2122,110 @@ export interface LotteryDecisionSet {
   updatedAt?: number;
 }
 
+export interface LotteryDecisionPerformanceDelta {
+  dimension?: string;
+  key?: string;
+  name?: string;
+  decisionTicketCount?: number;
+  benchmarkTicketCount?: number;
+  decisionNetResult?: number;
+  benchmarkNetResult?: number;
+  netResultDelta?: number;
+  decisionRoiPercent?: number;
+  benchmarkRoiPercent?: number;
+  roiPercentDelta?: number;
+  decisionHitRatePercent?: number;
+  benchmarkHitRatePercent?: number;
+  hitRatePercentDelta?: number;
+  backtestStabilityScore?: number;
+  backtestAverageRedHits?: number;
+  backtestBlueHitRate?: number;
+}
+
+export interface LotteryDecisionCandidateOutcome {
+  decisionSetId?: string;
+  decisionSetTitle?: string;
+  candidateKey?: string;
+  candidateTitle?: string;
+  source?: string;
+  snapshotId?: string;
+  ruleName?: string;
+  targetIssue?: string;
+  redNumbers: string[];
+  blueNumber?: string;
+  evidenceTag?: string;
+  driftLabel?: string;
+  redHits?: number;
+  blueHit?: boolean;
+  prizeName?: string;
+  resultState?: 'PENDING' | 'WON' | 'MISSED' | string;
+  convertedTicketCount?: number;
+  checkedTicketCount?: number;
+  winningTicketCount?: number;
+  totalCost?: number;
+  totalPrize?: number;
+  netResult?: number;
+  warnings: string[];
+}
+
+export interface LotteryDecisionOutcomeItem {
+  decisionSetId?: string;
+  title?: string;
+  targetIssue?: string;
+  ruleName?: string;
+  conversionState?: string;
+  status?: string;
+  candidateCount?: number;
+  scoredCandidateCount?: number;
+  winningCandidateCount?: number;
+  convertedTicketCount?: number;
+  checkedConvertedTicketCount?: number;
+  winningConvertedTicketCount?: number;
+  totalCost?: number;
+  totalPrize?: number;
+  netResult?: number;
+  roiPercent?: number;
+  hitRatePercent?: number;
+  bestRedHits?: number;
+  blueHitCount?: number;
+  warningCount?: number;
+  staleEvidenceCount?: number;
+  volatileEvidenceCount?: number;
+  underTestedEvidenceCount?: number;
+  hitDistribution: Record<string, number>;
+  prizeDistribution: Record<string, number>;
+  evidenceAlerts: string[];
+  ruleDelta?: LotteryDecisionPerformanceDelta;
+  sourceDelta?: LotteryDecisionPerformanceDelta;
+  candidates: LotteryDecisionCandidateOutcome[];
+  createdAt?: number;
+  updatedAt?: number;
+}
+
+export interface LotteryDecisionOutcomeSummary {
+  savedDecisionSetCount?: number;
+  candidateCount?: number;
+  scoredCandidateCount?: number;
+  winningCandidateCount?: number;
+  convertedTicketCount?: number;
+  checkedConvertedTicketCount?: number;
+  winningConvertedTicketCount?: number;
+  totalCost?: number;
+  totalPrize?: number;
+  netResult?: number;
+  roiPercent?: number;
+  hitRatePercent?: number;
+  bestRedHits?: number;
+  warningCount?: number;
+  staleEvidenceCount?: number;
+  volatileEvidenceCount?: number;
+  underTestedEvidenceCount?: number;
+  hitDistribution: Record<string, number>;
+  prizeDistribution: Record<string, number>;
+  items: LotteryDecisionOutcomeItem[];
+  generatedAt?: number;
+}
+
 export interface LotteryPageResponse<T> {
   items: T[];
   page?: number;
@@ -2571,6 +2675,9 @@ export const lotteryTicketApi = {
 export const lotteryDecisionSetApi = {
   decisionSets: (params?: { includeArchived?: boolean; page?: number; pageSize?: number }): Promise<LotteryPageResponse<LotteryDecisionSet>> => {
     return apiClient.get('/lottery/decision-sets', { params });
+  },
+  outcomes: (params?: { includeArchived?: boolean; limit?: number }): Promise<LotteryDecisionOutcomeSummary> => {
+    return apiClient.get('/lottery/decision-sets/outcomes', { params });
   },
   createDecisionSet: (decisionSet: Partial<LotteryDecisionSet>): Promise<LotteryDecisionSet> => {
     return apiClient.post('/lottery/decision-sets', decisionSet);

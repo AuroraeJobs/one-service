@@ -179,7 +179,16 @@ public class LotteryTicketService implements ILotteryTicketService {
         List<LotteryTicket> normalized = tickets.stream()
                 .map(this::newTicket)
                 .toList();
-        return budgetPrecheckInternal(normalized, tickets.size());
+        LotteryTicketBudgetPrecheckResult result = budgetPrecheckInternal(normalized, tickets.size());
+        saveAuditEvent("TICKET_BUDGET_PRECHECK", "tickets-budget", null, normalized.size(), Map.of(
+                "requestedCount", String.valueOf(tickets.size()),
+                "proposedTicketCount", String.valueOf(result.getProposedTicketCount()),
+                "proposedCost", String.valueOf(result.getProposedCost()),
+                "weeklyUsagePercent", String.valueOf(result.getWeeklyUsagePercent()),
+                "monthlyUsagePercent", String.valueOf(result.getMonthlyUsagePercent()),
+                "budgetStatus", result.getStatus()
+        ), "Prechecked lottery ticket budget");
+        return result;
     }
 
     @Override

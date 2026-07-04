@@ -20,9 +20,11 @@ import LifePageShell from './LifePageShell';
 import LotteryBalls from './lottery/LotteryBalls';
 import {
   lotteryBudgetApi,
+  lotteryDecisionSetApi,
   lotteryLedgerApi,
   lotteryTicketApi,
   type LotteryBudgetStatus,
+  type LotteryDecisionOutcomeSummary,
   type LotteryIssueLedger,
   type LotteryPageResponse,
   type LotteryTicket,
@@ -498,6 +500,7 @@ const LotteryTicketPage = () => {
   const [pageResponse, setPageResponse] = useState<LotteryPageResponse<LotteryTicket>>();
   const [summary, setSummary] = useState<LotteryTicketSummary>(emptySummary);
   const [issueLedgers, setIssueLedgers] = useState<LotteryIssueLedger[]>([]);
+  const [decisionOutcomeSummary, setDecisionOutcomeSummary] = useState<LotteryDecisionOutcomeSummary>();
   const [budgetStatus, setBudgetStatus] = useState<LotteryBudgetStatus>();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -606,17 +609,29 @@ const LotteryTicketPage = () => {
     () => buildSettlementReview(activeSettlementIssue, allTickets, issueLedgers),
     [activeSettlementIssue, allTickets, issueLedgers]
   );
+  const settlementDecisionSummary = useMemo(() => {
+    const rows = (decisionOutcomeSummary?.items || []).filter(item => item.targetIssue === activeSettlementIssue);
+    return {
+      rows,
+      candidateCount: rows.reduce((sum, item) => sum + Number(item.candidateCount || 0), 0),
+      winningCandidateCount: rows.reduce((sum, item) => sum + Number(item.winningCandidateCount || 0), 0),
+      convertedTicketCount: rows.reduce((sum, item) => sum + Number(item.convertedTicketCount || 0), 0),
+      netResult: rows.reduce((sum, item) => sum + Number(item.netResult || 0), 0),
+      warningCount: rows.reduce((sum, item) => sum + Number(item.warningCount || 0), 0)
+    };
+  }, [activeSettlementIssue, decisionOutcomeSummary?.items]);
 
   const loadTickets = useCallback(async () => {
     setLoading(true);
     setError(undefined);
     try {
-      const [ticketItems, ticketSummary, budgetData, issueRows, allTicketRows] = await Promise.all([
+      const [ticketItems, ticketSummary, budgetData, issueRows, allTicketRows, decisionOutcomes] = await Promise.all([
         lotteryTicketApi.ticketsPage(queryParams),
         lotteryTicketApi.summary(),
         lotteryBudgetApi.status(),
         lotteryLedgerApi.issues(),
-        lotteryTicketApi.tickets()
+        lotteryTicketApi.tickets(),
+        lotteryDecisionSetApi.outcomes({ limit: 30 })
       ]);
       setPageResponse(ticketItems);
       setTickets(ticketItems.items || []);
@@ -624,6 +639,7 @@ const LotteryTicketPage = () => {
       setSummary(ticketSummary || emptySummary);
       setBudgetStatus(budgetData);
       setIssueLedgers(issueRows || []);
+      setDecisionOutcomeSummary(decisionOutcomes);
     } catch (requestError) {
       console.error('获取彩票票据失败:', requestError);
       setError(requestError instanceof Error ? requestError.message : '获取彩票票据失败');
@@ -1252,6 +1268,7 @@ const LotteryTicketPage = () => {
               <span><small>已核/待核</small><strong>{settlementReview.checkedCount}/{settlementReview.pendingCount}</strong></span>
               <span><small>中奖</small><strong>{settlementReview.winningCount}</strong></span>
               <span><small>预测来源</small><strong>{settlementReview.predictionCount}</strong></span>
+              <span><small>决策候选</small><strong>{settlementDecisionSummary.candidateCount}</strong></span>
               <span><small>净结果</small><strong>{formatMoney(settlementReview.netResult)}</strong></span>
               <span><small>ROI</small><strong>{Number(settlementReview.roiPercent || 0).toFixed(2)}%</strong></span>
             </div>
@@ -1261,6 +1278,18 @@ const LotteryTicketPage = () => {
               ))}
               {latestCheckSummary?.issue === settlementReview.issue ? (
                 <Tag color="blue">最近核验 {latestCheckSummary.checkedTicketCount || 0}</Tag>
+              ) : null}
+              {settlementDecisionSummary.rows.length ? (
+                <>
+                  <Tag color="magenta">决策集 {settlementDecisionSummary.rows.length}</Tag>
+                  <Tag color={settlementDecisionSummary.warningCount ? 'gold' : 'green'}>
+                    决策命中 {settlementDecisionSummary.winningCandidateCount}/{settlementDecisionSummary.candidateCount}
+                  </Tag>
+                  <Tag color="purple">决策转票 {settlementDecisionSummary.convertedTicketCount}</Tag>
+                  <Tag color={settlementDecisionSummary.netResult >= 0 ? 'blue' : 'default'}>
+                    决策净 {formatMoney(settlementDecisionSummary.netResult)}
+                  </Tag>
+                </>
               ) : null}
             </div>
             <div className="lottery-ticket-settlement-list">
