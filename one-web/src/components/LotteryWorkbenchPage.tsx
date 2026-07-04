@@ -35,6 +35,7 @@ import {
   lotteryOperationsApi,
   lotteryPreferenceApi,
   lotteryPredictionApi,
+  lotteryReminderApi,
   lotteryTicketApi,
   lotteryWorkbenchApi,
   type LotteryAuditEvent,
@@ -47,6 +48,7 @@ import {
   type LotteryOperationsHealthSummary,
   type LotteryPreference,
   type LotteryPredictionSnapshot,
+  type LotteryReminderSummary,
   type LotteryStrategyExperiment,
   type LotteryTicket,
   type LotteryWorkbenchDailyRunResult,
@@ -79,6 +81,7 @@ interface LotteryRecentWorkLink {
 type WorkbenchWidgetKey =
   | 'status'
   | 'health'
+  | 'reminders'
   | 'issueFocus'
   | 'actionQueue'
   | 'calendar'
@@ -135,6 +138,7 @@ const workbenchWidgetStorageKey = 'one:lottery:workbench:widgets:v1';
 const workbenchWidgetMeta: WorkbenchWidgetMeta[] = [
   { key: 'status', label: '状态总览', description: '开奖、同步、质量、票据、账本和发布检查' },
   { key: 'health', label: '运营健康', description: 'Provider、同步、质量、票据、决策和导出健康评分' },
+  { key: 'reminders', label: '提醒中心', description: '每日行动提醒、到期、稍后和确认状态' },
   { key: 'issueFocus', label: '期号焦点', description: '当前期、下一期、预测、票据、核验和账本结果' },
   { key: 'actionQueue', label: '行动队列', description: '同步、质量、预测回填、核验和发布待办' },
   { key: 'calendar', label: '开奖日历', description: '开奖日、同步窗口和提醒数量' },
@@ -421,6 +425,7 @@ const LotteryWorkbenchPage = () => {
   const navigate = useNavigate();
   const [summary, setSummary] = useState<LotteryWorkbenchSummary>();
   const [calendar, setCalendar] = useState<LotteryCalendarState>();
+  const [reminders, setReminders] = useState<LotteryReminderSummary>();
   const [budgetStatus, setBudgetStatus] = useState<LotteryBudgetStatus>();
   const [operationsHealth, setOperationsHealth] = useState<LotteryOperationsHealthSummary>();
   const [recentWork, setRecentWork] = useState<LotteryWorkbenchRecentWork>(createEmptyRecentWork);
@@ -502,15 +507,17 @@ const LotteryWorkbenchPage = () => {
     setLoading(true);
     setError(undefined);
     try {
-      const [data, calendarData, budgetData, healthData, recentWorkData] = await Promise.all([
+      const [data, calendarData, reminderData, budgetData, healthData, recentWorkData] = await Promise.all([
         lotteryWorkbenchApi.summary(),
         lotteryCalendarApi.calendar(),
+        lotteryReminderApi.summary(),
         lotteryBudgetApi.status(),
         lotteryOperationsApi.health(),
         fetchRecentWork()
       ]);
       setSummary(data);
       setCalendar(calendarData);
+      setReminders(reminderData);
       setBudgetStatus(budgetData);
       setOperationsHealth(healthData);
       setRecentWork(recentWorkData);
@@ -547,13 +554,15 @@ const LotteryWorkbenchPage = () => {
       const result = await lotteryWorkbenchApi.dailyRun();
       setDailyRunResult(result);
       setSummary(result.summary);
-      const [calendarData, budgetData, healthData, recentWorkData] = await Promise.all([
+      const [calendarData, reminderData, budgetData, healthData, recentWorkData] = await Promise.all([
         lotteryCalendarApi.calendar(),
+        lotteryReminderApi.summary(),
         lotteryBudgetApi.status(),
         lotteryOperationsApi.health(),
         fetchRecentWork()
       ]);
       setCalendar(calendarData);
+      setReminders(reminderData);
       setBudgetStatus(budgetData);
       setOperationsHealth(healthData);
       setRecentWork(recentWorkData);
@@ -594,6 +603,34 @@ const LotteryWorkbenchPage = () => {
     } catch (requestError) {
       console.error('确认彩票运营健康提醒失败:', requestError);
       message.error('确认健康提醒失败');
+    }
+  };
+
+  const acknowledgeReminder = async (key?: string, fingerprint?: string) => {
+    if (!key || !fingerprint) {
+      return;
+    }
+    try {
+      const result = await lotteryReminderApi.acknowledge(key, fingerprint, 'workbench acknowledgement');
+      setReminders(result);
+      message.success('提醒已确认');
+    } catch (requestError) {
+      console.error('确认彩票行动提醒失败:', requestError);
+      message.error('确认提醒失败');
+    }
+  };
+
+  const snoozeReminder = async (key?: string, fingerprint?: string) => {
+    if (!key || !fingerprint) {
+      return;
+    }
+    try {
+      const result = await lotteryReminderApi.snooze(key, fingerprint);
+      setReminders(result);
+      message.success('已稍后提醒');
+    } catch (requestError) {
+      console.error('稍后处理彩票行动提醒失败:', requestError);
+      message.error('稍后提醒失败');
     }
   };
 
@@ -697,7 +734,7 @@ const LotteryWorkbenchPage = () => {
       key: 'alerts',
       icon: <BellOutlined />,
       label: '提醒',
-      detail: `${calendar?.reminders?.length || 0} 条`,
+      detail: `${reminders?.activeCount ?? calendar?.reminders?.length ?? 0} 条`,
       onClick: () => navigate('/lottery/alerts')
     },
     {
@@ -944,6 +981,19 @@ const LotteryWorkbenchPage = () => {
     return Array.from(groups.entries()).map(([title, items]) => ({ title, items }));
   }, [actionQueueItems]);
 
+  const reminderGroups = useMemo(() => {
+    const groups = new Map<string, NonNullable<LotteryReminderSummary['items']>>();
+    (reminders?.items || [])
+      .filter(item => !item.acknowledgedAt)
+      .forEach(item => {
+        const group = item.group || '提醒';
+        const groupItems = groups.get(group) || [];
+        groupItems.push(item);
+        groups.set(group, groupItems);
+      });
+    return Array.from(groups.entries()).map(([title, items]) => ({ title, items }));
+  }, [reminders?.items]);
+
   const stepItems = (dailyRunResult?.steps || []).map((step: LotteryWorkbenchStepResult) => ({
     title: step.step || '任务',
     status: toStepStatus(step.status),
@@ -1189,6 +1239,57 @@ const LotteryWorkbenchPage = () => {
               </div>
             ) : (
               <Empty description="暂无健康评分" />
+            )}
+          </Card>
+        );
+      case 'reminders':
+        return (
+          <Card
+            className="life-panel-card lottery-clean-panel lottery-workbench-action-queue"
+            title="提醒中心"
+            extra={
+              <Space wrap>
+                <Tag color={(reminders?.dueCount || 0) > 0 ? 'orange' : 'green'}>到期 {reminders?.dueCount || 0}</Tag>
+                <Tag>稍后 {reminders?.snoozedCount || 0}</Tag>
+                <Tag>确认 {reminders?.acknowledgedCount || 0}</Tag>
+              </Space>
+            }
+          >
+            {reminderGroups.length > 0 ? (
+              <div className="lottery-workbench-action-groups">
+                {reminderGroups.map(group => (
+                  <section key={group.title} className="lottery-workbench-action-group">
+                    <div className="lottery-workbench-action-group-title">
+                      <strong>{group.title}</strong>
+                      <Tag>{group.items.length}</Tag>
+                    </div>
+                    <div className="lottery-workbench-action-list">
+                      {group.items.map(item => (
+                        <article key={`${item.key}-${item.fingerprint}`} className="lottery-workbench-reminder-item">
+                          <button
+                            type="button"
+                            disabled={!item.path}
+                            onClick={() => item.path && navigate(item.path)}
+                          >
+                            <Tag color={queueStatusColor(item.status)}>{item.status || 'TODO'}</Tag>
+                            <span>
+                              <strong>{item.title || item.key}</strong>
+                              <small>{item.message || '-'}</small>
+                            </span>
+                            {item.snoozedUntil ? <em>{formatDateTime(item.snoozedUntil)}</em> : null}
+                          </button>
+                          <Space size={4}>
+                            <Button size="small" onClick={() => snoozeReminder(item.key, item.fingerprint)}>稍后</Button>
+                            <Button size="small" type="primary" onClick={() => acknowledgeReminder(item.key, item.fingerprint)}>确认</Button>
+                          </Space>
+                        </article>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <Empty description="暂无提醒" />
             )}
           </Card>
         );

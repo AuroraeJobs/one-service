@@ -26,6 +26,10 @@ public class LotteryPreferenceService implements ILotteryPreferenceService {
 
     private static final int DEFAULT_BUDGET_REMINDER_PERCENT = 80;
 
+    private static final int DEFAULT_REMINDER_DRAW_WINDOW_HOURS = 12;
+
+    private static final int DEFAULT_REMINDER_SNOOZE_MINUTES = 60;
+
     private final LotteryPreferenceRepository repository;
 
     @Override
@@ -46,6 +50,9 @@ public class LotteryPreferenceService implements ILotteryPreferenceService {
         target.setMonthlyBudget(normalizeBudget(preference == null ? null : preference.getMonthlyBudget()));
         target.setMaxTicketsPerIssue(normalizePositiveInteger(preference == null ? null : preference.getMaxTicketsPerIssue()));
         target.setBudgetReminderPercent(normalizeReminderPercent(preference == null ? null : preference.getBudgetReminderPercent()));
+        target.setReminderDrawWindowHours(normalizeReminderDrawWindowHours(preference == null ? null : preference.getReminderDrawWindowHours()));
+        target.setReminderDefaultSnoozeMinutes(normalizeSnoozeMinutes(preference == null ? null : preference.getReminderDefaultSnoozeMinutes()));
+        target.setMonthEndExportChecklistEnabled(preference == null || !Boolean.FALSE.equals(preference.getMonthEndExportChecklistEnabled()));
         target.setWorkbenchWidgetOrder(normalizeWidgetKeys(preference == null ? null : preference.getWorkbenchWidgetOrder()));
         target.setHiddenWorkbenchWidgets(normalizeWidgetKeys(preference == null ? null : preference.getHiddenWorkbenchWidgets()));
         target.setUpdatedAt(now);
@@ -67,6 +74,9 @@ public class LotteryPreferenceService implements ILotteryPreferenceService {
                 .monthlyBudget(null)
                 .maxTicketsPerIssue(null)
                 .budgetReminderPercent(DEFAULT_BUDGET_REMINDER_PERCENT)
+                .reminderDrawWindowHours(DEFAULT_REMINDER_DRAW_WINDOW_HOURS)
+                .reminderDefaultSnoozeMinutes(DEFAULT_REMINDER_SNOOZE_MINUTES)
+                .monthEndExportChecklistEnabled(true)
                 .workbenchWidgetOrder(List.of())
                 .hiddenWorkbenchWidgets(List.of())
                 .createdAt(now)
@@ -102,6 +112,20 @@ public class LotteryPreferenceService implements ILotteryPreferenceService {
             return DEFAULT_BUDGET_REMINDER_PERCENT;
         }
         return Math.min(100, value);
+    }
+
+    private Integer normalizeReminderDrawWindowHours(Integer value) {
+        if (value == null || value <= 0) {
+            return DEFAULT_REMINDER_DRAW_WINDOW_HOURS;
+        }
+        return Math.min(72, value);
+    }
+
+    private Integer normalizeSnoozeMinutes(Integer value) {
+        if (value == null || value <= 0) {
+            return DEFAULT_REMINDER_SNOOZE_MINUTES;
+        }
+        return Math.min(7 * 24 * 60, value);
     }
 
     private List<String> normalizeWidgetKeys(List<String> widgetKeys) {

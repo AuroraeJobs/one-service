@@ -14,4 +14,10 @@ import java.io.Serializable;
 public class LotteryReminderAcknowledgeRequest implements Serializable {
 
     private String fingerprint;
+
+    private String note;
+
+    private Integer snoozeMinutes;
+
+    private Long snoozeUntil;
 }

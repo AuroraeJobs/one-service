@@ -64,7 +64,10 @@ const LotterySettingsPage = () => {
           defaultReplayCount: 0,
           autoSavePredictions: false,
           defaultTicketSource: 'MANUAL',
-          budgetReminderPercent: 80
+          budgetReminderPercent: 80,
+          reminderDrawWindowHours: 12,
+          reminderDefaultSnoozeMinutes: 60,
+          monthEndExportChecklistEnabled: true
         }}>
           <Form.Item name="defaultTrainingScale" label="训练规模">
             <Select
@@ -105,6 +108,17 @@ const LotterySettingsPage = () => {
               <InputNumber min={1} max={100} precision={0} addonAfter="%" style={{ width: '100%' }} />
             </Form.Item>
           </Space.Compact>
+          <Space.Compact block>
+            <Form.Item name="reminderDrawWindowHours" label="开奖前提醒窗口" style={{ width: '50%' }}>
+              <InputNumber min={1} max={72} precision={0} addonAfter="小时" style={{ width: '100%' }} />
+            </Form.Item>
+            <Form.Item name="reminderDefaultSnoozeMinutes" label="默认稍后时长" style={{ width: '50%' }}>
+              <InputNumber min={5} max={10080} precision={0} addonAfter="分钟" style={{ width: '100%' }} />
+            </Form.Item>
+          </Space.Compact>
+          <Form.Item name="monthEndExportChecklistEnabled" label="月末导出清单提醒" valuePropName="checked">
+            <Switch />
+          </Form.Item>
         </Form>
       </Card>
     </LifePageShell>

@@ -190,6 +190,9 @@ export interface LotteryPreference {
   monthlyBudget?: number;
   maxTicketsPerIssue?: number;
   budgetReminderPercent?: number;
+  reminderDrawWindowHours?: number;
+  reminderDefaultSnoozeMinutes?: number;
+  monthEndExportChecklistEnabled?: boolean;
   workbenchWidgetOrder?: string[];
   hiddenWorkbenchWidgets?: string[];
   createdAt?: number;
@@ -2500,6 +2503,30 @@ export interface LotteryCalendarState {
   generatedAt?: number;
 }
 
+export interface LotteryReminderItem {
+  key?: string;
+  group?: string;
+  title?: string;
+  message?: string;
+  status?: string;
+  severity?: string;
+  path?: string;
+  fingerprint?: string;
+  dueAt?: number;
+  acknowledgedAt?: number;
+  snoozedUntil?: number;
+}
+
+export interface LotteryReminderSummary {
+  totalCount?: number;
+  activeCount?: number;
+  dueCount?: number;
+  snoozedCount?: number;
+  acknowledgedCount?: number;
+  items: LotteryReminderItem[];
+  generatedAt?: number;
+}
+
 export interface LotteryTrainingTimelineItem {
   period: number;
   predictedRedNumbers: string[];
@@ -2821,6 +2848,18 @@ export const lotteryCalendarApi = {
   },
   acknowledge: (key: string, fingerprint: string): Promise<LotteryCalendarState> => {
     return apiClient.post(`/lottery/alerts/${key}/ack`, { fingerprint });
+  }
+};
+
+export const lotteryReminderApi = {
+  summary: (): Promise<LotteryReminderSummary> => {
+    return apiClient.get('/lottery/reminders/summary');
+  },
+  acknowledge: (key: string, fingerprint: string, note?: string): Promise<LotteryReminderSummary> => {
+    return apiClient.post(`/lottery/reminders/${key}/ack`, { fingerprint, note });
+  },
+  snooze: (key: string, fingerprint: string, snoozeMinutes?: number): Promise<LotteryReminderSummary> => {
+    return apiClient.post(`/lottery/reminders/${key}/snooze`, { fingerprint, snoozeMinutes });
   }
 };
 

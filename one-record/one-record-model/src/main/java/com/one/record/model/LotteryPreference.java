@@ -39,6 +39,12 @@ public class LotteryPreference {
 
     private Integer budgetReminderPercent;
 
+    private Integer reminderDrawWindowHours;
+
+    private Integer reminderDefaultSnoozeMinutes;
+
+    private Boolean monthEndExportChecklistEnabled;
+
     @Builder.Default
     private List<String> workbenchWidgetOrder = new ArrayList<>();
 

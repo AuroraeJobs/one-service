@@ -446,11 +446,11 @@ Goal: spend the next month turning the lottery module from a frontend-operated o
 
 ### Week 3: Action Reminders And Daily Workflow Automation
 
-- [ ] Add reminder rules for upcoming draw windows, unsynced records, unconverted saved decisions, unchecked tickets, stale evidence, and missing month-end exports.
-- [ ] Add backend reminder summary API and acknowledgement/snooze endpoints with audit events.
-- [ ] Add workbench reminder center with grouped daily actions, due state, snooze, acknowledgement, and direct route handoff.
-- [ ] Add settings page controls for reminder thresholds, default snooze duration, and month-end export checklist preferences.
-- [ ] Run smoke/build verification, update docs, commit, and push.
+- [x] Add reminder rules for upcoming draw windows, unsynced records, unconverted saved decisions, unchecked tickets, stale evidence, and missing month-end exports. Added rule generation from calendar state, daily state, sync summary, data quality, tickets, decision outcomes, and month-end export audits.
+- [x] Add backend reminder summary API and acknowledgement/snooze endpoints with audit events. Added `/lottery/reminders/summary`, `/lottery/reminders/{key}/ack`, and `/lottery/reminders/{key}/snooze` backed by `LotteryAuditEvent`.
+- [x] Add workbench reminder center with grouped daily actions, due state, snooze, acknowledgement, and direct route handoff. Workbench now loads reminder summary, exposes the Reminder Center widget, and supports direct route handoff, snooze, and acknowledgement actions.
+- [x] Add settings page controls for reminder thresholds, default snooze duration, and month-end export checklist preferences. Added preference fields for draw-window hours, default snooze minutes, and month-end export checklist enablement.
+- [x] Run smoke/build verification, update docs, commit, and push. Verification: focused Maven reminder/preference service/controller tests; `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
 ### Week 4: Month-End Review, Release Governance, And Mobile Polish
 

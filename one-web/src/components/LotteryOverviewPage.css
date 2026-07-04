@@ -1372,7 +1372,8 @@
   gap: 6px;
 }
 
-.lottery-workbench-action-list button {
+.lottery-workbench-action-list > button,
+.lottery-workbench-reminder-item > button {
   min-width: 0;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -1387,12 +1388,22 @@
   cursor: pointer;
 }
 
-.lottery-workbench-action-list button:hover:not(:disabled) {
+.lottery-workbench-action-list > button:hover:not(:disabled),
+.lottery-workbench-reminder-item > button:hover:not(:disabled) {
   border-color: var(--module-accent, #0071e3);
 }
 
-.lottery-workbench-action-list button:disabled {
+.lottery-workbench-action-list > button:disabled,
+.lottery-workbench-reminder-item > button:disabled {
   cursor: default;
+}
+
+.lottery-workbench-reminder-item {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
 }
 
 .lottery-workbench-action-list span {
@@ -4810,6 +4821,10 @@ button.lottery-latest-vs-card:hover {
   .lottery-workbench-daily-state {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .lottery-workbench-reminder-item {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .lottery-ticket-desktop-table {

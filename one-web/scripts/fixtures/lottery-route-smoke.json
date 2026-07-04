@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 16 Week 2 lottery strategy notebook smoke",
+  "target": "Iteration 16 Week 3 lottery action reminders smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -19,10 +19,13 @@
         "lotteryPreferenceApi.updatePreference",
         "lotteryOperationsApi.health",
         "lotteryOperationsApi.acknowledgeHealth",
+        "lotteryReminderApi.summary",
+        "lotteryReminderApi.acknowledge",
+        "lotteryReminderApi.snooze",
         "lotteryTicketApi.checkLatestPrizes"
       ],
-      "emptyStates": ["暂无待办", "暂无预测快照", "暂无保存决策复盘结果", "暂无发布检查", "运营健康", "暂无健康评分"],
-      "errorStates": ["读取彩票工作台失败", "执行彩票日常任务失败"],
+      "emptyStates": ["暂无待办", "暂无提醒", "暂无预测快照", "暂无保存决策复盘结果", "暂无发布检查", "运营健康", "暂无健康评分"],
+      "errorStates": ["读取彩票工作台失败", "执行彩票日常任务失败", "确认提醒失败", "稍后提醒失败"],
       "fixtureData": {
         "summary": {
           "dailyState": {
@@ -39,6 +42,11 @@
             "score": 92,
             "status": "PASS",
             "contributors": ["provider-freshness", "record-sync", "data-quality", "ticket-settlement", "decision-outcomes", "export-evidence"]
+          },
+          "reminders": {
+            "activeCount": 3,
+            "dueCount": 1,
+            "groups": ["开奖准备", "同步", "决策复盘"]
           }
         }
       }

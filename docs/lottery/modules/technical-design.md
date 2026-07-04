@@ -458,6 +458,18 @@ POST /lottery/alerts/{key}/ack
 
 The frontend uses `/lottery/alerts` as the in-app reminder page and shows the next draw window on the workbench.
 
+V13 Week 3 adds the daily action reminder center on top of the calendar reminder base. `LotteryReminderService` generates `LotteryReminderSummary` from the current calendar, workbench daily state, sync summary, data quality report, ticket summary, decision-outcome summary, and recent export audit events. The summary includes active, due, snoozed, and acknowledged counts, plus grouped reminder items with direct route handoff paths. Confirm and snooze actions are stored as `LotteryAuditEvent` rows under `lottery-reminder`, so the generated reminders remain source-of-truth driven while user actions stay auditable.
+
+Action reminder endpoints:
+
+```text
+GET  /lottery/reminders/summary
+POST /lottery/reminders/{key}/ack
+POST /lottery/reminders/{key}/snooze
+```
+
+Lottery preferences now include `reminderDrawWindowHours`, `reminderDefaultSnoozeMinutes`, and `monthEndExportChecklistEnabled`; the settings page owns these controls and the workbench uses them to decide when upcoming draw and month-end export reminders become actionable.
+
 Portfolio-style governance extends preferences and ledger behavior with budget and exposure thresholds. The backend flags budget and max-ticket issues without blocking ordinary CRUD unless a future explicit enforcement mode is added.
 
 Wave 10E extends `LotteryPreference` with `weeklyBudget`, `monthlyBudget`, `maxTicketsPerIssue`, and `budgetReminderPercent`. `GET /lottery/budget/status` reads preferences and recorded tickets to return weekly/monthly usage, max issue exposure, and restrained warning rows for the workbench and ticket page. `LotteryLedgerSummary` also includes rolling 30-day cost/prize/net/ROI plus max/current drawdown values for exposure review.

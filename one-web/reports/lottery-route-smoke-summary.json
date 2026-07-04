@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 16 Week 2 lottery strategy notebook smoke",
-  "generatedAt": "2026-07-04T13:48:35.953Z",
+  "target": "Iteration 16 Week 3 lottery action reminders smoke",
+  "generatedAt": "2026-07-04T13:59:47.569Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 6,
-  "checkCount": 143,
+  "checkCount": 149,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
@@ -14,9 +14,9 @@
       "route": "/lottery/workbench",
       "label": "工作台",
       "component": "LotteryWorkbenchPage",
-      "mockApiCount": 9,
-      "emptyStateCount": 6,
-      "errorStateCount": 2
+      "mockApiCount": 12,
+      "emptyStateCount": 7,
+      "errorStateCount": 4
     },
     {
       "route": "/lottery/predictions/decision",
