@@ -37,7 +37,7 @@ Deferred unless the month finishes early:
 
 Goal: make `/lottery/workbench` the clear daily command center and reduce jumping between pages.
 
-Status: in progress. The first 11A slice shipped the workbench command-center panel: route/action audit, compact quick-action rail, latest prize-check action, recent prediction/ticket/experiment/backtest/export shortcuts, and URL-backed drill-through links. Saved frontend view state for common filters remains open.
+Status: shipped. Wave 11A now includes the workbench command-center panel, route/action audit, compact quick-action rail, latest prize-check action, recent prediction/ticket/experiment/backtest/export shortcuts, URL-backed drill-through links, and saved frontend view state for prediction history, ticket list, and sync operations.
 
 Deliverables:
 

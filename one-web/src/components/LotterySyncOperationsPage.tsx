@@ -14,7 +14,10 @@ import {
   type LotteryRecordSyncLog,
   type LotteryRecordSyncSummary
 } from '../services/api';
+import { lotteryViewStateKeys, useLotterySavedViewState } from '../utils/lotteryViewState';
 import './LotteryOverviewPage.css';
+
+const syncOperationViewKeys = ['status', 'provider', 'syncPage', 'syncPageSize', 'probePage', 'probePageSize'];
 
 const formatTime = (value?: number) => {
   if (!value) {
@@ -57,6 +60,8 @@ const LotterySyncOperationsPage = () => {
   const [syncing, setSyncing] = useState(false);
   const [probing, setProbing] = useState(false);
   const [error, setError] = useState<string>();
+
+  useLotterySavedViewState(lotteryViewStateKeys.syncOperations, searchParams, setSearchParams, syncOperationViewKeys);
 
   const statusFilter = searchParams.get('status') || undefined;
   const probeProvider = searchParams.get('provider') || 'cwl';

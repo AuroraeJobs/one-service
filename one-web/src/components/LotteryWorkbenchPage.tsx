@@ -41,6 +41,7 @@ import {
   type LotteryWorkbenchStepResult,
   type LotteryWorkbenchSummary
 } from '../services/api';
+import { getLotterySavedViewPath, lotteryViewStateKeys } from '../utils/lotteryViewState';
 import './LotteryOverviewPage.css';
 
 interface LotteryWorkbenchRecentWork {
@@ -167,6 +168,9 @@ const LotteryWorkbenchPage = () => {
   const latestSyncStatus = summary?.latestSyncSummary?.latestStatus || 'UNKNOWN';
   const trainingStatus = summary?.trainingStatus;
   const trainingPercent = Math.max(0, Math.min(100, trainingStatus?.percent ?? 0));
+  const savedPredictionHistoryPath = getLotterySavedViewPath('/lottery/predictions/history', lotteryViewStateKeys.predictionHistory);
+  const savedTicketsPath = getLotterySavedViewPath('/lottery/tickets', lotteryViewStateKeys.tickets);
+  const savedSyncPath = getLotterySavedViewPath('/lottery/sync', lotteryViewStateKeys.syncOperations);
 
   const loadSummary = useCallback(async () => {
     setLoading(true);
@@ -250,7 +254,7 @@ const LotteryWorkbenchPage = () => {
       label: '同步状态',
       value: latestSyncStatus,
       detail: formatDateTime(summary?.latestSyncSummary?.latestFinishedAt),
-      path: dailyState?.syncState?.path || '/lottery/sync'
+      path: dailyState?.syncState?.path || savedSyncPath
     },
     {
       key: 'quality',
@@ -266,7 +270,7 @@ const LotteryWorkbenchPage = () => {
       label: '待核验票据',
       value: summary?.pendingTicketCount ?? 0,
       detail: `最近核验 ${summary?.latestPrizeCheckSummary?.checkedTicketCount ?? 0} 张`,
-      path: dailyState?.prizeCheckState?.path || dailyState?.ticketState?.path || '/lottery/tickets'
+      path: dailyState?.prizeCheckState?.path || dailyState?.ticketState?.path || savedTicketsPath
     },
     {
       key: 'ledger',
@@ -284,7 +288,7 @@ const LotteryWorkbenchPage = () => {
       icon: <SyncOutlined />,
       label: '同步',
       detail: latestSyncStatus,
-      onClick: () => navigate(dailyState?.syncState?.path || '/lottery/sync')
+      onClick: () => navigate(dailyState?.syncState?.path || savedSyncPath)
     },
     {
       key: 'prediction',
@@ -367,24 +371,24 @@ const LotteryWorkbenchPage = () => {
         key: 'predictions',
         icon: <ThunderboltOutlined />,
         title: '预测',
-        path: '/lottery/predictions/history',
+        path: savedPredictionHistoryPath,
         items: recentWork.predictions.map(item => ({
           key: item.id || `prediction-${item.targetPeriod}-${item.createdAt}`,
           title: `第 ${item.targetPeriod || '-'} 期`,
           detail: `${item.ruleName || item.ruleId || '未记录规则'} · ${formatDateTime(item.createdAt)}`,
-          path: item.id ? `/lottery/predictions/${item.id}` : '/lottery/predictions/history'
+          path: item.id ? `/lottery/predictions/${item.id}` : savedPredictionHistoryPath
         }))
       },
       {
         key: 'tickets',
         icon: <FileTextOutlined />,
         title: '票据',
-        path: '/lottery/tickets',
+        path: savedTicketsPath,
         items: recentWork.tickets.map(item => ({
           key: item.id || `ticket-${item.issue}-${item.createdAt}`,
           title: `第 ${item.issue || item.period || '-'} 期`,
           detail: `${item.source || 'MANUAL'} · ${item.status || 'UNKNOWN'} · ${formatDateTime(item.updatedAt || item.createdAt)}`,
-          path: item.issue ? `/lottery/tickets?issue=${item.issue}` : '/lottery/tickets'
+          path: item.issue ? `/lottery/tickets?issue=${item.issue}` : savedTicketsPath
         }))
       },
       {
@@ -426,7 +430,7 @@ const LotteryWorkbenchPage = () => {
     ];
 
     return groups;
-  }, [recentWork]);
+  }, [recentWork, savedPredictionHistoryPath, savedTicketsPath]);
 
   return (
     <LifePageShell
@@ -438,7 +442,7 @@ const LotteryWorkbenchPage = () => {
           <Button icon={<ReloadOutlined />} loading={loading} onClick={loadSummary}>
             刷新
           </Button>
-          <Button icon={<SyncOutlined />} onClick={() => navigate('/lottery/sync')}>
+          <Button icon={<SyncOutlined />} onClick={() => navigate(savedSyncPath)}>
             同步运维
           </Button>
           <Button type="primary" icon={<ThunderboltOutlined />} loading={running} onClick={runDailyWork}>
@@ -558,7 +562,7 @@ const LotteryWorkbenchPage = () => {
                     详情
                   </Button>
                 ) : null}
-                <Button size="small" onClick={() => navigate(dailyState?.predictionState?.path || '/lottery/predictions/history')}>
+                <Button size="small" onClick={() => navigate(dailyState?.predictionState?.path || savedPredictionHistoryPath)}>
                   历史
                 </Button>
               </Space>
@@ -621,7 +625,7 @@ const LotteryWorkbenchPage = () => {
             className="life-panel-card lottery-clean-panel lottery-workbench-recent-card"
             title="最近工作"
             extra={
-              <Button size="small" icon={<HistoryOutlined />} onClick={() => navigate('/lottery/predictions/history')}>
+              <Button size="small" icon={<HistoryOutlined />} onClick={() => navigate(savedPredictionHistoryPath)}>
                 历史
               </Button>
             }

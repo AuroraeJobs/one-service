@@ -4,7 +4,10 @@ import { ExperimentOutlined, HistoryOutlined, ReloadOutlined, ThunderboltOutline
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import { lotteryPredictionApi, type LotteryPageResponse, type LotteryPredictionSnapshot } from '../services/api';
+import { lotteryViewStateKeys, useLotterySavedViewState } from '../utils/lotteryViewState';
 import './LotteryOverviewPage.css';
+
+const predictionHistoryViewKeys = ['page', 'pageSize', 'resultState', 'targetPeriod', 'ruleId', 'ruleName'];
 
 const formatTime = (value?: number) => {
   if (!value) {
@@ -47,6 +50,8 @@ const LotteryPredictionHistoryPage = () => {
   const [loading, setLoading] = useState(true);
   const [attachingLatest, setAttachingLatest] = useState(false);
   const [error, setError] = useState<string>();
+
+  useLotterySavedViewState(lotteryViewStateKeys.predictionHistory, searchParams, setSearchParams, predictionHistoryViewKeys);
 
   const page = Math.max(1, Number(searchParams.get('page') || '1') || 1);
   const pageSize = Math.max(1, Number(searchParams.get('pageSize') || '10') || 10);

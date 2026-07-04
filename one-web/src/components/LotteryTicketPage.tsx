@@ -14,7 +14,10 @@ import {
   type LotteryTicketPrizeCheckSummary,
   type LotteryTicketSummary
 } from '../services/api';
+import { lotteryViewStateKeys, useLotterySavedViewState } from '../utils/lotteryViewState';
 import './LotteryOverviewPage.css';
+
+const ticketViewKeys = ['page', 'pageSize', 'issue', 'predictionSnapshotId', 'status', 'source', 'prizeGrade'];
 
 const formatMoney = (value?: number) => {
   if (value === undefined || value === null) {
@@ -111,6 +114,8 @@ const LotteryTicketPage = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTicket, setEditingTicket] = useState<LotteryTicket>();
   const [error, setError] = useState<string>();
+
+  useLotterySavedViewState(lotteryViewStateKeys.tickets, searchParams, setSearchParams, ticketViewKeys);
 
   const page = Math.max(1, Number(searchParams.get('page') || '1') || 1);
   const pageSize = Math.max(1, Number(searchParams.get('pageSize') || '10') || 10);
