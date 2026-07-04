@@ -113,6 +113,28 @@ export interface LotteryDataQualityReport {
   generatedAt?: number;
 }
 
+export interface LotteryDataQualityRepairRequest {
+  issues?: string[];
+  limit?: number;
+}
+
+export interface LotteryDataQualityRepairResult {
+  repairType?: string;
+  dryRun?: boolean;
+  missingBefore?: number;
+  missingAfter?: number;
+  requestedIssueCount?: number;
+  repairableIssueCount?: number;
+  repairedIssueCount?: number;
+  skippedIssueCount?: number;
+  message?: string;
+  requestedIssues: string[];
+  repairableIssues: string[];
+  repairedIssues: string[];
+  skippedIssues: string[];
+  generatedAt?: number;
+}
+
 export interface LotteryDraw {
   id?: string;
   issue?: string;
@@ -386,6 +408,12 @@ export const lotteryPreferenceApi = {
 export const lotteryDataQualityApi = {
   report: (): Promise<LotteryDataQualityReport> => {
     return apiClient.get('/lottery/data-quality');
+  },
+  dryRunMissingIssuesRepair: (request?: LotteryDataQualityRepairRequest): Promise<LotteryDataQualityRepairResult> => {
+    return apiClient.post('/lottery/data-quality/repair/missing-issues/dry-run', request || {});
+  },
+  confirmMissingIssuesRepair: (request?: LotteryDataQualityRepairRequest): Promise<LotteryDataQualityRepairResult> => {
+    return apiClient.post('/lottery/data-quality/repair/missing-issues/confirm', request || {});
   }
 };
 

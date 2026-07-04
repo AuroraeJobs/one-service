@@ -247,6 +247,7 @@ VOID
 - Keep prediction UX research-oriented and avoid guaranteed-win language.
 - Ticket and ledger pages should be quiet, record-focused, and explicit about cost and outcome.
 - The sync operations page should read backend summaries and provider probe logs rather than recalculating operational health only in the browser.
+- The data quality page should use a two-step repair flow: generate a backend dry-run plan first, then enable confirm only for provider-backed missing issues.
 
 ## Verification Strategy
 

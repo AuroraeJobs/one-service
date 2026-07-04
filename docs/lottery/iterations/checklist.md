@@ -124,12 +124,12 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add conservative malformed/duplicate repair report behavior. Iteration 07 repair only writes provider-backed missing issues; malformed and duplicate records remain report-only until trusted replacement rules are added.
 - [x] Add provider operations panel to `/lottery/sync` or `/lottery/settings`. `/lottery/sync` now has a provider probe action and recent probe-log table.
 - [x] Add sync summary cards to `/lottery/sync`. Added recent success/failure/saved/duration cards and a latest sync summary strip.
-- [ ] Add data quality repair UI with dry-run, confirm, and before/after report.
+- [x] Add data quality repair UI with dry-run, confirm, and before/after report. `/lottery/data-quality` now generates missing-issue repair plans, confirms provider-backed fixes, and shows before/after repair counts.
 - [ ] Integrate preferences into prediction page defaults.
 - [ ] Add visible data quality indicators on operational entry points.
 - [x] Add frontend API client methods for new Iteration 07 endpoints. Added sync-summary, provider probe, and provider probe-log client methods.
 - [x] Add backend tests for repair dry-run/confirm behavior. Covered dry-run no-save behavior, confirm save/reorder behavior, and controller endpoint binding.
-- [x] Run frontend build after operational page changes. `npm run build` passed after `/lottery/sync` updates.
+- [x] Run frontend build after operational page changes. `npm run build` passed after `/lottery/sync` and `/lottery/data-quality` updates.
 
 ## Documentation And Delivery
 
