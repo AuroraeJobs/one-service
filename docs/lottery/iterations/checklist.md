@@ -460,6 +460,42 @@ Goal: spend the next month turning the lottery module from a frontend-operated o
 - [x] Review responsive layout for workbench, research notebook, reminders, month-end review, export, decision, and ticket pages. Added month-end dashboard responsive layout and folded it into existing mobile breakpoints used by the lottery workflow pages.
 - [x] Run month-end verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
+## Iteration 17: V14 Guided Strategy Execution
+
+Goal: turn the lottery intelligence cockpit into an execution-grade workflow closer to the stock module: strategies should be grouped, simulated, compared, approved, converted into ticket packs, reviewed after draw, and governed from mobile-friendly frontends.
+
+### Week 1: Strategy Portfolio And Allocation Board
+
+- [ ] Add a strategy portfolio model that groups prediction rules, experiments, backtests, saved decisions, and notes into named portfolios.
+- [ ] Add backend APIs for portfolio list/detail/create/update/archive with health, ROI, warning, replay, and evidence coverage summaries.
+- [ ] Add `/lottery/strategy-portfolios` frontend board with portfolio cards, sortable score columns, allocation weights, and evidence drilldowns.
+- [ ] Add portfolio links from prediction rules, research comparison, strategy notebook, and decision outcomes.
+- [ ] Run focused backend/frontend verification, update docs, commit, and push.
+
+### Week 2: Simulation Sandbox And What-If Tickets
+
+- [ ] Add a simulation request model for hypothetical ticket packs, budget limits, rule weights, replay window, and target issue.
+- [ ] Add backend simulation API that compares projected cost, historical hit distribution, backtest summaries, decision evidence, and budget exposure without saving tickets.
+- [ ] Add `/lottery/simulator` frontend sandbox with sliders for weights/budget, candidate ticket previews, risk warnings, and comparison charts.
+- [ ] Add handoff from simulator to decision board, ticket import preview, strategy notebook, and export report builder.
+- [ ] Run simulation tests, route smoke/build verification, update docs, commit, and push.
+
+### Week 3: Guided Ticket Pack Execution
+
+- [ ] Add a ticket-pack draft model that can be generated from saved decisions, simulator output, or portfolio allocation.
+- [ ] Add backend APIs for ticket-pack preview, budget precheck, approval, save-as-tickets, archive, and audit trail.
+- [ ] Add `/lottery/ticket-packs` frontend execution page with draft packs, approval checklist, conflict detection, batch save, and issue handoff.
+- [ ] Add workbench and reminder-center actions for pending ticket packs, overdue approval, and post-draw settlement.
+- [ ] Run ticket-pack service/controller tests, frontend smoke/build, update docs, commit, and push.
+
+### Week 4: Governance Dashboard, Mobile Polish, And Release Evidence
+
+- [ ] Add `/lottery/governance` dashboard that combines strategy portfolio health, simulator usage, ticket packs, reminders, month-end review, exports, and release readiness.
+- [ ] Add configurable governance thresholds for portfolio score, simulator risk, ticket-pack budget exposure, evidence freshness, and stale approvals.
+- [ ] Extend smoke fixtures and release readiness checks for strategy portfolios, simulator, ticket packs, and governance dashboard.
+- [ ] Review responsive/mobile layout for strategy portfolio board, simulator, ticket packs, governance, workbench, and month-end pages.
+- [ ] Run V14 verification, update docs, commit, and push.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

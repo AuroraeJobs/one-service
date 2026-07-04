@@ -219,6 +219,16 @@ Goal: turn the outcome-operation cockpit into a repeatable monthly intelligence 
 - Add month-end review and release governance for ledger results, tickets, outcomes, research notes, health score, and export evidence. The shipped Week 4 slice adds `/lottery/month-end`, the `月末治理包` report preset, route smoke coverage for month-end review, release readiness evidence for health/notebook/reminders/month-end, and responsive dashboard polish.
 - Preserve the same project-owned API boundary: browser code stays on `record/*` and `lottery/*`, and provider/network work stays behind backend services.
 
+### V14: Guided Strategy Execution
+
+Goal: make lottery execution feel closer to the stock module's portfolio/analysis workflow: strategies should be organized into portfolios, simulated before action, converted into auditable ticket packs, and governed from dense frontend operation pages.
+
+- Add strategy portfolios that group prediction rules, experiments, backtests, saved decisions, and notebook evidence. Planned Week 1 ships portfolio APIs, `/lottery/strategy-portfolios`, allocation weights, score columns, and evidence drilldowns.
+- Add a simulation sandbox for what-if ticket packs, budget limits, rule weights, replay windows, and target issues. Planned Week 2 ships simulation APIs, `/lottery/simulator`, candidate previews, risk warnings, comparison charts, and handoff into decision/ticket/export flows.
+- Add guided ticket-pack execution so saved decisions, simulator output, and portfolio allocation can become reviewed ticket drafts before saving. Planned Week 3 ships ticket-pack preview, approval, budget precheck, save-as-tickets, workbench reminders, and audit trail.
+- Add governance dashboards and settings for strategy portfolio health, simulation risk, ticket-pack exposure, evidence freshness, and stale approvals. Planned Week 4 ships `/lottery/governance`, threshold preferences, smoke/release readiness coverage, and mobile polish.
+- Preserve provider isolation and project-owned API boundaries: browser code stays on `record/*` and `lottery/*`, simulations do not call external providers directly, and all execution actions write audit evidence.
+
 ## API Boundary
 
 Frontend should only call:
