@@ -1608,6 +1608,18 @@ export interface LotteryTicketSummary {
   generatedAt?: number;
 }
 
+export interface LotteryLedgerSummary {
+  ticketCount?: number;
+  checkedTicketCount?: number;
+  pendingTicketCount?: number;
+  winningTicketCount?: number;
+  totalCost?: number;
+  totalPrize?: number;
+  netResult?: number;
+  roiPercent?: number;
+  generatedAt?: number;
+}
+
 export interface LotteryTrainingTimelineItem {
   period: number;
   predictedRedNumbers: string[];
@@ -1731,6 +1743,12 @@ export const lotteryTicketApi = {
   },
   checkPrizes: (actualRecord: LotteryActualRecord): Promise<LotteryTicket[]> => {
     return apiClient.post('/lottery/tickets/check-prizes', actualRecord);
+  }
+};
+
+export const lotteryLedgerApi = {
+  summary: (): Promise<LotteryLedgerSummary> => {
+    return apiClient.get('/lottery/ledger/summary');
   }
 };
 

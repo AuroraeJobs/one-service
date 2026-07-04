@@ -88,7 +88,7 @@ Use this file as the durable task board for the lottery module. When a task is f
 - [x] Add issue-level ledger endpoint. Added `LotteryIssueLedger` and `GET /lottery/ledger/issues` to aggregate ticket outcomes by issue.
 - [x] Add monthly ledger endpoint. Added `LotteryMonthlyLedger` and `GET /lottery/ledger/months` to aggregate cost and outcome by ticket creation month.
 - [x] Add rule/source performance endpoint. Added `LotteryPerformanceLedger` and `GET /lottery/ledger/performance?dimension=source|rule` for source and prediction-rule outcome analysis.
-- [ ] Add total cost, total prize, net result, ROI, and hit-rate cards.
+- [x] Add total cost, total prize, net result, ROI, and hit-rate cards. Added `/lottery/ledger` summary cards backed by `GET /lottery/ledger/summary`.
 - [ ] Add issue ledger table.
 - [ ] Add monthly trend chart.
 - [ ] Add source/rule performance chart.
