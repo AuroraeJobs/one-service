@@ -1394,6 +1394,96 @@
   margin-bottom: 16px;
 }
 
+.lottery-workbench-priority-card {
+  margin-bottom: 16px;
+}
+
+.lottery-workbench-priority-list {
+  display: grid;
+  gap: 8px;
+}
+
+.lottery-workbench-priority-list > button {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface-elevated);
+  color: var(--app-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lottery-workbench-priority-list > button:hover:not(:disabled) {
+  border-color: var(--module-accent, #0071e3);
+  background: color-mix(in srgb, var(--module-accent, #0071e3) 7%, var(--app-surface));
+}
+
+.lottery-workbench-priority-list > button:disabled {
+  cursor: default;
+}
+
+.lottery-workbench-priority-icon {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(0, 113, 227, 0.1);
+  color: var(--module-accent, #0071e3);
+  font-size: 16px;
+}
+
+.lottery-workbench-priority-list > button > span:nth-child(2) {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.lottery-workbench-priority-list strong {
+  overflow: hidden;
+  color: var(--app-text);
+  font-size: 13px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-workbench-priority-list small {
+  overflow: hidden;
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-workbench-priority-list em {
+  min-width: 20px;
+  min-height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(255, 149, 0, 0.14);
+  color: #ad6800;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.lottery-workbench-priority-list b {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .lottery-workbench-action-groups {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -5878,6 +5968,15 @@ button.lottery-latest-vs-card:hover {
 
   .lottery-workbench-reminder-item {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lottery-workbench-priority-list > button {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .lottery-workbench-priority-list > button > .ant-space {
+    grid-column: 2;
+    justify-content: flex-start;
   }
 
   .lottery-ticket-desktop-table {

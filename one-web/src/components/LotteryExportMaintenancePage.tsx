@@ -492,6 +492,13 @@ const LotteryExportMaintenancePage = () => {
       path: '/lottery/mobile'
     },
     {
+      key: 'v18-priority-workbench',
+      label: 'V18今日优先事项',
+      status: 'PASS',
+      message: '工作台聚合提醒、待办、健康、票据和发布检查，形成可点击的今日处理列表',
+      path: '/lottery/workbench'
+    },
+    {
       key: 'decision-outcome-export',
       label: '决策复盘证据',
       status: 'PASS',

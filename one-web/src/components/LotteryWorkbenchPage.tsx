@@ -80,6 +80,7 @@ interface LotteryRecentWorkLink {
 
 type WorkbenchWidgetKey =
   | 'status'
+  | 'priority'
   | 'health'
   | 'reminders'
   | 'issueFocus'
@@ -124,6 +125,17 @@ interface WorkbenchActionQueueItem {
   path?: string;
 }
 
+interface WorkbenchPriorityItem {
+  key: string;
+  icon: ReactNode;
+  title: string;
+  detail: string;
+  status?: string;
+  count?: number;
+  path?: string;
+  actionLabel: string;
+}
+
 interface WorkbenchRecentShortcut {
   key: string;
   icon: ReactNode;
@@ -137,6 +149,7 @@ const workbenchWidgetStorageKey = 'one:lottery:workbench:widgets:v1';
 
 const workbenchWidgetMeta: WorkbenchWidgetMeta[] = [
   { key: 'status', label: '状态总览', description: '开奖、同步、质量、票据、账本和发布检查' },
+  { key: 'priority', label: '今日优先', description: '到期提醒、待办、健康告警和待核验事项' },
   { key: 'health', label: '运营健康', description: 'Provider、同步、质量、票据、决策和导出健康评分' },
   { key: 'reminders', label: '提醒中心', description: '每日行动提醒、到期、稍后和确认状态' },
   { key: 'issueFocus', label: '期号焦点', description: '当前期、下一期、预测、票据、核验和账本结果' },
@@ -978,6 +991,93 @@ const LotteryWorkbenchPage = () => {
     summary?.latestPrediction?.id
   ]);
 
+  const priorityItems = useMemo<WorkbenchPriorityItem[]>(() => {
+    const items: WorkbenchPriorityItem[] = [];
+
+    (reminders?.items || [])
+      .filter(item => !item.acknowledgedAt)
+      .slice(0, 3)
+      .forEach(item => {
+        items.push({
+          key: `reminder-${item.key}-${item.fingerprint}`,
+          icon: <BellOutlined />,
+          title: item.title || item.key || '待处理提醒',
+          detail: item.message || '提醒等待确认',
+          status: item.status || 'TODO',
+          path: item.path || '/lottery/alerts',
+          actionLabel: '查看提醒'
+        });
+      });
+
+    actionQueueItems.slice(0, 4).forEach(item => {
+      items.push({
+        key: `queue-${item.key}`,
+        icon: <WarningOutlined />,
+        title: item.title,
+        detail: item.detail,
+        status: item.status || 'TODO',
+        count: item.count,
+        path: item.path,
+        actionLabel: item.path ? '处理待办' : '查看待办'
+      });
+    });
+
+    if (operationsHealth?.status && operationsHealth.status !== 'PASS') {
+      items.push({
+        key: 'operations-health-priority',
+        icon: <SafetyCertificateOutlined />,
+        title: '运营健康需要确认',
+        detail: operationsHealth.message || '健康评分存在提醒',
+        status: operationsHealth.status,
+        count: operationsHealth.warningCount || operationsHealth.pendingActionCount,
+        path: '/lottery/governance',
+        actionLabel: '查看健康'
+      });
+    }
+
+    if ((summary?.pendingTicketCount || 0) > 0) {
+      items.push({
+        key: 'pending-ticket-priority',
+        icon: <FileTextOutlined />,
+        title: '核验待处理票据',
+        detail: `${summary?.pendingTicketCount || 0} 张票据等待核验或归档`,
+        status: 'PENDING',
+        count: summary?.pendingTicketCount,
+        path: dailyState?.prizeCheckState?.path || dailyState?.ticketState?.path || savedTicketsPath,
+        actionLabel: '去核验'
+      });
+    }
+
+    const releaseIssue = (releaseCheckSummary?.checks || []).find(item => item.status && item.status !== 'PASS');
+    if (releaseIssue) {
+      items.push({
+        key: `release-${releaseIssue.key || releaseIssue.label || 'check'}`,
+        icon: <CheckCircleOutlined />,
+        title: releaseIssue.label || '发布检查',
+        detail: releaseIssue.message || releaseCheckSummary?.message || '发布检查需要确认',
+        status: releaseIssue.status,
+        count: releaseIssue.pendingCount,
+        path: releaseIssue.path || '/lottery/exports',
+        actionLabel: '查看检查'
+      });
+    }
+
+    return items.slice(0, 8);
+  }, [
+    actionQueueItems,
+    dailyState?.prizeCheckState?.path,
+    dailyState?.ticketState?.path,
+    operationsHealth?.message,
+    operationsHealth?.pendingActionCount,
+    operationsHealth?.status,
+    operationsHealth?.warningCount,
+    releaseCheckSummary?.checks,
+    releaseCheckSummary?.message,
+    reminders?.items,
+    savedTicketsPath,
+    summary?.pendingTicketCount
+  ]);
+
   const actionQueueGroups = useMemo(() => {
     const groups = new Map<string, WorkbenchActionQueueItem[]>();
     actionQueueItems.forEach(item => {
@@ -1201,6 +1301,40 @@ const LotteryWorkbenchPage = () => {
               </button>
             ))}
           </section>
+        );
+      case 'priority':
+        return (
+          <Card
+            className="life-panel-card lottery-clean-panel lottery-workbench-priority-card"
+            title="今日优先事项"
+            extra={<Tag color={priorityItems.length ? 'orange' : 'green'}>{priorityItems.length ? `${priorityItems.length} 项` : '已清空'}</Tag>}
+          >
+            {priorityItems.length ? (
+              <div className="lottery-workbench-priority-list">
+                {priorityItems.map(item => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    disabled={!item.path}
+                    onClick={() => item.path && navigate(item.path)}
+                  >
+                    <span className="lottery-workbench-priority-icon">{item.icon}</span>
+                    <span>
+                      <strong>{item.title}</strong>
+                      <small>{item.detail}</small>
+                    </span>
+                    <Space size={6}>
+                      {item.count ? <em>{item.count}</em> : null}
+                      <Tag color={queueStatusColor(item.status)}>{item.status || 'TODO'}</Tag>
+                      <b>{item.actionLabel}</b>
+                    </Space>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <Empty description="暂无优先事项" />
+            )}
+          </Card>
         );
       case 'health':
         return (

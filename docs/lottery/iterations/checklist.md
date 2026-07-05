@@ -581,6 +581,19 @@ Goal: reduce visible menu density after V16 by keeping daily actions in front wh
 - [x] Update menu documentation and release-readiness copy for the rollback behavior.
 - [x] Run frontend smoke/build verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
+## Iteration 21: V18 Practical Frontend Tools
+
+Goal: add practical frontend helpers that reduce daily operating friction without changing the footer/navigation shell.
+
+### Week 1: Workbench Priority Actions
+
+- [x] Add a workbench "今日优先事项" panel that aggregates reminders, action queue items, operation health warnings, pending tickets, and release checks.
+- [x] Make each priority item actionable with a direct page handoff while reusing existing backend data and routes.
+- [x] Keep the feature inside workbench content only; do not adjust the navigation bar or footer styling.
+- [x] Add responsive styling for narrow screens so priority status and action labels wrap under the item body.
+- [x] Extend route smoke and release evidence for the priority workbench feature.
+- [x] Run frontend smoke/build verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.
