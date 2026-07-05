@@ -1,12 +1,12 @@
 {
   "target": "Iteration 20 Week 1 lottery navigation density smoke",
-  "generatedAt": "2026-07-05T07:14:45.953Z",
+  "generatedAt": "2026-07-05T07:22:45.224Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 14,
-  "checkCount": 315,
+  "checkCount": 316,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [

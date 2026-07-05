@@ -575,6 +575,7 @@ Goal: reduce visible menu density after V16 by keeping daily actions in front wh
 ### Week 1: Single-Row Lottery Navigation
 
 - [x] Collapse low-frequency top-level lottery groups from the persistent strip without adding 更多. Overview, mobile, review, insights, and settings appear in the strip only when active.
+- [x] Keep collapsed top-level groups reachable without a 更多 label. Overview, mobile, review, insights, and settings are available from the home shortcut menu.
 - [x] Remove the second-row child menu from the lottery footer. Prediction, execution, review, data, and insight children are reachable from their parent dropdowns instead of a persistent context strip.
 - [x] Preserve active low-frequency top-level groups in the single row so users keep orientation after entering overview, mobile, review, insights, or settings.
 - [x] Add smoke coverage for single-row navigation so future menu changes do not reintroduce the second row.

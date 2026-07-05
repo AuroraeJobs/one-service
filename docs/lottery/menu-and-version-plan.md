@@ -41,6 +41,7 @@ The current lottery navigation already has a strong exploratory surface. The tar
 ```
 
 Navigation density rule: the persistent lottery footer must stay single-row and must not render a 更多 menu. It should expose only daily/high-frequency groups: 工作台, 预测, 执行, and 数据. Low-frequency top-level groups appear in the strip only when active. Child routes are reachable from each visible group dropdown; do not add a second-row child menu.
+Low-frequency top-level groups still need a compact access point: keep 概览, 移动, 复盘, 图谱, and 设置 available from the home shortcut menu without labeling that entry as 更多.
 
 ## Existing Routes To Preserve
 

@@ -51,6 +51,7 @@ const run = async () => {
   record(navSource.includes("label: '概览'") && navSource.includes('secondary: true'), 'navigation', 'low-frequency top-level lottery groups can be collapsed');
   record(navSource.includes("label: '设置'") && navSource.includes('secondary: true'), 'navigation', 'lottery settings stays reachable without occupying the daily nav strip');
   record(!footerNavSource.includes('MoreOutlined') && !footerNavSource.includes('更多'), 'navigation', 'footer navigation does not render a more menu');
+  record(footerNavSource.includes('shortcutMenuItems') && footerNavSource.includes('season-footer-home'), 'navigation', 'collapsed top-level groups stay reachable from the home shortcut menu');
   record(!footerNavSource.includes('season-footer-context'), 'navigation', 'footer navigation does not render a second-row child menu');
   record(!appCssSource.includes('season-footer-context'), 'navigation', 'footer styles do not keep second-row child menu selectors');
 
