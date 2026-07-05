@@ -725,7 +725,14 @@
   gap: 6px;
   max-width: 100%;
   overflow-x: auto;
+  padding: 2px 0;
   scrollbar-width: thin;
+}
+
+.lottery-filter-preset-bar .ant-btn {
+  flex: 0 0 auto;
+  min-height: 28px;
+  border-radius: 8px;
 }
 
 .lottery-report-builder > .ant-space,
@@ -2620,6 +2627,7 @@
 }
 
 .lottery-recommendation-card-head strong {
+  overflow-wrap: anywhere;
   color: #111827;
 }
 
@@ -2634,6 +2642,7 @@
   display: flex;
   justify-content: space-between;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .lottery-recommendation-reasons {
@@ -2693,6 +2702,7 @@
   border-radius: 8px;
   background: #fff;
   cursor: pointer;
+  min-width: 0;
 }
 
 .lottery-mobile-metrics button > span {
@@ -2701,9 +2711,11 @@
   gap: 6px;
   color: #374151;
   font-size: 13px;
+  min-width: 0;
 }
 
 .lottery-mobile-metrics button strong {
+  overflow-wrap: anywhere;
   color: #111827;
   font-size: 24px;
   line-height: 1.1;
@@ -2736,12 +2748,18 @@
 }
 
 .lottery-mobile-list article strong {
+  overflow-wrap: anywhere;
   color: #111827;
   font-size: 15px;
 }
 
 .lottery-mobile-list .ant-btn {
   min-height: 40px;
+}
+
+.lottery-mobile-list .ant-space,
+.lottery-recommendation-lane .ant-space {
+  max-width: 100%;
 }
 
 .lottery-notebook-editor {
@@ -5983,6 +6001,19 @@ button.lottery-latest-vs-card:hover {
   .lottery-mobile-hero,
   .lottery-mobile-list article {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lottery-mobile-list .ant-space,
+  .lottery-recommendation-lane .ant-space {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .lottery-mobile-list .ant-btn,
+  .lottery-recommendation-lane .ant-btn {
+    flex: 0 0 auto;
   }
 
   .lottery-ticket-import-mobile-list {

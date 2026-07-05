@@ -464,6 +464,34 @@ const LotteryExportMaintenancePage = () => {
       path: '/lottery/exports'
     },
     {
+      key: 'v16-navigation-usability',
+      label: 'V16导航易用性',
+      status: 'PASS',
+      message: '底部导航提供当前分组子入口，减少彩票菜单查找成本',
+      path: '/lottery/workbench'
+    },
+    {
+      key: 'v16-operation-ergonomics',
+      label: 'V16操作体验',
+      status: 'PASS',
+      message: '票包和推荐操作具备默认值、确认提示和可读结果反馈',
+      path: '/lottery/ticket-packs'
+    },
+    {
+      key: 'v16-filter-readability',
+      label: 'V16筛选可读性',
+      status: 'PASS',
+      message: '票据、归因、推荐和审计页面提供常用预设筛选',
+      path: '/lottery/tickets'
+    },
+    {
+      key: 'v16-responsive-polish',
+      label: 'V16响应式打磨',
+      status: 'PASS',
+      message: '预设条、移动指挥和推荐卡片统一换行与横向操作布局',
+      path: '/lottery/mobile'
+    },
+    {
       key: 'decision-outcome-export',
       label: '决策复盘证据',
       status: 'PASS',

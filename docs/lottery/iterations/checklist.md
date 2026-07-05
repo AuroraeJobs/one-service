@@ -562,11 +562,11 @@ Goal: make the lottery frontend easier to navigate and operate day to day, with 
 
 ### Week 4: Visual Consistency And Release Quality
 
-- [ ] Review spacing, buttons, tags, progress indicators, and card density across the lottery module.
-- [ ] Fix mobile/desktop text overflow, cramped actions, and inconsistent wrapping on high-use pages.
-- [ ] Extend smoke fixture coverage for the new usability entry points and release evidence.
-- [ ] Update frontend usability documentation and version plan.
-- [ ] Run V16 verification, update docs, commit, and push.
+- [x] Review spacing, buttons, tags, progress indicators, and card density across the lottery module. Polished shared preset bars, recommendation cards, and mobile command cards without changing backend contracts.
+- [x] Fix mobile/desktop text overflow, cramped actions, and inconsistent wrapping on high-use pages. Added safer wrapping and horizontal action behavior for recommendation and mobile command card actions.
+- [x] Extend smoke fixture coverage for the new usability entry points and release evidence. Smoke fixture now targets V16 frontend usability release evidence and checks navigation, operation, filtering, responsive, and release-readiness copy.
+- [x] Update frontend usability documentation and version plan. Version plan now marks the V16 visual consistency and release quality slice as shipped.
+- [x] Run V16 verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
 ## Documentation And Delivery
 
