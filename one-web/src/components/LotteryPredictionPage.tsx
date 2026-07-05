@@ -7,6 +7,7 @@ import {
   FileTextOutlined,
   HeartOutlined,
   HistoryOutlined,
+  LineChartOutlined,
   PieChartOutlined,
   ReloadOutlined
 } from '@ant-design/icons';
@@ -179,6 +180,9 @@ const LotteryPredictionPage = () => {
           </Button>
           <Button icon={<HeartOutlined />} onClick={() => navigate('/lottery/analysis?tab=prediction')}>
             摇奖
+          </Button>
+          <Button icon={<LineChartOutlined />} onClick={() => navigate('/lottery/deep-analysis')}>
+            深度
           </Button>
           <Button icon={<HistoryOutlined />} onClick={() => navigate('/lottery/predictions/history')}>
             历史

@@ -628,6 +628,15 @@ Goal: make the astronaut feature useful as an analysis surface. The core object 
 - [x] Extend route smoke and release evidence for number probability drilldown.
 - [x] Run frontend smoke/build verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
+### Week 6: Deep Pattern Analysis Page
+
+- [x] Add `/lottery/deep-analysis` as a dedicated deep pattern analysis page based on the available report direction and existing lottery statistics.
+- [x] Combine history frequency, recent drift, omission pressure, odd/even, big/small, zone coverage, hot/cold crossover, and candidate lines into one analysis workflow.
+- [x] Keep blue fleet analysis planet-rhythm-only and avoid hexagram semantics in blue number explanations.
+- [x] Add a prediction-page action entry without changing the overall navigation or footer style.
+- [x] Extend route smoke and release evidence for deep pattern analysis.
+- [x] Run frontend smoke/build verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

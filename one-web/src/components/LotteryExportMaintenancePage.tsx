@@ -513,6 +513,13 @@ const LotteryExportMaintenancePage = () => {
       path: '/lottery/prediction'
     },
     {
+      key: 'v18-deep-pattern-analysis',
+      label: 'V18深度规律分析',
+      status: 'PASS',
+      message: '新增深度规律分析页，综合频次、近期漂移、遗漏压力、奇偶大小、区间覆盖和蓝舰队星球节奏',
+      path: '/lottery/deep-analysis'
+    },
+    {
       key: 'decision-outcome-export',
       label: '决策复盘证据',
       status: 'PASS',

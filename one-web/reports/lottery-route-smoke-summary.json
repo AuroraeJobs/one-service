@@ -1,12 +1,12 @@
 {
   "target": "Iteration 21 Week 4 number probability pressure smoke",
-  "generatedAt": "2026-07-05T12:16:24.341Z",
+  "generatedAt": "2026-07-05T12:29:34.055Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
-  "routeCount": 16,
-  "checkCount": 349,
+  "routeCount": 17,
+  "checkCount": 358,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
@@ -25,6 +25,14 @@
       "mockApiCount": 6,
       "emptyStateCount": 9,
       "errorStateCount": 3
+    },
+    {
+      "route": "/lottery/deep-analysis",
+      "label": "深度规律分析",
+      "component": "LotteryDeepAnalysisPage",
+      "mockApiCount": 0,
+      "emptyStateCount": 6,
+      "errorStateCount": 0
     },
     {
       "route": "/lottery/mobile",
@@ -135,7 +143,7 @@
       "label": "导出审计",
       "component": "LotteryExportMaintenancePage",
       "mockApiCount": 4,
-      "emptyStateCount": 20,
+      "emptyStateCount": 21,
       "errorStateCount": 4
     }
   ]

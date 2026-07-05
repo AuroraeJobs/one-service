@@ -4973,6 +4973,208 @@ button.lottery-latest-vs-card:hover {
   gap: 6px;
 }
 
+.lottery-deep-analysis-layout {
+  display: grid;
+  gap: 14px;
+}
+
+.lottery-deep-hero-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.lottery-deep-method-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.lottery-deep-method-strip > div,
+.lottery-deep-signal,
+.lottery-deep-number-card,
+.lottery-deep-candidate-card {
+  min-width: 0;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-deep-method-strip > div {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+}
+
+.lottery-deep-method-strip strong {
+  color: var(--app-text);
+  font-size: 20px;
+  line-height: 1.1;
+}
+
+.lottery-deep-method-strip span,
+.lottery-deep-signal span,
+.lottery-deep-number-head span,
+.lottery-deep-number-meta span,
+.lottery-deep-number-bars span,
+.lottery-deep-candidate-head span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lottery-deep-signal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.lottery-deep-signal {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border-left-width: 4px;
+}
+
+.lottery-deep-signal > div {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.lottery-deep-signal strong,
+.lottery-deep-candidate-head strong {
+  color: var(--app-text);
+  font-size: 14px;
+}
+
+.lottery-deep-signal b {
+  flex: 0 0 auto;
+  color: var(--app-text);
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.lottery-deep-signal-red {
+  border-left-color: #ff3b30;
+}
+
+.lottery-deep-signal-blue {
+  border-left-color: #0071e3;
+}
+
+.lottery-deep-signal-green {
+  border-left-color: #34c759;
+}
+
+.lottery-deep-signal-purple {
+  border-left-color: #5856d6;
+}
+
+.lottery-deep-signal-orange {
+  border-left-color: #ff9500;
+}
+
+.lottery-deep-number-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 10px;
+}
+
+.lottery-deep-number-card {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.lottery-deep-number-head,
+.lottery-deep-candidate-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.lottery-deep-number-head > strong {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 14px;
+}
+
+.lottery-deep-number-card-red .lottery-deep-number-head > strong {
+  background: #ff3b30;
+}
+
+.lottery-deep-number-card-blue .lottery-deep-number-head > strong {
+  background: #0071e3;
+}
+
+.lottery-deep-number-head > div,
+.lottery-deep-candidate-head > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.lottery-deep-number-head b {
+  color: var(--app-text);
+  font-size: 13px;
+}
+
+.lottery-deep-number-meta,
+.lottery-deep-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lottery-deep-number-meta span {
+  padding: 2px 7px;
+  border-radius: 8px;
+  background: rgba(127, 127, 127, 0.12);
+}
+
+.lottery-deep-number-bars {
+  display: grid;
+  gap: 7px;
+}
+
+.lottery-deep-number-bars > div {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 8px;
+}
+
+.lottery-deep-number-bars b {
+  color: var(--module-accent, #ff3b30);
+  font-size: 12px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.lottery-deep-candidate-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.lottery-deep-candidate-card {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+
+.lottery-deep-candidate-head {
+  align-items: flex-start;
+}
+
 .lottery-simple-stat-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

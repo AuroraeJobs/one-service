@@ -76,6 +76,26 @@
       }
     },
     {
+      "route": "/lottery/deep-analysis",
+      "label": "深度规律分析",
+      "component": "LotteryDeepAnalysisPage",
+      "componentFile": "src/components/LotteryDeepAnalysisPage.tsx",
+      "mockApis": [],
+      "emptyStates": ["深度规律分析", "综合方法雷达", "号码可能性雷达", "候选线索", "红舰队", "蓝舰队星球"],
+      "errorStates": [],
+      "fixtureData": {
+        "analysisMethods": [
+          "history frequency",
+          "recent drift",
+          "omission pressure",
+          "odd even",
+          "big small",
+          "zone coverage",
+          "blue planet rhythm"
+        ]
+      }
+    },
+    {
       "route": "/lottery/mobile",
       "label": "移动",
       "component": "LotteryMobileCommandPage",
@@ -443,12 +463,12 @@
         "lotteryExportApi.maintenanceSummary",
         "lotteryExportApi.cleanupDryRun"
       ],
-      "emptyStates": ["本次导出没有数据", "暂无数据", "暂无审计事件", "暂无集合状态", "暂无缓存状态", "复盘运营", "月末复盘", "归因闭环包", "推荐生命周期包", "移动指挥包", "V15治理证据包", "V15闭环证据包", "V16导航易用性", "V16操作体验", "V16筛选可读性", "V16响应式打磨", "V18今日优先事项", "V18航行记录分析", "V18号码综合可能性", "前端发布就绪"],
+      "emptyStates": ["本次导出没有数据", "暂无数据", "暂无审计事件", "暂无集合状态", "暂无缓存状态", "复盘运营", "月末复盘", "归因闭环包", "推荐生命周期包", "移动指挥包", "V15治理证据包", "V15闭环证据包", "V16导航易用性", "V16操作体验", "V16筛选可读性", "V16响应式打磨", "V18今日优先事项", "V18航行记录分析", "V18号码综合可能性", "V18深度规律分析", "前端发布就绪"],
       "errorStates": ["读取彩票导出审计失败", "导出彩票数据失败", "生成彩票报表失败", "执行彩票维护 dry-run 失败"],
       "fixtureData": {
         "releaseEvidence": {
           "smokeCommand": "npm run lottery:smoke",
-          "v16Checks": ["navigation usability", "operation ergonomics", "filter readability", "responsive polish", "release readiness", "single-row lottery nav", "all top-level groups visible", "no more menu", "no second-row child nav", "workbench priority actions", "astronaut voyage analysis", "blue planet-only analysis", "number probability pressure", "number probability drilldown"],
+          "v16Checks": ["navigation usability", "operation ergonomics", "filter readability", "responsive polish", "release readiness", "single-row lottery nav", "all top-level groups visible", "no more menu", "no second-row child nav", "workbench priority actions", "astronaut voyage analysis", "blue planet-only analysis", "number probability pressure", "number probability drilldown", "deep pattern analysis"],
           "report": "reports/lottery-route-smoke-summary.json"
         }
       }

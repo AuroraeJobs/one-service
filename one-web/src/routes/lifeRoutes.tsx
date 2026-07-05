@@ -28,6 +28,7 @@ import LotteryAlertPage from '../components/LotteryAlertPage';
 import LotteryBacktestDetailPage from '../components/LotteryBacktestDetailPage';
 import LotteryBacktestPage from '../components/LotteryBacktestPage';
 import LotteryDataQualityPage from '../components/LotteryDataQualityPage';
+import LotteryDeepAnalysisPage from '../components/LotteryDeepAnalysisPage';
 import LotteryLedgerPage from '../components/LotteryLedgerPage';
 import LotteryMobileCommandPage from '../components/LotteryMobileCommandPage';
 import LotteryMonthEndReviewPage from '../components/LotteryMonthEndReviewPage';
@@ -95,6 +96,7 @@ export const createProtectedRoutes = (isTabVisible: boolean): ProtectedRouteConf
   { path: '/lottery/mobile', element: <LotteryMobileCommandPage /> },
   { path: '/lottery/month-end', element: <LotteryMonthEndReviewPage /> },
   { path: '/lottery/prediction', element: <LotteryPredictionPage /> },
+  { path: '/lottery/deep-analysis', element: <LotteryDeepAnalysisPage /> },
   { path: '/lottery/predictions/decision', element: <LotteryPredictionDecisionPage /> },
   { path: '/lottery/experiments', element: <LotteryExperimentPage /> },
   { path: '/lottery/experiments/:id', element: <LotteryExperimentDetailPage /> },
