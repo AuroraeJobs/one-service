@@ -45,6 +45,9 @@ const run = async () => {
   record(fixture.mode === 'mocked-fixture', 'fixture', 'uses mocked fixture mode');
   record(fixture.providerNetwork === 'not-required', 'fixture', 'does not require live lottery provider network');
   record(Array.isArray(fixture.consoleErrors) && fixture.consoleErrors.length === 0, 'fixture', 'declares zero expected console errors');
+  record(navSource.includes('secondary?: boolean'), 'navigation', 'supports secondary child nav entries');
+  record(navSource.includes("label: '研究'") && navSource.includes('secondary: true'), 'navigation', 'prediction research entries can be collapsed from the context strip');
+  record(navSource.includes("label: '历史'") && navSource.includes('secondary: true'), 'navigation', 'prediction history stays available from the parent dropdown');
 
   for (const route of fixture.routes || []) {
     const scope = route.route;

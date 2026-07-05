@@ -20,6 +20,7 @@ const SeasonFooterNav = () => {
     return activePath === item.path || childItems.some(child => activePath === child.path);
   });
   const activeGroupChildren = activeGroup?.children || [];
+  const visibleGroupChildren = activeGroupChildren.filter(child => !child.secondary || activePath === child.path);
 
   if (items.length === 0) return null;
 
@@ -81,7 +82,7 @@ const SeasonFooterNav = () => {
           })}
         </nav>
       </div>
-      {activeGroup && activeGroupChildren.length ? (
+      {activeGroup && visibleGroupChildren.length ? (
         <div className="season-footer-context" aria-label={`${activeGroup.label}子导航`}>
           <span className="season-footer-context-label">
             <span className="season-footer-icon" style={{ color: activeGroup.accent }}>
@@ -90,7 +91,7 @@ const SeasonFooterNav = () => {
             {activeGroup.label}
           </span>
           <div className="season-footer-context-items">
-            {activeGroupChildren.map(child => {
+            {visibleGroupChildren.map(child => {
               const isActive = activePath === child.path;
               return (
                 <button

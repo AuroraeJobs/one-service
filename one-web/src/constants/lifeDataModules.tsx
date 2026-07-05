@@ -67,6 +67,7 @@ export interface LifeSubNavItem {
   label: string;
   icon: ReactNode;
   accent: string;
+  secondary?: boolean;
   children?: LifeSubNavItem[];
 }
 
@@ -220,11 +221,11 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
         { id: 'lottery-prediction-decision', moduleKey: 'lottery', path: '/lottery/predictions/decision', label: '决策', icon: <SafetyCertificateOutlined />, accent: '#34c759' },
         { id: 'lottery-experiments', moduleKey: 'lottery', path: '/lottery/experiments', label: '实验', icon: <ExperimentOutlined />, accent: '#00c7be' },
         { id: 'lottery-backtests', moduleKey: 'lottery', path: '/lottery/backtests', label: '回测', icon: <BarChartOutlined />, accent: '#0071e3' },
-        { id: 'lottery-research', moduleKey: 'lottery', path: '/lottery/research', label: '研究', icon: <PieChartOutlined />, accent: '#5856d6' },
-        { id: 'lottery-strategy-portfolios', moduleKey: 'lottery', path: '/lottery/strategy-portfolios', label: '组合', icon: <AppstoreOutlined />, accent: '#00c7be' },
-        { id: 'lottery-simulator', moduleKey: 'lottery', path: '/lottery/simulator', label: '沙盘', icon: <DotChartOutlined />, accent: '#ff3b30' },
-        { id: 'lottery-research-notebook', moduleKey: 'lottery', path: '/lottery/research/notebook', label: '笔记', icon: <FileTextOutlined />, accent: '#5856d6' },
-        { id: 'lottery-prediction-history', moduleKey: 'lottery', path: '/lottery/predictions/history', label: '历史', icon: <HistoryOutlined />, accent: '#5856d6' }
+        { id: 'lottery-research', moduleKey: 'lottery', path: '/lottery/research', label: '研究', icon: <PieChartOutlined />, accent: '#5856d6', secondary: true },
+        { id: 'lottery-strategy-portfolios', moduleKey: 'lottery', path: '/lottery/strategy-portfolios', label: '组合', icon: <AppstoreOutlined />, accent: '#00c7be', secondary: true },
+        { id: 'lottery-simulator', moduleKey: 'lottery', path: '/lottery/simulator', label: '沙盘', icon: <DotChartOutlined />, accent: '#ff3b30', secondary: true },
+        { id: 'lottery-research-notebook', moduleKey: 'lottery', path: '/lottery/research/notebook', label: '笔记', icon: <FileTextOutlined />, accent: '#5856d6', secondary: true },
+        { id: 'lottery-prediction-history', moduleKey: 'lottery', path: '/lottery/predictions/history', label: '历史', icon: <HistoryOutlined />, accent: '#5856d6', secondary: true }
       ]
     },
     {

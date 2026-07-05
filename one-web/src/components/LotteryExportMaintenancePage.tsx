@@ -467,7 +467,7 @@ const LotteryExportMaintenancePage = () => {
       key: 'v16-navigation-usability',
       label: 'V16导航易用性',
       status: 'PASS',
-      message: '底部导航提供当前分组子入口，减少彩票菜单查找成本',
+      message: '底部导航只展示常用子入口，研究类入口保留在分组下拉，降低彩票菜单视觉噪音',
       path: '/lottery/workbench'
     },
     {

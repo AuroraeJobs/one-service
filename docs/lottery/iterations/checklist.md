@@ -568,6 +568,18 @@ Goal: make the lottery frontend easier to navigate and operate day to day, with 
 - [x] Update frontend usability documentation and version plan. Version plan now marks the V16 visual consistency and release quality slice as shipped.
 - [x] Run V16 verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
+## Iteration 20: V17 Navigation Density And Daily Focus
+
+Goal: reduce visible menu density after V16 by keeping daily actions in front while preserving advanced routes behind grouped menus.
+
+### Week 1: Prediction Context Strip Compression
+
+- [x] Collapse low-frequency prediction children from the persistent context strip. Research, portfolio, simulator, notebook, and history remain reachable from the parent prediction dropdown and appear in the strip only when active.
+- [x] Preserve high-frequency prediction actions in the context strip. Current prediction, decision, experiment, and backtest stay visible for daily work.
+- [x] Add smoke coverage for secondary child navigation so future menu changes do not re-expand the full prediction group by accident.
+- [x] Update menu documentation and release-readiness copy for the compact prediction navigation behavior.
+- [x] Run frontend smoke/build verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

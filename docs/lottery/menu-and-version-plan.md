@@ -1,6 +1,6 @@
 # Lottery Menu And Version Plan
 
-Last updated: 2026-07-04
+Last updated: 2026-07-05
 
 ## Target Menu Tree
 
@@ -16,11 +16,11 @@ The current lottery navigation already has a strong exploratory surface. The tar
   - 决策
   - 策略实验
   - 回测报告
-  - 研究对比
-  - 组合
-  - 沙盘
-  - 笔记
-  - 历史
+  - 研究对比（默认收纳）
+  - 组合（默认收纳）
+  - 沙盘（默认收纳）
+  - 笔记（默认收纳）
+  - 历史（默认收纳）
 - 执行
   - 票包
   - 票据
@@ -52,6 +52,8 @@ The current lottery navigation already has a strong exploratory surface. The tar
   - 节气/专题
 - 设置
 ```
+
+Navigation density rule: grouped child strips should expose only daily/high-frequency actions. Research, history, and advanced analysis entries stay reachable from the parent dropdown and appear in the strip only when they are the active page.
 
 ## Existing Routes To Preserve
 

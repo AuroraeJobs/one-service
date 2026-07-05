@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 19 Week 4 lottery frontend usability release smoke",
-  "generatedAt": "2026-07-05T06:29:29.843Z",
+  "target": "Iteration 20 Week 1 lottery navigation density smoke",
+  "generatedAt": "2026-07-05T06:42:04.922Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 14,
-  "checkCount": 309,
+  "checkCount": 312,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
