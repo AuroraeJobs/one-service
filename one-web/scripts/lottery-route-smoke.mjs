@@ -59,6 +59,9 @@ const run = async () => {
     let componentSource = '';
     try {
       componentSource = await readText(route.componentFile);
+      for (const extraFile of route.additionalComponentFiles || []) {
+        componentSource += `\n${await readText(extraFile)}`;
+      }
       record(true, scope, `component file exists: ${route.componentFile}`);
     } catch (error) {
       record(false, scope, `component file exists: ${route.componentFile}`);

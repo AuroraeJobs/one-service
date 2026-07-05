@@ -116,6 +116,8 @@ export interface LotteryNumberProbability {
   historyCount: number;
   recentCount: number;
   currentOmission: number;
+  averageOmission: number;
+  omissionPressure: number;
   omissionRatio: number;
   oddEvenLabel?: string;
   sizeLabel?: string;
@@ -820,6 +822,20 @@ const buildGroupPressure = (
   return counts.map(count => roundTwo((expected - count) / expected));
 };
 
+const getOmissionPressure = (omission?: NumberOmissionItem) => {
+  if (!omission || omission.averageOmission <= 0) {
+    return 0;
+  }
+  return roundTwo(omission.currentOmission / omission.averageOmission);
+};
+
+const getOmissionTrendFactor = (pressure: number) => {
+  if (pressure >= 2.4) return '极长遗漏回补';
+  if (pressure >= 1.6) return '遗漏显著超均';
+  if (pressure >= 1) return '遗漏超过均值';
+  return '遗漏未达均值';
+};
+
 const buildProbabilityAnalysis = (
   draws: LotteryDraw[],
   recentDraws: LotteryDraw[],
@@ -855,11 +871,12 @@ const buildProbabilityAnalysis = (
     const historyCount = getNumberFrequency(redFrequency, number);
     const recentCount = getNumberFrequency(recentRedFrequency, number);
     const omission = getNumberOmission(redOmissions, number);
+    const omissionPressure = getOmissionPressure(omission);
     const zone = getRedZone(value);
     const group = getRedFourGroup(value);
     const historyScore = Math.min(1.35, historyCount / redExpectedCount) * 24;
     const recentScore = Math.min(1.5, recentCount / recentRedExpectedCount) * 16;
-    const omissionScore = Math.max(0, 18 - Math.abs((omission?.omissionRatio || 0) - 1.35) * 8);
+    const omissionScore = Math.min(34, Math.max(0, omissionPressure - 0.55) * 14);
     const oddScore = (value % 2 !== 0 ? oddPressure : -oddPressure) * 8 + 8;
     const bigScore = (value >= 17 ? bigPressure : -bigPressure) * 8 + 8;
     const zoneScore = Math.max(0, 10 + zonePressure[zone.index] * 10);
@@ -869,7 +886,8 @@ const buildProbabilityAnalysis = (
     const factors = [
       historyCount >= redExpectedCount ? '历史偏热' : '历史偏冷',
       recentCount >= recentRedExpectedCount ? '近期活跃' : '近期平稳',
-      (omission?.omissionRatio || 0) >= 1.2 ? '遗漏回补' : '遗漏正常',
+      getOmissionTrendFactor(omissionPressure),
+      `遗漏压力${omissionPressure || 0}x`,
       `${value % 2 !== 0 ? '奇' : '偶'}性匹配`,
       `${value >= 17 ? '大' : '小'}号匹配`,
       `${zone.label}压力${zonePressure[zone.index] >= 0 ? '偏高' : '偏低'}`,
@@ -885,6 +903,8 @@ const buildProbabilityAnalysis = (
       historyCount,
       recentCount,
       currentOmission: omission?.currentOmission || 0,
+      averageOmission: roundTwo(omission?.averageOmission || 0),
+      omissionPressure,
       omissionRatio: omission?.omissionRatio || 0,
       oddEvenLabel: value % 2 !== 0 ? '奇' : '偶',
       sizeLabel: value >= 17 ? '大' : '小',
@@ -899,10 +919,11 @@ const buildProbabilityAnalysis = (
     const historyCount = getNumberFrequency(blueFrequency, number);
     const recentCount = getNumberFrequency(recentBlueFrequency, number);
     const omission = getNumberOmission(blueOmissions, number);
+    const omissionPressure = getOmissionPressure(omission);
     const groupLabel = value <= 4 ? '01-04' : value <= 8 ? '05-08' : value <= 12 ? '09-12' : '13-16';
     const historyScore = Math.min(1.35, historyCount / blueExpectedCount) * 30;
     const recentScore = Math.min(1.6, recentCount / recentBlueExpectedCount) * 18;
-    const omissionScore = Math.max(0, 28 - Math.abs((omission?.omissionRatio || 0) - 1.45) * 10);
+    const omissionScore = Math.min(38, Math.max(0, omissionPressure - 0.5) * 16);
     const balanceScore = Math.max(0, 14 - Math.abs(value - 8.5) * 1.2);
     const score = Math.max(1, historyScore + recentScore + omissionScore + balanceScore);
 
@@ -915,6 +936,8 @@ const buildProbabilityAnalysis = (
       historyCount,
       recentCount,
       currentOmission: omission?.currentOmission || 0,
+      averageOmission: roundTwo(omission?.averageOmission || 0),
+      omissionPressure,
       omissionRatio: omission?.omissionRatio || 0,
       oddEvenLabel: value % 2 !== 0 ? '奇' : '偶',
       sizeLabel: value >= 9 ? '大' : '小',
@@ -922,7 +945,8 @@ const buildProbabilityAnalysis = (
       factors: [
         historyCount >= blueExpectedCount ? '历史偏热' : '历史偏冷',
         recentCount >= recentBlueExpectedCount ? '近期活跃' : '近期平稳',
-        (omission?.omissionRatio || 0) >= 1.2 ? '遗漏回补' : '遗漏正常',
+        getOmissionTrendFactor(omissionPressure),
+        `遗漏压力${omissionPressure || 0}x`,
         `${groupLabel}小组`
       ]
     };

@@ -611,6 +611,15 @@ Goal: make the astronaut feature useful as an analysis surface. The core object 
 - [x] Extend route smoke and release evidence so blue fleet remains planet-analysis-only.
 - [x] Run frontend smoke/build verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
+### Week 4: Number Probability Pressure Analysis
+
+- [x] Strengthen number probability scoring with explicit omission pressure: current consecutive absence divided by historical average omission.
+- [x] Make omission pressure monotonic after the historical average, so a number that remains absent keeps gaining comeback pressure until capped.
+- [x] Keep frequency, recent activity, odd/even, size, zone, and group structure in the comprehensive score.
+- [x] Show average omission and pressure multiplier in the probability detail UI with explanatory copy.
+- [x] Extend route smoke and release evidence for number probability pressure analysis.
+- [x] Run frontend smoke/build verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

@@ -551,6 +551,8 @@ const ProbabilityDetail = ({ item }: { item: LotteryNumberProbability }) => (
       <span>历史 {item.historyCount}</span>
       <span>近期 {item.recentCount}</span>
       <span>遗漏 {item.currentOmission}</span>
+      <span>均遗 {item.averageOmission}</span>
+      <span>压力 {item.omissionPressure}x</span>
       <span>{item.oddEvenLabel}</span>
       <span>{item.sizeLabel}</span>
       {item.zoneLabel && <span>{item.zoneLabel}</span>}
@@ -823,7 +825,7 @@ const LotteryPredictionInsights = ({
         <div className="lottery-card-title-row">
           <div>
             <h2>号码概率分析</h2>
-            <p>结合历史次数、奇偶组合、三/四小组、大小分组、方差和标准差。</p>
+            <p>综合历史频次、近期活跃、遗漏压力、奇偶性、大小分组和区间结构；遗漏超过平均后，未出现时间越长，回补压力越高。</p>
           </div>
           <FieldTimeOutlined />
         </div>

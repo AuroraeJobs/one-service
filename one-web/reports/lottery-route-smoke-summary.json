@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 21 Week 2 astronaut voyage analysis smoke",
-  "generatedAt": "2026-07-05T11:46:36.904Z",
+  "target": "Iteration 21 Week 4 number probability pressure smoke",
+  "generatedAt": "2026-07-05T11:59:53.595Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
-  "routeCount": 15,
-  "checkCount": 328,
+  "routeCount": 16,
+  "checkCount": 349,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
@@ -17,6 +17,14 @@
       "mockApiCount": 12,
       "emptyStateCount": 9,
       "errorStateCount": 4
+    },
+    {
+      "route": "/lottery/prediction",
+      "label": "号码综合可能性",
+      "component": "LotteryPredictionPage",
+      "mockApiCount": 6,
+      "emptyStateCount": 6,
+      "errorStateCount": 3
     },
     {
       "route": "/lottery/mobile",
@@ -127,7 +135,7 @@
       "label": "导出审计",
       "component": "LotteryExportMaintenancePage",
       "mockApiCount": 4,
-      "emptyStateCount": 19,
+      "emptyStateCount": 20,
       "errorStateCount": 4
     }
   ]

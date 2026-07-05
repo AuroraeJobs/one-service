@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 21 Week 2 astronaut voyage analysis smoke",
+  "target": "Iteration 21 Week 4 number probability pressure smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -48,6 +48,29 @@
             "dueCount": 1,
             "groups": ["开奖准备", "同步", "决策复盘"]
           }
+        }
+      }
+    },
+    {
+      "route": "/lottery/prediction",
+      "label": "号码综合可能性",
+      "component": "LotteryPredictionPage",
+      "componentFile": "src/components/LotteryPredictionPage.tsx",
+      "additionalComponentFiles": ["src/components/lottery/LotteryPredictionInsights.tsx"],
+      "mockApis": [
+        "lotteryPreferenceApi.preference",
+        "lotteryTrainingApi.start",
+        "lotteryTrainingApi.status",
+        "lotteryTrainingApi.latestPrediction",
+        "lotteryTrainingApi.latestActualRecord",
+        "lotteryTicketApi.saveTicket"
+      ],
+      "emptyStates": ["号码概率分析", "遗漏压力", "均遗", "压力", "目标奇偶", "目标大小"],
+      "errorStates": ["规则训练失败，请检查后端服务", "读取训练状态失败，请检查后端服务", "自动保存预测票据失败"],
+      "fixtureData": {
+        "probabilityPressure": {
+          "signals": ["history frequency", "recent frequency", "current omission", "average omission", "odd even", "size zone"],
+          "rule": "current omission above average raises pressure and continues increasing while absent"
         }
       }
     },
@@ -419,12 +442,12 @@
         "lotteryExportApi.maintenanceSummary",
         "lotteryExportApi.cleanupDryRun"
       ],
-      "emptyStates": ["本次导出没有数据", "暂无数据", "暂无审计事件", "暂无集合状态", "暂无缓存状态", "复盘运营", "月末复盘", "归因闭环包", "推荐生命周期包", "移动指挥包", "V15治理证据包", "V15闭环证据包", "V16导航易用性", "V16操作体验", "V16筛选可读性", "V16响应式打磨", "V18今日优先事项", "V18航行记录分析", "前端发布就绪"],
+      "emptyStates": ["本次导出没有数据", "暂无数据", "暂无审计事件", "暂无集合状态", "暂无缓存状态", "复盘运营", "月末复盘", "归因闭环包", "推荐生命周期包", "移动指挥包", "V15治理证据包", "V15闭环证据包", "V16导航易用性", "V16操作体验", "V16筛选可读性", "V16响应式打磨", "V18今日优先事项", "V18航行记录分析", "V18号码综合可能性", "前端发布就绪"],
       "errorStates": ["读取彩票导出审计失败", "导出彩票数据失败", "生成彩票报表失败", "执行彩票维护 dry-run 失败"],
       "fixtureData": {
         "releaseEvidence": {
           "smokeCommand": "npm run lottery:smoke",
-          "v16Checks": ["navigation usability", "operation ergonomics", "filter readability", "responsive polish", "release readiness", "single-row lottery nav", "all top-level groups visible", "no more menu", "no second-row child nav", "workbench priority actions", "astronaut voyage analysis", "blue planet-only analysis"],
+          "v16Checks": ["navigation usability", "operation ergonomics", "filter readability", "responsive polish", "release readiness", "single-row lottery nav", "all top-level groups visible", "no more menu", "no second-row child nav", "workbench priority actions", "astronaut voyage analysis", "blue planet-only analysis", "number probability pressure"],
           "report": "reports/lottery-route-smoke-summary.json"
         }
       }
