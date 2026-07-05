@@ -8,19 +8,17 @@ The current lottery navigation already has a strong exploratory surface. The tar
 
 ```text
 彩票
-- 概览
 - 工作台
-- 移动
 - 预测
   - 当前
   - 决策
   - 策略实验
   - 回测报告
-  - 研究对比（默认收纳）
-  - 组合（默认收纳）
-  - 沙盘（默认收纳）
-  - 笔记（默认收纳）
-  - 历史（默认收纳）
+  - 研究对比
+  - 组合
+  - 沙盘
+  - 笔记
+  - 历史
 - 执行
   - 票包
   - 票据
@@ -40,20 +38,15 @@ The current lottery navigation already has a strong exploratory surface. The tar
   - 分组
   - 分布
   - 宇航员
-- 图谱
-  - 幻境
-  - 星球
-  - 能量
-  - 累计
-  - 集齐
-  - 位置
-  - 可视化
-  - 象数
-  - 节气/专题
-- 设置
+- 更多
+  - 概览
+  - 移动
+  - 复盘
+  - 图谱
+  - 设置
 ```
 
-Navigation density rule: grouped child strips should expose only daily/high-frequency actions. Research, history, and advanced analysis entries stay reachable from the parent dropdown and appear in the strip only when they are the active page.
+Navigation density rule: the persistent lottery footer must stay single-row. It should expose only daily/high-frequency groups: 工作台, 预测, 执行, 数据, and 更多. Low-frequency top-level groups stay reachable from 更多 and appear in the strip only when active. Child routes are reachable from each group dropdown; do not add a second-row child menu.
 
 ## Existing Routes To Preserve
 

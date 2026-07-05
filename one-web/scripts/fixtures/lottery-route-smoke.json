@@ -405,7 +405,7 @@
       "fixtureData": {
         "releaseEvidence": {
           "smokeCommand": "npm run lottery:smoke",
-          "v16Checks": ["navigation usability", "operation ergonomics", "filter readability", "responsive polish", "release readiness", "collapsed secondary prediction nav"],
+          "v16Checks": ["navigation usability", "operation ergonomics", "filter readability", "responsive polish", "release readiness", "single-row lottery nav", "collapsed primary lottery nav"],
           "report": "reports/lottery-route-smoke-summary.json"
         }
       }

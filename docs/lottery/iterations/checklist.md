@@ -572,12 +572,13 @@ Goal: make the lottery frontend easier to navigate and operate day to day, with 
 
 Goal: reduce visible menu density after V16 by keeping daily actions in front while preserving advanced routes behind grouped menus.
 
-### Week 1: Prediction Context Strip Compression
+### Week 1: Single-Row Lottery Navigation
 
-- [x] Collapse low-frequency prediction children from the persistent context strip. Research, portfolio, simulator, notebook, and history remain reachable from the parent prediction dropdown and appear in the strip only when active.
-- [x] Preserve high-frequency prediction actions in the context strip. Current prediction, decision, experiment, and backtest stay visible for daily work.
-- [x] Add smoke coverage for secondary child navigation so future menu changes do not re-expand the full prediction group by accident.
-- [x] Update menu documentation and release-readiness copy for the compact prediction navigation behavior.
+- [x] Collapse low-frequency top-level lottery groups from the persistent strip. Overview, mobile, review, insights, and settings now live behind 更多 and appear in the strip only when active.
+- [x] Remove the second-row child menu from the lottery footer. Prediction, execution, review, data, and insight children are reachable from their parent dropdowns instead of a persistent context strip.
+- [x] Preserve active low-frequency top-level groups in the single row so users keep orientation after entering overview, mobile, review, insights, or settings.
+- [x] Add smoke coverage for single-row navigation so future menu changes do not reintroduce the second row.
+- [x] Update menu documentation and release-readiness copy for the single-row lottery navigation behavior.
 - [x] Run frontend smoke/build verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
 ## Documentation And Delivery

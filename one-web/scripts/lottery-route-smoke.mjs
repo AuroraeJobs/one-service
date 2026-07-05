@@ -40,14 +40,19 @@ const run = async () => {
   const fixture = await readJson(fixturePath);
   const routeSource = await readText('src/routes/lifeRoutes.tsx');
   const navSource = await readText('src/constants/lifeDataModules.tsx');
+  const footerNavSource = await readText('src/components/SeasonFooterNav.tsx');
+  const appCssSource = await readText('src/App.css');
   const apiSource = await readText('src/services/api.ts');
 
   record(fixture.mode === 'mocked-fixture', 'fixture', 'uses mocked fixture mode');
   record(fixture.providerNetwork === 'not-required', 'fixture', 'does not require live lottery provider network');
   record(Array.isArray(fixture.consoleErrors) && fixture.consoleErrors.length === 0, 'fixture', 'declares zero expected console errors');
-  record(navSource.includes('secondary?: boolean'), 'navigation', 'supports secondary child nav entries');
-  record(navSource.includes("label: '研究'") && navSource.includes('secondary: true'), 'navigation', 'prediction research entries can be collapsed from the context strip');
-  record(navSource.includes("label: '历史'") && navSource.includes('secondary: true'), 'navigation', 'prediction history stays available from the parent dropdown');
+  record(navSource.includes('secondary?: boolean'), 'navigation', 'supports secondary nav entries');
+  record(navSource.includes("label: '概览'") && navSource.includes('secondary: true'), 'navigation', 'low-frequency top-level lottery groups can be collapsed');
+  record(navSource.includes("label: '设置'") && navSource.includes('secondary: true'), 'navigation', 'lottery settings stays reachable without occupying the daily nav strip');
+  record(footerNavSource.includes('MoreOutlined'), 'navigation', 'collapsed top-level groups render through a more menu');
+  record(!footerNavSource.includes('season-footer-context'), 'navigation', 'footer navigation does not render a second-row child menu');
+  record(!appCssSource.includes('season-footer-context'), 'navigation', 'footer styles do not keep second-row child menu selectors');
 
   for (const route of fixture.routes || []) {
     const scope = route.route;
