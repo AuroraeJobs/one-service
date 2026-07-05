@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 21 Week 1 lottery practical workbench smoke",
-  "generatedAt": "2026-07-05T11:21:37.843Z",
+  "target": "Iteration 21 Week 2 astronaut voyage analysis smoke",
+  "generatedAt": "2026-07-05T11:37:33.913Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
-  "routeCount": 14,
-  "checkCount": 315,
+  "routeCount": 15,
+  "checkCount": 328,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
@@ -115,11 +115,19 @@
       "errorStateCount": 4
     },
     {
+      "route": "/lottery/astronauts/:camp/:number",
+      "label": "宇航员航行分析",
+      "component": "LotteryAstronautVoyagePage",
+      "mockApiCount": 2,
+      "emptyStateCount": 5,
+      "errorStateCount": 1
+    },
+    {
       "route": "/lottery/exports",
       "label": "导出审计",
       "component": "LotteryExportMaintenancePage",
       "mockApiCount": 4,
-      "emptyStateCount": 18,
+      "emptyStateCount": 19,
       "errorStateCount": 4
     }
   ]

@@ -499,6 +499,13 @@ const LotteryExportMaintenancePage = () => {
       path: '/lottery/workbench'
     },
     {
+      key: 'v18-astronaut-voyage-analysis',
+      label: 'V18航行记录分析',
+      status: 'PASS',
+      message: '宇航员航行详情页提供星球分布、卦象结构、和值奇偶和近 12 次趋势分析',
+      path: '/lottery/astronauts'
+    },
+    {
       key: 'decision-outcome-export',
       label: '决策复盘证据',
       status: 'PASS',

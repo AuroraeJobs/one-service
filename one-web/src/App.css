@@ -287,6 +287,64 @@ body {
   line-height: 1.2;
 }
 
+.lottery-voyage-analysis-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.lottery-voyage-analysis-list {
+  display: grid;
+  gap: 8px;
+}
+
+.lottery-voyage-analysis-list div {
+  position: relative;
+  min-height: 30px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  padding: 6px 8px;
+  border-radius: 7px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-voyage-analysis-list span,
+.lottery-voyage-analysis-list strong {
+  position: relative;
+  z-index: 1;
+}
+
+.lottery-voyage-analysis-list span {
+  overflow: hidden;
+  color: var(--app-text);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-voyage-analysis-list strong {
+  color: var(--app-text);
+  font-size: 13px;
+}
+
+.lottery-voyage-analysis-list em {
+  position: absolute;
+  inset: auto auto 0 0;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--module-accent, #0071e3);
+}
+
+.lottery-voyage-trend-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .lottery-voyage-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -392,6 +450,10 @@ body {
 
   .lottery-voyage-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lottery-voyage-analysis-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .lottery-voyage-item {

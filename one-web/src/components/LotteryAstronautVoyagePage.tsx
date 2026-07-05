@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Button, Empty, Select, Space, Spin, Tag, message } from 'antd';
+import { Button, Card, Empty, Select, Space, Spin, Tag, message } from 'antd';
 import { ArrowLeftOutlined, RocketOutlined } from '@ant-design/icons';
 import LifePageShell from './LifePageShell';
 import { lotteryAstronautApi } from '../services/api';
@@ -16,6 +16,16 @@ const planetColors: Record<string, string> = {
   木星: '#9254de',
   土星: '#d48806',
   天王星: '#36cfc9'
+};
+
+const topDistribution = (values: string[]) => {
+  const counts = new Map<string, number>();
+  values.filter(Boolean).forEach(value => {
+    counts.set(value, (counts.get(value) || 0) + 1);
+  });
+  return Array.from(counts.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'zh-Hans-CN'));
 };
 
 const LotteryAstronautVoyagePage = () => {
@@ -37,7 +47,8 @@ const LotteryAstronautVoyagePage = () => {
         ]);
         setAstronauts(astronautData);
         setVoyage(voyageData);
-      } catch {
+      } catch (requestError) {
+        console.error('读取宇航员航行记录失败:', requestError);
         message.error('航行记录加载失败');
       } finally {
         setLoading(false);
@@ -63,6 +74,34 @@ const LotteryAstronautVoyagePage = () => {
   ), [astronauts, camp]);
 
   const title = astronaut ? `${astronaut.name}的航行记录` : `${number}号宇航员航行记录`;
+  const voyageAnalysis = useMemo(() => {
+    const sortedRecords = [...voyageRecords].sort((a, b) => b.period - a.period);
+    const ascendingRecords = [...voyageRecords].sort((a, b) => a.period - b.period);
+    const latestRecord = sortedRecords[0];
+    const earliestRecord = sortedRecords[sortedRecords.length - 1];
+    const total = sortedRecords.length;
+    const planetDistribution = topDistribution(sortedRecords.map(record => record.planetName));
+    const hexagramDistribution = topDistribution(sortedRecords.map(record => record.hexagramName));
+    const sumTotal = sortedRecords.reduce((sum, record) => sum + (record.redSum || 0), 0);
+    const oddTotal = sortedRecords.reduce((sum, record) => sum + (record.oddCount || 0), 0);
+    const evenTotal = sortedRecords.reduce((sum, record) => sum + (record.evenCount || 0), 0);
+    const gaps = ascendingRecords.slice(1).map((record, index) => record.period - ascendingRecords[index].period);
+    const averageGap = gaps.length ? gaps.reduce((sum, gap) => sum + gap, 0) / gaps.length : 0;
+    const recentRecords = sortedRecords.slice(0, 12);
+    const recentPlanets = topDistribution(recentRecords.map(record => record.planetName)).slice(0, 3);
+
+    return {
+      total,
+      latestRecord,
+      earliestRecord,
+      planetDistribution,
+      hexagramDistribution,
+      averageRedSum: total ? sumTotal / total : 0,
+      oddEvenLabel: `${oddTotal}奇 / ${evenTotal}偶`,
+      averageGap,
+      recentPlanets
+    };
+  }, [voyageRecords]);
 
   return (
     <LifePageShell
@@ -85,33 +124,87 @@ const LotteryAstronautVoyagePage = () => {
     >
       <Spin spinning={loading}>
         {voyageRecords.length > 0 ? (
-          <section className="lottery-voyage-list">
-            {voyageRecords.map(record => (
-              <article
-                className="lottery-voyage-item"
-                key={record.id}
-                style={{ '--voyage-planet-color': planetColors[record.planetName] || '#1890ff' } as React.CSSProperties}
-              >
-                <div className="lottery-voyage-planet">
-                  <RocketOutlined />
-                  <strong>{record.planetName}</strong>
+          <>
+            <section className="lottery-voyage-summary" aria-label="航行分析摘要">
+              <Card size="small">
+                <span>航行总数</span>
+                <strong>{voyageAnalysis.total}</strong>
+                <small>第 {voyageAnalysis.earliestRecord?.period || '-'} - {voyageAnalysis.latestRecord?.period || '-'}</small>
+              </Card>
+              <Card size="small">
+                <span>最近航行</span>
+                <strong>{voyageAnalysis.latestRecord?.planetName || '-'}</strong>
+                <small>第 {voyageAnalysis.latestRecord?.period || '-'} 期</small>
+              </Card>
+              <Card size="small">
+                <span>主访问星球</span>
+                <strong>{voyageAnalysis.planetDistribution[0]?.name || '-'}</strong>
+                <small>{voyageAnalysis.planetDistribution[0]?.count || 0} 次</small>
+              </Card>
+              <Card size="small">
+                <span>平均间隔</span>
+                <strong>{voyageAnalysis.averageGap ? voyageAnalysis.averageGap.toFixed(1) : '-'}</strong>
+                <small>期 / 次</small>
+              </Card>
+            </section>
+
+            <section className="lottery-voyage-analysis-grid" aria-label="航行结构分析">
+              <Card className="life-panel-card lottery-clean-panel" title="星球分布">
+                <div className="lottery-voyage-analysis-list">
+                  {voyageAnalysis.planetDistribution.slice(0, 8).map(item => (
+                    <div key={item.name}>
+                      <span>{item.name}</span>
+                      <strong>{item.count}</strong>
+                      <em style={{ width: `${Math.max(8, (item.count / voyageAnalysis.total) * 100)}%` }} />
+                    </div>
+                  ))}
                 </div>
-                <div className="lottery-voyage-item-main">
-                  <div>
-                    <div className="lottery-voyage-period">第 {record.period} 期</div>
-                    <div className="lottery-voyage-balls">
-                      {record.redNumbers.length > 0 ? record.redNumbers.join(' ') : record.blueNumber || record.raw}
+              </Card>
+              <Card className="life-panel-card lottery-clean-panel" title="卦象与结构">
+                <div className="lottery-voyage-hexagram-summary">
+                  <strong>{voyageAnalysis.hexagramDistribution[0]?.name || '-'}</strong>
+                  <span>最高频卦象 {voyageAnalysis.hexagramDistribution[0]?.count || 0} 次</span>
+                  <span>平均和值 {voyageAnalysis.averageRedSum ? voyageAnalysis.averageRedSum.toFixed(1) : '-'}</span>
+                  <span>累计奇偶 {voyageAnalysis.oddEvenLabel}</span>
+                </div>
+              </Card>
+              <Card className="life-panel-card lottery-clean-panel" title="近 12 次趋势">
+                <div className="lottery-voyage-trend-tags">
+                  {voyageAnalysis.recentPlanets.length ? voyageAnalysis.recentPlanets.map(item => (
+                    <Tag key={item.name} color={planetColors[item.name] ? 'blue' : 'default'}>{item.name} {item.count}</Tag>
+                  )) : <Tag>暂无趋势</Tag>}
+                </div>
+              </Card>
+            </section>
+
+            <section className="lottery-voyage-list">
+              {voyageRecords.map(record => (
+                <article
+                  className="lottery-voyage-item"
+                  key={record.id}
+                  style={{ '--voyage-planet-color': planetColors[record.planetName] || '#1890ff' } as React.CSSProperties}
+                >
+                  <div className="lottery-voyage-planet">
+                    <RocketOutlined />
+                    <strong>{record.planetName}</strong>
+                  </div>
+                  <div className="lottery-voyage-item-main">
+                    <div>
+                      <div className="lottery-voyage-period">第 {record.period} 期</div>
+                      <div className="lottery-voyage-balls">
+                        {record.redNumbers.length > 0 ? record.redNumbers.join(' ') : record.blueNumber || record.raw}
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="lottery-voyage-tags">
-                  <Tag color="gold">{record.hexagramName}</Tag>
-                  <Tag>和值 {record.redSum}</Tag>
-                  <Tag>{record.oddCount}奇{record.evenCount}偶</Tag>
-                </div>
-              </article>
-            ))}
-          </section>
+                  <div className="lottery-voyage-tags">
+                    <Tag color="gold">{record.hexagramName}</Tag>
+                    <Tag>和值 {record.redSum}</Tag>
+                    <Tag>{record.oddCount}奇{record.evenCount}偶</Tag>
+                  </div>
+                </article>
+              ))}
+            </section>
+          </>
         ) : (
           <Empty description="这个宇航员暂时没有航行记录" />
         )}

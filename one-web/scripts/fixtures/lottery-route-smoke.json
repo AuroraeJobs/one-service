@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 21 Week 1 lottery practical workbench smoke",
+  "target": "Iteration 21 Week 2 astronaut voyage analysis smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -390,6 +390,25 @@
       }
     },
     {
+      "route": "/lottery/astronauts/:camp/:number",
+      "label": "宇航员航行分析",
+      "component": "LotteryAstronautVoyagePage",
+      "componentFile": "src/components/LotteryAstronautVoyagePage.tsx",
+      "navExposed": false,
+      "mockApis": [
+        "lotteryAstronautApi.findAll",
+        "lotteryAstronautApi.voyage"
+      ],
+      "emptyStates": ["航行分析摘要", "星球分布", "卦象与结构", "近 12 次趋势", "这个宇航员暂时没有航行记录"],
+      "errorStates": ["航行记录加载失败"],
+      "fixtureData": {
+        "voyageAnalysis": {
+          "metrics": ["航行总数", "最近航行", "主访问星球", "平均间隔"],
+          "distributions": ["planet", "hexagram", "recentTrend"]
+        }
+      }
+    },
+    {
       "route": "/lottery/exports",
       "label": "导出审计",
       "component": "LotteryExportMaintenancePage",
@@ -400,12 +419,12 @@
         "lotteryExportApi.maintenanceSummary",
         "lotteryExportApi.cleanupDryRun"
       ],
-      "emptyStates": ["本次导出没有数据", "暂无数据", "暂无审计事件", "暂无集合状态", "暂无缓存状态", "复盘运营", "月末复盘", "归因闭环包", "推荐生命周期包", "移动指挥包", "V15治理证据包", "V15闭环证据包", "V16导航易用性", "V16操作体验", "V16筛选可读性", "V16响应式打磨", "V18今日优先事项", "前端发布就绪"],
+      "emptyStates": ["本次导出没有数据", "暂无数据", "暂无审计事件", "暂无集合状态", "暂无缓存状态", "复盘运营", "月末复盘", "归因闭环包", "推荐生命周期包", "移动指挥包", "V15治理证据包", "V15闭环证据包", "V16导航易用性", "V16操作体验", "V16筛选可读性", "V16响应式打磨", "V18今日优先事项", "V18航行记录分析", "前端发布就绪"],
       "errorStates": ["读取彩票导出审计失败", "导出彩票数据失败", "生成彩票报表失败", "执行彩票维护 dry-run 失败"],
       "fixtureData": {
         "releaseEvidence": {
           "smokeCommand": "npm run lottery:smoke",
-          "v16Checks": ["navigation usability", "operation ergonomics", "filter readability", "responsive polish", "release readiness", "single-row lottery nav", "all top-level groups visible", "no more menu", "no second-row child nav", "workbench priority actions"],
+          "v16Checks": ["navigation usability", "operation ergonomics", "filter readability", "responsive polish", "release readiness", "single-row lottery nav", "all top-level groups visible", "no more menu", "no second-row child nav", "workbench priority actions", "astronaut voyage analysis"],
           "report": "reports/lottery-route-smoke-summary.json"
         }
       }

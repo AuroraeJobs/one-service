@@ -55,6 +55,8 @@ The current lottery navigation already has a strong exploratory surface. The tar
 
 Navigation rollback rule: restore the footer to the shape before `1eb0adc8 feat(lottery): improve workflow navigation usability`. The lottery footer is a single horizontal row with all top-level groups visible or horizontally scrollable. Do not add a second-row child menu, do not add a 更多 entry, and do not hide top-level groups behind a home shortcut.
 
+Astronaut direction: the astronaut feature should prioritize voyage-record analysis over navigation changes. Useful frontend work should explain voyage frequency, rhythm, planet distribution, hexagram structure, red-sum/odd-even patterns, and recent movement trends.
+
 ## Existing Routes To Preserve
 
 ```text

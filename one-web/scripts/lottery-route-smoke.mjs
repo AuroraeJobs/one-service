@@ -66,7 +66,11 @@ const run = async () => {
     }
 
     record(routeElementExists(routeSource, route.route, route.component), scope, 'protected route maps to expected component');
-    record(navSource.includes(`path: '${route.route}'`), scope, 'lottery navigation exposes the route');
+    if (route.navExposed === false) {
+      record(true, scope, 'route intentionally skips direct lottery navigation exposure');
+    } else {
+      record(navSource.includes(`path: '${route.route}'`), scope, 'lottery navigation exposes the route');
+    }
     record(Boolean(route.fixtureData && Object.keys(route.fixtureData).length), scope, 'fixture data is present');
     record(!componentSource.includes('fetch('), scope, 'component does not bypass project API client with fetch');
     record(!componentSource.includes('axios.'), scope, 'component does not call axios directly');

@@ -581,9 +581,9 @@ Goal: reduce visible menu density after V16 by keeping daily actions in front wh
 - [x] Update menu documentation and release-readiness copy for the rollback behavior.
 - [x] Run frontend smoke/build verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
-## Iteration 21: V18 Practical Frontend Tools
+## Iteration 21: V18 Astronaut Voyage Analysis
 
-Goal: add practical frontend helpers that reduce daily operating friction without changing the footer/navigation shell.
+Goal: make the astronaut feature useful as an analysis surface. The core object is the astronaut voyage record, and frontend work should explain voyage frequency, rhythm, planet distribution, hexagram structure, and recent movement trends without changing the footer/navigation shell.
 
 ### Week 1: Workbench Priority Actions
 
@@ -592,6 +592,15 @@ Goal: add practical frontend helpers that reduce daily operating friction withou
 - [x] Keep the feature inside workbench content only; do not adjust the navigation bar or footer styling.
 - [x] Add responsive styling for narrow screens so priority status and action labels wrap under the item body.
 - [x] Extend route smoke and release evidence for the priority workbench feature.
+- [x] Run frontend smoke/build verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
+
+### Week 2: Voyage Record Analysis
+
+- [x] Add voyage-level analysis to the astronaut detail page, including total voyages, latest voyage, primary planet, average interval, average red sum, and odd/even structure.
+- [x] Add planet distribution, hexagram structure, and recent 12-voyage trend panels based on existing voyage records.
+- [x] Keep analysis inside the astronaut voyage page; do not adjust navigation bar or footer styling.
+- [x] Extend route smoke coverage to include the astronaut voyage detail route and analysis copy.
+- [x] Update release evidence for the astronaut voyage analysis direction.
 - [x] Run frontend smoke/build verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
 ## Documentation And Delivery
