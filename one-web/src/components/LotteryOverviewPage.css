@@ -719,6 +719,15 @@
   padding-bottom: 2px;
 }
 
+.lottery-filter-preset-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
 .lottery-report-builder > .ant-space,
 .lottery-audit-filter-bar {
   padding: 10px;

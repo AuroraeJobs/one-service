@@ -39,6 +39,7 @@ const LotteryOutcomeAttributionPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [outcomes, setOutcomes] = useState<LotteryOutcomeAttribution[]>([]);
   const [selected, setSelected] = useState<LotteryOutcomeAttribution>();
+  const [outcomeFilter, setOutcomeFilter] = useState<'ALL' | 'GAP' | 'PROMOTE' | 'WATCH'>('ALL');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -85,6 +86,13 @@ const LotteryOutcomeAttributionPage = () => {
     }
   };
 
+  const filteredOutcomes = outcomes.filter(item => {
+    if (outcomeFilter === 'GAP') return (item.ticketCount || 0) > (item.checkedTicketCount || 0);
+    if (outcomeFilter === 'PROMOTE') return item.calibrationState === 'PROMOTE_SIGNAL';
+    if (outcomeFilter === 'WATCH') return item.calibrationState === 'WATCH_RISK' || item.calibrationState === 'RECALIBRATE';
+    return true;
+  });
+
   return (
     <LifePageShell
       className="lottery-prediction-page lottery-outcome-page"
@@ -101,8 +109,14 @@ const LotteryOutcomeAttributionPage = () => {
       <Spin spinning={loading && !selected}>
         <section className="lottery-outcome-layout">
           <Card className="life-panel-card lottery-clean-panel" title={<Space><BranchesOutlined />期号时间线</Space>}>
+            <div className="lottery-filter-preset-bar">
+              <Button size="small" type={outcomeFilter === 'ALL' ? 'primary' : 'default'} onClick={() => setOutcomeFilter('ALL')}>全部</Button>
+              <Button size="small" type={outcomeFilter === 'GAP' ? 'primary' : 'default'} onClick={() => setOutcomeFilter('GAP')}>待结算</Button>
+              <Button size="small" type={outcomeFilter === 'PROMOTE' ? 'primary' : 'default'} onClick={() => setOutcomeFilter('PROMOTE')}>可推广</Button>
+              <Button size="small" type={outcomeFilter === 'WATCH' ? 'primary' : 'default'} onClick={() => setOutcomeFilter('WATCH')}>需观察</Button>
+            </div>
             <div className="lottery-outcome-issue-list">
-              {outcomes.length ? outcomes.map(item => (
+              {filteredOutcomes.length ? filteredOutcomes.map(item => (
                 <button
                   key={item.issue}
                   type="button"

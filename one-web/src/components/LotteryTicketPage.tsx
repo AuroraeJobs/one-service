@@ -1068,6 +1068,13 @@ const LotteryTicketPage = () => {
           <Button icon={<BranchesOutlined />} onClick={() => navigate(`/lottery/outcomes${issue ? `?issue=${issue}` : ''}`)}>
             归因
           </Button>
+          <div className="lottery-filter-preset-bar">
+            <Button size="small" onClick={() => updateQuery({ status: 'BOUGHT', prizeGrade: undefined })}>待核</Button>
+            <Button size="small" onClick={() => updateQuery({ status: 'CHECKED', prizeGrade: undefined })}>已核</Button>
+            <Button size="small" onClick={() => updateQuery({ status: 'CHECKED', prizeGrade: 'NONE' })}>未中</Button>
+            <Button size="small" onClick={() => updateQuery({ source: 'TICKET_PACK' })}>票包</Button>
+            <Button size="small" onClick={() => updateQuery({ status: undefined, source: undefined, prizeGrade: undefined, predictionSnapshotId: undefined })}>清除</Button>
+          </div>
           <Input
             allowClear
             prefix={<SearchOutlined />}
@@ -1105,7 +1112,8 @@ const LotteryTicketPage = () => {
             style={{ width: 120 }}
             options={[
               { label: '手动', value: 'MANUAL' },
-              { label: '预测', value: 'PREDICTION' }
+              { label: '预测', value: 'PREDICTION' },
+              { label: '票包', value: 'TICKET_PACK' }
             ]}
           />
           <Select

@@ -51,10 +51,13 @@ const lifecycleCopy: Record<string, { label: string; note: string; success: stri
   ARCHIVED: { label: '归档', note: 'recommendation archived from lifecycle board', success: '推荐已归档' }
 };
 
+type RecommendationPreset = 'ALL' | 'OPEN' | 'HIGH_CONFIDENCE' | 'STALE_EVIDENCE';
+
 const LotteryRecommendationPage = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState<LotteryRecommendation[]>([]);
   const [filterState, setFilterState] = useState<string>();
+  const [preset, setPreset] = useState<RecommendationPreset>('ALL');
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [actingId, setActingId] = useState<string>();
@@ -113,17 +116,24 @@ const LotteryRecommendationPage = () => {
     }
   };
 
+  const visibleItems = useMemo(() => items.filter(item => {
+    if (preset === 'OPEN') return item.lifecycleStatus !== 'APPLIED' && item.lifecycleStatus !== 'ARCHIVED';
+    if (preset === 'HIGH_CONFIDENCE') return (item.confidenceScore || 0) >= 80;
+    if (preset === 'STALE_EVIDENCE') return (item.evidenceAgeHours || 0) >= 24;
+    return true;
+  }), [items, preset]);
+
   const grouped = useMemo(() => lanes.map(lane => ({
     ...lane,
-    items: items.filter(item => item.recommendationState === lane.key)
-  })), [items]);
+    items: visibleItems.filter(item => item.recommendationState === lane.key)
+  })), [visibleItems]);
 
   const totals = useMemo(() => ({
-    total: items.length,
-    promote: items.filter(item => item.recommendationState === 'PROMOTE').length,
-    watch: items.filter(item => item.recommendationState === 'WATCH').length,
-    open: items.filter(item => item.lifecycleStatus !== 'APPLIED' && item.lifecycleStatus !== 'ARCHIVED').length
-  }), [items]);
+    total: visibleItems.length,
+    promote: visibleItems.filter(item => item.recommendationState === 'PROMOTE').length,
+    watch: visibleItems.filter(item => item.recommendationState === 'WATCH').length,
+    open: visibleItems.filter(item => item.lifecycleStatus !== 'APPLIED' && item.lifecycleStatus !== 'ARCHIVED').length
+  }), [visibleItems]);
 
   return (
     <LifePageShell
@@ -133,6 +143,12 @@ const LotteryRecommendationPage = () => {
       actions={
         <Space wrap>
           <Button onClick={() => navigate('/lottery/outcomes')}>归因</Button>
+          <div className="lottery-filter-preset-bar">
+            <Button size="small" type={preset === 'ALL' ? 'primary' : 'default'} onClick={() => setPreset('ALL')}>全部</Button>
+            <Button size="small" type={preset === 'OPEN' ? 'primary' : 'default'} onClick={() => setPreset('OPEN')}>待处理</Button>
+            <Button size="small" type={preset === 'HIGH_CONFIDENCE' ? 'primary' : 'default'} onClick={() => setPreset('HIGH_CONFIDENCE')}>高置信</Button>
+            <Button size="small" type={preset === 'STALE_EVIDENCE' ? 'primary' : 'default'} onClick={() => setPreset('STALE_EVIDENCE')}>证据过期</Button>
+          </div>
           <Select
             allowClear
             placeholder="状态"

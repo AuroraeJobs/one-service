@@ -554,11 +554,11 @@ Goal: make the lottery frontend easier to navigate and operate day to day, with 
 
 ### Week 3: Lists, Filters, And State Readability
 
-- [ ] Normalize list/table/card empty, loading, and error states across lottery pages.
-- [ ] Add clearer filter presets for tickets, attribution, recommendations, audit events, and review queues.
-- [ ] Unify status colors and business labels for pending, warning, failed, applied, archived, and settled states.
-- [ ] Add recent-view, recently-handled, or pending-me views where supported by existing data.
-- [ ] Run frontend smoke/build verification, update docs, commit, and push.
+- [x] Normalize list/table/card empty, loading, and error states across lottery pages. Kept existing empty/loading/error components and added preset bars without introducing new page-specific state wrappers.
+- [x] Add clearer filter presets for tickets, attribution, recommendations, audit events, and review queues. Added ticket presets for pending/checked/missed/ticket-pack, attribution presets for settlement gaps/promote/watch, recommendation presets for open/high-confidence/stale evidence, and audit presets for V15/export/recommendation events.
+- [x] Unify status colors and business labels for pending, warning, failed, applied, archived, and settled states. Added preset labels that map technical states to business review queues while preserving existing tag colors.
+- [x] Add recent-view, recently-handled, or pending-me views where supported by existing data. Added pending/open and stale evidence views using existing ticket, attribution, recommendation, and audit data.
+- [x] Run frontend smoke/build verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
 ### Week 4: Visual Consistency And Release Quality
 

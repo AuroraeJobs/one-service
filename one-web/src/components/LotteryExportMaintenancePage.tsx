@@ -656,6 +656,21 @@ const LotteryExportMaintenancePage = () => {
           extra={<Tag>{filteredAuditEvents.length}/{auditEvents.length} 条</Tag>}
         >
           <div className="lottery-audit-filter-bar">
+            <div className="lottery-filter-preset-bar">
+              <Button size="small" onClick={() => {
+                setAuditTypeFilter('LOTTERY_RECOMMENDATION_REFRESH');
+                setAuditTargetFilter('lottery');
+              }}>V15</Button>
+              <Button size="small" onClick={() => {
+                setAuditTypeFilter('EXPORT');
+                setAuditTargetFilter('');
+              }}>导出</Button>
+              <Button size="small" onClick={() => {
+                setAuditTypeFilter('LOTTERY_RECOMMENDATION_STATUS');
+                setAuditTargetFilter('');
+              }}>推荐</Button>
+              <Button size="small" onClick={clearAuditFilters}>清除</Button>
+            </div>
             <Select
               allowClear
               placeholder="类型"
