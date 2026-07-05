@@ -5691,10 +5691,27 @@ button.lottery-latest-vs-card:hover {
 
 .lottery-replay-toolbar {
   display: grid;
-  grid-template-columns: 180px minmax(0, 1fr);
+  grid-template-columns: 220px minmax(0, 1fr);
   gap: 16px;
   align-items: start;
   margin-bottom: 18px;
+}
+
+.lottery-replay-controls {
+  display: grid;
+  gap: 10px;
+}
+
+.lottery-replay-controls > div {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.lottery-replay-controls span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .lottery-replay-select {
@@ -5745,6 +5762,29 @@ button.lottery-latest-vs-card:hover {
   gap: 12px;
 }
 
+.lottery-replay-manual {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  background: rgba(127, 127, 127, 0.08);
+}
+
+.lottery-replay-manual h3 {
+  margin: 0;
+  color: var(--app-text);
+  font-size: 15px;
+}
+
+.lottery-replay-manual p {
+  margin: 0;
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .lottery-replay-row {
   display: grid;
   grid-template-columns: minmax(140px, 0.7fr) minmax(0, 2fr) minmax(180px, 0.9fr);
@@ -5784,6 +5824,34 @@ button.lottery-latest-vs-card:hover {
 
 .lottery-replay-score {
   justify-items: start;
+}
+
+.lottery-replay-candidate-list {
+  display: grid;
+  gap: 8px;
+}
+
+.lottery-replay-candidate-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr) repeat(4, max-content);
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-replay-candidate-row strong {
+  color: var(--app-text);
+  font-size: 13px;
+}
+
+.lottery-replay-candidate-row span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 .lottery-rule-trainer-panel {
@@ -6237,6 +6305,7 @@ button.lottery-latest-vs-card:hover {
   .lottery-replay-summary,
   .lottery-replay-row,
   .lottery-replay-comparison,
+  .lottery-replay-candidate-row,
   .lottery-yearly-content,
   .lottery-trainer-toolbar,
   .lottery-trainer-summary,

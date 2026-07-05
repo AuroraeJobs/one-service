@@ -1290,6 +1290,43 @@ export const buildLotteryReplayReport = (
   };
 };
 
+export const buildLotteryReplayForPeriod = (
+  allRecords: string | string[],
+  targetPeriod: number,
+  config: PredictionRuleConfig = defaultPredictionRuleConfig
+): LotteryPredictionReplay | undefined => {
+  const draws = parseLotteryDraws(allRecords);
+  const targetDraw = draws.find(draw => draw.period === targetPeriod);
+  if (!targetDraw || targetPeriod <= 1) {
+    return undefined;
+  }
+
+  const trainingDraws = draws.slice(0, targetPeriod - 1);
+  if (trainingDraws.length === 0) {
+    return undefined;
+  }
+
+  const trainingStats = buildLotteryStats(trainingDraws.map(draw => draw.raw), config);
+  const predictions = trainingStats.predictions
+    .map(prediction => ({
+      ...prediction,
+      result: scoreAgainstActual(prediction, targetDraw)
+    }))
+    .sort((a, b) => b.result.score - a.result.score || b.result.redHits - a.result.redHits);
+
+  const bestPrediction = predictions[0];
+  if (!bestPrediction) {
+    return undefined;
+  }
+
+  return {
+    targetDraw,
+    trainingDrawCount: trainingDraws.length,
+    predictions,
+    bestPrediction
+  };
+};
+
 const buildTrainingConfigs = (scale: 'fast' | 'standard' | 'deep'): PredictionRuleConfig[] => {
   const windows = scale === 'fast' ? [20] : scale === 'standard' ? [20, 30] : [10, 20, 30];
   const activeWeights = scale === 'fast' ? [1] : [0.8, 1.2];

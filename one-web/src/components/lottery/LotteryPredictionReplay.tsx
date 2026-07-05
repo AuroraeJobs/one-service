@@ -3,7 +3,9 @@ import { Card, Empty, Select, Statistic, Tag } from 'antd';
 import { HistoryOutlined } from '@ant-design/icons';
 import LotteryBalls from './LotteryBalls';
 import {
+  buildLotteryReplayForPeriod,
   buildLotteryReplayReport,
+  parseLotteryDraws,
   type LotteryPredictionReplay as LotteryPredictionReplayResult
 } from '../../utils/lotteryStats';
 
@@ -76,7 +78,23 @@ const ReplayRow = ({ replay }: { replay: LotteryPredictionReplayResult }) => {
 
 const LotteryPredictionReplay = ({ allRecords }: LotteryPredictionReplayProps) => {
   const [replayCount, setReplayCount] = useState(5);
+  const draws = useMemo(() => parseLotteryDraws(allRecords), [allRecords]);
+  const targetOptions = useMemo(
+    () => draws
+      .filter(draw => draw.period > 1)
+      .map(draw => ({
+        label: `第 ${draw.period} 期`,
+        value: draw.period
+      })),
+    [draws]
+  );
+  const [targetPeriod, setTargetPeriod] = useState<number>();
+  const selectedTargetPeriod = targetPeriod || targetOptions[targetOptions.length - 1]?.value;
   const report = useMemo(() => buildLotteryReplayReport(allRecords, replayCount), [allRecords, replayCount]);
+  const singleReplay = useMemo(
+    () => selectedTargetPeriod ? buildLotteryReplayForPeriod(allRecords, selectedTargetPeriod) : undefined,
+    [allRecords, selectedTargetPeriod]
+  );
 
   return (
     <Card className="life-panel-card lottery-prediction-panel lottery-replay-panel">
@@ -89,18 +107,68 @@ const LotteryPredictionReplay = ({ allRecords }: LotteryPredictionReplayProps) =
       </div>
 
       <div className="lottery-replay-toolbar">
-        <Select
-          value={replayCount}
-          options={replayOptions}
-          onChange={setReplayCount}
-          className="lottery-replay-select"
-        />
+        <div className="lottery-replay-controls">
+          <div>
+            <span>手动目标期</span>
+            <Select
+              showSearch
+              value={selectedTargetPeriod}
+              options={targetOptions}
+              onChange={setTargetPeriod}
+              className="lottery-replay-select"
+              optionFilterProp="label"
+              placeholder="选择目标期"
+            />
+          </div>
+          <div>
+            <span>批量窗口</span>
+            <Select
+              value={replayCount}
+              options={replayOptions}
+              onChange={setReplayCount}
+              className="lottery-replay-select"
+            />
+          </div>
+        </div>
         <div className="lottery-replay-summary">
           <Statistic title="回放期数" value={report.summary.total} />
           <Statistic title="平均评分" value={report.summary.averageScore} />
           <Statistic title="平均红球" value={report.summary.averageRedHits} suffix="/6" />
           <Statistic title="蓝球命中" value={report.summary.blueHitRate} suffix="%" />
         </div>
+      </div>
+
+      <div className="lottery-replay-manual">
+        <div className="lottery-card-title-row">
+          <div>
+            <h3>单期手动回放</h3>
+            <p>
+              {selectedTargetPeriod
+                ? `选择第 ${selectedTargetPeriod} 期：仅使用前 ${Math.max(0, selectedTargetPeriod - 1)} 期数据生成预测，再对照第 ${selectedTargetPeriod} 期开奖。`
+                : '请选择目标期号。'}
+            </p>
+          </div>
+          <Tag color="blue">严格时间切片</Tag>
+        </div>
+        {singleReplay ? (
+          <>
+            <ReplayRow replay={singleReplay} />
+            <div className="lottery-replay-candidate-list">
+              {singleReplay.predictions.map(prediction => (
+                <div key={`${singleReplay.targetDraw.id}-${prediction.title}`} className="lottery-replay-candidate-row">
+                  <strong>{prediction.title}</strong>
+                  <LotteryBalls redNumbers={prediction.redNumbers} blueNumber={prediction.blueNumber} />
+                  <Tag color={getPrizeColor(prediction.result.prizeLevel)}>{prediction.result.prizeName}</Tag>
+                  <span>红球 {prediction.result.redHits}/6</span>
+                  <span>{prediction.result.blueHit ? '蓝球命中' : '蓝球未中'}</span>
+                  <span>评分 {prediction.result.score}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <Empty description="请选择第 2 期或之后的目标期，系统会用目标期之前的数据回放预测" />
+        )}
       </div>
 
       {report.replays.length === 0 ? (

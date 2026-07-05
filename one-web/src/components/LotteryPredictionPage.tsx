@@ -14,6 +14,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import LotteryPredictionInsights from './lottery/LotteryPredictionInsights';
+import LotteryPredictionReplay from './lottery/LotteryPredictionReplay';
 import LotteryRuleTrainer from './lottery/LotteryRuleTrainer';
 import { useRecordContext } from '../contexts/RecordContext';
 import { buildLotteryStats } from '../utils/lotteryStats';
@@ -230,6 +231,7 @@ const LotteryPredictionPage = () => {
         onActualRecordUpdated={setActualRecord}
       />
       <section className="lottery-simple-support-grid">
+        <LotteryPredictionReplay allRecords={allRecords} />
         <LotteryRuleTrainer report={trainingReport} training={training} status={trainingStatus} />
       </section>
     </LifePageShell>

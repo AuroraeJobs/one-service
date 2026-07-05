@@ -56,7 +56,7 @@
       "label": "号码综合可能性",
       "component": "LotteryPredictionPage",
       "componentFile": "src/components/LotteryPredictionPage.tsx",
-      "additionalComponentFiles": ["src/components/lottery/LotteryPredictionInsights.tsx"],
+      "additionalComponentFiles": ["src/components/lottery/LotteryPredictionInsights.tsx", "src/components/lottery/LotteryPredictionReplay.tsx"],
       "mockApis": [
         "lotteryPreferenceApi.preference",
         "lotteryTrainingApi.start",
@@ -65,7 +65,7 @@
         "lotteryTrainingApi.latestActualRecord",
         "lotteryTicketApi.saveTicket"
       ],
-      "emptyStates": ["号码概率分析", "遗漏压力", "均遗", "压力", "目标奇偶", "目标大小", "概率 =", "红舰队号码", "蓝舰队星球"],
+      "emptyStates": ["号码概率分析", "遗漏压力", "均遗", "压力", "目标奇偶", "目标大小", "概率 =", "红舰队号码", "蓝舰队星球", "单期手动回放", "严格时间切片", "手动目标期", "批量窗口"],
       "errorStates": ["规则训练失败，请检查后端服务", "读取训练状态失败，请检查后端服务", "自动保存预测票据失败"],
       "fixtureData": {
         "probabilityPressure": {

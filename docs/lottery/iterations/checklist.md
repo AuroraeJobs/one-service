@@ -645,6 +645,14 @@ Goal: make the astronaut feature useful as an analysis surface. The core object 
 - [x] Extend route smoke and release evidence for report-style deep analysis.
 - [x] Run frontend smoke/build verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
+### Week 8: Manual Period Replay
+
+- [x] Add strict single-period replay: selecting target period N uses only periods before N to generate predictions, then compares against period N.
+- [x] Allow early-period replay such as period 2 based on period 1, without applying the batch replay minimum window.
+- [x] Keep batch replay summary while adding a manual target-period selector and candidate-level scoring details.
+- [x] Mount the replay panel on the prediction page and extend route smoke/release evidence.
+- [x] Run frontend smoke/build verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.
