@@ -399,12 +399,12 @@
         "lotteryAstronautApi.findAll",
         "lotteryAstronautApi.voyage"
       ],
-      "emptyStates": ["航行分析摘要", "星球分布", "卦象与结构", "近 12 次趋势", "这个宇航员暂时没有航行记录"],
+      "emptyStates": ["航行分析摘要", "星球分布", "红舰队卦象与结构", "蓝舰队星球节奏", "近 12 次趋势", "这个宇航员暂时没有航行记录"],
       "errorStates": ["航行记录加载失败"],
       "fixtureData": {
         "voyageAnalysis": {
           "metrics": ["航行总数", "最近航行", "主访问星球", "平均间隔"],
-          "distributions": ["planet", "hexagram", "recentTrend"]
+          "distributions": ["redHexagramStructure", "bluePlanetRhythm", "recentTrend"]
         }
       }
     },
@@ -424,7 +424,7 @@
       "fixtureData": {
         "releaseEvidence": {
           "smokeCommand": "npm run lottery:smoke",
-          "v16Checks": ["navigation usability", "operation ergonomics", "filter readability", "responsive polish", "release readiness", "single-row lottery nav", "all top-level groups visible", "no more menu", "no second-row child nav", "workbench priority actions", "astronaut voyage analysis"],
+          "v16Checks": ["navigation usability", "operation ergonomics", "filter readability", "responsive polish", "release readiness", "single-row lottery nav", "all top-level groups visible", "no more menu", "no second-row child nav", "workbench priority actions", "astronaut voyage analysis", "blue planet-only analysis"],
           "report": "reports/lottery-route-smoke-summary.json"
         }
       }

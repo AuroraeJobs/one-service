@@ -583,7 +583,7 @@ Goal: reduce visible menu density after V16 by keeping daily actions in front wh
 
 ## Iteration 21: V18 Astronaut Voyage Analysis
 
-Goal: make the astronaut feature useful as an analysis surface. The core object is the astronaut voyage record, and frontend work should explain voyage frequency, rhythm, planet distribution, hexagram structure, and recent movement trends without changing the footer/navigation shell.
+Goal: make the astronaut feature useful as an analysis surface. The core object is the astronaut voyage record. Red fleet analysis can explain hexagram, red-sum, and odd-even structure; blue fleet analysis should focus on planet rhythm, interval, and recent movement trends because hexagram analysis is not meaningful there. Do not change the footer/navigation shell.
 
 ### Week 1: Workbench Priority Actions
 
@@ -601,6 +601,14 @@ Goal: make the astronaut feature useful as an analysis surface. The core object 
 - [x] Keep analysis inside the astronaut voyage page; do not adjust navigation bar or footer styling.
 - [x] Extend route smoke coverage to include the astronaut voyage detail route and analysis copy.
 - [x] Update release evidence for the astronaut voyage analysis direction.
+- [x] Run frontend smoke/build verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
+
+### Week 3: Fleet-Specific Analysis Semantics
+
+- [x] Split astronaut voyage analysis by fleet semantics. Red fleet keeps hexagram, red-sum, and odd-even structure analysis.
+- [x] Remove hexagram analysis from blue fleet views and replace it with planet rhythm, primary-planet share, latest gap, and interval range.
+- [x] Update blue fleet voyage cards so they show blue ball and planet context instead of hexagram tags.
+- [x] Extend route smoke and release evidence so blue fleet remains planet-analysis-only.
 - [x] Run frontend smoke/build verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
 ## Documentation And Delivery

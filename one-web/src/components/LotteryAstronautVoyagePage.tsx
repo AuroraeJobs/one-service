@@ -74,6 +74,7 @@ const LotteryAstronautVoyagePage = () => {
   ), [astronauts, camp]);
 
   const title = astronaut ? `${astronaut.name}的航行记录` : `${number}号宇航员航行记录`;
+  const isBlueVoyage = camp === 'BLUE';
   const voyageAnalysis = useMemo(() => {
     const sortedRecords = [...voyageRecords].sort((a, b) => b.period - a.period);
     const ascendingRecords = [...voyageRecords].sort((a, b) => a.period - b.period);
@@ -87,8 +88,13 @@ const LotteryAstronautVoyagePage = () => {
     const evenTotal = sortedRecords.reduce((sum, record) => sum + (record.evenCount || 0), 0);
     const gaps = ascendingRecords.slice(1).map((record, index) => record.period - ascendingRecords[index].period);
     const averageGap = gaps.length ? gaps.reduce((sum, gap) => sum + gap, 0) / gaps.length : 0;
+    const latestGap = sortedRecords.length > 1 ? sortedRecords[0].period - sortedRecords[1].period : 0;
+    const longestGap = gaps.length ? Math.max(...gaps) : 0;
+    const shortestGap = gaps.length ? Math.min(...gaps) : 0;
     const recentRecords = sortedRecords.slice(0, 12);
     const recentPlanets = topDistribution(recentRecords.map(record => record.planetName)).slice(0, 3);
+    const primaryPlanetCount = planetDistribution[0]?.count || 0;
+    const primaryPlanetPercent = total ? Math.round((primaryPlanetCount / total) * 100) : 0;
 
     return {
       total,
@@ -99,7 +105,11 @@ const LotteryAstronautVoyagePage = () => {
       averageRedSum: total ? sumTotal / total : 0,
       oddEvenLabel: `${oddTotal}奇 / ${evenTotal}偶`,
       averageGap,
-      recentPlanets
+      latestGap,
+      longestGap,
+      shortestGap,
+      recentPlanets,
+      primaryPlanetPercent
     };
   }, [voyageRecords]);
 
@@ -160,14 +170,25 @@ const LotteryAstronautVoyagePage = () => {
                   ))}
                 </div>
               </Card>
-              <Card className="life-panel-card lottery-clean-panel" title="卦象与结构">
-                <div className="lottery-voyage-hexagram-summary">
-                  <strong>{voyageAnalysis.hexagramDistribution[0]?.name || '-'}</strong>
-                  <span>最高频卦象 {voyageAnalysis.hexagramDistribution[0]?.count || 0} 次</span>
-                  <span>平均和值 {voyageAnalysis.averageRedSum ? voyageAnalysis.averageRedSum.toFixed(1) : '-'}</span>
-                  <span>累计奇偶 {voyageAnalysis.oddEvenLabel}</span>
-                </div>
-              </Card>
+              {isBlueVoyage ? (
+                <Card className="life-panel-card lottery-clean-panel" title="蓝舰队星球节奏">
+                  <div className="lottery-voyage-hexagram-summary">
+                    <strong>{voyageAnalysis.planetDistribution[0]?.name || '-'}</strong>
+                    <span>主星占比 {voyageAnalysis.primaryPlanetPercent}%</span>
+                    <span>最近间隔 {voyageAnalysis.latestGap || '-'} 期</span>
+                    <span>间隔范围 {voyageAnalysis.shortestGap || '-'} - {voyageAnalysis.longestGap || '-'} 期</span>
+                  </div>
+                </Card>
+              ) : (
+                <Card className="life-panel-card lottery-clean-panel" title="红舰队卦象与结构">
+                  <div className="lottery-voyage-hexagram-summary">
+                    <strong>{voyageAnalysis.hexagramDistribution[0]?.name || '-'}</strong>
+                    <span>最高频卦象 {voyageAnalysis.hexagramDistribution[0]?.count || 0} 次</span>
+                    <span>平均和值 {voyageAnalysis.averageRedSum ? voyageAnalysis.averageRedSum.toFixed(1) : '-'}</span>
+                    <span>累计奇偶 {voyageAnalysis.oddEvenLabel}</span>
+                  </div>
+                </Card>
+              )}
               <Card className="life-panel-card lottery-clean-panel" title="近 12 次趋势">
                 <div className="lottery-voyage-trend-tags">
                   {voyageAnalysis.recentPlanets.length ? voyageAnalysis.recentPlanets.map(item => (
@@ -197,9 +218,18 @@ const LotteryAstronautVoyagePage = () => {
                     </div>
                   </div>
                   <div className="lottery-voyage-tags">
-                    <Tag color="gold">{record.hexagramName}</Tag>
-                    <Tag>和值 {record.redSum}</Tag>
-                    <Tag>{record.oddCount}奇{record.evenCount}偶</Tag>
+                    {isBlueVoyage ? (
+                      <>
+                        <Tag color="blue">蓝球 {record.blueNumber || record.raw}</Tag>
+                        <Tag>星球 {record.planetName}</Tag>
+                      </>
+                    ) : (
+                      <>
+                        <Tag color="gold">{record.hexagramName}</Tag>
+                        <Tag>和值 {record.redSum}</Tag>
+                        <Tag>{record.oddCount}奇{record.evenCount}偶</Tag>
+                      </>
+                    )}
                   </div>
                 </article>
               ))}
