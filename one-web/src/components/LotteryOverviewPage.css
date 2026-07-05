@@ -5175,6 +5175,121 @@ button.lottery-latest-vs-card:hover {
   align-items: flex-start;
 }
 
+.lottery-deep-report-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.lottery-deep-report-panel {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-deep-report-panel > strong {
+  color: var(--app-text);
+  font-size: 14px;
+}
+
+.lottery-deep-report-number-list,
+.lottery-deep-bucket-list {
+  display: grid;
+  gap: 8px;
+}
+
+.lottery-deep-report-number {
+  display: grid;
+  grid-template-columns: 36px 48px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--app-border);
+}
+
+.lottery-deep-report-number:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.lottery-deep-report-number b {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 12px;
+}
+
+.lottery-deep-report-number-red b {
+  background: #ff3b30;
+}
+
+.lottery-deep-report-number-blue b {
+  background: #0071e3;
+}
+
+.lottery-deep-report-number span,
+.lottery-deep-bucket-row b,
+.lottery-deep-pair-grid b {
+  color: var(--app-text);
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.lottery-deep-report-number small,
+.lottery-deep-bucket-row span,
+.lottery-deep-bucket-row small,
+.lottery-deep-pair-grid span,
+.lottery-deep-advice-list p {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lottery-deep-bucket-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) 42px 42px;
+  align-items: center;
+  gap: 8px;
+}
+
+.lottery-deep-pair-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+  gap: 8px;
+}
+
+.lottery-deep-pair-grid span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  background: rgba(127, 127, 127, 0.1);
+}
+
+.lottery-deep-advice-list {
+  display: grid;
+  gap: 8px;
+}
+
+.lottery-deep-advice-list p {
+  margin: 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--module-accent, #ff3b30);
+  border-radius: 8px;
+  background: var(--app-surface-elevated);
+}
+
 .lottery-simple-stat-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

@@ -516,7 +516,7 @@ const LotteryExportMaintenancePage = () => {
       key: 'v18-deep-pattern-analysis',
       label: 'V18深度规律分析',
       status: 'PASS',
-      message: '新增深度规律分析页，综合频次、近期漂移、遗漏压力、奇偶大小、区间覆盖和蓝舰队星球节奏',
+      message: '深度规律分析页已按报告结构覆盖数据规模、冷热、和值、奇偶大小、区间、连号重号、高频组合和核心建议',
       path: '/lottery/deep-analysis'
     },
     {

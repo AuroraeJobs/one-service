@@ -81,7 +81,7 @@
       "component": "LotteryDeepAnalysisPage",
       "componentFile": "src/components/LotteryDeepAnalysisPage.tsx",
       "mockApis": [],
-      "emptyStates": ["深度规律分析", "综合方法雷达", "号码可能性雷达", "候选线索", "红舰队", "蓝舰队星球"],
+      "emptyStates": ["深度规律分析", "综合方法雷达", "报告式规律总览", "号码可能性雷达", "候选线索", "核心建议", "和值区间分布", "连号数量分布", "重号数量分布", "红球高频二元组合", "红舰队", "蓝舰队星球"],
       "errorStates": [],
       "fixtureData": {
         "analysisMethods": [
@@ -91,7 +91,11 @@
           "odd even",
           "big small",
           "zone coverage",
-          "blue planet rhythm"
+          "blue planet rhythm",
+          "sum range distribution",
+          "repeat count",
+          "consecutive count",
+          "frequent red pairs"
         ]
       }
     },
@@ -468,7 +472,7 @@
       "fixtureData": {
         "releaseEvidence": {
           "smokeCommand": "npm run lottery:smoke",
-          "v16Checks": ["navigation usability", "operation ergonomics", "filter readability", "responsive polish", "release readiness", "single-row lottery nav", "all top-level groups visible", "no more menu", "no second-row child nav", "workbench priority actions", "astronaut voyage analysis", "blue planet-only analysis", "number probability pressure", "number probability drilldown", "deep pattern analysis"],
+          "v16Checks": ["navigation usability", "operation ergonomics", "filter readability", "responsive polish", "release readiness", "single-row lottery nav", "all top-level groups visible", "no more menu", "no second-row child nav", "workbench priority actions", "astronaut voyage analysis", "blue planet-only analysis", "number probability pressure", "number probability drilldown", "deep pattern analysis", "report-style deep analysis"],
           "report": "reports/lottery-route-smoke-summary.json"
         }
       }

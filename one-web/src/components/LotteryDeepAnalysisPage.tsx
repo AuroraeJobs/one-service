@@ -13,7 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import LotteryBalls from './lottery/LotteryBalls';
 import { useRecordContext } from '../contexts/RecordContext';
-import { buildLotteryStats, type LotteryNumberProbability, type LotteryStats } from '../utils/lotteryStats';
+import { buildLotteryStats, type LotteryDraw, type LotteryNumberProbability, type LotteryStats } from '../utils/lotteryStats';
 import './LotteryOverviewPage.css';
 
 interface AnalysisSignal {
@@ -33,12 +33,114 @@ interface CandidateLine {
   tags: string[];
 }
 
+interface DistributionBucket {
+  label: string;
+  count: number;
+  percentage: number;
+}
+
+interface PairItem {
+  label: string;
+  count: number;
+}
+
 const getSignalTone = (score: number): AnalysisSignal['tone'] => {
   if (score >= 80) return 'green';
   if (score >= 65) return 'blue';
   if (score >= 50) return 'orange';
   return 'red';
 };
+
+const formatPercent = (count: number, total: number) => `${total > 0 ? Math.round((count / total) * 1000) / 10 : 0}%`;
+
+const getBucketPercentage = (count: number, total: number) => total > 0 ? Math.round((count / total) * 1000) / 10 : 0;
+
+const getTopNumbers = (items: LotteryNumberProbability[], count: number) => items.slice(0, count);
+
+const getBottomNumbers = (items: LotteryNumberProbability[], count: number) =>
+  [...items].sort((a, b) => a.probability - b.probability || Number(a.number) - Number(b.number)).slice(0, count);
+
+const buildSumBuckets = (draws: LotteryDraw[]): DistributionBucket[] => {
+  const ranges = [
+    { label: '70以下', min: 0, max: 69 },
+    { label: '70-90', min: 70, max: 90 },
+    { label: '91-100', min: 91, max: 100 },
+    { label: '101-110', min: 101, max: 110 },
+    { label: '111-120', min: 111, max: 120 },
+    { label: '121以上', min: 121, max: 999 }
+  ];
+
+  return ranges.map(range => {
+    const count = draws.filter(draw => draw.redSum >= range.min && draw.redSum <= range.max).length;
+    return {
+      label: range.label,
+      count,
+      percentage: getBucketPercentage(count, draws.length)
+    };
+  });
+};
+
+const buildCountBuckets = (draws: LotteryDraw[], getCount: (draw: LotteryDraw, index: number) => number): DistributionBucket[] => {
+  const max = Math.max(0, ...draws.map(getCount));
+  return Array.from({ length: max + 1 }, (_, countValue) => {
+    const count = draws.filter((draw, index) => getCount(draw, index) === countValue).length;
+    return {
+      label: `${countValue}`,
+      count,
+      percentage: getBucketPercentage(count, draws.length)
+    };
+  });
+};
+
+const getZonePattern = (draw: LotteryDraw) => {
+  const counts = [0, 0, 0];
+  draw.redNumbers.forEach(number => {
+    const value = Number(number);
+    if (value <= 11) counts[0] += 1;
+    else if (value <= 22) counts[1] += 1;
+    else counts[2] += 1;
+  });
+  return counts.join('-');
+};
+
+const buildPatternBuckets = (draws: LotteryDraw[], getPattern: (draw: LotteryDraw) => string, limit = 6): DistributionBucket[] => {
+  const counts = draws.reduce<Record<string, number>>((result, draw) => {
+    const pattern = getPattern(draw);
+    result[pattern] = (result[pattern] || 0) + 1;
+    return result;
+  }, {});
+
+  return Object.entries(counts)
+    .map(([label, count]) => ({ label, count, percentage: getBucketPercentage(count, draws.length) }))
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+    .slice(0, limit);
+};
+
+const buildPairItems = (draws: LotteryDraw[], limit = 8): PairItem[] => {
+  const counts: Record<string, number> = {};
+  draws.forEach(draw => {
+    const numbers = [...draw.redNumbers].sort((a, b) => Number(a) - Number(b));
+    numbers.forEach((left, leftIndex) => {
+      numbers.slice(leftIndex + 1).forEach(right => {
+        const key = `${left}-${right}`;
+        counts[key] = (counts[key] || 0) + 1;
+      });
+    });
+  });
+  return Object.entries(counts)
+    .map(([label, count]) => ({ label, count }))
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+    .slice(0, limit);
+};
+
+const getRepeatCount = (draws: LotteryDraw[], draw: LotteryDraw, index: number) => {
+  const previous = draws[index - 1];
+  if (!previous) return 0;
+  const previousRed = new Set(previous.redNumbers);
+  return draw.redNumbers.filter(number => previousRed.has(number)).length;
+};
+
+const getLatestWindow = (draws: LotteryDraw[], size = 60) => draws.slice(Math.max(0, draws.length - size));
 
 const getHotColdText = (items: LotteryNumberProbability[]) => {
   const hot = items.slice(0, 3).map(item => item.number).join(' ');
@@ -219,6 +321,87 @@ const CandidateCard = ({ item }: { item: CandidateLine }) => (
   </div>
 );
 
+const NumberListPanel = ({
+  title,
+  items,
+  tone
+}: {
+  title: string;
+  items: LotteryNumberProbability[];
+  tone: 'red' | 'blue';
+}) => (
+  <div className="lottery-deep-report-panel">
+    <strong>{title}</strong>
+    <div className="lottery-deep-report-number-list">
+      {items.map(item => (
+        <div key={`${title}-${item.number}`} className={`lottery-deep-report-number lottery-deep-report-number-${tone}`}>
+          <b>{item.number}</b>
+          <span>{item.probability}%</span>
+          <small>频次 {item.historyCount} · 遗漏 {item.currentOmission} · 压力 {item.omissionPressure}x</small>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const BucketPanel = ({ title, items }: { title: string; items: DistributionBucket[] }) => (
+  <div className="lottery-deep-report-panel">
+    <strong>{title}</strong>
+    <div className="lottery-deep-bucket-list">
+      {items.map(item => (
+        <div key={`${title}-${item.label}`} className="lottery-deep-bucket-row">
+          <span>{item.label}</span>
+          <Progress percent={item.percentage} showInfo={false} size="small" />
+          <b>{item.count}</b>
+          <small>{item.percentage}%</small>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const PairPanel = ({ title, items }: { title: string; items: PairItem[] }) => (
+  <div className="lottery-deep-report-panel">
+    <strong>{title}</strong>
+    <div className="lottery-deep-pair-grid">
+      {items.map(item => (
+        <span key={`${title}-${item.label}`}>
+          {item.label}
+          <b>{item.count}</b>
+        </span>
+      ))}
+    </div>
+  </div>
+);
+
+const AdvicePanel = ({ stats }: { stats: LotteryStats }) => {
+  const hotRed = getTopNumbers(stats.probabilityAnalysis.red, 6).map(item => item.number).join(' ');
+  const pressureRed = stats.probabilityAnalysis.red
+    .filter(item => item.omissionPressure >= 1)
+    .slice(0, 6)
+    .map(item => item.number)
+    .join(' ');
+  const hotBlue = getTopNumbers(stats.probabilityAnalysis.blue, 4).map(item => item.number).join(' ');
+  const pressureBlue = stats.probabilityAnalysis.blue
+    .filter(item => item.omissionPressure >= 1)
+    .slice(0, 4)
+    .map(item => item.number)
+    .join(' ');
+
+  const advice = [
+    `红舰队先看综合概率：${hotRed || '-'}，再用遗漏压力池 ${pressureRed || '-'} 做替补。`,
+    `蓝舰队只按星球节奏处理，优先观察 ${hotBlue || '-'}；若追回补，则观察 ${pressureBlue || '-' }。`,
+    `和值优先落在近期高频桶附近，同时保持 ${stats.probabilityAnalysis.summary.recentOddEvenCombination} 和 ${stats.probabilityAnalysis.summary.recentBigSmallCombination} 的结构约束。`,
+    '候选组合不做单一结论，至少保留综合概率线、遗漏压力线、结构平衡线三条路径，方便复盘。'
+  ];
+
+  return (
+    <div className="lottery-deep-advice-list">
+      {advice.map(item => <p key={item}>{item}</p>)}
+    </div>
+  );
+};
+
 const LotteryDeepAnalysisPage = () => {
   const navigate = useNavigate();
   const { allRecords, loading, refreshRecords } = useRecordContext();
@@ -234,6 +417,15 @@ const LotteryDeepAnalysisPage = () => {
   const candidateLines = useMemo(() => buildCandidateLines(stats), [stats]);
   const topRed = stats.probabilityAnalysis.red.slice(0, 9);
   const topBlue = stats.probabilityAnalysis.blue.slice(0, 6);
+  const latestWindow = useMemo(() => getLatestWindow(stats.draws), [stats.draws]);
+  const sumBuckets = useMemo(() => buildSumBuckets(stats.draws), [stats.draws]);
+  const consecutiveBuckets = useMemo(() => buildCountBuckets(stats.draws, draw => draw.consecutivePairs), [stats.draws]);
+  const repeatBuckets = useMemo(() => buildCountBuckets(stats.draws, (draw, index) => getRepeatCount(stats.draws, draw, index)), [stats.draws]);
+  const zonePatterns = useMemo(() => buildPatternBuckets(stats.draws, getZonePattern), [stats.draws]);
+  const oddEvenPatterns = useMemo(() => buildPatternBuckets(stats.draws, draw => draw.combination), [stats.draws]);
+  const bigSmallPatterns = useMemo(() => buildPatternBuckets(stats.draws, draw => `${draw.bigCount}大${draw.smallCount}小`), [stats.draws]);
+  const pairItems = useMemo(() => buildPairItems(stats.draws), [stats.draws]);
+  const recentSumBuckets = useMemo(() => buildSumBuckets(latestWindow), [latestWindow]);
 
   return (
     <LifePageShell
@@ -288,9 +480,41 @@ const LotteryDeepAnalysisPage = () => {
                 <strong>{stats.averageRedSum}</strong>
                 <span>历史和值均值</span>
               </div>
+              <div>
+                <strong>{stats.recentAverageRedSum}</strong>
+                <span>近期和值均值</span>
+              </div>
+              <div>
+                <strong>{formatPercent(stats.draws.filter(draw => draw.consecutivePairs > 0).length, stats.draws.length)}</strong>
+                <span>连号出现率</span>
+              </div>
             </div>
             <div className="lottery-deep-signal-grid">
               {signals.map(signal => <SignalCard key={signal.key} signal={signal} />)}
+            </div>
+          </section>
+
+          <section className="lottery-clean-panel">
+            <div className="lottery-card-title-row">
+              <div>
+                <h2>报告式规律总览</h2>
+                <p>对齐截图报告的分析顺序：数据规模、冷热、和值、奇偶大小、区间、连号重号和高频组合。</p>
+              </div>
+              <BarChartOutlined />
+            </div>
+            <div className="lottery-deep-report-grid">
+              <NumberListPanel title="红球高可能号码" items={getTopNumbers(stats.probabilityAnalysis.red, 6)} tone="red" />
+              <NumberListPanel title="红球低位观察" items={getBottomNumbers(stats.probabilityAnalysis.red, 6)} tone="red" />
+              <NumberListPanel title="蓝球高可能星球" items={getTopNumbers(stats.probabilityAnalysis.blue, 4)} tone="blue" />
+              <NumberListPanel title="蓝球低位观察" items={getBottomNumbers(stats.probabilityAnalysis.blue, 4)} tone="blue" />
+              <BucketPanel title="和值区间分布" items={sumBuckets} />
+              <BucketPanel title="近期和值区间" items={recentSumBuckets} />
+              <BucketPanel title="连号数量分布" items={consecutiveBuckets} />
+              <BucketPanel title="重号数量分布" items={repeatBuckets} />
+              <BucketPanel title="三区分布模式" items={zonePatterns} />
+              <BucketPanel title="奇偶组合频次" items={oddEvenPatterns} />
+              <BucketPanel title="大小组合频次" items={bigSmallPatterns} />
+              <PairPanel title="红球高频二元组合" items={pairItems} />
             </div>
           </section>
 
@@ -319,6 +543,17 @@ const LotteryDeepAnalysisPage = () => {
             <div className="lottery-deep-candidate-grid">
               {candidateLines.map(item => <CandidateCard key={item.title} item={item} />)}
             </div>
+          </section>
+
+          <section className="lottery-clean-panel">
+            <div className="lottery-card-title-row">
+              <div>
+                <h2>核心建议</h2>
+                <p>把报告的统计结论转成下一次选号前的检查清单。</p>
+              </div>
+              <CompassOutlined />
+            </div>
+            <AdvicePanel stats={stats} />
           </section>
         </section>
       )}
