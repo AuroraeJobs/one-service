@@ -532,6 +532,42 @@ Goal: turn the V14 execution workflow into a learning loop: every strategy, simu
 - [x] Review responsive/mobile layout for outcomes, recommendations, mobile command flow, governance, ticket packs, and export pages. Added responsive evidence-pack grid behavior and kept V15 pages in the existing mobile grid breakpoints.
 - [x] Run V15 verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
+## Iteration 19: V16 Frontend Usability
+
+Goal: make the lottery frontend easier to navigate and operate day to day, with fewer scattered choices, clearer current context, better default actions, and more readable states.
+
+### Week 1: Navigation And Information Architecture
+
+- [x] Optimize the grouped lottery menu after the V15 consolidation. Kept the reduced top-level groups and added a persistent current-group child navigation strip for grouped items.
+- [x] Make the active workflow group easier to recognize. The footer now shows the active group name, icon, and its child entries with the active child highlighted.
+- [x] Improve child-menu switching feedback without relying only on hover. Group children are available as direct buttons above the footer, which works on desktop and mobile.
+- [x] Keep common routes reachable from the grouped menu. Smoke coverage still validates protected routes, navigation source entries, and component API bindings.
+- [x] Run route smoke/build verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
+
+### Week 2: Forms And Operation Ergonomics
+
+- [ ] Improve primary actions on ticket, ticket-pack, recommendation, and mobile command pages.
+- [ ] Reduce repeated input with recent values, default issue values, and clearer generated titles.
+- [ ] Add safer confirmations and clearer success/failure summaries for destructive and batch actions.
+- [ ] Convert technical errors into business-readable guidance where the frontend has enough context.
+- [ ] Run frontend smoke/build verification, update docs, commit, and push.
+
+### Week 3: Lists, Filters, And State Readability
+
+- [ ] Normalize list/table/card empty, loading, and error states across lottery pages.
+- [ ] Add clearer filter presets for tickets, attribution, recommendations, audit events, and review queues.
+- [ ] Unify status colors and business labels for pending, warning, failed, applied, archived, and settled states.
+- [ ] Add recent-view, recently-handled, or pending-me views where supported by existing data.
+- [ ] Run frontend smoke/build verification, update docs, commit, and push.
+
+### Week 4: Visual Consistency And Release Quality
+
+- [ ] Review spacing, buttons, tags, progress indicators, and card density across the lottery module.
+- [ ] Fix mobile/desktop text overflow, cramped actions, and inconsistent wrapping on high-use pages.
+- [ ] Extend smoke fixture coverage for the new usability entry points and release evidence.
+- [ ] Update frontend usability documentation and version plan.
+- [ ] Run V16 verification, update docs, commit, and push.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

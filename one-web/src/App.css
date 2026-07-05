@@ -712,7 +712,7 @@ body {
   left: 0;
   right: 0;
   transform: none;
-  height: var(--app-footer-height);
+  min-height: var(--app-footer-height);
   z-index: 1000;
   padding: 0 20px;
   border-left: 0 !important;
@@ -720,13 +720,16 @@ body {
   border-bottom: 0 !important;
   border-radius: 0 !important;
   box-sizing: border-box;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: visible;
 }
 
 .season-footer-inner {
   width: 100%;
   max-width: 1180px;
-  height: 100%;
+  min-height: var(--app-footer-height);
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -831,6 +834,64 @@ body {
   box-shadow: 0 0 10px color-mix(in srgb, var(--module-accent, #1890ff) 56%, transparent);
 }
 
+.season-footer-context {
+  width: min(1180px, calc(100vw - 40px));
+  margin: -7px auto 8px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--app-surface) 92%, transparent);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+}
+
+.season-footer-context-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: max-content;
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.season-footer-context-items {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.season-footer-context-item {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 5px 9px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--app-text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.season-footer-context-item:hover {
+  background: rgba(127, 127, 127, 0.1);
+}
+
+.season-footer-context-item-active {
+  border-color: color-mix(in srgb, var(--module-accent, #0071e3) 40%, transparent);
+  background: color-mix(in srgb, var(--module-accent, #0071e3) 10%, transparent);
+  color: var(--module-accent, #0071e3);
+  font-weight: 700;
+}
+
 @media (max-width: 720px) {
   .season-footer-nav {
     max-width: none;
@@ -844,6 +905,17 @@ body {
 
   .season-footer-items {
     gap: 4px;
+  }
+
+  .season-footer-context {
+    width: calc(100vw - 24px);
+    grid-template-columns: minmax(0, 1fr);
+    align-items: flex-start;
+    margin-bottom: 6px;
+  }
+
+  .season-footer-context-label {
+    display: none;
   }
 }
 

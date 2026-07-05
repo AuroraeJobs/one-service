@@ -241,6 +241,16 @@ Goal: make the V14 execution loop self-improving and easier to operate on mobile
 - Add closed-loop reports and release evidence for attribution, recommendations, mobile command flow, and V15 governance. The shipped Week 4 slice adds V15 report presets, evidence-pack cards, audit filters, route smoke coverage, release-readiness rows, and responsive export polish.
 - Preserve project-owned API boundaries: frontend routes continue to call `lottery/*` and reuse existing workbench/governance/ticket-pack/report APIs before adding narrow backend summaries.
 
+### V16: Frontend Usability
+
+Goal: make the lottery module easier to use every day. This version should improve navigation clarity, reduce repeated input, make states and actions easier to scan, and polish responsive behavior before adding more domain depth.
+
+- Improve navigation and information architecture after the grouped menu consolidation. The shipped Week 1 slice adds a persistent current-group child navigation strip above the footer, keeps grouped pages directly reachable on desktop and mobile, and documents the reduced workflow menu.
+- Improve form and operation ergonomics for ticket, ticket-pack, recommendation, and mobile-command surfaces. Planned Week 2 focuses on safer primary actions, better defaults, recent values, and readable action summaries.
+- Improve list, filter, and state readability across tickets, attribution, recommendations, audit events, and review queues. Planned Week 3 focuses on filter presets, state labels, and pending/recently-handled views where supported by existing data.
+- Improve visual consistency and release quality across the lottery module. Planned Week 4 focuses on spacing, wrapping, mobile density, smoke coverage, and release evidence for usability changes.
+- Prefer frontend-only improvements for this version unless an existing API shape blocks a meaningful usability fix.
+
 ## API Boundary
 
 Frontend should only call:

@@ -15,6 +15,11 @@ const SeasonFooterNav = () => {
   const fullPath = `${location.pathname}${location.search}`;
   const items = getLifeSubNavItems(fullPath);
   const activePath = getLifeActiveSubNavPath(fullPath);
+  const activeGroup = items.find(item => {
+    const childItems = item.children || [];
+    return activePath === item.path || childItems.some(child => activePath === child.path);
+  });
+  const activeGroupChildren = activeGroup?.children || [];
 
   if (items.length === 0) return null;
 
@@ -76,6 +81,34 @@ const SeasonFooterNav = () => {
           })}
         </nav>
       </div>
+      {activeGroup && activeGroupChildren.length ? (
+        <div className="season-footer-context" aria-label={`${activeGroup.label}子导航`}>
+          <span className="season-footer-context-label">
+            <span className="season-footer-icon" style={{ color: activeGroup.accent }}>
+              {activeGroup.icon}
+            </span>
+            {activeGroup.label}
+          </span>
+          <div className="season-footer-context-items">
+            {activeGroupChildren.map(child => {
+              const isActive = activePath === child.path;
+              return (
+                <button
+                  key={child.id}
+                  type="button"
+                  className={`season-footer-context-item ${isActive ? 'season-footer-context-item-active' : ''}`}
+                  onClick={() => navigate(child.path)}
+                >
+                  <span className="season-footer-icon" style={{ color: child.accent }}>
+                    {child.icon}
+                  </span>
+                  {child.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
     </footer>
   );
 };
