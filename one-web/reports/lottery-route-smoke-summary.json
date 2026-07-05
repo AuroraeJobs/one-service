@@ -1,6 +1,6 @@
 {
   "target": "Iteration 21 Week 4 number probability pressure smoke",
-  "generatedAt": "2026-07-05T11:59:53.595Z",
+  "generatedAt": "2026-07-05T12:16:24.341Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
@@ -23,7 +23,7 @@
       "label": "号码综合可能性",
       "component": "LotteryPredictionPage",
       "mockApiCount": 6,
-      "emptyStateCount": 6,
+      "emptyStateCount": 9,
       "errorStateCount": 3
     },
     {

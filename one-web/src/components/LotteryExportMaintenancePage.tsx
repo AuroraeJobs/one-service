@@ -509,7 +509,7 @@ const LotteryExportMaintenancePage = () => {
       key: 'v18-number-probability-pressure',
       label: 'V18号码综合可能性',
       status: 'PASS',
-      message: '预测页综合历史频次、近期频次、遗漏压力、奇偶性、大小和分区；遗漏超过平均后会持续提高回补压力',
+      message: '预测页综合历史频次、近期频次、遗漏压力、奇偶性、大小和分区；每个号码可查看分项贡献和归一化概率公式',
       path: '/lottery/prediction'
     },
     {

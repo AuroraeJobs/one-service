@@ -4746,6 +4746,22 @@ button.lottery-latest-vs-card:hover {
   border: 1px solid var(--app-border);
   border-radius: 10px;
   background: var(--app-surface-elevated);
+  cursor: pointer;
+  font: inherit;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.lottery-probability-cell:hover,
+.lottery-probability-cell:focus-visible {
+  border-color: var(--module-accent, #ff3b30);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.1);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.lottery-probability-cell-active {
+  border-color: var(--module-accent, #ff3b30);
+  box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.12);
 }
 
 .lottery-probability-cell strong {
@@ -4827,6 +4843,134 @@ button.lottery-latest-vs-card:hover {
 
 .lottery-probability-detail p {
   margin: 0;
+}
+
+.lottery-probability-formula {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-probability-formula-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lottery-probability-formula-head > strong {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 15px;
+}
+
+.lottery-probability-formula-head-red > strong {
+  background: #ff3b30;
+}
+
+.lottery-probability-formula-head-blue > strong {
+  background: #0071e3;
+}
+
+.lottery-probability-formula-head > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.lottery-probability-formula-head span,
+.lottery-probability-formula-kpis span,
+.lottery-probability-score-row span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lottery-probability-formula-head b {
+  color: var(--app-text);
+  font-size: 14px;
+}
+
+.lottery-probability-formula-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.lottery-probability-formula-kpis > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding: 8px;
+  border-radius: 9px;
+  background: rgba(127, 127, 127, 0.1);
+}
+
+.lottery-probability-formula-kpis strong {
+  color: var(--app-text);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.lottery-probability-equation {
+  padding: 9px 10px;
+  border-radius: 9px;
+  background: rgba(255, 59, 48, 0.08);
+  color: var(--module-accent, #ff3b30);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.lottery-probability-score-list {
+  display: grid;
+  gap: 8px;
+}
+
+.lottery-probability-score-row {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--app-border);
+}
+
+.lottery-probability-score-row:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.lottery-probability-score-row > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.lottery-probability-score-row strong {
+  color: var(--app-text);
+  font-size: 13px;
+}
+
+.lottery-probability-score-row b {
+  flex: 0 0 auto;
+  color: var(--module-accent, #ff3b30);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.lottery-probability-factor-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .lottery-simple-stat-row {
@@ -5764,6 +5908,7 @@ button.lottery-latest-vs-card:hover {
   .lottery-simple-stat-row,
   .lottery-latest-vs-grid,
   .lottery-probability-summary,
+  .lottery-probability-formula-kpis,
   .lottery-probability-top-list,
   .lottery-omission-grid,
   .lottery-candidate-grid,

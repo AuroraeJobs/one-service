@@ -112,6 +112,8 @@ export interface LotteryNumberProbability {
   type: 'red' | 'blue';
   probability: number;
   score: number;
+  poolTotalScore: number;
+  probabilityPool: number;
   rank: number;
   historyCount: number;
   recentCount: number;
@@ -124,6 +126,11 @@ export interface LotteryNumberProbability {
   zoneLabel?: string;
   groupLabel?: string;
   factors: string[];
+  scoreParts: Array<{
+    label: string;
+    score: number;
+    description: string;
+  }>;
 }
 
 export interface LotteryProbabilityAnalysis {
@@ -883,6 +890,48 @@ const buildProbabilityAnalysis = (
     const groupScore = Math.max(0, 10 + fourGroupPressure[group.index] * 10);
     const varianceScore = Math.max(0, 12 - Math.abs(value - targetAverage) / 2.2);
     const score = Math.max(1, historyScore + recentScore + omissionScore + oddScore + bigScore + zoneScore + groupScore + varianceScore);
+    const scoreParts = [
+      {
+        label: '历史频次',
+        score: historyScore,
+        description: `${historyCount}次 / 期望${roundTwo(redExpectedCount)}次，上限按1.35倍截断`
+      },
+      {
+        label: '近期活跃',
+        score: recentScore,
+        description: `${recentCount}次 / 近期期望${roundTwo(recentRedExpectedCount)}次，上限按1.5倍截断`
+      },
+      {
+        label: '遗漏压力',
+        score: omissionScore,
+        description: `当前遗漏${omission?.currentOmission || 0}期 / 平均遗漏${roundTwo(omission?.averageOmission || 0)}期 = ${omissionPressure || 0}x`
+      },
+      {
+        label: '奇偶匹配',
+        score: oddScore,
+        description: `${value % 2 !== 0 ? '奇数' : '偶数'}，目标奇数约${targetOddCount}个`
+      },
+      {
+        label: '大小匹配',
+        score: bigScore,
+        description: `${value >= 17 ? '大号' : '小号'}，目标大号约${targetBigCount}个`
+      },
+      {
+        label: '区间压力',
+        score: zoneScore,
+        description: `${zone.label}，近期分布压力${roundTwo(zonePressure[zone.index])}`
+      },
+      {
+        label: '四组压力',
+        score: groupScore,
+        description: `${group.label}，近期分组压力${roundTwo(fourGroupPressure[group.index])}`
+      },
+      {
+        label: '均值贴合',
+        score: varianceScore,
+        description: `号码距离目标均值${roundTwo(targetAverage)}越近，结构分越高`
+      }
+    ];
     const factors = [
       historyCount >= redExpectedCount ? '历史偏热' : '历史偏冷',
       recentCount >= recentRedExpectedCount ? '近期活跃' : '近期平稳',
@@ -899,6 +948,8 @@ const buildProbabilityAnalysis = (
       type: 'red' as const,
       probability: 0,
       score: roundTwo(score),
+      poolTotalScore: 0,
+      probabilityPool: 600,
       rank: 0,
       historyCount,
       recentCount,
@@ -910,7 +961,8 @@ const buildProbabilityAnalysis = (
       sizeLabel: value >= 17 ? '大' : '小',
       zoneLabel: zone.label,
       groupLabel: group.label,
-      factors
+      factors,
+      scoreParts: scoreParts.map(part => ({ ...part, score: roundTwo(part.score) }))
     };
   });
 
@@ -926,12 +978,36 @@ const buildProbabilityAnalysis = (
     const omissionScore = Math.min(38, Math.max(0, omissionPressure - 0.5) * 16);
     const balanceScore = Math.max(0, 14 - Math.abs(value - 8.5) * 1.2);
     const score = Math.max(1, historyScore + recentScore + omissionScore + balanceScore);
+    const scoreParts = [
+      {
+        label: '历史频次',
+        score: historyScore,
+        description: `${historyCount}次 / 期望${roundTwo(blueExpectedCount)}次，上限按1.35倍截断`
+      },
+      {
+        label: '近期活跃',
+        score: recentScore,
+        description: `${recentCount}次 / 近期期望${roundTwo(recentBlueExpectedCount)}次，上限按1.6倍截断`
+      },
+      {
+        label: '遗漏压力',
+        score: omissionScore,
+        description: `当前遗漏${omission?.currentOmission || 0}期 / 平均遗漏${roundTwo(omission?.averageOmission || 0)}期 = ${omissionPressure || 0}x`
+      },
+      {
+        label: '星球平衡',
+        score: balanceScore,
+        description: `蓝舰队按星球位置节奏分析，越接近中位轨道结构分越高`
+      }
+    ];
 
     return {
       number,
       type: 'blue' as const,
       probability: 0,
       score: roundTwo(score),
+      poolTotalScore: 0,
+      probabilityPool: 100,
       rank: 0,
       historyCount,
       recentCount,
@@ -948,7 +1024,8 @@ const buildProbabilityAnalysis = (
         getOmissionTrendFactor(omissionPressure),
         `遗漏压力${omissionPressure || 0}x`,
         `${groupLabel}小组`
-      ]
+      ],
+      scoreParts: scoreParts.map(part => ({ ...part, score: roundTwo(part.score) }))
     };
   });
 
@@ -957,6 +1034,8 @@ const buildProbabilityAnalysis = (
     return items
       .map(item => ({
         ...item,
+        poolTotalScore: roundTwo(totalScore),
+        probabilityPool: totalProbability,
         probability: roundTwo((item.score / totalScore) * totalProbability)
       }))
       .sort((a, b) => b.probability - a.probability || Number(a.number) - Number(b.number))

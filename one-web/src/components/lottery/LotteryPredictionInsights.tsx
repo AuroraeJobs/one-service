@@ -524,19 +524,37 @@ const LatestRecordCard = ({
   </button>
 );
 
-const ProbabilityGrid = ({ title, items }: { title: string; items: LotteryNumberProbability[] }) => (
+const ProbabilityGrid = ({
+  title,
+  items,
+  selectedKey,
+  onSelect
+}: {
+  title: string;
+  items: LotteryNumberProbability[];
+  selectedKey?: string;
+  onSelect: (item: LotteryNumberProbability) => void;
+}) => (
   <div className="lottery-probability-block">
     <div className="lottery-probability-block-head">
       <strong>{title}</strong>
       <span>按概率从高到低排序</span>
     </div>
     <div className="lottery-probability-grid">
-      {[...items].sort((a, b) => b.probability - a.probability || Number(a.number) - Number(b.number)).map(item => (
-        <div key={`${item.type}-${item.number}`} className={`lottery-probability-cell lottery-probability-cell-${item.type}`}>
-          <strong>{item.number}</strong>
-          <span>{item.probability}%</span>
-        </div>
-      ))}
+      {[...items].sort((a, b) => b.probability - a.probability || Number(a.number) - Number(b.number)).map(item => {
+        const itemKey = `${item.type}-${item.number}`;
+        return (
+          <button
+            key={itemKey}
+            type="button"
+            className={`lottery-probability-cell lottery-probability-cell-${item.type}${selectedKey === itemKey ? ' lottery-probability-cell-active' : ''}`}
+            onClick={() => onSelect(item)}
+          >
+            <strong>{item.number}</strong>
+            <span>{item.probability}%</span>
+          </button>
+        );
+      })}
     </div>
   </div>
 );
@@ -562,6 +580,53 @@ const ProbabilityDetail = ({ item }: { item: LotteryNumberProbability }) => (
   </div>
 );
 
+const ProbabilityFormulaPanel = ({ item }: { item: LotteryNumberProbability }) => (
+  <div className="lottery-probability-formula">
+    <div className={`lottery-probability-formula-head lottery-probability-formula-head-${item.type}`}>
+      <strong>{item.number}</strong>
+      <div>
+        <span>{item.type === 'red' ? '红舰队号码' : '蓝舰队星球'}</span>
+        <b>#{item.rank} · {item.probability}%</b>
+      </div>
+    </div>
+    <div className="lottery-probability-formula-kpis">
+      <div>
+        <strong>{item.score}</strong>
+        <span>本号综合分</span>
+      </div>
+      <div>
+        <strong>{item.poolTotalScore}</strong>
+        <span>{item.type === 'red' ? '红球总分' : '蓝球总分'}</span>
+      </div>
+      <div>
+        <strong>{item.probabilityPool}%</strong>
+        <span>{item.type === 'red' ? '红球概率池' : '蓝球概率池'}</span>
+      </div>
+      <div>
+        <strong>{item.omissionPressure}x</strong>
+        <span>遗漏压力</span>
+      </div>
+    </div>
+    <div className="lottery-probability-equation">
+      概率 = {item.score} / {item.poolTotalScore} × {item.probabilityPool}% = {item.probability}%
+    </div>
+    <div className="lottery-probability-score-list">
+      {item.scoreParts.map(part => (
+        <div key={part.label} className="lottery-probability-score-row">
+          <div>
+            <strong>{part.label}</strong>
+            <span>{part.description}</span>
+          </div>
+          <b>{part.score}</b>
+        </div>
+      ))}
+    </div>
+    <div className="lottery-probability-factor-list">
+      {item.factors.map(factor => <Tag key={factor}>{factor}</Tag>)}
+    </div>
+  </div>
+);
+
 const LotteryPredictionInsights = ({
   stats,
   trainedPrediction,
@@ -575,6 +640,10 @@ const LotteryPredictionInsights = ({
   const probability = stats.probabilityAnalysis;
   const topRed = probability.red.slice(0, 6);
   const topBlue = probability.blue.slice(0, 4);
+  const [selectedProbability, setSelectedProbability] = useState<LotteryNumberProbability | undefined>(
+    probability.red[0] || probability.blue[0]
+  );
+  const selectedProbabilityKey = selectedProbability ? `${selectedProbability.type}-${selectedProbability.number}` : undefined;
   const primaryRulePrediction = stats.predictions[0];
   const trainedCandidates = useMemo(
     () => trainedPrediction?.candidates ?? [],
@@ -847,8 +916,19 @@ const LotteryPredictionInsights = ({
             <span>红球标准差</span>
           </div>
         </div>
-        <ProbabilityGrid title="红球 01-33" items={probability.red} />
-        <ProbabilityGrid title="蓝球 01-16" items={probability.blue} />
+        <ProbabilityGrid
+          title="红球 01-33"
+          items={probability.red}
+          selectedKey={selectedProbabilityKey}
+          onSelect={setSelectedProbability}
+        />
+        <ProbabilityGrid
+          title="蓝球 01-16"
+          items={probability.blue}
+          selectedKey={selectedProbabilityKey}
+          onSelect={setSelectedProbability}
+        />
+        {selectedProbability && <ProbabilityFormulaPanel item={selectedProbability} />}
         <div className="lottery-probability-top-list">
           <div>
             <strong>红球关注</strong>

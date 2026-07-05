@@ -620,6 +620,14 @@ Goal: make the astronaut feature useful as an analysis surface. The core object 
 - [x] Extend route smoke and release evidence for number probability pressure analysis.
 - [x] Run frontend smoke/build verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
+### Week 5: Number Probability Drilldown
+
+- [x] Add score parts to each number probability item so the UI can explain the exact contribution of history frequency, recent activity, omission pressure, and structure factors.
+- [x] Expose the normalized probability equation: number score divided by fleet total score times the red or blue probability pool.
+- [x] Make red and blue number cells selectable inside the probability panel, with blue drilldown focused on planet rhythm instead of hexagram semantics.
+- [x] Extend route smoke and release evidence for number probability drilldown.
+- [x] Run frontend smoke/build verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.
