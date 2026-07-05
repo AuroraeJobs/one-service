@@ -712,7 +712,7 @@ body {
   left: 0;
   right: 0;
   transform: none;
-  min-height: var(--app-footer-height);
+  height: var(--app-footer-height);
   z-index: 1000;
   padding: 0 20px;
   border-left: 0 !important;
@@ -720,16 +720,13 @@ body {
   border-bottom: 0 !important;
   border-radius: 0 !important;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .season-footer-inner {
   width: 100%;
   max-width: 1180px;
-  min-height: var(--app-footer-height);
+  height: 100%;
   margin: 0 auto;
   display: flex;
   align-items: center;

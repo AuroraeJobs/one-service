@@ -47,11 +47,10 @@ const run = async () => {
   record(fixture.mode === 'mocked-fixture', 'fixture', 'uses mocked fixture mode');
   record(fixture.providerNetwork === 'not-required', 'fixture', 'does not require live lottery provider network');
   record(Array.isArray(fixture.consoleErrors) && fixture.consoleErrors.length === 0, 'fixture', 'declares zero expected console errors');
-  record(navSource.includes('secondary?: boolean'), 'navigation', 'supports secondary nav entries');
-  record(navSource.includes("label: '概览'") && navSource.includes('secondary: true'), 'navigation', 'low-frequency top-level lottery groups can be collapsed');
-  record(navSource.includes("label: '设置'") && navSource.includes('secondary: true'), 'navigation', 'lottery settings stays reachable without occupying the daily nav strip');
+  record(containsEvery(navSource, ["label: '概览'", "label: '工作台'", "label: '移动'", "label: '预测'", "label: '执行'", "label: '复盘'", "label: '数据'", "label: '图谱'", "label: '设置'"]), 'navigation', 'lottery top-level groups are all present in the footer source');
+  record(!navSource.includes('secondary?: boolean') && !navSource.includes('secondary: true'), 'navigation', 'lottery footer does not hide top-level groups with secondary flags');
   record(!footerNavSource.includes('MoreOutlined') && !footerNavSource.includes('更多'), 'navigation', 'footer navigation does not render a more menu');
-  record(footerNavSource.includes('shortcutMenuItems') && footerNavSource.includes('season-footer-home'), 'navigation', 'collapsed top-level groups stay reachable from the home shortcut menu');
+  record(footerNavSource.includes('items.map(item => renderNavItem(item))'), 'navigation', 'footer renders every top-level group directly');
   record(!footerNavSource.includes('season-footer-context'), 'navigation', 'footer navigation does not render a second-row child menu');
   record(!appCssSource.includes('season-footer-context'), 'navigation', 'footer styles do not keep second-row child menu selectors');
 

@@ -574,12 +574,11 @@ Goal: reduce visible menu density after V16 by keeping daily actions in front wh
 
 ### Week 1: Single-Row Lottery Navigation
 
-- [x] Collapse low-frequency top-level lottery groups from the persistent strip without adding 更多. Overview, mobile, review, insights, and settings appear in the strip only when active.
-- [x] Keep collapsed top-level groups reachable without a 更多 label. Overview, mobile, review, insights, and settings are available from the home shortcut menu.
-- [x] Remove the second-row child menu from the lottery footer. Prediction, execution, review, data, and insight children are reachable from their parent dropdowns instead of a persistent context strip.
-- [x] Preserve active low-frequency top-level groups in the single row so users keep orientation after entering overview, mobile, review, insights, or settings.
-- [x] Add smoke coverage for single-row navigation so future menu changes do not reintroduce the second row.
-- [x] Update menu documentation and release-readiness copy for the single-row lottery navigation behavior.
+- [x] Identify the second-row child menu introduction point. It was introduced by `1eb0adc8 feat(lottery): improve workflow navigation usability`.
+- [x] Restore the footer shape from before that commit. The footer is a single horizontal row with all lottery top-level groups rendered directly.
+- [x] Remove the later 更多/home-shortcut hiding flow. Top-level lottery groups are no longer hidden behind secondary flags or shortcut menus.
+- [x] Add smoke coverage so future menu changes do not reintroduce the second row, 更多, or hidden top-level groups.
+- [x] Update menu documentation and release-readiness copy for the rollback behavior.
 - [x] Run frontend smoke/build verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
 ## Documentation And Delivery

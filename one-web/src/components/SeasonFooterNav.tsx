@@ -15,12 +15,6 @@ const SeasonFooterNav = () => {
   const fullPath = `${location.pathname}${location.search}`;
   const items = getLifeSubNavItems(fullPath);
   const activePath = getLifeActiveSubNavPath(fullPath);
-  const visibleItems = items.filter(item => {
-    const childItems = item.children || [];
-    const isActive = activePath === item.path || childItems.some(child => activePath === child.path);
-    return !item.secondary || isActive;
-  });
-  const shortcutItems = items.filter(item => item.secondary && !visibleItems.some(visibleItem => visibleItem.id === item.id));
 
   if (items.length === 0) return null;
 
@@ -73,37 +67,15 @@ const SeasonFooterNav = () => {
     );
   };
 
-  const shortcutMenuItems: MenuProps['items'] = shortcutItems.map(item => ({
-    key: item.id,
-    label: (
-      <span className="season-footer-dropdown-item">
-        <span className="season-footer-icon" style={{ color: item.accent }}>
-          {item.icon}
-        </span>
-        {item.label}
-      </span>
-    ),
-    onClick: () => navigate(item.path)
-  }));
-
   return (
     <footer className="app-footer season-footer-nav">
       <div className="season-footer-inner">
-        {shortcutMenuItems.length ? (
-          <Dropdown menu={{ items: shortcutMenuItems }} trigger={['hover']} placement="topLeft">
-            <CloudFilled
-              className="season-footer-home"
-              onClick={() => navigate('/')}
-            />
-          </Dropdown>
-        ) : (
-          <CloudFilled
-            className="season-footer-home"
-            onClick={() => navigate('/')}
-          />
-        )}
+        <CloudFilled
+          className="season-footer-home"
+          onClick={() => navigate('/')}
+        />
         <nav className="season-footer-items" aria-label={getLifeSubNavAriaLabel(fullPath)}>
-          {visibleItems.map(item => renderNavItem(item))}
+          {items.map(item => renderNavItem(item))}
         </nav>
       </div>
     </footer>

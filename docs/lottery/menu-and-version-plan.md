@@ -8,7 +8,9 @@ The current lottery navigation already has a strong exploratory surface. The tar
 
 ```text
 彩票
+- 概览
 - 工作台
+- 移动
 - 预测
   - 当前
   - 决策
@@ -38,10 +40,20 @@ The current lottery navigation already has a strong exploratory surface. The tar
   - 分组
   - 分布
   - 宇航员
+- 图谱
+  - 幻境
+  - 星球
+  - 能量
+  - 累计
+  - 集齐
+  - 位置
+  - 可视化
+  - 象数
+  - 节气/专题
+- 设置
 ```
 
-Navigation density rule: the persistent lottery footer must stay single-row and must not render a 更多 menu. It should expose only daily/high-frequency groups: 工作台, 预测, 执行, and 数据. Low-frequency top-level groups appear in the strip only when active. Child routes are reachable from each visible group dropdown; do not add a second-row child menu.
-Low-frequency top-level groups still need a compact access point: keep 概览, 移动, 复盘, 图谱, and 设置 available from the home shortcut menu without labeling that entry as 更多.
+Navigation rollback rule: restore the footer to the shape before `1eb0adc8 feat(lottery): improve workflow navigation usability`. The lottery footer is a single horizontal row with all top-level groups visible or horizontally scrollable. Do not add a second-row child menu, do not add a 更多 entry, and do not hide top-level groups behind a home shortcut.
 
 ## Existing Routes To Preserve
 

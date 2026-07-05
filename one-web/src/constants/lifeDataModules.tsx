@@ -67,7 +67,6 @@ export interface LifeSubNavItem {
   label: string;
   icon: ReactNode;
   accent: string;
-  secondary?: boolean;
   children?: LifeSubNavItem[];
 }
 
@@ -206,9 +205,9 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
     { id: 'finance-tax', moduleKey: 'finance', path: '/connections', label: '税费', icon: <BankOutlined />, accent: '#ff9500' }
   ],
   lottery: [
-    { id: 'lottery-overview', moduleKey: 'lottery', path: '/lottery', label: '概览', icon: <TrophyOutlined />, accent: '#ff3b30', secondary: true },
+    { id: 'lottery-overview', moduleKey: 'lottery', path: '/lottery', label: '概览', icon: <TrophyOutlined />, accent: '#ff3b30' },
     { id: 'lottery-workbench', moduleKey: 'lottery', path: '/lottery/workbench', label: '工作台', icon: <DashboardOutlined />, accent: '#0071e3' },
-    { id: 'lottery-mobile', moduleKey: 'lottery', path: '/lottery/mobile', label: '移动', icon: <MobileOutlined />, accent: '#ff9500', secondary: true },
+    { id: 'lottery-mobile', moduleKey: 'lottery', path: '/lottery/mobile', label: '移动', icon: <MobileOutlined />, accent: '#ff9500' },
     {
       id: 'lottery-predictions',
       moduleKey: 'lottery',
@@ -250,7 +249,6 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
       label: '复盘',
       icon: <BranchesOutlined />,
       accent: '#34c759',
-      secondary: true,
       children: [
         { id: 'lottery-outcomes', moduleKey: 'lottery', path: '/lottery/outcomes', label: '归因', icon: <BranchesOutlined />, accent: '#34c759' },
         { id: 'lottery-recommendations', moduleKey: 'lottery', path: '/lottery/recommendations', label: '推荐', icon: <CompassOutlined />, accent: '#ff9500' },
@@ -282,7 +280,6 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
       label: '图谱',
       icon: <ExperimentOutlined />,
       accent: '#5856d6',
-      secondary: true,
       children: [
         { id: 'lottery-analysis-illusion', moduleKey: 'lottery', path: '/lottery/analysis?tab=illusion', label: '幻境', icon: <ExperimentOutlined />, accent: '#5856d6' },
         { id: 'lottery-analysis-planet', moduleKey: 'lottery', path: '/lottery/analysis?tab=planet', label: '星球', icon: <DotChartOutlined />, accent: '#722ed1' },
@@ -308,8 +305,7 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
       path: '/lottery/settings',
       label: '设置',
       icon: <SettingOutlined />,
-      accent: '#5856d6',
-      secondary: true
+      accent: '#5856d6'
     }
   ],
   ai: [
