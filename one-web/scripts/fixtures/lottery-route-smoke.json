@@ -231,6 +231,7 @@
       "component": "LotteryTicketPackPage",
       "componentFile": "src/components/LotteryTicketPackPage.tsx",
       "mockApis": [
+        "lotteryWorkbenchApi.summary",
         "lotteryTicketPackApi.ticketPacks",
         "lotteryTicketPackApi.preview",
         "lotteryTicketPackApi.create",

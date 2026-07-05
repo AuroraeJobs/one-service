@@ -246,7 +246,7 @@ Goal: make the V14 execution loop self-improving and easier to operate on mobile
 Goal: make the lottery module easier to use every day. This version should improve navigation clarity, reduce repeated input, make states and actions easier to scan, and polish responsive behavior before adding more domain depth.
 
 - Improve navigation and information architecture after the grouped menu consolidation. The shipped Week 1 slice adds a persistent current-group child navigation strip above the footer, keeps grouped pages directly reachable on desktop and mobile, and documents the reduced workflow menu.
-- Improve form and operation ergonomics for ticket, ticket-pack, recommendation, and mobile-command surfaces. Planned Week 2 focuses on safer primary actions, better defaults, recent values, and readable action summaries.
+- Improve form and operation ergonomics for ticket, ticket-pack, recommendation, and mobile-command surfaces. The shipped Week 2 slice adds next-issue/default-title assistance for ticket packs, safer confirmation prompts, and clearer action summaries for ticket-pack and recommendation lifecycle actions.
 - Improve list, filter, and state readability across tickets, attribution, recommendations, audit events, and review queues. Planned Week 3 focuses on filter presets, state labels, and pending/recently-handled views where supported by existing data.
 - Improve visual consistency and release quality across the lottery module. Planned Week 4 focuses on spacing, wrapping, mobile density, smoke coverage, and release evidence for usability changes.
 - Prefer frontend-only improvements for this version unless an existing API shape blocks a meaningful usability fix.

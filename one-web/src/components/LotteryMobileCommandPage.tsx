@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Alert, Button, Empty, Progress, Segmented, Space, Spin, Tag, message } from 'antd';
+import { Alert, Button, Empty, Popconfirm, Progress, Segmented, Space, Spin, Tag, message } from 'antd';
 import {
   BellOutlined,
   BranchesOutlined,
@@ -204,10 +204,10 @@ const LotteryMobileCommandPage = () => {
     try {
       if (action === 'approve') {
         await lotteryTicketPackApi.approve(pack.id);
-        message.success('票包已审批');
+        message.success(`${pack.title || pack.targetIssue || '票包'} 已审批`);
       } else {
-        await lotteryTicketPackApi.saveAsTickets(pack.id);
-        message.success('票包已保存为票据');
+        const saved = await lotteryTicketPackApi.saveAsTickets(pack.id);
+        message.success(`已保存为票据：${saved.savedTicketIds?.length || saved.items?.length || 0} 注`);
       }
       const nextPacks = await lotteryTicketPackApi.ticketPacks({ page: 1, pageSize: 20 });
       setPacks(nextPacks.items || []);
@@ -229,7 +229,7 @@ const LotteryMobileCommandPage = () => {
       await lotteryRecommendationApi.updateStatus(item.id, { lifecycleStatus, note: 'mobile command action' });
       const nextRecommendations = await lotteryRecommendationApi.recommendations({ page: 1, pageSize: 20 });
       setRecommendations(nextRecommendations.items || []);
-      message.success('推荐状态已更新');
+      message.success(`${lifecycleStatus === 'APPLIED' ? '推荐已应用' : '推荐已稍后处理'}：${item.title || item.targetId || '推荐'}`);
     } catch (requestError) {
       console.error('移动指挥更新推荐失败:', requestError);
       setError(requestError instanceof Error ? requestError.message : '移动指挥更新推荐失败');
@@ -317,8 +317,24 @@ const LotteryMobileCommandPage = () => {
                   <span>{formatTime(pack.updatedAt || pack.createdAt)}</span>
                 </div>
                 <Space wrap>
-                  <Button size="large" icon={<CheckCircleOutlined />} loading={actionLoading === `approve-${pack.id}`} onClick={() => runPackAction(pack, 'approve')}>审批</Button>
-                  <Button size="large" icon={<FileTextOutlined />} loading={actionLoading === `save-${pack.id}`} onClick={() => runPackAction(pack, 'save')}>保存票据</Button>
+                  <Popconfirm
+                    title="审批票包？"
+                    description={`${pack.targetIssue || '-'} · ${(pack.items || []).length} 注`}
+                    okText="审批"
+                    cancelText="取消"
+                    onConfirm={() => runPackAction(pack, 'approve')}
+                  >
+                    <Button size="large" icon={<CheckCircleOutlined />} loading={actionLoading === `approve-${pack.id}`}>审批</Button>
+                  </Popconfirm>
+                  <Popconfirm
+                    title="保存为票据？"
+                    description={`${pack.targetIssue || '-'} · ${(pack.items || []).length} 注，保存后会进入票据列表。`}
+                    okText="保存"
+                    cancelText="取消"
+                    onConfirm={() => runPackAction(pack, 'save')}
+                  >
+                    <Button size="large" icon={<FileTextOutlined />} loading={actionLoading === `save-${pack.id}`}>保存票据</Button>
+                  </Popconfirm>
                   <Button size="large" onClick={() => navigate('/lottery/ticket-packs')}>详情</Button>
                 </Space>
               </article>
@@ -356,7 +372,15 @@ const LotteryMobileCommandPage = () => {
                   <span>{item.evidenceSummary || '暂无证据摘要'}</span>
                 </div>
                 <Space wrap>
-                  <Button size="large" icon={<CheckCircleOutlined />} loading={actionLoading === `APPLIED-${item.id}`} onClick={() => updateRecommendation(item, 'APPLIED')}>应用</Button>
+                  <Popconfirm
+                    title="应用推荐？"
+                    description={item.expectedAction || '确认后会把推荐标记为已应用。'}
+                    okText="应用"
+                    cancelText="取消"
+                    onConfirm={() => updateRecommendation(item, 'APPLIED')}
+                  >
+                    <Button size="large" icon={<CheckCircleOutlined />} loading={actionLoading === `APPLIED-${item.id}`}>应用</Button>
+                  </Popconfirm>
                   <Button size="large" icon={<ClockCircleOutlined />} loading={actionLoading === `SNOOZED-${item.id}`} onClick={() => updateRecommendation(item, 'SNOOZED')}>稍后</Button>
                   <Button size="large" onClick={() => navigate(item.path || '/lottery/recommendations')}>处理</Button>
                 </Space>

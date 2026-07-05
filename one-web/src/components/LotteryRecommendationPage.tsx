@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Empty, Progress, Select, Space, Spin, Tag, message } from 'antd';
+import { Alert, Button, Card, Empty, Popconfirm, Progress, Select, Space, Spin, Tag, message } from 'antd';
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -44,6 +44,12 @@ const formatTime = (value?: number) => value ? new Intl.DateTimeFormat('zh-CN', 
   hour: '2-digit',
   minute: '2-digit'
 }).format(new Date(value)) : '-';
+
+const lifecycleCopy: Record<string, { label: string; note: string; success: string }> = {
+  APPLIED: { label: '应用', note: 'recommendation applied from lifecycle board', success: '推荐已标记为应用' },
+  SNOOZED: { label: '稍后', note: 'recommendation snoozed from lifecycle board', success: '推荐已稍后处理' },
+  ARCHIVED: { label: '归档', note: 'recommendation archived from lifecycle board', success: '推荐已归档' }
+};
 
 const LotteryRecommendationPage = () => {
   const navigate = useNavigate();
@@ -94,9 +100,10 @@ const LotteryRecommendationPage = () => {
     }
     setActingId(`${recommendation.id}-${lifecycleStatus}`);
     try {
-      await lotteryRecommendationApi.updateStatus(recommendation.id, { lifecycleStatus });
+      const copy = lifecycleCopy[lifecycleStatus] || lifecycleCopy.SNOOZED;
+      await lotteryRecommendationApi.updateStatus(recommendation.id, { lifecycleStatus, note: copy.note });
       await loadRecommendations();
-      message.success('推荐状态已更新');
+      message.success(`${copy.success}：${recommendation.title || recommendation.targetId || '推荐'}`);
     } catch (requestError) {
       console.error('更新彩票推荐失败:', requestError);
       setError(requestError instanceof Error ? requestError.message : '更新彩票推荐失败');
@@ -173,7 +180,15 @@ const LotteryRecommendationPage = () => {
                       <Button size="small" icon={<CompassOutlined />} onClick={() => navigate(item.path || '/lottery/recommendations')}>处理</Button>
                       <Button size="small" loading={actingId === `${item.id}-APPLIED`} onClick={() => updateStatus(item, 'APPLIED')}>应用</Button>
                       <Button size="small" loading={actingId === `${item.id}-SNOOZED`} onClick={() => updateStatus(item, 'SNOOZED')}>稍后</Button>
-                      <Button size="small" danger loading={actingId === `${item.id}-ARCHIVED`} onClick={() => updateStatus(item, 'ARCHIVED')}>归档</Button>
+                      <Popconfirm
+                        title="归档推荐？"
+                        description="归档后会从当前推荐队列中移除。"
+                        okText="归档"
+                        cancelText="取消"
+                        onConfirm={() => updateStatus(item, 'ARCHIVED')}
+                      >
+                        <Button size="small" danger loading={actingId === `${item.id}-ARCHIVED`}>归档</Button>
+                      </Popconfirm>
                     </Space>
                   </article>
                 )) : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyDescriptions[lane.key]} />}

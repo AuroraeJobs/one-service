@@ -546,11 +546,11 @@ Goal: make the lottery frontend easier to navigate and operate day to day, with 
 
 ### Week 2: Forms And Operation Ergonomics
 
-- [ ] Improve primary actions on ticket, ticket-pack, recommendation, and mobile command pages.
-- [ ] Reduce repeated input with recent values, default issue values, and clearer generated titles.
-- [ ] Add safer confirmations and clearer success/failure summaries for destructive and batch actions.
-- [ ] Convert technical errors into business-readable guidance where the frontend has enough context.
-- [ ] Run frontend smoke/build verification, update docs, commit, and push.
+- [x] Improve primary actions on ticket, ticket-pack, recommendation, and mobile command pages. Added safer ticket-pack and recommendation action flows on desktop and mobile command surfaces.
+- [x] Reduce repeated input with recent values, default issue values, and clearer generated titles. Ticket-pack drafts now load the next issue from the workbench summary and auto-generate the draft title until the user edits it.
+- [x] Add safer confirmations and clearer success/failure summaries for destructive and batch actions. Added confirmation prompts for ticket-pack approval/save/archive, mobile ticket-pack save, recommendation apply, and recommendation archive actions, with success messages that include the affected title or saved ticket count.
+- [x] Convert technical errors into business-readable guidance where the frontend has enough context. Kept existing business-facing error messages and added non-blocking default-issue loading failure handling for ticket-pack drafting.
+- [x] Run frontend smoke/build verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
 ### Week 3: Lists, Filters, And State Readability
 

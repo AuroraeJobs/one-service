@@ -1,12 +1,12 @@
 {
   "target": "Iteration 18 Week 4 lottery closed-loop release evidence smoke",
-  "generatedAt": "2026-07-05T03:49:37.949Z",
+  "generatedAt": "2026-07-05T04:11:05.562Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 14,
-  "checkCount": 307,
+  "checkCount": 309,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
@@ -70,7 +70,7 @@
       "route": "/lottery/ticket-packs",
       "label": "票包",
       "component": "LotteryTicketPackPage",
-      "mockApiCount": 6,
+      "mockApiCount": 7,
       "emptyStateCount": 3,
       "errorStateCount": 4
     },
