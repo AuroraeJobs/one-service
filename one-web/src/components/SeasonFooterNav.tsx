@@ -1,4 +1,4 @@
-import { CloudFilled, MoreOutlined } from '@ant-design/icons';
+import { CloudFilled } from '@ant-design/icons';
 import { Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -20,7 +20,6 @@ const SeasonFooterNav = () => {
     const isActive = activePath === item.path || childItems.some(child => activePath === child.path);
     return !item.secondary || isActive;
   });
-  const overflowItems = items.filter(item => item.secondary && !visibleItems.some(visibleItem => visibleItem.id === item.id));
 
   if (items.length === 0) return null;
 
@@ -73,19 +72,6 @@ const SeasonFooterNav = () => {
     );
   };
 
-  const overflowMenuItems: MenuProps['items'] = overflowItems.map(item => ({
-    key: item.id,
-    label: (
-      <span className="season-footer-dropdown-item">
-        <span className="season-footer-icon" style={{ color: item.accent }}>
-          {item.icon}
-        </span>
-        {item.label}
-      </span>
-    ),
-    onClick: () => navigate(item.path)
-  }));
-
   return (
     <footer className="app-footer season-footer-nav">
       <div className="season-footer-inner">
@@ -95,19 +81,6 @@ const SeasonFooterNav = () => {
         />
         <nav className="season-footer-items" aria-label={getLifeSubNavAriaLabel(fullPath)}>
           {visibleItems.map(item => renderNavItem(item))}
-          {overflowMenuItems.length ? (
-            <Dropdown menu={{ items: overflowMenuItems }} trigger={['hover']} placement="top">
-              <button
-                type="button"
-                className="footer-menu-item season-footer-item season-footer-more-item"
-              >
-                <span className="season-footer-icon">
-                  <MoreOutlined />
-                </span>
-                更多
-              </button>
-            </Dropdown>
-          ) : null}
         </nav>
       </div>
     </footer>

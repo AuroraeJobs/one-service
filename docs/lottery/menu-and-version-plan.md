@@ -38,15 +38,9 @@ The current lottery navigation already has a strong exploratory surface. The tar
   - 分组
   - 分布
   - 宇航员
-- 更多
-  - 概览
-  - 移动
-  - 复盘
-  - 图谱
-  - 设置
 ```
 
-Navigation density rule: the persistent lottery footer must stay single-row. It should expose only daily/high-frequency groups: 工作台, 预测, 执行, 数据, and 更多. Low-frequency top-level groups stay reachable from 更多 and appear in the strip only when active. Child routes are reachable from each group dropdown; do not add a second-row child menu.
+Navigation density rule: the persistent lottery footer must stay single-row and must not render a 更多 menu. It should expose only daily/high-frequency groups: 工作台, 预测, 执行, and 数据. Low-frequency top-level groups appear in the strip only when active. Child routes are reachable from each visible group dropdown; do not add a second-row child menu.
 
 ## Existing Routes To Preserve
 
