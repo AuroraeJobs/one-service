@@ -1067,6 +1067,83 @@ export const aiApi = {
   }
 };
 
+export interface WechatArticleRequest {
+  markdown?: string;
+  postPath?: string;
+  title?: string;
+  author?: string;
+  thumbMediaId?: string;
+  contentSourceUrl?: string;
+  needOpenComment?: number;
+  onlyFansCanComment?: number;
+  showCoverPic?: number;
+  uploadImages?: boolean;
+  publishAfterDraft?: boolean;
+}
+
+export interface WechatRenderedArticle {
+  title?: string;
+  author?: string;
+  digest?: string;
+  content?: string;
+  contentSourceUrl?: string;
+  thumbMediaId?: string;
+  needOpenComment?: number;
+  onlyFansCanComment?: number;
+  showCoverPic?: number;
+}
+
+export interface WechatDraftResult {
+  dryRun?: boolean;
+  mediaId?: string;
+  publishSubmitted?: boolean;
+  publishResponse?: Record<string, unknown>;
+  article?: WechatRenderedArticle;
+}
+
+export interface WechatTokenStatus {
+  configured?: boolean;
+  cached?: boolean;
+  expiresAt?: number;
+  updatedAt?: number;
+}
+
+export interface WechatArticleListRequest {
+  offset?: number;
+  count?: number;
+  noContent?: number;
+}
+
+export interface WechatArticleListResponse {
+  total_count?: number;
+  item_count?: number;
+  item?: Array<Record<string, unknown>>;
+}
+
+export const wechatOfficialAccountApi = {
+  render: (request: WechatArticleRequest): Promise<WechatRenderedArticle> => (
+    apiClient.post('/wechat/official-account/render', request)
+  ),
+  createDraft: (request: WechatArticleRequest): Promise<WechatDraftResult> => (
+    apiClient.post('/wechat/official-account/drafts', request)
+  ),
+  listDrafts: (request: WechatArticleListRequest): Promise<WechatArticleListResponse> => (
+    apiClient.post('/wechat/official-account/drafts/list', request)
+  ),
+  listPublishedArticles: (request: WechatArticleListRequest): Promise<WechatArticleListResponse> => (
+    apiClient.post('/wechat/official-account/publications/list', request)
+  ),
+  submitPublish: (mediaId: string): Promise<Record<string, unknown>> => (
+    apiClient.post('/wechat/official-account/publish', null, { params: { mediaId } })
+  ),
+  refreshAccessToken: (): Promise<string> => (
+    apiClient.post('/wechat/official-account/token/refresh')
+  ),
+  tokenStatus: (): Promise<WechatTokenStatus> => (
+    apiClient.get('/wechat/official-account/token/status')
+  )
+};
+
 // 认证相关API
 export const authApi = {
   // 登录

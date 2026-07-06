@@ -310,7 +310,8 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
     }
   ],
   ai: [
-    { id: 'ai-chat', moduleKey: 'ai', path: '/ai/chat', label: '对话', icon: <MessageOutlined />, accent: '#00c7be' }
+    { id: 'ai-chat', moduleKey: 'ai', path: '/ai/chat', label: '对话', icon: <MessageOutlined />, accent: '#00c7be' },
+    { id: 'ai-wechat', moduleKey: 'ai', path: '/ai/wechat', label: '公众号', icon: <FileTextOutlined />, accent: '#0071e3' }
   ]
 };
 

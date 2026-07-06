@@ -92,6 +92,18 @@ github:
     redirect-uri: ${GITHUB_OAUTH_REDIRECT_URI:}
     scope: ${GITHUB_OAUTH_SCOPE:read:user user:email}
 
+wechat:
+  official-account:
+    app-id: ${WECHAT_APP_ID:}
+    app-secret: ${WECHAT_APP_SECRET:}
+    thumb-media-id: ${WECHAT_THUMB_MEDIA_ID:}
+    author: ${WECHAT_AUTHOR:OneAI}
+    api-base-url: ${WECHAT_API_BASE:https://api.weixin.qq.com}
+    need-open-comment: ${WECHAT_NEED_OPEN_COMMENT:0}
+    only-fans-can-comment: ${WECHAT_ONLY_FANS_CAN_COMMENT:0}
+    cache-token: ${WECHAT_CACHE_TOKEN:true}
+    token-refresh-skew-seconds: ${WECHAT_TOKEN_REFRESH_SKEW_SECONDS:300}
+
 stock:
   market:
     provider: ${STOCK_MARKET_PROVIDER:sina}

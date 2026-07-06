@@ -1,0 +1,182 @@
+.wechat-official-account-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.95fr) minmax(360px, 1.05fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.wechat-official-account-panel {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--app-border, rgba(15, 23, 42, 0.08));
+  border-radius: 8px;
+  background: var(--app-surface, #fff);
+}
+
+.wechat-official-account-panel-header {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--app-border, rgba(15, 23, 42, 0.08));
+  color: var(--app-text, #1d1d1f);
+}
+
+.wechat-official-account-editor {
+  height: 520px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  resize: none !important;
+  font-family: SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  line-height: 1.65;
+  background: var(--app-surface, #fff) !important;
+  color: var(--app-text, #1d1d1f) !important;
+}
+
+.wechat-official-account-editor:focus {
+  box-shadow: none !important;
+}
+
+.wechat-official-account-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  border-top: 1px solid var(--app-border, rgba(15, 23, 42, 0.08));
+  background: var(--app-surface, #fff);
+}
+
+.wechat-official-account-media-input {
+  width: 260px;
+}
+
+.wechat-official-account-preview {
+  width: 100%;
+  height: 586px;
+  border: 0;
+  display: block;
+  background: #fff;
+}
+
+.wechat-official-account-list-panel {
+  margin-top: 16px;
+}
+
+.wechat-official-account-list {
+  min-height: 160px;
+  padding: 8px 16px;
+}
+
+.wechat-official-account-list-item {
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--app-border, rgba(15, 23, 42, 0.08));
+}
+
+.wechat-official-account-list-item:last-child {
+  border-bottom: 0;
+}
+
+.wechat-official-account-list-item h3 {
+  margin: 0;
+  color: var(--app-text, #1d1d1f);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.wechat-official-account-list-item p {
+  margin: 4px 0 0;
+  color: var(--app-text-secondary, #6e6e73);
+  font-size: 13px;
+}
+
+.wechat-official-account-list-item span {
+  display: inline-block;
+  margin-top: 6px;
+  color: var(--app-text-tertiary, #8e8e93);
+  font-size: 12px;
+}
+
+.wechat-official-account-pagination {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--app-border, rgba(15, 23, 42, 0.08));
+}
+
+.app-theme-dark .wechat-official-account-panel {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: #141414;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.28);
+}
+
+.app-theme-dark .wechat-official-account-panel-header {
+  border-bottom-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.88);
+  background: #1f1f1f;
+}
+
+.app-theme-dark .wechat-official-account-editor {
+  background: #141414 !important;
+  color: rgba(255, 255, 255, 0.78) !important;
+  caret-color: #4096ff;
+}
+
+.app-theme-dark .wechat-official-account-editor::placeholder {
+  color: rgba(255, 255, 255, 0.28) !important;
+}
+
+.app-theme-dark .wechat-official-account-toolbar {
+  border-top-color: rgba(255, 255, 255, 0.12);
+  background: #1f1f1f;
+}
+
+.app-theme-dark .wechat-official-account-media-input .ant-input {
+  background: #141414;
+}
+
+.app-theme-dark .wechat-official-account-preview {
+  background: #141414;
+}
+
+.app-theme-dark .wechat-official-account-list-item {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.app-theme-dark .wechat-official-account-list-item h3 {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.app-theme-dark .wechat-official-account-list-item p {
+  color: rgba(255, 255, 255, 0.54);
+}
+
+.app-theme-dark .wechat-official-account-list-item span {
+  color: rgba(255, 255, 255, 0.36);
+}
+
+.app-theme-dark .wechat-official-account-pagination {
+  border-top-color: rgba(255, 255, 255, 0.12);
+}
+
+@media (max-width: 980px) {
+  .wechat-official-account-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .wechat-official-account-toolbar {
+    flex-direction: column;
+  }
+
+  .wechat-official-account-media-input {
+    width: 100%;
+  }
+}
