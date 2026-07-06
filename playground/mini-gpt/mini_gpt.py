@@ -7,7 +7,9 @@ training runs; it is a readable path from text to generation.
 from __future__ import annotations
 
 import argparse
+import csv
 import json
+import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -182,6 +184,7 @@ def estimate_loss(model: MiniGPT, data: torch.Tensor, block_size: int, batch_siz
 
 
 def train(args: argparse.Namespace) -> None:
+    started_at = time.strftime("%Y-%m-%d %H:%M:%S")
     text = load_text(Path(args.data))
     tokenizer = CharTokenizer(text)
     config = ModelConfig(
@@ -196,17 +199,34 @@ def train(args: argparse.Namespace) -> None:
     encoded = torch.tensor(tokenizer.encode(text), dtype=torch.long)
     model = MiniGPT(config).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate)
+    runs_dir = Path(args.runs_dir)
+    runs_dir.mkdir(parents=True, exist_ok=True)
+    log_path = runs_dir / args.log_file
+    latest_path = runs_dir / "latest.json"
 
-    for step in range(1, args.max_steps + 1):
-        x, y = get_batch(encoded, config.block_size, args.batch_size, device)
-        _, loss = model(x, y)
-        optimizer.zero_grad(set_to_none=True)
-        loss.backward()
-        optimizer.step()
+    with log_path.open("w", encoding="utf-8", newline="") as log_file:
+        writer = csv.DictWriter(log_file, fieldnames=["step", "train_loss", "eval_loss", "elapsed_seconds"])
+        writer.writeheader()
 
-        if step == 1 or step % args.log_every == 0:
-            eval_loss = estimate_loss(model, encoded, config.block_size, args.batch_size, device)
-            print(f"step={step} train_loss={loss.item():.4f} eval_loss={eval_loss:.4f}")
+        train_started = time.time()
+        for step in range(1, args.max_steps + 1):
+            x, y = get_batch(encoded, config.block_size, args.batch_size, device)
+            _, loss = model(x, y)
+            optimizer.zero_grad(set_to_none=True)
+            loss.backward()
+            optimizer.step()
+
+            if step == 1 or step % args.log_every == 0 or step == args.max_steps:
+                eval_loss = estimate_loss(model, encoded, config.block_size, args.batch_size, device)
+                elapsed_seconds = round(time.time() - train_started, 2)
+                writer.writerow({
+                    "step": step,
+                    "train_loss": round(float(loss.item()), 6),
+                    "eval_loss": round(eval_loss, 6),
+                    "elapsed_seconds": elapsed_seconds,
+                })
+                log_file.flush()
+                print(f"step={step} train_loss={loss.item():.4f} eval_loss={eval_loss:.4f}")
 
     checkpoint_dir = Path(args.out_dir)
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
@@ -220,7 +240,20 @@ def train(args: argparse.Namespace) -> None:
         checkpoint_path,
     )
     (checkpoint_dir / "config.json").write_text(json.dumps(asdict(config), ensure_ascii=False, indent=2), encoding="utf-8")
+    latest_path.write_text(json.dumps({
+        "started_at": started_at,
+        "finished_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "data": args.data,
+        "checkpoint": str(checkpoint_path),
+        "log_file": str(log_path),
+        "device": str(device),
+        "max_steps": args.max_steps,
+        "batch_size": args.batch_size,
+        "learning_rate": args.learning_rate,
+        "config": asdict(config),
+    }, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"saved checkpoint to {checkpoint_path}")
+    print(f"saved training log to {log_path}")
 
 
 def generate(args: argparse.Namespace) -> None:
@@ -258,6 +291,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--temperature", type=float, default=0.9)
     parser.add_argument("--top-k", type=int, default=20)
     parser.add_argument("--log-every", type=int, default=50)
+    parser.add_argument("--runs-dir", default="runs")
+    parser.add_argument("--log-file", default="train_log.csv")
     return parser
 
 

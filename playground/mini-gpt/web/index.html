@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mini GPT 训练观察台</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <h1>Mini GPT 训练观察台</h1>
+          <p>观察 loss 是否下降、训练是否稳定、配置是否合理。</p>
+        </div>
+        <div class="actions">
+          <button id="reloadButton" type="button">刷新日志</button>
+          <label class="file-button">
+            选择 CSV
+            <input id="csvInput" type="file" accept=".csv,text/csv" />
+          </label>
+        </div>
+      </header>
+
+      <section class="status-grid" aria-label="训练状态">
+        <article>
+          <span>训练步数</span>
+          <strong id="stepCount">-</strong>
+        </article>
+        <article>
+          <span>最新训练 loss</span>
+          <strong id="latestTrainLoss">-</strong>
+        </article>
+        <article>
+          <span>最新评估 loss</span>
+          <strong id="latestEvalLoss">-</strong>
+        </article>
+        <article>
+          <span>下降幅度</span>
+          <strong id="lossDrop">-</strong>
+        </article>
+      </section>
+
+      <section class="main-grid">
+        <section class="panel chart-panel">
+          <div class="panel-head">
+            <div>
+              <h2>Loss 曲线</h2>
+              <p>训练 loss 与评估 loss 越往下越好；如果评估 loss 不降，说明模型还没学到稳定模式。</p>
+            </div>
+            <span id="sourceLabel">未加载</span>
+          </div>
+          <canvas id="lossChart" width="960" height="420"></canvas>
+        </section>
+
+        <aside class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>训练配置</h2>
+              <p>来自 runs/latest.json。</p>
+            </div>
+          </div>
+          <dl class="meta-list" id="metaList">
+            <div><dt>状态</dt><dd>等待加载</dd></div>
+          </dl>
+        </aside>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>日志明细</h2>
+            <p>每一行对应一次 log 输出。</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>step</th>
+                <th>train_loss</th>
+                <th>eval_loss</th>
+                <th>elapsed_seconds</th>
+              </tr>
+            </thead>
+            <tbody id="logRows">
+              <tr><td colspan="4">暂无日志</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <script src="./app.js"></script>
+  </body>
+</html>

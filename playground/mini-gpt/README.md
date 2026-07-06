@@ -32,7 +32,25 @@ python mini_gpt.py --mode train --data data/sample.txt --max-steps 300
 
 ```text
 checkpoints/mini_gpt.pt
+runs/train_log.csv
+runs/latest.json
 ```
+
+## Web 观察台
+
+训练后启动本地静态服务：
+
+```bash
+python -m http.server 8000
+```
+
+然后打开：
+
+```text
+http://localhost:8000/web/
+```
+
+页面会自动读取 `runs/latest.json` 和 `runs/train_log.csv`，展示训练配置、loss 曲线和日志表。如果浏览器没有自动读取，点击页面右上角的 `选择 CSV`，手动选择 `runs/train_log.csv`。
 
 ## 生成
 
