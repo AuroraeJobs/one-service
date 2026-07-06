@@ -52,6 +52,14 @@ http://localhost:8000/web/
 
 页面会自动读取 `runs/latest.json` 和 `runs/train_log.csv`，展示训练配置、loss 曲线和日志表。如果浏览器没有自动读取，点击页面右上角的 `选择 CSV`，手动选择 `runs/train_log.csv`。
 
+默认会把语料最后 10% 留作验证集：
+
+```bash
+python mini_gpt.py --mode train --data data/sample.txt --val-ratio 0.1
+```
+
+Web 页里的 `泛化差距 = eval_loss - train_loss`。如果训练 loss 下降但泛化差距持续变大，说明模型可能在记忆训练文本，而不是学到稳定规律。样本太短时会自动回退为同源评估，`validation_enabled` 会显示为 `false`。
+
 训练日志还会保存每次 log 时的生成样例。可以通过参数调整采样：
 
 ```bash

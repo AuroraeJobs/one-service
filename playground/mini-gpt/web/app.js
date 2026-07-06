@@ -9,6 +9,7 @@ const ids = {
   latestTrainLoss: document.getElementById('latestTrainLoss'),
   latestEvalLoss: document.getElementById('latestEvalLoss'),
   lossDrop: document.getElementById('lossDrop'),
+  lossGap: document.getElementById('lossGap'),
   sourceLabel: document.getElementById('sourceLabel'),
   sampleStep: document.getElementById('sampleStep'),
   sampleText: document.getElementById('sampleText'),
@@ -94,6 +95,14 @@ const updateStats = () => {
     ids.lossDrop.textContent = '-';
     ids.lossDrop.style.color = '';
   }
+  if (latest && Number.isFinite(latest.eval_loss) && Number.isFinite(latest.train_loss)) {
+    const gap = latest.eval_loss - latest.train_loss;
+    ids.lossGap.textContent = `${gap >= 0 ? '+' : '-'}${Math.abs(gap).toFixed(4)}`;
+    ids.lossGap.style.color = gap <= 0.2 ? 'var(--good)' : 'var(--accent-2)';
+  } else {
+    ids.lossGap.textContent = '-';
+    ids.lossGap.style.color = '';
+  }
   ids.sourceLabel.textContent = state.source;
   ids.sampleStep.textContent = latest?.step ? `step ${latest.step}` : 'step -';
   ids.sampleText.textContent = latest?.sample || '暂无生成样例';
@@ -113,6 +122,10 @@ const updateMeta = () => {
     ['结束', state.meta.finished_at],
     ['max_steps', state.meta.max_steps],
     ['batch_size', state.meta.batch_size],
+    ['val_ratio', state.meta.val_ratio],
+    ['validation_enabled', state.meta.validation_enabled],
+    ['train_tokens', state.meta.train_tokens],
+    ['eval_tokens', state.meta.eval_tokens],
     ['sample_prompt', state.meta.sample_prompt],
     ['sample_tokens', state.meta.sample_tokens],
     ['block_size', config.block_size],

@@ -171,6 +171,14 @@ def get_batch(data: torch.Tensor, block_size: int, batch_size: int, device: torc
     return x.to(device), y.to(device)
 
 
+def split_dataset(data: torch.Tensor, val_ratio: float, block_size: int) -> tuple[torch.Tensor, torch.Tensor, bool]:
+    val_size = int(len(data) * val_ratio)
+    min_eval_size = block_size + 2
+    if val_size < min_eval_size or len(data) - val_size < min_eval_size:
+        return data, data, False
+    return data[:-val_size], data[-val_size:], True
+
+
 @torch.no_grad()
 def estimate_loss(model: MiniGPT, data: torch.Tensor, block_size: int, batch_size: int, device: torch.device) -> float:
     model.eval()
@@ -217,6 +225,7 @@ def train(args: argparse.Namespace) -> None:
     )
     device = select_device()
     encoded = torch.tensor(tokenizer.encode(text), dtype=torch.long)
+    train_data, eval_data, validation_enabled = split_dataset(encoded, args.val_ratio, config.block_size)
     model = MiniGPT(config).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate)
     runs_dir = Path(args.runs_dir)
@@ -231,14 +240,14 @@ def train(args: argparse.Namespace) -> None:
 
         train_started = time.time()
         for step in range(1, args.max_steps + 1):
-            x, y = get_batch(encoded, config.block_size, args.batch_size, device)
+            x, y = get_batch(train_data, config.block_size, args.batch_size, device)
             _, loss = model(x, y)
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             optimizer.step()
 
             if step == 1 or step % args.log_every == 0 or step == args.max_steps:
-                eval_loss = estimate_loss(model, encoded, config.block_size, args.batch_size, device)
+                eval_loss = estimate_loss(model, eval_data, config.block_size, args.batch_size, device)
                 elapsed_seconds = round(time.time() - train_started, 2)
                 sample = sample_text(
                     model,
@@ -281,6 +290,10 @@ def train(args: argparse.Namespace) -> None:
         "max_steps": args.max_steps,
         "batch_size": args.batch_size,
         "learning_rate": args.learning_rate,
+        "val_ratio": args.val_ratio,
+        "validation_enabled": validation_enabled,
+        "train_tokens": int(len(train_data)),
+        "eval_tokens": int(len(eval_data)),
         "sample_prompt": args.sample_prompt,
         "sample_tokens": args.sample_tokens,
         "config": asdict(config),
@@ -321,6 +334,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--n-layer", type=int, default=4)
     parser.add_argument("--dropout", type=float, default=0.1)
     parser.add_argument("--learning-rate", type=float, default=3e-4)
+    parser.add_argument("--val-ratio", type=float, default=0.1)
     parser.add_argument("--temperature", type=float, default=0.9)
     parser.add_argument("--top-k", type=int, default=20)
     parser.add_argument("--log-every", type=int, default=50)
