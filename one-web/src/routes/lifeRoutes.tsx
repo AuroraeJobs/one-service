@@ -60,6 +60,7 @@ import SpacePage from '../components/SpacePage';
 import Statistics from '../components/Statistics';
 import TaijiPage from '../components/TaijiPage';
 import TeslaFleetManagerPage from '../components/TeslaFleetManagerPage';
+import WechatOfficialAccountArticlesPage from '../components/WechatOfficialAccountArticlesPage';
 import WechatOfficialAccountPage from '../components/WechatOfficialAccountPage';
 
 export interface ProtectedRouteConfig {
@@ -74,6 +75,8 @@ export const createProtectedRoutes = (isTabVisible: boolean): ProtectedRouteConf
   { path: '/connections', element: <LifeDataConnectionsPage /> },
   { path: '/ai/chat', element: <AiChatPage /> },
   { path: '/ai/wechat', element: <WechatOfficialAccountPage /> },
+  { path: '/ai/wechat/drafts', element: <WechatOfficialAccountArticlesPage type="drafts" /> },
+  { path: '/ai/wechat/published', element: <WechatOfficialAccountArticlesPage type="published" /> },
   { path: '/investments', element: <LifeInvestmentPage /> },
   { path: '/investments/watchlist', element: <LifeInvestmentPage /> },
   { path: '/investments/market', element: <LifeInvestmentPage /> },

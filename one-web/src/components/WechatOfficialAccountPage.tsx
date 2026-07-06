@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Empty, Input, Pagination, Segmented, Space, Switch, Tag, message } from 'antd';
+import { Button, Input, Space, Switch, Tag, message } from 'antd';
 import { CloudUploadOutlined, EyeOutlined, ReloadOutlined, SendOutlined } from '@ant-design/icons';
 import LifePageShell from './LifePageShell';
 import {
   wechatOfficialAccountApi,
-  type WechatArticleListResponse,
   type WechatRenderedArticle,
   type WechatTokenStatus
 } from '../services/api';
@@ -39,11 +38,6 @@ const WechatOfficialAccountPage = () => {
   const [loading, setLoading] = useState(false);
   const [article, setArticle] = useState<WechatRenderedArticle>();
   const [tokenStatus, setTokenStatus] = useState<WechatTokenStatus>();
-  const [listType, setListType] = useState<'drafts' | 'published'>('drafts');
-  const [listLoading, setListLoading] = useState(false);
-  const [articleList, setArticleList] = useState<WechatArticleListResponse>();
-  const [listPage, setListPage] = useState(1);
-  const listPageSize = 10;
 
   const previewHtml = useMemo(() => {
     if (!article?.content) {
@@ -63,31 +57,6 @@ const WechatOfficialAccountPage = () => {
   useEffect(() => {
     loadTokenStatus();
   }, []);
-
-  const loadArticleList = async (type = listType, page = listPage) => {
-    setListLoading(true);
-    try {
-      const request = {
-        offset: (page - 1) * listPageSize,
-        count: listPageSize,
-        noContent: 1
-      };
-      const result = type === 'drafts'
-        ? await wechatOfficialAccountApi.listDrafts(request)
-        : await wechatOfficialAccountApi.listPublishedArticles(request);
-      setArticleList(result);
-    } catch (error) {
-      message.error(error instanceof Error ? error.message : '列表加载失败');
-    } finally {
-      setListLoading(false);
-    }
-  };
-
-  const switchListType = (value: 'drafts' | 'published') => {
-    setListType(value);
-    setListPage(1);
-    loadArticleList(value, 1);
-  };
 
   const renderArticle = async () => {
     setLoading(true);
@@ -191,9 +160,6 @@ const WechatOfficialAccountPage = () => {
               <Button icon={<CloudUploadOutlined />} onClick={createDraft} loading={loading}>
                 创建草稿
               </Button>
-              <Button icon={<ReloadOutlined />} onClick={() => loadArticleList()} loading={listLoading}>
-                列表
-              </Button>
             </Space>
             <Input.Search
               value={mediaId}
@@ -218,61 +184,6 @@ const WechatOfficialAccountPage = () => {
           />
         </section>
       </div>
-
-      <section className="wechat-official-account-panel wechat-official-account-list-panel">
-        <div className="wechat-official-account-panel-header">
-          <Space>
-            <strong>公众号文章</strong>
-            <Segmented
-              size="small"
-              value={listType}
-              onChange={(value) => switchListType(value as 'drafts' | 'published')}
-              options={[
-                { label: '草稿箱', value: 'drafts' },
-                { label: '已发布', value: 'published' }
-              ]}
-            />
-          </Space>
-          <Button icon={<ReloadOutlined />} onClick={() => loadArticleList()} loading={listLoading}>
-            刷新
-          </Button>
-        </div>
-        <div className="wechat-official-account-list">
-          {articleList?.item?.length ? articleList.item.map((item, index) => {
-            const content = item.content as Record<string, unknown> | undefined;
-            const newsItems = content?.news_item as Array<Record<string, unknown>> | undefined;
-            const firstNews = newsItems?.[0] || {};
-            const title = String(firstNews.title || item.media_id || item.publish_id || '未命名文章');
-            const digest = String(firstNews.digest || '');
-            const updatedAt = Number(item.update_time || item.create_time || item.publish_time || 0);
-            return (
-              <article className="wechat-official-account-list-item" key={`${item.media_id || item.publish_id || index}`}>
-                <div>
-                  <h3>{title}</h3>
-                  {digest && <p>{digest}</p>}
-                  <span>{updatedAt ? new Date(updatedAt * 1000).toLocaleString() : '暂无时间'}</span>
-                </div>
-                <Tag>{String(item.media_id || item.publish_id || '无 id')}</Tag>
-              </article>
-            );
-          }) : (
-            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={listLoading ? '加载中' : '暂无数据'} />
-          )}
-        </div>
-        <div className="wechat-official-account-pagination">
-          <Pagination
-            size="small"
-            current={listPage}
-            pageSize={listPageSize}
-            total={articleList?.total_count || 0}
-            showSizeChanger={false}
-            onChange={(page) => {
-              setListPage(page);
-              loadArticleList(listType, page);
-            }}
-          />
-        </div>
-      </section>
     </LifePageShell>
   );
 };

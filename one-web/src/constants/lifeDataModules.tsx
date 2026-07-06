@@ -311,7 +311,9 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
   ],
   ai: [
     { id: 'ai-chat', moduleKey: 'ai', path: '/ai/chat', label: '对话', icon: <MessageOutlined />, accent: '#00c7be' },
-    { id: 'ai-wechat', moduleKey: 'ai', path: '/ai/wechat', label: '公众号', icon: <FileTextOutlined />, accent: '#0071e3' }
+    { id: 'ai-wechat', moduleKey: 'ai', path: '/ai/wechat', label: '写稿', icon: <FileTextOutlined />, accent: '#0071e3' },
+    { id: 'ai-wechat-drafts', moduleKey: 'ai', path: '/ai/wechat/drafts', label: '草稿箱', icon: <DatabaseOutlined />, accent: '#00c7be' },
+    { id: 'ai-wechat-published', moduleKey: 'ai', path: '/ai/wechat/published', label: '已发布', icon: <HistoryOutlined />, accent: '#34c759' }
   ]
 };
 
