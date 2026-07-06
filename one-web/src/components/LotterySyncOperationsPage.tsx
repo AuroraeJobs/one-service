@@ -15,6 +15,7 @@ import {
   type LotteryRecordSyncSummary
 } from '../services/api';
 import { lotteryViewStateKeys, useLotterySavedViewState } from '../utils/lotteryViewState';
+import { lotteryStatusLabel } from '../utils/lotteryStatusLabel';
 import './LotteryOverviewPage.css';
 
 const syncOperationViewKeys = ['status', 'provider', 'syncPage', 'syncPageSize', 'probePage', 'probePageSize'];
@@ -205,7 +206,7 @@ const LotterySyncOperationsPage = () => {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
-      render: value => <Tag color={statusColor(value)}>{value || 'UNKNOWN'}</Tag>
+      render: value => <Tag color={statusColor(value)}>{lotteryStatusLabel(value)}</Tag>
     },
     {
       title: '期号',
@@ -278,7 +279,7 @@ const LotterySyncOperationsPage = () => {
       key: 'status',
       render: (_, record) => (
         <Tag color={record.success && record.status === 'AVAILABLE' ? 'green' : 'orange'}>
-          {record.status || 'UNKNOWN'}
+          {lotteryStatusLabel(record.status)}
         </Tag>
       )
     },

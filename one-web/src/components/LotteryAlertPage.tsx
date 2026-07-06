@@ -4,6 +4,7 @@ import { BellOutlined, CheckCircleOutlined, ClockCircleOutlined, MobileOutlined,
 import { useNavigate } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import { lotteryCalendarApi, type LotteryCalendarReminder, type LotteryCalendarState } from '../services/api';
+import { lotteryStatusLabel } from '../utils/lotteryStatusLabel';
 import './LotteryOverviewPage.css';
 
 const formatDateTime = (timestamp?: number) => {
@@ -91,7 +92,7 @@ const LotteryAlertPage = () => {
             <span>{calendar?.nextDrawDate || '-'} {calendar?.drawWeekday || ''}</span>
           </div>
           <Space wrap>
-            <Tag color="blue">{calendar?.currentIssueState || 'UNKNOWN'}</Tag>
+            <Tag color="blue">{lotteryStatusLabel(calendar?.currentIssueState)}</Tag>
             <Tag>同步 {formatDateTime(calendar?.expectedSyncStartAt)} - {formatDateTime(calendar?.expectedSyncEndAt)}</Tag>
           </Space>
         </section>
@@ -105,7 +106,7 @@ const LotteryAlertPage = () => {
                     <h2>{reminder.label || reminder.key}</h2>
                     <p>{reminder.message || '-'}</p>
                   </div>
-                  <Tag color={statusColor(reminder.status)}>{reminder.status || 'UNKNOWN'}</Tag>
+                  <Tag color={statusColor(reminder.status)}>{lotteryStatusLabel(reminder.status)}</Tag>
                 </div>
                 <div className="lottery-latest-meta">
                   <span><ClockCircleOutlined /> 到期 {formatDateTime(reminder.dueAt)}</span>

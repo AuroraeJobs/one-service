@@ -14,6 +14,7 @@ import {
   lotteryRecommendationApi,
   type LotteryRecommendation
 } from '../services/api';
+import { lotteryCodeLabel, lotteryStatusLabel } from '../utils/lotteryStatusLabel';
 import './LotteryOverviewPage.css';
 
 const lanes = [
@@ -179,9 +180,9 @@ const LotteryRecommendationPage = () => {
                     <div className="lottery-recommendation-card-head">
                       <div>
                         <strong>{item.title || item.targetId}</strong>
-                        <span>{item.targetType} · {item.expectedAction || '-'}</span>
+                        <span>{lotteryCodeLabel(item.targetType)} · {lotteryCodeLabel(item.expectedAction)}</span>
                       </div>
-                      <Tag color={stateColor(item.lifecycleStatus)}>{item.lifecycleStatus || 'OPEN'}</Tag>
+                      <Tag color={stateColor(item.lifecycleStatus)}>{lotteryStatusLabel(item.lifecycleStatus, 'OPEN')}</Tag>
                     </div>
                     <Progress percent={item.confidenceScore || 0} size="small" strokeColor={stateColor(item.recommendationState) === 'green' ? '#34c759' : '#ff9500'} />
                     <p>{item.evidenceSummary || '暂无证据摘要'}</p>

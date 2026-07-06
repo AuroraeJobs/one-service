@@ -18,6 +18,7 @@ import {
   type LotteryTicketPack,
   type LotteryTicketPackItem
 } from '../services/api';
+import { lotteryCodeLabel, lotteryStatusLabel } from '../utils/lotteryStatusLabel';
 import './LotteryOverviewPage.css';
 
 const defaultTicketText = '01 06 11 18 25 31 + 09\n03 08 14 19 26 32 + 12';
@@ -283,7 +284,7 @@ const LotteryTicketPackPage = () => {
           {preview ? (
             <div className="lottery-ticket-pack-preview">
               <div className="lottery-ticket-pack-budget-row">
-                <Tag color={budgetColor(preview.budgetPrecheck?.status)}>{preview.budgetPrecheck?.status || 'UNKNOWN'}</Tag>
+                <Tag color={budgetColor(preview.budgetPrecheck?.status)}>{lotteryStatusLabel(preview.budgetPrecheck?.status)}</Tag>
                 <strong>{formatMoney(preview.budgetPrecheck?.proposedCost)}</strong>
                 <span>{preview.items?.length || 0} 注</span>
               </div>
@@ -316,12 +317,12 @@ const LotteryTicketPackPage = () => {
                 <div className="lottery-ticket-pack-head">
                   <div>
                     <strong>{pack.title || pack.id}</strong>
-                    <span>{pack.targetIssue || '-'} · {pack.sourceType || 'MANUAL'} · 更新 {formatTime(pack.updatedAt)}</span>
+                    <span>{pack.targetIssue || '-'} · {lotteryCodeLabel(pack.sourceType, 'MANUAL')} · 更新 {formatTime(pack.updatedAt)}</span>
                   </div>
                   <Space wrap>
-                    <Tag color={statusColor(pack.status)}>{pack.status || 'DRAFT'}</Tag>
-                    <Tag color={pack.approvalState === 'APPROVED' ? 'green' : 'gold'}>{pack.approvalState || 'PENDING'}</Tag>
-                    <Tag color={budgetColor(pack.budgetPrecheck?.status)}>{pack.budgetPrecheck?.status || 'UNKNOWN'}</Tag>
+                    <Tag color={statusColor(pack.status)}>{lotteryStatusLabel(pack.status, 'DRAFT')}</Tag>
+                    <Tag color={pack.approvalState === 'APPROVED' ? 'green' : 'gold'}>{lotteryStatusLabel(pack.approvalState, 'PENDING')}</Tag>
+                    <Tag color={budgetColor(pack.budgetPrecheck?.status)}>{lotteryStatusLabel(pack.budgetPrecheck?.status)}</Tag>
                   </Space>
                 </div>
                 {pack.warnings?.length ? <Alert type="warning" showIcon message={pack.warnings.join('；')} /> : null}

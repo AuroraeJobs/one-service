@@ -29,6 +29,7 @@ import {
   type LotteryTicketPack,
   type LotteryWorkbenchSummary
 } from '../services/api';
+import { lotteryMessageLabel, lotteryStatusLabel } from '../utils/lotteryStatusLabel';
 import './LotteryOverviewPage.css';
 
 type MobileView = 'actions' | 'packs' | 'outcomes' | 'recommendations';
@@ -257,7 +258,7 @@ const LotteryMobileCommandPage = () => {
           <div>
             <span>下一期</span>
             <strong>{workbench?.dailyState?.nextIssue || health?.nextIssue || '-'}</strong>
-            <p>{health?.message || workbench?.operationSummary?.message || '等待移动端批量复核'}</p>
+            <p>{lotteryMessageLabel(health?.message || workbench?.operationSummary?.message, '等待移动端批量复核')}</p>
           </div>
           <Progress type="circle" percent={Math.max(0, Math.min(100, health?.score || 0))} size={86} strokeColor="#34c759" />
         </section>
@@ -268,7 +269,7 @@ const LotteryMobileCommandPage = () => {
               <span>{metric.icon}{metric.label}</span>
               <strong>{metric.value}</strong>
               <em>{metric.detail}</em>
-              <Tag color={statusColor(metric.status)}>{metric.status || 'UNKNOWN'}</Tag>
+              <Tag color={statusColor(metric.status)}>{lotteryStatusLabel(metric.status)}</Tag>
             </button>
           ))}
         </section>
@@ -311,9 +312,9 @@ const LotteryMobileCommandPage = () => {
             {reviewPacks.length ? reviewPacks.map(pack => (
               <article key={pack.id || pack.title}>
                 <div>
-                  <Tag color={statusColor(pack.approvalState || pack.status)}>{pack.approvalState || pack.status || 'PENDING'}</Tag>
+                  <Tag color={statusColor(pack.approvalState || pack.status)}>{lotteryStatusLabel(pack.approvalState || pack.status, 'PENDING')}</Tag>
                   <strong>{pack.title || '票包'}</strong>
-                  <p>{pack.targetIssue || '-'} · {(pack.items || []).length} 注 · {pack.budgetPrecheck?.status || 'UNKNOWN'}</p>
+                  <p>{pack.targetIssue || '-'} · {(pack.items || []).length} 注 · {lotteryStatusLabel(pack.budgetPrecheck?.status)}</p>
                   <span>{formatTime(pack.updatedAt || pack.createdAt)}</span>
                 </div>
                 <Space wrap>
@@ -347,7 +348,7 @@ const LotteryMobileCommandPage = () => {
             {outcomes.length ? outcomes.map(item => (
               <article key={item.issue}>
                 <div>
-                  <Tag color={statusColor(item.calibrationState)}>{item.calibrationState || 'UNKNOWN'}</Tag>
+                  <Tag color={statusColor(item.calibrationState)}>{lotteryStatusLabel(item.calibrationState)}</Tag>
                   <strong>{item.issue || '-'} 期归因</strong>
                   <p>已核 {item.checkedTicketCount || 0}/{item.ticketCount || 0} · 中奖 {item.winningTicketCount || 0} · ROI {item.roiPercent ?? '-'}%</p>
                   <span>{formatTime(item.generatedAt)}</span>
@@ -366,7 +367,7 @@ const LotteryMobileCommandPage = () => {
             {recommendations.length ? recommendations.map(item => (
               <article key={item.id || `${item.targetType}-${item.targetId}`}>
                 <div>
-                  <Tag color={statusColor(item.recommendationState)}>{item.recommendationState || 'WATCH'}</Tag>
+                  <Tag color={statusColor(item.recommendationState)}>{lotteryStatusLabel(item.recommendationState, 'WATCH')}</Tag>
                   <strong>{item.title || item.targetId}</strong>
                   <p>{item.expectedAction || '-'} · 置信 {item.confidenceScore || 0}% · 证据 {item.evidenceAgeHours || 0}h</p>
                   <span>{item.evidenceSummary || '暂无证据摘要'}</span>

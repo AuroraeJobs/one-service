@@ -14,6 +14,7 @@ import {
   lotteryOutcomeApi,
   type LotteryOutcomeAttribution
 } from '../services/api';
+import { lotteryStatusLabel } from '../utils/lotteryStatusLabel';
 import './LotteryOverviewPage.css';
 
 const formatMoney = (value?: number) => value === undefined || value === null ? '-' : `¥${Number(value).toFixed(2)}`;
@@ -125,7 +126,7 @@ const LotteryOutcomeAttributionPage = () => {
                 >
                   <strong>{item.issue}</strong>
                   <span>{formatMoney(item.netResult)} · ROI {formatPercent(item.roiPercent)}</span>
-                  <Tag color={stateColor(item.calibrationState)}>{item.calibrationState || 'UNKNOWN'}</Tag>
+                  <Tag color={stateColor(item.calibrationState)}>{lotteryStatusLabel(item.calibrationState)}</Tag>
                 </button>
               )) : <Empty description="暂无归因期号" />}
             </div>
@@ -140,7 +141,7 @@ const LotteryOutcomeAttributionPage = () => {
                   <article><strong>{selected.winningTicketCount || 0}</strong><span>中奖票据</span></article>
                   <article><strong>{formatMoney(selected.netResult)}</strong><span>净收益</span></article>
                   <article><strong>{formatPercent(selected.roiPercent)}</strong><span>ROI</span></article>
-                  <article><Tag color={stateColor(selected.calibrationState)}>{selected.calibrationState || 'UNKNOWN'}</Tag><span>校准状态</span></article>
+                  <article><Tag color={stateColor(selected.calibrationState)}>{lotteryStatusLabel(selected.calibrationState)}</Tag><span>校准状态</span></article>
                 </section>
 
                 <section className="lottery-outcome-card-grid">
@@ -172,7 +173,7 @@ const LotteryOutcomeAttributionPage = () => {
                     <div className="lottery-outcome-table">
                       {selected.simulationDrifts?.length ? selected.simulationDrifts.map(item => (
                         <button key={item.auditId || item.generatedAt} type="button" onClick={() => navigate('/lottery/simulator')}>
-                          <span>{item.riskLevel || 'UNKNOWN'} · {item.candidateCount || 0} 候选</span>
+                          <span>{lotteryStatusLabel(item.riskLevel)} · {item.candidateCount || 0} 候选</span>
                           <small>中奖票据 {item.actualWinningTicketCount || 0} · {formatTime(item.generatedAt)}</small>
                           <Tag color={stateColor(item.driftState)}>{item.driftState}</Tag>
                         </button>

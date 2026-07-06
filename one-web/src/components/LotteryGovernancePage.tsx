@@ -31,6 +31,7 @@ import {
   type LotteryTicketPack,
   type LotteryWorkbenchSummary
 } from '../services/api';
+import { lotteryCodeLabel, lotteryStatusLabel } from '../utils/lotteryStatusLabel';
 import './LotteryOverviewPage.css';
 
 type GovernanceStatus = 'PASS' | 'WARNING' | 'FAILED' | 'MANUAL';
@@ -171,7 +172,7 @@ const LotteryGovernancePage = () => {
         status: reminders?.dueCount ? 'WARNING' : 'PASS',
         score: Math.max(40, 100 - (reminders?.dueCount || 0) * 15),
         message: `${reminders?.activeCount || 0} 条活跃提醒，${reminders?.dueCount || 0} 条到期`,
-        detail: `运营健康 ${operations?.status || 'UNKNOWN'} · 月末 ${workbench?.maintenanceSummary?.collections?.length || 0} 集合`,
+        detail: `运营健康 ${lotteryStatusLabel(operations?.status)} · 月末 ${workbench?.maintenanceSummary?.collections?.length || 0} 集合`,
         path: '/lottery/month-end',
         icon: <BellOutlined />
       },
@@ -240,7 +241,7 @@ const LotteryGovernancePage = () => {
                   <strong>{domain.title}</strong>
                   <small>{domain.detail}</small>
                 </div>
-                <Tag color={statusColor(domain.status)}>{domain.status}</Tag>
+                <Tag color={statusColor(domain.status)}>{lotteryStatusLabel(domain.status)}</Tag>
               </div>
               <Progress percent={domain.score} size="small" status={domain.status === 'FAILED' ? 'exception' : 'normal'} />
               <p>{domain.message}</p>
@@ -254,7 +255,7 @@ const LotteryGovernancePage = () => {
             {workbench?.releaseCheckSummary?.checks?.length ? workbench.releaseCheckSummary.checks.map(check => (
               <button key={check.key} type="button" onClick={() => navigate(check.path || '/lottery/exports')}>
                 <span><WarningOutlined /> {check.label || check.key}</span>
-                <Tag color={statusColor(check.status)}>{check.status || 'UNKNOWN'}</Tag>
+                <Tag color={statusColor(check.status)}>{lotteryStatusLabel(check.status)}</Tag>
               </button>
             )) : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无发布检查" />}
           </Card>
@@ -262,7 +263,7 @@ const LotteryGovernancePage = () => {
             <div className="lottery-governance-audit-list">
               {audits.length ? audits.slice(0, 8).map(event => (
                 <button key={event.id || `${event.eventType}-${event.generatedAt}`} type="button" onClick={() => navigate('/lottery/exports')}>
-                  <span>{event.eventType || '-'}</span>
+                  <span>{lotteryCodeLabel(event.eventType)}</span>
                   <small>{formatTime(event.generatedAt)} · {event.rowCount || 0} 行</small>
                 </button>
               )) : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无治理证据" />}

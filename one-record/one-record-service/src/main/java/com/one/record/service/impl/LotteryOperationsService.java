@@ -239,12 +239,12 @@ public class LotteryOperationsService implements ILotteryOperationsService {
 
     private static String healthMessage(int score, long warningCount) {
         if (score >= 90 && warningCount == 0) {
-            return "Lottery operations are ready";
+            return "彩票运营已就绪";
         }
         if (score >= 70) {
-            return "Lottery operations need review before month-end";
+            return "月末前需要复核彩票运营";
         }
-        return "Lottery operations need attention";
+        return "彩票运营需要关注";
     }
 
     private static String nextIssue(LotteryDraw latestDraw) {

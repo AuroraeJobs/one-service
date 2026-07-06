@@ -22,6 +22,7 @@ import {
   type LotteryMaintenanceCollectionStatus,
   type LotteryMaintenanceSummary
 } from '../services/api';
+import { lotteryStatusLabel } from '../utils/lotteryStatusLabel';
 import './LotteryOverviewPage.css';
 
 const exportTypeOptions = [
@@ -697,7 +698,7 @@ const LotteryExportMaintenancePage = () => {
           {releaseReadinessChecks.map(item => (
             <button key={item.key} type="button" onClick={() => window.location.assign(item.path)}>
               <span>{item.status === 'PASS' ? <CheckCircleOutlined /> : <ThunderboltOutlined />}</span>
-              <Tag color={item.status === 'PASS' ? 'green' : 'blue'}>{item.status}</Tag>
+              <Tag color={item.status === 'PASS' ? 'green' : 'blue'}>{lotteryStatusLabel(item.status)}</Tag>
               <strong>{item.label}</strong>
               <small>{item.message}</small>
             </button>

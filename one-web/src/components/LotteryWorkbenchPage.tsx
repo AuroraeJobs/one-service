@@ -56,6 +56,7 @@ import {
   type LotteryWorkbenchSummary
 } from '../services/api';
 import { getLotterySavedViewPath, lotteryViewStateKeys } from '../utils/lotteryViewState';
+import { lotteryCodeLabel, lotteryMessageLabel, lotteryStatusLabel } from '../utils/lotteryStatusLabel';
 import './LotteryOverviewPage.css';
 
 interface LotteryWorkbenchRecentWork {
@@ -459,6 +460,7 @@ const LotteryWorkbenchPage = () => {
   const scheduledRunbook = summary?.scheduledSyncRunbook;
   const releaseCheckSummary = summary?.releaseCheckSummary;
   const latestSyncStatus = summary?.latestSyncSummary?.latestStatus || 'UNKNOWN';
+  const latestSyncStatusLabel = lotteryStatusLabel(latestSyncStatus);
   const trainingStatus = summary?.trainingStatus;
   const trainingPercent = Math.max(0, Math.min(100, trainingStatus?.percent ?? 0));
   const savedPredictionHistoryPath = getLotterySavedViewPath('/lottery/predictions/history', lotteryViewStateKeys.predictionHistory);
@@ -660,7 +662,7 @@ const LotteryWorkbenchPage = () => {
       key: 'sync',
       icon: <SyncOutlined />,
       label: '同步状态',
-      value: latestSyncStatus,
+      value: latestSyncStatusLabel,
       detail: formatDateTime(summary?.latestSyncSummary?.latestFinishedAt),
       path: dailyState?.syncState?.path || savedSyncPath
     },
@@ -668,7 +670,7 @@ const LotteryWorkbenchPage = () => {
       key: 'scheduled',
       icon: <ClockCircleOutlined />,
       label: '定时同步',
-      value: scheduledRunbook?.healthStatus || 'UNKNOWN',
+      value: lotteryStatusLabel(scheduledRunbook?.healthStatus),
       detail: scheduledRunbook?.nextRunText || scheduledRunbook?.message || '-',
       path: savedSyncPath
     },
@@ -711,14 +713,14 @@ const LotteryWorkbenchPage = () => {
       key: 'sync',
       icon: <SyncOutlined />,
       label: '同步',
-      detail: latestSyncStatus,
+      detail: latestSyncStatusLabel,
       onClick: () => navigate(dailyState?.syncState?.path || savedSyncPath)
     },
     {
       key: 'prediction',
       icon: <ThunderboltOutlined />,
       label: '预测',
-      detail: trainingStatus?.running ? '训练中' : (dailyState?.predictionState?.status || '就绪'),
+      detail: trainingStatus?.running ? '训练中' : lotteryStatusLabel(dailyState?.predictionState?.status, 'READY'),
       onClick: () => navigate(dailyState?.predictionState?.path || '/lottery/prediction')
     },
     {
@@ -1107,7 +1109,7 @@ const LotteryWorkbenchPage = () => {
     description: (
       <Space direction="vertical" size={2}>
         <Space wrap size={6}>
-          <Tag color={stepStatusColor(step.status)}>{step.status || 'UNKNOWN'}</Tag>
+          <Tag color={stepStatusColor(step.status)}>{lotteryStatusLabel(step.status)}</Tag>
           {step.savedCount !== undefined ? <Tag>新增 {step.savedCount}</Tag> : null}
           {step.checkedCount !== undefined ? <Tag>核验 {step.checkedCount}</Tag> : null}
           {step.updatedCount !== undefined ? <Tag>更新 {step.updatedCount}</Tag> : null}
@@ -1153,7 +1155,7 @@ const LotteryWorkbenchPage = () => {
         items: recentWork.tickets.map(item => ({
           key: item.id || `ticket-${item.issue}-${item.createdAt}`,
           title: `第 ${item.issue || item.period || '-'} 期`,
-          detail: `${item.source || 'MANUAL'} · ${item.status || 'UNKNOWN'} · ${formatDateTime(item.updatedAt || item.createdAt)}`,
+          detail: `${lotteryCodeLabel(item.source, 'MANUAL')} · ${lotteryStatusLabel(item.status)} · ${formatDateTime(item.updatedAt || item.createdAt)}`,
           path: item.issue ? `/lottery/tickets?issue=${item.issue}` : savedTicketsPath
         }))
       },
@@ -1184,7 +1186,7 @@ const LotteryWorkbenchPage = () => {
         items: recentWork.experiments.map(item => ({
           key: item.id || `experiment-${item.strategyName}-${item.createdAt}`,
           title: item.strategyName || '策略实验',
-          detail: `${item.scale || '-'} · 回放 ${item.replayWindow || 0} · ${formatDateTime(item.createdAt)}`,
+          detail: `${lotteryCodeLabel(item.scale)} · 回放 ${item.replayWindow || 0} · ${formatDateTime(item.createdAt)}`,
           path: item.id ? `/lottery/experiments/${item.id}` : '/lottery/experiments'
         }))
       },
@@ -1209,7 +1211,7 @@ const LotteryWorkbenchPage = () => {
         emptyDescription: '暂无导出审计',
         items: recentWork.exports.map(item => ({
           key: item.id || `export-${item.targetId || item.generatedAt}`,
-          title: item.targetType || item.eventType || '导出记录',
+          title: lotteryCodeLabel(item.targetType || item.eventType, '导出记录'),
           detail: `${item.rowCount || 0} 行 · ${formatDateTime(item.generatedAt)}`,
           path: '/lottery/exports'
         }))
@@ -1243,7 +1245,7 @@ const LotteryWorkbenchPage = () => {
         icon: <FileTextOutlined />,
         label: '票据',
         title: latestTicket ? `第 ${latestTicket.issue || latestTicket.period || '-'} 期` : '投注记录',
-        detail: latestTicket ? `${latestTicket.status || 'UNKNOWN'} · ${formatDateTime(latestTicket.updatedAt || latestTicket.createdAt)}` : '打开上次筛选',
+        detail: latestTicket ? `${lotteryStatusLabel(latestTicket.status)} · ${formatDateTime(latestTicket.updatedAt || latestTicket.createdAt)}` : '打开上次筛选',
         path: latestTicket?.issue ? `/lottery/tickets?issue=${latestTicket.issue}` : savedTicketsPath
       },
       {
@@ -1251,14 +1253,14 @@ const LotteryWorkbenchPage = () => {
         icon: <ExperimentOutlined />,
         label: '研究',
         title: latestBacktest?.strategyName || latestExperiment?.strategyName || '研究对比',
-        detail: latestBacktest ? `回测 · ${formatRoi(latestBacktest.netResult, latestBacktest.totalCost)}` : latestExperiment ? `实验 · ${latestExperiment.scale || '-'}` : '打开研究页面',
+        detail: latestBacktest ? `回测 · ${formatRoi(latestBacktest.netResult, latestBacktest.totalCost)}` : latestExperiment ? `实验 · ${lotteryCodeLabel(latestExperiment.scale)}` : '打开研究页面',
         path: researchKey ? `/lottery/research?items=${encodeURIComponent(researchKey)}` : '/lottery/research'
       },
       {
         key: 'export',
         icon: <DownloadOutlined />,
         label: '导出',
-        title: latestExport?.targetType || latestExport?.eventType || '导出审计',
+        title: lotteryCodeLabel(latestExport?.targetType || latestExport?.eventType, '导出审计'),
         detail: latestExport ? `${latestExport.rowCount || 0} 行 · ${formatDateTime(latestExport.generatedAt)}` : '打开报表构建器',
         path: '/lottery/exports'
       },
@@ -1266,7 +1268,7 @@ const LotteryWorkbenchPage = () => {
         key: 'maintenance',
         icon: <SafetyCertificateOutlined />,
         label: '维护',
-        title: releaseCheckSummary?.status || '维护检查',
+        title: releaseCheckSummary?.status ? lotteryStatusLabel(releaseCheckSummary.status) : '维护检查',
         detail: releaseCheckSummary?.message || '查看保留和导出检查',
         path: '/lottery/exports'
       }
@@ -1325,7 +1327,7 @@ const LotteryWorkbenchPage = () => {
                     </span>
                     <Space size={6}>
                       {item.count ? <em>{item.count}</em> : null}
-                      <Tag color={queueStatusColor(item.status)}>{item.status || 'TODO'}</Tag>
+                      <Tag color={queueStatusColor(item.status)}>{lotteryStatusLabel(item.status, 'TODO')}</Tag>
                       <b>{item.actionLabel}</b>
                     </Space>
                   </button>
@@ -1343,7 +1345,7 @@ const LotteryWorkbenchPage = () => {
             title="运营健康"
             extra={
               <Space wrap>
-                <Tag color={operationsHealthColor(operationsHealth?.status)}>{operationsHealth?.status || 'UNKNOWN'}</Tag>
+                <Tag color={operationsHealthColor(operationsHealth?.status)}>{lotteryStatusLabel(operationsHealth?.status)}</Tag>
                 <Button size="small" onClick={() => acknowledgeHealth()}>确认</Button>
               </Space>
             }
@@ -1356,7 +1358,7 @@ const LotteryWorkbenchPage = () => {
                 strokeColor={operationsHealth?.status === 'FAILED' ? '#ff4d4f' : operationsHealth?.status === 'WARNING' ? '#faad14' : '#52c41a'}
               />
               <div>
-                <strong>{operationsHealth?.message || '等待健康评分'}</strong>
+                <strong>{lotteryMessageLabel(operationsHealth?.message, '等待健康评分')}</strong>
                 <span>最近期号 {operationsHealth?.latestIssue || '-'} · 下一期 {operationsHealth?.nextIssue || '-'}</span>
                 <Space wrap>
                   <Tag color={operationsHealth?.warningCount ? 'gold' : 'green'}>提醒 {operationsHealth?.warningCount || 0}</Tag>
@@ -1369,7 +1371,7 @@ const LotteryWorkbenchPage = () => {
               <div className="lottery-workbench-health-list">
                 {(operationsHealth?.contributors || []).map(item => (
                   <button key={item.key || item.label} type="button" onClick={() => item.path && navigate(item.path)}>
-                    <Tag color={operationsHealthColor(item.status)}>{item.status || 'UNKNOWN'}</Tag>
+                    <Tag color={operationsHealthColor(item.status)}>{lotteryStatusLabel(item.status)}</Tag>
                     <span>
                       <strong>{item.label || item.key}</strong>
                       <small>{item.message || '-'}</small>
@@ -1412,7 +1414,7 @@ const LotteryWorkbenchPage = () => {
                             disabled={!item.path}
                             onClick={() => item.path && navigate(item.path)}
                           >
-                            <Tag color={queueStatusColor(item.status)}>{item.status || 'TODO'}</Tag>
+                            <Tag color={queueStatusColor(item.status)}>{lotteryStatusLabel(item.status, 'TODO')}</Tag>
                             <span>
                               <strong>{item.title || item.key}</strong>
                               <small>{item.message || '-'}</small>
@@ -1445,7 +1447,7 @@ const LotteryWorkbenchPage = () => {
                   <strong>{item.value}</strong>
                   <small>{item.detail}</small>
                 </span>
-                {item.status ? <Tag color={dailyStateColor(item.status)}>{item.status}</Tag> : null}
+                {item.status ? <Tag color={dailyStateColor(item.status)}>{lotteryStatusLabel(item.status)}</Tag> : null}
               </button>
             ))}
           </section>
@@ -1473,7 +1475,7 @@ const LotteryWorkbenchPage = () => {
                           disabled={!item.path}
                           onClick={() => item.path && navigate(item.path)}
                         >
-                          <Tag color={queueStatusColor(item.status)}>{item.status || 'TODO'}</Tag>
+                          <Tag color={queueStatusColor(item.status)}>{lotteryStatusLabel(item.status, 'TODO')}</Tag>
                           <span>
                             <strong>{item.title}</strong>
                             <small>{item.detail}</small>
@@ -1498,7 +1500,7 @@ const LotteryWorkbenchPage = () => {
               <span>同步窗口 {formatDateTime(calendar.expectedSyncStartAt)} - {formatDateTime(calendar.expectedSyncEndAt)}</span>
             </div>
             <Space wrap>
-              <Tag color={calendar.currentIssueState === 'BEFORE_DRAW' ? 'blue' : 'orange'}>{calendar.currentIssueState || 'UNKNOWN'}</Tag>
+              <Tag color={calendar.currentIssueState === 'BEFORE_DRAW' ? 'blue' : 'orange'}>{lotteryStatusLabel(calendar.currentIssueState)}</Tag>
               <Button size="small" icon={<BellOutlined />} onClick={() => navigate('/lottery/alerts')}>
                 提醒 {calendar.reminders?.length || 0}
               </Button>
@@ -1514,7 +1516,7 @@ const LotteryWorkbenchPage = () => {
                 <span>{operationSummary?.message || '暂无日常摘要'}</span>
               </div>
               <Space wrap>
-                <Tag color={dailyStateColor(operationSummary?.status)}>{operationSummary?.status || 'UNKNOWN'}</Tag>
+                <Tag color={dailyStateColor(operationSummary?.status)}>{lotteryStatusLabel(operationSummary?.status)}</Tag>
                 <Tag>完成 {operationSummary?.completedCount ?? 0}/{operationSummary?.totalCount ?? 0}</Tag>
                 <Tag>提醒 {operationSummary?.activeReminderCount ?? 0}</Tag>
                 <Tag>预测回填 {operationSummary?.latestPredictionAttachmentCount ?? 0}</Tag>
@@ -1526,7 +1528,7 @@ const LotteryWorkbenchPage = () => {
                 <span>{scheduledRunbook?.message || '暂无定时同步状态'}</span>
               </div>
               <Space wrap>
-                <Tag color={scheduledStatusColor(scheduledRunbook?.healthStatus)}>{scheduledRunbook?.healthStatus || 'UNKNOWN'}</Tag>
+                <Tag color={scheduledStatusColor(scheduledRunbook?.healthStatus)}>{lotteryStatusLabel(scheduledRunbook?.healthStatus)}</Tag>
                 <Tag>{scheduledRunbook?.enabled ? '已启用' : '未启用'}</Tag>
                 <Tag>{scheduledRunbook?.cron || '-'}</Tag>
                 <Tag>最近 {formatDateTime(scheduledRunbook?.lastRunAt)}</Tag>
@@ -1609,10 +1611,10 @@ const LotteryWorkbenchPage = () => {
                 <Progress percent={trainingPercent} status={trainingStatus?.failed ? 'exception' : trainingStatus?.running ? 'active' : 'normal'} />
                 <Space wrap>
                   <Tag color={trainingStatus?.running ? 'processing' : trainingStatus?.failed ? 'red' : 'green'}>
-                    {trainingStatus?.stage || (trainingStatus?.running ? 'RUNNING' : 'IDLE')}
+                    {lotteryStatusLabel(trainingStatus?.stage || (trainingStatus?.running ? 'RUNNING' : 'IDLE'))}
                   </Tag>
                   <Tag>{trainingStatus?.processed ?? 0}/{trainingStatus?.total ?? 0}</Tag>
-                  {trainingStatus?.scale ? <Tag>{trainingStatus.scale}</Tag> : null}
+                  {trainingStatus?.scale ? <Tag>{lotteryCodeLabel(trainingStatus.scale)}</Tag> : null}
                 </Space>
                 <span>{trainingStatus?.message || '训练任务未运行'}</span>
               </div>
@@ -1633,7 +1635,7 @@ const LotteryWorkbenchPage = () => {
             <Card
               className="life-panel-card lottery-clean-panel"
               title="发布检查"
-              extra={<Tag color={releaseStatusColor(releaseCheckSummary?.status)}>{releaseCheckSummary?.status || 'UNKNOWN'}</Tag>}
+              extra={<Tag color={releaseStatusColor(releaseCheckSummary?.status)}>{lotteryStatusLabel(releaseCheckSummary?.status)}</Tag>}
             >
               {releaseCheckItems.length > 0 ? (
                 <div className="lottery-release-check-list">
@@ -1643,7 +1645,7 @@ const LotteryWorkbenchPage = () => {
                       type="button"
                       onClick={() => item.path && navigate(item.path)}
                     >
-                      <Tag color={releaseStatusColor(item.status)}>{item.status || 'UNKNOWN'}</Tag>
+                      <Tag color={releaseStatusColor(item.status)}>{lotteryStatusLabel(item.status)}</Tag>
                       <span>
                         <strong>{item.label || item.key}</strong>
                         <small>{item.message || '-'}</small>

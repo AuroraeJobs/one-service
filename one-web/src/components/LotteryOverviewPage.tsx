@@ -16,17 +16,23 @@ import { buildLotteryStats, getRecentDraws, type LotteryDraw } from '../utils/lo
 import './LotteryOverviewPage.css';
 
 const YEARLY_PIE_COLORS = [
-  '#ff4d4f',
-  '#1677ff',
-  '#52c41a',
-  '#faad14',
-  '#722ed1',
-  '#13c2c2',
-  '#eb2f96',
-  '#2f54eb',
-  '#a0d911',
-  '#fa8c16'
+  '#2f6f88',
+  '#4f8fa8',
+  '#72a9bd',
+  '#95becd',
+  '#b8d3dc',
+  '#d3e3e8',
+  '#8aa3a9',
+  '#6f8f96'
 ];
+
+const getThemeValue = (name: string, fallback: string) => {
+  if (typeof window === 'undefined') {
+    return fallback;
+  }
+  const value = window.getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
+};
 
 const createYearlyPieOption = (yearlyCounts: RecordYearCount[]): EChartsOption => ({
   backgroundColor: 'transparent',
@@ -44,16 +50,38 @@ const createYearlyPieOption = (yearlyCounts: RecordYearCount[]): EChartsOption =
       type: 'pie',
       radius: ['58%', '78%'],
       center: ['50%', '50%'],
+      selectedMode: false,
+      selectedOffset: 0,
       avoidLabelOverlap: true,
       padAngle: 1,
-      itemStyle: { borderWidth: 0 },
-      label: { show: false },
-      labelLine: { show: false },
+      minShowLabelAngle: 8,
+      itemStyle: {
+        borderWidth: 2,
+        borderColor: getThemeValue('--app-bg', 'rgba(255, 255, 255, 0.72)')
+      },
+      label: {
+        show: true,
+        formatter: params => {
+          const item = params as { name: string; value: number };
+          return `${item.name}\n${item.value}`;
+        },
+        color: getThemeValue('--app-text-muted', '#6b7280'),
+        fontSize: 11,
+        lineHeight: 15
+      },
+      labelLine: {
+        show: true,
+        length: 10,
+        length2: 8,
+        lineStyle: {
+          color: 'rgba(120, 136, 148, 0.62)'
+        }
+      },
       emphasis: {
-        scaleSize: 6,
+        disabled: true,
+        scale: false,
         itemStyle: {
-          shadowBlur: 16,
-          shadowColor: 'rgba(0, 0, 0, 0.2)'
+          shadowBlur: 0
         }
       },
       data: yearlyCounts.map(item => ({
@@ -222,7 +250,7 @@ const LotteryOverviewPage = () => {
                   : '统计服务暂不可用，当前使用本地开奖记录计算'
           }
           action={
-            <Space>
+            <Space className="lottery-overview-alert-actions" wrap>
               {statisticsStale && (
                 <Button size="small" loading={statisticsRefreshing} onClick={handleRefreshStatistics}>
                   重算
@@ -278,22 +306,20 @@ const LotteryOverviewPage = () => {
               <h2>年度记录占比</h2>
               <p>按开奖年份拆分历史样本。</p>
             </div>
-            <Space wrap>
-              <Tag icon={<PieChartOutlined />} color={yearlyCounts.length ? 'processing' : 'default'}>
-                {totalYearlyRecords ? `${totalYearlyRecords} 条` : '暂无统计'}
-              </Tag>
+            <div className="lottery-yearly-actions">
               <Button
                 size="small"
                 icon={<ReloadOutlined />}
                 loading={yearlyCountsRefreshing}
                 onClick={handleRefreshYearlyCounts}
               >
-                手动统计
+                统计
               </Button>
-              <Button size="small" icon={<BarChartOutlined />} onClick={() => navigate('/lottery/statistics?tab=distribution')}>
-                分布
-              </Button>
-            </Space>
+              <span>
+                {statisticsGeneratedAt ? `统计生成 ${statisticsGeneratedAt}` : '本地临时统计'}
+                {statisticsStale ? ' · 待重算' : ''}
+              </span>
+            </div>
           </div>
           <Spin spinning={yearlyCountsLoading || yearlyCountsRefreshing || statisticsLoading}>
             {yearlyCounts.length > 0 ? (
@@ -317,12 +343,6 @@ const LotteryOverviewPage = () => {
 
       {stats.draws.length > 0 && (
         <>
-          <div className="lottery-statistics-cache-row">
-            <Tag color={statisticsSummary ? 'processing' : 'default'}>
-              {statisticsGeneratedAt ? `统计生成 ${statisticsGeneratedAt}` : '本地临时统计'}
-            </Tag>
-            {statisticsStale && <Tag color="warning">待重算</Tag>}
-          </div>
           <LotteryFrequencyCharts
             redFrequency={redFrequency}
             blueFrequency={blueFrequency}

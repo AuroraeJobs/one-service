@@ -36,6 +36,7 @@ import {
   type LotteryTicketSummary,
   type LotteryWorkbenchSummary
 } from '../services/api';
+import { lotteryMessageLabel, lotteryStatusLabel } from '../utils/lotteryStatusLabel';
 import './LotteryOverviewPage.css';
 
 interface MonthEndMetric {
@@ -192,7 +193,7 @@ const LotteryMonthEndReviewPage = () => {
       icon: <TrophyOutlined />,
       label: '运营健康',
       value: health?.score ?? 0,
-      detail: health?.message || '等待健康评分',
+      detail: lotteryMessageLabel(health?.message, '等待健康评分'),
       path: '/lottery/workbench',
       status: health?.status
     },
@@ -251,7 +252,7 @@ const LotteryMonthEndReviewPage = () => {
               <em>{item.label}</em>
               <strong>{item.value}</strong>
               <small>{item.detail}</small>
-              <Tag color={statusColor(item.status)}>{item.status || 'UNKNOWN'}</Tag>
+              <Tag color={statusColor(item.status)}>{lotteryStatusLabel(item.status)}</Tag>
             </button>
           ))}
         </section>
@@ -277,7 +278,7 @@ const LotteryMonthEndReviewPage = () => {
           <Card className="life-panel-card lottery-clean-panel" title="行动与发布检查">
             <div className="lottery-month-end-list">
               <button type="button" onClick={() => navigate('/lottery/workbench')}>
-                <Tag color={statusColor(workbench?.operationSummary?.status)}>{workbench?.operationSummary?.status || 'UNKNOWN'}</Tag>
+                <Tag color={statusColor(workbench?.operationSummary?.status)}>{lotteryStatusLabel(workbench?.operationSummary?.status)}</Tag>
                 <span>{workbench?.operationSummary?.message || '暂无日常摘要'}</span>
                 <strong>{workbench?.operationSummary?.completedCount || 0}/{workbench?.operationSummary?.totalCount || 0}</strong>
                 <small>日常完成度</small>
@@ -289,7 +290,7 @@ const LotteryMonthEndReviewPage = () => {
                 <small>行动提醒</small>
               </button>
               <button type="button" onClick={() => navigate('/lottery/exports')}>
-                <Tag color={statusColor(workbench?.releaseCheckSummary?.status)}>{workbench?.releaseCheckSummary?.status || 'UNKNOWN'}</Tag>
+                <Tag color={statusColor(workbench?.releaseCheckSummary?.status)}>{lotteryStatusLabel(workbench?.releaseCheckSummary?.status)}</Tag>
                 <span>{workbench?.releaseCheckSummary?.message || '暂无发布检查'}</span>
                 <strong>{workbench?.releaseCheckSummary?.passedCount || 0}/{workbench?.releaseCheckSummary?.totalCount || 0}</strong>
                 <small>发布检查</small>
@@ -312,7 +313,7 @@ const LotteryMonthEndReviewPage = () => {
                 ))}
                 {(notes?.items || []).slice(0, 3).map(item => (
                   <button key={item.id || item.title} type="button" onClick={() => navigate('/lottery/research/notebook')}>
-                    <Tag color="blue">{item.status || 'NOTE'}</Tag>
+                    <Tag color="blue">{lotteryStatusLabel(item.status, 'NOTE')}</Tag>
                     <span>{item.title || '策略笔记'}</span>
                     <strong>{item.evidence?.length || 0}</strong>
                     <small>{item.ruleName || item.targetIssue || '待补充假设'}</small>
@@ -328,7 +329,7 @@ const LotteryMonthEndReviewPage = () => {
             <div className="lottery-month-end-list">
               {releaseChecks.slice(0, 5).map(item => (
                 <button key={item.key || item.label} type="button" onClick={() => item.path && navigate(item.path)}>
-                  <Tag color={statusColor(item.status)}>{item.status || 'UNKNOWN'}</Tag>
+                  <Tag color={statusColor(item.status)}>{lotteryStatusLabel(item.status)}</Tag>
                   <span>{item.label || item.key}</span>
                   <strong>{item.pendingCount || 0}</strong>
                   <small>{item.message || '-'}</small>

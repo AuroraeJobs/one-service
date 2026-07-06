@@ -21,6 +21,7 @@ import {
   type LotteryStrategyPortfolioEvidenceLink,
   type LotteryStrategyPortfolioSummary
 } from '../services/api';
+import { lotteryStatusLabel } from '../utils/lotteryStatusLabel';
 import './LotteryOverviewPage.css';
 
 type SortKey = 'health' | 'roi' | 'coverage' | 'warnings' | 'updated';
@@ -240,7 +241,7 @@ const LotteryStrategyPortfolioPage = () => {
                         <strong>{portfolio?.name || '策略组合'}</strong>
                         <span>{portfolio?.description || `权重 ${item.allocationWeight ?? portfolio?.allocationWeight ?? 1}`}</span>
                       </div>
-                      <Tag color={statusColor(item.healthStatus)}>{item.healthStatus || 'UNKNOWN'}</Tag>
+                      <Tag color={statusColor(item.healthStatus)}>{lotteryStatusLabel(item.healthStatus)}</Tag>
                     </div>
                     <div className="lottery-portfolio-score-row">
                       <button type="button" onClick={() => portfolio?.id && navigate(`/lottery/strategy-portfolios?id=${portfolio.id}`)}>

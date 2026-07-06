@@ -20,6 +20,7 @@ import {
   type LotteryStrategyPortfolioSummary,
   type LotteryTicket
 } from '../services/api';
+import { lotteryCodeLabel, lotteryStatusLabel } from '../utils/lotteryStatusLabel';
 import './LotteryOverviewPage.css';
 
 const defaultTicketText = '01 06 11 18 25 31 + 09\n03 08 14 19 26 32 + 12';
@@ -206,7 +207,7 @@ const LotterySimulatorPage = () => {
               <article><strong>{formatMoney(result.proposedCost)}</strong><span>模拟成本</span></article>
               <article><strong>{formatPercent(result.roiReference)}</strong><span>ROI 参考</span></article>
               <article><strong>{result.replayWindow || '-'}</strong><span>回放窗口</span></article>
-              <article><Tag color={riskColor(result.riskLevel)}>{result.riskLevel || 'UNKNOWN'}</Tag><span>风险级别</span></article>
+              <article><Tag color={riskColor(result.riskLevel)}>{lotteryStatusLabel(result.riskLevel)}</Tag><span>风险级别</span></article>
             </section>
 
             {result.warnings?.length ? (
@@ -254,7 +255,7 @@ const LotterySimulatorPage = () => {
                       <LotteryBalls redNumbers={candidate.redNumbers || []} blueNumber={candidate.blueNumber || ''} />
                     </div>
                     <Space wrap>
-                      <Tag>{candidate.source || 'SIMULATION'}</Tag>
+                      <Tag>{lotteryCodeLabel(candidate.source, 'SIMULATION')}</Tag>
                       <Tag color="blue">{formatMoney(candidate.cost)}</Tag>
                       {candidate.warning ? <Tag color="red">{candidate.warning}</Tag> : null}
                     </Space>

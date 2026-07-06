@@ -16,6 +16,7 @@ import {
   type LotteryStrategyNote,
   type LotteryStrategyNoteEvidence
 } from '../services/api';
+import { lotteryStatusLabel } from '../utils/lotteryStatusLabel';
 import './LotteryOverviewPage.css';
 
 const statusOptions = [
@@ -220,7 +221,7 @@ const LotteryResearchNotebookPage = () => {
               <article key={note.id || note.title} className="lottery-notebook-card">
                 <div className="lottery-notebook-card-head">
                   <div>
-                    <Tag color={note.status === 'ACTIVE' ? 'blue' : note.status === 'VALIDATED' ? 'green' : 'default'}>{note.status || 'DRAFT'}</Tag>
+                    <Tag color={note.status === 'ACTIVE' ? 'blue' : note.status === 'VALIDATED' ? 'green' : 'default'}>{lotteryStatusLabel(note.status, 'DRAFT')}</Tag>
                     <strong>{note.title || '策略笔记'}</strong>
                     <span>{note.ruleName || '未绑定规则'} · 第 {note.targetIssue || '-'} 期 · {formatTime(note.updatedAt || note.createdAt)}</span>
                   </div>
