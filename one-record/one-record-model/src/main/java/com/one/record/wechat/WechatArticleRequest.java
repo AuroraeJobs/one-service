@@ -15,6 +15,8 @@ public class WechatArticleRequest {
 
     private String thumbMediaId;
 
+    private String coverPath;
+
     private String contentSourceUrl;
 
     private Integer needOpenComment;

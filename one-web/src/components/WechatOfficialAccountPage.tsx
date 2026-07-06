@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button, Input, Space, Switch, Tag, message } from 'antd';
-import { CloudUploadOutlined, EyeOutlined, ReloadOutlined, SendOutlined } from '@ant-design/icons';
+import { CloudUploadOutlined, EyeOutlined, FileSearchOutlined, ReloadOutlined, SendOutlined } from '@ant-design/icons';
 import LifePageShell from './LifePageShell';
 import {
   wechatOfficialAccountApi,
+  type WechatArticleRequest,
   type WechatRenderedArticle,
   type WechatTokenStatus
 } from '../services/api';
@@ -32,6 +33,8 @@ show_cover_pic: 0
 
 const WechatOfficialAccountPage = () => {
   const [markdown, setMarkdown] = useState(defaultMarkdown);
+  const [postPath, setPostPath] = useState('');
+  const [coverPath, setCoverPath] = useState('');
   const [mediaId, setMediaId] = useState('');
   const [uploadImages, setUploadImages] = useState(true);
   const [publishAfterDraft, setPublishAfterDraft] = useState(false);
@@ -58,10 +61,25 @@ const WechatOfficialAccountPage = () => {
     loadTokenStatus();
   }, []);
 
+  const buildArticleRequest = (forDraft = false): WechatArticleRequest => {
+    const normalizedPostPath = postPath.trim();
+    const normalizedCoverPath = coverPath.trim();
+    const request: WechatArticleRequest = {
+      markdown: normalizedPostPath ? undefined : markdown,
+      postPath: normalizedPostPath || undefined,
+      uploadImages: forDraft ? uploadImages : false,
+      publishAfterDraft: forDraft ? publishAfterDraft : false
+    };
+    if (normalizedCoverPath) {
+      request.coverPath = normalizedCoverPath;
+    }
+    return request;
+  };
+
   const renderArticle = async () => {
     setLoading(true);
     try {
-      const result = await wechatOfficialAccountApi.render({ markdown, uploadImages: false });
+      const result = await wechatOfficialAccountApi.render(buildArticleRequest(false));
       setArticle(result);
       message.success('已渲染');
     } catch (error) {
@@ -74,11 +92,7 @@ const WechatOfficialAccountPage = () => {
   const createDraft = async () => {
     setLoading(true);
     try {
-      const result = await wechatOfficialAccountApi.createDraft({
-        markdown,
-        uploadImages,
-        publishAfterDraft
-      });
+      const result = await wechatOfficialAccountApi.createDraft(buildArticleRequest(true));
       setArticle(result.article);
       setMediaId(result.mediaId || '');
       message.success(result.publishSubmitted ? '已提交发布' : '草稿已创建');
@@ -152,6 +166,20 @@ const WechatOfficialAccountPage = () => {
             autoSize={false}
             className="wechat-official-account-editor"
           />
+          <div className="wechat-official-account-script-panel">
+            <Input
+              value={postPath}
+              onChange={(event) => setPostPath(event.target.value)}
+              prefix={<FileSearchOutlined />}
+              placeholder="文章路径，例如 /path/to/oneai-daily-wechat/content/daily/2026-07-06-daily-briefing.md"
+            />
+            <Input
+              value={coverPath}
+              onChange={(event) => setCoverPath(event.target.value)}
+              prefix={<CloudUploadOutlined />}
+              placeholder="封面图片路径，例如 /path/to/oneai-daily-wechat/assets/brand/oneai-daily-cover.png"
+            />
+          </div>
           <div className="wechat-official-account-toolbar">
             <Space>
               <Button type="primary" icon={<EyeOutlined />} onClick={renderArticle} loading={loading}>

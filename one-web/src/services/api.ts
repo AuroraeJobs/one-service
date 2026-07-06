@@ -1073,6 +1073,7 @@ export interface WechatArticleRequest {
   title?: string;
   author?: string;
   thumbMediaId?: string;
+  coverPath?: string;
   contentSourceUrl?: string;
   needOpenComment?: number;
   onlyFansCanComment?: number;

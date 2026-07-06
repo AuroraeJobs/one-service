@@ -82,6 +82,10 @@ public class WechatOfficialAccountService implements IWechatOfficialAccountServi
         ArticleSource source = articleSource(request);
         List<Path> tempFiles = new ArrayList<>();
         try {
+            String uploadedThumbMediaId = uploadCoverMaterialIfNeeded(accessToken, request, source, tempFiles);
+            if (hasText(uploadedThumbMediaId)) {
+                request.setThumbMediaId(uploadedThumbMediaId);
+            }
             WechatRenderedArticle article = renderArticle(request, source, src -> uploadArticleImage(accessToken, source, src, tempFiles));
             String mediaId = addDraft(accessToken, article);
             Map<String, Object> publishResponse = null;
@@ -230,6 +234,55 @@ public class WechatOfficialAccountService implements IWechatOfficialAccountServi
         return payload;
     }
 
+    private String uploadCoverMaterialIfNeeded(String accessToken, WechatArticleRequest request, ArticleSource source, List<Path> tempFiles) {
+        String existingThumbMediaId = firstText(
+                request == null ? null : request.getThumbMediaId(),
+                source.getMeta().get("cover_media_id"),
+                source.getMeta().get("thumb_media_id"),
+                properties.getThumbMediaId()
+        );
+        String coverRef = firstText(
+                request == null ? null : request.getCoverPath(),
+                source.getMeta().get("cover")
+        );
+        if (!hasText(coverRef)) {
+            return "";
+        }
+        if (hasText(existingThumbMediaId) && !hasText(request == null ? null : request.getCoverPath())) {
+            return "";
+        }
+        Path coverPath = resolveLocalPath(source, coverRef, "微信公众号封面图片不存在");
+        Path uploadPath = prepareUploadImage(coverPath, tempFiles);
+        String url = UriComponentsBuilder.fromUriString(apiBaseUrl() + "/cgi-bin/material/add_material")
+                .queryParam("access_token", accessToken)
+                .queryParam("type", "image")
+                .build()
+                .encode()
+                .toUriString();
+        MultiValueMap<String, Object> form = new LinkedMultiValueMap<>();
+        form.add("media", new FileSystemResource(uploadPath));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        try {
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.POST,
+                    new HttpEntity<>(form, headers),
+                    new ParameterizedTypeReference<Map<String, Object>>() {
+                    }
+            );
+            Map<String, Object> body = checkedWechatBody(response.getBody(), "微信公众号封面素材上传失败");
+            Object mediaId = body.get("media_id");
+            if (!(mediaId instanceof String value) || !hasText(value)) {
+                throw new ServiceException("微信公众号封面素材上传响应缺少 media_id: {}", body);
+            }
+            return value;
+        } catch (HttpStatusCodeException e) {
+            throw wechatHttpException("微信公众号封面素材上传失败", "/cgi-bin/material/add_material", e);
+        }
+    }
+
     private Map<String, Object> batchGet(String path, WechatArticleListRequest request) {
         WechatArticleListRequest normalized = normalizeListRequest(request);
         Map<String, Object> body = new HashMap<>();
@@ -254,18 +307,7 @@ public class WechatOfficialAccountService implements IWechatOfficialAccountServi
             return src;
         }
 
-        Path imagePath = Path.of(uri.getPath());
-        if (!imagePath.isAbsolute()) {
-            Path baseDir = source.getBaseDir();
-            if (baseDir == null) {
-                throw new ServiceException("Markdown 正文图片使用相对路径时必须提供 postPath: {}", src);
-            }
-            imagePath = baseDir.resolve(imagePath);
-        }
-        imagePath = imagePath.normalize().toAbsolutePath();
-        if (!Files.exists(imagePath)) {
-            throw new ServiceException("微信公众号正文图片不存在: {}", imagePath);
-        }
+        Path imagePath = resolveLocalPath(source, uri.getPath(), "微信公众号正文图片不存在");
 
         Path uploadPath = prepareUploadImage(imagePath, tempFiles);
         String url = UriComponentsBuilder.fromUriString(apiBaseUrl() + "/cgi-bin/media/uploadimg")
@@ -318,6 +360,22 @@ public class WechatOfficialAccountService implements IWechatOfficialAccountServi
             }
         }
         throw new ServiceException("微信公众号正文图片仅支持 png/jpg/jpeg/svg: {}", imagePath);
+    }
+
+    private Path resolveLocalPath(ArticleSource source, String pathRef, String missingMessage) {
+        Path path = Path.of(pathRef);
+        if (!path.isAbsolute()) {
+            Path baseDir = source.getBaseDir();
+            if (baseDir == null) {
+                throw new ServiceException("Markdown 图片使用相对路径时必须提供 postPath: {}", pathRef);
+            }
+            path = baseDir.resolve(path);
+        }
+        path = path.normalize().toAbsolutePath();
+        if (!Files.exists(path)) {
+            throw new ServiceException("{}: {}", missingMessage, path);
+        }
+        return path;
     }
 
     private Map<String, Object> wechatRequest(HttpMethod method, String path, Map<String, String> params, Object body) {
