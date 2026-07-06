@@ -1,6 +1,8 @@
 const state = {
   rows: [],
   meta: undefined,
+  runs: [],
+  selectedRun: '',
   source: '未加载',
 };
 
@@ -16,6 +18,7 @@ const ids = {
   metaList: document.getElementById('metaList'),
   logRows: document.getElementById('logRows'),
   canvas: document.getElementById('lossChart'),
+  runSelect: document.getElementById('runSelect'),
   reloadButton: document.getElementById('reloadButton'),
   csvInput: document.getElementById('csvInput'),
 };
@@ -81,6 +84,26 @@ const loadJson = async (path) => {
 
 const formatNumber = (value) => Number.isFinite(value) ? value.toFixed(4) : '-';
 
+const renderRunOptions = () => {
+  if (!state.runs.length) {
+    ids.runSelect.innerHTML = '<option value="">最近一次训练</option>';
+    ids.runSelect.disabled = true;
+    return;
+  }
+  ids.runSelect.disabled = false;
+  ids.runSelect.innerHTML = state.runs
+    .map((run) => {
+      const label = [
+        run.run_name,
+        run.preset ? `preset=${run.preset}` : '',
+        run.final_eval_loss !== undefined ? `eval=${formatNumber(run.final_eval_loss)}` : '',
+      ].filter(Boolean).join(' · ');
+      return `<option value="${run.run_name}">${label}</option>`;
+    })
+    .join('');
+  ids.runSelect.value = state.selectedRun || state.runs[0]?.run_name || '';
+};
+
 const updateStats = () => {
   const first = state.rows[0];
   const latest = state.rows[state.rows.length - 1];
@@ -115,6 +138,8 @@ const updateMeta = () => {
   }
   const config = state.meta.config || {};
   const entries = [
+    ['run_name', state.meta.run_name],
+    ['preset', state.meta.preset],
     ['设备', state.meta.device],
     ['数据', state.meta.data],
     ['checkpoint', state.meta.checkpoint],
@@ -128,6 +153,9 @@ const updateMeta = () => {
     ['eval_tokens', state.meta.eval_tokens],
     ['sample_prompt', state.meta.sample_prompt],
     ['sample_tokens', state.meta.sample_tokens],
+    ['final_train_loss', state.meta.final_train_loss],
+    ['final_eval_loss', state.meta.final_eval_loss],
+    ['loss_gap', state.meta.loss_gap],
     ['block_size', config.block_size],
     ['n_layer', config.n_layer],
     ['n_head', config.n_head],
@@ -231,18 +259,33 @@ const drawChart = () => {
 };
 
 const render = () => {
+  renderRunOptions();
   updateStats();
   updateMeta();
   updateTable();
   drawChart();
 };
 
-const loadLatest = async () => {
+const loadRunIndex = async () => {
   try {
-    state.meta = await loadJson('../runs/latest.json');
+    const runs = await loadJson('../runs/index.json');
+    state.runs = Array.isArray(runs) ? runs : [];
+  } catch (error) {
+    state.runs = [];
+  }
+};
+
+const loadTrainingRun = async (runName = '') => {
+  try {
+    await loadRunIndex();
+    state.selectedRun = runName || state.selectedRun || state.runs[0]?.run_name || '';
+    const selected = state.runs.find((run) => run.run_name === state.selectedRun);
+    const metadataPath = selected?.metadata_file ? `../${selected.metadata_file}` : '../runs/latest.json';
+    state.meta = await loadJson(metadataPath);
     const csvPath = `../${state.meta.log_file || 'runs/train_log.csv'}`;
     state.rows = parseCsv(await loadText(csvPath));
     state.source = state.meta.log_file || 'runs/train_log.csv';
+    state.selectedRun = state.meta.run_name || state.selectedRun;
   } catch (error) {
     state.meta = undefined;
     state.rows = [];
@@ -251,13 +294,16 @@ const loadLatest = async () => {
   render();
 };
 
-ids.reloadButton.addEventListener('click', loadLatest);
+ids.reloadButton.addEventListener('click', () => loadTrainingRun(state.selectedRun));
+ids.runSelect.addEventListener('change', () => loadTrainingRun(ids.runSelect.value));
 ids.csvInput.addEventListener('change', async (event) => {
   const file = event.target.files?.[0];
   if (!file) return;
   state.rows = parseCsv(await file.text());
+  state.meta = undefined;
+  state.selectedRun = '';
   state.source = file.name;
   render();
 });
 
-loadLatest();
+loadTrainingRun();

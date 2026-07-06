@@ -28,11 +28,27 @@ pip install --force-reinstall "numpy<2"
 python mini_gpt.py --mode train --data data/sample.txt --max-steps 300
 ```
 
+也可以用训练预设快速做对比实验：
+
+```bash
+python mini_gpt.py --mode train --preset tiny --run-name tiny-baseline
+python mini_gpt.py --mode train --preset small --run-name small-baseline
+python mini_gpt.py --mode train --preset medium --run-name medium-baseline
+```
+
+预设会设置 `block_size`、`batch_size`、层数和 embedding 维度；命令行里显式传入的参数仍会覆盖预设，例如：
+
+```bash
+python mini_gpt.py --mode train --preset tiny --run-name tiny-smoke --max-steps 10
+```
+
 训练会生成：
 
 ```text
-checkpoints/mini_gpt.pt
-runs/train_log.csv
+runs/<run-name>/checkpoints/mini_gpt.pt
+runs/<run-name>/train_log.csv
+runs/<run-name>/latest.json
+runs/index.json
 runs/latest.json
 ```
 
@@ -50,7 +66,7 @@ python -m http.server 8000
 http://localhost:8000/web/
 ```
 
-页面会自动读取 `runs/latest.json` 和 `runs/train_log.csv`，展示训练配置、loss 曲线和日志表。如果浏览器没有自动读取，点击页面右上角的 `选择 CSV`，手动选择 `runs/train_log.csv`。
+页面会自动读取 `runs/index.json`，可以在右上角选择历史训练实验，展示对应配置、loss 曲线、生成样例和日志表。如果浏览器没有自动读取，点击页面右上角的 `选择 CSV`，手动选择某个 `runs/<run-name>/train_log.csv`。
 
 默认会把语料最后 10% 留作验证集：
 

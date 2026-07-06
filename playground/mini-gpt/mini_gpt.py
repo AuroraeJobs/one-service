@@ -18,6 +18,52 @@ from torch import nn
 import torch.nn.functional as F
 
 
+TRAIN_DEFAULTS = {
+    "max_steps": 300,
+    "batch_size": 16,
+    "block_size": 64,
+    "n_embd": 128,
+    "n_head": 4,
+    "n_layer": 4,
+    "dropout": 0.1,
+    "learning_rate": 3e-4,
+    "val_ratio": 0.1,
+    "log_every": 50,
+    "sample_tokens": 80,
+}
+
+PRESETS = {
+    "custom": {},
+    "tiny": {
+        "max_steps": 120,
+        "batch_size": 4,
+        "block_size": 32,
+        "n_embd": 32,
+        "n_head": 4,
+        "n_layer": 1,
+        "log_every": 20,
+    },
+    "small": {
+        "max_steps": 300,
+        "batch_size": 8,
+        "block_size": 48,
+        "n_embd": 64,
+        "n_head": 4,
+        "n_layer": 2,
+        "log_every": 50,
+    },
+    "medium": {
+        "max_steps": 600,
+        "batch_size": 12,
+        "block_size": 64,
+        "n_embd": 128,
+        "n_head": 4,
+        "n_layer": 4,
+        "log_every": 60,
+    },
+}
+
+
 @dataclass
 class ModelConfig:
     block_size: int = 64
@@ -211,7 +257,35 @@ def sample_text(
     return tokenizer.decode(output[0].tolist())
 
 
+def apply_training_defaults(args: argparse.Namespace) -> None:
+    preset = PRESETS[args.preset]
+    for key, default_value in TRAIN_DEFAULTS.items():
+        value = getattr(args, key)
+        if value is None:
+            setattr(args, key, preset.get(key, default_value))
+
+
+def safe_run_name(value: str) -> str:
+    cleaned = "".join(ch if ch.isalnum() or ch in {"-", "_"} else "-" for ch in value.strip())
+    return cleaned.strip("-_") or "run"
+
+
+def append_run_index(runs_dir: Path, entry: dict[str, object]) -> None:
+    index_path = runs_dir / "index.json"
+    if index_path.exists():
+        try:
+            entries = json.loads(index_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            entries = []
+    else:
+        entries = []
+    entries = [item for item in entries if item.get("run_name") != entry["run_name"]]
+    entries.insert(0, entry)
+    index_path.write_text(json.dumps(entries[:50], ensure_ascii=False, indent=2), encoding="utf-8")
+
+
 def train(args: argparse.Namespace) -> None:
+    apply_training_defaults(args)
     started_at = time.strftime("%Y-%m-%d %H:%M:%S")
     text = load_text(Path(args.data))
     tokenizer = CharTokenizer(text)
@@ -230,8 +304,15 @@ def train(args: argparse.Namespace) -> None:
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate)
     runs_dir = Path(args.runs_dir)
     runs_dir.mkdir(parents=True, exist_ok=True)
-    log_path = runs_dir / args.log_file
+    run_name = safe_run_name(args.run_name or f"{time.strftime('%Y%m%d-%H%M%S')}-{args.preset}")
+    run_dir = runs_dir / run_name
+    run_dir.mkdir(parents=True, exist_ok=True)
+    checkpoint_dir = run_dir / "checkpoints"
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    log_path = run_dir / args.log_file
     latest_path = runs_dir / "latest.json"
+    run_latest_path = run_dir / "latest.json"
+    last_log_row = None
 
     fieldnames = ["step", "train_loss", "eval_loss", "elapsed_seconds", "sample"]
     with log_path.open("w", encoding="utf-8", newline="") as log_file:
@@ -258,18 +339,17 @@ def train(args: argparse.Namespace) -> None:
                     args.temperature,
                     args.top_k,
                 )
-                writer.writerow({
+                last_log_row = {
                     "step": step,
                     "train_loss": round(float(loss.item()), 6),
                     "eval_loss": round(eval_loss, 6),
                     "elapsed_seconds": elapsed_seconds,
                     "sample": json.dumps(sample, ensure_ascii=False),
-                })
+                }
+                writer.writerow(last_log_row)
                 log_file.flush()
                 print(f"step={step} train_loss={loss.item():.4f} eval_loss={eval_loss:.4f}")
 
-    checkpoint_dir = Path(args.out_dir)
-    checkpoint_dir.mkdir(parents=True, exist_ok=True)
     checkpoint_path = checkpoint_dir / "mini_gpt.pt"
     torch.save(
         {
@@ -280,12 +360,20 @@ def train(args: argparse.Namespace) -> None:
         checkpoint_path,
     )
     (checkpoint_dir / "config.json").write_text(json.dumps(asdict(config), ensure_ascii=False, indent=2), encoding="utf-8")
-    latest_path.write_text(json.dumps({
+    final_train_loss = last_log_row["train_loss"] if last_log_row else None
+    final_eval_loss = last_log_row["eval_loss"] if last_log_row else None
+    loss_gap = None
+    if final_train_loss is not None and final_eval_loss is not None:
+        loss_gap = round(float(final_eval_loss) - float(final_train_loss), 6)
+    metadata = {
+        "run_name": run_name,
+        "preset": args.preset,
         "started_at": started_at,
         "finished_at": time.strftime("%Y-%m-%d %H:%M:%S"),
         "data": args.data,
         "checkpoint": str(checkpoint_path),
         "log_file": str(log_path),
+        "metadata_file": str(run_latest_path),
         "device": str(device),
         "max_steps": args.max_steps,
         "batch_size": args.batch_size,
@@ -296,8 +384,28 @@ def train(args: argparse.Namespace) -> None:
         "eval_tokens": int(len(eval_data)),
         "sample_prompt": args.sample_prompt,
         "sample_tokens": args.sample_tokens,
+        "final_train_loss": final_train_loss,
+        "final_eval_loss": final_eval_loss,
+        "loss_gap": loss_gap,
         "config": asdict(config),
-    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    }
+    latest_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
+    run_latest_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
+    append_run_index(runs_dir, {
+        "run_name": run_name,
+        "preset": args.preset,
+        "finished_at": metadata["finished_at"],
+        "log_file": metadata["log_file"],
+        "metadata_file": metadata["metadata_file"],
+        "checkpoint": metadata["checkpoint"],
+        "final_train_loss": final_train_loss,
+        "final_eval_loss": final_eval_loss,
+        "loss_gap": loss_gap,
+        "max_steps": args.max_steps,
+        "n_layer": config.n_layer,
+        "n_embd": config.n_embd,
+        "block_size": config.block_size,
+    })
     print(f"saved checkpoint to {checkpoint_path}")
     print(f"saved training log to {log_path}")
 
@@ -326,22 +434,24 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--out-dir", default="checkpoints")
     parser.add_argument("--prompt", default="语言模型")
     parser.add_argument("--max-new-tokens", type=int, default=120)
-    parser.add_argument("--max-steps", type=int, default=300)
-    parser.add_argument("--batch-size", type=int, default=16)
-    parser.add_argument("--block-size", type=int, default=64)
-    parser.add_argument("--n-embd", type=int, default=128)
-    parser.add_argument("--n-head", type=int, default=4)
-    parser.add_argument("--n-layer", type=int, default=4)
-    parser.add_argument("--dropout", type=float, default=0.1)
-    parser.add_argument("--learning-rate", type=float, default=3e-4)
-    parser.add_argument("--val-ratio", type=float, default=0.1)
+    parser.add_argument("--preset", choices=sorted(PRESETS), default="custom")
+    parser.add_argument("--run-name")
+    parser.add_argument("--max-steps", type=int)
+    parser.add_argument("--batch-size", type=int)
+    parser.add_argument("--block-size", type=int)
+    parser.add_argument("--n-embd", type=int)
+    parser.add_argument("--n-head", type=int)
+    parser.add_argument("--n-layer", type=int)
+    parser.add_argument("--dropout", type=float)
+    parser.add_argument("--learning-rate", type=float)
+    parser.add_argument("--val-ratio", type=float)
     parser.add_argument("--temperature", type=float, default=0.9)
     parser.add_argument("--top-k", type=int, default=20)
-    parser.add_argument("--log-every", type=int, default=50)
+    parser.add_argument("--log-every", type=int)
     parser.add_argument("--runs-dir", default="runs")
     parser.add_argument("--log-file", default="train_log.csv")
     parser.add_argument("--sample-prompt", default="语言模型")
-    parser.add_argument("--sample-tokens", type=int, default=80)
+    parser.add_argument("--sample-tokens", type=int)
     return parser
 
 

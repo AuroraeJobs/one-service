@@ -38,6 +38,8 @@
 
 完成标准：能用自己的中文文本训练一个小模型，并让它续写。
 
+已完成工具：`playground/mini-gpt` 支持 tiny/small/medium 训练预设、独立 run 保存、loss/验证集/生成样例记录，以及可选择历史实验的 Web 观察台。
+
 ## 阶段 4：开源模型开发者
 
 - Hugging Face Transformers。

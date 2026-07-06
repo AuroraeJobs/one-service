@@ -75,7 +75,8 @@ dt {
 }
 
 button,
-.file-button {
+.file-button,
+select {
   min-height: 38px;
   display: inline-flex;
   align-items: center;
@@ -91,7 +92,12 @@ button,
   cursor: pointer;
 }
 
-button:first-child {
+select {
+  min-width: 180px;
+  max-width: 260px;
+}
+
+#reloadButton {
   border-color: var(--accent);
   background: var(--accent);
   color: #fff;

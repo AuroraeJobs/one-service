@@ -14,6 +14,9 @@
           <p>观察 loss 是否下降、训练是否稳定、配置是否合理。</p>
         </div>
         <div class="actions">
+          <select id="runSelect" aria-label="选择训练实验">
+            <option value="">最近一次训练</option>
+          </select>
           <button id="reloadButton" type="button">刷新日志</button>
           <label class="file-button">
             选择 CSV
@@ -61,7 +64,7 @@
           <div class="panel-head">
             <div>
               <h2>训练配置</h2>
-              <p>来自 runs/latest.json。</p>
+              <p>来自训练实验的 latest.json。</p>
             </div>
           </div>
           <dl class="meta-list" id="metaList">
