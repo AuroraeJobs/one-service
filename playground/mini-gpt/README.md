@@ -52,6 +52,16 @@ http://localhost:8000/web/
 
 页面会自动读取 `runs/latest.json` 和 `runs/train_log.csv`，展示训练配置、loss 曲线和日志表。如果浏览器没有自动读取，点击页面右上角的 `选择 CSV`，手动选择 `runs/train_log.csv`。
 
+训练日志还会保存每次 log 时的生成样例。可以通过参数调整采样：
+
+```bash
+python mini_gpt.py --mode train \
+  --data data/sample.txt \
+  --max-steps 300 \
+  --sample-prompt "语言模型" \
+  --sample-tokens 80
+```
+
 ## 生成
 
 ```bash

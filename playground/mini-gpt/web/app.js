@@ -10,6 +10,8 @@ const ids = {
   latestEvalLoss: document.getElementById('latestEvalLoss'),
   lossDrop: document.getElementById('lossDrop'),
   sourceLabel: document.getElementById('sourceLabel'),
+  sampleStep: document.getElementById('sampleStep'),
+  sampleText: document.getElementById('sampleText'),
   metaList: document.getElementById('metaList'),
   logRows: document.getElementById('logRows'),
   canvas: document.getElementById('lossChart'),
@@ -17,13 +19,44 @@ const ids = {
   csvInput: document.getElementById('csvInput'),
 };
 
+const parseCsvLine = (line) => {
+  const values = [];
+  let current = '';
+  let quoted = false;
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+    const next = line[index + 1];
+    if (char === '"' && quoted && next === '"') {
+      current += '"';
+      index += 1;
+    } else if (char === '"') {
+      quoted = !quoted;
+    } else if (char === ',' && !quoted) {
+      values.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  values.push(current);
+  return values;
+};
+
 const parseCsv = (text) => {
   const lines = text.trim().split(/\r?\n/).filter(Boolean);
-  const headers = lines.shift()?.split(',') || [];
+  const headers = parseCsvLine(lines.shift() || '');
   return lines.map((line) => {
-    const values = line.split(',');
+    const values = parseCsvLine(line);
     return headers.reduce((row, header, index) => {
-      row[header] = Number(values[index]);
+      if (header === 'sample') {
+        try {
+          row[header] = JSON.parse(values[index] || '""');
+        } catch (error) {
+          row[header] = values[index] || '';
+        }
+      } else {
+        row[header] = Number(values[index]);
+      }
       return row;
     }, {});
   });
@@ -62,6 +95,8 @@ const updateStats = () => {
     ids.lossDrop.style.color = '';
   }
   ids.sourceLabel.textContent = state.source;
+  ids.sampleStep.textContent = latest?.step ? `step ${latest.step}` : 'step -';
+  ids.sampleText.textContent = latest?.sample || '暂无生成样例';
 };
 
 const updateMeta = () => {
@@ -78,6 +113,8 @@ const updateMeta = () => {
     ['结束', state.meta.finished_at],
     ['max_steps', state.meta.max_steps],
     ['batch_size', state.meta.batch_size],
+    ['sample_prompt', state.meta.sample_prompt],
+    ['sample_tokens', state.meta.sample_tokens],
     ['block_size', config.block_size],
     ['n_layer', config.n_layer],
     ['n_head', config.n_head],
@@ -91,7 +128,7 @@ const updateMeta = () => {
 
 const updateTable = () => {
   if (!state.rows.length) {
-    ids.logRows.innerHTML = '<tr><td colspan="4">暂无日志</td></tr>';
+    ids.logRows.innerHTML = '<tr><td colspan="5">暂无日志</td></tr>';
     return;
   }
   ids.logRows.innerHTML = state.rows
@@ -103,6 +140,7 @@ const updateTable = () => {
         <td>${formatNumber(row.train_loss)}</td>
         <td>${formatNumber(row.eval_loss)}</td>
         <td>${row.elapsed_seconds ?? '-'}</td>
+        <td><pre class="table-sample">${row.sample || '-'}</pre></td>
       </tr>
     `)
     .join('');

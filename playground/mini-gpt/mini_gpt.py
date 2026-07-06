@@ -183,6 +183,26 @@ def estimate_loss(model: MiniGPT, data: torch.Tensor, block_size: int, batch_siz
     return sum(losses) / len(losses)
 
 
+@torch.no_grad()
+def sample_text(
+    model: MiniGPT,
+    tokenizer: CharTokenizer,
+    prompt: str,
+    device: torch.device,
+    max_new_tokens: int,
+    temperature: float,
+    top_k: int,
+) -> str:
+    model.eval()
+    prompt_ids = tokenizer.encode(prompt)
+    if not prompt_ids:
+        prompt_ids = [0]
+    idx = torch.tensor([prompt_ids], dtype=torch.long, device=device)
+    output = model.generate(idx, max_new_tokens=max_new_tokens, temperature=temperature, top_k=top_k)
+    model.train()
+    return tokenizer.decode(output[0].tolist())
+
+
 def train(args: argparse.Namespace) -> None:
     started_at = time.strftime("%Y-%m-%d %H:%M:%S")
     text = load_text(Path(args.data))
@@ -204,8 +224,9 @@ def train(args: argparse.Namespace) -> None:
     log_path = runs_dir / args.log_file
     latest_path = runs_dir / "latest.json"
 
+    fieldnames = ["step", "train_loss", "eval_loss", "elapsed_seconds", "sample"]
     with log_path.open("w", encoding="utf-8", newline="") as log_file:
-        writer = csv.DictWriter(log_file, fieldnames=["step", "train_loss", "eval_loss", "elapsed_seconds"])
+        writer = csv.DictWriter(log_file, fieldnames=fieldnames)
         writer.writeheader()
 
         train_started = time.time()
@@ -219,11 +240,21 @@ def train(args: argparse.Namespace) -> None:
             if step == 1 or step % args.log_every == 0 or step == args.max_steps:
                 eval_loss = estimate_loss(model, encoded, config.block_size, args.batch_size, device)
                 elapsed_seconds = round(time.time() - train_started, 2)
+                sample = sample_text(
+                    model,
+                    tokenizer,
+                    args.sample_prompt,
+                    device,
+                    args.sample_tokens,
+                    args.temperature,
+                    args.top_k,
+                )
                 writer.writerow({
                     "step": step,
                     "train_loss": round(float(loss.item()), 6),
                     "eval_loss": round(eval_loss, 6),
                     "elapsed_seconds": elapsed_seconds,
+                    "sample": json.dumps(sample, ensure_ascii=False),
                 })
                 log_file.flush()
                 print(f"step={step} train_loss={loss.item():.4f} eval_loss={eval_loss:.4f}")
@@ -250,6 +281,8 @@ def train(args: argparse.Namespace) -> None:
         "max_steps": args.max_steps,
         "batch_size": args.batch_size,
         "learning_rate": args.learning_rate,
+        "sample_prompt": args.sample_prompt,
+        "sample_tokens": args.sample_tokens,
         "config": asdict(config),
     }, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"saved checkpoint to {checkpoint_path}")
@@ -293,6 +326,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--log-every", type=int, default=50)
     parser.add_argument("--runs-dir", default="runs")
     parser.add_argument("--log-file", default="train_log.csv")
+    parser.add_argument("--sample-prompt", default="语言模型")
+    parser.add_argument("--sample-tokens", type=int, default=80)
     return parser
 
 

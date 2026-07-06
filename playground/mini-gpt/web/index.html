@@ -66,6 +66,17 @@
         </aside>
       </section>
 
+      <section class="panel sample-panel">
+        <div class="panel-head">
+          <div>
+            <h2>最新生成样例</h2>
+            <p>训练时按固定 prompt 采样，观察文字是否逐渐从随机变成像语料。</p>
+          </div>
+          <span id="sampleStep">step -</span>
+        </div>
+        <pre id="sampleText">暂无生成样例</pre>
+      </section>
+
       <section class="panel">
         <div class="panel-head">
           <div>
@@ -81,10 +92,11 @@
                 <th>train_loss</th>
                 <th>eval_loss</th>
                 <th>elapsed_seconds</th>
+                <th>sample</th>
               </tr>
             </thead>
             <tbody id="logRows">
-              <tr><td colspan="4">暂无日志</td></tr>
+              <tr><td colspan="5">暂无日志</td></tr>
             </tbody>
           </table>
         </div>
