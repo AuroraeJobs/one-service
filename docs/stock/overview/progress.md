@@ -1,6 +1,6 @@
 # Stock Module Progress
 
-Last updated: 2026-07-03
+Last updated: 2026-07-06
 
 ## How To Resume
 
@@ -37,7 +37,7 @@ docs/stock/modules/technical-design.md
 Menu and version planning file:
 
 ```text
-docs/stock/menu-and-version-plan.md
+docs/stock/overview/menu-and-version-plan.md
 ```
 
 When key logic, provider behavior, storage responsibilities, calculation rules, or architecture decisions change, update the technical design document in the same milestone.

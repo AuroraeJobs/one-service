@@ -43,7 +43,7 @@ The module should eventually become a personal investment cockpit inside the lif
 Menu-driven planning is maintained in:
 
 ```text
-docs/stock/menu-and-version-plan.md
+docs/stock/overview/menu-and-version-plan.md
 ```
 
 ## Non-Negotiable Architecture Principle

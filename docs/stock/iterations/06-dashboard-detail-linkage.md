@@ -120,7 +120,7 @@ Backend:
 Documentation:
 
 - Update `docs/stock/iterations/checklist.md`.
-- Update `docs/stock/menu-and-version-plan.md`.
+- Update `docs/stock/overview/menu-and-version-plan.md`.
 - Update `docs/stock/modules/technical-design.md` if route contracts, key logic, or API usage changes.
 
 ## Checklist

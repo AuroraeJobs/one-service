@@ -1,9 +1,10 @@
 # Stock Documentation Index
 
-Last updated: 2026-07-03
+Last updated: 2026-07-06
 
-This folder is the durable memory for the stock module. It is organized in two directions:
+This folder is the durable memory for the stock module. All stock documentation lives under this directory and is organized in three directions:
 
+- `overview/`: current progress, menu plan, and handoff notes.
 - `iterations/`: what was planned and delivered by iteration.
 - `modules/`: feature-module design, data ownership, and key logic.
 
@@ -26,9 +27,13 @@ java -version
 mvn -version
 ```
 
+## Overview Docs
+
+- [Progress and handoff](overview/progress.md): current state and next-task guidance.
+- [Menu and version plan](overview/menu-and-version-plan.md): target stock menus and version plan by menu.
+
 ## Iteration Docs
 
-- [Menu and version plan](menu-and-version-plan.md): target stock menus and version plan by menu.
 - [Roadmap](iterations/roadmap.md): one-month plan and product direction.
 - [Checklist](iterations/checklist.md): completed and remaining task board.
 - [Baseline real-time quote](iterations/00-baseline-real-time-quote.md)
