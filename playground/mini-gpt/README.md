@@ -10,9 +10,16 @@
 
 ```bash
 cd playground/mini-gpt
-python3 -m venv .venv
+pyenv local 3.12.8
+python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+```
+
+如果你已经装过 NumPy 2.x，PyTorch 2.2.x 可能会报 `modules must be compiled with NumPy 2.0`。直接降级即可：
+
+```bash
+pip install --force-reinstall "numpy<2"
 ```
 
 ## 训练

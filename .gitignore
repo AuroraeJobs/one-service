@@ -9,3 +9,7 @@ taiji
 .env
 dump.rdb
 response.json
+.venv/
+*/.venv/
+checkpoints/
+*/checkpoints/
