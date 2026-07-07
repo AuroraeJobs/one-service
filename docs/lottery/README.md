@@ -61,7 +61,7 @@ run release archive -> review latest report and history index -> attach browser 
 
 For protected browser QA, use [Quality gates](iterations/quality-gates.md). A valid `aurorae_auth` login session and running backend are required before screenshots are meaningful; `ECONNREFUSED` on `/lottery/records/draws?page=0&size=500` is a backend/proxy blocker, not a page-layout failure.
 
-The latest generated frontend release evidence is written to `one-web/reports/lottery-release-evidence.md`. Run `npm run lottery:release-check` from `one-web` before frontend lottery release handoff; use `npm run lottery:release-evidence` only when you need to refresh the report without a production build, and `npm run lottery:release-evidence:check` when you only need to verify freshness. Run `npm run lottery:release-archive` when the passed evidence should be kept as a historical snapshot.
+The latest generated frontend release evidence is written to `one-web/reports/lottery-release-evidence.md`. Historical snapshots are indexed in `one-web/reports/lottery-release-history/README.md`. Run `npm run lottery:release-check` from `one-web` before frontend lottery release handoff; use `npm run lottery:release-evidence` only when you need to refresh the report without a production build, and `npm run lottery:release-evidence:check` when you only need to verify freshness. Run `npm run lottery:release-archive` when the passed evidence should be kept as a historical snapshot.
 
 ## Long Iteration
 

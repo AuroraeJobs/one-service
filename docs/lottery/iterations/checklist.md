@@ -754,10 +754,10 @@ Goal: keep frontend lottery release evidence as durable snapshots instead of onl
 
 ### Wave 26B: Release History Consumption
 
-- [ ] Link the archive index from lottery documentation.
-- [ ] Decide whether `/lottery/exports` should surface local release-history metadata or keep it as docs-only.
-- [ ] Record browser-QA blocker notes next to archived snapshots when screenshots are unavailable.
-- [ ] Run documentation diff check, update checklist, commit, and push.
+- [x] Link the archive index from lottery documentation.
+- [x] Decide whether `/lottery/exports` should surface local release-history metadata or keep it as docs-only. Decision: keep release history docs-only until a backend/export contract is explicitly added for archived local evidence.
+- [x] Record browser-QA blocker notes next to archived snapshots when screenshots are unavailable.
+- [x] Run documentation diff check, update checklist, commit, and push. Verification: `one-web node scripts/lottery-release-evidence.mjs --archive`; `git diff --check`.
 
 ## Documentation And Delivery
 

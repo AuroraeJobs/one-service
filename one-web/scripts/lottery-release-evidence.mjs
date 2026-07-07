@@ -67,6 +67,12 @@ npm run lottery:release-archive
 \`\`\`
 
 Run this after a release-check pass when the evidence should be kept as a durable handoff snapshot.
+
+## Browser QA Notes
+
+- Latest snapshot includes the protected-browser QA prerequisites and known backend/proxy blocker signature.
+- Keep release history docs-only for now; local Markdown snapshots are not surfaced through \`/lottery/exports\`.
+- When screenshots are unavailable, record the remaining blocker in the final handoff next to this archive path.
 `;
 
 const renderMarkdown = (summary, fixture) => {

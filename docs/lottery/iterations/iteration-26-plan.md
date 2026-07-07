@@ -40,6 +40,7 @@ Acceptance:
 
 - A future thread can find both the latest report and historical snapshots from documentation.
 - Browser-QA blocker notes remain adjacent to release evidence.
+- Release history stays docs-only until a backend/export contract is explicitly added for archived local evidence.
 
 ## Delivery Rule
 
