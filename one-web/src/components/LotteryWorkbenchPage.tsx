@@ -1801,13 +1801,16 @@ const LotteryWorkbenchPage = () => {
             {widgetSettings.map((item, index) => {
               const meta = workbenchWidgetMetaMap.get(item.key);
               return (
-                <div key={item.key} className="lottery-workbench-widget-row">
+                <div
+                  key={item.key}
+                  className={`lottery-workbench-widget-row${item.visible ? '' : ' is-hidden'}`}
+                >
                   <span className="lottery-workbench-widget-index">{index + 1}</span>
-                  <div>
+                  <div className="lottery-workbench-widget-copy">
                     <strong>{meta?.label || item.key}</strong>
                     <small>{meta?.description || '-'}</small>
                   </div>
-                  <Space size={4}>
+                  <Space className="lottery-workbench-widget-actions" size={4}>
                     <Tooltip title="上移">
                       <Button
                         size="small"
