@@ -33,6 +33,8 @@ Acceptance:
 
 Goal: make high-use pages tell the same story.
 
+Status: shipped. Wave 22B normalized visible high-use status/source/event labels on ticket, ticket-pack, export/maintenance, and audit-adjacent views while keeping workbench count sources unchanged.
+
 - Audit workbench, overview, tickets, ticket packs, recommendations, governance, simulator, mobile command, and exports for English status leakage.
 - Normalize status labels through shared frontend helpers when practical.
 - Compare visible counts across overview statistics, latest draw, pending tickets, prize-check summary, and ledger summary.

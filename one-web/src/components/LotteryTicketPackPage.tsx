@@ -294,7 +294,7 @@ const LotteryTicketPackPage = () => {
                   <article key={item.key || `${item.redNumbers.join('-')}-${item.blueNumber}`}>
                     <LotteryBalls redNumbers={item.redNumbers || []} blueNumber={item.blueNumber || ''} />
                     <Space wrap>
-                      <Tag>{item.source || 'TICKET_PACK'}</Tag>
+                      <Tag>{lotteryCodeLabel(item.source, 'TICKET_PACK')}</Tag>
                       <Tag color="blue">{formatMoney(item.cost)}</Tag>
                     </Space>
                   </article>

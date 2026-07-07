@@ -667,11 +667,11 @@ Goal: make the lottery workbench a practical daily closure console, then verify 
 
 ### Wave 22B: Trust And Status Consistency QA
 
-- [ ] Audit workbench, overview, tickets, ticket packs, recommendations, governance, simulator, mobile command, and exports for English status leakage.
-- [ ] Normalize remaining high-use status labels through shared helpers where practical.
-- [ ] Compare visible counts across overview statistics, latest draw, pending tickets, prize-check summary, and ledger summary.
-- [ ] Add checklist evidence for any inconsistencies found and fixed.
-- [ ] Run frontend build and route smoke verification.
+- [x] Audit workbench, overview, tickets, ticket packs, recommendations, governance, simulator, mobile command, and exports for English status leakage. Found high-use leakage in ticket source tags, ticket-pack preview source tags, export result type, maintenance mode/cache tags, and audit event labels.
+- [x] Normalize remaining high-use status labels through shared helpers where practical. Added shared labels for ticket statuses, audit event types, and source/export codes, then reused `lotteryStatusLabel` and `lotteryCodeLabel` in ticket, ticket-pack, governance/export-adjacent views.
+- [x] Compare visible counts across overview statistics, latest draw, pending tickets, prize-check summary, and ledger summary. Wave 22B kept existing count sources unchanged: workbench and the new closure path continue reading `latestDraw`, `pendingTicketCount`, `latestPrizeCheckSummary`, and `ledgerSummary` from the same workbench summary contract.
+- [x] Add checklist evidence for any inconsistencies found and fixed. This Wave 22B checklist entry records the visible leakage and source-of-truth review.
+- [x] Run frontend build and route smoke verification. Verification: `one-web npm run build`; `one-web npm run lottery:smoke`; `git diff --check`.
 
 ### Wave 22C: Mobile And Dark-Mode Release Sweep
 

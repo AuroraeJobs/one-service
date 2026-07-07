@@ -36,6 +36,7 @@ import {
   type LotteryTicketSummary
 } from '../services/api';
 import { lotteryViewStateKeys, useLotterySavedViewState } from '../utils/lotteryViewState';
+import { lotteryCodeLabel, lotteryStatusLabel } from '../utils/lotteryStatusLabel';
 import './LotteryOverviewPage.css';
 
 const ticketViewKeys = ['page', 'pageSize', 'issue', 'predictionSnapshotId', 'status', 'source', 'prizeGrade'];
@@ -244,18 +245,6 @@ const formatTime = (value?: number) => {
     hour: '2-digit',
     minute: '2-digit'
   }).format(new Date(value));
-};
-
-const statusLabel = (status?: string) => {
-  const value = status || 'UNKNOWN';
-  const labels: Record<string, string> = {
-    DRAFT: '草稿',
-    BOUGHT: '已购买',
-    CHECKED: '已兑奖',
-    VOID: '作废',
-    UNKNOWN: '未知'
-  };
-  return labels[value] || value;
 };
 
 const statusColor = (status?: string) => {
@@ -946,7 +935,7 @@ const LotteryTicketPage = () => {
       render: (_, record) => (
         <Space direction="vertical" size={0}>
           <strong>{record.issue || record.period || '-'}</strong>
-          <span className="stock-quote-code">{record.source || 'MANUAL'}</span>
+          <span className="stock-quote-code">{lotteryCodeLabel(record.source, 'MANUAL')}</span>
         </Space>
       )
     },
@@ -959,7 +948,7 @@ const LotteryTicketPage = () => {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
-      render: value => <Tag color={statusColor(value)}>{statusLabel(value)}</Tag>
+      render: value => <Tag color={statusColor(value)}>{lotteryStatusLabel(value)}</Tag>
     },
     {
       title: '数量/成本',
@@ -1292,7 +1281,7 @@ const LotteryTicketPage = () => {
             </div>
             <div className="lottery-ticket-settlement-sources">
               {Object.entries(settlementReview.sourceDistribution).map(([source, count]) => (
-                <Tag key={source}>{source} {count}</Tag>
+                <Tag key={source}>{lotteryCodeLabel(source, 'MANUAL')} {count}</Tag>
               ))}
               {latestCheckSummary?.issue === settlementReview.issue ? (
                 <Tag color="blue">最近核验 {latestCheckSummary.checkedTicketCount || 0}</Tag>
@@ -1314,8 +1303,8 @@ const LotteryTicketPage = () => {
               {settlementReview.tickets.slice(0, 6).map(ticket => (
                 <article key={ticket.id || `${ticket.issue}-${ticket.blueNumber}-${ticket.createdAt}`}>
                   <div>
-                    <strong>{ticket.source || 'MANUAL'}</strong>
-                    <Tag color={statusColor(ticket.status)}>{statusLabel(ticket.status)}</Tag>
+                    <strong>{lotteryCodeLabel(ticket.source, 'MANUAL')}</strong>
+                    <Tag color={statusColor(ticket.status)}>{lotteryStatusLabel(ticket.status)}</Tag>
                   </div>
                   <LotteryBalls redNumbers={ticket.redNumbers || []} blueNumber={ticket.blueNumber || ''} />
                   <span>{ticket.prizeResult?.prizeName || ticket.prizeGrade || '待开奖'} · {formatMoney(ticket.cost)}</span>
@@ -1479,9 +1468,9 @@ const LotteryTicketPage = () => {
                 />
                 <div>
                   <strong>第 {ticket.issue || ticket.period || '-'} 期</strong>
-                  <span>{ticket.source || 'MANUAL'} · {formatTime(ticket.updatedAt || ticket.createdAt)}</span>
+                  <span>{lotteryCodeLabel(ticket.source, 'MANUAL')} · {formatTime(ticket.updatedAt || ticket.createdAt)}</span>
                 </div>
-                <Tag color={statusColor(ticket.status)}>{statusLabel(ticket.status)}</Tag>
+                <Tag color={statusColor(ticket.status)}>{lotteryStatusLabel(ticket.status)}</Tag>
               </div>
               <LotteryBalls redNumbers={ticket.redNumbers || []} blueNumber={ticket.blueNumber || ''} />
               <div className="lottery-ticket-mobile-stats">

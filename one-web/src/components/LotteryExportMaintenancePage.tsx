@@ -22,7 +22,7 @@ import {
   type LotteryMaintenanceCollectionStatus,
   type LotteryMaintenanceSummary
 } from '../services/api';
-import { lotteryStatusLabel } from '../utils/lotteryStatusLabel';
+import { lotteryCodeLabel, lotteryStatusLabel } from '../utils/lotteryStatusLabel';
 import './LotteryOverviewPage.css';
 
 const exportTypeOptions = [
@@ -537,9 +537,9 @@ const LotteryExportMaintenancePage = () => {
   ], []);
 
   const auditColumns: ColumnsType<LotteryAuditEvent> = [
-    { title: '类型', dataIndex: 'targetType', key: 'targetType', render: value => <Tag color="blue">{value || '-'}</Tag> },
+    { title: '类型', dataIndex: 'targetType', key: 'targetType', render: value => <Tag color="blue">{lotteryCodeLabel(value, '-')}</Tag> },
     { title: '行数', dataIndex: 'rowCount', key: 'rowCount', align: 'right' },
-    { title: '范围', dataIndex: 'requesterScope', key: 'requesterScope' },
+    { title: '范围', dataIndex: 'requesterScope', key: 'requesterScope', render: value => lotteryCodeLabel(value, '-') },
     { title: '生成', dataIndex: 'generatedAt', key: 'generatedAt', render: value => formatDateTime(value) }
   ];
 
@@ -548,14 +548,14 @@ const LotteryExportMaintenancePage = () => {
     { title: '总量', dataIndex: 'totalCount', key: 'totalCount', align: 'right' },
     { title: '过期', dataIndex: 'staleCount', key: 'staleCount', align: 'right' },
     { title: '超量', dataIndex: 'oversizedBy', key: 'oversizedBy', align: 'right' },
-    { title: '模式', dataIndex: 'cleanupSupported', key: 'cleanupSupported', render: value => <Tag color={value ? 'gold' : 'default'}>{value ? 'DRY-RUN' : 'REPORT'}</Tag> }
+    { title: '模式', dataIndex: 'cleanupSupported', key: 'cleanupSupported', render: value => <Tag color={value ? 'gold' : 'default'}>{value ? '预演' : '报告'}</Tag> }
   ];
 
   const cacheColumns: ColumnsType<LotteryMaintenanceCacheStatus> = [
     { title: '缓存', dataIndex: 'cacheKey', key: 'cacheKey' },
-    { title: '状态', dataIndex: 'present', key: 'present', render: value => <Tag color={value ? 'green' : 'default'}>{value ? 'PRESENT' : 'MISS'}</Tag> },
+    { title: '状态', dataIndex: 'present', key: 'present', render: value => <Tag color={value ? 'green' : 'default'}>{value ? '存在' : '缺失'}</Tag> },
     { title: 'TTL', dataIndex: 'ttlSeconds', key: 'ttlSeconds', align: 'right', render: value => (value === undefined || value === null ? '-' : value) },
-    { title: '过期', dataIndex: 'noExpiry', key: 'noExpiry', render: value => <Tag color={value ? 'gold' : 'default'}>{value ? 'NO TTL' : 'TTL'}</Tag> }
+    { title: '过期', dataIndex: 'noExpiry', key: 'noExpiry', render: value => <Tag color={value ? 'gold' : 'default'}>{value ? '无过期' : '有过期'}</Tag> }
   ];
 
   const resultLines = useMemo(() => csvPreview(result?.content, 12), [result?.content]);
@@ -662,7 +662,7 @@ const LotteryExportMaintenancePage = () => {
           extra={<Button size="small" icon={<DownloadOutlined />} onClick={() => downloadCsv(result)}>下载 CSV</Button>}
         >
           <Space wrap size="large">
-            <span>类型 {result.exportType}</span>
+            <span>类型 {exportTypeLabel(result.exportType)}</span>
             <span>行数 {result.rowCount || 0}</span>
             <span>生成 {formatDateTime(result.generatedAt)}</span>
           </Space>
