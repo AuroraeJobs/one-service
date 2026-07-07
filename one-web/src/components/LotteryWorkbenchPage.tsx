@@ -117,6 +117,17 @@ interface WorkbenchFocusItem {
   status?: string;
 }
 
+interface WorkbenchIssueNextItem {
+  key: string;
+  icon: ReactNode;
+  title: string;
+  detail: string;
+  status?: string;
+  count?: number;
+  path: string;
+  actionLabel: string;
+}
+
 interface WorkbenchActionQueueItem {
   key: string;
   group: string;
@@ -1175,6 +1186,103 @@ const LotteryWorkbenchPage = () => {
     return Array.from(groups.entries()).map(([title, items]) => ({ title, items }));
   }, [actionQueueItems]);
 
+  const issueNextItems = useMemo<WorkbenchIssueNextItem[]>(() => {
+    const items: WorkbenchIssueNextItem[] = [];
+    const releaseBlockers = (releaseCheckSummary?.checks || []).filter(item => item.status && item.status !== 'PASS');
+    const staleEvidence = actionQueueItems.find(item => item.group === '证据复核' || item.title.includes('过期'));
+
+    if ((summary?.pendingTicketCount || 0) > 0) {
+      items.push({
+        key: 'pending-tickets',
+        icon: <FileTextOutlined />,
+        title: '待处理票据',
+        detail: `第 ${latestTicketIssue} 期 · ${summary?.pendingTicketCount || 0} 张待核验`,
+        status: dailyState?.ticketState?.status || 'PENDING',
+        count: summary?.pendingTicketCount,
+        path: dailyState?.ticketState?.path || savedTicketsPath,
+        actionLabel: '处理票据'
+      });
+    }
+
+    if (isActionableState(dailyState?.prizeCheckState)) {
+      items.push({
+        key: 'pending-prize-check',
+        icon: <CheckCircleOutlined />,
+        title: '开奖核验',
+        detail: dailyState?.prizeCheckState?.message || `第 ${latestDrawIssue} 期等待核验`,
+        status: dailyState?.prizeCheckState?.status,
+        count: dailyState?.prizeCheckState?.pendingCount,
+        path: dailyState?.prizeCheckState?.path || savedTicketsPath,
+        actionLabel: '去核验'
+      });
+    }
+
+    if (staleEvidence) {
+      items.push({
+        key: 'stale-evidence',
+        icon: <WarningOutlined />,
+        title: '证据复核',
+        detail: staleEvidence.detail,
+        status: staleEvidence.status,
+        count: staleEvidence.count,
+        path: staleEvidence.path || '/lottery/recommendations',
+        actionLabel: '复核证据'
+      });
+    }
+
+    if (releaseBlockers.length > 0) {
+      const blocker = releaseBlockers[0];
+      items.push({
+        key: 'release-blockers',
+        icon: <DownloadOutlined />,
+        title: '发布阻塞',
+        detail: blocker.message || releaseCheckSummary?.message || '发布检查需要确认',
+        status: blocker.status,
+        count: releaseBlockers.length,
+        path: blocker.path || '/lottery/exports',
+        actionLabel: '看证据'
+      });
+    }
+
+    items.push({
+      key: 'mobile-command',
+      icon: <ThunderboltOutlined />,
+      title: '移动复核',
+      detail: `当前 ${latestDrawIssue} · 下一期 ${nextIssue}`,
+      status: reminders?.dueCount ? 'PENDING' : operationsHealth?.status,
+      count: reminders?.dueCount || operationsHealth?.pendingActionCount,
+      path: '/lottery/mobile',
+      actionLabel: '移动处理'
+    });
+
+    items.push({
+      key: 'recommendation-review',
+      icon: <SafetyCertificateOutlined />,
+      title: '推荐复核',
+      detail: '检查推荐生命周期和 stale evidence',
+      status: staleEvidence ? 'WARNING' : 'MANUAL',
+      path: '/lottery/recommendations',
+      actionLabel: '看推荐'
+    });
+
+    return items.slice(0, 6);
+  }, [
+    actionQueueItems,
+    dailyState?.prizeCheckState,
+    dailyState?.ticketState?.path,
+    dailyState?.ticketState?.status,
+    latestDrawIssue,
+    latestTicketIssue,
+    nextIssue,
+    operationsHealth?.pendingActionCount,
+    operationsHealth?.status,
+    releaseCheckSummary?.checks,
+    releaseCheckSummary?.message,
+    reminders?.dueCount,
+    savedTicketsPath,
+    summary?.pendingTicketCount
+  ]);
+
   const reminderGroups = useMemo(() => {
     const groups = new Map<string, NonNullable<LotteryReminderSummary['items']>>();
     (reminders?.items || [])
@@ -1559,18 +1667,36 @@ const LotteryWorkbenchPage = () => {
         );
       case 'issueFocus':
         return (
-          <section className="lottery-workbench-issue-focus">
-            {issueFocusItems.map(item => (
-              <button key={item.key} type="button" onClick={() => navigate(item.path)}>
-                <span className="lottery-workbench-issue-icon">{item.icon}</span>
-                <span>
-                  <em>{item.label}</em>
-                  <strong>{item.value}</strong>
-                  <small>{item.detail}</small>
-                </span>
-                {item.status ? <Tag color={dailyStateColor(item.status)}>{lotteryStatusLabel(item.status)}</Tag> : null}
-              </button>
-            ))}
+          <section className="lottery-workbench-issue-focus-panel">
+            <div className="lottery-workbench-issue-next">
+              {issueNextItems.map(item => (
+                <button key={item.key} type="button" onClick={() => navigate(item.path)}>
+                  <span className="lottery-workbench-issue-icon">{item.icon}</span>
+                  <span>
+                    <em>{item.title}</em>
+                    <strong>{item.actionLabel}</strong>
+                    <small>{item.detail}</small>
+                  </span>
+                  <Space size={6}>
+                    {item.count ? <b>{item.count}</b> : null}
+                    <Tag color={queueStatusColor(item.status)}>{lotteryStatusLabel(item.status, 'TODO')}</Tag>
+                  </Space>
+                </button>
+              ))}
+            </div>
+            <div className="lottery-workbench-issue-focus">
+              {issueFocusItems.map(item => (
+                <button key={item.key} type="button" onClick={() => navigate(item.path)}>
+                  <span className="lottery-workbench-issue-icon">{item.icon}</span>
+                  <span>
+                    <em>{item.label}</em>
+                    <strong>{item.value}</strong>
+                    <small>{item.detail}</small>
+                  </span>
+                  {item.status ? <Tag color={dailyStateColor(item.status)}>{lotteryStatusLabel(item.status)}</Tag> : null}
+                </button>
+              ))}
+            </div>
           </section>
         );
       case 'actionQueue':

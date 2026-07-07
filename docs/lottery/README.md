@@ -53,10 +53,10 @@ Live capabilities already present in the codebase:
 
 ## Next Iteration
 
-Iteration 26 should start from `docs/lottery/iterations/iteration-26-plan.md` and `docs/lottery/iterations/checklist.md`. The planned release-history flow is:
+Iteration 27 should start from `docs/lottery/iterations/iteration-27-plan.md` and `docs/lottery/iterations/checklist.md`. The planned workbench focus flow is:
 
 ```text
-run release archive -> review latest report and history index -> attach browser screenshots when login/backend are available
+open workbench -> scan next-step focus -> hand off to mobile, governance, tickets, recommendations, or exports
 ```
 
 For protected browser QA, use [Quality gates](iterations/quality-gates.md). A valid `aurorae_auth` login session and running backend are required before screenshots are meaningful; `ECONNREFUSED` on `/lottery/records/draws?page=0&size=500` is a backend/proxy blocker, not a page-layout failure.
@@ -71,7 +71,7 @@ Iteration 10 is the longer platform roadmap after the workbench foundation. It s
 daily state backbone -> strategy experiments -> backtest evidence -> alerts/calendar -> budget governance -> export/audit/maintenance
 ```
 
-Iteration 10 completed the platform foundation, and later frontend/usability waves are tracked in `docs/lottery/iterations/checklist.md`. Iteration 26 focuses on release history and evidence archive snapshots.
+Iteration 10 completed the platform foundation, and later frontend/usability waves are tracked in `docs/lottery/iterations/checklist.md`. Iteration 27 focuses on workbench issue focus and daily handoff clarity.
 
 ## Non-Negotiable Rules
 

@@ -964,13 +964,25 @@
   height: 32px;
 }
 
+.lottery-workbench-issue-focus-panel {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.lottery-workbench-issue-next {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
 .lottery-workbench-issue-focus {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 10px;
-  margin-bottom: 16px;
 }
 
+.lottery-workbench-issue-next button,
 .lottery-workbench-issue-focus button {
   min-width: 0;
   min-height: 92px;
@@ -993,6 +1005,28 @@
   transform: translateY(-1px);
 }
 
+.lottery-workbench-issue-next button {
+  min-height: 104px;
+  background: color-mix(in srgb, var(--app-surface) 88%, var(--module-accent, #0071e3) 12%);
+}
+
+.lottery-workbench-issue-next button:hover {
+  border-color: var(--module-accent, #0071e3);
+  transform: translateY(-1px);
+}
+
+.lottery-workbench-issue-next b {
+  color: var(--module-accent, #0071e3);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.lottery-workbench-issue-next .ant-space {
+  grid-column: 1 / -1;
+  justify-content: space-between;
+}
+
+.lottery-workbench-issue-next .ant-tag,
 .lottery-workbench-issue-focus .ant-tag {
   grid-column: 1 / -1;
   width: max-content;
@@ -1011,12 +1045,14 @@
   font-size: 16px;
 }
 
+.lottery-workbench-issue-next span:not(.lottery-workbench-issue-icon),
 .lottery-workbench-issue-focus span:not(.lottery-workbench-issue-icon) {
   min-width: 0;
   display: grid;
   gap: 3px;
 }
 
+.lottery-workbench-issue-next em,
 .lottery-workbench-issue-focus em,
 .lottery-workbench-shortcut-grid small {
   overflow: hidden;
@@ -1028,6 +1064,7 @@
   white-space: nowrap;
 }
 
+.lottery-workbench-issue-next strong,
 .lottery-workbench-issue-focus strong {
   overflow: hidden;
   color: var(--app-text);
@@ -1037,6 +1074,7 @@
   white-space: nowrap;
 }
 
+.lottery-workbench-issue-next small,
 .lottery-workbench-issue-focus small {
   overflow: hidden;
   color: var(--app-text-muted);
@@ -7019,6 +7057,10 @@ button.lottery-latest-vs-card:hover {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .lottery-workbench-issue-next {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .lottery-simulator-summary-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -7310,6 +7352,7 @@ button.lottery-latest-vs-card:hover {
   .lottery-portfolio-evidence-editor-row,
   .lottery-notebook-editor-row,
   .lottery-notebook-grid,
+  .lottery-workbench-issue-next,
   .lottery-workbench-issue-focus,
   .lottery-workbench-shortcut-grid,
   .lottery-decision-saved-bar,

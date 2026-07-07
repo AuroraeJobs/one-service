@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 23 Week 1 protected frontend QA smoke",
+  "target": "Iteration 27 Week 1 workbench issue focus smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -12,8 +12,12 @@
         "key: 'closure'",
         "label: '本期闭环'",
         "const closureSteps",
+        "const issueNextItems",
+        "lottery-workbench-issue-next",
         "lottery-workbench-closure-list",
-        "执行日常"
+        "执行日常",
+        "推荐复核",
+        "移动复核"
       ]
     },
     {

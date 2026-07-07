@@ -759,6 +759,26 @@ Goal: keep frontend lottery release evidence as durable snapshots instead of onl
 - [x] Record browser-QA blocker notes next to archived snapshots when screenshots are unavailable.
 - [x] Run documentation diff check, update checklist, commit, and push. Verification: `one-web node scripts/lottery-release-evidence.mjs --archive`; `git diff --check`.
 
+## Iteration 27: Workbench Issue Focus 2.0
+
+Goal: make `/lottery/workbench` answer the current draw-cycle question faster: what issue is active, what needs action next, and which specialist page should handle it.
+
+### Wave 27A: Next-Step Issue Focus
+
+- [x] Show pending tickets, pending prize checks, stale evidence, release blockers, mobile command, and recommendation review as direct handoffs.
+- [x] Keep current issue, next issue, prediction target, ticket issue, prize check, and ledger result in the existing issue-focus card grid.
+- [x] Reuse existing action queue, daily state, release checks, reminders, and operations health data.
+- [x] Add responsive CSS for desktop and mobile.
+- [x] Extend route smoke source guards for the new issue-focus panel.
+- [x] Run route smoke verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `git diff --check`.
+
+### Wave 27B: Workbench Handoff Polish
+
+- [ ] Review handoffs to `/lottery/mobile`, `/lottery/governance`, `/lottery/ticket-packs`, `/lottery/recommendations`, and `/lottery/exports`.
+- [ ] Add source checks or route smoke fixture evidence for any new handoff labels.
+- [ ] Decide whether the next-step strip should participate in widget settings as a separate widget or stay inside `期号焦点`.
+- [ ] Run frontend release-check verification, update docs, commit, and push.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.
