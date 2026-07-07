@@ -128,6 +128,14 @@ interface WorkbenchIssueNextItem {
   actionLabel: string;
 }
 
+const workbenchIssueHandoffPaths = {
+  mobile: '/lottery/mobile',
+  governance: '/lottery/governance',
+  ticketPacks: '/lottery/ticket-packs',
+  recommendations: '/lottery/recommendations',
+  exports: '/lottery/exports'
+} as const;
+
 interface WorkbenchActionQueueItem {
   key: string;
   group: string;
@@ -760,7 +768,7 @@ const LotteryWorkbenchPage = () => {
       icon: <SafetyCertificateOutlined />,
       label: '票包',
       detail: '待审批执行',
-      onClick: () => navigate('/lottery/ticket-packs')
+      onClick: () => navigate(workbenchIssueHandoffPaths.ticketPacks)
     },
     {
       key: 'check',
@@ -1128,7 +1136,7 @@ const LotteryWorkbenchPage = () => {
         detail: operationsHealth.message || '健康评分存在提醒',
         status: operationsHealth.status,
         count: operationsHealth.warningCount || operationsHealth.pendingActionCount,
-        path: '/lottery/governance',
+        path: workbenchIssueHandoffPaths.governance,
         actionLabel: '查看健康'
       });
     }
@@ -1225,7 +1233,7 @@ const LotteryWorkbenchPage = () => {
         detail: staleEvidence.detail,
         status: staleEvidence.status,
         count: staleEvidence.count,
-        path: staleEvidence.path || '/lottery/recommendations',
+        path: staleEvidence.path || workbenchIssueHandoffPaths.recommendations,
         actionLabel: '复核证据'
       });
     }
@@ -1239,10 +1247,31 @@ const LotteryWorkbenchPage = () => {
         detail: blocker.message || releaseCheckSummary?.message || '发布检查需要确认',
         status: blocker.status,
         count: releaseBlockers.length,
-        path: blocker.path || '/lottery/exports',
+        path: blocker.path || workbenchIssueHandoffPaths.exports,
         actionLabel: '看证据'
       });
     }
+
+    items.push({
+      key: 'ticket-pack-review',
+      icon: <FileTextOutlined />,
+      title: '票包复核',
+      detail: '审批票包、预算预检和保存票据',
+      status: 'MANUAL',
+      path: workbenchIssueHandoffPaths.ticketPacks,
+      actionLabel: '看票包'
+    });
+
+    items.push({
+      key: 'governance-review',
+      icon: <SafetyCertificateOutlined />,
+      title: '治理复核',
+      detail: operationsHealth?.message || '检查组合、票包、证据和发布健康',
+      status: operationsHealth?.status || 'MANUAL',
+      count: operationsHealth?.warningCount || operationsHealth?.pendingActionCount,
+      path: workbenchIssueHandoffPaths.governance,
+      actionLabel: '看治理'
+    });
 
     items.push({
       key: 'mobile-command',
@@ -1251,7 +1280,7 @@ const LotteryWorkbenchPage = () => {
       detail: `当前 ${latestDrawIssue} · 下一期 ${nextIssue}`,
       status: reminders?.dueCount ? 'PENDING' : operationsHealth?.status,
       count: reminders?.dueCount || operationsHealth?.pendingActionCount,
-      path: '/lottery/mobile',
+      path: workbenchIssueHandoffPaths.mobile,
       actionLabel: '移动处理'
     });
 
@@ -1261,7 +1290,7 @@ const LotteryWorkbenchPage = () => {
       title: '推荐复核',
       detail: '检查推荐生命周期和 stale evidence',
       status: staleEvidence ? 'WARNING' : 'MANUAL',
-      path: '/lottery/recommendations',
+      path: workbenchIssueHandoffPaths.recommendations,
       actionLabel: '看推荐'
     });
 
@@ -1274,8 +1303,10 @@ const LotteryWorkbenchPage = () => {
     latestDrawIssue,
     latestTicketIssue,
     nextIssue,
+    operationsHealth?.message,
     operationsHealth?.pendingActionCount,
     operationsHealth?.status,
+    operationsHealth?.warningCount,
     releaseCheckSummary?.checks,
     releaseCheckSummary?.message,
     reminders?.dueCount,

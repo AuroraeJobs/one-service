@@ -40,6 +40,8 @@ Acceptance:
 - The issue-focus handoff model is documented and guarded by smoke checks.
 - Mobile layout stays single-column and touch-friendly.
 
+Status: shipped as a polish slice. The next-step strip stays inside the existing `期号焦点` widget instead of becoming another layout item, because it is an interpretation of the same current-issue context. Handoff paths are centralized in `workbenchIssueHandoffPaths` and guarded by route smoke source checks.
+
 ## Delivery Rule
 
 Each wave should update `docs/lottery/iterations/checklist.md`, run verification, review diff, commit, and push.

@@ -774,10 +774,10 @@ Goal: make `/lottery/workbench` answer the current draw-cycle question faster: w
 
 ### Wave 27B: Workbench Handoff Polish
 
-- [ ] Review handoffs to `/lottery/mobile`, `/lottery/governance`, `/lottery/ticket-packs`, `/lottery/recommendations`, and `/lottery/exports`.
-- [ ] Add source checks or route smoke fixture evidence for any new handoff labels.
-- [ ] Decide whether the next-step strip should participate in widget settings as a separate widget or stay inside `期号焦点`.
-- [ ] Run frontend release-check verification, update docs, commit, and push.
+- [x] Review handoffs to `/lottery/mobile`, `/lottery/governance`, `/lottery/ticket-packs`, `/lottery/recommendations`, and `/lottery/exports`.
+- [x] Add source checks or route smoke fixture evidence for any new handoff labels.
+- [x] Decide whether the next-step strip should participate in widget settings as a separate widget or stay inside `期号焦点`. Decision: keep it inside `期号焦点` so widget settings stay stable.
+- [x] Run route smoke verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm exec eslint -- src/components/LotteryWorkbenchPage.tsx`; `git diff --check`.
 
 ## Documentation And Delivery
 

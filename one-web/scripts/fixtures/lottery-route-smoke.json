@@ -13,9 +13,15 @@
         "label: '本期闭环'",
         "const closureSteps",
         "const issueNextItems",
+        "const workbenchIssueHandoffPaths",
+        "ticketPacks: '/lottery/ticket-packs'",
+        "governance: '/lottery/governance'",
+        "exports: '/lottery/exports'",
         "lottery-workbench-issue-next",
         "lottery-workbench-closure-list",
         "执行日常",
+        "票包复核",
+        "治理复核",
         "推荐复核",
         "移动复核"
       ]
