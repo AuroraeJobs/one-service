@@ -27,7 +27,8 @@ Use these gates when finishing a lottery milestone.
 - Workbench drill-through links preserve useful filters in query parameters.
 - Experiment, backtest, alert, export, and audit pages keep research language restrained and evidence-oriented.
 - Run `npm run lottery:smoke` in `one-web` after changing `/lottery/workbench`, `/lottery/predictions/decision`, `/lottery/tickets`, `/lottery/research`, or `/lottery/exports`; this fixture smoke does not require live provider access.
-- Run `npm run lottery:release-evidence` in `one-web` when release evidence needs to be committed or handed off. It refreshes route smoke and writes the human-readable report to `one-web/reports/lottery-release-evidence.md`.
+- Run `npm run lottery:release-check` in `one-web` when frontend lottery release evidence needs to be committed or handed off. It refreshes route smoke, writes the human-readable report to `one-web/reports/lottery-release-evidence.md`, and verifies the production build.
+- Use `npm run lottery:release-evidence` only when the report needs to be refreshed without a production build.
 - Browser QA for those routes still requires a valid local login session and backend service. Proxy-related provider failures, including HTTP 403 when a proxy is enabled, should be recorded as provider/sync evidence rather than treated as route-render failures.
 
 ## Protected Browser QA
@@ -37,7 +38,7 @@ Use this gate when a lottery milestone needs screenshots or manual browser inspe
 - Confirm the browser has a valid local login session before opening `/lottery/*`. The frontend guard reads local storage key `aurorae_auth`; if it is missing or stale, protected lottery routes redirect to `/login` and the screenshot only proves the login shell.
 - Confirm the local backend service is running before judging route rendering. The Vite proxy must be able to reach project-owned lottery APIs such as `/lottery/records/draws`, `/lottery/workbench/summary`, and `/lottery/providers/health`.
 - Treat `ECONNREFUSED` on `/lottery/records/draws?page=0&size=500` as a backend/proxy availability blocker, not a frontend dark-mode or layout failure.
-- If login or backend availability blocks screenshots, still run `npm run lottery:release-evidence` and `npm run build` in `one-web`, record the blocker signature, and continue only after noting that browser evidence is incomplete.
+- If login or backend availability blocks screenshots, still run `npm run lottery:release-check` in `one-web`, record the blocker signature, and continue only after noting that browser evidence is incomplete.
 - When browser QA is available, record screenshot paths or the remaining blocker next to `one-web/reports/lottery-release-evidence.md` in the final handoff.
 - Do not add frontend bypasses for production authentication behavior just to make screenshots easier.
 

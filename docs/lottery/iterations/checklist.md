@@ -721,6 +721,24 @@ Goal: make lottery release evidence easy to read, commit, and hand off by turnin
 - [x] Record any manual screenshot paths or blockers next to the generated report when browser QA is available.
 - [x] Run documentation diff check, update checklist, commit, and push. Verification: `git diff --check`.
 
+## Iteration 25: One-Command Frontend Release Check
+
+Goal: make frontend lottery release validation harder to run incompletely by combining evidence generation and production build verification into one command.
+
+### Wave 25A: Release Check Script
+
+- [x] Add an npm script that runs `lottery:release-evidence` and then `build`.
+- [x] Update lottery docs to use the one-command release check as the default frontend release gate.
+- [x] Keep `lottery:smoke` and `lottery:release-evidence` available for narrower checks.
+- [x] Run release-check verification, update docs, commit, and push. Verification: `one-web npm run lottery:release-check`; `git diff --check`.
+
+### Wave 25B: Freshness Guard
+
+- [ ] Add a check mode that compares the generated Markdown evidence with the current smoke summary and fixture.
+- [ ] Fail when the committed Markdown evidence is stale.
+- [ ] Keep the check deterministic enough for local and CI use.
+- [ ] Run freshness-guard verification, update docs, commit, and push.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

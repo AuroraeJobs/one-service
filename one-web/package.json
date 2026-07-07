@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lottery:smoke": "node scripts/lottery-route-smoke.mjs",
     "lottery:release-evidence": "npm run lottery:smoke && node scripts/lottery-release-evidence.mjs",
+    "lottery:release-check": "npm run lottery:release-evidence && npm run build",
     "lint": "eslint .",
     "preview": "vite preview"
   },

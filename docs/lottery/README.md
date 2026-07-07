@@ -52,15 +52,15 @@ Live capabilities already present in the codebase:
 
 ## Next Iteration
 
-Iteration 24 should start from `docs/lottery/iterations/iteration-24-plan.md` and `docs/lottery/iterations/checklist.md`. The planned release-evidence flow is:
+Iteration 25 should start from `docs/lottery/iterations/iteration-25-plan.md` and `docs/lottery/iterations/checklist.md`. The planned frontend release-check flow is:
 
 ```text
-run release evidence script -> review generated Markdown report -> attach browser screenshots when login/backend are available
+run release check -> review generated Markdown report -> attach browser screenshots when login/backend are available
 ```
 
 For protected browser QA, use [Quality gates](iterations/quality-gates.md). A valid `aurorae_auth` login session and running backend are required before screenshots are meaningful; `ECONNREFUSED` on `/lottery/records/draws?page=0&size=500` is a backend/proxy blocker, not a page-layout failure.
 
-The latest generated frontend release evidence is written to `one-web/reports/lottery-release-evidence.md`. Regenerate it with `npm run lottery:release-evidence` from `one-web` after changing protected lottery routes, smoke fixture coverage, source guards, or release-readiness copy.
+The latest generated frontend release evidence is written to `one-web/reports/lottery-release-evidence.md`. Run `npm run lottery:release-check` from `one-web` before frontend lottery release handoff; use `npm run lottery:release-evidence` only when you need to refresh the report without a production build.
 
 ## Long Iteration
 
@@ -70,7 +70,7 @@ Iteration 10 is the longer platform roadmap after the workbench foundation. It s
 daily state backbone -> strategy experiments -> backtest evidence -> alerts/calendar -> budget governance -> export/audit/maintenance
 ```
 
-Iteration 10 completed the platform foundation, and later frontend/usability waves are tracked in `docs/lottery/iterations/checklist.md`. Iteration 24 focuses on release evidence packaging and protected-browser QA handoff.
+Iteration 10 completed the platform foundation, and later frontend/usability waves are tracked in `docs/lottery/iterations/checklist.md`. Iteration 25 focuses on one-command frontend release checks and evidence freshness.
 
 ## Non-Negotiable Rules
 
