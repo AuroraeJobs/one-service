@@ -700,6 +700,27 @@ Goal: reduce the protected-route QA gap by making static smoke catch release-cri
 - [x] Add a concise browser-QA fallback note to the lottery README and quality gate docs.
 - [x] Run documentation diff check, update checklist, commit, and push. Verification: `git diff --check`.
 
+## Iteration 24: Release Evidence Packaging
+
+Goal: make lottery release evidence easy to read, commit, and hand off by turning the smoke summary JSON into a concise Markdown report.
+
+### Wave 24A: Markdown Release Evidence
+
+- [x] Add a script that reads `reports/lottery-route-smoke-summary.json`.
+- [x] Include target, generated time, status, route count, check count, and failure count.
+- [x] Include source guard coverage from the smoke fixture.
+- [x] Include checked protected routes with component/API/empty/error state counts.
+- [x] Include protected browser QA prerequisites and the known backend/proxy blocker signature.
+- [x] Add an npm script that refreshes smoke output and writes the evidence report.
+- [x] Run release-evidence/build verification, update docs, commit, and push. Verification: `one-web npm run lottery:release-evidence`; `one-web npm run build`; `git diff --check`.
+
+### Wave 24B: Evidence Surface Handoff
+
+- [ ] Link the evidence report from the lottery README and quality gates.
+- [ ] Add guidance for when to regenerate the report.
+- [ ] Record any manual screenshot paths or blockers next to the generated report when browser QA is available.
+- [ ] Run documentation diff check, update checklist, commit, and push.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

@@ -52,10 +52,10 @@ Live capabilities already present in the codebase:
 
 ## Next Iteration
 
-Iteration 23 should start from `docs/lottery/iterations/iteration-23-plan.md` and `docs/lottery/iterations/checklist.md`. The planned release-evidence flow is:
+Iteration 24 should start from `docs/lottery/iterations/iteration-24-plan.md` and `docs/lottery/iterations/checklist.md`. The planned release-evidence flow is:
 
 ```text
-run protected frontend smoke -> confirm browser QA prerequisites -> capture screenshots when login/backend are available
+run release evidence script -> review generated Markdown report -> attach browser screenshots when login/backend are available
 ```
 
 For protected browser QA, use [Quality gates](iterations/quality-gates.md). A valid `aurorae_auth` login session and running backend are required before screenshots are meaningful; `ECONNREFUSED` on `/lottery/records/draws?page=0&size=500` is a backend/proxy blocker, not a page-layout failure.
@@ -68,7 +68,7 @@ Iteration 10 is the longer platform roadmap after the workbench foundation. It s
 daily state backbone -> strategy experiments -> backtest evidence -> alerts/calendar -> budget governance -> export/audit/maintenance
 ```
 
-Iteration 10 completed the platform foundation, and later frontend/usability waves are tracked in `docs/lottery/iterations/checklist.md`. Iteration 23 focuses on protected frontend QA smoke and browser-QA readiness evidence.
+Iteration 10 completed the platform foundation, and later frontend/usability waves are tracked in `docs/lottery/iterations/checklist.md`. Iteration 24 focuses on release evidence packaging and protected-browser QA handoff.
 
 ## Non-Negotiable Rules
 
