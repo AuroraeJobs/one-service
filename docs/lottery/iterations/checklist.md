@@ -680,6 +680,26 @@ Goal: make the lottery workbench a practical daily closure console, then verify 
 - [x] Prefer mobile card/list layouts over wide tables where the page is used in daily operation. Existing ticket mobile cards remain in place; export/maintenance tables now stay contained with horizontal scroll instead of breaking the card.
 - [x] Run frontend build, route smoke verification, update docs, commit, and push. Verification: `one-web npm run build`; `one-web npm run lottery:smoke`; `git diff --check`. Browser QA was limited by the protected login route and local API proxy 500 responses, so screenshot verification only reached the dark login shell.
 
+## Iteration 23: Protected Frontend QA And Release Evidence
+
+Goal: reduce the protected-route QA gap by making static smoke catch release-critical frontend regressions even when local login state or backend proxy availability blocks browser screenshots.
+
+### Wave 23A: Protected Frontend QA Smoke
+
+- [x] Add fixture-driven source checks to the lottery route smoke script.
+- [x] Guard the Wave 22 workbench `本期闭环` widget with route smoke source checks.
+- [x] Guard shared mobile and dark-mode CSS safeguards with route smoke source checks.
+- [x] Guard high-use Chinese status/source label helpers with route smoke source checks.
+- [x] Keep the smoke independent from live auth, backend availability, and lottery provider network access.
+- [x] Run frontend build, route smoke verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
+
+### Wave 23B: Browser QA Readiness Notes
+
+- [ ] Document local prerequisites for protected route screenshots: valid `aurorae_auth`, backend service, and lottery proxy endpoints.
+- [ ] Record the known blocker signature for backend proxy `ECONNREFUSED` on `/lottery/records/draws`.
+- [ ] Add a concise browser-QA fallback note to the lottery README or quality gate docs.
+- [ ] Run documentation diff check, update checklist, commit, and push.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

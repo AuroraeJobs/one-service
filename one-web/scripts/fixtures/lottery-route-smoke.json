@@ -1,9 +1,45 @@
 {
-  "target": "Iteration 21 Week 4 number probability pressure smoke",
+  "target": "Iteration 23 Week 1 protected frontend QA smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "consoleErrors": [],
+  "sourceChecks": [
+    {
+      "scope": "workbench closure path",
+      "file": "src/components/LotteryWorkbenchPage.tsx",
+      "includes": [
+        "key: 'closure'",
+        "label: '本期闭环'",
+        "const closureSteps",
+        "lottery-workbench-closure-list",
+        "执行日常"
+      ]
+    },
+    {
+      "scope": "mobile dark-mode CSS safeguards",
+      "file": "src/components/LotteryOverviewPage.css",
+      "includes": [
+        ".lottery-export-page .ant-table",
+        ".lottery-export-page .ant-table-cell",
+        ".lottery-ticket-pack-actions",
+        ".lottery-report-preset-bar",
+        ".lottery-mobile-list .ant-space",
+        ".lottery-recommendation-lane .ant-space",
+        "@media (max-width: 560px)"
+      ]
+    },
+    {
+      "scope": "visible lottery label helpers",
+      "file": "src/utils/lotteryStatusLabel.ts",
+      "includes": [
+        "BOUGHT: '已购买'",
+        "CHECKED: '已兑奖'",
+        "LOTTERY_RECOMMENDATION_REFRESH: '推荐刷新'",
+        "LOTTERY_SIMULATION_RUN: '沙盘模拟'"
+      ]
+    }
+  ],
   "routes": [
     {
       "route": "/lottery/workbench",

@@ -54,6 +54,24 @@ const run = async () => {
   record(!footerNavSource.includes('season-footer-context'), 'navigation', 'footer navigation does not render a second-row child menu');
   record(!appCssSource.includes('season-footer-context'), 'navigation', 'footer styles do not keep second-row child menu selectors');
 
+  for (const sourceCheck of fixture.sourceChecks || []) {
+    const scope = sourceCheck.scope || sourceCheck.file;
+    let source = '';
+    try {
+      source = await readText(sourceCheck.file);
+      record(true, scope, `source file exists: ${sourceCheck.file}`);
+    } catch (error) {
+      record(false, scope, `source file exists: ${sourceCheck.file}`);
+      continue;
+    }
+    for (const value of sourceCheck.includes || []) {
+      record(source.includes(value), scope, `source includes ${value}`);
+    }
+    for (const value of sourceCheck.excludes || []) {
+      record(!source.includes(value), scope, `source excludes ${value}`);
+    }
+  }
+
   for (const route of fixture.routes || []) {
     const scope = route.route;
     let componentSource = '';
