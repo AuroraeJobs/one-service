@@ -10,6 +10,7 @@
     "lottery:release-evidence": "npm run lottery:smoke && node scripts/lottery-release-evidence.mjs",
     "lottery:release-evidence:check": "node scripts/lottery-release-evidence.mjs --check",
     "lottery:release-check": "npm run lottery:release-evidence && npm run build",
+    "lottery:release-archive": "npm run lottery:release-check && node scripts/lottery-release-evidence.mjs --archive",
     "lint": "eslint .",
     "preview": "vite preview"
   },

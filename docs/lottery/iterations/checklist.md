@@ -739,6 +739,26 @@ Goal: make frontend lottery release validation harder to run incompletely by com
 - [x] Keep the check deterministic enough for local and CI use.
 - [x] Run freshness-guard verification, update docs, commit, and push. Verification: `one-web npm run lottery:release-check`; `one-web npm run lottery:release-evidence:check`; `git diff --check`.
 
+## Iteration 26: Release History And Evidence Archive
+
+Goal: keep frontend lottery release evidence as durable snapshots instead of only the latest mutable report.
+
+### Wave 26A: Evidence Snapshot Archive
+
+- [x] Add archive mode to the release evidence script.
+- [x] Add `npm run lottery:release-archive`.
+- [x] Write snapshots under `one-web/reports/lottery-release-history/`.
+- [x] Maintain a small history index with the latest snapshot, target, generated time, status, check count, and route count.
+- [x] Keep the archive command failing when the latest evidence report is stale.
+- [x] Run release-archive verification, update docs, commit, and push. Verification: `one-web npm run lottery:release-archive`; `git diff --check`.
+
+### Wave 26B: Release History Consumption
+
+- [ ] Link the archive index from lottery documentation.
+- [ ] Decide whether `/lottery/exports` should surface local release-history metadata or keep it as docs-only.
+- [ ] Record browser-QA blocker notes next to archived snapshots when screenshots are unavailable.
+- [ ] Run documentation diff check, update checklist, commit, and push.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

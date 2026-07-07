@@ -53,15 +53,15 @@ Live capabilities already present in the codebase:
 
 ## Next Iteration
 
-Iteration 25 should start from `docs/lottery/iterations/iteration-25-plan.md` and `docs/lottery/iterations/checklist.md`. The planned frontend release-check flow is:
+Iteration 26 should start from `docs/lottery/iterations/iteration-26-plan.md` and `docs/lottery/iterations/checklist.md`. The planned release-history flow is:
 
 ```text
-run release check -> review generated Markdown report -> attach browser screenshots when login/backend are available
+run release archive -> review latest report and history index -> attach browser screenshots when login/backend are available
 ```
 
 For protected browser QA, use [Quality gates](iterations/quality-gates.md). A valid `aurorae_auth` login session and running backend are required before screenshots are meaningful; `ECONNREFUSED` on `/lottery/records/draws?page=0&size=500` is a backend/proxy blocker, not a page-layout failure.
 
-The latest generated frontend release evidence is written to `one-web/reports/lottery-release-evidence.md`. Run `npm run lottery:release-check` from `one-web` before frontend lottery release handoff; use `npm run lottery:release-evidence` only when you need to refresh the report without a production build, and `npm run lottery:release-evidence:check` when you only need to verify freshness.
+The latest generated frontend release evidence is written to `one-web/reports/lottery-release-evidence.md`. Run `npm run lottery:release-check` from `one-web` before frontend lottery release handoff; use `npm run lottery:release-evidence` only when you need to refresh the report without a production build, and `npm run lottery:release-evidence:check` when you only need to verify freshness. Run `npm run lottery:release-archive` when the passed evidence should be kept as a historical snapshot.
 
 ## Long Iteration
 
@@ -71,7 +71,7 @@ Iteration 10 is the longer platform roadmap after the workbench foundation. It s
 daily state backbone -> strategy experiments -> backtest evidence -> alerts/calendar -> budget governance -> export/audit/maintenance
 ```
 
-Iteration 10 completed the platform foundation, and later frontend/usability waves are tracked in `docs/lottery/iterations/checklist.md`. Iteration 25 focuses on one-command frontend release checks and evidence freshness.
+Iteration 10 completed the platform foundation, and later frontend/usability waves are tracked in `docs/lottery/iterations/checklist.md`. Iteration 26 focuses on release history and evidence archive snapshots.
 
 ## Non-Negotiable Rules
 
