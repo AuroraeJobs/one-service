@@ -1,6 +1,6 @@
 # Lottery Technical Design
 
-Last updated: 2026-07-04
+Last updated: 2026-07-07
 
 ## Module Shape
 
@@ -272,6 +272,8 @@ Iteration 13A adds browser-local workbench layout preferences under `one:lottery
 Iteration 14A promotes those same widget keys into backend-backed preferences. `/lottery/workbench` now reads `GET /lottery/preferences`, applies `workbenchWidgetOrder` and `hiddenWorkbenchWidgets` when present, writes changes through `PUT /lottery/preferences`, and still writes the local `one:lottery:workbench:widgets:v1` payload as a browser fallback if the preference API is unavailable.
 
 The 13A issue-focus strip keeps latest draw, next issue, prediction target, ticket issue, prize-check issue, and ledger outcome visible as one drill-through row. The action queue is derived from existing workbench state: daily-state items, scheduled sync warnings, operation pending actions, budget warnings, prediction actual-result attachment gaps, and non-passing release checks. No browser-side provider calls or new lottery-domain endpoints are introduced.
+
+Iteration 22A adds a frontend-only current-issue closure widget to `/lottery/workbench`. It composes existing workbench summary fields, `LotteryDailyState` items, release checks, and recent export evidence into an ordered path: sync, prediction review, ticket handling, prize check, ledger review, and report/archive. Each step owns a project route handoff and status label, while the daily-run button remains the bounded backend orchestrator. This widget is not a new source of truth and does not add browser-side provider calls.
 
 Iteration 13B adds `/lottery/predictions/decision` as a frontend decision board. It composes `GET /lottery/predictions`, `GET /lottery/predictions/rules/compare`, `GET /lottery/predictions/replay-metrics`, and prediction-linked ticket rows to compare primary predictions and candidate sets. URL parameters `targetIssue`, `ruleName`, `evidence`, and `resultState` preserve the board state. Selected candidates are saved through the existing `POST /lottery/tickets/batch` contract as draft `PREDICTION` tickets; the page does not introduce a browser-side lottery provider call.
 

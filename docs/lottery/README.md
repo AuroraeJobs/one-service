@@ -52,10 +52,10 @@ Live capabilities already present in the codebase:
 
 ## Next Iteration
 
-Iteration 11 should start from `docs/lottery/iterations/checklist.md` and implement the frontend-led experience and power-tool plan. The planned user flow is:
+Iteration 22 should start from `docs/lottery/iterations/iteration-22-plan.md` and `docs/lottery/iterations/checklist.md`. The planned user flow is:
 
 ```text
-open workbench -> choose next action -> compare research evidence -> manage tickets quickly -> build report/export evidence
+open workbench -> complete current-issue closure -> verify specialist pages agree -> review mobile/dark-mode release quality
 ```
 
 ## Long Iteration
@@ -66,7 +66,7 @@ Iteration 10 is the longer platform roadmap after the workbench foundation. It s
 daily state backbone -> strategy experiments -> backtest evidence -> alerts/calendar -> budget governance -> export/audit/maintenance
 ```
 
-Iteration 10 has completed the platform foundation. The next one-month delivery plan lives in `docs/lottery/iterations/frontend-one-month-version-plan.md` and deliberately prioritizes frontend functionality.
+Iteration 10 completed the platform foundation, and later frontend/usability waves are tracked in `docs/lottery/iterations/checklist.md`. Iteration 22 focuses on daily closure, trust consistency, and release-quality QA.
 
 ## Non-Negotiable Rules
 

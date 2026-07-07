@@ -1,6 +1,6 @@
 {
   "target": "Iteration 21 Week 4 number probability pressure smoke",
-  "generatedAt": "2026-07-05T12:47:51.661Z",
+  "generatedAt": "2026-07-07T11:34:32.306Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",

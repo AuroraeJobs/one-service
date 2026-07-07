@@ -81,6 +81,7 @@ interface LotteryRecentWorkLink {
 
 type WorkbenchWidgetKey =
   | 'status'
+  | 'closure'
   | 'priority'
   | 'health'
   | 'reminders'
@@ -146,10 +147,23 @@ interface WorkbenchRecentShortcut {
   path: string;
 }
 
+interface WorkbenchClosureStep {
+  key: string;
+  icon: ReactNode;
+  label: string;
+  title: string;
+  detail: string;
+  status?: string;
+  count?: number;
+  path: string;
+  actionLabel: string;
+}
+
 const workbenchWidgetStorageKey = 'one:lottery:workbench:widgets:v1';
 
 const workbenchWidgetMeta: WorkbenchWidgetMeta[] = [
   { key: 'status', label: '状态总览', description: '开奖、同步、质量、票据、账本和发布检查' },
+  { key: 'closure', label: '本期闭环', description: '同步、预测、票包、核验、账本和报告的本期主路径' },
   { key: 'priority', label: '今日优先', description: '到期提醒、待办、健康告警和待核验事项' },
   { key: 'health', label: '运营健康', description: 'Provider、同步、质量、票据、决策和导出健康评分' },
   { key: 'reminders', label: '提醒中心', description: '每日行动提醒、到期、稍后和确认状态' },
@@ -837,6 +851,77 @@ const LotteryWorkbenchPage = () => {
     }
   ];
 
+  const closureSteps: WorkbenchClosureStep[] = [
+    {
+      key: 'sync',
+      icon: <SyncOutlined />,
+      label: '同步',
+      title: dailyState?.syncState?.label || '更新开奖记录',
+      detail: dailyState?.syncState?.message || latestSyncStatusLabel,
+      status: dailyState?.syncState?.status || summary?.latestSyncSummary?.latestStatus,
+      count: dailyState?.syncState?.pendingCount,
+      path: dailyState?.syncState?.path || savedSyncPath,
+      actionLabel: '去同步'
+    },
+    {
+      key: 'prediction',
+      icon: <ThunderboltOutlined />,
+      label: '预测',
+      title: dailyState?.predictionState?.label || '复核预测快照',
+      detail: dailyState?.predictionState?.message || (summary?.latestPrediction ? `第 ${summary.latestPrediction.targetPeriod} 期` : '暂无预测快照'),
+      status: trainingStatus?.running ? 'RUNNING' : dailyState?.predictionState?.status,
+      count: dailyState?.predictionState?.pendingCount,
+      path: dailyState?.predictionState?.path || (summary?.latestPrediction?.id ? `/lottery/predictions/${summary.latestPrediction.id}` : '/lottery/prediction'),
+      actionLabel: trainingStatus?.running ? '看进度' : '去复核'
+    },
+    {
+      key: 'ticket',
+      icon: <FileTextOutlined />,
+      label: '票包',
+      title: dailyState?.ticketState?.label || '确认票据',
+      detail: dailyState?.ticketState?.message || `${summary?.pendingTicketCount ?? 0} 张待核验`,
+      status: dailyState?.ticketState?.status,
+      count: dailyState?.ticketState?.pendingCount || summary?.pendingTicketCount,
+      path: dailyState?.ticketState?.path || savedTicketsPath,
+      actionLabel: '去处理'
+    },
+    {
+      key: 'prize-check',
+      icon: <CheckCircleOutlined />,
+      label: '核验',
+      title: dailyState?.prizeCheckState?.label || '核验开奖结果',
+      detail: dailyState?.prizeCheckState?.message || `最近核验 ${summary?.latestPrizeCheckSummary?.checkedTicketCount ?? 0} 张`,
+      status: dailyState?.prizeCheckState?.status,
+      count: dailyState?.prizeCheckState?.pendingCount,
+      path: dailyState?.prizeCheckState?.path || savedTicketsPath,
+      actionLabel: '去核验'
+    },
+    {
+      key: 'ledger',
+      icon: <PieChartOutlined />,
+      label: '账本',
+      title: '复盘账本结果',
+      detail: `${formatCurrency(summary?.ledgerSummary?.netResult)} · ROI ${formatPercent(summary?.ledgerSummary?.roiPercent)}`,
+      status: summary?.ledgerSummary ? 'COMPLETE' : 'PENDING',
+      path: '/lottery/ledger',
+      actionLabel: '看账本'
+    },
+    {
+      key: 'report',
+      icon: <DownloadOutlined />,
+      label: '留档',
+      title: '生成报告导出',
+      detail: releaseCheckSummary?.message || `${recentWork.exports.length} 次近期导出`,
+      status: releaseCheckSummary?.status || (recentWork.exports.length ? 'COMPLETE' : 'MANUAL'),
+      count: releaseCheckSummary?.totalCount,
+      path: '/lottery/exports',
+      actionLabel: '去留档'
+    }
+  ];
+
+  const closureCompleteCount = closureSteps.filter(item => item.status === 'COMPLETE' || item.status === 'PASS' || item.status === 'SUCCESS').length;
+  const closureNeedsAttentionCount = closureSteps.filter(item => item.status && item.status !== 'COMPLETE' && item.status !== 'PASS' && item.status !== 'SUCCESS').length;
+
   const decisionOutcomeFollowUps = useMemo<WorkbenchActionQueueItem[]>(() => {
     const outcomes = recentWork.decisionOutcomes?.items || [];
     const items: WorkbenchActionQueueItem[] = [];
@@ -1303,6 +1388,42 @@ const LotteryWorkbenchPage = () => {
               </button>
             ))}
           </section>
+        );
+      case 'closure':
+        return (
+          <Card
+            className="life-panel-card lottery-clean-panel lottery-workbench-closure-card"
+            title="本期闭环"
+            extra={
+              <Space wrap>
+                <Tag color={closureNeedsAttentionCount ? 'orange' : 'green'}>
+                  完成 {closureCompleteCount}/{closureSteps.length}
+                </Tag>
+                <Button size="small" icon={<ThunderboltOutlined />} loading={running} onClick={runDailyWork}>
+                  执行日常
+                </Button>
+              </Space>
+            }
+          >
+            <div className="lottery-workbench-closure-list">
+              {closureSteps.map((item, index) => (
+                <button key={item.key} type="button" onClick={() => navigate(item.path)}>
+                  <span className="lottery-workbench-closure-index">{index + 1}</span>
+                  <span className="lottery-workbench-closure-icon">{item.icon}</span>
+                  <span className="lottery-workbench-closure-copy">
+                    <em>{item.label}</em>
+                    <strong>{item.title}</strong>
+                    <small>{item.detail}</small>
+                  </span>
+                  <span className="lottery-workbench-closure-meta">
+                    <Tag color={queueStatusColor(item.status)}>{lotteryStatusLabel(item.status, 'TODO')}</Tag>
+                    {item.count ? <b>{item.count}</b> : null}
+                    <small>{item.actionLabel}</small>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </Card>
         );
       case 'priority':
         return (

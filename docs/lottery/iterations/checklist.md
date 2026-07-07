@@ -653,6 +653,33 @@ Goal: make the astronaut feature useful as an analysis surface. The core object 
 - [x] Mount the replay panel on the prediction page and extend route smoke/release evidence.
 - [x] Run frontend smoke/build verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm run build`; `git diff --check`.
 
+## Iteration 22: Daily Closure And Trust QA
+
+Goal: make the lottery workbench a practical daily closure console, then verify status consistency, mobile layout, and dark-mode quality across high-use lottery pages.
+
+### Wave 22A: Current-Issue Closure Path
+
+- [x] Add a default-visible `本期闭环` workbench widget that orders the current issue workflow from sync through report/archive.
+- [x] Reuse existing workbench summary, `dailyState`, release checks, and drill-through routes instead of adding a backend contract.
+- [x] Keep each closure step actionable with Chinese labels, status tags, counts, details, and direct page handoff.
+- [x] Add responsive styling so the closure path is compact on desktop and becomes a single-column action list on mobile.
+- [x] Run frontend build, route smoke, update docs, review diff, commit, and push Wave 22A. Verification: `one-web npm run build`; `one-web npm run lottery:smoke`; `git diff --check`.
+
+### Wave 22B: Trust And Status Consistency QA
+
+- [ ] Audit workbench, overview, tickets, ticket packs, recommendations, governance, simulator, mobile command, and exports for English status leakage.
+- [ ] Normalize remaining high-use status labels through shared helpers where practical.
+- [ ] Compare visible counts across overview statistics, latest draw, pending tickets, prize-check summary, and ledger summary.
+- [ ] Add checklist evidence for any inconsistencies found and fixed.
+- [ ] Run frontend build and route smoke verification.
+
+### Wave 22C: Mobile And Dark-Mode Release Sweep
+
+- [ ] Review workbench, overview, tickets, ticket packs, recommendations, governance, simulator, research, and exports at mobile width and in dark mode.
+- [ ] Fix text overflow, cramped actions, card heights, and dark-mode contrast issues.
+- [ ] Prefer mobile card/list layouts over wide tables where the page is used in daily operation.
+- [ ] Run frontend build, route smoke verification, update docs, commit, and push.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

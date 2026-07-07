@@ -1,6 +1,6 @@
 # Lottery Menu And Version Plan
 
-Last updated: 2026-07-05
+Last updated: 2026-07-07
 
 ## Target Menu Tree
 
@@ -254,6 +254,14 @@ Goal: make the lottery module easier to use every day. This version should impro
 - Improve list, filter, and state readability across tickets, attribution, recommendations, audit events, and review queues. The shipped Week 3 slice adds preset filter bars for tickets, attribution, recommendations, and audit events while reusing existing URL and local state.
 - Improve visual consistency and release quality across the lottery module. The shipped Week 4 slice polishes preset bars, recommendation and mobile cards, responsive action wrapping, smoke coverage, and V16 release-readiness evidence.
 - Prefer frontend-only improvements for this version unless an existing API shape blocks a meaningful usability fix.
+
+### V17: Daily Closure And Trust QA
+
+Goal: make the workbench the practical current-issue closure console while verifying that specialist pages tell the same status story.
+
+- Add a default-visible `本期闭环` widget to `/lottery/workbench` so users can move through sync, prediction review, ticket handling, prize check, ledger review, and report/archive without hunting through separate pages.
+- Keep the widget as frontend composition over existing workbench summary, daily state, release checks, and export evidence; do not add another navigation row or new browser-side data provider call.
+- Follow with status consistency, mobile, and dark-mode QA across high-use pages before adding more domain surfaces.
 
 ## API Boundary
 
