@@ -7,7 +7,7 @@ Generated from `npm run lottery:smoke`.
 | Field | Value |
 | --- | --- |
 | Target | Iteration 23 Week 1 protected frontend QA smoke |
-| Generated at | 2026-07-07T11:58:58.918Z |
+| Generated at | 2026-07-07T12:01:45.133Z |
 | Status | PASSED |
 | Mode | mocked-fixture |
 | Provider network | not-required |

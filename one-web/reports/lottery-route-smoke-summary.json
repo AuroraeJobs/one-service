@@ -1,6 +1,6 @@
 {
   "target": "Iteration 23 Week 1 protected frontend QA smoke",
-  "generatedAt": "2026-07-07T11:58:58.918Z",
+  "generatedAt": "2026-07-07T12:01:45.133Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",

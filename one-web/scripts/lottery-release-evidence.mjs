@@ -7,6 +7,8 @@ const webRoot = path.resolve(scriptDir, '..');
 const reportPath = path.join(webRoot, 'reports', 'lottery-route-smoke-summary.json');
 const fixturePath = path.join(scriptDir, 'fixtures', 'lottery-route-smoke.json');
 const evidencePath = path.join(webRoot, 'reports', 'lottery-release-evidence.md');
+const evidenceReport = path.relative(webRoot, evidencePath);
+const checkOnly = process.argv.includes('--check');
 
 const readJson = async filePath => JSON.parse(await readFile(filePath, 'utf8'));
 
@@ -35,12 +37,11 @@ const renderSourceRows = sourceChecks =>
     )
     .join('\n');
 
-const run = async () => {
-  const [summary, fixture] = await Promise.all([readJson(reportPath), readJson(fixturePath)]);
+const renderMarkdown = (summary, fixture) => {
   const sourceChecks = fixture.sourceChecks || [];
   const checkedRoutes = summary.checkedRoutes || [];
 
-  const markdown = `# Lottery Release Evidence
+  return `# Lottery Release Evidence
 
 Generated from \`npm run lottery:smoke\`.
 
@@ -82,10 +83,27 @@ ${checkedRoutes.length ? renderRouteRows(checkedRoutes) : '| None |  |  | 0 | 0 
 
 ${summary.failures?.length ? summary.failures.map(failure => `- ${failure.scope}: ${failure.detail}`).join('\n') : 'No failures.'}
 `;
+};
+
+const run = async () => {
+  const [summary, fixture] = await Promise.all([readJson(reportPath), readJson(fixturePath)]);
+  const markdown = renderMarkdown(summary, fixture);
+
+  if (checkOnly) {
+    const current = await readFile(evidencePath, 'utf8');
+    if (current !== markdown) {
+      console.error(`[lottery-evidence] stale report: ${evidenceReport}`);
+      console.error('[lottery-evidence] run `npm run lottery:release-evidence` to refresh it');
+      process.exitCode = 1;
+      return;
+    }
+    console.log(`[lottery-evidence] fresh ${evidenceReport}`);
+    return;
+  }
 
   await mkdir(path.dirname(evidencePath), { recursive: true });
   await writeFile(evidencePath, markdown);
-  console.log(`[lottery-evidence] wrote ${path.relative(webRoot, evidencePath)}`);
+  console.log(`[lottery-evidence] wrote ${evidenceReport}`);
 };
 
 run().catch(error => {

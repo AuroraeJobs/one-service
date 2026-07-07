@@ -29,6 +29,7 @@ Use these gates when finishing a lottery milestone.
 - Run `npm run lottery:smoke` in `one-web` after changing `/lottery/workbench`, `/lottery/predictions/decision`, `/lottery/tickets`, `/lottery/research`, or `/lottery/exports`; this fixture smoke does not require live provider access.
 - Run `npm run lottery:release-check` in `one-web` when frontend lottery release evidence needs to be committed or handed off. It refreshes route smoke, writes the human-readable report to `one-web/reports/lottery-release-evidence.md`, and verifies the production build.
 - Use `npm run lottery:release-evidence` only when the report needs to be refreshed without a production build.
+- Use `npm run lottery:release-evidence:check` to verify the committed Markdown report still matches the current smoke summary and fixture without rewriting files.
 - Browser QA for those routes still requires a valid local login session and backend service. Proxy-related provider failures, including HTTP 403 when a proxy is enabled, should be recorded as provider/sync evidence rather than treated as route-render failures.
 
 ## Protected Browser QA

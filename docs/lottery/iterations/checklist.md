@@ -734,10 +734,10 @@ Goal: make frontend lottery release validation harder to run incompletely by com
 
 ### Wave 25B: Freshness Guard
 
-- [ ] Add a check mode that compares the generated Markdown evidence with the current smoke summary and fixture.
-- [ ] Fail when the committed Markdown evidence is stale.
-- [ ] Keep the check deterministic enough for local and CI use.
-- [ ] Run freshness-guard verification, update docs, commit, and push.
+- [x] Add a check mode that compares the generated Markdown evidence with the current smoke summary and fixture.
+- [x] Fail when the committed Markdown evidence is stale.
+- [x] Keep the check deterministic enough for local and CI use.
+- [x] Run freshness-guard verification, update docs, commit, and push. Verification: `one-web npm run lottery:release-check`; `one-web npm run lottery:release-evidence:check`; `git diff --check`.
 
 ## Documentation And Delivery
 
