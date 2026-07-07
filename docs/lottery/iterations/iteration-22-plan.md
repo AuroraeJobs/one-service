@@ -50,6 +50,8 @@ Acceptance:
 
 Goal: make daily operation readable on narrow screens and in dark mode.
 
+Status: shipped. Wave 22C tightened shared mobile/dark-mode behavior for export and maintenance tables, ticket-pack action rows, recommendation/mobile action rails, governance handoff actions, and report sections without changing backend contracts.
+
 - Review workbench, overview, tickets, ticket packs, recommendations, governance, simulator, research, and exports.
 - Fix text overflow, cramped actions, card heights, and dark-mode contrast issues.
 - Prefer card/list layouts over wide tables on mobile.

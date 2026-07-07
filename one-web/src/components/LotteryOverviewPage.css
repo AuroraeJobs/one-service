@@ -1402,6 +1402,38 @@
   margin-top: 14px;
 }
 
+.lottery-export-page .ant-table-wrapper,
+.lottery-governance-page .ant-table-wrapper,
+.lottery-ticket-pack-page .ant-table-wrapper,
+.lottery-simulator-page .ant-table-wrapper {
+  max-width: 100%;
+}
+
+.lottery-export-page .ant-table,
+.lottery-governance-page .ant-table,
+.lottery-ticket-pack-page .ant-table,
+.lottery-simulator-page .ant-table {
+  background: var(--app-surface) !important;
+  color: var(--app-text) !important;
+}
+
+.lottery-export-page .ant-table-cell,
+.lottery-governance-page .ant-table-cell,
+.lottery-ticket-pack-page .ant-table-cell,
+.lottery-simulator-page .ant-table-cell {
+  background: var(--app-surface) !important;
+  border-color: var(--app-border) !important;
+  color: var(--app-text) !important;
+}
+
+.lottery-export-page .ant-table-thead > tr > th,
+.lottery-governance-page .ant-table-thead > tr > th,
+.lottery-ticket-pack-page .ant-table-thead > tr > th,
+.lottery-simulator-page .ant-table-thead > tr > th {
+  background: var(--app-surface-elevated) !important;
+  color: var(--app-text) !important;
+}
+
 .lottery-ledger-backtest-strip {
   display: flex;
   flex-wrap: wrap;
@@ -2959,6 +2991,20 @@
   margin-top: 14px;
 }
 
+.lottery-ticket-pack-actions,
+.lottery-report-preset-bar,
+.lottery-mobile-list .ant-space,
+.lottery-recommendation-lane .ant-space {
+  scrollbar-width: thin;
+}
+
+.lottery-ticket-pack-actions .ant-btn,
+.lottery-report-preset-bar .ant-btn,
+.lottery-mobile-list .ant-btn,
+.lottery-recommendation-lane .ant-btn {
+  flex: 0 0 auto;
+}
+
 .lottery-ticket-pack-preview,
 .lottery-ticket-pack-item-list,
 .lottery-ticket-pack-list {
@@ -3005,6 +3051,11 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
+}
+
+.lottery-ticket-pack-head > .ant-space,
+.lottery-governance-hero > .ant-space {
+  max-width: 100%;
 }
 
 .lottery-ticket-pack-head > div {
@@ -7289,6 +7340,19 @@ button.lottery-latest-vs-card:hover {
     flex-direction: column;
   }
 
+  .lottery-report-preset-bar,
+  .lottery-ticket-pack-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    max-width: 100%;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .lottery-report-section-head {
+    flex-direction: column;
+  }
+
   .lottery-report-builder .ant-checkbox-group {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -7347,6 +7411,19 @@ button.lottery-latest-vs-card:hover {
   .lottery-mobile-list .ant-btn,
   .lottery-recommendation-lane .ant-btn {
     flex: 0 0 auto;
+  }
+
+  .lottery-export-page .ant-table-wrapper,
+  .lottery-ticket-pack-page .ant-table-wrapper {
+    overflow-x: auto;
+  }
+
+  .lottery-ticket-pack-head > .ant-space,
+  .lottery-governance-hero > .ant-space,
+  .lottery-recommendation-card-head > .ant-space {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 2px;
   }
 
   .lottery-ticket-import-mobile-list {

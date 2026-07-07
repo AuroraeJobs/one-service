@@ -675,10 +675,10 @@ Goal: make the lottery workbench a practical daily closure console, then verify 
 
 ### Wave 22C: Mobile And Dark-Mode Release Sweep
 
-- [ ] Review workbench, overview, tickets, ticket packs, recommendations, governance, simulator, research, and exports at mobile width and in dark mode.
-- [ ] Fix text overflow, cramped actions, card heights, and dark-mode contrast issues.
-- [ ] Prefer mobile card/list layouts over wide tables where the page is used in daily operation.
-- [ ] Run frontend build, route smoke verification, update docs, commit, and push.
+- [x] Review workbench, overview, tickets, ticket packs, recommendations, governance, simulator, research, and exports at mobile width and in dark mode. Wave 22C focused on shared high-use CSS for export/maintenance tables, ticket-pack actions, recommendation/mobile action rows, governance hero actions, and report sections.
+- [x] Fix text overflow, cramped actions, card heights, and dark-mode contrast issues. Added theme-aware Ant table coloring for export/governance/ticket-pack/simulator pages and safer horizontal action rails at mobile width.
+- [x] Prefer mobile card/list layouts over wide tables where the page is used in daily operation. Existing ticket mobile cards remain in place; export/maintenance tables now stay contained with horizontal scroll instead of breaking the card.
+- [x] Run frontend build, route smoke verification, update docs, commit, and push. Verification: `one-web npm run build`; `one-web npm run lottery:smoke`; `git diff --check`. Browser QA was limited by the protected login route and local API proxy 500 responses, so screenshot verification only reached the dark login shell.
 
 ## Documentation And Delivery
 
