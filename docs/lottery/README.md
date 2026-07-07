@@ -60,6 +60,8 @@ run release evidence script -> review generated Markdown report -> attach browse
 
 For protected browser QA, use [Quality gates](iterations/quality-gates.md). A valid `aurorae_auth` login session and running backend are required before screenshots are meaningful; `ECONNREFUSED` on `/lottery/records/draws?page=0&size=500` is a backend/proxy blocker, not a page-layout failure.
 
+The latest generated frontend release evidence is written to `one-web/reports/lottery-release-evidence.md`. Regenerate it with `npm run lottery:release-evidence` from `one-web` after changing protected lottery routes, smoke fixture coverage, source guards, or release-readiness copy.
+
 ## Long Iteration
 
 Iteration 10 is the longer platform roadmap after the workbench foundation. It should be delivered in waves:

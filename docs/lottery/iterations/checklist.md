@@ -716,10 +716,10 @@ Goal: make lottery release evidence easy to read, commit, and hand off by turnin
 
 ### Wave 24B: Evidence Surface Handoff
 
-- [ ] Link the evidence report from the lottery README and quality gates.
-- [ ] Add guidance for when to regenerate the report.
-- [ ] Record any manual screenshot paths or blockers next to the generated report when browser QA is available.
-- [ ] Run documentation diff check, update checklist, commit, and push.
+- [x] Link the evidence report from the lottery README and quality gates.
+- [x] Add guidance for when to regenerate the report.
+- [x] Record any manual screenshot paths or blockers next to the generated report when browser QA is available.
+- [x] Run documentation diff check, update checklist, commit, and push. Verification: `git diff --check`.
 
 ## Documentation And Delivery
 
