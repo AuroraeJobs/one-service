@@ -695,10 +695,10 @@ Goal: reduce the protected-route QA gap by making static smoke catch release-cri
 
 ### Wave 23B: Browser QA Readiness Notes
 
-- [ ] Document local prerequisites for protected route screenshots: valid `aurorae_auth`, backend service, and lottery proxy endpoints.
-- [ ] Record the known blocker signature for backend proxy `ECONNREFUSED` on `/lottery/records/draws`.
-- [ ] Add a concise browser-QA fallback note to the lottery README or quality gate docs.
-- [ ] Run documentation diff check, update checklist, commit, and push.
+- [x] Document local prerequisites for protected route screenshots: valid `aurorae_auth`, backend service, and lottery proxy endpoints.
+- [x] Record the known blocker signature for backend proxy `ECONNREFUSED` on `/lottery/records/draws?page=0&size=500`.
+- [x] Add a concise browser-QA fallback note to the lottery README and quality gate docs.
+- [x] Run documentation diff check, update checklist, commit, and push. Verification: `git diff --check`.
 
 ## Documentation And Delivery
 

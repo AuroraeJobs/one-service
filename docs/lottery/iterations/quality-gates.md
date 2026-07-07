@@ -29,6 +29,16 @@ Use these gates when finishing a lottery milestone.
 - Run `npm run lottery:smoke` in `one-web` after changing `/lottery/workbench`, `/lottery/predictions/decision`, `/lottery/tickets`, `/lottery/research`, or `/lottery/exports`; this fixture smoke does not require live provider access.
 - Browser QA for those routes still requires a valid local login session and backend service. Proxy-related provider failures, including HTTP 403 when a proxy is enabled, should be recorded as provider/sync evidence rather than treated as route-render failures.
 
+## Protected Browser QA
+
+Use this gate when a lottery milestone needs screenshots or manual browser inspection for protected routes.
+
+- Confirm the browser has a valid local login session before opening `/lottery/*`. The frontend guard reads local storage key `aurorae_auth`; if it is missing or stale, protected lottery routes redirect to `/login` and the screenshot only proves the login shell.
+- Confirm the local backend service is running before judging route rendering. The Vite proxy must be able to reach project-owned lottery APIs such as `/lottery/records/draws`, `/lottery/workbench/summary`, and `/lottery/providers/health`.
+- Treat `ECONNREFUSED` on `/lottery/records/draws?page=0&size=500` as a backend/proxy availability blocker, not a frontend dark-mode or layout failure.
+- If login or backend availability blocks screenshots, still run `npm run lottery:smoke` and `npm run build` in `one-web`, record the blocker signature, and continue only after noting that browser evidence is incomplete.
+- Do not add frontend bypasses for production authentication behavior just to make screenshots easier.
+
 ## Data
 
 - Red numbers are normalized to six sorted two-digit strings.

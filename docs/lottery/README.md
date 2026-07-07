@@ -58,6 +58,8 @@ Iteration 23 should start from `docs/lottery/iterations/iteration-23-plan.md` an
 run protected frontend smoke -> confirm browser QA prerequisites -> capture screenshots when login/backend are available
 ```
 
+For protected browser QA, use [Quality gates](iterations/quality-gates.md). A valid `aurorae_auth` login session and running backend are required before screenshots are meaningful; `ECONNREFUSED` on `/lottery/records/draws?page=0&size=500` is a backend/proxy blocker, not a page-layout failure.
+
 ## Long Iteration
 
 Iteration 10 is the longer platform roadmap after the workbench foundation. It should be delivered in waves:
