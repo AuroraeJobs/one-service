@@ -38,6 +38,8 @@ historical records -> stable sync -> statistics cockpit -> prediction replay -> 
 
 The module should become a daily-use lottery research cockpit inside the life data area, similar to how the stock module became an investment cockpit.
 
+For the 0-12 month direction after the completed platform, QA, and release-evidence waves, use [Lottery Long-Term Plan](long-term-plan.md). This roadmap remains the historical module direction and architecture reference; the long-term plan carries candidate future iterations and review cadence.
+
 ## Architecture Principles
 
 - Controllers expose project-owned APIs only.

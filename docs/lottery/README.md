@@ -27,6 +27,7 @@ mvn -version
 
 - [Menu and version plan](menu-and-version-plan.md): target lottery menus and release slices.
 - [Roadmap](iterations/roadmap.md): module direction and phased plan.
+- [Long-term plan](iterations/long-term-plan.md): 0-12 month direction, candidate future iterations, risks, and review cadence.
 - [Checklist](iterations/checklist.md): durable task board.
 - [Quality gates](iterations/quality-gates.md): verification rules for backend, frontend, and data behavior.
 - [Frontend one-month plan](iterations/frontend-one-month-version-plan.md): next month frontend-led experience and power-tool plan.
