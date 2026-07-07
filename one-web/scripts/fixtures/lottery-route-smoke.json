@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 27 Week 1 workbench issue focus smoke",
+  "target": "Iteration 28 Wave 28A attribution handoff smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -47,6 +47,21 @@
         "CHECKED: '已兑奖'",
         "LOTTERY_RECOMMENDATION_REFRESH: '推荐刷新'",
         "LOTTERY_SIMULATION_RUN: '沙盘模拟'"
+      ]
+    },
+    {
+      "scope": "outcome attribution handoff map",
+      "file": "src/components/LotteryOutcomeAttributionPage.tsx",
+      "includes": [
+        "const buildAttributionHandoffs",
+        "组合归因",
+        "票包执行",
+        "沙盘提案",
+        "保存决策",
+        "推荐线索",
+        "证据趋势",
+        "lotteryStatusLabel(item.executionState)",
+        "lotteryCodeLabel(item.type)"
       ]
     }
   ],

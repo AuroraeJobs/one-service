@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 27 Week 1 workbench issue focus smoke",
-  "generatedAt": "2026-07-07T12:26:11.987Z",
+  "target": "Iteration 28 Wave 28A attribution handoff smoke",
+  "generatedAt": "2026-07-07T12:36:33.905Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 17,
-  "checkCount": 387,
+  "checkCount": 397,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [

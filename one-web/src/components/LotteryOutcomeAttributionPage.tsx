@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Empty, Progress, Space, Spin, Tag } from 'antd';
 import {
   AppstoreOutlined,
@@ -14,7 +14,7 @@ import {
   lotteryOutcomeApi,
   type LotteryOutcomeAttribution
 } from '../services/api';
-import { lotteryStatusLabel } from '../utils/lotteryStatusLabel';
+import { lotteryCodeLabel, lotteryStatusLabel } from '../utils/lotteryStatusLabel';
 import './LotteryOverviewPage.css';
 
 const formatMoney = (value?: number) => value === undefined || value === null ? '-' : `¥${Number(value).toFixed(2)}`;
@@ -34,6 +34,121 @@ const stateColor = (state?: string) => {
 };
 
 const distributionRows = (distribution?: Record<string, number>) => Object.entries(distribution || {});
+
+const qualityFor = (params: { samples?: number; warnings?: number; score?: number; stale?: boolean }) => {
+  const samples = params.samples || 0;
+  const warnings = params.warnings || 0;
+  if (!samples) {
+    return { label: '样本不足', color: 'default', description: '需要更多结果进入归因链路' };
+  }
+  if (params.stale || warnings > 0) {
+    return { label: '需复核', color: 'gold', description: '存在警示或证据需要人工确认' };
+  }
+  if ((params.score || 0) >= 80 || samples >= 3) {
+    return { label: '稳定', color: 'green', description: '证据覆盖较完整，可进入复盘' };
+  }
+  return { label: '观察中', color: 'blue', description: '已有结果，但仍需继续跟踪' };
+};
+
+const average = (values: Array<number | undefined>) => {
+  const numericValues = values.filter((value): value is number => typeof value === 'number');
+  if (!numericValues.length) {
+    return undefined;
+  }
+  return numericValues.reduce((sum, value) => sum + value, 0) / numericValues.length;
+};
+
+const buildAttributionHandoffs = (selected?: LotteryOutcomeAttribution) => {
+  const portfolioCount = selected?.portfolioContributions?.length || 0;
+  const ticketPackCount = selected?.ticketPackExecutions?.length || 0;
+  const simulatorCount = selected?.simulationDrifts?.length || 0;
+  const decisionCount = selected?.decisionContributions?.length || 0;
+  const recommendationTrailCount = selected?.timeline?.filter(item => /RECOMMEND|推荐/i.test(`${item.type || ''} ${item.title || ''}`)).length || 0;
+  const portfolioWarnings = selected?.portfolioContributions?.reduce((sum, item) => sum + (item.warningCount || 0), 0) || 0;
+  const portfolioScore = average(selected?.portfolioContributions?.map(item => item.healthScore) || []);
+  const unsettledPacks = selected?.ticketPackExecutions?.filter(item => (item.savedTicketCount || 0) < (item.itemCount || 0)).length || 0;
+  const driftWarnings = selected?.simulationDrifts?.filter(item => item.driftState === 'WATCH_RISK' || item.driftState === 'RECALIBRATE').length || 0;
+
+  return [
+    {
+      key: 'portfolio',
+      title: '组合归因',
+      metric: `${portfolioCount} 个组合`,
+      description: portfolioCount ? `平均健康度 ${portfolioScore === undefined ? '-' : Math.round(portfolioScore)}` : '等待组合贡献进入复盘',
+      path: '/lottery/strategy-portfolios',
+      quality: qualityFor({ samples: portfolioCount, warnings: portfolioWarnings, score: portfolioScore })
+    },
+    {
+      key: 'ticket-pack',
+      title: '票包执行',
+      metric: `${ticketPackCount} 个票包`,
+      description: unsettledPacks ? `${unsettledPacks} 个票包仍有保存缺口` : '票包保存状态可进入核对',
+      path: '/lottery/ticket-packs',
+      quality: qualityFor({ samples: ticketPackCount, warnings: unsettledPacks })
+    },
+    {
+      key: 'simulator',
+      title: '沙盘提案',
+      metric: `${simulatorCount} 次提案`,
+      description: driftWarnings ? `${driftWarnings} 项漂移需要观察` : '模拟结果已接入当期开奖',
+      path: '/lottery/simulator',
+      quality: qualityFor({ samples: simulatorCount, warnings: driftWarnings })
+    },
+    {
+      key: 'decision',
+      title: '保存决策',
+      metric: `${decisionCount} 组决策`,
+      description: `${selected?.winningTicketCount || 0} 张中奖票据已纳入结果`,
+      path: '/lottery/predictions/decision',
+      quality: qualityFor({ samples: decisionCount, score: selected?.roiPercent })
+    },
+    {
+      key: 'recommendation',
+      title: '推荐线索',
+      metric: `${recommendationTrailCount} 条线索`,
+      description: recommendationTrailCount ? '推荐事件已进入归因时间线' : '等待推荐状态与结果回连',
+      path: '/lottery/recommendations',
+      quality: qualityFor({ samples: recommendationTrailCount })
+    }
+  ];
+};
+
+const buildTrendRows = (selected?: LotteryOutcomeAttribution) => {
+  if (!selected) {
+    return [];
+  }
+  const ruleRows = (selected.decisionContributions || []).map(item => ({
+    key: `rule-${item.decisionSetId || item.title}`,
+    source: '规则',
+    name: item.ruleName || item.title || item.decisionSetId || '-',
+    result: `${item.winningCandidateCount || 0} 个命中候选 · ${formatMoney(item.netResult)}`,
+    state: item.contributionState,
+    path: '/lottery/predictions/decision',
+    quality: qualityFor({ samples: item.winningCandidateCount || 0, score: item.roiPercent })
+  }));
+  const sourceRows = (selected.ticketPackExecutions || []).map(item => ({
+    key: `pack-${item.packId || item.title}`,
+    source: '来源',
+    name: item.title || item.packId || '-',
+    result: `${item.savedTicketCount || 0}/${item.itemCount || 0} 已保存 · ${formatMoney(item.proposedCost)}`,
+    state: item.executionState || item.status,
+    path: '/lottery/ticket-packs',
+    quality: qualityFor({ samples: item.itemCount || 0, warnings: (item.savedTicketCount || 0) < (item.itemCount || 0) ? 1 : 0 })
+  }));
+  const recommendationRows = (selected.timeline || [])
+    .filter(item => /RECOMMEND|推荐/i.test(`${item.type || ''} ${item.title || ''}`))
+    .map(item => ({
+      key: `recommendation-${item.timestamp}-${item.title}`,
+      source: '推荐',
+      name: item.title || lotteryCodeLabel(item.type),
+      result: `${lotteryStatusLabel(item.state)} · ${formatTime(item.timestamp)}`,
+      state: item.state,
+      path: item.path || '/lottery/recommendations',
+      quality: qualityFor({ samples: 1 })
+    }));
+
+  return [...ruleRows, ...sourceRows, ...recommendationRows];
+};
 
 const LotteryOutcomeAttributionPage = () => {
   const navigate = useNavigate();
@@ -93,6 +208,8 @@ const LotteryOutcomeAttributionPage = () => {
     if (outcomeFilter === 'WATCH') return item.calibrationState === 'WATCH_RISK' || item.calibrationState === 'RECALIBRATE';
     return true;
   });
+  const handoffCards = useMemo(() => buildAttributionHandoffs(selected), [selected]);
+  const trendRows = useMemo(() => buildTrendRows(selected), [selected]);
 
   return (
     <LifePageShell
@@ -144,6 +261,33 @@ const LotteryOutcomeAttributionPage = () => {
                   <article><Tag color={stateColor(selected.calibrationState)}>{lotteryStatusLabel(selected.calibrationState)}</Tag><span>校准状态</span></article>
                 </section>
 
+                <section className="lottery-attribution-handoff-map">
+                  {handoffCards.map(item => (
+                    <button key={item.key} type="button" onClick={() => navigate(item.path)}>
+                      <div>
+                        <strong>{item.title}</strong>
+                        <span>{item.description}</span>
+                      </div>
+                      <small>{item.metric}</small>
+                      <Tag color={item.quality.color}>{item.quality.label}</Tag>
+                    </button>
+                  ))}
+                </section>
+
+                <Card className="life-panel-card lottery-clean-panel" title="证据趋势">
+                  <div className="lottery-attribution-trend-table">
+                    {trendRows.length ? trendRows.map(item => (
+                      <button key={item.key} type="button" onClick={() => navigate(item.path)}>
+                        <Tag>{item.source}</Tag>
+                        <span>{item.name}</span>
+                        <small>{item.result}</small>
+                        <Tag color={stateColor(item.state)}>{lotteryStatusLabel(item.state)}</Tag>
+                        <Tag color={item.quality.color}>{item.quality.label}</Tag>
+                      </button>
+                    )) : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无规则、来源或推荐趋势" />}
+                  </div>
+                </Card>
+
                 <section className="lottery-outcome-card-grid">
                   <Card className="life-panel-card lottery-clean-panel" title={<Space><AppstoreOutlined />组合贡献</Space>}>
                     <div className="lottery-outcome-table">
@@ -151,7 +295,7 @@ const LotteryOutcomeAttributionPage = () => {
                         <button key={item.portfolioId || item.name} type="button" onClick={() => navigate('/lottery/strategy-portfolios')}>
                           <span>{item.name || item.portfolioId || '-'}</span>
                           <Progress percent={item.healthScore || 0} size="small" />
-                          <Tag color={stateColor(item.contributionState)}>{item.contributionState}</Tag>
+                          <Tag color={stateColor(item.contributionState)}>{lotteryStatusLabel(item.contributionState)}</Tag>
                         </button>
                       )) : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无组合贡献" />}
                     </div>
@@ -163,7 +307,7 @@ const LotteryOutcomeAttributionPage = () => {
                         <button key={item.packId || item.title} type="button" onClick={() => navigate('/lottery/ticket-packs')}>
                           <span>{item.title || item.packId}</span>
                           <small>{item.savedTicketCount || 0}/{item.itemCount || 0} 已保存 · {formatMoney(item.proposedCost)}</small>
-                          <Tag color={stateColor(item.executionState)}>{item.executionState}</Tag>
+                          <Tag color={stateColor(item.executionState)}>{lotteryStatusLabel(item.executionState)}</Tag>
                         </button>
                       )) : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无票包执行" />}
                     </div>
@@ -175,7 +319,7 @@ const LotteryOutcomeAttributionPage = () => {
                         <button key={item.auditId || item.generatedAt} type="button" onClick={() => navigate('/lottery/simulator')}>
                           <span>{lotteryStatusLabel(item.riskLevel)} · {item.candidateCount || 0} 候选</span>
                           <small>中奖票据 {item.actualWinningTicketCount || 0} · {formatTime(item.generatedAt)}</small>
-                          <Tag color={stateColor(item.driftState)}>{item.driftState}</Tag>
+                          <Tag color={stateColor(item.driftState)}>{lotteryStatusLabel(item.driftState)}</Tag>
                         </button>
                       )) : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无沙盘归因" />}
                     </div>
@@ -192,7 +336,7 @@ const LotteryOutcomeAttributionPage = () => {
                         <button key={item.decisionSetId || item.title} type="button" onClick={() => navigate('/lottery/predictions/decision')}>
                           <span>{item.title || item.decisionSetId}</span>
                           <small>{item.ruleName || '-'} · {formatMoney(item.netResult)}</small>
-                          <Tag color={stateColor(item.contributionState)}>{item.contributionState}</Tag>
+                          <Tag color={stateColor(item.contributionState)}>{lotteryStatusLabel(item.contributionState)}</Tag>
                         </button>
                       ))}
                     </div>
@@ -203,9 +347,9 @@ const LotteryOutcomeAttributionPage = () => {
                   <div className="lottery-outcome-timeline">
                     {selected.timeline?.length ? selected.timeline.map(item => (
                       <button key={`${item.type}-${item.timestamp}-${item.title}`} type="button" onClick={() => navigate(item.path || '/lottery/outcomes')}>
-                        <Tag>{item.type}</Tag>
+                        <Tag>{lotteryCodeLabel(item.type)}</Tag>
                         <span>{item.title}</span>
-                        <small>{item.state || '-'} · {formatTime(item.timestamp)}</small>
+                        <small>{lotteryStatusLabel(item.state)} · {formatTime(item.timestamp)}</small>
                       </button>
                     )) : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无归因时间线" />}
                   </div>

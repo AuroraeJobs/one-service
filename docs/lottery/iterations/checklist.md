@@ -779,6 +779,32 @@ Goal: make `/lottery/workbench` answer the current draw-cycle question faster: w
 - [x] Decide whether the next-step strip should participate in widget settings as a separate widget or stay inside `期号焦点`. Decision: keep it inside `期号焦点` so widget settings stay stable.
 - [x] Run route smoke verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm exec eslint -- src/components/LotteryWorkbenchPage.tsx`; `git diff --check`.
 
+## Iteration 28: Strategy Outcome Attribution 2.0
+
+Goal: make `/lottery/outcomes` explain the closed loop from strategy evidence to recommendation, ticket/action, and actual issue outcome.
+
+### Wave 28A: Attribution Handoff Map
+
+- [x] Add attribution handoffs for portfolio, ticket pack, simulator, saved decision, and recommendation follow-up.
+- [x] Add source/rule/recommendation trend rows with evidence quality labels.
+- [x] Keep Wave 28A derived from the existing outcome attribution DTO.
+- [x] Localize exposed status/code labels in outcome attribution rows.
+- [x] Add dark-mode and mobile responsive CSS for the new attribution surfaces.
+- [x] Extend route smoke source guards for the new labels and helpers.
+- [x] Run route smoke verification, update docs, commit, and push. Verification: `one-web npm run lottery:smoke`; `one-web npm exec eslint -- src/components/LotteryOutcomeAttributionPage.tsx`; `git diff --check`.
+
+### Wave 28B: Aggregated Attribution Rollups
+
+- [ ] Add backend rollups by issue, portfolio, rule, source, recommendation lifecycle, simulator risk, and ticket-pack execution state.
+- [ ] Add bounded frontend rollup filters for latest issue, recent 10 issues, month-to-date, and all tracked outcomes.
+- [ ] Add tests for rollup aggregation and empty-state semantics.
+
+### Wave 28C: Review And Export Connections
+
+- [ ] Connect attribution quality summaries into governance and month-end review.
+- [ ] Add attribution closure preset metadata to exports.
+- [ ] Record stale or missing attribution links in release evidence warnings.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.
