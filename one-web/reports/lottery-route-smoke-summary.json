@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 40 Wave 40B next-phase candidates smoke",
-  "generatedAt": "2026-07-08T11:16:53.132Z",
+  "target": "Iteration 40 Wave 40C release evidence handoff smoke",
+  "generatedAt": "2026-07-08T11:19:39.550Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 18,
-  "checkCount": 606,
+  "checkCount": 609,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
@@ -151,7 +151,7 @@
       "label": "导出审计",
       "component": "LotteryExportMaintenancePage",
       "mockApiCount": 4,
-      "emptyStateCount": 39,
+      "emptyStateCount": 40,
       "errorStateCount": 4
     }
   ]

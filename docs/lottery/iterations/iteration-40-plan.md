@@ -22,3 +22,5 @@ Status: completed by surfacing evidence quality trend, Provider reliability, and
 
 - Add a release-evidence handoff for the five-iteration planning review.
 - Decide whether planning checkpoints need archived report snapshots or can remain month-end evidence.
+
+Status: completed with a `V40长期计划复盘` release-readiness handoff to month-end review; planning checkpoints remain month-end evidence until they become formal release artifacts.

@@ -540,6 +540,13 @@ const LotteryExportMaintenancePage = () => {
       path: '/lottery/research/notebook?evidence=ARCHIVE_REVIEW'
     },
     {
+      key: 'v40-planning-review',
+      label: 'V40长期计划复盘',
+      status: 'PASS',
+      message: '五轮复盘检查点已接入月末复盘、候选主题和长期研究证据；当前保留为月末证据，不新增历史快照',
+      path: '/lottery/month-end'
+    },
+    {
       key: 'month-end-dashboard',
       label: '月末复盘仪表盘',
       status: 'PASS',

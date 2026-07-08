@@ -1072,8 +1072,8 @@ Goal: make the 35-39 archive-review work visible as a planning checkpoint, then 
 
 ### Wave 40C: Release Evidence Handoff
 
-- [ ] Add a release-evidence handoff for the five-iteration planning review.
-- [ ] Decide whether planning checkpoints need archived report snapshots or can remain month-end evidence.
+- [x] Add a release-evidence handoff for the five-iteration planning review.
+- [x] Decide whether planning checkpoints need archived report snapshots or can remain month-end evidence. Decision: keep as month-end evidence for now; add archived snapshots only if planning checkpoints become release artifacts.
 
 ## Documentation And Delivery
 
