@@ -963,9 +963,9 @@ Goal: turn month-end archive search results into explicit next actions without s
 
 ### Wave 35C: Governance Connection
 
-- [ ] Connect recurring archive-review pressure into governance anomaly context.
-- [ ] Reuse existing governance, month-end, and export evidence paths before adding any persistence.
-- [ ] Add export evidence labels only if the review queue needs durable report packaging.
+- [x] Connect recurring archive-review pressure into governance anomaly context.
+- [x] Reuse existing governance, month-end, and export evidence paths before adding any persistence.
+- [x] Add export evidence labels only if the review queue needs durable report packaging. Decision: reuse the existing V34 archive search export preset; no new preset needed.
 
 ## Documentation And Delivery
 

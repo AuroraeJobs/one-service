@@ -22,3 +22,5 @@ Status: completed with a frontend-derived `archiveReviewPressure` handoff on the
 - Connect recurring archive-review pressure into governance anomaly context.
 - Reuse existing governance, month-end, and export evidence paths before adding any persistence.
 - Add export evidence labels only if the review queue needs durable report packaging.
+
+Status: completed by adding archive review pressure to governance anomaly watch and drift trends while reusing the V34 archive search evidence preset.

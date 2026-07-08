@@ -269,6 +269,23 @@ const LotteryGovernancePage = () => {
     ];
   }, [attributionRollup, audits, operations, portfolios, preference, recommendationRollup, reminders, ticketPacks, workbench]);
 
+  const archiveReviewPressure = useMemo(() => {
+    const releaseWarnings = (workbench?.releaseCheckSummary?.checks || []).filter(item => item.status && item.status !== 'PASS');
+    const attributionWarnings = attributionWarningRows(attributionRollup);
+    const staleRecommendations = recommendationRollup?.staleCount || 0;
+    const dueReminders = reminders?.dueCount || 0;
+    const recentExportEvents = recentAuditEvents(audits, 14).filter(event => event.eventType?.includes('EXPORT'));
+    const missingExportEvidence = recentExportEvents.length ? 0 : 1;
+    const count = releaseWarnings.length + attributionWarnings.length + staleRecommendations + dueReminders + missingExportEvidence;
+    return {
+      count,
+      status: releaseWarnings.some(item => item.status === 'FAILED') ? 'FAILED' as const : count ? 'WARNING' as const : 'PASS' as const,
+      detail: `发布 ${releaseWarnings.length} · 归因 ${attributionWarnings.length} · 推荐过期 ${staleRecommendations} · 提醒 ${dueReminders}`,
+      trend: recentExportEvents.length ? `近14天导出证据 ${recentExportEvents.length} 条` : '近14天暂无导出证据',
+      path: '/lottery/month-end'
+    };
+  }, [attributionRollup, audits, recommendationRollup?.staleCount, reminders?.dueCount, workbench?.releaseCheckSummary?.checks]);
+
   const anomalyItems = useMemo<GovernanceAnomaly[]>(() => {
     const highRiskLimit = preference?.governanceSimulatorHighRiskLimit ?? 2;
     const ticketPackExposureThreshold = preference?.governanceTicketPackBudgetExposurePercent ?? 90;
@@ -362,6 +379,18 @@ const LotteryGovernancePage = () => {
       });
     }
 
+    if (archiveReviewPressure.count > 0) {
+      items.push({
+        key: 'archive-review-pressure',
+        title: '归档复核压力',
+        status: archiveReviewPressure.status,
+        count: archiveReviewPressure.count,
+        detail: archiveReviewPressure.detail,
+        trend: archiveReviewPressure.trend,
+        path: archiveReviewPressure.path
+      });
+    }
+
     if (syncWarningCount || syncSummary?.latestStatus === 'FAILED') {
       items.push({
         key: 'provider-reliability',
@@ -378,7 +407,7 @@ const LotteryGovernancePage = () => {
       const weight = (status: GovernanceAnomaly['status']) => status === 'FAILED' ? 0 : status === 'WARNING' ? 1 : 2;
       return weight(left.status) - weight(right.status) || right.count - left.count;
     });
-  }, [attributionRollup, audits, operations, preference, recommendationRollup, ticketPacks, workbench]);
+  }, [archiveReviewPressure, attributionRollup, audits, operations, preference, recommendationRollup, ticketPacks, workbench]);
 
   const driftTrendItems = useMemo<GovernanceTrend[]>(() => {
     const recentEvents = recentAuditEvents(audits, 14);
@@ -423,6 +452,14 @@ const LotteryGovernancePage = () => {
         path: '/lottery/outcomes'
       },
       {
+        key: 'archive-review-pressure',
+        label: '归档复核压力',
+        value: `${archiveReviewPressure.count} 项`,
+        detail: archiveReviewPressure.detail,
+        status: archiveReviewPressure.status,
+        path: archiveReviewPressure.path
+      },
+      {
         key: 'operations-freshness',
         label: '运营健康刷新',
         value: formatTime(operations?.generatedAt),
@@ -431,7 +468,7 @@ const LotteryGovernancePage = () => {
         path: '/lottery/workbench'
       }
     ];
-  }, [attributionRollup, audits, operations, recommendationRollup, workbench]);
+  }, [archiveReviewPressure, attributionRollup, audits, operations, recommendationRollup, workbench]);
 
   const overallScore = domains.length ? Math.round(domains.reduce((sum, item) => sum + item.score, 0) / domains.length) : 0;
   const warningCount = domains.filter(item => item.status !== 'PASS').length;
