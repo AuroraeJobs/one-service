@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 36 Wave 36A archive note handoff smoke",
+  "target": "Iteration 36 Wave 36B workbench note handoff smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -20,6 +20,11 @@
         "确认导出健康",
         "const issueNextItems",
         "archiveReviewPressure",
+        "archiveReviewNotePath",
+        "buildWorkbenchPath",
+        "ARCHIVE_REVIEW",
+        "记录复核",
+        "lottery-workbench-archive-note-bar",
         "archive-review",
         "归档复核",
         "归档复核 ${archiveReviewPressure.count}",

@@ -137,6 +137,17 @@ const workbenchIssueHandoffPaths = {
   monthEnd: '/lottery/month-end'
 } as const;
 
+const buildWorkbenchPath = (base: string, params: Record<string, string | number | undefined>) => {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== '') {
+      query.set(key, String(value));
+    }
+  });
+  const serialized = query.toString();
+  return serialized ? `${base}?${serialized}` : base;
+};
+
 interface WorkbenchActionQueueItem {
   key: string;
   group: string;
@@ -1226,6 +1237,16 @@ const LotteryWorkbenchPage = () => {
     };
   }, [actionQueueItems, recentWork.exports.length, releaseCheckSummary?.checks, reminders?.dueCount]);
 
+  const archiveReviewNotePath = useMemo(() => buildWorkbenchPath('/lottery/research/notebook', {
+    title: '工作台归档复核',
+    status: 'ACTIVE',
+    evidenceKey: `workbench-archive-review:${archiveReviewPressure.count}`,
+    evidenceType: 'ARCHIVE_REVIEW',
+    evidenceTitle: `工作台归档复核 ${archiveReviewPressure.count} 项`,
+    sourceId: 'workbench',
+    path: buildWorkbenchPath('/lottery/exports', { preset: 'v34-archive-search' })
+  }), [archiveReviewPressure.count]);
+
   const issueNextItems = useMemo<WorkbenchIssueNextItem[]>(() => {
     const items: WorkbenchIssueNextItem[] = [];
     const releaseBlockers = (releaseCheckSummary?.checks || []).filter(item => item.status && item.status !== 'PASS');
@@ -1892,6 +1913,14 @@ const LotteryWorkbenchPage = () => {
                 </button>
               ))}
             </div>
+            {archiveReviewPressure.count > 0 ? (
+              <div className="lottery-workbench-archive-note-bar">
+                <span>归档复核可沉淀为研究笔记，保存复核原因、证据入口和后续动作。</span>
+                <Button size="small" icon={<BookOutlined />} onClick={() => navigate(archiveReviewNotePath)}>
+                  记录复核
+                </Button>
+              </div>
+            ) : null}
             <div className="lottery-workbench-issue-focus">
               {issueFocusItems.map(item => (
                 <button key={item.key} type="button" onClick={() => navigate(item.path)}>

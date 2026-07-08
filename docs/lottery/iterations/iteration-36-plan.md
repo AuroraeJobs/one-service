@@ -14,6 +14,8 @@ Goal: make archive review conclusions easy to preserve as research evidence whil
 - Keep the primary workbench action pointed at the review queue.
 - Add smoke checks for the note handoff.
 
+Status: completed with a secondary workbench `记录复核` handoff that opens the research notebook with `ARCHIVE_REVIEW` evidence context.
+
 ## Wave 36C: Governance Note Handoff
 
 - Add governance context for preserving archive-review decisions.

@@ -1052,6 +1052,28 @@
   transform: translateY(-1px);
 }
 
+.lottery-workbench-archive-note-bar {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+}
+
+.lottery-workbench-archive-note-bar span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .lottery-workbench-issue-next b {
   color: var(--module-accent, #0071e3);
   font-size: 18px;
@@ -7426,6 +7448,11 @@ button.lottery-latest-vs-card:hover {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .lottery-workbench-archive-note-bar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .lottery-attribution-handoff-map {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -7745,6 +7772,7 @@ button.lottery-latest-vs-card:hover {
   .lottery-notebook-editor-row,
   .lottery-notebook-grid,
   .lottery-workbench-issue-next,
+  .lottery-workbench-archive-note-bar,
   .lottery-workbench-issue-focus,
   .lottery-workbench-shortcut-grid,
   .lottery-decision-saved-bar,

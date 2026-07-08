@@ -979,9 +979,9 @@ Goal: make archive review conclusions easy to preserve as research evidence whil
 
 ### Wave 36B: Workbench Note Handoff
 
-- [ ] Add a workbench shortcut from archive-review pressure to the same notebook evidence flow.
-- [ ] Keep the primary workbench action pointed at the review queue.
-- [ ] Add smoke checks for the note handoff.
+- [x] Add a workbench shortcut from archive-review pressure to the same notebook evidence flow.
+- [x] Keep the primary workbench action pointed at the review queue.
+- [x] Add smoke checks for the note handoff.
 
 ### Wave 36C: Governance Note Handoff
 
