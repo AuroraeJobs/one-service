@@ -14,6 +14,7 @@ import {
 import LifePageShell from './LifePageShell';
 import {
   openAiTrainingApi,
+  type OpenAiTrainingAuditEvent,
   type OpenAiTrainingCheckpoint,
   type OpenAiTrainingCostItem,
   type OpenAiTrainingDataset,
@@ -288,6 +289,30 @@ const costColumns: ColumnsType<OpenAiTrainingCostItem> = [
   }
 ];
 
+const auditColumns: ColumnsType<OpenAiTrainingAuditEvent> = [
+  {
+    title: 'Time',
+    dataIndex: 'happenedAt'
+  },
+  {
+    title: 'Actor',
+    dataIndex: 'actor'
+  },
+  {
+    title: 'Action',
+    dataIndex: 'action',
+    render: (value?: string) => <strong>{value || '-'}</strong>
+  },
+  {
+    title: 'Target',
+    dataIndex: 'target'
+  },
+  {
+    title: 'Note',
+    dataIndex: 'note'
+  }
+];
+
 const deploymentColumns: ColumnsType<OpenAiTrainingDeploymentBinding> = [
   {
     title: 'Feature',
@@ -346,6 +371,7 @@ const OpenAiTrainingManagementPage = () => {
   const evalRows = dashboard.evalRuns || [];
   const evalFailureRows = dashboard.evalFailureCases || [];
   const costRows = dashboard.costItems || [];
+  const auditRows = dashboard.auditEvents || [];
   const deploymentRows = dashboard.deploymentBindings || [];
   const readinessChecks = dashboard.readinessChecks || [];
   const nextActions = dashboard.nextActions || [];
@@ -475,6 +501,16 @@ const OpenAiTrainingManagementPage = () => {
                 pagination={false}
                 size="middle"
                 scroll={{ x: 960 }}
+              />
+            </Card>
+
+            <Card className="openai-training-panel" title="训练审计事件">
+              <Table
+                columns={auditColumns}
+                dataSource={auditRows}
+                pagination={false}
+                size="middle"
+                scroll={{ x: 900 }}
               />
             </Card>
 

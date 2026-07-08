@@ -43,6 +43,9 @@ public class OpenAiTrainingManagementDashboard implements Serializable {
     private List<CostItem> costItems = new ArrayList<>();
 
     @Builder.Default
+    private List<AuditEvent> auditEvents = new ArrayList<>();
+
+    @Builder.Default
     private List<DeploymentBinding> deploymentBindings = new ArrayList<>();
 
     @Builder.Default
@@ -230,6 +233,25 @@ public class OpenAiTrainingManagementDashboard implements Serializable {
         private Integer outputTokens;
 
         private Double estimatedUsd;
+
+        private String note;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AuditEvent implements Serializable {
+
+        private String key;
+
+        private String happenedAt;
+
+        private String actor;
+
+        private String action;
+
+        private String target;
 
         private String note;
     }

@@ -21,6 +21,7 @@ public class OpenAiTrainingManagementService implements IOpenAiTrainingManagemen
                 .evalRuns(evalRuns())
                 .evalFailureCases(evalFailureCases())
                 .costItems(costItems())
+                .auditEvents(auditEvents())
                 .deploymentBindings(deploymentBindings())
                 .readinessChecks(readinessChecks())
                 .nextActions(nextActions())
@@ -128,6 +129,15 @@ public class OpenAiTrainingManagementService implements IOpenAiTrainingManagemen
                 cost("training-wechat", "fine_tune", "gpt-4.1-mini", 620000, 0, 3.10, "训练样本和验证集 token 估算。"),
                 cost("eval-wechat", "eval", "ft:wechat:step-240", 48000, 36000, 0.42, "上线前回归评测成本快照。"),
                 cost("canary-review", "canary", "ft:review:step-120", 120000, 90000, 1.05, "灰度期间按 1 周样本量估算。")
+        );
+    }
+
+    private List<OpenAiTrainingManagementDashboard.AuditEvent> auditEvents() {
+        return List.of(
+                audit("dataset-approved", "2026-07-08 09:30", "learning-admin", "approve_dataset", "ds_wechat_style_v1", "训练集完成用途、来源和质量审核。"),
+                audit("job-created", "2026-07-08 10:15", "one-service", "create_job", "ftjob_wechat_draft_v1", "使用 gpt-4.1-mini 创建托管训练任务。"),
+                audit("checkpoint-promoted", "2026-07-08 11:40", "learning-admin", "promote_checkpoint", "ft:wechat:step-240", "Eval 通过后标记为候选 checkpoint。"),
+                audit("deployment-bound", "2026-07-08 13:20", "one-service", "bind_deployment", "wechat-draft", "绑定模型并保留 rollbackModelId。")
         );
     }
 
@@ -301,6 +311,22 @@ public class OpenAiTrainingManagementService implements IOpenAiTrainingManagemen
                 .inputTokens(inputTokens)
                 .outputTokens(outputTokens)
                 .estimatedUsd(estimatedUsd)
+                .note(note)
+                .build();
+    }
+
+    private OpenAiTrainingManagementDashboard.AuditEvent audit(String key,
+                                                              String happenedAt,
+                                                              String actor,
+                                                              String action,
+                                                              String target,
+                                                              String note) {
+        return OpenAiTrainingManagementDashboard.AuditEvent.builder()
+                .key(key)
+                .happenedAt(happenedAt)
+                .actor(actor)
+                .action(action)
+                .target(target)
                 .note(note)
                 .build();
     }

@@ -1334,6 +1334,15 @@ export interface OpenAiTrainingCostItem {
   note?: string;
 }
 
+export interface OpenAiTrainingAuditEvent {
+  key: string;
+  happenedAt?: string;
+  actor?: string;
+  action?: string;
+  target?: string;
+  note?: string;
+}
+
 export interface OpenAiTrainingDeploymentBinding {
   key: string;
   featureKey?: string;
@@ -1368,6 +1377,7 @@ export interface OpenAiTrainingManagementDashboard {
   evalRuns?: OpenAiTrainingEvalRun[];
   evalFailureCases?: OpenAiTrainingEvalFailureCase[];
   costItems?: OpenAiTrainingCostItem[];
+  auditEvents?: OpenAiTrainingAuditEvent[];
   deploymentBindings?: OpenAiTrainingDeploymentBinding[];
   readinessChecks?: OpenAiTrainingReadinessCheck[];
   nextActions?: OpenAiTrainingNextAction[];
