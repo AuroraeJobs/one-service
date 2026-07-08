@@ -11,6 +11,7 @@ import {
   MobileOutlined,
   ReloadOutlined,
   SafetyCertificateOutlined,
+  SyncOutlined,
   WarningOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
@@ -81,6 +82,17 @@ const statusScore = (status: GovernanceStatus) => {
   if (status === 'PASS') return 100;
   if (status === 'WARNING' || status === 'MANUAL') return 72;
   return 35;
+};
+
+const failureCategoryLabel = (category?: string) => {
+  if (category === 'PROXY_OR_NETWORK_BLOCK') return '代理/网络阻断';
+  if (category === 'HTTP_FAILURE') return 'HTTP失败';
+  if (category === 'BLANK_RESPONSE') return '空响应';
+  if (category === 'INVALID_JSON') return '响应解析失败';
+  if (category === 'BUSINESS_FAILURE') return '接口业务失败';
+  if (category === 'REQUEST_EXCEPTION') return '请求异常';
+  if (category === 'PROXY_CONFIG_INVALID') return '代理配置错误';
+  return category || '暂无诊断';
 };
 
 const formatTime = (value?: number) => value ? new Intl.DateTimeFormat('zh-CN', {
@@ -274,6 +286,8 @@ const LotteryGovernancePage = () => {
     const attributionWarnings = attributionWarningRows(attributionRollup);
     const recommendationOpenGap = Math.max(0, (recommendationRollup?.activeCount || 0) - (recommendationRollup?.appliedCount || 0));
     const releaseWarnings = (workbench?.releaseCheckSummary?.checks || []).filter(item => item.status && item.status !== 'PASS');
+    const syncSummary = workbench?.latestSyncSummary;
+    const syncWarningCount = (syncSummary?.failedCount || 0) + (syncSummary?.skippedCount || 0) + (syncSummary?.latestNetworkBlockSuspected ? 1 : 0);
     const items: GovernanceAnomaly[] = [];
 
     if (healthWarnings.length) {
@@ -348,6 +362,18 @@ const LotteryGovernancePage = () => {
       });
     }
 
+    if (syncWarningCount || syncSummary?.latestStatus === 'FAILED') {
+      items.push({
+        key: 'provider-reliability',
+        title: 'Provider可靠性复核',
+        status: syncSummary?.latestNetworkBlockSuspected || syncSummary?.latestStatus === 'FAILED' ? 'FAILED' : 'WARNING',
+        count: Math.max(1, syncWarningCount),
+        detail: `${syncSummary?.latestProvider || 'provider'} · ${failureCategoryLabel(syncSummary?.latestFailureCategory)}`,
+        trend: `同步成功率 ${syncSummary?.successRate ?? 0}% · 最近完成 ${formatTime(syncSummary?.latestFinishedAt)}`,
+        path: '/lottery/sync'
+      });
+    }
+
     return items.sort((left, right) => {
       const weight = (status: GovernanceAnomaly['status']) => status === 'FAILED' ? 0 : status === 'WARNING' ? 1 : 2;
       return weight(left.status) - weight(right.status) || right.count - left.count;
@@ -361,8 +387,17 @@ const LotteryGovernancePage = () => {
     const attributionWarnings = attributionWarningRows(attributionRollup);
     const healthWarningCount = operations?.warningCount || operations?.contributors?.filter(item => item.status && item.status !== 'PASS').length || 0;
     const recommendationTransitions = recommendationRollup?.transitions || [];
+    const syncSummary = workbench?.latestSyncSummary;
 
     return [
+      {
+        key: 'provider-reliability',
+        label: '同步可靠性',
+        value: `${syncSummary?.successRate ?? 0}%`,
+        detail: `${syncSummary?.latestProvider || 'provider'} · ${failureCategoryLabel(syncSummary?.latestFailureCategory)} · ${syncSummary?.latestRequestMode || '-'}`,
+        status: syncSummary?.latestNetworkBlockSuspected || syncSummary?.latestStatus === 'FAILED' ? 'FAILED' : (syncSummary?.failedCount ? 'WARNING' : syncSummary ? 'PASS' : 'MANUAL'),
+        path: '/lottery/sync'
+      },
       {
         key: 'audit-repeat',
         label: '近14天审计重复',
@@ -396,7 +431,7 @@ const LotteryGovernancePage = () => {
         path: '/lottery/workbench'
       }
     ];
-  }, [attributionRollup, audits, operations, recommendationRollup]);
+  }, [attributionRollup, audits, operations, recommendationRollup, workbench]);
 
   const overallScore = domains.length ? Math.round(domains.reduce((sum, item) => sum + item.score, 0) / domains.length) : 0;
   const warningCount = domains.filter(item => item.status !== 'PASS').length;
@@ -409,6 +444,7 @@ const LotteryGovernancePage = () => {
       actions={
         <Space wrap>
           <Button icon={<MobileOutlined />} onClick={() => navigate('/lottery/mobile')}>移动指挥</Button>
+          <Button icon={<SyncOutlined />} onClick={() => navigate('/lottery/sync')}>同步</Button>
           <Button icon={<BranchesOutlined />} onClick={() => navigate('/lottery/outcomes')}>归因</Button>
           <Button icon={<CompassOutlined />} onClick={() => navigate('/lottery/recommendations')}>推荐</Button>
           <Button onClick={() => navigate('/lottery/settings')}>阈值设置</Button>

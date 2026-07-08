@@ -888,9 +888,9 @@ Goal: make provider freshness, sync outcomes, probe diagnostics, and recovery si
 
 ### Wave 32B: Governance Reliability Handoff
 
-- [ ] Add provider reliability trend rows to governance anomaly review.
-- [ ] Keep failure-category copy descriptive and route users back to `/lottery/sync`.
-- [ ] Avoid adding new backend contracts unless existing summaries cannot express recovery state.
+- [x] Add provider reliability trend rows to governance anomaly review. Governance now shows `Provider可靠性复核` in anomaly watch and `同步可靠性` in drift trends.
+- [x] Keep failure-category copy descriptive and route users back to `/lottery/sync`. Governance maps provider failure categories to Chinese diagnostic labels and links the row to sync operations.
+- [x] Avoid adding new backend contracts unless existing summaries cannot express recovery state. The handoff reuses `workbench.latestSyncSummary`.
 
 ### Wave 32C: Reliability Evidence Export
 

@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 32 Wave 32A provider reliability trend smoke",
+  "target": "Iteration 32 Wave 32B governance reliability handoff smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -116,6 +116,9 @@
         "const driftTrendItems",
         "异常观察",
         "漂移趋势",
+        "Provider可靠性复核",
+        "同步可靠性",
+        "failureCategoryLabel",
         "暂无异常观察",
         "运营健康待复核",
         "推荐跟进滞留",
@@ -639,7 +642,7 @@
         "governance": {
           "score": 88,
           "domains": ["portfolio", "simulator", "ticket-pack", "reminders", "attribution", "recommendation", "evidence", "release"],
-          "anomalyDomains": ["operations-health", "simulation-risk", "ticket-pack-exposure", "attribution-drift", "recommendation-stale", "release-readiness"],
+          "anomalyDomains": ["operations-health", "simulation-risk", "ticket-pack-exposure", "attribution-drift", "recommendation-stale", "release-readiness", "provider-reliability"],
           "thresholds": ["portfolioScore", "simulatorRisk", "ticketPackExposure", "evidenceFreshness", "staleApproval"]
         }
       }

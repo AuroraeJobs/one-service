@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 32 Wave 32A provider reliability trend smoke",
-  "generatedAt": "2026-07-08T04:09:44.027Z",
+  "target": "Iteration 32 Wave 32B governance reliability handoff smoke",
+  "generatedAt": "2026-07-08T04:11:10.641Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 18,
-  "checkCount": 513,
+  "checkCount": 516,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
