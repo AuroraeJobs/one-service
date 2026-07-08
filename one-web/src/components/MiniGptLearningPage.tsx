@@ -43,6 +43,26 @@ const latestSample = (logs: MiniGptTrainingLogRecord[]) => (
   [...logs].reverse().find(log => log.sample)?.sample || ''
 );
 
+const mergeStatusLog = (
+  runName: string | undefined,
+  logs: MiniGptTrainingLogRecord[],
+  latestLog?: MiniGptTrainingLogRecord
+) => {
+  const sameRunLogs = runName
+    ? logs.filter(log => !log.runName || log.runName === runName)
+    : logs;
+  if (!latestLog || (runName && latestLog.runName && latestLog.runName !== runName)) {
+    return sameRunLogs;
+  }
+
+  const byStep = new Map<number | string, MiniGptTrainingLogRecord>();
+  sameRunLogs.forEach(log => {
+    byStep.set(log.step ?? `${log.runName}-${log.createdAt}`, log);
+  });
+  byStep.set(latestLog.step ?? `${latestLog.runName}-${latestLog.createdAt}`, latestLog);
+  return Array.from(byStep.values()).sort((left, right) => (left.step ?? 0) - (right.step ?? 0));
+};
+
 const buildChartOption = (logs: MiniGptTrainingLogRecord[]) => ({
   color: ['#0071e3', '#ff9500'],
   tooltip: {
@@ -1505,7 +1525,7 @@ const MiniGptLearningPage = () => {
     });
     const timer = window.setInterval(() => {
       loadTrainingStatus(true);
-    }, 5000);
+    }, 2000);
     return () => window.clearInterval(timer);
   }, [loadCorpusInsight, loadDashboard, loadTrainingStatus]);
 
@@ -1514,8 +1534,25 @@ const MiniGptLearningPage = () => {
   }, [plannedExperiments]);
 
   const runs = useMemo(() => dashboard.runs || [], [dashboard.runs]);
-  const logs = useMemo(() => dashboard.logs || [], [dashboard.logs]);
-  const run = dashboard.latestRun;
+  const dashboardLogs = useMemo(() => dashboard.logs || [], [dashboard.logs]);
+  const activeTrainingRun = useMemo<MiniGptRunRecord | undefined>(() => {
+    if (!trainingStatus.runName) {
+      return undefined;
+    }
+    return trainingStatus.run || {
+      runName: trainingStatus.runName,
+      preset: trainingStatus.preset,
+      status: trainingStatus.running ? 'RUNNING' : trainingStatus.failed ? 'FAILED' : trainingStatus.cancelled ? 'CANCELLED' : undefined,
+      maxSteps: trainingStatus.totalSteps,
+      finalTrainLoss: trainingStatus.latestLog?.trainLoss,
+      finalEvalLoss: trainingStatus.latestLog?.evalLoss
+    };
+  }, [trainingStatus]);
+  const run = (trainingStatus.running && activeTrainingRun) ? activeTrainingRun : dashboard.latestRun || activeTrainingRun;
+  const logs = useMemo(
+    () => mergeStatusLog(run?.runName, dashboardLogs, trainingStatus.latestLog),
+    [dashboardLogs, run?.runName, trainingStatus.latestLog]
+  );
   const sample = latestSample(logs);
   const chartOption = useMemo(() => buildChartOption(logs), [logs]);
   const lossDiagnosticItems = useMemo(() => lossDiagnostics(run, logs), [logs, run]);
@@ -2315,10 +2352,30 @@ const MiniGptLearningPage = () => {
 
             <section className="mini-gpt-main-grid">
               <Card className="mini-gpt-panel" title="Loss 曲线">
-                {logs.length > 1 ? (
+                {trainingStatus.runName && (
+                  <section className="mini-gpt-live-loss">
+                    <div>
+                      <span>运行实验</span>
+                      <strong>{trainingStatus.runName}</strong>
+                    </div>
+                    <div>
+                      <span>当前 Step</span>
+                      <strong>{formatInteger(trainingStatus.processedStep)} / {formatInteger(trainingStatus.totalSteps)}</strong>
+                    </div>
+                    <div>
+                      <span>Train Loss</span>
+                      <strong>{formatLoss(latestStatusLog?.trainLoss ?? logs[logs.length - 1]?.trainLoss)}</strong>
+                    </div>
+                    <div>
+                      <span>Eval Loss</span>
+                      <strong>{formatLoss(latestStatusLog?.evalLoss ?? logs[logs.length - 1]?.evalLoss)}</strong>
+                    </div>
+                  </section>
+                )}
+                {logs.length ? (
                   <ReactECharts option={chartOption} className="mini-gpt-chart" notMerge />
                 ) : (
-                  <Empty description="训练日志不足" />
+                  <Empty description={trainingStatus.running ? '等待第一条 loss 日志' : '训练日志不足'} />
                 )}
               </Card>
 

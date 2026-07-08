@@ -163,6 +163,36 @@
   gap: 16px;
 }
 
+.mini-gpt-live-loss {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.mini-gpt-live-loss div {
+  display: grid;
+  gap: 6px;
+  min-height: 68px;
+  padding: 10px 12px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 8px;
+  background: var(--mini-gpt-panel-bg-soft);
+}
+
+.mini-gpt-live-loss span {
+  color: var(--mini-gpt-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mini-gpt-live-loss strong {
+  min-width: 0;
+  color: var(--mini-gpt-text);
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
 .mini-gpt-panel {
   border-radius: 8px;
 }
@@ -1473,6 +1503,10 @@
   .mini-gpt-diagnostic-grid {
     grid-template-columns: 1fr;
   }
+
+  .mini-gpt-live-loss {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 620px) {
@@ -1497,6 +1531,7 @@
   .mini-gpt-review-draft-sources,
   .mini-gpt-review-quality,
   .mini-gpt-tokenizer-metrics,
+  .mini-gpt-live-loss,
   .mini-gpt-status-panel dl,
   .mini-gpt-config-list {
     grid-template-columns: 1fr;
