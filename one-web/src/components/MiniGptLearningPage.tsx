@@ -248,6 +248,7 @@ const buildExperimentReport = (
 ) => {
   const metrics = metricItems(run, logs);
   const sample = generationResult?.generatedText || latestSample(logs);
+  const shapeRows = tensorShapeRows(run, undefined, []);
   return [
     `# MiniGPT 实验报告：${run.runName || '未命名实验'}`,
     '',
@@ -262,6 +263,9 @@ const buildExperimentReport = (
     '',
     '## 配置',
     ...configEntries(run).map(([key, value]) => `- ${key}: ${value}`),
+    '',
+    '## Tensor Shapes',
+    ...shapeRows.map(row => `- ${row.label}: ${row.shape} (${row.note})`),
     '',
     '## 实验笔记',
     `- 假设：${run.hypothesis || '-'}`,
@@ -315,6 +319,51 @@ const modelStages = (run?: MiniGptRunRecord, corpusInsight?: MiniGptCorpusInsigh
     { key: 'blocks', label: 'Transformer Blocks', value: `layers=${config.n_layer || '-'} heads=${config.n_head || '-'}` },
     { key: 'logits', label: 'Logits', value: `vocab=${formatInteger(run?.config?.vocab_size as number | undefined)}` },
     { key: 'loss', label: 'Cross Entropy Loss', value: `eval=${formatLoss(run?.finalEvalLoss)}` }
+  ];
+};
+
+const tensorShapeRows = (
+  run: MiniGptRunRecord | undefined,
+  corpusInsight: MiniGptCorpusInsight | undefined,
+  encodedSample: number[]
+) => {
+  const config = run?.config || {};
+  const batch = run?.batchSize || config.batch_size || '-';
+  const block = config.block_size || buildMaskSize(run, encodedSample);
+  const embedding = config.n_embd || '-';
+  const heads = config.n_head || '-';
+  const vocab = config.vocab_size || corpusInsight?.vocabSize || '-';
+  return [
+    {
+      key: 'batch-x',
+      label: 'x / y',
+      shape: `[${batch}, ${block}]`,
+      note: '输入 token 与下一个 token 目标'
+    },
+    {
+      key: 'embedding',
+      label: 'token + position',
+      shape: `[${batch}, ${block}, ${embedding}]`,
+      note: '离散 token 进入连续向量空间'
+    },
+    {
+      key: 'attention',
+      label: 'attention scores',
+      shape: `[${batch}, ${heads}, ${block}, ${block}]`,
+      note: '每个位置对历史位置打分'
+    },
+    {
+      key: 'logits',
+      label: 'logits',
+      shape: `[${batch}, ${block}, ${vocab}]`,
+      note: '每个位置预测词表分布'
+    },
+    {
+      key: 'loss',
+      label: 'cross entropy',
+      shape: `[${Number.isFinite(Number(batch)) && Number.isFinite(Number(block)) ? Number(batch) * Number(block) : 'B*T'}, ${vocab}]`,
+      note: '展平后计算 next-token loss'
+    }
   ];
 };
 
@@ -581,6 +630,7 @@ const MiniGptLearningPage = () => {
   const batchRows = useMemo(() => buildBatchRows(encodedSample, tokenRows), [encodedSample, tokenRows]);
   const maskSize = useMemo(() => buildMaskSize(run, encodedSample), [encodedSample, run]);
   const architectureStages = useMemo(() => modelStages(run, corpusInsight), [corpusInsight, run]);
+  const shapeRows = useMemo(() => tensorShapeRows(run, corpusInsight, encodedSample), [corpusInsight, encodedSample, run]);
   const comparisonChartOption = useMemo(() => buildComparisonChartOption(comparisonLogs), [comparisonLogs]);
   const milestones = useMemo(() => learningMilestones(run, logs, corpusInsight), [corpusInsight, logs, run]);
   const experimentReport = useMemo(
@@ -944,6 +994,16 @@ const MiniGptLearningPage = () => {
                   ))}
                 </div>
               </section>
+            </div>
+
+            <div className="mini-gpt-shape-grid">
+              {shapeRows.map(row => (
+                <section className="mini-gpt-shape-card" key={row.key}>
+                  <span>{row.label}</span>
+                  <strong>{row.shape}</strong>
+                  <p>{row.note}</p>
+                </section>
+              ))}
             </div>
           </Card>
 

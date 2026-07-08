@@ -38,7 +38,7 @@
 
 完成标准：能用自己的中文文本训练一个小模型，并让它续写。
 
-已完成工具：`playground/mini-gpt` 支持 tiny/small/medium 训练预设、独立 run 保存、loss/验证集/生成样例记录、实验模板、实验对比、复盘笔记、实验报告复制、高级训练参数、checkpoint 生成试验台，以及可选择历史实验的 Web 观察台。`/ai/minigpt` 页面会按 Tokenizer、Batch、Causal Attention、Loss、Generate、Review 给出学习阶段清单。
+已完成工具：`playground/mini-gpt` 支持 tiny/small/medium 训练预设、独立 run 保存、loss/验证集/生成样例记录、实验模板、实验对比、复盘笔记、实验报告复制、高级训练参数、tensor shape 速查、checkpoint 生成试验台，以及可选择历史实验的 Web 观察台。`/ai/minigpt` 页面会按 Tokenizer、Batch、Causal Attention、Loss、Generate、Review 给出学习阶段清单。
 
 ## 阶段 4：开源模型开发者
 
@@ -55,6 +55,7 @@
 
 - 跑通 `playground/mini-gpt/mini_gpt.py`。
 - 读懂每个模块的数据形状。
+- 对照 `/ai/minigpt` 的 Tensor Shapes，确认 `x/y`、embedding、attention scores、logits 和 loss 的维度。
 - 替换 `data/sample.txt` 为自己的文本。
 - 从 `/ai/minigpt` 的 Tiny 基线、低学习率、长上下文、Small 对照模板中选择一个启动实验。
 - 训练 200 到 1000 step，观察 loss 下降和生成文本变化。

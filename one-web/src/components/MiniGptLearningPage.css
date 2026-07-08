@@ -443,6 +443,44 @@
   word-break: break-word;
 }
 
+.mini-gpt-shape-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.mini-gpt-shape-card {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  min-height: 104px;
+  padding: 12px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 8px;
+  background: var(--mini-gpt-panel-bg-soft);
+}
+
+.mini-gpt-shape-card span {
+  color: var(--mini-gpt-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mini-gpt-shape-card strong {
+  overflow-wrap: anywhere;
+  color: var(--module-accent, #00c7be);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 14px;
+}
+
+.mini-gpt-shape-card p {
+  margin: 0;
+  color: var(--mini-gpt-text);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .mini-gpt-chart {
   height: 340px;
 }
@@ -713,6 +751,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .mini-gpt-shape-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .mini-gpt-summary-band {
     display: grid;
   }
@@ -741,6 +783,7 @@
   .mini-gpt-training-form,
   .mini-gpt-advanced-form,
   .mini-gpt-recipe-grid,
+  .mini-gpt-shape-grid,
   .mini-gpt-tokenizer-metrics,
   .mini-gpt-status-panel dl,
   .mini-gpt-config-list {
