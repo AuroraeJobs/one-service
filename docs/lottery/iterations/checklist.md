@@ -1066,9 +1066,9 @@ Goal: make the 35-39 archive-review work visible as a planning checkpoint, then 
 
 ### Wave 40B: Next-Phase Candidate Surfacing
 
-- [ ] Surface the next recommended review themes from the long-term plan.
-- [ ] Keep candidate themes tied to existing pages before adding new routes.
-- [ ] Add smoke coverage for candidate labels.
+- [x] Surface the next recommended review themes from the long-term plan.
+- [x] Keep candidate themes tied to existing pages before adding new routes.
+- [x] Add smoke coverage for candidate labels.
 
 ### Wave 40C: Release Evidence Handoff
 

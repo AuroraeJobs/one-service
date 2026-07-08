@@ -16,6 +16,8 @@ Status: completed with a month-end `长期计划复盘` card that links the five
 - Keep candidate themes tied to existing pages before adding new routes.
 - Add smoke coverage for candidate labels.
 
+Status: completed by surfacing evidence quality trend, Provider reliability, and release evidence archive candidates from the month-end planning checkpoint.
+
 ## Wave 40C: Release Evidence Handoff
 
 - Add a release-evidence handoff for the five-iteration planning review.

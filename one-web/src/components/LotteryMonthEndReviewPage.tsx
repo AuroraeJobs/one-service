@@ -598,6 +598,30 @@ const LotteryMonthEndReviewPage = () => {
     }
   ], [exportAudits.length, notes?.items?.length, notes?.total]);
 
+  const nextPhaseCandidateItems = useMemo(() => [
+    {
+      key: 'evidence-quality-trend',
+      label: '证据质量趋势',
+      detail: '继续追踪归因警示、复核笔记质量和策略证据覆盖',
+      status: attributionRows.some(item => safeCount(item.warningCount) > 0) || archiveReviewNoteSummary.active ? 'WARNING' : 'PASS',
+      path: '/lottery/outcomes'
+    },
+    {
+      key: 'provider-reliability',
+      label: 'Provider可靠性',
+      detail: '复用同步页和治理页的探测、跳过、失败和恢复证据',
+      status: health?.warningCount ? 'WARNING' : health?.status || 'MANUAL',
+      path: '/lottery/sync'
+    },
+    {
+      key: 'release-evidence-archive',
+      label: '发布证据归档',
+      detail: '把长期计划复盘接入发布证据和历史快照',
+      status: exportAudits.length ? 'PASS' : 'MANUAL',
+      path: '/lottery/exports'
+    }
+  ], [archiveReviewNoteSummary.active, attributionRows, exportAudits.length, health?.status, health?.warningCount]);
+
   return (
     <LifePageShell
       className="lottery-prediction-page lottery-month-end-page"
@@ -677,6 +701,15 @@ const LotteryMonthEndReviewPage = () => {
                 <span>{item.detail}</span>
                 <strong>{item.value}</strong>
                 <small>长期计划检查点</small>
+              </button>
+            ))}
+          </div>
+          <div className="lottery-month-end-narrative lottery-month-end-candidate-grid">
+            {nextPhaseCandidateItems.map(item => (
+              <button key={item.key} type="button" onClick={() => navigate(item.path)}>
+                <Tag color={statusColor(item.status)}>{lotteryStatusLabel(item.status)}</Tag>
+                <strong>{item.label}</strong>
+                <span>{item.detail}</span>
               </button>
             ))}
           </div>

@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 40 Wave 40A month-end planning checkpoint smoke",
+  "target": "Iteration 40 Wave 40B next-phase candidates smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -497,7 +497,7 @@
         "lotteryReminderApi.summary",
         "lotteryExportApi.auditEvents"
       ],
-      "emptyStates": ["暂无期号复盘", "暂无研究证据", "暂无归因质量摘要", "暂无推荐生命周期摘要", "异常复核闭环", "长期计划复盘", "35-39 复盘窗口", "长期研究包", "复核笔记", "下轮执行", "长期计划检查点", "全部范围", "全部状态", "暂无研究归档", "暂无月末导出证据"],
+      "emptyStates": ["暂无期号复盘", "暂无研究证据", "暂无归因质量摘要", "暂无推荐生命周期摘要", "异常复核闭环", "长期计划复盘", "35-39 复盘窗口", "长期研究包", "复核笔记", "下轮执行", "长期计划检查点", "nextPhaseCandidateItems", "证据质量趋势", "Provider可靠性", "发布证据归档", "全部范围", "全部状态", "暂无研究归档", "暂无月末导出证据"],
       "errorStates": ["读取彩票月末复盘失败"],
       "fixtureData": {
         "review": {
