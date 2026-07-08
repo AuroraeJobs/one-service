@@ -106,6 +106,13 @@ const statusColor = (status?: string) => {
   return 'default';
 };
 
+const archiveReviewPriority = (status?: string) => {
+  if (status === 'FAILED' || status === 'OVER') return 0;
+  if (status === 'WARNING' || status === 'MANUAL') return 1;
+  if (status === 'PENDING' || status === 'SNOOZED') return 2;
+  return 3;
+};
+
 const sortIssueLedgers = (items: LotteryIssueLedger[]) =>
   [...items].sort((left, right) => Number(right.period || right.issue || 0) - Number(left.period || left.issue || 0));
 
@@ -444,6 +451,11 @@ const LotteryMonthEndReviewPage = () => {
       .slice(0, 12);
   }, [allArchiveItems, archiveQuery, archiveScopeFilter, archiveStatusFilter]);
 
+  const archiveReviewQueueItems = useMemo<ArchiveItem[]>(() => archiveItems
+    .filter(item => archiveReviewPriority(item.status) < 3)
+    .sort((left, right) => archiveReviewPriority(left.status) - archiveReviewPriority(right.status))
+    .slice(0, 6), [archiveItems]);
+
   const archiveEvidenceExportPath = useMemo(() => buildArchivePath('/lottery/exports', {
     preset: 'v34-archive-search',
     archiveScope: archiveScopeFilter,
@@ -771,6 +783,27 @@ const LotteryMonthEndReviewPage = () => {
               </div>
             ) : (
               <Empty description="暂无研究归档" />
+            )}
+          </Card>
+
+          <Card
+            className="life-panel-card lottery-clean-panel"
+            title="归档复核队列"
+            extra={<Tag color={archiveReviewQueueItems.length ? 'orange' : 'green'}>{archiveReviewQueueItems.length ? `${archiveReviewQueueItems.length} 项` : '已清空'}</Tag>}
+          >
+            {archiveReviewQueueItems.length ? (
+              <div className="lottery-month-end-list">
+                {archiveReviewQueueItems.map(item => (
+                  <button key={`review-${item.key}`} type="button" onClick={() => navigate(item.path)}>
+                    <Tag color={statusColor(item.status)}>{lotteryStatusLabel(item.status, '需复核')}</Tag>
+                    <span>{archiveScopeLabel(item.scope)} · {item.title}</span>
+                    <strong>{item.count ?? '-'}</strong>
+                    <small>{item.detail}</small>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <Empty description="当前筛选暂无待复核归档" />
             )}
           </Card>
 

@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 34 Wave 34C archive evidence export smoke",
-  "generatedAt": "2026-07-08T06:05:35.533Z",
+  "target": "Iteration 35 Wave 35A archive review queue smoke",
+  "generatedAt": "2026-07-08T06:10:50.278Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 18,
-  "checkCount": 560,
+  "checkCount": 564,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [

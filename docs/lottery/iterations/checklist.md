@@ -944,6 +944,29 @@ Goal: make month-end review a faster long-term research entry point by improving
 - [x] Record the active range/status/search context in export-ready metadata where existing export presets allow it.
 - [x] Keep the export path explicit and user-triggered.
 
+## Iteration 35: Archive Review Queue
+
+Goal: turn month-end archive search results into explicit next actions without starting hidden background jobs or adding a backend queue contract.
+
+### Wave 35A: Month-End Archive Review Queue
+
+- [x] Derive a compact review queue from the current archive search and filters.
+- [x] Prioritize failed, warning, manual, pending, and snoozed archive records before pass states.
+- [x] Route each queue row back to the specialist page that owns the evidence.
+- [x] Keep the queue frontend-derived from existing month-end data.
+
+### Wave 35B: Workbench Handoff
+
+- [ ] Surface archive-review pressure on the workbench when month-end evidence contains pending review items.
+- [ ] Keep handoffs explicit and user-triggered.
+- [ ] Add smoke checks for the workbench entry.
+
+### Wave 35C: Governance Connection
+
+- [ ] Connect recurring archive-review pressure into governance anomaly context.
+- [ ] Reuse existing governance, month-end, and export evidence paths before adding any persistence.
+- [ ] Add export evidence labels only if the review queue needs durable report packaging.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

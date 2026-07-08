@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 34 Wave 34C archive evidence export smoke",
+  "target": "Iteration 35 Wave 35A archive review queue smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -162,6 +162,10 @@
         "archivePathForStrategyNote",
         "archivePathForExportAudit",
         "archiveEvidenceExportPath",
+        "archiveReviewPriority",
+        "archiveReviewQueueItems",
+        "归档复核队列",
+        "当前筛选暂无待复核归档",
         "v34-archive-search",
         "archiveScope",
         "archiveStatus",
