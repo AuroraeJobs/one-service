@@ -44,12 +44,15 @@
 
 - Hugging Face Transformers。
 - LoRA / QLoRA 微调。
+- OpenAI 托管训练管理：dataset、fine-tuning job、checkpoint、eval、model deployment。
 - RAG：切分、向量化、检索、重排、引用。
 - Agent：工具调用、计划、记忆、任务状态。
 - 部署：Ollama、vLLM、TGI。
 - 评测：命中率、幻觉率、延迟、成本。
 
 完成标准：能把一个开源模型接入业务数据，做成稳定的产品功能。
+
+参考文档：`docs/llm-learning/openai-training-management.md` 记录了 OpenAI 模型训练管理的生命周期和 one-service 数据实体建议。
 
 ## 第一周任务
 
@@ -79,3 +82,4 @@
 - 在实验对比摘要里查看每个 run 的最终 step、train loss、eval loss 和 gap，再判断哪个实验更值得继续。
 - 用同一个 checkpoint 对比 2 组 `temperature/top-k` 生成结果，记录输出稳定性和重复程度。
 - 点击 `复制报告` 把当前实验配置、loss、笔记、复盘质量检查和生成样例整理成 Markdown 复盘。
+- 阅读 `docs/llm-learning/openai-training-management.md`，把 MiniGPT 的 run、logs、checkpoint、report 对应到 OpenAI 的 fine-tuning job、metrics、checkpoint 和 eval。
