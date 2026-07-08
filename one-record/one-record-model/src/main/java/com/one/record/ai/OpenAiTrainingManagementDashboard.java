@@ -28,6 +28,9 @@ public class OpenAiTrainingManagementDashboard implements Serializable {
     private List<TrainingJob> jobs = new ArrayList<>();
 
     @Builder.Default
+    private List<TrainingMetric> metrics = new ArrayList<>();
+
+    @Builder.Default
     private List<ModelCheckpoint> checkpoints = new ArrayList<>();
 
     @Builder.Default
@@ -118,6 +121,27 @@ public class OpenAiTrainingManagementDashboard implements Serializable {
         private Double validLoss;
 
         private String checkpoint;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TrainingMetric implements Serializable {
+
+        private String key;
+
+        private String jobId;
+
+        private Integer step;
+
+        private Double trainLoss;
+
+        private Double validLoss;
+
+        private Double validTokenAccuracy;
+
+        private Integer elapsedSeconds;
     }
 
     @Data

@@ -16,6 +16,7 @@ public class OpenAiTrainingManagementService implements IOpenAiTrainingManagemen
                 .entities(entities())
                 .datasets(datasets())
                 .jobs(jobs())
+                .metrics(metrics())
                 .checkpoints(checkpoints())
                 .evalRuns(evalRuns())
                 .deploymentBindings(deploymentBindings())
@@ -59,6 +60,16 @@ public class OpenAiTrainingManagementService implements IOpenAiTrainingManagemen
                 job("job-1", "ftjob_wechat_draft_v1", "gpt-4.1-mini", "wechat-style-sft.jsonl", "succeeded", 0.92, 1.04, "step-240"),
                 job("job-2", "ftjob_review_guard_v2", "gpt-4.1-mini", "review-quality-sft.jsonl", "running", 1.18, 1.31, "step-120"),
                 job("job-3", "ftjob_tool_route_v1", "gpt-4.1", "tool-routing-eval.jsonl", "queued", null, null, "-")
+        );
+    }
+
+    private List<OpenAiTrainingManagementDashboard.TrainingMetric> metrics() {
+        return List.of(
+                metric("wechat-060", "ftjob_wechat_draft_v1", 60, 1.42, 1.56, 0.62, 180),
+                metric("wechat-120", "ftjob_wechat_draft_v1", 120, 1.12, 1.18, 0.74, 365),
+                metric("wechat-240", "ftjob_wechat_draft_v1", 240, 0.92, 1.04, 0.81, 720),
+                metric("review-060", "ftjob_review_guard_v2", 60, 1.43, 1.52, 0.61, 210),
+                metric("review-120", "ftjob_review_guard_v2", 120, 1.18, 1.31, 0.69, 430)
         );
     }
 
@@ -159,6 +170,24 @@ public class OpenAiTrainingManagementService implements IOpenAiTrainingManagemen
                 .trainLoss(trainLoss)
                 .validLoss(validLoss)
                 .checkpoint(checkpoint)
+                .build();
+    }
+
+    private OpenAiTrainingManagementDashboard.TrainingMetric metric(String key,
+                                                                   String jobId,
+                                                                   Integer step,
+                                                                   Double trainLoss,
+                                                                   Double validLoss,
+                                                                   Double validTokenAccuracy,
+                                                                   Integer elapsedSeconds) {
+        return OpenAiTrainingManagementDashboard.TrainingMetric.builder()
+                .key(key)
+                .jobId(jobId)
+                .step(step)
+                .trainLoss(trainLoss)
+                .validLoss(validLoss)
+                .validTokenAccuracy(validTokenAccuracy)
+                .elapsedSeconds(elapsedSeconds)
                 .build();
     }
 

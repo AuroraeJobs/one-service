@@ -1284,6 +1284,16 @@ export interface OpenAiTrainingJob {
   checkpoint?: string;
 }
 
+export interface OpenAiTrainingMetric {
+  key: string;
+  jobId?: string;
+  step?: number;
+  trainLoss?: number;
+  validLoss?: number;
+  validTokenAccuracy?: number;
+  elapsedSeconds?: number;
+}
+
 export interface OpenAiTrainingCheckpoint {
   key: string;
   checkpointId?: string;
@@ -1333,6 +1343,7 @@ export interface OpenAiTrainingManagementDashboard {
   entities?: OpenAiTrainingEntityCard[];
   datasets?: OpenAiTrainingDataset[];
   jobs?: OpenAiTrainingJob[];
+  metrics?: OpenAiTrainingMetric[];
   checkpoints?: OpenAiTrainingCheckpoint[];
   evalRuns?: OpenAiTrainingEvalRun[];
   deploymentBindings?: OpenAiTrainingDeploymentBinding[];

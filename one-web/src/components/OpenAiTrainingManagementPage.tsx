@@ -19,7 +19,8 @@ import {
   type OpenAiTrainingDeploymentBinding,
   type OpenAiTrainingEvalRun,
   type OpenAiTrainingJob,
-  type OpenAiTrainingManagementDashboard
+  type OpenAiTrainingManagementDashboard,
+  type OpenAiTrainingMetric
 } from '../services/api';
 import './OpenAiTrainingManagementPage.css';
 
@@ -128,6 +129,41 @@ const jobColumns: ColumnsType<OpenAiTrainingJob> = [
   {
     title: 'Checkpoint',
     dataIndex: 'checkpoint'
+  }
+];
+
+const metricColumns: ColumnsType<OpenAiTrainingMetric> = [
+  {
+    title: 'Job',
+    dataIndex: 'jobId',
+    render: (value?: string) => <strong>{value || '-'}</strong>
+  },
+  {
+    title: 'Step',
+    dataIndex: 'step',
+    render: (value?: number) => value === undefined ? '-' : value.toLocaleString('zh-CN')
+  },
+  {
+    title: 'Train Loss',
+    dataIndex: 'trainLoss',
+    render: (value?: number) => value === undefined ? '-' : value.toFixed(2)
+  },
+  {
+    title: 'Valid Loss',
+    dataIndex: 'validLoss',
+    render: (value?: number) => value === undefined ? '-' : value.toFixed(2)
+  },
+  {
+    title: 'Token Accuracy',
+    dataIndex: 'validTokenAccuracy',
+    render: (value?: number) => (
+      <Progress percent={value === undefined ? 0 : Math.round(value * 100)} size="small" />
+    )
+  },
+  {
+    title: 'Elapsed',
+    dataIndex: 'elapsedSeconds',
+    render: (value?: number) => value === undefined ? '-' : `${value}s`
   }
 ];
 
@@ -244,6 +280,7 @@ const OpenAiTrainingManagementPage = () => {
   const entityCards = dashboard.entities || [];
   const datasetRows = dashboard.datasets || [];
   const jobRows = dashboard.jobs || [];
+  const metricRows = dashboard.metrics || [];
   const checkpointRows = dashboard.checkpoints || [];
   const evalRows = dashboard.evalRuns || [];
   const deploymentRows = dashboard.deploymentBindings || [];
@@ -313,6 +350,16 @@ const OpenAiTrainingManagementPage = () => {
                 pagination={false}
                 size="middle"
                 scroll={{ x: 760 }}
+              />
+            </Card>
+
+            <Card className="openai-training-panel" title="训练指标快照">
+              <Table
+                columns={metricColumns}
+                dataSource={metricRows}
+                pagination={false}
+                size="middle"
+                scroll={{ x: 840 }}
               />
             </Card>
 
