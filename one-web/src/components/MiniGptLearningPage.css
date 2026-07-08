@@ -1067,6 +1067,35 @@
   margin-bottom: 10px;
 }
 
+.mini-gpt-review-draft-sources {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mini-gpt-review-draft-sources div {
+  display: grid;
+  gap: 6px;
+  min-height: 78px;
+  padding: 10px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 8px;
+  background: var(--mini-gpt-panel-bg);
+}
+
+.mini-gpt-review-draft-sources span {
+  color: var(--mini-gpt-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mini-gpt-review-draft-sources strong {
+  color: var(--mini-gpt-text);
+  font-size: 12px;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
 .mini-gpt-note-form .ant-btn {
   justify-self: start;
 }
@@ -1296,6 +1325,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .mini-gpt-review-draft-sources {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .mini-gpt-training-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1361,6 +1394,7 @@
   .mini-gpt-next-actions,
   .mini-gpt-variable-diff-grid,
   .mini-gpt-launch-checklist-grid,
+  .mini-gpt-review-draft-sources,
   .mini-gpt-tokenizer-metrics,
   .mini-gpt-status-panel dl,
   .mini-gpt-config-list {

@@ -1144,6 +1144,46 @@ const buildReviewDraft = (
   };
 };
 
+const reviewDraftSources = (
+  run: MiniGptRunRecord | undefined,
+  logs: MiniGptTrainingLogRecord[],
+  variableDiffs: ExperimentVariableDiff[],
+  checklistItems: LaunchChecklistItem[],
+  actionItems: NextExperimentAction[],
+  generationResult?: MiniGptGenerationResult
+) => {
+  const latestLog = logs[logs.length - 1];
+  const sampleText = generationResult?.generatedText || latestSample(logs);
+  const watchCount = checklistItems.filter(item => item.status !== 'PASS').length;
+  return [
+    {
+      key: 'loss',
+      label: 'Loss',
+      value: `train=${formatLoss(run?.finalTrainLoss ?? latestLog?.trainLoss)} / eval=${formatLoss(run?.finalEvalLoss ?? latestLog?.evalLoss)}`
+    },
+    {
+      key: 'variable',
+      label: '变量',
+      value: variableDiffs[0] ? `${variableDiffs[0].label}: ${variableDiffs[0].from} -> ${variableDiffs[0].to}` : '暂无变量差异'
+    },
+    {
+      key: 'checklist',
+      label: '启动检查',
+      value: watchCount ? `${watchCount} 项需注意` : '全部通过'
+    },
+    {
+      key: 'sample',
+      label: '生成样例',
+      value: sampleText ? '已有输出' : '暂缺采样'
+    },
+    {
+      key: 'next',
+      label: '下一步',
+      value: actionItems[0]?.title || '暂无建议'
+    }
+  ];
+};
+
 const MiniGptLearningPage = () => {
   const [form] = Form.useForm<MiniGptTrainingRequest>();
   const [noteForm] = Form.useForm<MiniGptRunNoteRequest>();
@@ -1465,6 +1505,10 @@ const MiniGptLearningPage = () => {
   const launchChecklistItems = useMemo(
     () => launchChecklist(run, corpusDiagnosticItems, variableGuardState, runNameExists, plannedExperiments),
     [corpusDiagnosticItems, plannedExperiments, run, runNameExists, variableGuardState]
+  );
+  const reviewDraftSourceItems = useMemo(
+    () => reviewDraftSources(run, logs, variableDiffItems, launchChecklistItems, nextActionItems, generationResult),
+    [generationResult, launchChecklistItems, logs, nextActionItems, run, variableDiffItems]
   );
   const experimentReport = useMemo(
     () => run ? buildExperimentReport(run, logs, generationResult, corpusInsight, plannedExperiments, variableDiffItems, launchChecklistItems) : '',
@@ -2118,6 +2162,14 @@ const MiniGptLearningPage = () => {
                   className="mini-gpt-note-form"
                   onFinish={handleSaveNotes}
                 >
+                  <section className="mini-gpt-review-draft-sources">
+                    {reviewDraftSourceItems.map(item => (
+                      <div key={item.key}>
+                        <span>{item.label}</span>
+                        <strong>{item.value}</strong>
+                      </div>
+                    ))}
+                  </section>
                   <Form.Item name="hypothesis" label="训练假设">
                     <Input.TextArea rows={3} placeholder="例如：更小学习率会降低 eval loss 抖动" />
                   </Form.Item>
