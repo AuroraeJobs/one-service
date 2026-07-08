@@ -422,6 +422,40 @@ type PlannedExperiment = NextExperimentAction & {
   sourceRun?: string;
 };
 
+const MINI_GPT_PLAN_STORAGE_KEY = 'one-web:minigpt:planned-experiments';
+
+const isPlannedExperiment = (value: unknown): value is PlannedExperiment => {
+  const item = value as PlannedExperiment;
+  return Boolean(
+    item
+    && typeof item.id === 'string'
+    && typeof item.key === 'string'
+    && typeof item.title === 'string'
+    && typeof item.reason === 'string'
+    && typeof item.action === 'string'
+  );
+};
+
+const loadPlannedExperiments = (): PlannedExperiment[] => {
+  try {
+    const rawValue = window.localStorage.getItem(MINI_GPT_PLAN_STORAGE_KEY);
+    if (!rawValue) return [];
+    const parsedValue = JSON.parse(rawValue);
+    return Array.isArray(parsedValue) ? parsedValue.filter(isPlannedExperiment).slice(0, 8) : [];
+  } catch (error) {
+    console.warn('读取 MiniGPT 实验计划失败:', error);
+    return [];
+  }
+};
+
+const savePlannedExperiments = (items: PlannedExperiment[]) => {
+  try {
+    window.localStorage.setItem(MINI_GPT_PLAN_STORAGE_KEY, JSON.stringify(items.slice(0, 8)));
+  } catch (error) {
+    console.warn('保存 MiniGPT 实验计划失败:', error);
+  }
+};
+
 const nextExperimentActions = (
   run: MiniGptRunRecord | undefined,
   logs: MiniGptTrainingLogRecord[],
@@ -870,7 +904,7 @@ const MiniGptLearningPage = () => {
   const [selectedRun, setSelectedRun] = useState<string>();
   const [comparisonRunNames, setComparisonRunNames] = useState<string[]>([]);
   const [comparisonLogs, setComparisonLogs] = useState<Record<string, MiniGptTrainingLogRecord[]>>({});
-  const [plannedExperiments, setPlannedExperiments] = useState<PlannedExperiment[]>([]);
+  const [plannedExperiments, setPlannedExperiments] = useState<PlannedExperiment[]>(loadPlannedExperiments);
   const [loading, setLoading] = useState(false);
   const [corpusLoading, setCorpusLoading] = useState(false);
   const [comparisonLoading, setComparisonLoading] = useState(false);
@@ -952,6 +986,11 @@ const MiniGptLearningPage = () => {
 
   const handleRemovePlan = (id: string) => {
     setPlannedExperiments(current => current.filter(item => item.id !== id));
+  };
+
+  const handleClearPlans = () => {
+    setPlannedExperiments([]);
+    message.success('实验计划已清空');
   };
 
   const loadComparisonLogs = useCallback(async (runNames: string[]) => {
@@ -1056,6 +1095,10 @@ const MiniGptLearningPage = () => {
     }, 5000);
     return () => window.clearInterval(timer);
   }, [loadCorpusInsight, loadDashboard, loadTrainingStatus]);
+
+  useEffect(() => {
+    savePlannedExperiments(plannedExperiments);
+  }, [plannedExperiments]);
 
   const runs = useMemo(() => dashboard.runs || [], [dashboard.runs]);
   const logs = useMemo(() => dashboard.logs || [], [dashboard.logs]);
@@ -1535,7 +1578,15 @@ const MiniGptLearningPage = () => {
             </div>
           </Card>
 
-          <Card className="mini-gpt-panel" title="实验计划队列">
+          <Card
+            className="mini-gpt-panel"
+            title="实验计划队列"
+            extra={(
+              <Button size="small" onClick={handleClearPlans} disabled={!plannedExperiments.length}>
+                清空计划
+              </Button>
+            )}
+          >
             {plannedExperiments.length ? (
               <div className="mini-gpt-plan-list">
                 {plannedExperiments.map(item => (
@@ -1553,7 +1604,7 @@ const MiniGptLearningPage = () => {
                 ))}
               </div>
             ) : (
-              <Empty description="从下一步建议加入计划" />
+              <Empty description="从下一步建议加入计划，本机自动保存" />
             )}
           </Card>
 
