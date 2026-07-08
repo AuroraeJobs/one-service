@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 28 Wave 28C attribution review smoke",
+  "target": "Iteration 29 Wave 29A recommendation lifecycle analytics smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -67,6 +67,19 @@
         "证据趋势",
         "lotteryStatusLabel(item.executionState)",
         "lotteryCodeLabel(item.type)"
+      ]
+    },
+    {
+      "scope": "recommendation lifecycle analytics",
+      "file": "src/components/LotteryRecommendationPage.tsx",
+      "includes": [
+        "生命周期分析",
+        "行动结果回看",
+        "过期证据清理",
+        "归档过期",
+        "cleanupStaleRecommendations",
+        "isStaleRecommendation",
+        "lotteryRecommendationApi.updateStatus"
       ]
     }
   ],
@@ -407,7 +420,7 @@
         "lotteryRecommendationApi.refresh",
         "lotteryRecommendationApi.updateStatus"
       ],
-      "emptyStates": ["暂无推广推荐", "暂无观察推荐", "暂无暂停推荐", "暂无退役推荐"],
+      "emptyStates": ["暂无推广推荐", "暂无观察推荐", "暂无暂停推荐", "暂无退役推荐", "暂无行动结果回看"],
       "errorStates": ["读取彩票推荐失败", "刷新彩票推荐失败", "更新彩票推荐失败"],
       "fixtureData": {
         "recommendations": {
@@ -423,11 +436,35 @@
               "evidenceAgeHours": 6,
               "expectedAction": "提升组合权重",
               "path": "/lottery/strategy-portfolios"
+            },
+            {
+              "id": "recommendation-fixture-2",
+              "targetType": "RULE",
+              "targetId": "rule-fixture-1",
+              "title": "观察连号规则",
+              "recommendationState": "WATCH",
+              "lifecycleStatus": "APPLIED",
+              "confidenceScore": 76,
+              "evidenceAgeHours": 4,
+              "expectedAction": "保持观察",
+              "path": "/lottery/outcomes"
+            },
+            {
+              "id": "recommendation-fixture-3",
+              "targetType": "SIMULATION",
+              "targetId": "simulation-fixture-1",
+              "title": "归档过期沙盘",
+              "recommendationState": "PAUSE",
+              "lifecycleStatus": "OPEN",
+              "confidenceScore": 55,
+              "evidenceAgeHours": 36,
+              "expectedAction": "调整沙盘权重",
+              "path": "/lottery/simulator"
             }
           ],
           "page": 1,
           "pageSize": 20,
-          "total": 1
+          "total": 3
         }
       }
     },

@@ -54,6 +54,9 @@ const lifecycleCopy: Record<string, { label: string; note: string; success: stri
 
 type RecommendationPreset = 'ALL' | 'OPEN' | 'HIGH_CONFIDENCE' | 'STALE_EVIDENCE';
 
+const isOpenRecommendation = (item: LotteryRecommendation) => item.lifecycleStatus !== 'APPLIED' && item.lifecycleStatus !== 'ARCHIVED';
+const isStaleRecommendation = (item: LotteryRecommendation) => isOpenRecommendation(item) && (item.evidenceAgeHours || 0) >= 24;
+
 const LotteryRecommendationPage = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState<LotteryRecommendation[]>([]);
@@ -117,10 +120,33 @@ const LotteryRecommendationPage = () => {
     }
   };
 
+  const cleanupStaleRecommendations = async () => {
+    const staleItems = visibleItems.filter(isStaleRecommendation).filter(item => item.id);
+    if (!staleItems.length) {
+      message.info('暂无可清理的过期推荐');
+      return;
+    }
+    setActingId('STALE_CLEANUP');
+    try {
+      await Promise.all(staleItems.map(item => lotteryRecommendationApi.updateStatus(item.id || '', {
+        lifecycleStatus: 'ARCHIVED',
+        note: 'stale recommendation archived from lifecycle analytics'
+      })));
+      await loadRecommendations();
+      message.success(`已归档 ${staleItems.length} 条过期推荐`);
+    } catch (requestError) {
+      console.error('更新彩票推荐失败:', requestError);
+      setError(requestError instanceof Error ? requestError.message : '更新彩票推荐失败');
+      message.error('更新彩票推荐失败');
+    } finally {
+      setActingId(undefined);
+    }
+  };
+
   const visibleItems = useMemo(() => items.filter(item => {
     if (preset === 'OPEN') return item.lifecycleStatus !== 'APPLIED' && item.lifecycleStatus !== 'ARCHIVED';
     if (preset === 'HIGH_CONFIDENCE') return (item.confidenceScore || 0) >= 80;
-    if (preset === 'STALE_EVIDENCE') return (item.evidenceAgeHours || 0) >= 24;
+    if (preset === 'STALE_EVIDENCE') return isStaleRecommendation(item);
     return true;
   }), [items, preset]);
 
@@ -135,6 +161,23 @@ const LotteryRecommendationPage = () => {
     watch: visibleItems.filter(item => item.recommendationState === 'WATCH').length,
     open: visibleItems.filter(item => item.lifecycleStatus !== 'APPLIED' && item.lifecycleStatus !== 'ARCHIVED').length
   }), [visibleItems]);
+
+  const lifecycleAnalytics = useMemo(() => {
+    const source = visibleItems;
+    const countBy = (predicate: (item: LotteryRecommendation) => boolean) => source.filter(predicate).length;
+    return {
+      active: countBy(isOpenRecommendation),
+      watch: countBy(item => item.recommendationState === 'WATCH'),
+      paused: countBy(item => item.recommendationState === 'PAUSE' || item.lifecycleStatus === 'SNOOZED'),
+      retired: countBy(item => item.recommendationState === 'RETIRE' || item.lifecycleStatus === 'ARCHIVED'),
+      stale: countBy(isStaleRecommendation),
+      applied: countBy(item => item.lifecycleStatus === 'APPLIED')
+    };
+  }, [visibleItems]);
+
+  const actionSummary = useMemo(() => visibleItems
+    .filter(item => item.lifecycleStatus === 'APPLIED' || item.lifecycleStatus === 'ARCHIVED' || item.recommendationState === 'PROMOTE' || item.recommendationState === 'RETIRE')
+    .slice(0, 4), [visibleItems]);
 
   return (
     <LifePageShell
@@ -168,6 +211,45 @@ const LotteryRecommendationPage = () => {
         <article><strong>{totals.promote}</strong><span>推广</span></article>
         <article><strong>{totals.watch}</strong><span>观察</span></article>
         <article><strong>{totals.open}</strong><span>待处理</span></article>
+      </section>
+
+      <section className="lottery-recommendation-analytics">
+        <Card className="life-panel-card lottery-clean-panel" title="生命周期分析" extra={<Tag color={lifecycleAnalytics.stale ? 'orange' : 'green'}>{lifecycleAnalytics.stale} 条过期</Tag>}>
+          <div className="lottery-recommendation-lifecycle-grid">
+            <article><strong>{lifecycleAnalytics.active}</strong><span>活跃</span></article>
+            <article><strong>{lifecycleAnalytics.watch}</strong><span>观察</span></article>
+            <article><strong>{lifecycleAnalytics.paused}</strong><span>暂停</span></article>
+            <article><strong>{lifecycleAnalytics.retired}</strong><span>退役</span></article>
+          </div>
+          <div className="lottery-recommendation-cleanup">
+            <div>
+              <strong>过期证据清理</strong>
+              <span>仅归档仍在处理中的过期推荐，已应用记录继续保留在回看中。</span>
+            </div>
+            <Popconfirm
+              title="归档过期推荐？"
+              description="只会处理当前筛选范围内证据超过 24 小时且未应用的推荐。"
+              okText="归档"
+              cancelText="取消"
+              onConfirm={cleanupStaleRecommendations}
+            >
+              <Button loading={actingId === 'STALE_CLEANUP'} disabled={!lifecycleAnalytics.stale}>归档过期</Button>
+            </Popconfirm>
+          </div>
+        </Card>
+        <Card className="life-panel-card lottery-clean-panel" title="行动结果回看" extra={<Tag>{lifecycleAnalytics.applied} 条已应用</Tag>}>
+          <div className="lottery-recommendation-action-review">
+            {actionSummary.length ? actionSummary.map(item => (
+              <button key={item.id || `${item.targetType}-${item.targetId}`} type="button" onClick={() => navigate(item.path || '/lottery/outcomes')}>
+                <span>
+                  <strong>{item.title || item.targetId || '推荐记录'}</strong>
+                  <small>{lotteryCodeLabel(item.targetType)} · {lotteryStatusLabel(item.lifecycleStatus, 'OPEN')}</small>
+                </span>
+                <Tag color={stateColor(item.recommendationState)}>{lotteryStatusLabel(item.recommendationState, 'WATCH')}</Tag>
+              </button>
+            )) : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无行动结果回看" />}
+          </div>
+        </Card>
       </section>
 
       <Spin spinning={loading && !items.length}>

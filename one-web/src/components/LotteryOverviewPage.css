@@ -3480,6 +3480,107 @@
   font-size: 12px;
 }
 
+.lottery-recommendation-analytics {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.lottery-recommendation-lifecycle-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.lottery-recommendation-lifecycle-grid article {
+  display: grid;
+  gap: 5px;
+  min-height: 72px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface-elevated);
+  color: var(--app-text);
+}
+
+.lottery-recommendation-lifecycle-grid strong {
+  color: var(--app-text);
+  font-size: 20px;
+  line-height: 1.1;
+}
+
+.lottery-recommendation-lifecycle-grid span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.lottery-recommendation-cleanup {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--app-border);
+}
+
+.lottery-recommendation-cleanup > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.lottery-recommendation-cleanup strong {
+  color: var(--app-text);
+}
+
+.lottery-recommendation-cleanup span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.lottery-recommendation-action-review {
+  display: grid;
+  gap: 10px;
+}
+
+.lottery-recommendation-action-review button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface-elevated);
+  color: var(--app-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lottery-recommendation-action-review button:hover {
+  border-color: var(--app-primary);
+}
+
+.lottery-recommendation-action-review span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.lottery-recommendation-action-review strong {
+  overflow-wrap: anywhere;
+  color: var(--app-text);
+}
+
+.lottery-recommendation-action-review small {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
 .lottery-recommendation-board {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -7474,7 +7575,9 @@ button.lottery-latest-vs-card:hover {
   .lottery-attribution-handoff-map,
   .lottery-attribution-rollup-summary,
   .lottery-recommendation-summary,
+  .lottery-recommendation-analytics,
   .lottery-recommendation-board,
+  .lottery-recommendation-lifecycle-grid,
   .lottery-mobile-metrics,
   .lottery-portfolio-score-row,
   .lottery-portfolio-evidence-editor-row,
@@ -7560,6 +7663,8 @@ button.lottery-latest-vs-card:hover {
   .lottery-outcome-timeline button,
   .lottery-attribution-trend-table button,
   .lottery-recommendation-card-head,
+  .lottery-recommendation-cleanup,
+  .lottery-recommendation-action-review button,
   .lottery-mobile-hero,
   .lottery-mobile-list article,
   .lottery-simulator-candidate-list article {

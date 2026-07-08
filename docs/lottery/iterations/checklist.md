@@ -805,6 +805,18 @@ Goal: make `/lottery/outcomes` explain the closed loop from strategy evidence to
 - [x] Add attribution closure preset metadata to exports. Added the `归因质量包` preset and export evidence card.
 - [x] Record stale or missing attribution links in release evidence warnings. Export release readiness now includes `V28归因质量`, and route smoke checks the governance/month-end/export rollup handoffs.
 
+## Iteration 29: Recommendation Lifecycle Analytics
+
+Goal: make `/lottery/recommendations` show lifecycle health, action follow-through, and conservative stale-evidence cleanup.
+
+### Wave 29A: Lifecycle Analytics Panel
+
+- [x] Add active, watch, paused, and retired lifecycle counts. `/lottery/recommendations` now shows a lifecycle analytics panel derived from the current recommendation list.
+- [x] Add result-after-action summaries for promoted, retired, applied, or archived recommendations. Added action-review rows that hand off to the recommendation target or outcomes.
+- [x] Add stale recommendation cleanup flows with conservative copy. Added a confirmed archive action for currently visible open recommendations with evidence older than 24 hours.
+- [x] Keep the first slice frontend-derived from the existing recommendation API. Reused `lotteryRecommendationApi.recommendations` and `updateStatus` without expanding the backend contract.
+- [x] Extend route smoke coverage for lifecycle analytics. Smoke fixture now checks lifecycle analytics labels, cleanup code paths, and action-review empty state.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.
