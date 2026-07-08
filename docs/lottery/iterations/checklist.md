@@ -831,6 +831,16 @@ Goal: make `/lottery/recommendations` show lifecycle health, action follow-throu
 - [x] Review mobile and dark-mode behavior after backend rollups land. Reused the existing governance/month-end/export responsive grids and added smoke guards for the new labels.
 - [x] Extend route smoke coverage for connected evidence. Smoke fixture now checks governance, month-end, and export recommendation follow-through wiring.
 
+## Iteration 30: Research Archive And Month-End Intelligence
+
+Goal: make the lottery module easier to use as a long-running research archive, with month-end review as the compact historical evidence entry point.
+
+### Wave 30A: Searchable Research Archive Index
+
+- [x] Add searchable archive views across issues, months, strategies, outcomes, and release evidence. `/lottery/month-end` now has a `研究归档索引` that combines issue ledgers, month summary, attribution rows, recommendation transitions, strategy notes, and export evidence.
+- [x] Keep the first slice frontend-derived from existing APIs. Reused month-end page data instead of adding a new backend archive contract.
+- [x] Add route smoke coverage for archive labels and search state. Smoke fixture now checks archive index labels, `archiveItems`, `archiveQuery`, and the empty state.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

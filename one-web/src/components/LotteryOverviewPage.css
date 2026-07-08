@@ -2585,6 +2585,10 @@
   gap: 8px;
 }
 
+.lottery-archive-search {
+  margin-bottom: 10px;
+}
+
 .lottery-month-end-list button {
   min-width: 0;
   display: grid;

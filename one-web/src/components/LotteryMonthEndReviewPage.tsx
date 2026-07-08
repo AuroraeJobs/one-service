@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Alert, Button, Card, Empty, Progress, Space, Spin, Tag } from 'antd';
+import { Alert, Button, Card, Empty, Input, Progress, Space, Spin, Tag } from 'antd';
 import {
   BellOutlined,
   BookOutlined,
@@ -10,6 +10,7 @@ import {
   MobileOutlined,
   PieChartOutlined,
   ReloadOutlined,
+  SearchOutlined,
   SafetyCertificateOutlined,
   TrophyOutlined,
   WarningOutlined
@@ -51,6 +52,16 @@ interface MonthEndMetric {
   detail: string;
   path: string;
   status?: string;
+}
+
+interface ArchiveItem {
+  key: string;
+  scope: string;
+  title: string;
+  detail: string;
+  path: string;
+  status?: string;
+  count?: number;
 }
 
 const formatDateTime = (timestamp?: number) => {
@@ -107,6 +118,18 @@ const attributionQualityLabel = (quality?: string) => {
   return labels[quality || ''] || lotteryStatusLabel(quality);
 };
 
+const archiveScopeLabel = (scope: string) => {
+  const labels: Record<string, string> = {
+    issue: '期号',
+    month: '月份',
+    outcome: '归因',
+    recommendation: '推荐',
+    strategy: '策略',
+    release: '发布'
+  };
+  return labels[scope] || scope;
+};
+
 const LotteryMonthEndReviewPage = () => {
   const navigate = useNavigate();
   const [workbench, setWorkbench] = useState<LotteryWorkbenchSummary>();
@@ -120,6 +143,7 @@ const LotteryMonthEndReviewPage = () => {
   const [notes, setNotes] = useState<LotteryPageResponse<LotteryStrategyNote>>();
   const [reminders, setReminders] = useState<LotteryReminderSummary>();
   const [audits, setAudits] = useState<LotteryAuditEvent[]>([]);
+  const [archiveQuery, setArchiveQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -255,6 +279,80 @@ const LotteryMonthEndReviewPage = () => {
       status: exportAudits.length ? 'PASS' : 'MANUAL'
     }
   ];
+
+  const archiveItems = useMemo<ArchiveItem[]>(() => {
+    const items: ArchiveItem[] = [];
+    items.push({
+      key: 'month:current',
+      scope: 'month',
+      title: '本月复盘',
+      detail: `账本 ${formatCurrency(ledger?.netResult)} · 归因 ${attributionRollup?.issueCount || 0} 期 · 推荐 ${recommendationRollup?.recommendationCount || 0} 条`,
+      path: '/lottery/month-end',
+      status: monthEndScore >= 85 ? 'PASS' : monthEndScore >= 65 ? 'WARNING' : 'FAILED',
+      count: monthEndScore
+    });
+    recentIssues.forEach(item => {
+      const issue = item.issue || item.period || '-';
+      items.push({
+        key: `issue:${issue}`,
+        scope: 'issue',
+        title: `第 ${issue} 期`,
+        detail: `票据 ${item.checkedTicketCount || 0}/${item.ticketCount || 0} · ROI ${formatPercent(item.roiPercent)} · ${formatCurrency(item.netResult)}`,
+        path: `/lottery/tickets?issue=${issue}`,
+        status: item.netResult && item.netResult >= 0 ? 'PASS' : 'WARNING',
+        count: item.ticketCount
+      });
+    });
+    attributionRows.forEach(item => {
+      items.push({
+        key: `outcome:${item.dimension}:${item.key}`,
+        scope: 'outcome',
+        title: item.label || item.key || '归因维度',
+        detail: `${item.issueCount || 0} 期 · 样本 ${item.sampleCount || 0} · 警示 ${item.warningCount || 0}`,
+        path: item.path || '/lottery/outcomes',
+        status: item.warningCount ? 'WARNING' : 'PASS',
+        count: item.sampleCount
+      });
+    });
+    (recommendationRollup?.transitions || []).slice(0, 5).forEach(item => {
+      items.push({
+        key: `recommendation:${item.day}:${item.lifecycleStatus}:${item.recommendationState}`,
+        scope: 'recommendation',
+        title: `${item.day || '-'} 推荐流转`,
+        detail: `${lotteryStatusLabel(item.lifecycleStatus, 'OPEN')} · ${lotteryStatusLabel(item.recommendationState, 'WATCH')}`,
+        path: '/lottery/recommendations',
+        status: item.lifecycleStatus,
+        count: item.count
+      });
+    });
+    (notes?.items || []).slice(0, 5).forEach(item => {
+      items.push({
+        key: `strategy:${item.id || item.title}`,
+        scope: 'strategy',
+        title: item.title || '策略笔记',
+        detail: `${item.ruleName || item.targetIssue || '研究假设'} · 证据 ${item.evidence?.length || 0} 条`,
+        path: '/lottery/research/notebook',
+        status: item.status,
+        count: item.evidence?.length
+      });
+    });
+    exportAudits.slice(0, 5).forEach(item => {
+      items.push({
+        key: `release:${item.id || item.generatedAt}`,
+        scope: 'release',
+        title: item.targetType || item.eventType || '导出证据',
+        detail: `${formatDateTime(item.generatedAt)} · ${item.rowCount || 0} 行`,
+        path: '/lottery/exports',
+        status: 'PASS',
+        count: item.rowCount
+      });
+    });
+    const keyword = archiveQuery.trim().toLowerCase();
+    if (!keyword) {
+      return items.slice(0, 12);
+    }
+    return items.filter(item => `${archiveScopeLabel(item.scope)} ${item.title} ${item.detail}`.toLowerCase().includes(keyword)).slice(0, 12);
+  }, [archiveQuery, attributionRollup?.issueCount, attributionRows, exportAudits, ledger?.netResult, monthEndScore, notes?.items, recentIssues, recommendationRollup]);
 
   return (
     <LifePageShell
@@ -410,6 +508,36 @@ const LotteryMonthEndReviewPage = () => {
               </div>
             ) : (
               <Empty description="暂无推荐生命周期摘要" />
+            )}
+          </Card>
+
+          <Card
+            className="life-panel-card lottery-clean-panel"
+            title="研究归档索引"
+            extra={<Tag>{archiveItems.length} 条</Tag>}
+          >
+            <div className="lottery-archive-search">
+              <Input
+                allowClear
+                prefix={<SearchOutlined />}
+                value={archiveQuery}
+                onChange={event => setArchiveQuery(event.target.value)}
+                placeholder="搜索期号、月份、策略、归因、推荐或发布证据"
+              />
+            </div>
+            {archiveItems.length ? (
+              <div className="lottery-month-end-list">
+                {archiveItems.map(item => (
+                  <button key={item.key} type="button" onClick={() => navigate(item.path)}>
+                    <Tag color={statusColor(item.status)}>{archiveScopeLabel(item.scope)}</Tag>
+                    <span>{item.title}</span>
+                    <strong>{item.count ?? '-'}</strong>
+                    <small>{item.detail}</small>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <Empty description="暂无研究归档" />
             )}
           </Card>
 
