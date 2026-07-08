@@ -40,6 +40,9 @@ public class OpenAiTrainingManagementDashboard implements Serializable {
     private List<EvalFailureCase> evalFailureCases = new ArrayList<>();
 
     @Builder.Default
+    private List<CostItem> costItems = new ArrayList<>();
+
+    @Builder.Default
     private List<DeploymentBinding> deploymentBindings = new ArrayList<>();
 
     @Builder.Default
@@ -208,6 +211,27 @@ public class OpenAiTrainingManagementDashboard implements Serializable {
         private String observed;
 
         private String nextAction;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CostItem implements Serializable {
+
+        private String key;
+
+        private String scope;
+
+        private String model;
+
+        private Integer inputTokens;
+
+        private Integer outputTokens;
+
+        private Double estimatedUsd;
+
+        private String note;
     }
 
     @Data

@@ -1324,6 +1324,16 @@ export interface OpenAiTrainingEvalFailureCase {
   nextAction?: string;
 }
 
+export interface OpenAiTrainingCostItem {
+  key: string;
+  scope?: string;
+  model?: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  estimatedUsd?: number;
+  note?: string;
+}
+
 export interface OpenAiTrainingDeploymentBinding {
   key: string;
   featureKey?: string;
@@ -1357,6 +1367,7 @@ export interface OpenAiTrainingManagementDashboard {
   checkpoints?: OpenAiTrainingCheckpoint[];
   evalRuns?: OpenAiTrainingEvalRun[];
   evalFailureCases?: OpenAiTrainingEvalFailureCase[];
+  costItems?: OpenAiTrainingCostItem[];
   deploymentBindings?: OpenAiTrainingDeploymentBinding[];
   readinessChecks?: OpenAiTrainingReadinessCheck[];
   nextActions?: OpenAiTrainingNextAction[];

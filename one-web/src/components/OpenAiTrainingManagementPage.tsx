@@ -15,6 +15,7 @@ import LifePageShell from './LifePageShell';
 import {
   openAiTrainingApi,
   type OpenAiTrainingCheckpoint,
+  type OpenAiTrainingCostItem,
   type OpenAiTrainingDataset,
   type OpenAiTrainingDeploymentBinding,
   type OpenAiTrainingEvalFailureCase,
@@ -256,6 +257,37 @@ const evalFailureColumns: ColumnsType<OpenAiTrainingEvalFailureCase> = [
   }
 ];
 
+const costColumns: ColumnsType<OpenAiTrainingCostItem> = [
+  {
+    title: 'Scope',
+    dataIndex: 'scope',
+    render: (value?: string) => <strong>{value || '-'}</strong>
+  },
+  {
+    title: 'Model',
+    dataIndex: 'model'
+  },
+  {
+    title: 'Input Tokens',
+    dataIndex: 'inputTokens',
+    render: (value?: number) => value === undefined ? '-' : value.toLocaleString('zh-CN')
+  },
+  {
+    title: 'Output Tokens',
+    dataIndex: 'outputTokens',
+    render: (value?: number) => value === undefined ? '-' : value.toLocaleString('zh-CN')
+  },
+  {
+    title: 'Estimated USD',
+    dataIndex: 'estimatedUsd',
+    render: (value?: number) => value === undefined ? '-' : `$${value.toFixed(2)}`
+  },
+  {
+    title: 'Note',
+    dataIndex: 'note'
+  }
+];
+
 const deploymentColumns: ColumnsType<OpenAiTrainingDeploymentBinding> = [
   {
     title: 'Feature',
@@ -313,6 +345,7 @@ const OpenAiTrainingManagementPage = () => {
   const checkpointRows = dashboard.checkpoints || [];
   const evalRows = dashboard.evalRuns || [];
   const evalFailureRows = dashboard.evalFailureCases || [];
+  const costRows = dashboard.costItems || [];
   const deploymentRows = dashboard.deploymentBindings || [];
   const readinessChecks = dashboard.readinessChecks || [];
   const nextActions = dashboard.nextActions || [];
@@ -432,6 +465,16 @@ const OpenAiTrainingManagementPage = () => {
                 pagination={false}
                 size="middle"
                 scroll={{ x: 1100 }}
+              />
+            </Card>
+
+            <Card className="openai-training-panel" title="成本与 Token 快照">
+              <Table
+                columns={costColumns}
+                dataSource={costRows}
+                pagination={false}
+                size="middle"
+                scroll={{ x: 960 }}
               />
             </Card>
 

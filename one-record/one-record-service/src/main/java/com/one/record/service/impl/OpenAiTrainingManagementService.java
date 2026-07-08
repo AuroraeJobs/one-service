@@ -20,6 +20,7 @@ public class OpenAiTrainingManagementService implements IOpenAiTrainingManagemen
                 .checkpoints(checkpoints())
                 .evalRuns(evalRuns())
                 .evalFailureCases(evalFailureCases())
+                .costItems(costItems())
                 .deploymentBindings(deploymentBindings())
                 .readinessChecks(readinessChecks())
                 .nextActions(nextActions())
@@ -119,6 +120,14 @@ public class OpenAiTrainingManagementService implements IOpenAiTrainingManagemen
                         "误判为普通聊天回答",
                         "为 tool-routing 数据集补充边界样本"
                 )
+        );
+    }
+
+    private List<OpenAiTrainingManagementDashboard.CostItem> costItems() {
+        return List.of(
+                cost("training-wechat", "fine_tune", "gpt-4.1-mini", 620000, 0, 3.10, "训练样本和验证集 token 估算。"),
+                cost("eval-wechat", "eval", "ft:wechat:step-240", 48000, 36000, 0.42, "上线前回归评测成本快照。"),
+                cost("canary-review", "canary", "ft:review:step-120", 120000, 90000, 1.05, "灰度期间按 1 周样本量估算。")
         );
     }
 
@@ -275,6 +284,24 @@ public class OpenAiTrainingManagementService implements IOpenAiTrainingManagemen
                 .expected(expected)
                 .observed(observed)
                 .nextAction(nextAction)
+                .build();
+    }
+
+    private OpenAiTrainingManagementDashboard.CostItem cost(String key,
+                                                           String scope,
+                                                           String model,
+                                                           Integer inputTokens,
+                                                           Integer outputTokens,
+                                                           Double estimatedUsd,
+                                                           String note) {
+        return OpenAiTrainingManagementDashboard.CostItem.builder()
+                .key(key)
+                .scope(scope)
+                .model(model)
+                .inputTokens(inputTokens)
+                .outputTokens(outputTokens)
+                .estimatedUsd(estimatedUsd)
+                .note(note)
                 .build();
     }
 
