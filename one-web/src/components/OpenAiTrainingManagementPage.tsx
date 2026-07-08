@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Card, Progress, Spin, Table, Tag, Typography, message } from 'antd';
+import { Alert, Button, Card, Progress, Spin, Table, Tag, Typography, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
   ApiOutlined,
   BranchesOutlined,
   CheckCircleOutlined,
   CloudUploadOutlined,
+  CopyOutlined,
   DatabaseOutlined,
   ExperimentOutlined,
   LineChartOutlined,
@@ -28,6 +29,89 @@ import {
 import './OpenAiTrainingManagementPage.css';
 
 const { Text } = Typography;
+
+const formatNumber = (value?: number) => value === undefined ? '-' : value.toLocaleString('zh-CN');
+
+const formatDecimal = (value?: number) => value === undefined ? '-' : value.toFixed(2);
+
+const formatPercent = (value?: number) => value === undefined ? '-' : `${Math.round(value * 100)}%`;
+
+const formatDashboardTime = (value?: number) => (
+  value === undefined ? '-' : new Date(value).toLocaleString('zh-CN', { hour12: false })
+);
+
+const listLines = <T,>(items: T[] | undefined, render: (item: T) => string) => (
+  items?.length ? items.map(render) : ['- 暂无数据']
+);
+
+const buildTrainingReport = (dashboard: OpenAiTrainingManagementDashboard) => [
+  '# OpenAI 训练管理报告',
+  '',
+  `生成时间：${formatDashboardTime(dashboard.generatedAt)}`,
+  '',
+  '## 生命周期',
+  ...listLines(dashboard.lifecycleStages, stage => `- ${stage.title || '-'}：${stage.detail || '-'}`),
+  '',
+  '## 数据集资产',
+  ...listLines(
+    dashboard.datasets,
+    dataset => `- ${dataset.name || '-'}：${dataset.purpose || '-'} / ${formatNumber(dataset.recordCount)} records / ${dataset.qualityStatus || '-'} / ${dataset.fileId || '-'}`
+  ),
+  '',
+  '## 训练任务',
+  ...listLines(
+    dashboard.jobs,
+    job => `- ${job.jobId || '-'}：${job.baseModel || '-'} / ${job.dataset || '-'} / ${job.status || '-'} / train=${formatDecimal(job.trainLoss)} valid=${formatDecimal(job.validLoss)} / checkpoint=${job.checkpoint || '-'}`
+  ),
+  '',
+  '## 训练指标快照',
+  ...listLines(
+    dashboard.metrics,
+    metric => `- ${metric.jobId || '-'} step ${formatNumber(metric.step)}：train=${formatDecimal(metric.trainLoss)}, valid=${formatDecimal(metric.validLoss)}, acc=${formatPercent(metric.validTokenAccuracy)}, elapsed=${metric.elapsedSeconds === undefined ? '-' : `${metric.elapsedSeconds}s`}`
+  ),
+  '',
+  '## Checkpoint 资产',
+  ...listLines(
+    dashboard.checkpoints,
+    checkpoint => `- ${checkpoint.providerCheckpointId || '-'}：${checkpoint.jobId || '-'} step ${formatNumber(checkpoint.step)} / valid=${formatDecimal(checkpoint.validLoss)} / acc=${formatPercent(checkpoint.validTokenAccuracy)} / ${checkpoint.notes || '-'}`
+  ),
+  '',
+  '## Eval 决策',
+  ...listLines(
+    dashboard.evalRuns,
+    evalRun => `- ${evalRun.model || '-'}：${evalRun.evalSet || '-'} / pass=${evalRun.passRate === undefined ? '-' : `${evalRun.passRate}%`} / score=${formatDecimal(evalRun.score)} / decision=${evalRun.decision || '-'}`
+  ),
+  '',
+  '## Eval 失败案例',
+  ...listLines(
+    dashboard.evalFailureCases,
+    failure => `- ${failure.category || '-'}：${failure.prompt || '-'} -> observed=${failure.observed || '-'}; next=${failure.nextAction || '-'}`
+  ),
+  '',
+  '## 成本与 Token',
+  ...listLines(
+    dashboard.costItems,
+    cost => `- ${cost.scope || '-'}：${cost.model || '-'} / input=${formatNumber(cost.inputTokens)} / output=${formatNumber(cost.outputTokens)} / estimated=$${formatDecimal(cost.estimatedUsd)} / ${cost.note || '-'}`
+  ),
+  '',
+  '## 部署绑定',
+  ...listLines(
+    dashboard.deploymentBindings,
+    deployment => `- ${deployment.featureKey || '-'}：${deployment.modelId || '-'} / prompt=${deployment.promptVersion || '-'} / eval=${deployment.evalRunId || '-'} / rollout=${deployment.rolloutStatus || '-'} / rollback=${deployment.rollbackModelId || '-'}`
+  ),
+  '',
+  '## 上线门禁',
+  ...listLines(
+    dashboard.readinessChecks,
+    check => `- ${check.label || '-'}：${check.status || '-'} / ${check.detail || '-'}`
+  ),
+  '',
+  '## 审计事件',
+  ...listLines(
+    dashboard.auditEvents,
+    event => `- ${event.happenedAt || '-'} ${event.actor || '-'} ${event.action || '-'} ${event.target || '-'}：${event.note || '-'}`
+  )
+].join('\n');
 
 const iconMap = {
   api: <ApiOutlined />,
@@ -376,12 +460,35 @@ const OpenAiTrainingManagementPage = () => {
   const readinessChecks = dashboard.readinessChecks || [];
   const nextActions = dashboard.nextActions || [];
 
+  const handleCopyReport = useCallback(async () => {
+    if (!lifecycleStages.length) {
+      message.warning('暂无 OpenAI 训练管理报告可复制');
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(buildTrainingReport(dashboard));
+      message.success('训练管理报告已复制');
+    } catch (error) {
+      console.error('复制 OpenAI 训练管理报告失败:', error);
+      message.error('训练管理报告复制失败');
+    }
+  }, [dashboard, lifecycleStages.length]);
+
   return (
     <LifePageShell
       className="openai-training-page"
       eyebrow="OpenAI / Training Management"
       title="OpenAI 训练管理"
-      actions={<Tag color="cyan">one-service API</Tag>}
+      actions={(
+        <Button
+          disabled={loading || !lifecycleStages.length}
+          icon={<CopyOutlined />}
+          onClick={handleCopyReport}
+        >
+          复制报告
+        </Button>
+      )}
     >
       <Spin spinning={loading}>
         {!loading && !lifecycleStages.length ? (
