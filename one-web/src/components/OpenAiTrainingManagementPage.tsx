@@ -14,6 +14,7 @@ import {
 import LifePageShell from './LifePageShell';
 import {
   openAiTrainingApi,
+  type OpenAiTrainingCheckpoint,
   type OpenAiTrainingDataset,
   type OpenAiTrainingDeploymentBinding,
   type OpenAiTrainingEvalRun,
@@ -130,6 +131,39 @@ const jobColumns: ColumnsType<OpenAiTrainingJob> = [
   }
 ];
 
+const checkpointColumns: ColumnsType<OpenAiTrainingCheckpoint> = [
+  {
+    title: 'Checkpoint',
+    dataIndex: 'providerCheckpointId',
+    render: (value?: string) => <strong>{value || '-'}</strong>
+  },
+  {
+    title: 'Job',
+    dataIndex: 'jobId'
+  },
+  {
+    title: 'Step',
+    dataIndex: 'step',
+    render: (value?: number) => value === undefined ? '-' : value.toLocaleString('zh-CN')
+  },
+  {
+    title: 'Valid Loss',
+    dataIndex: 'validLoss',
+    render: (value?: number) => value === undefined ? '-' : value.toFixed(2)
+  },
+  {
+    title: 'Token Accuracy',
+    dataIndex: 'validTokenAccuracy',
+    render: (value?: number) => (
+      <Progress percent={value === undefined ? 0 : Math.round(value * 100)} size="small" />
+    )
+  },
+  {
+    title: 'Notes',
+    dataIndex: 'notes'
+  }
+];
+
 const evalColumns: ColumnsType<OpenAiTrainingEvalRun> = [
   {
     title: 'Model',
@@ -210,6 +244,7 @@ const OpenAiTrainingManagementPage = () => {
   const entityCards = dashboard.entities || [];
   const datasetRows = dashboard.datasets || [];
   const jobRows = dashboard.jobs || [];
+  const checkpointRows = dashboard.checkpoints || [];
   const evalRows = dashboard.evalRuns || [];
   const deploymentRows = dashboard.deploymentBindings || [];
   const readinessChecks = dashboard.readinessChecks || [];
@@ -278,6 +313,16 @@ const OpenAiTrainingManagementPage = () => {
                 pagination={false}
                 size="middle"
                 scroll={{ x: 760 }}
+              />
+            </Card>
+
+            <Card className="openai-training-panel" title="Checkpoint 资产">
+              <Table
+                columns={checkpointColumns}
+                dataSource={checkpointRows}
+                pagination={false}
+                size="middle"
+                scroll={{ x: 900 }}
               />
             </Card>
 

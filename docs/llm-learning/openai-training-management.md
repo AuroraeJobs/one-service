@@ -113,6 +113,6 @@ MiniGPT 是本地可解释训练台，适合学习训练细节。OpenAI fine-tun
 | 复盘笔记 | training review |
 | 复制报告 | training report |
 
-当前进展：`/ai/training` 已经提供只读“OpenAI 训练管理”学习页，并通过 one-service 的 `/ai/training/dashboard` API 获取生命周期、管理对象、数据集资产、训练任务、Eval 决策、模型部署绑定、上线门禁检查和下一步实现数据。
+当前进展：`/ai/training` 已经提供只读“OpenAI 训练管理”学习页，并通过 one-service 的 `/ai/training/dashboard` API 获取生命周期、管理对象、数据集资产、训练任务、Checkpoint 资产、Eval 决策、模型部署绑定、上线门禁检查和下一步实现数据。
 
 下一步可以把 `/ai/training/dashboard` 的固定学习蓝图替换为 Mongo 持久化数据，再逐步接入 OpenAI 文件、fine-tuning job、checkpoint、eval API 和发布门禁规则。

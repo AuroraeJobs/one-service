@@ -16,6 +16,7 @@ public class OpenAiTrainingManagementService implements IOpenAiTrainingManagemen
                 .entities(entities())
                 .datasets(datasets())
                 .jobs(jobs())
+                .checkpoints(checkpoints())
                 .evalRuns(evalRuns())
                 .deploymentBindings(deploymentBindings())
                 .readinessChecks(readinessChecks())
@@ -58,6 +59,14 @@ public class OpenAiTrainingManagementService implements IOpenAiTrainingManagemen
                 job("job-1", "ftjob_wechat_draft_v1", "gpt-4.1-mini", "wechat-style-sft.jsonl", "succeeded", 0.92, 1.04, "step-240"),
                 job("job-2", "ftjob_review_guard_v2", "gpt-4.1-mini", "review-quality-sft.jsonl", "running", 1.18, 1.31, "step-120"),
                 job("job-3", "ftjob_tool_route_v1", "gpt-4.1", "tool-routing-eval.jsonl", "queued", null, null, "-")
+        );
+    }
+
+    private List<OpenAiTrainingManagementDashboard.ModelCheckpoint> checkpoints() {
+        return List.of(
+                checkpoint("wechat-120", "ckpt_wechat_120", "ft:wechat:step-120", "ftjob_wechat_draft_v1", 120, 1.18, 0.74, "风格开始稳定，但标题仍偏模板化。"),
+                checkpoint("wechat-240", "ckpt_wechat_240", "ft:wechat:step-240", "ftjob_wechat_draft_v1", 240, 1.04, 0.81, "候选 checkpoint，Eval 提升明显。"),
+                checkpoint("review-120", "ckpt_review_120", "ft:review:step-120", "ftjob_review_guard_v2", 120, 1.31, 0.69, "适合作为 canary，继续补失败样例。")
         );
     }
 
@@ -150,6 +159,26 @@ public class OpenAiTrainingManagementService implements IOpenAiTrainingManagemen
                 .trainLoss(trainLoss)
                 .validLoss(validLoss)
                 .checkpoint(checkpoint)
+                .build();
+    }
+
+    private OpenAiTrainingManagementDashboard.ModelCheckpoint checkpoint(String key,
+                                                                        String checkpointId,
+                                                                        String providerCheckpointId,
+                                                                        String jobId,
+                                                                        Integer step,
+                                                                        Double validLoss,
+                                                                        Double validTokenAccuracy,
+                                                                        String notes) {
+        return OpenAiTrainingManagementDashboard.ModelCheckpoint.builder()
+                .key(key)
+                .checkpointId(checkpointId)
+                .providerCheckpointId(providerCheckpointId)
+                .jobId(jobId)
+                .step(step)
+                .validLoss(validLoss)
+                .validTokenAccuracy(validTokenAccuracy)
+                .notes(notes)
                 .build();
     }
 
