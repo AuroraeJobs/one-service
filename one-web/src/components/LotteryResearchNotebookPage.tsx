@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Empty, Input, Select, Space, Spin, Tag, message } from 'antd';
 import {
+  AuditOutlined,
   BookOutlined,
   CompassOutlined,
   FileAddOutlined,
@@ -68,6 +69,14 @@ const LotteryResearchNotebookPage = () => {
 
   const status = searchParams.get('status') || 'ALL';
   const pendingEvidence = useMemo(() => evidenceFromQuery(searchParams), [searchParams]);
+  const isArchiveReviewEvidence = pendingEvidence?.evidenceType === 'ARCHIVE_REVIEW';
+  const pendingEvidenceSourceLabel = pendingEvidence?.sourceId === 'workbench'
+    ? '工作台'
+    : pendingEvidence?.sourceId === 'governance'
+      ? '治理看板'
+      : pendingEvidence?.sourceId === 'all'
+        ? '全部归档'
+        : pendingEvidence?.sourceId || '归档复核';
   const notes = response?.items || [];
 
   const loadNotes = useCallback(async () => {
@@ -187,12 +196,33 @@ const LotteryResearchNotebookPage = () => {
     >
       {error ? <Alert className="lottery-overview-status-alert" type="error" showIcon message={error} /> : null}
       {pendingEvidence ? (
-        <Alert
-          className="lottery-overview-status-alert"
-          type="info"
-          showIcon
-          message={`待挂载证据：${pendingEvidence.title || pendingEvidence.evidenceKey}`}
-        />
+        isArchiveReviewEvidence ? (
+          <Card
+            className="life-panel-card lottery-clean-panel lottery-notebook-pending-evidence"
+            title={<Space><AuditOutlined />归档复核证据待挂载</Space>}
+            extra={<Tag color="gold">{pendingEvidenceSourceLabel}</Tag>}
+          >
+            <div>
+              <strong>{pendingEvidence.title || pendingEvidence.evidenceKey}</strong>
+              <span>{pendingEvidence.evidenceKey}</span>
+            </div>
+            <Space wrap>
+              {pendingEvidence.path ? (
+                <Button size="small" icon={<LinkOutlined />} onClick={() => navigate(pendingEvidence.path || '/lottery/exports')}>
+                  查看证据
+                </Button>
+              ) : null}
+              <Button size="small" onClick={clearPendingEvidence}>清除</Button>
+            </Space>
+          </Card>
+        ) : (
+          <Alert
+            className="lottery-overview-status-alert"
+            type="info"
+            showIcon
+            message={`待挂载证据：${pendingEvidence.title || pendingEvidence.evidenceKey}`}
+          />
+        )
       ) : null}
 
       <Card className="life-panel-card lottery-clean-panel lottery-notebook-editor">

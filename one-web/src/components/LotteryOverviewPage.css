@@ -3986,6 +3986,34 @@
   gap: 10px;
 }
 
+.lottery-notebook-pending-evidence {
+  display: grid;
+  gap: 10px;
+}
+
+.lottery-notebook-pending-evidence > div:not(.ant-card-head) {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.lottery-notebook-pending-evidence strong {
+  overflow: hidden;
+  color: var(--app-text);
+  font-size: 15px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-notebook-pending-evidence span {
+  overflow: hidden;
+  color: var(--app-text-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .lottery-notebook-editor-row {
   display: grid;
   grid-template-columns: minmax(160px, 1fr) minmax(140px, 180px) auto;

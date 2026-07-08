@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 36 Wave 36C governance note handoff smoke",
+  "target": "Iteration 37 Wave 37A archive notebook panel smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -749,7 +749,7 @@
         "lotteryStrategyNoteApi.archive",
         "lotteryStrategyNoteApi.attachEvidence"
       ],
-      "emptyStates": ["暂无策略笔记", "待挂载证据", "策略笔记标题"],
+      "emptyStates": ["暂无策略笔记", "待挂载证据", "归档复核证据待挂载", "ARCHIVE_REVIEW", "pendingEvidenceSourceLabel", "lottery-notebook-pending-evidence", "查看证据", "策略笔记标题"],
       "errorStates": ["读取彩票策略笔记失败", "创建彩票策略笔记失败", "挂载策略笔记证据失败", "归档彩票策略笔记失败"],
       "fixtureData": {
         "notes": {
