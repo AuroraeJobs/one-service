@@ -917,9 +917,9 @@ Goal: make daily, draw-cycle, month-end, and release review steps explicit and r
 
 ### Wave 33C: Runbook Evidence Export
 
-- [ ] Add runbook evidence labels to export maintenance.
-- [ ] Connect review runbook steps to release readiness and month-end review.
-- [ ] Keep static smoke independent from live backend or provider availability.
+- [x] Add runbook evidence labels to export maintenance. Export maintenance now offers `复核Runbook包` and `复核Runbook证据`.
+- [x] Connect review runbook steps to release readiness and month-end review. Added `V33复核Runbook` release evidence that points to the runbook evidence preset.
+- [x] Keep static smoke independent from live backend or provider availability. Smoke guards the runbook export labels without live backend or provider calls.
 
 ## Documentation And Delivery
 

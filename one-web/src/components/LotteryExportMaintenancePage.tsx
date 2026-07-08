@@ -81,6 +81,11 @@ const reportPresets = [
     sections: ['sync-logs', 'probe-logs']
   },
   {
+    key: 'v33-review-runbook',
+    label: '复核Runbook包',
+    sections: ['ledger-issues', 'tickets', 'decision-outcomes', 'settlement-reviews', 'sync-logs', 'probe-logs']
+  },
+  {
     key: 'v15-attribution-loop',
     label: '归因闭环包',
     sections: ['ledger-issues', 'tickets', 'decision-outcomes', 'settlement-reviews', 'rule-evidence', 'replay-evidence']
@@ -176,6 +181,14 @@ const v15EvidencePacks = [
     preset: 'Provider可靠性包',
     auditTypes: ['sync-logs', 'probe-logs', 'PROXY_OR_NETWORK_BLOCK'],
     sections: ['sync-logs', 'probe-logs']
+  },
+  {
+    key: 'review-runbook',
+    title: '复核Runbook证据',
+    route: '/lottery/workbench',
+    preset: '复核Runbook包',
+    auditTypes: ['reminder-ack', 'lottery-operations-health', 'EXPORT', 'REPORT_EXPORT'],
+    sections: ['ledger-issues', 'tickets', 'decision-outcomes', 'settlement-reviews', 'sync-logs', 'probe-logs']
   },
   {
     key: 'long-term-research',
@@ -487,6 +500,13 @@ const LotteryExportMaintenancePage = () => {
       path: '/lottery/exports?preset=v32-provider-reliability'
     },
     {
+      key: 'v33-review-runbook',
+      label: 'V33复核Runbook',
+      status: 'PASS',
+      message: '工作台复核 Runbook 已接入显式确认、月末复盘和导出证据包',
+      path: '/lottery/exports?preset=v33-review-runbook'
+    },
+    {
       key: 'month-end-dashboard',
       label: '月末复盘仪表盘',
       status: 'PASS',
@@ -748,7 +768,7 @@ const LotteryExportMaintenancePage = () => {
       <Card
         className="life-panel-card lottery-clean-panel lottery-v15-evidence-card"
         title={<Space><SafetyCertificateOutlined />闭环证据包</Space>}
-        extra={<Tag color="blue">归因 / 推荐 / 移动 / 治理 / 异常 / Provider / 长期</Tag>}
+        extra={<Tag color="blue">归因 / 推荐 / 移动 / 治理 / 异常 / Provider / Runbook / 长期</Tag>}
       >
         <div className="lottery-v15-evidence-grid">
           {v15EvidencePacks.map(pack => (
