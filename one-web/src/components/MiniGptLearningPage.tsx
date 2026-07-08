@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Empty, Form, Input, InputNumber, Progress, Select, Space, Spin, Table, Tag, Typography, message } from 'antd';
-import { CloseCircleOutlined, CopyOutlined, DatabaseOutlined, PlayCircleOutlined, ReloadOutlined } from '@ant-design/icons';
+import { CloseCircleOutlined, CopyOutlined, DatabaseOutlined, PlayCircleOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
 import LifePageShell from './LifePageShell';
 import {
+  lotteryDecisionSetApi,
   miniGptApi,
+  type LotteryDecisionCandidateSelection,
   type MiniGptCorpusInsight,
   type MiniGptDashboard,
   type MiniGptEnvironmentCheck,
@@ -545,6 +547,51 @@ const formatPlannedValues = (values?: Partial<MiniGptTrainingRequest>) => {
 const displayVariableValue = (value: unknown) => (
   value === undefined || value === null || value === '' ? '-' : String(value)
 );
+
+const candidateKeyFromBalls = (redNumbers: string[] = [], blueNumber?: string) => (
+  `${redNumbers.join('-')}+${blueNumber || '--'}`
+);
+
+const generationToDecisionCandidate = (
+  result: MiniGptGenerationResult,
+  index: number
+): LotteryDecisionCandidateSelection | undefined => {
+  const candidate = result.lotteryCandidate;
+  if (!candidate?.parseable) return undefined;
+  const rawRedNumbers = candidate.valid ? candidate.redNumbers : candidate.repairedRedNumbers;
+  const rawBlueNumber = candidate.valid ? candidate.blueNumber : candidate.repairedBlueNumber;
+  const redNumbers = (rawRedNumbers || []).filter(Boolean).slice(0, 6);
+  if (redNumbers.length !== 6 || !rawBlueNumber) return undefined;
+  const warning = candidate.valid ? undefined : (candidate.issues || []).join('；') || '由 MiniGPT 输出修复得到';
+  return {
+    key: `minigpt-${candidateKeyFromBalls(redNumbers, rawBlueNumber)}`,
+    candidateTitle: `MiniGPT 候选 ${index + 1}`,
+    source: 'MINIGPT',
+    ruleName: `MiniGPT temp=${result.temperature ?? '-'} topK=${result.topK ?? '-'}`,
+    redNumbers,
+    blueNumber: rawBlueNumber,
+    score: candidate.valid ? 80 : 55,
+    replayText: result.generatedText,
+    driftLabel: result.temperature !== undefined ? `temp=${result.temperature}` : undefined,
+    resultState: 'PENDING',
+    ticketCount: 0,
+    ticketState: '未转票',
+    warning
+  };
+};
+
+const uniqueDecisionCandidates = (results: MiniGptGenerationResult[]) => {
+  const byKey = new Map<string, LotteryDecisionCandidateSelection>();
+  results.forEach((result, index) => {
+    const candidate = generationToDecisionCandidate(result, index);
+    if (!candidate) return;
+    const key = candidateKeyFromBalls(candidate.redNumbers, candidate.blueNumber);
+    if (!byKey.has(key)) {
+      byKey.set(key, candidate);
+    }
+  });
+  return Array.from(byKey.values());
+};
 
 const slugifyRunPart = (value: unknown) => (
   displayVariableValue(value)
@@ -1298,6 +1345,7 @@ const MiniGptLearningPage = () => {
   const [savingNotes, setSavingNotes] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [comparingGeneration, setComparingGeneration] = useState(false);
+  const [savingCandidateSet, setSavingCandidateSet] = useState(false);
   const watchedTrainingValues = Form.useWatch([], form) as MiniGptTrainingRequest | undefined;
   const watchedRunName = Form.useWatch('runName', form) as string | undefined;
   const watchedNoteValues = Form.useWatch([], noteForm) as MiniGptRunNoteRequest | undefined;
@@ -1600,6 +1648,32 @@ const MiniGptLearningPage = () => {
     }
   };
 
+  const handleSaveCandidateSet = async () => {
+    if (!decisionCandidateSelections.length) {
+      message.warning('当前没有可保存的合规或可修复候选');
+      return;
+    }
+    setSavingCandidateSet(true);
+    try {
+      const timestamp = new Date().toLocaleString('zh-CN', { hour12: false });
+      const saved = await lotteryDecisionSetApi.createDecisionSet({
+        title: `MiniGPT 候选池 ${timestamp}`,
+        ruleName: run?.runName ? `MiniGPT:${run.runName}` : 'MiniGPT',
+        evidenceState: 'MINIGPT',
+        resultState: 'PENDING',
+        conversionState: 'DRAFT',
+        note: `由 MiniGPT 生成试验台保存，prompt=${generationForm.getFieldValue('prompt') || run?.samplePrompt || '-'}`,
+        selectedCandidates: decisionCandidateSelections
+      });
+      message.success(`已保存候选池：${saved.title || saved.id || 'MiniGPT 决策集'}`);
+    } catch (error) {
+      console.error('保存 MiniGPT 候选池失败:', error);
+      message.error('保存 MiniGPT 候选池失败');
+    } finally {
+      setSavingCandidateSet(false);
+    }
+  };
+
   useEffect(() => {
     loadDashboard();
     loadTrainingStatus();
@@ -1659,6 +1733,13 @@ const MiniGptLearningPage = () => {
     [generationResult, logs, run]
   );
   const lotteryCandidate = generationResult?.lotteryCandidate;
+  const decisionCandidateSelections = useMemo(
+    () => uniqueDecisionCandidates([
+      ...(generationResult ? [generationResult] : []),
+      ...generationComparisons
+    ]),
+    [generationComparisons, generationResult]
+  );
   const nextActionItems = useMemo(
     () => nextExperimentActions(run, logs, corpusInsight, generationResult),
     [corpusInsight, generationResult, logs, run]
@@ -2630,6 +2711,21 @@ const MiniGptLearningPage = () => {
                       <p>生成一段包含 6 个红球和 1 个蓝球的文本后，这里会解析并检查基础约束。</p>
                     )}
                   </section>
+                  {decisionCandidateSelections.length > 0 && (
+                    <section className="mini-gpt-candidate-set-save">
+                      <div>
+                        <Text type="secondary">候选池草稿</Text>
+                        <strong>{decisionCandidateSelections.length} 注可保存</strong>
+                      </div>
+                      <Button
+                        icon={<SaveOutlined />}
+                        loading={savingCandidateSet}
+                        onClick={handleSaveCandidateSet}
+                      >
+                        保存到决策集
+                      </Button>
+                    </section>
+                  )}
                   {generationComparisons.length > 0 && (
                     <section className="mini-gpt-generation-comparison">
                       <div className="mini-gpt-lottery-candidate-head">

@@ -1090,6 +1090,29 @@
   overflow-wrap: anywhere;
 }
 
+.mini-gpt-candidate-set-save {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, #34c759 34%, var(--mini-gpt-border));
+  border-radius: 8px;
+  background: color-mix(in srgb, #34c759 8%, var(--mini-gpt-panel-bg-soft));
+}
+
+.mini-gpt-candidate-set-save > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.mini-gpt-candidate-set-save strong {
+  color: var(--mini-gpt-text);
+  font-size: 15px;
+}
+
 .mini-gpt-generation-buttons {
   align-self: end;
 }
@@ -1836,5 +1859,9 @@
 
   .mini-gpt-generation-controls {
     grid-template-columns: 1fr;
+  }
+
+  .mini-gpt-candidate-set-save {
+    display: grid;
   }
 }
