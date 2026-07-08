@@ -137,6 +137,70 @@ const buildComparisonChartOption = (comparisonLogs: Record<string, MiniGptTraini
   };
 };
 
+type MiniGptTrainingRecipe = {
+  key: string;
+  title: string;
+  description: string;
+  values: MiniGptTrainingRequest;
+};
+
+const trainingRecipes: MiniGptTrainingRecipe[] = [
+  {
+    key: 'tiny-baseline',
+    title: 'Tiny 基线',
+    description: '先跑最小模型，确认语料、loss 和生成链路。',
+    values: {
+      preset: 'tiny',
+      maxSteps: 120,
+      valRatio: 0.1,
+      samplePrompt: '语言模型',
+      sampleTokens: 80
+    }
+  },
+  {
+    key: 'low-lr',
+    title: '低学习率',
+    description: '观察 loss 是否更平滑，训练速度是否变慢。',
+    values: {
+      preset: 'tiny',
+      maxSteps: 240,
+      learningRate: 0.0001,
+      valRatio: 0.1,
+      samplePrompt: '语言模型',
+      sampleTokens: 100
+    }
+  },
+  {
+    key: 'long-context',
+    title: '长上下文',
+    description: '增加 block size，看模型能否利用更远的上下文。',
+    values: {
+      preset: 'custom',
+      maxSteps: 240,
+      batchSize: 32,
+      blockSize: 96,
+      nEmbd: 96,
+      nHead: 4,
+      nLayer: 3,
+      valRatio: 0.1,
+      samplePrompt: '语言模型',
+      sampleTokens: 120
+    }
+  },
+  {
+    key: 'small-model',
+    title: 'Small 对照',
+    description: '扩大模型容量，对比 tiny 的泛化差距和样例质量。',
+    values: {
+      preset: 'small',
+      maxSteps: 300,
+      valRatio: 0.1,
+      samplePrompt: '语言模型',
+      sampleTokens: 120
+    }
+  }
+];
+
 const metricItems = (run?: MiniGptRunRecord, logs: MiniGptTrainingLogRecord[] = []) => {
   const latestLog = logs[logs.length - 1];
   return [
@@ -349,6 +413,16 @@ const MiniGptLearningPage = () => {
       setCorpusLoading(false);
     }
   }, [form]);
+
+  const handleApplyTrainingRecipe = (recipe: MiniGptTrainingRecipe) => {
+    const mergedValues = {
+      ...form.getFieldsValue(),
+      ...recipe.values
+    };
+    form.setFieldsValue(mergedValues);
+    loadCorpusInsight(mergedValues);
+    message.info(`已应用实验模板：${recipe.title}`);
+  };
 
   const loadComparisonLogs = useCallback(async (runNames: string[]) => {
     const safeRunNames = runNames.filter(Boolean).slice(0, 4);
@@ -636,6 +710,19 @@ const MiniGptLearningPage = () => {
                   <Form.Item name="topK" label="Top-K">
                     <InputNumber min={1} max={200} />
                   </Form.Item>
+                </section>
+                <section className="mini-gpt-recipe-grid">
+                  {trainingRecipes.map(recipe => (
+                    <button
+                      type="button"
+                      key={recipe.key}
+                      onClick={() => handleApplyTrainingRecipe(recipe)}
+                      disabled={trainingStatus.running}
+                    >
+                      <strong>{recipe.title}</strong>
+                      <span>{recipe.description}</span>
+                    </button>
+                  ))}
                 </section>
                 <Form.Item className="mini-gpt-training-actions">
                   <Space wrap>
