@@ -4,9 +4,12 @@ import { CloseCircleOutlined, CopyOutlined, DatabaseOutlined, PlayCircleOutlined
 import ReactECharts from 'echarts-for-react';
 import LifePageShell from './LifePageShell';
 import {
+  lotteryBacktestApi,
   lotteryDecisionSetApi,
   miniGptApi,
   type LotteryDecisionCandidateSelection,
+  type LotteryBacktestReport,
+  type LotteryDecisionSet,
   type MiniGptCorpusInsight,
   type MiniGptDashboard,
   type MiniGptEnvironmentCheck,
@@ -1331,6 +1334,8 @@ const MiniGptLearningPage = () => {
   const [lotteryCorpusExport, setLotteryCorpusExport] = useState<MiniGptLotteryCorpusExport>();
   const [generationResult, setGenerationResult] = useState<MiniGptGenerationResult>();
   const [generationComparisons, setGenerationComparisons] = useState<MiniGptGenerationResult[]>([]);
+  const [savedCandidateSet, setSavedCandidateSet] = useState<LotteryDecisionSet>();
+  const [candidateBacktest, setCandidateBacktest] = useState<LotteryBacktestReport>();
   const [selectedRun, setSelectedRun] = useState<string>();
   const [comparisonRunNames, setComparisonRunNames] = useState<string[]>([]);
   const [comparisonLogs, setComparisonLogs] = useState<Record<string, MiniGptTrainingLogRecord[]>>({});
@@ -1346,6 +1351,7 @@ const MiniGptLearningPage = () => {
   const [generating, setGenerating] = useState(false);
   const [comparingGeneration, setComparingGeneration] = useState(false);
   const [savingCandidateSet, setSavingCandidateSet] = useState(false);
+  const [runningCandidateBacktest, setRunningCandidateBacktest] = useState(false);
   const watchedTrainingValues = Form.useWatch([], form) as MiniGptTrainingRequest | undefined;
   const watchedRunName = Form.useWatch('runName', form) as string | undefined;
   const watchedNoteValues = Form.useWatch([], noteForm) as MiniGptRunNoteRequest | undefined;
@@ -1612,6 +1618,8 @@ const MiniGptLearningPage = () => {
         runName: run.runName
       });
       setGenerationResult(result);
+      setSavedCandidateSet(undefined);
+      setCandidateBacktest(undefined);
     } catch (error) {
       console.error('MiniGPT 生成失败:', error);
       message.error('MiniGPT 生成失败');
@@ -1639,6 +1647,8 @@ const MiniGptLearningPage = () => {
       if (results[0]) {
         setGenerationResult(results[0]);
       }
+      setSavedCandidateSet(undefined);
+      setCandidateBacktest(undefined);
       message.success(`已完成 ${results.length} 组采样参数对比`);
     } catch (error) {
       console.error('MiniGPT 采样参数对比失败:', error);
@@ -1665,12 +1675,37 @@ const MiniGptLearningPage = () => {
         note: `由 MiniGPT 生成试验台保存，prompt=${generationForm.getFieldValue('prompt') || run?.samplePrompt || '-'}`,
         selectedCandidates: decisionCandidateSelections
       });
+      setSavedCandidateSet(saved);
+      setCandidateBacktest(undefined);
       message.success(`已保存候选池：${saved.title || saved.id || 'MiniGPT 决策集'}`);
     } catch (error) {
       console.error('保存 MiniGPT 候选池失败:', error);
       message.error('保存 MiniGPT 候选池失败');
     } finally {
       setSavingCandidateSet(false);
+    }
+  };
+
+  const handleRunCandidateBacktest = async () => {
+    if (!savedCandidateSet?.id) {
+      message.warning('请先保存候选池');
+      return;
+    }
+    setRunningCandidateBacktest(true);
+    try {
+      const report = await lotteryBacktestApi.run({
+        decisionSetId: savedCandidateSet.id,
+        strategyName: savedCandidateSet.ruleName || savedCandidateSet.title || 'MiniGPT 候选池',
+        presetWindow: 'latest-30',
+        window: 30
+      });
+      setCandidateBacktest(report);
+      message.success('MiniGPT 候选池回测完成');
+    } catch (error) {
+      console.error('MiniGPT 候选池回测失败:', error);
+      message.error('MiniGPT 候选池回测失败');
+    } finally {
+      setRunningCandidateBacktest(false);
     }
   };
 
@@ -1844,6 +1879,8 @@ const MiniGptLearningPage = () => {
     });
     setGenerationResult(undefined);
     setGenerationComparisons([]);
+    setSavedCandidateSet(undefined);
+    setCandidateBacktest(undefined);
   }, [generationForm, noteForm, run]);
 
   const columns = [
@@ -2724,6 +2761,43 @@ const MiniGptLearningPage = () => {
                       >
                         保存到决策集
                       </Button>
+                      <Button
+                        loading={runningCandidateBacktest}
+                        disabled={!savedCandidateSet?.id}
+                        onClick={handleRunCandidateBacktest}
+                      >
+                        立即回测
+                      </Button>
+                    </section>
+                  )}
+                  {candidateBacktest && (
+                    <section className="mini-gpt-candidate-backtest">
+                      <div className="mini-gpt-lottery-candidate-head">
+                        <Text type="secondary">候选池历史回测</Text>
+                        <Tag>{candidateBacktest.replayCount || 0} rows</Tag>
+                      </div>
+                      <div className="mini-gpt-candidate-backtest-grid">
+                        <div>
+                          <span>平均红球</span>
+                          <strong>{candidateBacktest.averageRedHits ?? '-'}</strong>
+                          <em>随机 {candidateBacktest.baselineAverageRedHits ?? '-'}</em>
+                        </div>
+                        <div>
+                          <span>蓝球命中率</span>
+                          <strong>{candidateBacktest.blueHitRate ?? '-'}%</strong>
+                          <em>随机 {candidateBacktest.baselineBlueHitRate ?? '-'}%</em>
+                        </div>
+                        <div>
+                          <span>净结果</span>
+                          <strong>{candidateBacktest.netResult ?? '-'}</strong>
+                          <em>成本 {candidateBacktest.totalCost ?? '-'}</em>
+                        </div>
+                        <div>
+                          <span>奖级分布</span>
+                          <strong>{Object.entries(candidateBacktest.prizeDistribution || {}).slice(0, 2).map(([key, value]) => `${key}:${value}`).join(' / ') || '-'}</strong>
+                          <em>历史窗口表现</em>
+                        </div>
+                      </div>
                     </section>
                   )}
                   {generationComparisons.length > 0 && (

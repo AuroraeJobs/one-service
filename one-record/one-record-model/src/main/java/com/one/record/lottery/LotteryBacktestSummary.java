@@ -32,6 +32,10 @@ public class LotteryBacktestSummary implements Serializable {
 
     private BigDecimal blueHitRate;
 
+    private BigDecimal baselineAverageRedHits;
+
+    private BigDecimal baselineBlueHitRate;
+
     private Integer bestScore;
 
     private Integer stabilityScore;
@@ -46,6 +50,9 @@ public class LotteryBacktestSummary implements Serializable {
 
     @Builder.Default
     private Map<String, Integer> prizeDistribution = new LinkedHashMap<>();
+
+    @Builder.Default
+    private Map<String, Integer> baselinePrizeDistribution = new LinkedHashMap<>();
 
     private Long createdAt;
 }

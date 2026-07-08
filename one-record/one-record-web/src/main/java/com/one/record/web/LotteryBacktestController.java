@@ -32,12 +32,12 @@ public class LotteryBacktestController {
     @GetMapping
     @Operation(summary = "分页查询彩票回测报告", description = "按策略、窗口和创建时间筛选回测报告")
     public LotteryPageResponse<LotteryBacktestReport> reports(
-            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
-            @RequestParam(value = "pageSize", required = false, defaultValue = "20") Integer pageSize,
-            @RequestParam(value = "strategyName", required = false) String strategyName,
-            @RequestParam(value = "presetWindow", required = false) String presetWindow,
-            @RequestParam(value = "createdStartAt", required = false) Long createdStartAt,
-            @RequestParam(value = "createdEndAt", required = false) Long createdEndAt) {
+            @RequestParam(name = "page", required = false, defaultValue = "0") Integer page,
+            @RequestParam(name = "pageSize", required = false, defaultValue = "20") Integer pageSize,
+            @RequestParam(name = "strategyName", required = false) String strategyName,
+            @RequestParam(name = "presetWindow", required = false) String presetWindow,
+            @RequestParam(name = "createdStartAt", required = false) Long createdStartAt,
+            @RequestParam(name = "createdEndAt", required = false) Long createdEndAt) {
         return service.reports(page, pageSize, strategyName, presetWindow, createdStartAt, createdEndAt);
     }
 

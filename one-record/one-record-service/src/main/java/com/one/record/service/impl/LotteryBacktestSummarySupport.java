@@ -57,6 +57,8 @@ final class LotteryBacktestSummarySupport {
                 .replayCount(report.getReplayCount())
                 .averageRedHits(report.getAverageRedHits())
                 .blueHitRate(report.getBlueHitRate())
+                .baselineAverageRedHits(report.getBaselineAverageRedHits())
+                .baselineBlueHitRate(report.getBaselineBlueHitRate())
                 .bestScore(report.getBestScore())
                 .stabilityScore(report.getStabilityScore())
                 .totalCost(report.getTotalCost())
@@ -64,6 +66,7 @@ final class LotteryBacktestSummarySupport {
                 .netResult(report.getNetResult())
                 .roiPercent(roiPercent(report.getNetResult(), report.getTotalCost()))
                 .prizeDistribution(report.getPrizeDistribution() == null ? new LinkedHashMap<>() : new LinkedHashMap<>(report.getPrizeDistribution()))
+                .baselinePrizeDistribution(report.getBaselinePrizeDistribution() == null ? new LinkedHashMap<>() : new LinkedHashMap<>(report.getBaselinePrizeDistribution()))
                 .createdAt(report.getCreatedAt())
                 .build();
     }

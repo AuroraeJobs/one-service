@@ -2336,6 +2336,8 @@ export interface LotteryBacktestSummary {
   replayCount?: number;
   averageRedHits?: number;
   blueHitRate?: number;
+  baselineAverageRedHits?: number;
+  baselineBlueHitRate?: number;
   bestScore?: number;
   stabilityScore?: number;
   totalCost?: number;
@@ -2343,6 +2345,7 @@ export interface LotteryBacktestSummary {
   netResult?: number;
   roiPercent?: number;
   prizeDistribution: Record<string, number>;
+  baselinePrizeDistribution?: Record<string, number>;
   createdAt?: number;
 }
 
@@ -2357,12 +2360,15 @@ export interface LotteryBacktestReport {
   replayCount?: number;
   averageRedHits?: number;
   blueHitRate?: number;
+  baselineAverageRedHits?: number;
+  baselineBlueHitRate?: number;
   bestScore?: number;
   stabilityScore?: number;
   totalCost?: number;
   totalPrize?: number;
   netResult?: number;
   prizeDistribution: Record<string, number>;
+  baselinePrizeDistribution?: Record<string, number>;
   rows: LotteryBacktestReplayRow[];
   bankrollSimulation: LotteryBacktestBankrollPoint[];
   createdAt?: number;
@@ -2464,6 +2470,7 @@ export interface LotterySimulationResult {
 
 export interface LotteryBacktestRunRequest {
   experimentId?: string;
+  decisionSetId?: string;
   strategyName?: string;
   presetWindow?: string;
   window?: number;

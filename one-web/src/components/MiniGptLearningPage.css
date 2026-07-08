@@ -1113,6 +1113,45 @@
   font-size: 15px;
 }
 
+.mini-gpt-candidate-backtest {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, #0071e3 34%, var(--mini-gpt-border));
+  border-radius: 8px;
+  background: color-mix(in srgb, #0071e3 8%, var(--mini-gpt-panel-bg-soft));
+}
+
+.mini-gpt-candidate-backtest-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mini-gpt-candidate-backtest-grid div {
+  display: grid;
+  gap: 4px;
+  min-height: 74px;
+  padding: 9px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 8px;
+  background: var(--mini-gpt-panel-bg);
+}
+
+.mini-gpt-candidate-backtest-grid span,
+.mini-gpt-candidate-backtest-grid em {
+  color: var(--mini-gpt-muted);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.mini-gpt-candidate-backtest-grid strong {
+  color: var(--mini-gpt-text);
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
 .mini-gpt-generation-buttons {
   align-self: end;
 }
@@ -1764,6 +1803,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .mini-gpt-candidate-backtest-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .mini-gpt-review-draft-sources {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1848,6 +1891,7 @@
   .mini-gpt-env-check-grid,
   .mini-gpt-lottery-candidate-metrics,
   .mini-gpt-generation-comparison-grid,
+  .mini-gpt-candidate-backtest-grid,
   .mini-gpt-status-panel dl,
   .mini-gpt-config-list {
     grid-template-columns: 1fr;

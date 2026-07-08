@@ -4,7 +4,10 @@ import com.one.record.lottery.LotteryAuditMetadata;
 import com.one.record.lottery.LotteryBacktestRunRequest;
 import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.model.LotteryBacktestReport;
+import com.one.record.model.LotteryDecisionCandidateSelection;
+import com.one.record.model.LotteryDecisionSet;
 import com.one.record.repository.LotteryBacktestReportRepository;
+import com.one.record.repository.LotteryDecisionSetRepository;
 import com.one.record.response.Record;
 import com.one.record.service.ILotteryBacktestService;
 import com.one.record.service.IRecordService;
@@ -21,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 @Service
@@ -39,6 +43,8 @@ public class LotteryBacktestService implements ILotteryBacktestService {
 
     private final LotteryBacktestReportRepository repository;
 
+    private final LotteryDecisionSetRepository decisionSetRepository;
+
     private final IRecordService recordService;
 
     @Override
@@ -49,7 +55,9 @@ public class LotteryBacktestService implements ILotteryBacktestService {
                 .sorted(Comparator.comparing(Record::getCode))
                 .toList();
         List<Record> scoped = scope(records, normalized);
-        List<LotteryBacktestReport.ReplayRow> rows = buildRows(scoped);
+        List<LotteryBacktestReport.ReplayRow> rows = StringUtils.hasText(normalized.getDecisionSetId())
+                ? buildDecisionSetRows(scoped, normalized.getDecisionSetId())
+                : buildRows(scoped);
         LotteryBacktestReport report = buildReport(normalized, rows);
         return repository.save(report);
     }
@@ -90,6 +98,7 @@ public class LotteryBacktestService implements ILotteryBacktestService {
         int window = request == null ? DEFAULT_WINDOW : normalizeWindow(request.getWindow(), preset);
         return LotteryBacktestRunRequest.builder()
                 .experimentId(trimToNull(request == null ? null : request.getExperimentId()))
+                .decisionSetId(trimToNull(request == null ? null : request.getDecisionSetId()))
                 .strategyName(StringUtils.hasText(request == null ? null : request.getStrategyName())
                         ? request.getStrategyName().trim()
                         : "上一期基线")
@@ -134,9 +143,39 @@ public class LotteryBacktestService implements ILotteryBacktestService {
                 .toList();
     }
 
+    private List<LotteryBacktestReport.ReplayRow> buildDecisionSetRows(List<Record> records, String decisionSetId) {
+        LotteryDecisionSet decisionSet = decisionSetRepository.findById(decisionSetId).orElse(null);
+        if (decisionSet == null || decisionSet.getSelectedCandidates() == null || decisionSet.getSelectedCandidates().isEmpty()) {
+            return List.of();
+        }
+        List<LotteryDecisionCandidateSelection> candidates = decisionSet.getSelectedCandidates().stream()
+                .filter(candidate -> candidate != null && candidate.getRedNumbers() != null && candidate.getRedNumbers().size() >= 6 && StringUtils.hasText(candidate.getBlueNumber()))
+                .toList();
+        if (records == null || records.isEmpty() || candidates.isEmpty()) {
+            return List.of();
+        }
+        return records.stream()
+                .flatMap(record -> candidates.stream().map(candidate -> candidateRow(record, candidate)))
+                .toList();
+    }
+
     private static LotteryBacktestReport.ReplayRow row(Record previous, Record actual) {
         List<String> predictedRed = LotteryDrawUtil.normalizeRedNumbers(previous.getRed());
         String predictedBlue = LotteryDrawUtil.normalizeBlueNumber(previous.getBlue());
+        return row(actual, predictedRed, predictedBlue);
+    }
+
+    private static LotteryBacktestReport.ReplayRow candidateRow(Record actual, LotteryDecisionCandidateSelection candidate) {
+        List<String> predictedRed = candidate.getRedNumbers().stream()
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .limit(6)
+                .toList();
+        String predictedBlue = LotteryDrawUtil.normalizeBlueNumber(candidate.getBlueNumber());
+        return row(actual, predictedRed, predictedBlue);
+    }
+
+    private static LotteryBacktestReport.ReplayRow row(Record actual, List<String> predictedRed, String predictedBlue) {
         List<String> actualRed = LotteryDrawUtil.normalizeRedNumbers(actual.getRed());
         String actualBlue = LotteryDrawUtil.normalizeBlueNumber(actual.getBlue());
         Set<String> actualRedSet = Set.copyOf(actualRed);
@@ -161,33 +200,40 @@ public class LotteryBacktestService implements ILotteryBacktestService {
                 .build();
     }
 
+    private static List<LotteryBacktestReport.ReplayRow> randomBaselineRows(List<LotteryBacktestReport.ReplayRow> rows) {
+        return rows.stream()
+                .map(row -> {
+                    Random random = new Random((row.getIssue() == null ? "baseline" : row.getIssue()).hashCode());
+                    List<String> predictedRed = random.ints(1, 34)
+                            .distinct()
+                            .limit(6)
+                            .sorted()
+                            .mapToObj(number -> String.format("%02d", number))
+                            .toList();
+                    String predictedBlue = String.format("%02d", random.nextInt(16) + 1);
+                    Record actual = new Record();
+                    actual.setCode(row.getIssue());
+                    actual.setDate(row.getDrawDate());
+                    actual.setRed(String.join(",", row.getActualRedNumbers()));
+                    actual.setBlue(row.getActualBlueNumber());
+                    return row(actual, predictedRed, predictedBlue);
+                })
+                .toList();
+    }
+
     private static LotteryBacktestReport buildReport(LotteryBacktestRunRequest request, List<LotteryBacktestReport.ReplayRow> rows) {
-        Map<String, Integer> prizeDistribution = new LinkedHashMap<>();
-        BigDecimal totalCost = BigDecimal.ZERO;
-        BigDecimal totalPrize = BigDecimal.ZERO;
+        List<LotteryBacktestReport.ReplayRow> baselineRows = randomBaselineRows(rows);
+        Summary baseline = summarize(baselineRows);
+        Summary summary = summarize(rows);
         BigDecimal balance = BigDecimal.ZERO;
-        int redHits = 0;
-        int blueHits = 0;
-        int bestScore = 0;
         List<LotteryBacktestReport.BankrollPoint> bankroll = new java.util.ArrayList<>();
         for (LotteryBacktestReport.ReplayRow row : rows) {
-            prizeDistribution.put(row.getPrizeName(), prizeDistribution.getOrDefault(row.getPrizeName(), 0) + 1);
-            totalCost = totalCost.add(row.getCost());
-            totalPrize = totalPrize.add(row.getPrize());
             balance = balance.add(row.getNetResult());
-            redHits += row.getRedHits();
-            if (Boolean.TRUE.equals(row.getBlueHit())) {
-                blueHits += 1;
-            }
-            bestScore = Math.max(bestScore, row.getScore());
             bankroll.add(LotteryBacktestReport.BankrollPoint.builder()
                     .issue(row.getIssue())
                     .balance(balance)
                     .build());
         }
-        int count = rows.size();
-        BigDecimal averageRedHits = count == 0 ? BigDecimal.ZERO : BigDecimal.valueOf(redHits).divide(BigDecimal.valueOf(count), 2, RoundingMode.HALF_UP);
-        BigDecimal blueHitRate = count == 0 ? BigDecimal.ZERO : BigDecimal.valueOf(blueHits * 100L).divide(BigDecimal.valueOf(count), 2, RoundingMode.HALF_UP);
         return LotteryBacktestReport.builder()
                 .experimentId(request.getExperimentId())
                 .strategyName(request.getStrategyName())
@@ -195,20 +241,46 @@ public class LotteryBacktestService implements ILotteryBacktestService {
                 .requestedWindow(request.getWindow())
                 .issueStart(rows.isEmpty() ? request.getIssueStart() : rows.get(0).getIssue())
                 .issueEnd(rows.isEmpty() ? request.getIssueEnd() : rows.get(rows.size() - 1).getIssue())
-                .replayCount(count)
-                .averageRedHits(averageRedHits)
-                .blueHitRate(blueHitRate)
-                .bestScore(bestScore)
-                .stabilityScore(stabilityScore(rows, averageRedHits))
-                .totalCost(totalCost)
-                .totalPrize(totalPrize)
-                .netResult(totalPrize.subtract(totalCost))
-                .prizeDistribution(prizeDistribution)
+                .replayCount(rows.size())
+                .averageRedHits(summary.averageRedHits())
+                .blueHitRate(summary.blueHitRate())
+                .baselineAverageRedHits(baseline.averageRedHits())
+                .baselineBlueHitRate(baseline.blueHitRate())
+                .bestScore(summary.bestScore())
+                .stabilityScore(stabilityScore(rows, summary.averageRedHits()))
+                .totalCost(summary.totalCost())
+                .totalPrize(summary.totalPrize())
+                .netResult(summary.totalPrize().subtract(summary.totalCost()))
+                .prizeDistribution(summary.prizeDistribution())
+                .baselinePrizeDistribution(baseline.prizeDistribution())
                 .rows(rows)
                 .bankrollSimulation(bankroll)
                 .createdAt(System.currentTimeMillis())
                 .auditMetadata(audit("backtest-run", "backtest-service", System.currentTimeMillis()))
                 .build();
+    }
+
+    private static Summary summarize(List<LotteryBacktestReport.ReplayRow> rows) {
+        Map<String, Integer> prizeDistribution = new LinkedHashMap<>();
+        BigDecimal totalCost = BigDecimal.ZERO;
+        BigDecimal totalPrize = BigDecimal.ZERO;
+        int redHits = 0;
+        int blueHits = 0;
+        int bestScore = 0;
+        for (LotteryBacktestReport.ReplayRow row : rows) {
+            prizeDistribution.put(row.getPrizeName(), prizeDistribution.getOrDefault(row.getPrizeName(), 0) + 1);
+            totalCost = totalCost.add(row.getCost());
+            totalPrize = totalPrize.add(row.getPrize());
+            redHits += row.getRedHits();
+            if (Boolean.TRUE.equals(row.getBlueHit())) {
+                blueHits += 1;
+            }
+            bestScore = Math.max(bestScore, row.getScore());
+        }
+        int count = rows.size();
+        BigDecimal averageRedHits = count == 0 ? BigDecimal.ZERO : BigDecimal.valueOf(redHits).divide(BigDecimal.valueOf(count), 2, RoundingMode.HALF_UP);
+        BigDecimal blueHitRate = count == 0 ? BigDecimal.ZERO : BigDecimal.valueOf(blueHits * 100L).divide(BigDecimal.valueOf(count), 2, RoundingMode.HALF_UP);
+        return new Summary(averageRedHits, blueHitRate, bestScore, totalCost, totalPrize, prizeDistribution);
     }
 
     private static LotteryAuditMetadata audit(String action, String source, long now) {
@@ -280,5 +352,13 @@ public class LotteryBacktestService implements ILotteryBacktestService {
     }
 
     private record Prize(String name, BigDecimal amount) {
+    }
+
+    private record Summary(BigDecimal averageRedHits,
+                           BigDecimal blueHitRate,
+                           int bestScore,
+                           BigDecimal totalCost,
+                           BigDecimal totalPrize,
+                           Map<String, Integer> prizeDistribution) {
     }
 }

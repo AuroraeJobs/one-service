@@ -15,6 +15,8 @@ public class LotteryBacktestRunRequest implements Serializable {
 
     private String experimentId;
 
+    private String decisionSetId;
+
     private String strategyName;
 
     private String presetWindow;
