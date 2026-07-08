@@ -1,6 +1,6 @@
 {
-  "target": "Iteration 39 Wave 39B workbench note quality follow-up smoke",
-  "generatedAt": "2026-07-08T10:28:14.125Z",
+  "target": "Iteration 39 Wave 39C review closure summary smoke",
+  "generatedAt": "2026-07-08T10:30:03.248Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
@@ -135,7 +135,7 @@
       "label": "策略笔记",
       "component": "LotteryResearchNotebookPage",
       "mockApiCount": 4,
-      "emptyStateCount": 18,
+      "emptyStateCount": 27,
       "errorStateCount": 4
     },
     {

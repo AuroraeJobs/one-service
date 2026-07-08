@@ -4081,6 +4081,51 @@
   white-space: nowrap;
 }
 
+.lottery-notebook-closure-card p {
+  margin: 10px 0 0;
+  color: var(--app-text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.lottery-notebook-closure-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.lottery-notebook-closure-grid button {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+  color: var(--app-text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.lottery-notebook-closure-grid button:hover {
+  border-color: var(--app-primary);
+  transform: translateY(-1px);
+}
+
+.lottery-notebook-closure-grid strong {
+  overflow: hidden;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-notebook-closure-grid span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .lottery-notebook-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -7861,6 +7906,7 @@ button.lottery-latest-vs-card:hover {
   .lottery-portfolio-evidence-editor-row,
   .lottery-notebook-editor-row,
   .lottery-notebook-archive-summary,
+  .lottery-notebook-closure-grid,
   .lottery-notebook-grid,
   .lottery-workbench-issue-next,
   .lottery-workbench-archive-note-bar,

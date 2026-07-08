@@ -86,6 +86,33 @@ const LotteryResearchNotebookPage = () => {
     validated: archiveReviewNotes.filter(note => note.status === 'VALIDATED').length,
     evidenceCount: archiveReviewNotes.reduce((sum, note) => sum + (note.evidence || []).filter(item => item.evidenceType === 'ARCHIVE_REVIEW').length, 0)
   }), [archiveReviewNotes]);
+  const archiveReviewClosureItems = useMemo(() => [
+    {
+      key: 'notebook',
+      label: '笔记本',
+      detail: `${archiveReviewSummary.total} 条复核笔记`,
+      path: '/lottery/research/notebook?evidence=ARCHIVE_REVIEW'
+    },
+    {
+      key: 'month-end',
+      label: '月末复盘',
+      detail: '回看复核队列和月末证据',
+      path: '/lottery/month-end'
+    },
+    {
+      key: 'governance',
+      label: '治理趋势',
+      detail: '观察复核质量和异常压力',
+      path: '/lottery/governance'
+    },
+    {
+      key: 'release',
+      label: '发布证据',
+      detail: 'V39 复核笔记质量入口',
+      path: '/lottery/exports'
+    }
+  ], [archiveReviewSummary.total]);
+  const showArchiveReviewClosure = evidenceFilter === 'ARCHIVE_REVIEW' || archiveReviewSummary.total > 0 || pendingEvidence?.evidenceType === 'ARCHIVE_REVIEW';
   const visibleNotes = evidenceFilter === 'ARCHIVE_REVIEW' ? archiveReviewNotes : notes;
 
   const loadNotes = useCallback(async () => {
@@ -273,6 +300,24 @@ const LotteryResearchNotebookPage = () => {
           <article><strong>{archiveReviewSummary.validated}</strong><span>已验证</span></article>
           <article><strong>{archiveReviewSummary.evidenceCount}</strong><span>复核证据</span></article>
         </section>
+      ) : null}
+
+      {showArchiveReviewClosure ? (
+        <Card
+          className="life-panel-card lottery-clean-panel lottery-notebook-closure-card"
+          title={<Space><SafetyCertificateOutlined />复核闭环摘要</Space>}
+          extra={<Tag color={archiveReviewSummary.active ? 'gold' : 'green'}>{archiveReviewSummary.active ? '继续观察' : '非阻塞'}</Tag>}
+        >
+          <div className="lottery-notebook-closure-grid">
+            {archiveReviewClosureItems.map(item => (
+              <button key={item.key} type="button" onClick={() => navigate(item.path)}>
+                <strong>{item.label}</strong>
+                <span>{item.detail}</span>
+              </button>
+            ))}
+          </div>
+          <p>复核笔记质量已串联工作台、月末复盘、治理趋势和发布证据；当前保留为观察信号，不升级为发布阻塞项。</p>
+        </Card>
       ) : null}
 
       <Spin spinning={loading}>

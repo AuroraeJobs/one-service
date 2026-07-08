@@ -22,3 +22,5 @@ Status: completed with a workbench `复核笔记质量` follow-up card that reus
 
 - Add a compact closure summary that connects notebook, month-end, governance, and release evidence paths.
 - Decide whether repeated quality gaps should become a future release-readiness guard.
+
+Status: completed with a notebook closure card linking archive-review notes to month-end review, governance trends, and release evidence; repeated gaps remain non-blocking until review history proves they should gate release.

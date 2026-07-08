@@ -1051,8 +1051,8 @@ Goal: turn archive-review note quality into visible release and review evidence 
 
 ### Wave 39C: Review Closure Summary
 
-- [ ] Add a compact closure summary that connects notebook, month-end, governance, and release evidence paths.
-- [ ] Decide whether repeated quality gaps should become a future release-readiness guard.
+- [x] Add a compact closure summary that connects notebook, month-end, governance, and release evidence paths.
+- [x] Decide whether repeated quality gaps should become a future release-readiness guard. Decision: keep observing as a non-blocking signal; revisit after repeated quality gaps appear in review history.
 
 ## Documentation And Delivery
 
