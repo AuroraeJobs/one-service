@@ -278,6 +278,7 @@ red=04,10,16,21,26,32 blue=09 reason=sum_mid;odd_even_3_3;zone_2_2_2
 - 导出后会刷新语料与 Tokenizer 洞察，便于先检查字符数、词表和编码样例，再启动训练。
 - `POST /ai/minigpt/lottery-candidate/validate` 支持解析 MiniGPT 生成文本中的红蓝球，并检查数量、范围、重复、升序、和值、跨度和奇偶。
 - MiniGPT 生成试验台会直接显示“双色球候选校验”，把模型生成文本分成“未解析、可修复、不合规、通过”几种状态。
+- `POST /ai/minigpt/generate/compare` 支持同一 prompt 下批量对比不同 `temperature/top-k`，页面会并排显示生成文本和候选校验结果。
 
 建议新增或复用的能力：
 
@@ -302,6 +303,5 @@ red=04,10,16,21,26,32 blue=09 reason=sum_mid;odd_even_3_3;zone_2_2_2
 后续训练计划从这里拆：
 
 1. 用 MiniGPT 训练“格式学习”基线。
-2. 用同一采样提示对比不同 `temperature/top-k`。
-3. 保存候选池并接入历史回测。
-4. 形成“模型生成 + 规则过滤 + 随机基线对比”的第一版闭环。
+2. 保存候选池并接入历史回测。
+3. 形成“模型生成 + 规则过滤 + 随机基线对比”的第一版闭环。

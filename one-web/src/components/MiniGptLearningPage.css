@@ -1090,6 +1090,77 @@
   overflow-wrap: anywhere;
 }
 
+.mini-gpt-generation-buttons {
+  align-self: end;
+}
+
+.mini-gpt-generation-comparison {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 8px;
+  background: var(--mini-gpt-panel-bg-soft);
+}
+
+.mini-gpt-generation-comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.mini-gpt-generation-comparison article {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 8px;
+  background: var(--mini-gpt-panel-bg);
+}
+
+.mini-gpt-generation-comparison article > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mini-gpt-generation-comparison strong {
+  color: var(--mini-gpt-text);
+  font-size: 13px;
+}
+
+.mini-gpt-generation-comparison span {
+  color: var(--mini-gpt-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mini-gpt-generation-comparison p {
+  margin: 0;
+  color: var(--mini-gpt-text);
+  font-size: 13px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.mini-gpt-generation-comparison pre {
+  max-height: 128px;
+  margin: 0;
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 6px;
+  color: var(--mini-gpt-muted);
+  background: var(--mini-gpt-code-bg);
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .mini-gpt-chart {
   height: 340px;
 }
@@ -1666,6 +1737,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .mini-gpt-generation-comparison-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .mini-gpt-review-draft-sources {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1749,6 +1824,7 @@
   .mini-gpt-live-loss,
   .mini-gpt-env-check-grid,
   .mini-gpt-lottery-candidate-metrics,
+  .mini-gpt-generation-comparison-grid,
   .mini-gpt-status-panel dl,
   .mini-gpt-config-list {
     grid-template-columns: 1fr;

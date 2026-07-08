@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.one.record.ai.MiniGptDashboard;
 import com.one.record.ai.MiniGptEnvironmentCheck;
 import com.one.record.ai.MiniGptCorpusInsight;
+import com.one.record.ai.MiniGptGenerationComparisonRequest;
 import com.one.record.ai.MiniGptGenerationRequest;
 import com.one.record.ai.MiniGptGenerationResult;
 import com.one.record.ai.MiniGptLotteryCandidateValidation;
@@ -79,6 +80,8 @@ public class MiniGptLearningService implements IMiniGptLearningService {
     private static final int MAX_GENERATION_TOKENS = 500;
 
     private static final long GENERATION_TIMEOUT_SECONDS = 60;
+
+    private static final int MAX_GENERATION_COMPARISONS = 6;
 
     private static final Pattern TRAINING_LOSS_LINE = Pattern.compile(
             "step=(\\d+)\\s+train_loss=([0-9.]+)\\s+eval_loss=([0-9.]+)"
@@ -409,6 +412,35 @@ public class MiniGptLearningService implements IMiniGptLearningService {
     @Override
     public MiniGptGenerationResult generate(MiniGptGenerationRequest request) {
         MiniGptGenerationRequest safeRequest = request == null ? new MiniGptGenerationRequest() : request;
+        return runGeneration(safeRequest);
+    }
+
+    @Override
+    public List<MiniGptGenerationResult> compareGeneration(MiniGptGenerationComparisonRequest request) {
+        MiniGptGenerationComparisonRequest safeRequest = request == null ? new MiniGptGenerationComparisonRequest() : request;
+        List<Double> temperatures = normalizeTemperatures(safeRequest.getTemperatures());
+        List<Integer> topKs = normalizeTopKs(safeRequest.getTopKs());
+        List<MiniGptGenerationRequest> requests = new ArrayList<>();
+        for (Double temperature : temperatures) {
+            for (Integer topK : topKs) {
+                if (requests.size() >= MAX_GENERATION_COMPARISONS) {
+                    break;
+                }
+                MiniGptGenerationRequest generationRequest = new MiniGptGenerationRequest();
+                generationRequest.setRunName(safeRequest.getRunName());
+                generationRequest.setPrompt(safeRequest.getPrompt());
+                generationRequest.setMaxNewTokens(safeRequest.getMaxNewTokens());
+                generationRequest.setTemperature(temperature);
+                generationRequest.setTopK(topK);
+                requests.add(generationRequest);
+            }
+        }
+        return requests.stream()
+                .map(this::runGeneration)
+                .toList();
+    }
+
+    private MiniGptGenerationResult runGeneration(MiniGptGenerationRequest safeRequest) {
         MiniGptRunRecord run = selectedGenerationRun(safeRequest.getRunName());
         if (run == null || !StringUtils.hasText(run.getCheckpoint())) {
             throw new IllegalArgumentException("当前 MiniGPT 实验没有可用 checkpoint");
@@ -574,6 +606,30 @@ public class MiniGptLearningService implements IMiniGptLearningService {
             return defaultValue;
         }
         return Math.min(limit, maxValue);
+    }
+
+    private static List<Double> normalizeTemperatures(List<Double> temperatures) {
+        if (temperatures == null || temperatures.isEmpty()) {
+            return List.of(0.7, 0.9, 1.1);
+        }
+        List<Double> values = temperatures.stream()
+                .filter(value -> value != null && value >= 0.1 && value <= 2)
+                .distinct()
+                .limit(3)
+                .toList();
+        return values.isEmpty() ? List.of(0.7, 0.9, 1.1) : values;
+    }
+
+    private static List<Integer> normalizeTopKs(List<Integer> topKs) {
+        if (topKs == null || topKs.isEmpty()) {
+            return List.of(20);
+        }
+        List<Integer> values = topKs.stream()
+                .filter(value -> value != null && value >= 1 && value <= 200)
+                .distinct()
+                .limit(2)
+                .toList();
+        return values.isEmpty() ? List.of(20) : values;
     }
 
     private void runTrainingProcess(MiniGptTrainingRequest request, String runName, String preset, int maxSteps, long startedAt) {

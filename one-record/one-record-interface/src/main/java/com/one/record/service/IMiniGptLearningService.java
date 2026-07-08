@@ -2,6 +2,7 @@ package com.one.record.service;
 
 import com.one.record.ai.MiniGptDashboard;
 import com.one.record.ai.MiniGptEnvironmentCheck;
+import com.one.record.ai.MiniGptGenerationComparisonRequest;
 import com.one.record.ai.MiniGptGenerationRequest;
 import com.one.record.ai.MiniGptGenerationResult;
 import com.one.record.ai.MiniGptLotteryCandidateValidation;
@@ -38,6 +39,8 @@ public interface IMiniGptLearningService {
     MiniGptCorpusInsight corpusInsight(String data, String sample, Integer tokenLimit);
 
     MiniGptGenerationResult generate(MiniGptGenerationRequest request);
+
+    List<MiniGptGenerationResult> compareGeneration(MiniGptGenerationComparisonRequest request);
 
     MiniGptLotteryCandidateValidation validateLotteryCandidate(String text);
 

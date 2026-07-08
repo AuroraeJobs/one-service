@@ -1283,6 +1283,7 @@ const MiniGptLearningPage = () => {
   const [environmentCheck, setEnvironmentCheck] = useState<MiniGptEnvironmentCheck>({});
   const [lotteryCorpusExport, setLotteryCorpusExport] = useState<MiniGptLotteryCorpusExport>();
   const [generationResult, setGenerationResult] = useState<MiniGptGenerationResult>();
+  const [generationComparisons, setGenerationComparisons] = useState<MiniGptGenerationResult[]>([]);
   const [selectedRun, setSelectedRun] = useState<string>();
   const [comparisonRunNames, setComparisonRunNames] = useState<string[]>([]);
   const [comparisonLogs, setComparisonLogs] = useState<Record<string, MiniGptTrainingLogRecord[]>>({});
@@ -1296,6 +1297,7 @@ const MiniGptLearningPage = () => {
   const [cancelling, setCancelling] = useState(false);
   const [savingNotes, setSavingNotes] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [comparingGeneration, setComparingGeneration] = useState(false);
   const watchedTrainingValues = Form.useWatch([], form) as MiniGptTrainingRequest | undefined;
   const watchedRunName = Form.useWatch('runName', form) as string | undefined;
   const watchedNoteValues = Form.useWatch([], noteForm) as MiniGptRunNoteRequest | undefined;
@@ -1570,6 +1572,34 @@ const MiniGptLearningPage = () => {
     }
   };
 
+  const handleCompareGeneration = async () => {
+    if (!run?.runName || !run?.checkpoint) {
+      message.warning('请先选择一个有 checkpoint 的实验');
+      return;
+    }
+    const values = generationForm.getFieldsValue();
+    setComparingGeneration(true);
+    try {
+      const results = await miniGptApi.compareGeneration({
+        runName: run.runName,
+        prompt: values.prompt || run.samplePrompt || 'target=next strategy=balanced',
+        maxNewTokens: values.maxNewTokens || run.sampleTokens || 120,
+        temperatures: [0.7, values.temperature || 0.9, 1.1],
+        topKs: [values.topK || 20]
+      });
+      setGenerationComparisons(results);
+      if (results[0]) {
+        setGenerationResult(results[0]);
+      }
+      message.success(`已完成 ${results.length} 组采样参数对比`);
+    } catch (error) {
+      console.error('MiniGPT 采样参数对比失败:', error);
+      message.error('MiniGPT 采样参数对比失败');
+    } finally {
+      setComparingGeneration(false);
+    }
+  };
+
   useEffect(() => {
     loadDashboard();
     loadTrainingStatus();
@@ -1732,6 +1762,7 @@ const MiniGptLearningPage = () => {
       topK: 20
     });
     setGenerationResult(undefined);
+    setGenerationComparisons([]);
   }, [generationForm, noteForm, run]);
 
   const columns = [
@@ -2518,9 +2549,14 @@ const MiniGptLearningPage = () => {
                     <Form.Item name="topK" label="Top-K">
                       <InputNumber min={1} max={200} />
                     </Form.Item>
-                    <Button type="primary" htmlType="submit" loading={generating} disabled={!run?.checkpoint}>
-                      生成
-                    </Button>
+                    <Space wrap className="mini-gpt-generation-buttons">
+                      <Button type="primary" htmlType="submit" loading={generating} disabled={!run?.checkpoint}>
+                        生成
+                      </Button>
+                      <Button loading={comparingGeneration} disabled={!run?.checkpoint} onClick={handleCompareGeneration}>
+                        参数对比
+                      </Button>
+                    </Space>
                   </div>
                 </Form>
                 <div className="mini-gpt-generation-result">
@@ -2594,6 +2630,37 @@ const MiniGptLearningPage = () => {
                       <p>生成一段包含 6 个红球和 1 个蓝球的文本后，这里会解析并检查基础约束。</p>
                     )}
                   </section>
+                  {generationComparisons.length > 0 && (
+                    <section className="mini-gpt-generation-comparison">
+                      <div className="mini-gpt-lottery-candidate-head">
+                        <Text type="secondary">采样参数对比</Text>
+                        <Tag>{generationComparisons.length} runs</Tag>
+                      </div>
+                      <div className="mini-gpt-generation-comparison-grid">
+                        {generationComparisons.map((item, index) => (
+                          <article key={`${item.temperature}-${item.topK}-${index}`}>
+                            <div>
+                              <strong>temp={item.temperature ?? '-'}</strong>
+                              <Tag color={lotteryCandidateStatusColor(item.lotteryCandidate?.status)}>
+                                {item.lotteryCandidate?.status || 'CHECK'}
+                              </Tag>
+                            </div>
+                            <span>topK={item.topK ?? '-'} · {item.elapsedMillis ?? '-'}ms</span>
+                            {item.lotteryCandidate?.parseable ? (
+                              <p>
+                                {(item.lotteryCandidate.redNumbers || []).join(' ')}
+                                {' + '}
+                                {item.lotteryCandidate.blueNumber || '--'}
+                              </p>
+                            ) : (
+                              <p>未解析到完整候选号码</p>
+                            )}
+                            <pre>{item.generatedText || '-'}</pre>
+                          </article>
+                        ))}
+                      </div>
+                    </section>
+                  )}
                 </div>
               </Card>
             </section>

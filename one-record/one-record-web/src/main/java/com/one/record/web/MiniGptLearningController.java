@@ -3,6 +3,7 @@ package com.one.record.web;
 import com.one.record.ai.MiniGptDashboard;
 import com.one.record.ai.MiniGptEnvironmentCheck;
 import com.one.record.ai.MiniGptCorpusInsight;
+import com.one.record.ai.MiniGptGenerationComparisonRequest;
 import com.one.record.ai.MiniGptGenerationRequest;
 import com.one.record.ai.MiniGptGenerationResult;
 import com.one.record.ai.MiniGptLotteryCandidateValidation;
@@ -91,6 +92,11 @@ public class MiniGptLearningController {
     @PostMapping("generate")
     public MiniGptGenerationResult generate(@RequestBody(required = false) MiniGptGenerationRequest request) {
         return service.generate(request);
+    }
+
+    @PostMapping("generate/compare")
+    public List<MiniGptGenerationResult> compareGeneration(@RequestBody(required = false) MiniGptGenerationComparisonRequest request) {
+        return service.compareGeneration(request);
     }
 
     @PostMapping("lottery-candidate/validate")

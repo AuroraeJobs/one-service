@@ -1237,6 +1237,14 @@ export interface MiniGptGenerationRequest {
   topK?: number;
 }
 
+export interface MiniGptGenerationComparisonRequest {
+  runName?: string;
+  prompt?: string;
+  maxNewTokens?: number;
+  temperatures?: number[];
+  topKs?: number[];
+}
+
 export interface MiniGptGenerationResult {
   runName?: string;
   prompt?: string;
@@ -1294,6 +1302,10 @@ export const miniGptApi = {
 
   generate: (request: MiniGptGenerationRequest): Promise<MiniGptGenerationResult> => {
     return apiClient.post('/ai/minigpt/generate', request);
+  },
+
+  compareGeneration: (request: MiniGptGenerationComparisonRequest): Promise<MiniGptGenerationResult[]> => {
+    return apiClient.post('/ai/minigpt/generate/compare', request);
   },
 
   validateLotteryCandidate: (text: string): Promise<MiniGptLotteryCandidateValidation> => {
