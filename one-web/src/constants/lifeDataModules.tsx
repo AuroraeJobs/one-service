@@ -34,7 +34,8 @@ import {
   TrophyOutlined,
   UserOutlined,
   WalletOutlined,
-  WechatOutlined
+  WechatOutlined,
+  XOutlined
 } from '@ant-design/icons';
 import type { ReactNode } from 'react';
 
@@ -76,12 +77,12 @@ export const lifeDataModules: LifeDataModule[] = [
   {
     id: 'vehicle',
     title: '车辆能源',
-    shortTitle: '能源',
+    shortTitle: 'X',
     description: '统一管理油车加油、电车充电、充电站和车辆接口数据。',
     path: '/vehicle/charging',
     status: 'partial',
     accent: '#0071e3',
-    icon: <CarOutlined />,
+    icon: <XOutlined />,
     liveCapabilities: ['电车充电记录', '充电站管理', '充电成本统计'],
     plannedCapabilities: ['油车加油管理', 'Tesla Fleet API', '车辆里程与电耗趋势'],
     dataSources: ['手动记录', '充电站数据', 'Tesla Fleet API', '加油票据']
@@ -184,7 +185,7 @@ export const lifeNavItems: LifeNavItem[] = [
   { path: '/lottery/workbench', key: 'lottery', label: '彩票', icon: <TrophyOutlined /> },
   { path: '/investments', key: 'investment', label: '股票', icon: <StockOutlined /> },
   { path: '/finance/salary', key: 'finance', label: '支付宝', icon: <AlipayOutlined /> },
-  { path: '/vehicle/charging', key: 'vehicle', label: '能源', icon: <CarOutlined /> },
+  { path: '/vehicle/charging', key: 'vehicle', label: 'X', icon: <XOutlined /> },
   { path: '/ai/chat', key: 'ai', label: 'OpenAI', icon: <OpenAIOutlined /> },
   { path: '/wechat', key: 'wechat', label: '微信', icon: <WechatOutlined /> }
 ];
