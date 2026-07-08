@@ -201,6 +201,65 @@ const trainingRecipes: MiniGptTrainingRecipe[] = [
   }
 ];
 
+const hyperparameterGuideRows = [
+  {
+    key: 'learning-rate',
+    label: 'Learning Rate',
+    effect: '步子大小',
+    watch: '过大容易震荡，过小下降慢',
+    next: 'loss 抖动时先降低一档'
+  },
+  {
+    key: 'batch-size',
+    label: 'Batch Size',
+    effect: '每步看到的样本数',
+    watch: '更大更稳但更吃内存',
+    next: 'loss 噪声大时适度增大'
+  },
+  {
+    key: 'block-size',
+    label: 'Block Size',
+    effect: '上下文长度',
+    watch: '更长可看更远但训练更慢',
+    next: '生成断裂时尝试加长'
+  },
+  {
+    key: 'n-embd',
+    label: 'Embedding',
+    effect: ' token 向量宽度',
+    watch: '越大容量越强也越易过拟合',
+    next: '样例太贫乏时再增大'
+  },
+  {
+    key: 'n-head',
+    label: 'Heads',
+    effect: '注意力视角数',
+    watch: '需能整除 embedding',
+    next: '扩大模型时同步调整'
+  },
+  {
+    key: 'n-layer',
+    label: 'Layers',
+    effect: 'Transformer 深度',
+    watch: '更深表达更强但更难训',
+    next: 'tiny 稳定后再增加'
+  },
+  {
+    key: 'temperature',
+    label: 'Temperature',
+    effect: '生成随机性',
+    watch: '高更发散，低更保守',
+    next: '重复时升高，跑题时降低'
+  },
+  {
+    key: 'top-k',
+    label: 'Top-K',
+    effect: '采样候选范围',
+    watch: '小更稳定，大更多样',
+    next: '先试 10、20、50 对照'
+  }
+];
+
 const metricItems = (run?: MiniGptRunRecord, logs: MiniGptTrainingLogRecord[] = []) => {
   const latestLog = logs[logs.length - 1];
   return [
@@ -270,6 +329,9 @@ const buildExperimentReport = (
     '',
     '## 代码定位',
     ...codeReferenceRows.map(row => `- ${row.concept} / ${row.symbol}: ${row.action}`),
+    '',
+    '## 参数速查',
+    ...hyperparameterGuideRows.map(row => `- ${row.label}: ${row.effect}；观察 ${row.watch}；下一步 ${row.next}`),
     '',
     '## 实验笔记',
     `- 假设：${run.hypothesis || '-'}`,
@@ -979,6 +1041,21 @@ const MiniGptLearningPage = () => {
                   </div>
                 </dl>
               </div>
+            </div>
+          </Card>
+
+          <Card className="mini-gpt-panel" title="参数速查">
+            <div className="mini-gpt-hparam-grid">
+              {hyperparameterGuideRows.map(row => (
+                <section className="mini-gpt-hparam-card" key={row.key}>
+                  <div>
+                    <strong>{row.label}</strong>
+                    <span>{row.effect}</span>
+                  </div>
+                  <p>{row.watch}</p>
+                  <em>{row.next}</em>
+                </section>
+              ))}
             </div>
           </Card>
 
