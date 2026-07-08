@@ -611,7 +611,7 @@ const LotteryMonthEndReviewPage = () => {
       label: 'Provider可靠性',
       detail: '复用同步页和治理页的探测、跳过、失败和恢复证据',
       status: health?.warningCount ? 'WARNING' : health?.status || 'MANUAL',
-      path: '/lottery/sync'
+      path: '/lottery/sync?focus=provider-reliability'
     },
     {
       key: 'release-evidence-archive',

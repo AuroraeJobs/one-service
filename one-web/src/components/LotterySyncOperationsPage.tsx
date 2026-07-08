@@ -18,7 +18,7 @@ import { lotteryViewStateKeys, useLotterySavedViewState } from '../utils/lottery
 import { lotteryStatusLabel } from '../utils/lotteryStatusLabel';
 import './LotteryOverviewPage.css';
 
-const syncOperationViewKeys = ['status', 'provider', 'syncPage', 'syncPageSize', 'probePage', 'probePageSize'];
+const syncOperationViewKeys = ['status', 'provider', 'focus', 'syncPage', 'syncPageSize', 'probePage', 'probePageSize'];
 
 interface ProviderReliabilityTrend {
   key: string;
@@ -112,6 +112,8 @@ const LotterySyncOperationsPage = () => {
   useLotterySavedViewState(lotteryViewStateKeys.syncOperations, searchParams, setSearchParams, syncOperationViewKeys);
 
   const statusFilter = searchParams.get('status') || undefined;
+  const focusMode = searchParams.get('focus') || '';
+  const providerReliabilityFocus = focusMode === 'provider-reliability';
   const probeProvider = searchParams.get('provider') || 'cwl';
   const syncPage = Math.max(1, Number(searchParams.get('syncPage') || '1') || 1);
   const syncPageSize = Math.max(1, Number(searchParams.get('syncPageSize') || '10') || 10);
@@ -413,6 +415,9 @@ const LotterySyncOperationsPage = () => {
       title="同步运维"
       actions={
         <Space wrap>
+          <Button icon={<ApiOutlined />} onClick={() => navigate('/lottery/sync?focus=provider-reliability')}>
+            Provider可靠性
+          </Button>
           <Button type="primary" icon={<SyncOutlined />} loading={syncing} onClick={() => runOperation('sync')}>
             同步
           </Button>
@@ -525,6 +530,19 @@ const LotterySyncOperationsPage = () => {
         title="Provider 可靠性趋势"
         extra={<Tag color={summary?.latestNetworkBlockSuspected ? 'red' : 'blue'}>{summary?.latestProvider || probeProvider || '-'}</Tag>}
       >
+        {providerReliabilityFocus ? (
+          <div className="lottery-attribution-focus-summary">
+            <strong>Provider可靠性焦点</strong>
+            <section className="lottery-attribution-rollup-summary">
+              {providerReliabilityTrends.map(item => (
+                <article key={item.key}>
+                  <strong>{item.value}</strong>
+                  <span>{item.label}</span>
+                </article>
+              ))}
+            </section>
+          </div>
+        ) : null}
         <div className="lottery-provider-reliability-grid">
           {providerReliabilityTrends.map(item => (
             <button key={item.key} type="button" onClick={() => item.key === 'network-block' ? updateQuery({ status: 'FAILED' }) : undefined}>

@@ -1096,6 +1096,27 @@ Goal: turn the next-phase evidence-quality candidate into a focused review path 
 - [x] Connect the focused evidence-quality path to governance or release evidence when useful.
 - [x] Decide whether a dedicated quality-trend export label is needed. Decision: no dedicated export label yet; reuse attribution and long-term research evidence.
 
+## Iteration 42: Provider Reliability Focus
+
+Goal: turn the next-phase Provider reliability candidate into a focused review path that reuses existing sync summaries, sync logs, and probe logs.
+
+### Wave 42A: Sync Reliability Focus
+
+- [x] Link the month-end Provider reliability candidate to a focused sync operations view.
+- [x] Summarize sync stability, recovery interval, probe success, failure category, and network-block signals.
+- [x] Keep the first slice frontend-derived from existing sync and probe evidence.
+
+### Wave 42B: Workbench Provider Reliability Handoff
+
+- [ ] Surface the focused Provider reliability path from workbench when sync or health evidence needs review.
+- [ ] Keep the action compact and tied to existing operations health signals.
+- [ ] Add smoke coverage for the handoff label.
+
+### Wave 42C: Governance Provider Reliability Release Link
+
+- [ ] Connect the focused Provider reliability path to governance or release evidence when useful.
+- [ ] Decide whether the existing Provider reliability package is enough or needs a more specific review label.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

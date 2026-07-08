@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 41 Wave 41C governance release evidence smoke",
-  "generatedAt": "2026-07-08T11:29:45.469Z",
+  "target": "Iteration 42 Wave 42A provider reliability focus smoke",
+  "generatedAt": "2026-07-08T11:32:44.077Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 18,
-  "checkCount": 621,
+  "checkCount": 624,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
@@ -23,7 +23,7 @@
       "label": "同步",
       "component": "LotterySyncOperationsPage",
       "mockApiCount": 5,
-      "emptyStateCount": 6,
+      "emptyStateCount": 8,
       "errorStateCount": 3
     },
     {
@@ -71,7 +71,7 @@
       "label": "月末复盘",
       "component": "LotteryMonthEndReviewPage",
       "mockApiCount": 11,
-      "emptyStateCount": 20,
+      "emptyStateCount": 21,
       "errorStateCount": 1
     },
     {

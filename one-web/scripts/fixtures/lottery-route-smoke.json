@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 41 Wave 41C governance release evidence smoke",
+  "target": "Iteration 42 Wave 42A provider reliability focus smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -290,6 +290,9 @@
         "interface ProviderReliabilityTrend",
         "providerReliabilityTrends",
         "Provider 可靠性趋势",
+        "focus=provider-reliability",
+        "providerReliabilityFocus",
+        "Provider可靠性焦点",
         "同步稳定性",
         "最近恢复间隔",
         "Provider 探测成功率",
@@ -357,7 +360,7 @@
         "lotteryProviderApi.probe",
         "lotteryDataQualityApi.report"
       ],
-      "emptyStates": ["Provider 可靠性趋势", "同步稳定性", "最近恢复间隔", "Provider 探测成功率", "主要故障分类", "网络阻断信号"],
+      "emptyStates": ["Provider 可靠性趋势", "Provider可靠性焦点", "focus=provider-reliability", "同步稳定性", "最近恢复间隔", "Provider 探测成功率", "主要故障分类", "网络阻断信号"],
       "errorStates": ["读取彩票同步日志失败", "执行彩票同步失败", "探测彩票 Provider 失败"],
       "fixtureData": {
         "providerReliability": {
@@ -512,7 +515,7 @@
         "lotteryReminderApi.summary",
         "lotteryExportApi.auditEvents"
       ],
-      "emptyStates": ["暂无期号复盘", "暂无研究证据", "暂无归因质量摘要", "暂无推荐生命周期摘要", "异常复核闭环", "长期计划复盘", "35-39 复盘窗口", "长期研究包", "复核笔记", "下轮执行", "长期计划检查点", "nextPhaseCandidateItems", "证据质量趋势", "focus=evidence-quality", "Provider可靠性", "发布证据归档", "全部范围", "全部状态", "暂无研究归档", "暂无月末导出证据"],
+      "emptyStates": ["暂无期号复盘", "暂无研究证据", "暂无归因质量摘要", "暂无推荐生命周期摘要", "异常复核闭环", "长期计划复盘", "35-39 复盘窗口", "长期研究包", "复核笔记", "下轮执行", "长期计划检查点", "nextPhaseCandidateItems", "证据质量趋势", "focus=evidence-quality", "Provider可靠性", "focus=provider-reliability", "发布证据归档", "全部范围", "全部状态", "暂无研究归档", "暂无月末导出证据"],
       "errorStates": ["读取彩票月末复盘失败"],
       "fixtureData": {
         "review": {
