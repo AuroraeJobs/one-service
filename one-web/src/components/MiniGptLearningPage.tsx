@@ -249,6 +249,7 @@ const buildExperimentReport = (
   const metrics = metricItems(run, logs);
   const sample = generationResult?.generatedText || latestSample(logs);
   const shapeRows = tensorShapeRows(run, undefined, []);
+  const questions = reviewQuestions(run, logs, generationResult);
   return [
     `# MiniGPT 实验报告：${run.runName || '未命名实验'}`,
     '',
@@ -272,6 +273,9 @@ const buildExperimentReport = (
     `- 观察：${run.observation || '-'}`,
     `- 结论：${run.conclusion || '-'}`,
     `- 下一步：${run.nextStep || '-'}`,
+    '',
+    '## 复盘问题',
+    ...questions.map((question, index) => `${index + 1}. ${question}`),
     '',
     '## 生成样例',
     '```text',
@@ -480,6 +484,40 @@ const learningMilestones = (
   ];
 };
 
+const reviewQuestions = (
+  run: MiniGptRunRecord | undefined,
+  logs: MiniGptTrainingLogRecord[],
+  generationResult?: MiniGptGenerationResult
+) => {
+  if (!run) {
+    return [
+      '先跑一次 Tiny 基线：语料能否被读取、tokenizer 是否符合预期？',
+      '训练日志里 train/eval loss 是否都有记录？',
+      '生成样例是否能看出语料风格的影子？'
+    ];
+  }
+  const latestLog = logs[logs.length - 1];
+  const questions = [
+    `本次 ${run.preset || 'custom'} 实验的目标是什么，和上一个实验只改了哪个变量？`,
+    `最后一步 train=${formatLoss(run.finalTrainLoss ?? latestLog?.trainLoss)}、eval=${formatLoss(run.finalEvalLoss ?? latestLog?.evalLoss)}，趋势是否稳定下降？`
+  ];
+  if (run.validationEnabled === false) {
+    questions.push('验证集没有启用：是语料太短，还是 valRatio 设置不合适？');
+  }
+  if (Number.isFinite(run.lossGap) && Math.abs(run.lossGap || 0) > 0.5) {
+    questions.push(`泛化差距 ${formatLoss(run.lossGap)} 偏大：模型是在记忆训练文本，还是验证集分布不同？`);
+  }
+  if (!latestSample(logs) && !generationResult?.generatedText) {
+    questions.push('还没有生成样例：当前 checkpoint 是否保存成功，采样 prompt 是否在词表内？');
+  } else {
+    questions.push('生成文本里最明显的问题是什么：重复、跑题、标点混乱，还是上下文断裂？');
+  }
+  if (!run.conclusion) {
+    questions.push('这次实验能形成哪一句结论，下一次要改学习率、上下文长度还是模型容量？');
+  }
+  return questions.slice(0, 6);
+};
+
 const MiniGptLearningPage = () => {
   const [form] = Form.useForm<MiniGptTrainingRequest>();
   const [noteForm] = Form.useForm<MiniGptRunNoteRequest>();
@@ -678,6 +716,7 @@ const MiniGptLearningPage = () => {
   const shapeRows = useMemo(() => tensorShapeRows(run, corpusInsight, encodedSample), [corpusInsight, encodedSample, run]);
   const comparisonChartOption = useMemo(() => buildComparisonChartOption(comparisonLogs), [comparisonLogs]);
   const milestones = useMemo(() => learningMilestones(run, logs, corpusInsight), [corpusInsight, logs, run]);
+  const reviewQuestionItems = useMemo(() => reviewQuestions(run, logs, generationResult), [generationResult, logs, run]);
   const experimentReport = useMemo(
     () => run ? buildExperimentReport(run, logs, generationResult) : '',
     [generationResult, logs, run]
@@ -1077,6 +1116,14 @@ const MiniGptLearningPage = () => {
                 </section>
               ))}
             </div>
+          </Card>
+
+          <Card className="mini-gpt-panel" title="复盘问题">
+            <ol className="mini-gpt-review-list">
+              {reviewQuestionItems.map(question => (
+                <li key={question}>{question}</li>
+              ))}
+            </ol>
           </Card>
 
           {!run ? (

@@ -580,6 +580,44 @@
   word-break: break-word;
 }
 
+.mini-gpt-review-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: mini-gpt-review;
+}
+
+.mini-gpt-review-list li {
+  position: relative;
+  min-height: 44px;
+  padding: 11px 12px 11px 42px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 8px;
+  color: var(--mini-gpt-text);
+  background: var(--mini-gpt-panel-bg-soft);
+  line-height: 1.55;
+  counter-increment: mini-gpt-review;
+}
+
+.mini-gpt-review-list li::before {
+  content: counter(mini-gpt-review);
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: #061a18;
+  background: var(--module-accent, #00c7be);
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .mini-gpt-comparison-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
