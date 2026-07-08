@@ -57,6 +57,16 @@ interface GovernanceAnomaly {
   status: Exclude<GovernanceStatus, 'PASS'>;
   count: number;
   detail: string;
+  trend: string;
+  path: string;
+}
+
+interface GovernanceTrend {
+  key: string;
+  label: string;
+  value: string;
+  detail: string;
+  status: GovernanceStatus;
   path: string;
 }
 
@@ -83,6 +93,9 @@ const formatTime = (value?: number) => value ? new Intl.DateTimeFormat('zh-CN', 
 const latestEvents = (events: LotteryAuditEvent[], type: string) => events.filter(event => event.eventType === type);
 
 const ageHours = (timestamp?: number) => timestamp ? (Date.now() - timestamp) / (60 * 60 * 1000) : Number.POSITIVE_INFINITY;
+
+const recentAuditEvents = (events: LotteryAuditEvent[], days: number) =>
+  events.filter(event => ageHours(event.generatedAt) <= days * 24);
 
 const attributionWarningRows = (rollup?: LotteryOutcomeAttributionRollup) =>
   (rollup?.rows || []).filter(item => item.evidenceQuality === 'WATCH' || item.evidenceQuality === 'NEGATIVE' || item.evidenceQuality === 'UNDER_TESTED');
@@ -270,6 +283,7 @@ const LotteryGovernancePage = () => {
         status: healthWarnings.some(item => item.status === 'FAILED') ? 'FAILED' : 'WARNING',
         count: healthWarnings.length,
         detail: healthWarnings.map(item => item.label || item.key).filter(Boolean).slice(0, 3).join('、') || '运营健康贡献项异常',
+        trend: `最近更新 ${formatTime(operations?.generatedAt)}`,
         path: healthWarnings.find(item => item.path)?.path || '/lottery/workbench'
       });
     }
@@ -281,6 +295,7 @@ const LotteryGovernancePage = () => {
         status: highRiskSimulations.length > highRiskLimit ? 'FAILED' : 'WARNING',
         count: highRiskSimulations.length,
         detail: `高风险上限 ${highRiskLimit} 次，需复核参数和回填结果`,
+        trend: `近14天沙盘审计 ${recentAuditEvents(highRiskSimulations, 14).length} 条`,
         path: '/lottery/simulator'
       });
     }
@@ -292,6 +307,7 @@ const LotteryGovernancePage = () => {
         status: 'WARNING',
         count: stalePacks.length + overBudgetPacks.length,
         detail: `滞留 ${stalePacks.length} 个，预算预警 ${overBudgetPacks.length} 个`,
+        trend: `最久滞留 ${Math.max(0, ...stalePacks.map(pack => Math.floor(ageHours(pack.updatedAt || pack.createdAt))))} 小时`,
         path: '/lottery/ticket-packs'
       });
     }
@@ -303,6 +319,7 @@ const LotteryGovernancePage = () => {
         status: 'WARNING',
         count: attributionWarnings.length,
         detail: attributionWarnings.map(item => item.label || item.key || item.dimension).filter(Boolean).slice(0, 3).join('、') || '归因质量需要复核',
+        trend: `近10期样本 ${attributionRollup?.issueCount || 0} 期`,
         path: '/lottery/outcomes'
       });
     }
@@ -314,6 +331,7 @@ const LotteryGovernancePage = () => {
         status: 'WARNING',
         count: (recommendationRollup?.staleCount || 0) + recommendationOpenGap,
         detail: `${recommendationRollup?.staleCount || 0} 条过期，${recommendationOpenGap} 条未闭环`,
+        trend: `近30条流转 ${recommendationRollup?.transitions?.length || 0} 类`,
         path: '/lottery/recommendations'
       });
     }
@@ -325,6 +343,7 @@ const LotteryGovernancePage = () => {
         status: releaseWarnings.some(item => item.status === 'FAILED') ? 'FAILED' : 'WARNING',
         count: releaseWarnings.length,
         detail: releaseWarnings.map(item => item.label || item.key).filter(Boolean).slice(0, 3).join('、') || '发布检查需要补证据',
+        trend: `检查更新时间 ${formatTime(workbench?.releaseCheckSummary?.generatedAt)}`,
         path: '/lottery/exports'
       });
     }
@@ -334,6 +353,50 @@ const LotteryGovernancePage = () => {
       return weight(left.status) - weight(right.status) || right.count - left.count;
     });
   }, [attributionRollup, audits, operations, preference, recommendationRollup, ticketPacks, workbench]);
+
+  const driftTrendItems = useMemo<GovernanceTrend[]>(() => {
+    const recentEvents = recentAuditEvents(audits, 14);
+    const simulationEvents = recentEvents.filter(event => event.eventType === 'LOTTERY_SIMULATION_RUN');
+    const exportEvents = recentEvents.filter(event => event.eventType?.includes('EXPORT'));
+    const attributionWarnings = attributionWarningRows(attributionRollup);
+    const healthWarningCount = operations?.warningCount || operations?.contributors?.filter(item => item.status && item.status !== 'PASS').length || 0;
+    const recommendationTransitions = recommendationRollup?.transitions || [];
+
+    return [
+      {
+        key: 'audit-repeat',
+        label: '近14天审计重复',
+        value: `${recentEvents.length} 条`,
+        detail: `沙盘 ${simulationEvents.length} 条，导出 ${exportEvents.length} 条`,
+        status: recentEvents.length > 12 ? 'WARNING' : 'PASS',
+        path: '/lottery/exports'
+      },
+      {
+        key: 'recommendation-transition',
+        label: '推荐状态流转',
+        value: `${recommendationTransitions.length} 类`,
+        detail: `${recommendationRollup?.staleCount || 0} 条过期，${recommendationRollup?.appliedCount || 0} 条已应用`,
+        status: recommendationRollup?.staleCount ? 'WARNING' : recommendationTransitions.length ? 'PASS' : 'MANUAL',
+        path: '/lottery/recommendations'
+      },
+      {
+        key: 'attribution-quality',
+        label: '归因质量警示',
+        value: `${attributionWarnings.length} 项`,
+        detail: `近10期 ${attributionRollup?.issueCount || 0} 期，样本 ${attributionRollup?.ticketCount || 0} 张`,
+        status: attributionWarnings.length ? 'WARNING' : attributionRollup?.issueCount ? 'PASS' : 'MANUAL',
+        path: '/lottery/outcomes'
+      },
+      {
+        key: 'operations-freshness',
+        label: '运营健康刷新',
+        value: formatTime(operations?.generatedAt),
+        detail: `${healthWarningCount} 个健康贡献项需关注`,
+        status: healthWarningCount ? 'WARNING' : operations?.generatedAt ? 'PASS' : 'MANUAL',
+        path: '/lottery/workbench'
+      }
+    ];
+  }, [attributionRollup, audits, operations, recommendationRollup]);
 
   const overallScore = domains.length ? Math.round(domains.reduce((sum, item) => sum + item.score, 0) / domains.length) : 0;
   const warningCount = domains.filter(item => item.status !== 'PASS').length;
@@ -394,10 +457,24 @@ const LotteryGovernancePage = () => {
                   <span>
                     <strong><WarningOutlined /> {item.title}</strong>
                     <small>{item.detail}</small>
+                    <small>{item.trend}</small>
                   </span>
                   <Tag color={statusColor(item.status)}>{item.count} 条</Tag>
                 </button>
               )) : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无异常观察" />}
+            </div>
+          </Card>
+          <Card className="life-panel-card lottery-clean-panel" title="漂移趋势">
+            <div className="lottery-governance-trend-list">
+              {driftTrendItems.map(item => (
+                <button key={item.key} type="button" onClick={() => navigate(item.path)}>
+                  <span>
+                    <strong>{item.label}</strong>
+                    <small>{item.detail}</small>
+                  </span>
+                  <Tag color={statusColor(item.status)}>{item.value}</Tag>
+                </button>
+              ))}
             </div>
           </Card>
           <Card className="life-panel-card lottery-clean-panel" title="发布检查">

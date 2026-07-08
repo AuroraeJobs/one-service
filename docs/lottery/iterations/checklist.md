@@ -866,9 +866,9 @@ Goal: make governance review catch operational drift earlier using existing heal
 
 ### Wave 31B: Drift Trend Evidence
 
-- [ ] Add compact trend context for repeated anomaly types across recent audit and rollup data.
-- [ ] Prefer existing audit/export/recommendation/attribution sources before adding new persistence.
-- [ ] Keep trend copy descriptive, not predictive.
+- [x] Add compact trend context for repeated anomaly types across recent audit and rollup data. Governance anomaly rows now include trend text, and the page shows `漂移趋势` for audit repeats, recommendation transitions, attribution quality, and operations refresh.
+- [x] Prefer existing audit/export/recommendation/attribution sources before adding new persistence. Trend rows are derived from loaded audit events, recommendation rollup, attribution rollup, and operations health.
+- [x] Keep trend copy descriptive, not predictive. Trend labels report counts, recency, and warning totals without outcome promises.
 
 ### Wave 31C: Review Handoffs
 
