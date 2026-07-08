@@ -1157,6 +1157,20 @@ export interface MiniGptTrainingStatus {
   updatedAt?: number;
 }
 
+export interface MiniGptEnvironmentCheck {
+  playgroundDir?: string;
+  pythonPath?: string;
+  pythonAvailable?: boolean;
+  pymongoAvailable?: boolean;
+  pymongoVersion?: string;
+  mongoAvailable?: boolean;
+  mongoUri?: string;
+  mongoDb?: string;
+  status?: string;
+  message?: string;
+  checkedAt?: number;
+}
+
 export interface MiniGptTokenEntry {
   token?: string;
   tokenId?: number;
@@ -1233,6 +1247,10 @@ export const miniGptApi = {
 
   cancelTraining: (): Promise<MiniGptTrainingStatus> => {
     return apiClient.post('/ai/minigpt/training/cancel');
+  },
+
+  environment: (): Promise<MiniGptEnvironmentCheck> => {
+    return apiClient.get('/ai/minigpt/environment');
   },
 
   corpusInsight: (params?: { data?: string; sample?: string; tokenLimit?: number }): Promise<MiniGptCorpusInsight> => {

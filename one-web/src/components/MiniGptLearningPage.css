@@ -289,6 +289,64 @@
   line-height: 1.5;
 }
 
+.mini-gpt-env-check {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--mini-gpt-border);
+}
+
+.mini-gpt-env-check-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mini-gpt-env-check-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mini-gpt-env-check-grid div {
+  display: grid;
+  gap: 6px;
+  min-height: 64px;
+  padding: 10px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 8px;
+  background: var(--mini-gpt-panel-bg);
+}
+
+.mini-gpt-env-check-grid div.pass {
+  border-color: color-mix(in srgb, #34c759 40%, var(--mini-gpt-border));
+}
+
+.mini-gpt-env-check-grid div.watch {
+  border-color: color-mix(in srgb, #ff9500 42%, var(--mini-gpt-border));
+}
+
+.mini-gpt-env-check-grid span {
+  color: var(--mini-gpt-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mini-gpt-env-check-grid strong {
+  color: var(--mini-gpt-text);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.mini-gpt-env-check p {
+  margin: 0;
+  color: var(--mini-gpt-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
 .mini-gpt-variable-diff {
   display: grid;
   gap: 10px;
@@ -1532,6 +1590,7 @@
   .mini-gpt-review-quality,
   .mini-gpt-tokenizer-metrics,
   .mini-gpt-live-loss,
+  .mini-gpt-env-check-grid,
   .mini-gpt-status-panel dl,
   .mini-gpt-config-list {
     grid-template-columns: 1fr;

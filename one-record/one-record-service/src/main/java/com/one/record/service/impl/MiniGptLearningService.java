@@ -1,6 +1,9 @@
 package com.one.record.service.impl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.one.record.ai.MiniGptDashboard;
+import com.one.record.ai.MiniGptEnvironmentCheck;
 import com.one.record.ai.MiniGptCorpusInsight;
 import com.one.record.ai.MiniGptGenerationRequest;
 import com.one.record.ai.MiniGptGenerationResult;
@@ -76,6 +79,12 @@ public class MiniGptLearningService implements IMiniGptLearningService {
     );
 
     private static final DateTimeFormatter DISPLAY_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    private static final String DEFAULT_MONGO_URI = "mongodb://localhost:27017";
+
+    private static final String DEFAULT_MONGO_DB = "test";
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final MiniGptRunRepository runRepository;
 
@@ -225,6 +234,79 @@ public class MiniGptLearningService implements IMiniGptLearningService {
                 .updatedAt(System.currentTimeMillis())
                 .build());
         return trainingStatus();
+    }
+
+    @Override
+    public MiniGptEnvironmentCheck environment() {
+        Path playgroundDir = resolvePlaygroundDir();
+        String pythonPath = resolvePython(playgroundDir);
+        String mongoUri = System.getenv().getOrDefault("MINI_GPT_MONGO_URI", DEFAULT_MONGO_URI);
+        String mongoDb = System.getenv().getOrDefault("MINI_GPT_MONGO_DB", DEFAULT_MONGO_DB);
+        MiniGptEnvironmentCheck.MiniGptEnvironmentCheckBuilder builder = MiniGptEnvironmentCheck.builder()
+                .playgroundDir(playgroundDir.toString())
+                .pythonPath(pythonPath)
+                .mongoUri(maskMongoUri(mongoUri))
+                .mongoDb(mongoDb)
+                .checkedAt(System.currentTimeMillis());
+
+        List<String> command = List.of(
+                pythonPath,
+                "-c",
+                "import json, os, sys\n"
+                        + "result={'pythonAvailable': True, 'pythonPath': sys.executable}\n"
+                        + "try:\n"
+                        + " import pymongo\n"
+                        + " result['pymongoAvailable']=True\n"
+                        + " result['pymongoVersion']=pymongo.version\n"
+                        + " uri=os.getenv('MINI_GPT_MONGO_URI','mongodb://localhost:27017')\n"
+                        + " db=os.getenv('MINI_GPT_MONGO_DB','test')\n"
+                        + " client=pymongo.MongoClient(uri, serverSelectionTimeoutMS=1000)\n"
+                        + " client.admin.command('ping')\n"
+                        + " result['mongoAvailable']=True\n"
+                        + " result['mongoDb']=db\n"
+                        + "except Exception as exc:\n"
+                        + " result.setdefault('pymongoAvailable', False)\n"
+                        + " result.setdefault('mongoAvailable', False)\n"
+                        + " result['message']=type(exc).__name__ + ': ' + str(exc)\n"
+                        + "print(json.dumps(result, ensure_ascii=False))"
+        );
+        try {
+            Process process = new ProcessBuilder(command)
+                    .directory(playgroundDir.toFile())
+                    .redirectErrorStream(true)
+                    .start();
+            boolean finished = process.waitFor(8, TimeUnit.SECONDS);
+            String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
+            if (!finished) {
+                process.destroyForcibly();
+                return builder
+                        .pythonAvailable(true)
+                        .pymongoAvailable(false)
+                        .mongoAvailable(false)
+                        .status("FAILED")
+                        .message("MiniGPT 环境检查超时")
+                        .build();
+            }
+            applyEnvironmentOutput(builder, output);
+            return builder.build();
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            return builder
+                    .pythonAvailable(false)
+                    .pymongoAvailable(false)
+                    .mongoAvailable(false)
+                    .status("FAILED")
+                    .message("MiniGPT 环境检查线程被中断")
+                    .build();
+        } catch (IOException exception) {
+            return builder
+                    .pythonAvailable(false)
+                    .pymongoAvailable(false)
+                    .mongoAvailable(false)
+                    .status("FAILED")
+                    .message("MiniGPT Python 启动失败: " + exception.getMessage())
+                    .build();
+        }
     }
 
     @Override
@@ -661,6 +743,46 @@ public class MiniGptLearningService implements IMiniGptLearningService {
                     .updatedAt(now)
                     .build());
         }
+    }
+
+    private void applyEnvironmentOutput(MiniGptEnvironmentCheck.MiniGptEnvironmentCheckBuilder builder, String output) {
+        if (!StringUtils.hasText(output)) {
+            builder.pythonAvailable(false)
+                    .pymongoAvailable(false)
+                    .mongoAvailable(false)
+                    .status("FAILED")
+                    .message("MiniGPT 环境检查没有输出");
+            return;
+        }
+        try {
+            Map<String, Object> payload = OBJECT_MAPPER.readValue(output, new TypeReference<>() {
+            });
+            Boolean pymongoAvailable = Boolean.TRUE.equals(payload.get("pymongoAvailable"));
+            Boolean mongoAvailable = Boolean.TRUE.equals(payload.get("mongoAvailable"));
+            builder.pythonAvailable(Boolean.TRUE.equals(payload.get("pythonAvailable")))
+                    .pythonPath(String.valueOf(payload.getOrDefault("pythonPath", "")))
+                    .pymongoAvailable(pymongoAvailable)
+                    .pymongoVersion(payload.get("pymongoVersion") == null ? null : String.valueOf(payload.get("pymongoVersion")))
+                    .mongoAvailable(mongoAvailable)
+                    .mongoDb(payload.get("mongoDb") == null ? DEFAULT_MONGO_DB : String.valueOf(payload.get("mongoDb")))
+                    .status(pymongoAvailable && mongoAvailable ? "PASS" : "FAILED")
+                    .message(payload.get("message") == null
+                            ? pymongoAvailable && mongoAvailable ? "Python 可以直接写 Mongo" : "Python Mongo 依赖不完整"
+                            : String.valueOf(payload.get("message")));
+        } catch (IOException exception) {
+            builder.pythonAvailable(true)
+                    .pymongoAvailable(false)
+                    .mongoAvailable(false)
+                    .status("FAILED")
+                    .message("MiniGPT 环境检查输出无法解析: " + output);
+        }
+    }
+
+    private static String maskMongoUri(String mongoUri) {
+        if (!StringUtils.hasText(mongoUri)) {
+            return DEFAULT_MONGO_URI;
+        }
+        return mongoUri.replaceAll("(?<=://)([^:/@]+):([^@]+)@", "$1:****@");
     }
 
     private Map<String, Object> trainingConfig(MiniGptTrainingRequest request) {

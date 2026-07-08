@@ -7,6 +7,7 @@ import {
   miniGptApi,
   type MiniGptCorpusInsight,
   type MiniGptDashboard,
+  type MiniGptEnvironmentCheck,
   type MiniGptGenerationRequest,
   type MiniGptGenerationResult,
   type MiniGptRunRecord,
@@ -1271,6 +1272,7 @@ const MiniGptLearningPage = () => {
   const [dashboard, setDashboard] = useState<MiniGptDashboard>({});
   const [corpusInsight, setCorpusInsight] = useState<MiniGptCorpusInsight>({});
   const [trainingStatus, setTrainingStatus] = useState<MiniGptTrainingStatus>({});
+  const [environmentCheck, setEnvironmentCheck] = useState<MiniGptEnvironmentCheck>({});
   const [generationResult, setGenerationResult] = useState<MiniGptGenerationResult>();
   const [selectedRun, setSelectedRun] = useState<string>();
   const [comparisonRunNames, setComparisonRunNames] = useState<string[]>([]);
@@ -1278,6 +1280,7 @@ const MiniGptLearningPage = () => {
   const [plannedExperiments, setPlannedExperiments] = useState<PlannedExperiment[]>(loadPlannedExperiments);
   const [loading, setLoading] = useState(false);
   const [corpusLoading, setCorpusLoading] = useState(false);
+  const [environmentLoading, setEnvironmentLoading] = useState(false);
   const [comparisonLoading, setComparisonLoading] = useState(false);
   const [starting, setStarting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -1337,6 +1340,24 @@ const MiniGptLearningPage = () => {
       setCorpusLoading(false);
     }
   }, [form]);
+
+  const loadEnvironmentCheck = useCallback(async (quiet = false) => {
+    setEnvironmentLoading(true);
+    try {
+      const data = await miniGptApi.environment();
+      setEnvironmentCheck(data);
+      if (!quiet && data.status === 'PASS') {
+        message.success('MiniGPT 训练环境检查通过');
+      }
+    } catch (error) {
+      console.error('加载 MiniGPT 训练环境检查失败:', error);
+      if (!quiet) {
+        message.error('MiniGPT 训练环境检查失败');
+      }
+    } finally {
+      setEnvironmentLoading(false);
+    }
+  }, []);
 
   const handleApplyTrainingRecipe = (recipe: MiniGptTrainingRecipe) => {
     const mergedValues = {
@@ -1523,11 +1544,12 @@ const MiniGptLearningPage = () => {
       data: 'data/sample.txt',
       samplePrompt: '语言模型'
     });
+    loadEnvironmentCheck(true);
     const timer = window.setInterval(() => {
       loadTrainingStatus(true);
     }, 2000);
     return () => window.clearInterval(timer);
-  }, [loadCorpusInsight, loadDashboard, loadTrainingStatus]);
+  }, [loadCorpusInsight, loadDashboard, loadEnvironmentCheck, loadTrainingStatus]);
 
   useEffect(() => {
     savePlannedExperiments(plannedExperiments);
@@ -1900,6 +1922,34 @@ const MiniGptLearningPage = () => {
                     <dd>{formatTime(trainingStatus.updatedAt)}</dd>
                   </div>
                 </dl>
+                <section className="mini-gpt-env-check">
+                  <div className="mini-gpt-env-check-head">
+                    <Text type="secondary">训练环境</Text>
+                    <Space wrap>
+                      <Tag color={environmentCheck.status === 'PASS' ? 'green' : 'orange'}>
+                        {environmentCheck.status || 'CHECK'}
+                      </Tag>
+                      <Button size="small" icon={<ReloadOutlined />} loading={environmentLoading} onClick={() => loadEnvironmentCheck()}>
+                        检查
+                      </Button>
+                    </Space>
+                  </div>
+                  <div className="mini-gpt-env-check-grid">
+                    <div className={environmentCheck.pythonAvailable ? 'pass' : 'watch'}>
+                      <span>Python</span>
+                      <strong>{environmentCheck.pythonAvailable ? '可用' : '未确认'}</strong>
+                    </div>
+                    <div className={environmentCheck.pymongoAvailable ? 'pass' : 'watch'}>
+                      <span>pymongo</span>
+                      <strong>{environmentCheck.pymongoVersion || '-'}</strong>
+                    </div>
+                    <div className={environmentCheck.mongoAvailable ? 'pass' : 'watch'}>
+                      <span>Mongo</span>
+                      <strong>{environmentCheck.mongoAvailable ? environmentCheck.mongoDb || 'test' : '不可用'}</strong>
+                    </div>
+                  </div>
+                  <p>{environmentCheck.message || '检查 Python 直接写 Mongo 的依赖链路'}</p>
+                </section>
               </div>
             </div>
             <section className="mini-gpt-variable-diff">

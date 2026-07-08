@@ -1,6 +1,7 @@
 package com.one.record.web;
 
 import com.one.record.ai.MiniGptDashboard;
+import com.one.record.ai.MiniGptEnvironmentCheck;
 import com.one.record.ai.MiniGptCorpusInsight;
 import com.one.record.ai.MiniGptGenerationRequest;
 import com.one.record.ai.MiniGptGenerationResult;
@@ -65,6 +66,11 @@ public class MiniGptLearningController {
     @PostMapping("training/cancel")
     public MiniGptTrainingStatus cancelTraining() {
         return service.cancelTraining();
+    }
+
+    @GetMapping("environment")
+    public MiniGptEnvironmentCheck environment() {
+        return service.environment();
     }
 
     @GetMapping("corpus")

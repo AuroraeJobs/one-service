@@ -1,6 +1,7 @@
 package com.one.record.service;
 
 import com.one.record.ai.MiniGptDashboard;
+import com.one.record.ai.MiniGptEnvironmentCheck;
 import com.one.record.ai.MiniGptGenerationRequest;
 import com.one.record.ai.MiniGptGenerationResult;
 import com.one.record.ai.MiniGptCorpusInsight;
@@ -27,6 +28,8 @@ public interface IMiniGptLearningService {
     MiniGptTrainingStatus trainingStatus();
 
     MiniGptTrainingStatus cancelTraining();
+
+    MiniGptEnvironmentCheck environment();
 
     MiniGptCorpusInsight corpusInsight(String data, String sample, Integer tokenLimit);
 
