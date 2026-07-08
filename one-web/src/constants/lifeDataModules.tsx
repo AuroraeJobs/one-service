@@ -1,4 +1,5 @@
 import {
+  AlipayOutlined,
   ApiOutlined,
   AppstoreOutlined,
   AuditOutlined,
@@ -23,7 +24,6 @@ import {
   LineChartOutlined,
   MessageOutlined,
   MobileOutlined,
-  MoneyCollectOutlined,
   OpenAIOutlined,
   PieChartOutlined,
   SafetyCertificateOutlined,
@@ -89,12 +89,12 @@ export const lifeDataModules: LifeDataModule[] = [
   {
     id: 'finance',
     title: '收入与现金流',
-    shortTitle: '钞票',
+    shortTitle: '支付宝',
     description: '跟踪工资、五险一金、税费、日常收支和账户流水。',
     path: '/finance/salary',
     status: 'partial',
     accent: '#34c759',
-    icon: <MoneyCollectOutlined />,
+    icon: <AlipayOutlined />,
     liveCapabilities: ['工资记录', '五险一金', '个税与实发收入统计'],
     plannedCapabilities: ['支付宝/微信账单', '银行流水', '预算与分类账'],
     dataSources: ['手动工资记录', '支付宝账单', '微信账单', '银行 Open API']
@@ -183,7 +183,7 @@ export const lifeNavItems: LifeNavItem[] = [
   { path: '/overview', key: 'overview', label: '首页', icon: <DashboardOutlined /> },
   { path: '/lottery/workbench', key: 'lottery', label: '彩票', icon: <TrophyOutlined /> },
   { path: '/investments', key: 'investment', label: '股票', icon: <StockOutlined /> },
-  { path: '/finance/salary', key: 'finance', label: '钞票', icon: <MoneyCollectOutlined /> },
+  { path: '/finance/salary', key: 'finance', label: '支付宝', icon: <AlipayOutlined /> },
   { path: '/vehicle/charging', key: 'vehicle', label: '能源', icon: <CarOutlined /> },
   { path: '/ai/chat', key: 'ai', label: 'OpenAI', icon: <OpenAIOutlined /> },
   { path: '/wechat', key: 'wechat', label: '微信', icon: <WechatOutlined /> }
