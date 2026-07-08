@@ -16,6 +16,8 @@ Status: completed with `/lottery/outcomes?focus=evidence-quality` and a focused 
 - Keep the action compact and tied to existing workbench warning signals.
 - Add smoke coverage for the handoff label.
 
+Status: completed with a workbench `证据质量趋势` next-step handoff to `/lottery/outcomes?focus=evidence-quality` when stale evidence or archive-review pressure exists.
+
 ## Wave 41C: Governance Evidence Quality Release Link
 
 - Connect the focused evidence-quality path to governance or release evidence when useful.

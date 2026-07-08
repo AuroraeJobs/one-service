@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 41 Wave 41A evidence quality focus smoke",
-  "generatedAt": "2026-07-08T11:24:10.575Z",
+  "target": "Iteration 41 Wave 41B workbench evidence quality handoff smoke",
+  "generatedAt": "2026-07-08T11:26:19.832Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 18,
-  "checkCount": 613,
+  "checkCount": 617,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [

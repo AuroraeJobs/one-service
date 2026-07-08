@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 41 Wave 41A evidence quality focus smoke",
+  "target": "Iteration 41 Wave 41B workbench evidence quality handoff smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -25,6 +25,10 @@
         "lotteryStrategyNoteApi.notes",
         "复核笔记质量",
         "补齐笔记",
+        "evidence-quality-trend",
+        "证据质量趋势",
+        "/lottery/outcomes?focus=evidence-quality",
+        "看趋势",
         "buildWorkbenchPath",
         "ARCHIVE_REVIEW",
         "记录复核",

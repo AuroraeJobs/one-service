@@ -1316,6 +1316,19 @@ const LotteryWorkbenchPage = () => {
       });
     }
 
+    if (staleEvidence || archiveReviewPressure.count > 0) {
+      items.push({
+        key: 'evidence-quality-trend',
+        icon: <SafetyCertificateOutlined />,
+        title: '证据质量趋势',
+        detail: staleEvidence?.detail || archiveReviewPressure.detail,
+        status: staleEvidence?.status || archiveReviewPressure.status,
+        count: staleEvidence?.count || archiveReviewPressure.count,
+        path: '/lottery/outcomes?focus=evidence-quality',
+        actionLabel: '看趋势'
+      });
+    }
+
     if (releaseBlockers.length > 0) {
       const blocker = releaseBlockers[0];
       items.push({

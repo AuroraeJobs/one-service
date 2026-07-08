@@ -1087,9 +1087,9 @@ Goal: turn the next-phase evidence-quality candidate into a focused review path 
 
 ### Wave 41B: Workbench Evidence Quality Handoff
 
-- [ ] Surface the same focused attribution path from workbench when evidence quality needs review.
-- [ ] Keep the action compact and tied to existing workbench warning signals.
-- [ ] Add smoke coverage for the handoff label.
+- [x] Surface the same focused attribution path from workbench when evidence quality needs review.
+- [x] Keep the action compact and tied to existing workbench warning signals.
+- [x] Add smoke coverage for the handoff label.
 
 ### Wave 41C: Governance Evidence Quality Release Link
 
