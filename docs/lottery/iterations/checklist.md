@@ -1045,9 +1045,9 @@ Goal: turn archive-review note quality into visible release and review evidence 
 
 ### Wave 39B: Workbench Quality Follow-Up
 
-- [ ] Surface archive-review note quality as a daily follow-up when notes are still active or missing evidence.
-- [ ] Reuse the existing workbench archive-review handoff.
-- [ ] Keep the copy action-oriented and compact.
+- [x] Surface archive-review note quality as a daily follow-up when notes are still active or missing evidence.
+- [x] Reuse the existing workbench archive-review handoff.
+- [x] Keep the copy action-oriented and compact.
 
 ### Wave 39C: Review Closure Summary
 

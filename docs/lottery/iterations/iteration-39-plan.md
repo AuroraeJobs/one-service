@@ -16,6 +16,8 @@ Status: completed with a `V39复核笔记质量` release-readiness evidence item
 - Reuse the existing workbench archive-review handoff.
 - Keep the copy action-oriented and compact.
 
+Status: completed with a workbench `复核笔记质量` follow-up card that reuses the archive-review notebook handoff when notes are active, missing evidence, or not yet created.
+
 ## Wave 39C: Review Closure Summary
 
 - Add a compact closure summary that connects notebook, month-end, governance, and release evidence paths.

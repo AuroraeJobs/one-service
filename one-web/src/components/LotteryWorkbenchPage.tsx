@@ -3,6 +3,7 @@ import { Alert, Button, Card, Empty, Progress, Space, Spin, Steps, Tag, Tooltip,
 import {
   BarChartOutlined,
   BellOutlined,
+  BookOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   DatabaseOutlined,
@@ -36,6 +37,7 @@ import {
   lotteryPreferenceApi,
   lotteryPredictionApi,
   lotteryReminderApi,
+  lotteryStrategyNoteApi,
   lotteryTicketApi,
   lotteryWorkbenchApi,
   type LotteryAuditEvent,
@@ -49,6 +51,7 @@ import {
   type LotteryPreference,
   type LotteryPredictionSnapshot,
   type LotteryReminderSummary,
+  type LotteryStrategyNote,
   type LotteryStrategyExperiment,
   type LotteryTicket,
   type LotteryWorkbenchDailyRunResult,
@@ -504,6 +507,7 @@ const LotteryWorkbenchPage = () => {
   const [reminders, setReminders] = useState<LotteryReminderSummary>();
   const [budgetStatus, setBudgetStatus] = useState<LotteryBudgetStatus>();
   const [operationsHealth, setOperationsHealth] = useState<LotteryOperationsHealthSummary>();
+  const [notes, setNotes] = useState<LotteryStrategyNote[]>([]);
   const [recentWork, setRecentWork] = useState<LotteryWorkbenchRecentWork>(createEmptyRecentWork);
   const [dailyRunResult, setDailyRunResult] = useState<LotteryWorkbenchDailyRunResult>();
   const [loading, setLoading] = useState(false);
@@ -584,12 +588,13 @@ const LotteryWorkbenchPage = () => {
     setLoading(true);
     setError(undefined);
     try {
-      const [data, calendarData, reminderData, budgetData, healthData, recentWorkData] = await Promise.all([
+      const [data, calendarData, reminderData, budgetData, healthData, notesData, recentWorkData] = await Promise.all([
         lotteryWorkbenchApi.summary(),
         lotteryCalendarApi.calendar(),
         lotteryReminderApi.summary(),
         lotteryBudgetApi.status(),
         lotteryOperationsApi.health(),
+        lotteryStrategyNoteApi.notes({ page: 1, pageSize: 30 }),
         fetchRecentWork()
       ]);
       setSummary(data);
@@ -597,6 +602,7 @@ const LotteryWorkbenchPage = () => {
       setReminders(reminderData);
       setBudgetStatus(budgetData);
       setOperationsHealth(healthData);
+      setNotes(notesData.items || []);
       setRecentWork(recentWorkData);
     } catch (requestError) {
       console.error('读取彩票工作台失败:', requestError);
@@ -1247,6 +1253,24 @@ const LotteryWorkbenchPage = () => {
     path: buildWorkbenchPath('/lottery/exports', { preset: 'v34-archive-search' })
   }), [archiveReviewPressure.count]);
 
+  const archiveReviewNoteQuality = useMemo(() => {
+    const archiveNotes = notes.filter(note => (note.evidence || []).some(evidence => evidence.evidenceType === 'ARCHIVE_REVIEW'));
+    const active = archiveNotes.filter(note => note.status === 'ACTIVE').length;
+    const validated = archiveNotes.filter(note => note.status === 'VALIDATED').length;
+    const evidenceCount = archiveNotes.reduce((sum, note) => sum + (note.evidence || []).filter(evidence => evidence.evidenceType === 'ARCHIVE_REVIEW').length, 0);
+    const missingEvidence = Math.max(0, archiveNotes.length - evidenceCount);
+    const needsFollowUp = active > 0 || missingEvidence > 0 || (archiveReviewPressure.count > 0 && archiveNotes.length === 0);
+    return {
+      total: archiveNotes.length,
+      active,
+      validated,
+      evidenceCount,
+      missingEvidence,
+      needsFollowUp,
+      status: needsFollowUp ? 'WARNING' : archiveNotes.length ? 'PASS' : 'MANUAL'
+    };
+  }, [archiveReviewPressure.count, notes]);
+
   const issueNextItems = useMemo<WorkbenchIssueNextItem[]>(() => {
     const items: WorkbenchIssueNextItem[] = [];
     const releaseBlockers = (releaseCheckSummary?.checks || []).filter(item => item.status && item.status !== 'PASS');
@@ -1319,6 +1343,21 @@ const LotteryWorkbenchPage = () => {
       });
     }
 
+    if (archiveReviewNoteQuality.needsFollowUp) {
+      items.push({
+        key: 'archive-review-note-quality',
+        icon: <BookOutlined />,
+        title: '复核笔记质量',
+        detail: archiveReviewNoteQuality.total
+          ? `验证中 ${archiveReviewNoteQuality.active} 条 · 复核证据 ${archiveReviewNoteQuality.evidenceCount} 条`
+          : '归档复核尚未沉淀为策略笔记',
+        status: archiveReviewNoteQuality.status,
+        count: archiveReviewNoteQuality.active || archiveReviewNoteQuality.missingEvidence || archiveReviewPressure.count,
+        path: archiveReviewNotePath,
+        actionLabel: archiveReviewNoteQuality.total ? '补齐笔记' : '记录复核'
+      });
+    }
+
     if (anomalyCount > 0) {
       items.push({
         key: 'anomaly-review',
@@ -1377,6 +1416,8 @@ const LotteryWorkbenchPage = () => {
     return items.slice(0, 6);
   }, [
     actionQueueItems,
+    archiveReviewNotePath,
+    archiveReviewNoteQuality,
     archiveReviewPressure,
     dailyState?.prizeCheckState,
     dailyState?.ticketState?.path,
