@@ -381,7 +381,7 @@ const LotteryMonthEndReviewPage = () => {
       count: monthEndScore
     });
     recentIssues.forEach(item => {
-      const issue = item.issue || item.period || '-';
+      const issue = String(item.issue || item.period || '-');
       items.push({
         key: `issue:${issue}`,
         scope: 'issue',

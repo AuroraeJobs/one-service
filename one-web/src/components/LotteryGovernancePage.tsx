@@ -57,7 +57,7 @@ interface GovernanceDomain {
 interface GovernanceAnomaly {
   key: string;
   title: string;
-  status: Exclude<GovernanceStatus, 'PASS'>;
+  status: GovernanceStatus;
   count: number;
   detail: string;
   trend: string;
