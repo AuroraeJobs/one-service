@@ -184,10 +184,10 @@ export const lifeNavItems: LifeNavItem[] = [
   { path: '/overview', key: 'overview', label: '首页', icon: <DashboardOutlined /> },
   { path: '/lottery/workbench', key: 'lottery', label: '彩票', icon: <TrophyOutlined /> },
   { path: '/investments', key: 'investment', label: '股票', icon: <StockOutlined /> },
+  { path: '/wechat', key: 'wechat', label: '微信', icon: <WechatOutlined /> },
   { path: '/finance/salary', key: 'finance', label: '支付宝', icon: <AlipayOutlined /> },
   { path: '/vehicle/charging', key: 'vehicle', label: 'X', icon: <XOutlined /> },
-  { path: '/ai/chat', key: 'ai', label: 'OpenAI', icon: <OpenAIOutlined /> },
-  { path: '/wechat', key: 'wechat', label: '微信', icon: <WechatOutlined /> }
+  { path: '/ai/chat', key: 'ai', label: 'OpenAI', icon: <OpenAIOutlined /> }
 ];
 
 export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
