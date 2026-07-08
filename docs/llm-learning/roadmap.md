@@ -38,7 +38,7 @@
 
 完成标准：能用自己的中文文本训练一个小模型，并让它续写。
 
-已完成工具：`playground/mini-gpt` 支持 tiny/small/medium 训练预设、独立 run 保存、loss/验证集/生成样例记录、Loss 诊断、实验模板、实验对比、复盘问题、复盘笔记、实验报告复制、高级训练参数、参数速查、tensor shape 速查、代码定位与学习动作、checkpoint 生成试验台，以及可选择历史实验的 Web 观察台。`/ai/minigpt` 页面会按 Tokenizer、Batch、Causal Attention、Loss、Generate、Review 给出学习阶段清单。
+已完成工具：`playground/mini-gpt` 支持 tiny/small/medium 训练预设、独立 run 保存、loss/验证集/生成样例记录、Loss 诊断、语料诊断、实验模板、实验对比、复盘问题、复盘笔记、实验报告复制、高级训练参数、参数速查、tensor shape 速查、代码定位与学习动作、checkpoint 生成试验台，以及可选择历史实验的 Web 观察台。`/ai/minigpt` 页面会按 Tokenizer、Batch、Causal Attention、Loss、Generate、Review 给出学习阶段清单。
 
 ## 阶段 4：开源模型开发者
 
@@ -59,6 +59,7 @@
 - 对照 `/ai/minigpt` 的代码定位与学习动作，把 Tokenizer、Batch、Attention、Block、Train、Generate 映射到 `mini_gpt.py` 的类和函数。
 - 对照 `/ai/minigpt` 的参数速查，理解 learning rate、batch size、block size、temperature、top-k 对实验的影响。
 - 替换 `data/sample.txt` 为自己的文本。
+- 对照 `/ai/minigpt` 的语料诊断，检查字符数、行密度、词表密度和样例编码是否适合继续训练。
 - 从 `/ai/minigpt` 的 Tiny 基线、低学习率、长上下文、Small 对照模板中选择一个启动实验。
 - 训练 200 到 1000 step，观察 loss 下降和生成文本变化。
 - 用 `/ai/minigpt` 的 Loss 诊断检查下降趋势、泛化差距和验证集状态。

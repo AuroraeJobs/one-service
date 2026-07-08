@@ -316,6 +316,46 @@ const lossDiagnostics = (run?: MiniGptRunRecord, logs: MiniGptTrainingLogRecord[
   ];
 };
 
+const corpusDiagnostics = (corpusInsight?: MiniGptCorpusInsight) => {
+  const charCount = corpusInsight?.charCount || 0;
+  const lineCount = corpusInsight?.lineCount || 0;
+  const vocabSize = corpusInsight?.vocabSize || 0;
+  const encodedLength = corpusInsight?.encodedSample?.length || 0;
+  const charsPerLine = lineCount > 0 ? charCount / lineCount : 0;
+  const vocabDensity = charCount > 0 ? vocabSize / charCount : 0;
+
+  return [
+    {
+      key: 'scale',
+      title: '语料规模',
+      status: charCount >= 1000 ? 'pass' : charCount >= 200 ? 'watch' : 'todo',
+      value: formatInteger(charCount),
+      detail: charCount >= 1000 ? '足够做小基线' : '先补到 1000 字以上再观察 loss'
+    },
+    {
+      key: 'line-density',
+      title: '行密度',
+      status: charsPerLine >= 12 ? 'pass' : lineCount > 0 ? 'watch' : 'todo',
+      value: lineCount > 0 ? charsPerLine.toFixed(1) : '-',
+      detail: charsPerLine >= 12 ? '句子上下文较完整' : '行太短会削弱上下文学习'
+    },
+    {
+      key: 'vocab-density',
+      title: '词表密度',
+      status: vocabDensity > 0 && vocabDensity <= 0.35 ? 'pass' : vocabDensity > 0 ? 'watch' : 'todo',
+      value: vocabDensity > 0 ? `${(vocabDensity * 100).toFixed(1)}%` : '-',
+      detail: vocabDensity > 0 && vocabDensity <= 0.35 ? '字符复用较好' : '生僻字符多时需要更多数据'
+    },
+    {
+      key: 'sample-encode',
+      title: '样例编码',
+      status: encodedLength >= 8 ? 'pass' : encodedLength > 1 ? 'watch' : 'todo',
+      value: encodedLength ? `${encodedLength} tokens` : '-',
+      detail: encodedLength >= 8 ? '可以检查 x/y 平移' : '样例太短，batch 解释不明显'
+    }
+  ];
+};
+
 const configEntries = (run?: MiniGptRunRecord): [string, string][] => {
   const config = run?.config || {};
   return [
@@ -347,10 +387,12 @@ const fencedText = (value?: string) => (value || '-').replaceAll('```', "'''");
 const buildExperimentReport = (
   run: MiniGptRunRecord,
   logs: MiniGptTrainingLogRecord[],
-  generationResult?: MiniGptGenerationResult
+  generationResult?: MiniGptGenerationResult,
+  corpusInsight?: MiniGptCorpusInsight
 ) => {
   const metrics = metricItems(run, logs);
   const diagnostics = lossDiagnostics(run, logs);
+  const corpusRows = corpusDiagnostics(corpusInsight);
   const sample = generationResult?.generatedText || latestSample(logs);
   const shapeRows = tensorShapeRows(run, undefined, []);
   const questions = reviewQuestions(run, logs, generationResult);
@@ -368,6 +410,9 @@ const buildExperimentReport = (
     '',
     '## Loss 诊断',
     ...diagnostics.map(item => `- ${item.title}: ${item.value} / ${item.detail}`),
+    '',
+    '## 语料诊断',
+    ...corpusRows.map(item => `- ${item.title}: ${item.value} / ${item.detail}`),
     '',
     '## 配置',
     ...configEntries(run).map(([key, value]) => `- ${key}: ${value}`),
@@ -831,6 +876,7 @@ const MiniGptLearningPage = () => {
   const trainingPercent = trainingStatus.running ? trainingStatus.percent ?? 1 : trainingStatus.failed ? 100 : trainingStatus.percent ?? 0;
   const encodedSample = useMemo(() => corpusInsight.encodedSample || [], [corpusInsight.encodedSample]);
   const tokenRows = useMemo(() => corpusInsight.tokens || [], [corpusInsight.tokens]);
+  const corpusDiagnosticItems = useMemo(() => corpusDiagnostics(corpusInsight), [corpusInsight]);
   const batchRows = useMemo(() => buildBatchRows(encodedSample, tokenRows), [encodedSample, tokenRows]);
   const maskSize = useMemo(() => buildMaskSize(run, encodedSample), [encodedSample, run]);
   const architectureStages = useMemo(() => modelStages(run, corpusInsight), [corpusInsight, run]);
@@ -839,8 +885,8 @@ const MiniGptLearningPage = () => {
   const milestones = useMemo(() => learningMilestones(run, logs, corpusInsight), [corpusInsight, logs, run]);
   const reviewQuestionItems = useMemo(() => reviewQuestions(run, logs, generationResult), [generationResult, logs, run]);
   const experimentReport = useMemo(
-    () => run ? buildExperimentReport(run, logs, generationResult) : '',
-    [generationResult, logs, run]
+    () => run ? buildExperimentReport(run, logs, generationResult, corpusInsight) : '',
+    [corpusInsight, generationResult, logs, run]
   );
 
   const handleCopyReport = async () => {
@@ -1129,6 +1175,18 @@ const MiniGptLearningPage = () => {
                       <span>词表大小</span>
                       <strong>{formatInteger(corpusInsight.vocabSize)}</strong>
                     </div>
+                  </section>
+                  <section className="mini-gpt-corpus-diagnostics">
+                    {corpusDiagnosticItems.map(item => (
+                      <div className={item.status} key={item.key}>
+                        <div>
+                          <Text type="secondary">{item.title}</Text>
+                          <Tag>{item.status.toUpperCase()}</Tag>
+                        </div>
+                        <strong>{item.value}</strong>
+                        <p>{item.detail}</p>
+                      </div>
+                    ))}
                   </section>
                   <div className="mini-gpt-tokenizer-block">
                     <Text type="secondary">语料预览</Text>
