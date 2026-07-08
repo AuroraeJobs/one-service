@@ -17,6 +17,6 @@ Goal: make provider freshness, sync outcomes, probe diagnostics, and recovery si
 
 ## Wave 32C: Reliability Evidence Export
 
-- Add provider reliability evidence labels to export maintenance.
-- Connect sync/probe log report presets to governance and release-readiness checks.
-- Keep smoke independent from live provider networking.
+- Add provider reliability evidence labels to export maintenance. Added `Provider可靠性包` and `Provider可靠性证据`.
+- Connect sync/probe log report presets to governance and release-readiness checks. Added `V32Provider可靠性` release evidence using sync/probe logs.
+- Keep smoke independent from live provider networking. Smoke guards the labels and preset wiring without live provider access.

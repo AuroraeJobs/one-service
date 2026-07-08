@@ -76,6 +76,11 @@ const reportPresets = [
     sections: ['decision-outcomes', 'settlement-reviews', 'budget-prechecks', 'rule-evidence', 'replay-evidence', 'sync-logs', 'probe-logs']
   },
   {
+    key: 'v32-provider-reliability',
+    label: 'Provider可靠性包',
+    sections: ['sync-logs', 'probe-logs']
+  },
+  {
     key: 'v15-attribution-loop',
     label: '归因闭环包',
     sections: ['ledger-issues', 'tickets', 'decision-outcomes', 'settlement-reviews', 'rule-evidence', 'replay-evidence']
@@ -163,6 +168,14 @@ const v15EvidencePacks = [
     preset: '异常复盘包',
     auditTypes: ['EXPORT', 'REPORT_EXPORT', 'LOTTERY_OUTCOME_ATTRIBUTION', 'LOTTERY_RECOMMENDATION_STATUS'],
     sections: ['decision-outcomes', 'settlement-reviews', 'budget-prechecks', 'sync-logs', 'probe-logs']
+  },
+  {
+    key: 'provider-reliability',
+    title: 'Provider可靠性证据',
+    route: '/lottery/sync',
+    preset: 'Provider可靠性包',
+    auditTypes: ['sync-logs', 'probe-logs', 'PROXY_OR_NETWORK_BLOCK'],
+    sections: ['sync-logs', 'probe-logs']
   },
   {
     key: 'long-term-research',
@@ -467,6 +480,13 @@ const LotteryExportMaintenancePage = () => {
       path: '/lottery/exports?preset=v31-anomaly-review'
     },
     {
+      key: 'v32-provider-reliability',
+      label: 'V32Provider可靠性',
+      status: 'PASS',
+      message: 'Provider 可靠性趋势已接入同步页、治理看板和同步/探测日志证据包',
+      path: '/lottery/exports?preset=v32-provider-reliability'
+    },
+    {
       key: 'month-end-dashboard',
       label: '月末复盘仪表盘',
       status: 'PASS',
@@ -728,7 +748,7 @@ const LotteryExportMaintenancePage = () => {
       <Card
         className="life-panel-card lottery-clean-panel lottery-v15-evidence-card"
         title={<Space><SafetyCertificateOutlined />闭环证据包</Space>}
-        extra={<Tag color="blue">归因 / 推荐 / 移动 / 治理 / 异常 / 长期</Tag>}
+        extra={<Tag color="blue">归因 / 推荐 / 移动 / 治理 / 异常 / Provider / 长期</Tag>}
       >
         <div className="lottery-v15-evidence-grid">
           {v15EvidencePacks.map(pack => (

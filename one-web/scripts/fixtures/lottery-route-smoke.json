@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 32 Wave 32B governance reliability handoff smoke",
+  "target": "Iteration 32 Wave 32C reliability evidence export smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -160,6 +160,10 @@
         "年度复盘包",
         "异常复盘包",
         "异常观察证据",
+        "Provider可靠性包",
+        "Provider可靠性证据",
+        "v32-provider-reliability",
+        "V32Provider可靠性",
         "v31-anomaly-review",
         "V31异常复盘",
         "长期研究证据",
@@ -727,7 +731,7 @@
         "lotteryExportApi.maintenanceSummary",
         "lotteryExportApi.cleanupDryRun"
       ],
-      "emptyStates": ["本次导出没有数据", "暂无数据", "暂无审计事件", "暂无集合状态", "暂无缓存状态", "复盘运营", "月末复盘", "长期研究包", "年度复盘包", "异常复盘包", "归因闭环包", "归因质量包", "推荐生命周期包", "推荐跟进包", "移动指挥包", "V15治理证据包", "异常观察证据", "长期研究证据", "闭环证据包", "V31异常复盘", "V30长期复盘导出", "V29推荐跟进", "V28归因质量", "V16导航易用性", "V16操作体验", "V16筛选可读性", "V16响应式打磨", "V18今日优先事项", "V18航行记录分析", "V18号码综合可能性", "V18深度规律分析", "前端发布就绪"],
+      "emptyStates": ["本次导出没有数据", "暂无数据", "暂无审计事件", "暂无集合状态", "暂无缓存状态", "复盘运营", "月末复盘", "长期研究包", "年度复盘包", "异常复盘包", "Provider可靠性包", "归因闭环包", "归因质量包", "推荐生命周期包", "推荐跟进包", "移动指挥包", "V15治理证据包", "异常观察证据", "Provider可靠性证据", "长期研究证据", "闭环证据包", "V32Provider可靠性", "V31异常复盘", "V30长期复盘导出", "V29推荐跟进", "V28归因质量", "V16导航易用性", "V16操作体验", "V16筛选可读性", "V16响应式打磨", "V18今日优先事项", "V18航行记录分析", "V18号码综合可能性", "V18深度规律分析", "前端发布就绪"],
       "errorStates": ["读取彩票导出审计失败", "导出彩票数据失败", "生成彩票报表失败", "执行彩票维护 dry-run 失败"],
       "fixtureData": {
         "releaseEvidence": {
