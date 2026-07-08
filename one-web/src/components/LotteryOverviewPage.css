@@ -3572,6 +3572,20 @@
   font-size: 12px;
 }
 
+.lottery-attribution-focus-summary {
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+}
+
+.lottery-attribution-focus-summary > strong {
+  display: block;
+  color: var(--app-text);
+  font-size: 14px;
+}
+
 .lottery-attribution-trend-table {
   display: grid;
   gap: 10px;

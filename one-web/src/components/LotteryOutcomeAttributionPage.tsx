@@ -249,6 +249,19 @@ const LotteryOutcomeAttributionPage = () => {
   const handoffCards = useMemo(() => buildAttributionHandoffs(selected), [selected]);
   const trendRows = useMemo(() => buildTrendRows(selected), [selected]);
   const rollupRows = useMemo(() => (rollup?.rows || []).slice(0, 12), [rollup]);
+  const focusMode = searchParams.get('focus') || '';
+  const evidenceQualityFocus = focusMode === 'evidence-quality';
+  const evidenceQualitySummary = useMemo(() => {
+    const qualityRows = rollup?.rows || [];
+    return {
+      stable: qualityRows.filter(item => item.evidenceQuality === 'STABLE').length,
+      watch: qualityRows.filter(item => item.evidenceQuality === 'WATCH').length,
+      underTested: qualityRows.filter(item => item.evidenceQuality === 'UNDER_TESTED' || item.evidenceQuality === 'OBSERVE').length,
+      negative: qualityRows.filter(item => item.evidenceQuality === 'NEGATIVE').length,
+      warnings: qualityRows.reduce((sum, item) => sum + (item.warningCount || 0), 0),
+      samples: qualityRows.reduce((sum, item) => sum + (item.sampleCount || 0), 0)
+    };
+  }, [rollup?.rows]);
 
   return (
     <LifePageShell
@@ -257,6 +270,7 @@ const LotteryOutcomeAttributionPage = () => {
       title="归因复盘"
       actions={
         <Space wrap>
+          <Button icon={<SafetyCertificateOutlined />} onClick={() => navigate('/lottery/outcomes?focus=evidence-quality')}>证据质量</Button>
           <Button onClick={() => navigate('/lottery/governance')}>治理</Button>
           <Button icon={<ReloadOutlined />} loading={loading} onClick={loadOutcomes}>刷新</Button>
         </Space>
@@ -320,6 +334,19 @@ const LotteryOutcomeAttributionPage = () => {
                     <article><strong>{formatMoney(rollup?.netResult)}</strong><span>净收益</span></article>
                     <article><strong>{formatPercent(rollup?.roiPercent)}</strong><span>ROI</span></article>
                   </section>
+                  {evidenceQualityFocus ? (
+                    <div className="lottery-attribution-focus-summary">
+                      <strong>证据质量趋势焦点</strong>
+                      <section className="lottery-attribution-rollup-summary">
+                        <article><strong>{evidenceQualitySummary.stable}</strong><span>稳定</span></article>
+                        <article><strong>{evidenceQualitySummary.watch}</strong><span>需复核</span></article>
+                        <article><strong>{evidenceQualitySummary.underTested}</strong><span>样本不足</span></article>
+                        <article><strong>{evidenceQualitySummary.negative}</strong><span>负向</span></article>
+                        <article><strong>{evidenceQualitySummary.warnings}</strong><span>警示</span></article>
+                        <article><strong>{evidenceQualitySummary.samples}</strong><span>样本</span></article>
+                      </section>
+                    </div>
+                  ) : null}
                   <div className="lottery-attribution-trend-table">
                     {rollupRows.length ? rollupRows.map(item => (
                       <button key={`${item.dimension}-${item.key}`} type="button" onClick={() => navigate(item.path || '/lottery/outcomes')}>

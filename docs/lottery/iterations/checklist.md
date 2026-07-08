@@ -1075,6 +1075,27 @@ Goal: make the 35-39 archive-review work visible as a planning checkpoint, then 
 - [x] Add a release-evidence handoff for the five-iteration planning review.
 - [x] Decide whether planning checkpoints need archived report snapshots or can remain month-end evidence. Decision: keep as month-end evidence for now; add archived snapshots only if planning checkpoints become release artifacts.
 
+## Iteration 41: Evidence Quality Trend Focus
+
+Goal: turn the next-phase evidence-quality candidate into a focused review path that reuses existing attribution rollups before adding backend contracts.
+
+### Wave 41A: Attribution Quality Focus
+
+- [x] Link the month-end evidence-quality candidate to a focused attribution view.
+- [x] Summarize stable, watch, under-tested, and negative evidence-quality rows from the current rollup.
+- [x] Keep the first slice frontend-derived from existing outcome attribution rollups.
+
+### Wave 41B: Workbench Evidence Quality Handoff
+
+- [ ] Surface the same focused attribution path from workbench when evidence quality needs review.
+- [ ] Keep the action compact and tied to existing workbench warning signals.
+- [ ] Add smoke coverage for the handoff label.
+
+### Wave 41C: Governance Evidence Quality Release Link
+
+- [ ] Connect the focused evidence-quality path to governance or release evidence when useful.
+- [ ] Decide whether a dedicated quality-trend export label is needed.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

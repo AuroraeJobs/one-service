@@ -604,7 +604,7 @@ const LotteryMonthEndReviewPage = () => {
       label: '证据质量趋势',
       detail: '继续追踪归因警示、复核笔记质量和策略证据覆盖',
       status: attributionRows.some(item => safeCount(item.warningCount) > 0) || archiveReviewNoteSummary.active ? 'WARNING' : 'PASS',
-      path: '/lottery/outcomes'
+      path: '/lottery/outcomes?focus=evidence-quality'
     },
     {
       key: 'provider-reliability',
