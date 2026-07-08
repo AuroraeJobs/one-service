@@ -1292,6 +1292,13 @@ export interface OpenAiTrainingDeploymentBinding {
   rollbackModelId?: string;
 }
 
+export interface OpenAiTrainingReadinessCheck {
+  key: string;
+  label?: string;
+  status?: string;
+  detail?: string;
+}
+
 export interface OpenAiTrainingNextAction {
   key: string;
   icon?: string;
@@ -1305,6 +1312,7 @@ export interface OpenAiTrainingManagementDashboard {
   jobs?: OpenAiTrainingJob[];
   evalRuns?: OpenAiTrainingEvalRun[];
   deploymentBindings?: OpenAiTrainingDeploymentBinding[];
+  readinessChecks?: OpenAiTrainingReadinessCheck[];
   nextActions?: OpenAiTrainingNextAction[];
   generatedAt?: number;
 }

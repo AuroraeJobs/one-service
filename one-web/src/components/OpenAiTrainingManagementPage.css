@@ -25,6 +25,7 @@
 .openai-training-overview div,
 .openai-training-entity-grid div,
 .openai-training-map div,
+.openai-training-readiness div,
 .openai-training-next div {
   border: 1px solid var(--openai-training-border);
   border-radius: 8px;
@@ -83,9 +84,14 @@
 
 .openai-training-entity-grid,
 .openai-training-map,
+.openai-training-readiness,
 .openai-training-next {
   display: grid;
   gap: 10px;
+}
+
+.openai-training-readiness {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .openai-training-entity-grid {
@@ -98,6 +104,38 @@
   gap: 8px;
   min-height: 92px;
   padding: 12px;
+}
+
+.openai-training-readiness div {
+  display: grid;
+  gap: 8px;
+  min-height: 118px;
+  padding: 12px;
+}
+
+.openai-training-readiness div.pass {
+  border-color: color-mix(in srgb, #34c759 38%, var(--openai-training-border));
+}
+
+.openai-training-readiness div.warning {
+  border-color: color-mix(in srgb, #ff9500 42%, var(--openai-training-border));
+}
+
+.openai-training-readiness div.failed {
+  border-color: color-mix(in srgb, #ff3b30 42%, var(--openai-training-border));
+}
+
+.openai-training-readiness span {
+  color: var(--openai-training-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.openai-training-readiness p {
+  margin: 0;
+  color: var(--openai-training-muted);
+  font-size: 13px;
+  line-height: 1.55;
 }
 
 .openai-training-entity-grid strong,
@@ -141,6 +179,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .openai-training-readiness {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .openai-training-grid {
     grid-template-columns: 1fr;
   }
@@ -149,7 +191,8 @@
 @media (max-width: 680px) {
   .openai-training-overview,
   .openai-training-entity-grid,
-  .openai-training-map {
+  .openai-training-map,
+  .openai-training-readiness {
     grid-template-columns: 1fr;
   }
 }

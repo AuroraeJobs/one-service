@@ -17,6 +17,7 @@ public class OpenAiTrainingManagementService implements IOpenAiTrainingManagemen
                 .jobs(jobs())
                 .evalRuns(evalRuns())
                 .deploymentBindings(deploymentBindings())
+                .readinessChecks(readinessChecks())
                 .nextActions(nextActions())
                 .generatedAt(System.currentTimeMillis())
                 .build();
@@ -64,6 +65,16 @@ public class OpenAiTrainingManagementService implements IOpenAiTrainingManagemen
                 deployment("wechat-draft", "wechat-draft", "ft:wechat:final", "wechat-draft-v3", "deploy", "active", "gpt-4.1-mini"),
                 deployment("minigpt-review", "minigpt-review", "ft:review:step-120", "review-v2", "checkpoint", "canary", "gpt-4.1-mini"),
                 deployment("tool-routing", "tool-routing", "gpt-4.1", "tool-route-v1", "base", "draft", "gpt-4.1-mini")
+        );
+    }
+
+    private List<OpenAiTrainingManagementDashboard.ReadinessCheck> readinessChecks() {
+        return List.of(
+                readiness("dataset-reviewed", "数据集审核", "PASS", "训练样本已标注用途、来源和审核状态。"),
+                readiness("job-succeeded", "训练任务", "PASS", "主候选任务已完成，并产出 fine-tuned model。"),
+                readiness("eval-threshold", "Eval 门槛", "PASS", "目标评测集 pass rate 达到 85% 以上。"),
+                readiness("rollback-ready", "回滚模型", "PASS", "每个 active/canary 绑定都保留 rollbackModelId。"),
+                readiness("canary-watch", "灰度观察", "WARNING", "canary 模型仍需补充失败样例和人工复盘。")
         );
     }
 
@@ -144,6 +155,15 @@ public class OpenAiTrainingManagementService implements IOpenAiTrainingManagemen
                 .evalRunId(evalRunId)
                 .rolloutStatus(rolloutStatus)
                 .rollbackModelId(rollbackModelId)
+                .build();
+    }
+
+    private OpenAiTrainingManagementDashboard.ReadinessCheck readiness(String key, String label, String status, String detail) {
+        return OpenAiTrainingManagementDashboard.ReadinessCheck.builder()
+                .key(key)
+                .label(label)
+                .status(status)
+                .detail(detail)
                 .build();
     }
 

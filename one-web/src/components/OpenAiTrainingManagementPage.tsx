@@ -55,6 +55,12 @@ const rolloutColor: Record<string, string> = {
   rolled_back: 'error'
 };
 
+const readinessColor: Record<string, string> = {
+  FAILED: 'error',
+  PASS: 'success',
+  WARNING: 'warning'
+};
+
 const jobColumns: ColumnsType<OpenAiTrainingJob> = [
   {
     title: 'Job',
@@ -167,6 +173,7 @@ const OpenAiTrainingManagementPage = () => {
   const jobRows = dashboard.jobs || [];
   const evalRows = dashboard.evalRuns || [];
   const deploymentRows = dashboard.deploymentBindings || [];
+  const readinessChecks = dashboard.readinessChecks || [];
   const nextActions = dashboard.nextActions || [];
 
   return (
@@ -246,6 +253,18 @@ const OpenAiTrainingManagementPage = () => {
                 />
               </Card>
             </section>
+
+            <Card className="openai-training-panel" title="上线门禁检查">
+              <section className="openai-training-readiness">
+                {readinessChecks.map(item => (
+                  <div className={(item.status || 'WARNING').toLowerCase()} key={item.key}>
+                    <span>{item.label}</span>
+                    <Tag color={readinessColor[item.status || ''] || 'default'}>{item.status || '-'}</Tag>
+                    <p>{item.detail}</p>
+                  </div>
+                ))}
+              </section>
+            </Card>
 
             <section className="openai-training-grid">
               <Card className="openai-training-panel" title="下一步实现">
