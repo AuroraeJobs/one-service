@@ -281,7 +281,7 @@ red=04,10,16,21,26,32 blue=09 reason=sum_mid;odd_even_3_3;zone_2_2_2
 - `POST /ai/minigpt/generate/compare` 支持同一 prompt 下批量对比不同 `temperature/top-k`，页面会并排显示生成文本和候选校验结果。
 - MiniGPT 生成试验台可以把合规或可修复候选保存为现有彩票决策集草稿，后续可进入决策板、票包和回测链路。
 - `POST /lottery/backtests/run` 支持 `decisionSetId`，可对 MiniGPT 候选池做最近窗口历史回测，并附带同窗口随机基线。
-- MiniGPT 候选池回测完成后，页面可直接进入回测详情、研究对比，并把 `backtest:<id>` 挂到策略笔记作为训练复盘证据。
+- MiniGPT 候选池回测完成后，页面可直接进入回测详情、研究对比，把 `backtest:<id>` 挂到策略笔记，并按策略名跳转导出回测证据。
 
 建议新增或复用的能力：
 
@@ -307,4 +307,4 @@ red=04,10,16,21,26,32 blue=09 reason=sum_mid;odd_even_3_3;zone_2_2_2
 
 1. 用 MiniGPT 训练“格式学习”基线。
 2. 形成“模型生成 + 规则过滤 + 随机基线对比 + 研究笔记”的第一版闭环。
-3. 将 MiniGPT 候选池回测报告继续纳入导出包和月度复盘。
+3. 将 MiniGPT 候选池回测报告继续纳入月度复盘。

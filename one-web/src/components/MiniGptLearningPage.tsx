@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Button, Card, Empty, Form, Input, InputNumber, Progress, Select, Space, Spin, Table, Tag, Typography, message } from 'antd';
-import { BarChartOutlined, BookOutlined, CloseCircleOutlined, CopyOutlined, DatabaseOutlined, PlayCircleOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons';
+import { BarChartOutlined, BookOutlined, CloseCircleOutlined, CopyOutlined, DatabaseOutlined, DownloadOutlined, PlayCircleOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
 import LifePageShell from './LifePageShell';
 import {
@@ -1744,6 +1744,19 @@ const MiniGptLearningPage = () => {
     navigate(`/lottery/research/notebook?${search.toString()}`);
   };
 
+  const openCandidateBacktestExport = () => {
+    if (!candidateBacktest?.strategyName) {
+      message.warning('当前回测报告缺少策略名称，暂时无法带入导出筛选');
+      return;
+    }
+    const search = new URLSearchParams({
+      type: 'backtests',
+      strategyName: candidateBacktest.strategyName,
+      preset: 'long-term-research'
+    });
+    navigate(`/lottery/exports?${search.toString()}`);
+  };
+
   useEffect(() => {
     loadDashboard();
     loadTrainingStatus();
@@ -2842,6 +2855,9 @@ const MiniGptLearningPage = () => {
                         </Button>
                         <Button size="small" icon={<BookOutlined />} onClick={openCandidateBacktestNotebook}>
                           挂到笔记
+                        </Button>
+                        <Button size="small" icon={<DownloadOutlined />} onClick={openCandidateBacktestExport}>
+                          导出证据
                         </Button>
                       </div>
                     </section>

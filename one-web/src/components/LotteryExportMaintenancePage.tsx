@@ -292,7 +292,12 @@ const LotteryExportMaintenancePage = () => {
     return isSupportedExportType(requestedType) ? requestedType || 'tickets' : 'tickets';
   });
   const [primaryFilter, setPrimaryFilter] = useState(() =>
-    searchParams.get('targetIssue') || searchParams.get('issue') || searchParams.get('ruleName') || searchParams.get('archiveQuery') || ''
+    searchParams.get('targetIssue')
+    || searchParams.get('issue')
+    || searchParams.get('ruleName')
+    || searchParams.get('strategyName')
+    || searchParams.get('archiveQuery')
+    || ''
   );
   const [limit, setLimit] = useState('500');
   const [result, setResult] = useState<LotteryExportResult>();
