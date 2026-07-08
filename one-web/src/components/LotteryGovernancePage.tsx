@@ -439,7 +439,7 @@ const LotteryGovernancePage = () => {
         count: Math.max(1, syncWarningCount),
         detail: `${syncSummary?.latestProvider || 'provider'} · ${failureCategoryLabel(syncSummary?.latestFailureCategory)}`,
         trend: `同步成功率 ${syncSummary?.successRate ?? 0}% · 最近完成 ${formatTime(syncSummary?.latestFinishedAt)}`,
-        path: '/lottery/sync'
+        path: '/lottery/sync?focus=provider-reliability'
       });
     }
 
@@ -465,7 +465,7 @@ const LotteryGovernancePage = () => {
         value: `${syncSummary?.successRate ?? 0}%`,
         detail: `${syncSummary?.latestProvider || 'provider'} · ${failureCategoryLabel(syncSummary?.latestFailureCategory)} · ${syncSummary?.latestRequestMode || '-'}`,
         status: syncSummary?.latestNetworkBlockSuspected || syncSummary?.latestStatus === 'FAILED' ? 'FAILED' : (syncSummary?.failedCount ? 'WARNING' : syncSummary ? 'PASS' : 'MANUAL'),
-        path: '/lottery/sync'
+        path: '/lottery/sync?focus=provider-reliability'
       },
       {
         key: 'audit-repeat',

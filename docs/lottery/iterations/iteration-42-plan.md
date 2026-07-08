@@ -22,3 +22,5 @@ Status: completed with a workbench `Provider可靠性` next-step handoff to `/lo
 
 - Connect the focused Provider reliability path to governance or release evidence when useful.
 - Decide whether the existing Provider reliability package is enough or needs a more specific review label.
+
+Status: completed by routing governance Provider reliability and release-readiness evidence to `/lottery/sync?focus=provider-reliability`; the existing Provider reliability package remains sufficient.

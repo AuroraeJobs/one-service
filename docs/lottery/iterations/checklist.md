@@ -1114,8 +1114,8 @@ Goal: turn the next-phase Provider reliability candidate into a focused review p
 
 ### Wave 42C: Governance Provider Reliability Release Link
 
-- [ ] Connect the focused Provider reliability path to governance or release evidence when useful.
-- [ ] Decide whether the existing Provider reliability package is enough or needs a more specific review label.
+- [x] Connect the focused Provider reliability path to governance or release evidence when useful.
+- [x] Decide whether the existing Provider reliability package is enough or needs a more specific review label. Decision: existing Provider reliability package is enough; keep V32 release evidence and point it at the focused sync view.
 
 ## Documentation And Delivery
 

@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 42 Wave 42B workbench provider reliability handoff smoke",
-  "generatedAt": "2026-07-08T14:33:09.998Z",
+  "target": "Iteration 42 Wave 42C governance release provider reliability smoke",
+  "generatedAt": "2026-07-08T14:35:45.827Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 18,
-  "checkCount": 628,
+  "checkCount": 632,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [

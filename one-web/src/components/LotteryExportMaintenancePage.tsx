@@ -527,8 +527,8 @@ const LotteryExportMaintenancePage = () => {
       key: 'v32-provider-reliability',
       label: 'V32Provider可靠性',
       status: 'PASS',
-      message: 'Provider 可靠性趋势已接入同步页、治理看板和同步/探测日志证据包',
-      path: '/lottery/exports?preset=v32-provider-reliability'
+      message: 'Provider 可靠性焦点已接入月末、工作台、同步页和治理；继续复用同步/探测日志证据包',
+      path: '/lottery/sync?focus=provider-reliability'
     },
     {
       key: 'v33-review-runbook',
