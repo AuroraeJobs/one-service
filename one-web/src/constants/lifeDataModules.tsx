@@ -1,6 +1,7 @@
 import {
   AlipayOutlined,
   ApiOutlined,
+  AppleOutlined,
   AppstoreOutlined,
   AuditOutlined,
   BankOutlined,
@@ -10,6 +11,7 @@ import {
   CalendarOutlined,
   CarOutlined,
   ClockCircleOutlined,
+  ChromeOutlined,
   CompassOutlined,
   CreditCardOutlined,
   DashboardOutlined,
@@ -108,7 +110,7 @@ export const lifeDataModules: LifeDataModule[] = [
     path: '/investments',
     status: 'planned',
     accent: '#5856d6',
-    icon: <StockOutlined />,
+    icon: <ChromeOutlined />,
     liveCapabilities: [],
     plannedCapabilities: ['持仓同步', '收益归因', '市场行情', '风险暴露'],
     dataSources: ['券商账户', '基金账户', '行情数据', '自定义资产']
@@ -121,7 +123,7 @@ export const lifeDataModules: LifeDataModule[] = [
     path: '/lottery/workbench',
     status: 'live',
     accent: '#ff3b30',
-    icon: <TrophyOutlined />,
+    icon: <AppleOutlined />,
     liveCapabilities: ['历史开奖同步', '号码预测', '红蓝球统计', '趋势分析', '卦象视图'],
     plannedCapabilities: ['个人下注记录', '中奖记录', '投入产出统计'],
     dataSources: ['开奖记录接口', '手动下注记录', '中奖核验数据']
@@ -182,8 +184,8 @@ export const lifeDataModules: LifeDataModule[] = [
 
 export const lifeNavItems: LifeNavItem[] = [
   { path: '/overview', key: 'overview', label: '首页', icon: <DashboardOutlined /> },
-  { path: '/lottery/workbench', key: 'lottery', label: '彩票', icon: <TrophyOutlined /> },
-  { path: '/investments', key: 'investment', label: '股票', icon: <StockOutlined /> },
+  { path: '/lottery/workbench', key: 'lottery', label: '彩票', icon: <AppleOutlined /> },
+  { path: '/investments', key: 'investment', label: '股票', icon: <ChromeOutlined /> },
   { path: '/wechat', key: 'wechat', label: '微信', icon: <WechatOutlined /> },
   { path: '/finance/salary', key: 'finance', label: '支付宝', icon: <AlipayOutlined /> },
   { path: '/vehicle/charging', key: 'vehicle', label: 'X', icon: <XOutlined /> },
