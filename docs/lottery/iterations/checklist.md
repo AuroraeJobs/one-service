@@ -1007,9 +1007,9 @@ Goal: make archive review evidence obvious after users enter the research notebo
 
 ### Wave 37C: Review Note Surfacing
 
-- [ ] Surface recent archive-review notes back on month-end review or governance when useful.
-- [ ] Prefer frontend-derived summaries from existing strategy notes before adding backend contracts.
-- [ ] Decide whether archived review notes need export evidence.
+- [x] Surface recent archive-review notes back on month-end review or governance when useful.
+- [x] Prefer frontend-derived summaries from existing strategy notes before adding backend contracts.
+- [x] Decide whether archived review notes need export evidence. Decision: keep notes surfaced through notebook filtering and existing archive evidence packages.
 
 ## Documentation And Delivery
 

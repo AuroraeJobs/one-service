@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 37 Wave 37B archive notebook filter smoke",
-  "generatedAt": "2026-07-08T07:13:16.112Z",
+  "target": "Iteration 37 Wave 37C archive review note surfacing smoke",
+  "generatedAt": "2026-07-08T07:17:30.682Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 18,
-  "checkCount": 585,
+  "checkCount": 590,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [

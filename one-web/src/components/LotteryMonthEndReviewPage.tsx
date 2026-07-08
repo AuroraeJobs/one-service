@@ -474,6 +474,10 @@ const LotteryMonthEndReviewPage = () => {
     path: archiveEvidenceExportPath
   }), [archiveEvidenceExportPath, archiveQuery, archiveReviewQueueItems.length, archiveScopeFilter, archiveStatusFilter]);
 
+  const archiveReviewNotes = useMemo(() => (notes?.items || [])
+    .filter(item => (item.evidence || []).some(evidence => evidence.evidenceType === 'ARCHIVE_REVIEW'))
+    .slice(0, 4), [notes?.items]);
+
   const narrativeItems = useMemo<NarrativeItem[]>(() => {
     const pendingTickets = safeCount(tickets?.pendingTicketCount);
     const attributionWarnings = attributionRows.reduce((sum, item) => sum + safeCount(item.warningCount), 0);
@@ -821,6 +825,27 @@ const LotteryMonthEndReviewPage = () => {
               </div>
             ) : (
               <Empty description="当前筛选暂无待复核归档" />
+            )}
+          </Card>
+
+          <Card
+            className="life-panel-card lottery-clean-panel"
+            title="复核笔记回看"
+            extra={<Button size="small" icon={<BookOutlined />} onClick={() => navigate('/lottery/research/notebook?evidence=ARCHIVE_REVIEW')}>全部笔记</Button>}
+          >
+            {archiveReviewNotes.length ? (
+              <div className="lottery-month-end-list">
+                {archiveReviewNotes.map(item => (
+                  <button key={item.id || item.title} type="button" onClick={() => navigate('/lottery/research/notebook?evidence=ARCHIVE_REVIEW')}>
+                    <Tag color={statusColor(item.status)}>{lotteryStatusLabel(item.status, 'ACTIVE')}</Tag>
+                    <span>{item.title || '归档复核笔记'}</span>
+                    <strong>{item.evidence?.length || 0}</strong>
+                    <small>{item.updatedAt ? formatDateTime(item.updatedAt) : (item.ruleName || 'ARCHIVE_REVIEW')}</small>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <Empty description="暂无归档复核笔记" />
             )}
           </Card>
 

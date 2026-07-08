@@ -21,3 +21,5 @@ Status: completed with a URL-backed `evidence=ARCHIVE_REVIEW` filter and a visib
 - Surface recent archive-review notes back on month-end review or governance when useful.
 - Prefer frontend-derived summaries from existing strategy notes before adding backend contracts.
 - Decide whether archived review notes need export evidence.
+
+Status: completed by surfacing recent `ARCHIVE_REVIEW` strategy notes on month-end review and linking to the notebook archive-review filter.
