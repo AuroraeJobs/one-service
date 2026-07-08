@@ -481,6 +481,31 @@ const configNumber = (run: MiniGptRunRecord | undefined, key: string) => {
   return Number.isFinite(Number(value)) ? Number(value) : undefined;
 };
 
+const currentTrainingValue = (
+  run: MiniGptRunRecord | undefined,
+  key: keyof MiniGptTrainingRequest
+): MiniGptTrainingRequest[keyof MiniGptTrainingRequest] | undefined => {
+  if (!run) return undefined;
+  const config = run.config || {};
+  const values: Partial<MiniGptTrainingRequest> = {
+    preset: run.preset,
+    data: run.data,
+    maxSteps: run.maxSteps,
+    batchSize: run.batchSize,
+    learningRate: run.learningRate,
+    blockSize: configNumber(run, 'block_size'),
+    nEmbd: configNumber(run, 'n_embd'),
+    nHead: configNumber(run, 'n_head'),
+    nLayer: configNumber(run, 'n_layer'),
+    valRatio: run.valRatio,
+    samplePrompt: run.samplePrompt,
+    sampleTokens: run.sampleTokens,
+    temperature: Number.isFinite(Number(config.temperature)) ? Number(config.temperature) : undefined,
+    topK: Number.isFinite(Number(config.top_k)) ? Number(config.top_k) : undefined
+  };
+  return values[key];
+};
+
 const experimentVariableDiffs = (
   run: MiniGptRunRecord | undefined,
   values: MiniGptTrainingRequest = {}
@@ -1128,6 +1153,22 @@ const MiniGptLearningPage = () => {
     message.success(`已应用计划到训练表单：${item.title}`);
   };
 
+  const handleKeepFirstVariableOnly = () => {
+    if (!run || variableDiffItems.length <= 1) return;
+    const [, ...diffsToReset] = variableDiffItems;
+    const resetValues = diffsToReset.reduce<Partial<MiniGptTrainingRequest>>((values, item) => ({
+      ...values,
+      [item.key]: currentTrainingValue(run, item.key as keyof MiniGptTrainingRequest)
+    }), {});
+    const mergedValues = {
+      ...form.getFieldsValue(),
+      ...resetValues
+    };
+    form.setFieldsValue(mergedValues);
+    loadCorpusInsight(mergedValues);
+    message.success(`已保留变量：${variableDiffItems[0].label}`);
+  };
+
   const loadComparisonLogs = useCallback(async (runNames: string[]) => {
     const safeRunNames = runNames.filter(Boolean).slice(0, 4);
     setComparisonRunNames(safeRunNames);
@@ -1544,6 +1585,11 @@ const MiniGptLearningPage = () => {
                 </Space>
               </div>
               <p className={`mini-gpt-variable-guard ${variableGuardState.status}`}>{variableGuardState.detail}</p>
+              {run && variableDiffItems.length > 1 && (
+                <Button size="small" onClick={handleKeepFirstVariableOnly}>
+                  只保留第一个变量
+                </Button>
+              )}
               {run ? (
                 variableDiffItems.length ? (
                   <div className="mini-gpt-variable-diff-grid">

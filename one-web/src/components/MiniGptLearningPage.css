@@ -321,6 +321,10 @@
   line-height: 1.55;
 }
 
+.mini-gpt-variable-diff > .ant-btn {
+  justify-self: start;
+}
+
 .mini-gpt-variable-guard {
   padding: 10px 12px;
   border: 1px solid var(--mini-gpt-border);
