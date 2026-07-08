@@ -1108,9 +1108,9 @@ Goal: turn the next-phase Provider reliability candidate into a focused review p
 
 ### Wave 42B: Workbench Provider Reliability Handoff
 
-- [ ] Surface the focused Provider reliability path from workbench when sync or health evidence needs review.
-- [ ] Keep the action compact and tied to existing operations health signals.
-- [ ] Add smoke coverage for the handoff label.
+- [x] Surface the focused Provider reliability path from workbench when sync or health evidence needs review.
+- [x] Keep the action compact and tied to existing operations health signals.
+- [x] Add smoke coverage for the handoff label.
 
 ### Wave 42C: Governance Provider Reliability Release Link
 

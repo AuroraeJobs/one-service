@@ -1329,6 +1329,19 @@ const LotteryWorkbenchPage = () => {
       });
     }
 
+    if (latestSyncStatus !== 'SUCCESS' || (operationsHealth?.warningCount || 0) > 0) {
+      items.push({
+        key: 'provider-reliability-focus',
+        icon: <SyncOutlined />,
+        title: 'Provider可靠性',
+        detail: `同步 ${latestSyncStatusLabel} · 健康警示 ${operationsHealth?.warningCount || 0}`,
+        status: latestSyncStatus === 'FAILED' ? 'FAILED' : (operationsHealth?.warningCount ? 'WARNING' : latestSyncStatus),
+        count: operationsHealth?.warningCount || undefined,
+        path: '/lottery/sync?focus=provider-reliability',
+        actionLabel: '看可靠性'
+      });
+    }
+
     if (releaseBlockers.length > 0) {
       const blocker = releaseBlockers[0];
       items.push({
@@ -1436,6 +1449,8 @@ const LotteryWorkbenchPage = () => {
     dailyState?.ticketState?.path,
     dailyState?.ticketState?.status,
     latestDrawIssue,
+    latestSyncStatus,
+    latestSyncStatusLabel,
     latestTicketIssue,
     nextIssue,
     operationsHealth?.message,

@@ -16,6 +16,8 @@ Status: completed with `/lottery/sync?focus=provider-reliability` and a focused 
 - Keep the action compact and tied to existing operations health signals.
 - Add smoke coverage for the handoff label.
 
+Status: completed with a workbench `Provider可靠性` next-step handoff to `/lottery/sync?focus=provider-reliability` when sync status or operations health needs review.
+
 ## Wave 42C: Governance Provider Reliability Release Link
 
 - Connect the focused Provider reliability path to governance or release evidence when useful.
