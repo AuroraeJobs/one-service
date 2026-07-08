@@ -68,6 +68,7 @@ const LotteryResearchNotebookPage = () => {
   const [targetIssue, setTargetIssue] = useState(searchParams.get('targetIssue') || '');
 
   const status = searchParams.get('status') || 'ALL';
+  const evidenceFilter = searchParams.get('evidence') || 'ALL';
   const pendingEvidence = useMemo(() => evidenceFromQuery(searchParams), [searchParams]);
   const isArchiveReviewEvidence = pendingEvidence?.evidenceType === 'ARCHIVE_REVIEW';
   const pendingEvidenceSourceLabel = pendingEvidence?.sourceId === 'workbench'
@@ -77,7 +78,9 @@ const LotteryResearchNotebookPage = () => {
       : pendingEvidence?.sourceId === 'all'
         ? '全部归档'
         : pendingEvidence?.sourceId || '归档复核';
-  const notes = response?.items || [];
+  const notes = useMemo(() => response?.items || [], [response?.items]);
+  const archiveReviewNotes = useMemo(() => notes.filter(note => (note.evidence || []).some(item => item.evidenceType === 'ARCHIVE_REVIEW')), [notes]);
+  const visibleNotes = evidenceFilter === 'ARCHIVE_REVIEW' ? archiveReviewNotes : notes;
 
   const loadNotes = useCallback(async () => {
     setLoading(true);
@@ -107,6 +110,16 @@ const LotteryResearchNotebookPage = () => {
       next.delete('status');
     } else {
       next.set('status', value);
+    }
+    setSearchParams(next);
+  };
+
+  const updateEvidenceFilter = (value: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (value === 'ALL') {
+      next.delete('evidence');
+    } else {
+      next.set('evidence', value);
     }
     setSearchParams(next);
   };
@@ -239,15 +252,18 @@ const LotteryResearchNotebookPage = () => {
       <Card className="life-panel-card lottery-clean-panel">
         <Space wrap>
           <Select value={status} options={statusOptions} onChange={updateStatus} style={{ width: 140 }} />
-          <Tag color="blue">笔记 {response?.total || notes.length}</Tag>
+          <Button size="small" type={evidenceFilter === 'ARCHIVE_REVIEW' ? 'primary' : 'default'} onClick={() => updateEvidenceFilter(evidenceFilter === 'ARCHIVE_REVIEW' ? 'ALL' : 'ARCHIVE_REVIEW')}>
+            归档复核 {archiveReviewNotes.length}
+          </Button>
+          <Tag color="blue">笔记 {evidenceFilter === 'ARCHIVE_REVIEW' ? visibleNotes.length : response?.total || notes.length}</Tag>
           {pendingEvidence ? <Tag color="gold">待挂载证据</Tag> : null}
         </Space>
       </Card>
 
       <Spin spinning={loading}>
-        {notes.length ? (
+        {visibleNotes.length ? (
           <section className="lottery-notebook-grid">
-            {notes.map(note => (
+            {visibleNotes.map(note => (
               <article key={note.id || note.title} className="lottery-notebook-card">
                 <div className="lottery-notebook-card-head">
                   <div>
@@ -279,7 +295,7 @@ const LotteryResearchNotebookPage = () => {
           </section>
         ) : (
           <Card className="life-panel-card lottery-clean-panel">
-            <Empty description="暂无策略笔记" />
+            <Empty description={evidenceFilter === 'ARCHIVE_REVIEW' ? '暂无归档复核笔记' : '暂无策略笔记'} />
           </Card>
         )}
       </Spin>

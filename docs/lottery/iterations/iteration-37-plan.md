@@ -14,6 +14,8 @@ Goal: make archive review evidence obvious after users enter the research notebo
 - Preserve the existing status filter and create flow.
 - Add smoke checks for the filter affordance.
 
+Status: completed with a URL-backed `evidence=ARCHIVE_REVIEW` filter and a visible archive-review note count.
+
 ## Wave 37C: Review Note Surfacing
 
 - Surface recent archive-review notes back on month-end review or governance when useful.

@@ -1001,9 +1001,9 @@ Goal: make archive review evidence obvious after users enter the research notebo
 
 ### Wave 37B: Archive Evidence Filtering
 
-- [ ] Add a quick way to focus notes that already contain archive-review evidence.
-- [ ] Preserve the existing status filter and create flow.
-- [ ] Add smoke checks for the filter affordance.
+- [x] Add a quick way to focus notes that already contain archive-review evidence.
+- [x] Preserve the existing status filter and create flow.
+- [x] Add smoke checks for the filter affordance.
 
 ### Wave 37C: Review Note Surfacing
 
