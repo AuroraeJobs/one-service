@@ -417,6 +417,11 @@ type NextExperimentAction = {
   action: string;
 };
 
+type PlannedExperiment = NextExperimentAction & {
+  id: string;
+  sourceRun?: string;
+};
+
 const nextExperimentActions = (
   run: MiniGptRunRecord | undefined,
   logs: MiniGptTrainingLogRecord[],
@@ -545,7 +550,8 @@ const buildExperimentReport = (
   run: MiniGptRunRecord,
   logs: MiniGptTrainingLogRecord[],
   generationResult?: MiniGptGenerationResult,
-  corpusInsight?: MiniGptCorpusInsight
+  corpusInsight?: MiniGptCorpusInsight,
+  plannedExperiments: PlannedExperiment[] = []
 ) => {
   const metrics = metricItems(run, logs);
   const diagnostics = lossDiagnostics(run, logs);
@@ -578,6 +584,11 @@ const buildExperimentReport = (
     '',
     '## 下一步建议',
     ...actionRows.map(item => `- ${item.title}: ${item.action}（${item.reason}）`),
+    '',
+    '## 实验计划',
+    ...(plannedExperiments.length
+      ? plannedExperiments.map(item => `- ${item.title}: ${item.action}（来源：${item.sourceRun || '未绑定实验'}）`)
+      : ['- 暂无计划']),
     '',
     '## 配置',
     ...configEntries(run).map(([key, value]) => `- ${key}: ${value}`),
@@ -859,6 +870,7 @@ const MiniGptLearningPage = () => {
   const [selectedRun, setSelectedRun] = useState<string>();
   const [comparisonRunNames, setComparisonRunNames] = useState<string[]>([]);
   const [comparisonLogs, setComparisonLogs] = useState<Record<string, MiniGptTrainingLogRecord[]>>({});
+  const [plannedExperiments, setPlannedExperiments] = useState<PlannedExperiment[]>([]);
   const [loading, setLoading] = useState(false);
   const [corpusLoading, setCorpusLoading] = useState(false);
   const [comparisonLoading, setComparisonLoading] = useState(false);
@@ -926,6 +938,20 @@ const MiniGptLearningPage = () => {
     form.setFieldsValue(mergedValues);
     loadCorpusInsight(mergedValues);
     message.info(`已应用实验模板：${recipe.title}`);
+  };
+
+  const handleAddPlan = (item: NextExperimentAction) => {
+    const plannedItem: PlannedExperiment = {
+      ...item,
+      id: `${item.key}-${Date.now()}`,
+      sourceRun: run?.runName
+    };
+    setPlannedExperiments(current => [plannedItem, ...current].slice(0, 8));
+    message.success(`已加入实验计划：${item.title}`);
+  };
+
+  const handleRemovePlan = (id: string) => {
+    setPlannedExperiments(current => current.filter(item => item.id !== id));
   };
 
   const loadComparisonLogs = useCallback(async (runNames: string[]) => {
@@ -1058,8 +1084,8 @@ const MiniGptLearningPage = () => {
     [corpusInsight, generationResult, logs, run]
   );
   const experimentReport = useMemo(
-    () => run ? buildExperimentReport(run, logs, generationResult, corpusInsight) : '',
-    [corpusInsight, generationResult, logs, run]
+    () => run ? buildExperimentReport(run, logs, generationResult, corpusInsight, plannedExperiments) : '',
+    [corpusInsight, generationResult, logs, plannedExperiments, run]
   );
 
   const handleCopyReport = async () => {
@@ -1501,9 +1527,34 @@ const MiniGptLearningPage = () => {
                   <Text type="secondary">{item.reason}</Text>
                   <strong>{item.title}</strong>
                   <p>{item.action}</p>
+                  <Button size="small" onClick={() => handleAddPlan(item)}>
+                    加入计划
+                  </Button>
                 </section>
               ))}
             </div>
+          </Card>
+
+          <Card className="mini-gpt-panel" title="实验计划队列">
+            {plannedExperiments.length ? (
+              <div className="mini-gpt-plan-list">
+                {plannedExperiments.map(item => (
+                  <section key={item.id}>
+                    <div>
+                      <strong>{item.title}</strong>
+                      {item.sourceRun && <Tag>{item.sourceRun}</Tag>}
+                    </div>
+                    <Text type="secondary">{item.reason}</Text>
+                    <p>{item.action}</p>
+                    <Button size="small" onClick={() => handleRemovePlan(item.id)}>
+                      完成/移除
+                    </Button>
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <Empty description="从下一步建议加入计划" />
+            )}
           </Card>
 
           {!run ? (
