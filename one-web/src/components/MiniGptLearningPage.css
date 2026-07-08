@@ -481,6 +481,44 @@
   line-height: 1.5;
 }
 
+.mini-gpt-code-map {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.mini-gpt-code-card {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 8px;
+  background: var(--mini-gpt-code-bg);
+}
+
+.mini-gpt-code-card span {
+  color: var(--mini-gpt-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mini-gpt-code-card code {
+  overflow: hidden;
+  color: var(--mini-gpt-text);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mini-gpt-code-card p {
+  margin: 0;
+  color: var(--mini-gpt-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .mini-gpt-chart {
   height: 340px;
 }
@@ -755,6 +793,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .mini-gpt-code-map {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .mini-gpt-summary-band {
     display: grid;
   }
@@ -784,6 +826,7 @@
   .mini-gpt-advanced-form,
   .mini-gpt-recipe-grid,
   .mini-gpt-shape-grid,
+  .mini-gpt-code-map,
   .mini-gpt-tokenizer-metrics,
   .mini-gpt-status-panel dl,
   .mini-gpt-config-list {

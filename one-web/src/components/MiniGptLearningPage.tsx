@@ -367,6 +367,51 @@ const tensorShapeRows = (
   ];
 };
 
+const codeReferenceRows = [
+  {
+    key: 'tokenizer',
+    concept: 'Tokenizer',
+    symbol: 'CharTokenizer',
+    note: '字符与 token id 互转'
+  },
+  {
+    key: 'batch',
+    concept: 'Batch',
+    symbol: 'get_batch',
+    note: '构造 x/y next-token 样本'
+  },
+  {
+    key: 'attention',
+    concept: 'Causal Attention',
+    symbol: 'CausalSelfAttention',
+    note: 'mask、Q/K/V 和注意力权重'
+  },
+  {
+    key: 'block',
+    concept: 'Transformer Block',
+    symbol: 'Block',
+    note: 'attention、MLP、残差和 layer norm'
+  },
+  {
+    key: 'model',
+    concept: 'Model',
+    symbol: 'MiniGPT',
+    note: 'embedding、blocks、logits、loss'
+  },
+  {
+    key: 'train',
+    concept: 'Train',
+    symbol: 'train',
+    note: 'AdamW、eval、checkpoint 和日志'
+  },
+  {
+    key: 'generate',
+    concept: 'Generate',
+    symbol: 'generate',
+    note: 'temperature、top-k 和采样'
+  }
+];
+
 type LearningMilestoneStatus = 'done' | 'active' | 'todo';
 
 const learningMilestones = (
@@ -1001,6 +1046,16 @@ const MiniGptLearningPage = () => {
                 <section className="mini-gpt-shape-card" key={row.key}>
                   <span>{row.label}</span>
                   <strong>{row.shape}</strong>
+                  <p>{row.note}</p>
+                </section>
+              ))}
+            </div>
+
+            <div className="mini-gpt-code-map">
+              {codeReferenceRows.map(row => (
+                <section className="mini-gpt-code-card" key={row.key}>
+                  <span>{row.concept}</span>
+                  <code>{row.symbol}</code>
                   <p>{row.note}</p>
                 </section>
               ))}
