@@ -51,6 +51,15 @@ interface GovernanceDomain {
   icon: ReactNode;
 }
 
+interface GovernanceAnomaly {
+  key: string;
+  title: string;
+  status: Exclude<GovernanceStatus, 'PASS'>;
+  count: number;
+  detail: string;
+  path: string;
+}
+
 const statusColor = (status?: string) => {
   if (status === 'PASS') return 'green';
   if (status === 'WARNING' || status === 'MANUAL') return 'gold';
@@ -235,6 +244,97 @@ const LotteryGovernancePage = () => {
     ];
   }, [attributionRollup, audits, operations, portfolios, preference, recommendationRollup, reminders, ticketPacks, workbench]);
 
+  const anomalyItems = useMemo<GovernanceAnomaly[]>(() => {
+    const highRiskLimit = preference?.governanceSimulatorHighRiskLimit ?? 2;
+    const ticketPackExposureThreshold = preference?.governanceTicketPackBudgetExposurePercent ?? 90;
+    const staleApprovalHours = preference?.governanceStaleApprovalHours ?? 24;
+
+    const highRiskSimulations = latestEvents(audits, 'LOTTERY_SIMULATION_RUN')
+      .filter(event => event.filters?.riskLevel === 'HIGH');
+    const pendingPacks = ticketPacks.filter(pack => pack.approvalState !== 'APPROVED' && pack.status !== 'SAVED');
+    const stalePacks = pendingPacks.filter(pack => ageHours(pack.updatedAt || pack.createdAt) > staleApprovalHours);
+    const overBudgetPacks = ticketPacks.filter(pack => {
+      const usage = Math.max(pack.budgetPrecheck?.weeklyUsagePercent || 0, pack.budgetPrecheck?.monthlyUsagePercent || 0);
+      return usage >= ticketPackExposureThreshold || pack.budgetPrecheck?.status === 'OVER';
+    });
+    const healthWarnings = (operations?.contributors || []).filter(item => item.status && item.status !== 'PASS');
+    const attributionWarnings = attributionWarningRows(attributionRollup);
+    const recommendationOpenGap = Math.max(0, (recommendationRollup?.activeCount || 0) - (recommendationRollup?.appliedCount || 0));
+    const releaseWarnings = (workbench?.releaseCheckSummary?.checks || []).filter(item => item.status && item.status !== 'PASS');
+    const items: GovernanceAnomaly[] = [];
+
+    if (healthWarnings.length) {
+      items.push({
+        key: 'operations-health',
+        title: '运营健康待复核',
+        status: healthWarnings.some(item => item.status === 'FAILED') ? 'FAILED' : 'WARNING',
+        count: healthWarnings.length,
+        detail: healthWarnings.map(item => item.label || item.key).filter(Boolean).slice(0, 3).join('、') || '运营健康贡献项异常',
+        path: healthWarnings.find(item => item.path)?.path || '/lottery/workbench'
+      });
+    }
+
+    if (highRiskSimulations.length) {
+      items.push({
+        key: 'simulation-risk',
+        title: '沙盘高风险模拟',
+        status: highRiskSimulations.length > highRiskLimit ? 'FAILED' : 'WARNING',
+        count: highRiskSimulations.length,
+        detail: `高风险上限 ${highRiskLimit} 次，需复核参数和回填结果`,
+        path: '/lottery/simulator'
+      });
+    }
+
+    if (stalePacks.length || overBudgetPacks.length) {
+      items.push({
+        key: 'ticket-pack-exposure',
+        title: '票包审批或预算暴露',
+        status: 'WARNING',
+        count: stalePacks.length + overBudgetPacks.length,
+        detail: `滞留 ${stalePacks.length} 个，预算预警 ${overBudgetPacks.length} 个`,
+        path: '/lottery/ticket-packs'
+      });
+    }
+
+    if (attributionWarnings.length) {
+      items.push({
+        key: 'attribution-drift',
+        title: '归因证据漂移',
+        status: 'WARNING',
+        count: attributionWarnings.length,
+        detail: attributionWarnings.map(item => item.label || item.key || item.dimension).filter(Boolean).slice(0, 3).join('、') || '归因质量需要复核',
+        path: '/lottery/outcomes'
+      });
+    }
+
+    if ((recommendationRollup?.staleCount || 0) || recommendationOpenGap) {
+      items.push({
+        key: 'recommendation-stale',
+        title: '推荐跟进滞留',
+        status: 'WARNING',
+        count: (recommendationRollup?.staleCount || 0) + recommendationOpenGap,
+        detail: `${recommendationRollup?.staleCount || 0} 条过期，${recommendationOpenGap} 条未闭环`,
+        path: '/lottery/recommendations'
+      });
+    }
+
+    if (releaseWarnings.length) {
+      items.push({
+        key: 'release-readiness',
+        title: '发布检查未通过',
+        status: releaseWarnings.some(item => item.status === 'FAILED') ? 'FAILED' : 'WARNING',
+        count: releaseWarnings.length,
+        detail: releaseWarnings.map(item => item.label || item.key).filter(Boolean).slice(0, 3).join('、') || '发布检查需要补证据',
+        path: '/lottery/exports'
+      });
+    }
+
+    return items.sort((left, right) => {
+      const weight = (status: GovernanceAnomaly['status']) => status === 'FAILED' ? 0 : status === 'WARNING' ? 1 : 2;
+      return weight(left.status) - weight(right.status) || right.count - left.count;
+    });
+  }, [attributionRollup, audits, operations, preference, recommendationRollup, ticketPacks, workbench]);
+
   const overallScore = domains.length ? Math.round(domains.reduce((sum, item) => sum + item.score, 0) / domains.length) : 0;
   const warningCount = domains.filter(item => item.status !== 'PASS').length;
 
@@ -287,6 +387,19 @@ const LotteryGovernancePage = () => {
         </section>
 
         <section className="lottery-governance-release-grid">
+          <Card className="life-panel-card lottery-clean-panel" title="异常观察">
+            <div className="lottery-governance-anomaly-list">
+              {anomalyItems.length ? anomalyItems.map(item => (
+                <button key={item.key} type="button" onClick={() => navigate(item.path)}>
+                  <span>
+                    <strong><WarningOutlined /> {item.title}</strong>
+                    <small>{item.detail}</small>
+                  </span>
+                  <Tag color={statusColor(item.status)}>{item.count} 条</Tag>
+                </button>
+              )) : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无异常观察" />}
+            </div>
+          </Card>
           <Card className="life-panel-card lottery-clean-panel" title="发布检查">
             {workbench?.releaseCheckSummary?.checks?.length ? workbench.releaseCheckSummary.checks.map(check => (
               <button key={check.key} type="button" onClick={() => navigate(check.path || '/lottery/exports')}>

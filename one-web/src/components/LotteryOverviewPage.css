@@ -3235,7 +3235,8 @@
 }
 
 .lottery-governance-release-grid button,
-.lottery-governance-audit-list button {
+.lottery-governance-audit-list button,
+.lottery-governance-anomaly-list button {
   display: flex;
   width: 100%;
   align-items: center;
@@ -3254,9 +3255,32 @@
   display: grid;
 }
 
+.lottery-governance-anomaly-list {
+  display: grid;
+  gap: 2px;
+}
+
 .lottery-governance-audit-list button {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.lottery-governance-anomaly-list button {
+  align-items: flex-start;
+}
+
+.lottery-governance-anomaly-list span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.lottery-governance-anomaly-list strong {
+  color: var(--app-text);
+}
+
+.lottery-governance-anomaly-list .anticon {
+  color: #ff9500;
 }
 
 .lottery-governance-audit-list small {
@@ -3264,8 +3288,14 @@
 }
 
 .lottery-governance-release-grid button:hover,
-.lottery-governance-audit-list button:hover {
+.lottery-governance-audit-list button:hover,
+.lottery-governance-anomaly-list button:hover,
+.lottery-governance-anomaly-list button:hover strong {
   color: var(--module-accent, #0071e3);
+}
+
+.lottery-governance-anomaly-list small {
+  color: var(--app-text-muted);
 }
 
 .lottery-governance-page .ant-empty-description {

@@ -853,6 +853,29 @@ Goal: make the lottery module easier to use as a long-running research archive, 
 - [x] Connect archive and narrative views to export evidence. Month-end review now links to `/lottery/exports?preset=long-term-research`, and export evidence packs include `长期研究证据`.
 - [x] Review mobile/dark-mode behavior for archive-heavy states. Reused existing evidence-pack and report-preset responsive grids, with smoke guards for the new export labels.
 
+## Iteration 31: Anomaly Watch And Evidence Drift
+
+Goal: make governance review catch operational drift earlier using existing health, attribution, recommendation, ticket-pack, simulator, and release evidence.
+
+### Wave 31A: Governance Anomaly Watch
+
+- [x] Add a governance anomaly watch surface. `/lottery/governance` now shows `异常观察` with rows for operations health, simulator risk, ticket-pack exposure, attribution drift, stale recommendations, and release-readiness blockers.
+- [x] Keep the first slice frontend-derived from existing APIs. Reused the governance page's existing operations, attribution, recommendation, ticket-pack, audit, and workbench calls without adding a backend contract.
+- [x] Route each anomaly to its specialist resolution page. Rows navigate to workbench, simulator, ticket packs, outcomes, recommendations, or exports based on the source.
+- [x] Add route smoke coverage for anomaly labels and empty state. Smoke fixture now checks `anomalyItems`, `异常观察`, and `暂无异常观察`.
+
+### Wave 31B: Drift Trend Evidence
+
+- [ ] Add compact trend context for repeated anomaly types across recent audit and rollup data.
+- [ ] Prefer existing audit/export/recommendation/attribution sources before adding new persistence.
+- [ ] Keep trend copy descriptive, not predictive.
+
+### Wave 31C: Review Handoffs
+
+- [ ] Connect recurring anomaly categories to workbench and month-end review handoffs.
+- [ ] Add export evidence labels for anomaly review when a durable report preset is justified.
+- [ ] Review mobile and dark-mode behavior after anomaly surfaces expand.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

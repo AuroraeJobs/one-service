@@ -90,35 +90,37 @@ Success signals:
 
 ## Candidate Iterations
 
-### Iteration 26: Release History And Evidence Archive
+Completed in the previous planning block: Iterations 26-30 covered release history, workbench issue focus, attribution rollups, recommendation lifecycle analytics, and research archive/month-end intelligence.
 
-- Store generated release evidence snapshots by date or commit.
-- Add a small release-history index in docs or app export surfaces.
-- Preserve browser-QA blocker notes next to release evidence.
+### Iteration 31: Anomaly Watch And Evidence Drift
 
-### Iteration 27: Workbench Issue Focus 2.0
+- Add a governance anomaly watch that joins operations health, simulator risk, ticket-pack exposure, attribution drift, stale recommendations, and release blockers.
+- Add compact trend context for repeated anomaly categories.
+- Connect recurring anomalies to workbench and month-end review handoffs.
 
-- Show current issue, next issue, pending tickets, pending prize checks, stale recommendations, and release blockers in one issue strip.
-- Add direct handoffs to mobile command, governance, ticket packs, and exports.
-- Keep all state derived from existing backend workbench and operations contracts where possible.
+### Iteration 32: Provider Reliability Trends
 
-### Iteration 28: Strategy Outcome Attribution 2.0
+- Summarize provider freshness, probe outcomes, sync skips, failures, and recovery intervals over time.
+- Add failure-category trend rows to sync and governance surfaces.
+- Keep provider diagnosis descriptive and bounded to stored operational evidence.
 
-- Add aggregated outcome trails for portfolios, simulator proposals, recommendations, ticket packs, and saved decisions.
-- Add source/rule/recommendation trend tables with evidence quality labels.
-- Connect attribution summaries to research, governance, and month-end review.
+### Iteration 33: Review Automation Runbook
 
-### Iteration 29: Recommendation Lifecycle Analytics
+- Turn daily, draw-cycle, month-end, and release-review steps into explicit runbook cards.
+- Track manual acknowledgement and generated evidence without starting hidden prediction work.
+- Add smoke coverage for runbook labels and disabled/blocked states.
 
-- Track lifecycle transitions over time and expose active/watch/paused/retired counts.
-- Add result-after-action summaries for promoted or retired recommendations.
-- Add stale recommendation cleanup flows with conservative copy.
+### Iteration 34: Research Archive Search 2.0
 
-### Iteration 30: Research Archive And Month-End Intelligence
+- Add stronger filters by issue, month, rule, portfolio, source, lifecycle state, and evidence quality.
+- Connect archive results to recommendation, outcome, ticket-pack, and export views.
+- Keep large historical views paged and archive-first rather than recomputing heavy analysis in the browser.
 
-- Add searchable archive views across issues, months, strategies, outcomes, and release evidence.
-- Add month-end narrative summaries backed by ledger, tickets, outcomes, notes, and exports.
-- Add export presets for long-term retrospectives.
+### Iteration 35: Long-Horizon Quality Retrospective
+
+- Generate six-month and yearly quality retrospectives from durable ledger, attribution, recommendation, release, and provider evidence.
+- Highlight what changed since the previous review.
+- Add export presets only after the on-screen retrospective has stable evidence groups.
 
 ## Risk Register
 

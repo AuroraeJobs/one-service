@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 30 Wave 30C long-term retrospective export smoke",
+  "target": "Iteration 31 Wave 31A anomaly watch smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -103,6 +103,19 @@
         "推荐跟进",
         "recommendationRollup",
         "近30条"
+      ]
+    },
+    {
+      "scope": "governance anomaly watch",
+      "file": "src/components/LotteryGovernancePage.tsx",
+      "includes": [
+        "interface GovernanceAnomaly",
+        "const anomalyItems",
+        "异常观察",
+        "暂无异常观察",
+        "运营健康待复核",
+        "推荐跟进滞留",
+        "归因证据漂移"
       ]
     },
     {
@@ -570,12 +583,13 @@
         "lotteryTicketPackApi.ticketPacks",
         "lotteryExportApi.auditEvents"
       ],
-      "emptyStates": ["暂无发布检查", "暂无治理证据"],
+      "emptyStates": ["暂无异常观察", "暂无发布检查", "暂无治理证据"],
       "errorStates": ["读取彩票治理看板失败"],
       "fixtureData": {
         "governance": {
           "score": 88,
           "domains": ["portfolio", "simulator", "ticket-pack", "reminders", "attribution", "recommendation", "evidence", "release"],
+          "anomalyDomains": ["operations-health", "simulation-risk", "ticket-pack-exposure", "attribution-drift", "recommendation-stale", "release-readiness"],
           "thresholds": ["portfolioScore", "simulatorRisk", "ticketPackExposure", "evidenceFreshness", "staleApproval"]
         }
       }
