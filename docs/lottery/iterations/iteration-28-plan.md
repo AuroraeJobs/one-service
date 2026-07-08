@@ -17,9 +17,10 @@ Make `/lottery/outcomes` a closed-loop attribution hub that explains how portfol
 
 ## Wave 28B: Aggregated Attribution Rollups
 
-- Add backend rollups by issue, portfolio, rule, source, recommendation lifecycle, simulator risk, and ticket-pack execution state.
-- Add result windows for latest issue, recent 10 issues, month-to-date, and all tracked outcomes.
+- Add backend rollups by issue, portfolio, rule, source, recommendation lifecycle, simulator risk, and ticket-pack execution state. Shipped as `GET /lottery/outcomes/rollup`.
+- Add result windows for latest issue, recent 10 issues, month-to-date, and all tracked outcomes. Backend accepts `latest`, `recent10`, `month-to-date`, and `all`.
 - Keep rollups bounded and paged where historical rows can grow.
+- Add frontend consumption after the shared API client can be edited without mixing unrelated local changes.
 
 ## Wave 28C: Review And Export Connections
 

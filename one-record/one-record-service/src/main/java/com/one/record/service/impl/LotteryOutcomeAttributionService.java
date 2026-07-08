@@ -4,6 +4,7 @@ import com.one.common.exception.NotFoundException;
 import com.one.record.lottery.LotteryDecisionOutcomeItem;
 import com.one.record.lottery.LotteryDecisionOutcomeSummary;
 import com.one.record.lottery.LotteryOutcomeAttribution;
+import com.one.record.lottery.LotteryOutcomeAttributionRollup;
 import com.one.record.lottery.LotteryPrizeResult;
 import com.one.record.lottery.LotteryStrategyPortfolioSummary;
 import com.one.record.model.LotteryAuditEvent;
@@ -62,6 +63,47 @@ public class LotteryOutcomeAttributionService implements ILotteryOutcomeAttribut
                 .limit(safeLimit)
                 .map(this::issue)
                 .toList();
+    }
+
+    @Override
+    public LotteryOutcomeAttributionRollup rollup(String window, Integer limit) {
+        String safeWindow = normalizeWindow(window);
+        int safeLimit = rollupLimit(safeWindow, limit);
+        List<LotteryOutcomeAttribution> outcomes = recent(safeLimit);
+        BigDecimal totalCost = sum(outcomes.stream().map(LotteryOutcomeAttribution::getTotalCost).toList());
+        BigDecimal totalPrize = sum(outcomes.stream().map(LotteryOutcomeAttribution::getTotalPrize).toList());
+        BigDecimal netResult = totalPrize.subtract(totalCost).setScale(2, RoundingMode.HALF_UP);
+        Map<String, Integer> calibrationDistribution = new LinkedHashMap<>();
+        Map<String, RollupAccumulator> rows = new LinkedHashMap<>();
+        for (LotteryOutcomeAttribution outcome : outcomes) {
+            increment(calibrationDistribution, outcome.getCalibrationState());
+            addIssueRow(rows, outcome);
+            addPortfolioRows(rows, outcome);
+            addRuleRows(rows, outcome);
+            addTicketPackRows(rows, outcome);
+            addSimulatorRows(rows, outcome);
+            addRecommendationRows(rows, outcome);
+        }
+        return LotteryOutcomeAttributionRollup.builder()
+                .window(safeWindow)
+                .requestedLimit(safeLimit)
+                .issueCount(outcomes.size())
+                .ticketCount(outcomes.stream().mapToInt(item -> safeInt(item.getTicketCount())).sum())
+                .checkedTicketCount(outcomes.stream().mapToInt(item -> safeInt(item.getCheckedTicketCount())).sum())
+                .winningTicketCount(outcomes.stream().mapToInt(item -> safeInt(item.getWinningTicketCount())).sum())
+                .totalCost(totalCost)
+                .totalPrize(totalPrize)
+                .netResult(netResult)
+                .roiPercent(roiPercent(netResult, totalCost))
+                .calibrationDistribution(calibrationDistribution)
+                .rows(rows.values().stream()
+                        .map(RollupAccumulator::toRow)
+                        .sorted(Comparator.comparing(LotteryOutcomeAttributionRollup.RollupRow::getDimension)
+                                .thenComparing(LotteryOutcomeAttributionRollup.RollupRow::getSampleCount, Comparator.reverseOrder())
+                                .thenComparing(LotteryOutcomeAttributionRollup.RollupRow::getLabel, Comparator.nullsLast(String::compareTo)))
+                        .toList())
+                .generatedAt(System.currentTimeMillis())
+                .build();
     }
 
     @Override
@@ -229,6 +271,79 @@ public class LotteryOutcomeAttributionService implements ILotteryOutcomeAttribut
                 .build());
     }
 
+    private void addIssueRow(Map<String, RollupAccumulator> rows, LotteryOutcomeAttribution outcome) {
+        String issue = value(outcome.getIssue());
+        row(rows, "issue", issue, issue + " 期", "/lottery/outcomes?issue=" + issue)
+                .sample(1)
+                .issue(issue)
+                .net(outcome.getNetResult())
+                .state(outcome.getCalibrationState())
+                .warn("WATCH_RISK".equals(outcome.getCalibrationState()) || "RECALIBRATE".equals(outcome.getCalibrationState()));
+    }
+
+    private void addPortfolioRows(Map<String, RollupAccumulator> rows, LotteryOutcomeAttribution outcome) {
+        for (LotteryOutcomeAttribution.PortfolioContribution portfolio : nullSafe(outcome.getPortfolioContributions())) {
+            row(rows, "portfolio", value(firstText(portfolio.getPortfolioId(), portfolio.getName())), value(firstText(portfolio.getName(), portfolio.getPortfolioId())), "/lottery/strategy-portfolios")
+                    .sample(safeInt(portfolio.getLinkedDecisionCount()) > 0 ? safeInt(portfolio.getLinkedDecisionCount()) : 1)
+                    .issue(outcome.getIssue())
+                    .score(portfolio.getHealthScore() == null ? null : BigDecimal.valueOf(portfolio.getHealthScore()))
+                    .state(portfolio.getContributionState())
+                    .warn(safeInt(portfolio.getWarningCount()));
+        }
+    }
+
+    private void addRuleRows(Map<String, RollupAccumulator> rows, LotteryOutcomeAttribution outcome) {
+        for (LotteryOutcomeAttribution.DecisionContribution decision : nullSafe(outcome.getDecisionContributions())) {
+            row(rows, "rule", value(firstText(decision.getRuleName(), decision.getTitle(), decision.getDecisionSetId())), value(firstText(decision.getRuleName(), decision.getTitle(), decision.getDecisionSetId())), "/lottery/predictions/decision")
+                    .sample(Math.max(1, safeInt(decision.getWinningCandidateCount())))
+                    .issue(outcome.getIssue())
+                    .net(decision.getNetResult())
+                    .score(decision.getRoiPercent())
+                    .state(decision.getContributionState())
+                    .warn("WATCH".equals(decision.getContributionState()));
+        }
+    }
+
+    private void addTicketPackRows(Map<String, RollupAccumulator> rows, LotteryOutcomeAttribution outcome) {
+        for (LotteryOutcomeAttribution.TicketPackExecution pack : nullSafe(outcome.getTicketPackExecutions())) {
+            boolean hasGap = safeInt(pack.getSavedTicketCount()) < safeInt(pack.getItemCount());
+            row(rows, "source", value(firstText(pack.getPackId(), pack.getTitle(), pack.getExecutionState())), value(firstText(pack.getTitle(), pack.getPackId(), pack.getExecutionState())), "/lottery/ticket-packs")
+                    .sample(Math.max(1, safeInt(pack.getItemCount())))
+                    .issue(outcome.getIssue())
+                    .net(pack.getProposedCost() == null ? null : pack.getProposedCost().negate())
+                    .state(pack.getExecutionState())
+                    .warn(hasGap);
+            row(rows, "ticket-pack-execution", value(pack.getExecutionState()), value(pack.getExecutionState()), "/lottery/ticket-packs")
+                    .sample(1)
+                    .issue(outcome.getIssue())
+                    .state(pack.getExecutionState())
+                    .warn(hasGap);
+        }
+    }
+
+    private void addSimulatorRows(Map<String, RollupAccumulator> rows, LotteryOutcomeAttribution outcome) {
+        for (LotteryOutcomeAttribution.SimulationDrift drift : nullSafe(outcome.getSimulationDrifts())) {
+            row(rows, "simulator-risk", value(drift.getRiskLevel()), value(drift.getRiskLevel()), "/lottery/simulator")
+                    .sample(Math.max(1, safeInt(drift.getCandidateCount())))
+                    .issue(outcome.getIssue())
+                    .state(drift.getDriftState())
+                    .warn("WATCH_RISK".equals(drift.getDriftState()) || "RECALIBRATE".equals(drift.getDriftState()));
+        }
+    }
+
+    private void addRecommendationRows(Map<String, RollupAccumulator> rows, LotteryOutcomeAttribution outcome) {
+        for (LotteryOutcomeAttribution.TimelineItem item : nullSafe(outcome.getTimeline())) {
+            if (!isRecommendationTimeline(item)) {
+                continue;
+            }
+            row(rows, "recommendation-lifecycle", value(item.getState()), value(item.getState()), StringUtils.hasText(item.getPath()) ? item.getPath() : "/lottery/recommendations")
+                    .sample(1)
+                    .issue(outcome.getIssue())
+                    .state(item.getState())
+                    .warn("WATCH".equals(item.getState()) || "PAUSE".equals(item.getState()) || "RETIRE".equals(item.getState()));
+        }
+    }
+
     private BigDecimal sum(List<BigDecimal> values) {
         return values.stream().filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2, RoundingMode.HALF_UP);
     }
@@ -276,6 +391,54 @@ public class LotteryOutcomeAttributionService implements ILotteryOutcomeAttribut
         distribution.put(value(key), distribution.getOrDefault(value(key), 0) + 1);
     }
 
+    private RollupAccumulator row(Map<String, RollupAccumulator> rows, String dimension, String key, String label, String path) {
+        String safeKey = value(key);
+        return rows.computeIfAbsent(dimension + ":" + safeKey, ignored -> new RollupAccumulator(dimension, safeKey, value(label), path));
+    }
+
+    private String normalizeWindow(String window) {
+        String safeWindow = StringUtils.hasText(window) ? window.trim().toLowerCase() : "recent10";
+        return switch (safeWindow) {
+            case "latest", "recent10", "month-to-date", "all" -> safeWindow;
+            default -> "recent10";
+        };
+    }
+
+    private int rollupLimit(String window, Integer limit) {
+        if ("latest".equals(window)) {
+            return 1;
+        }
+        if ("recent10".equals(window)) {
+            return 10;
+        }
+        if ("month-to-date".equals(window)) {
+            return 31;
+        }
+        return limit == null || limit <= 0 ? 50 : Math.min(50, limit);
+    }
+
+    private boolean isRecommendationTimeline(LotteryOutcomeAttribution.TimelineItem item) {
+        String text = (value(item.getType()) + " " + value(item.getTitle())).toUpperCase();
+        return text.contains("RECOMMEND") || text.contains("推荐");
+    }
+
+    private <T> List<T> nullSafe(List<T> values) {
+        return values == null ? List.of() : values;
+    }
+
+    private String firstText(String... values) {
+        for (String item : values) {
+            if (StringUtils.hasText(item)) {
+                return item;
+            }
+        }
+        return null;
+    }
+
+    private int safeInt(Integer value) {
+        return value == null ? 0 : value;
+    }
+
     private Integer parseInt(String value) {
         try {
             return StringUtils.hasText(value) ? Integer.parseInt(value) : null;
@@ -286,5 +449,116 @@ public class LotteryOutcomeAttributionService implements ILotteryOutcomeAttribut
 
     private String value(String value) {
         return StringUtils.hasText(value) ? value : "-";
+    }
+
+    private static class RollupAccumulator {
+
+        private final String dimension;
+
+        private final String key;
+
+        private final String label;
+
+        private final String path;
+
+        private final LinkedHashSet<String> issues = new LinkedHashSet<>();
+
+        private int sampleCount;
+
+        private int warningCount;
+
+        private BigDecimal netResult = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+
+        private BigDecimal scoreTotal = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+
+        private int scoreCount;
+
+        private String state;
+
+        RollupAccumulator(String dimension, String key, String label, String path) {
+            this.dimension = dimension;
+            this.key = key;
+            this.label = label;
+            this.path = path;
+        }
+
+        RollupAccumulator issue(String issue) {
+            if (StringUtils.hasText(issue)) {
+                issues.add(issue);
+            }
+            return this;
+        }
+
+        RollupAccumulator sample(int value) {
+            sampleCount += Math.max(0, value);
+            return this;
+        }
+
+        RollupAccumulator warn(boolean value) {
+            if (value) {
+                warningCount++;
+            }
+            return this;
+        }
+
+        RollupAccumulator warn(int value) {
+            warningCount += Math.max(0, value);
+            return this;
+        }
+
+        RollupAccumulator net(BigDecimal value) {
+            if (value != null) {
+                netResult = netResult.add(value).setScale(2, RoundingMode.HALF_UP);
+            }
+            return this;
+        }
+
+        RollupAccumulator score(BigDecimal value) {
+            if (value != null) {
+                scoreTotal = scoreTotal.add(value).setScale(2, RoundingMode.HALF_UP);
+                scoreCount++;
+            }
+            return this;
+        }
+
+        RollupAccumulator state(String value) {
+            if (StringUtils.hasText(value)) {
+                state = value;
+            }
+            return this;
+        }
+
+        LotteryOutcomeAttributionRollup.RollupRow toRow() {
+            BigDecimal averageScore = scoreCount == 0 ? null : scoreTotal.divide(BigDecimal.valueOf(scoreCount), 2, RoundingMode.HALF_UP);
+            return LotteryOutcomeAttributionRollup.RollupRow.builder()
+                    .dimension(dimension)
+                    .key(key)
+                    .label(label)
+                    .issueCount(issues.size())
+                    .sampleCount(sampleCount)
+                    .warningCount(warningCount)
+                    .netResult(netResult)
+                    .roiPercent(averageScore)
+                    .state(state)
+                    .evidenceQuality(quality(sampleCount, warningCount, averageScore))
+                    .path(path)
+                    .build();
+        }
+
+        private String quality(int samples, int warnings, BigDecimal score) {
+            if (samples <= 0) {
+                return "UNDER_TESTED";
+            }
+            if (warnings > 0) {
+                return "WATCH";
+            }
+            if (score != null && score.compareTo(BigDecimal.ZERO) < 0) {
+                return "NEGATIVE";
+            }
+            if (samples >= 3 || (score != null && score.compareTo(new BigDecimal("80")) >= 0)) {
+                return "STABLE";
+            }
+            return "OBSERVE";
+        }
     }
 }

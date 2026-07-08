@@ -795,9 +795,9 @@ Goal: make `/lottery/outcomes` explain the closed loop from strategy evidence to
 
 ### Wave 28B: Aggregated Attribution Rollups
 
-- [ ] Add backend rollups by issue, portfolio, rule, source, recommendation lifecycle, simulator risk, and ticket-pack execution state.
+- [x] Add backend rollups by issue, portfolio, rule, source, recommendation lifecycle, simulator risk, and ticket-pack execution state. Added `GET /lottery/outcomes/rollup`.
 - [ ] Add bounded frontend rollup filters for latest issue, recent 10 issues, month-to-date, and all tracked outcomes.
-- [ ] Add tests for rollup aggregation and empty-state semantics.
+- [x] Add tests for rollup aggregation and empty-state semantics. Covered service aggregation and controller delegation for the rollup endpoint.
 
 ### Wave 28C: Review And Export Connections
 

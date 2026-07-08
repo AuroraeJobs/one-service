@@ -535,8 +535,11 @@ Outcome attribution endpoints:
 
 ```text
 GET /lottery/outcomes
+GET /lottery/outcomes/rollup?window=recent10&limit=50
 GET /lottery/outcomes/{issue}
 ```
+
+`GET /lottery/outcomes/rollup` aggregates the same issue-level read models into bounded windows: `latest`, `recent10`, `month-to-date`, or `all` with a server-side limit cap. The response includes issue count, ticket/checked/winning counts, cost/prize/net/ROI totals, calibration distribution, and dimension rows for issue, portfolio, rule, ticket-pack source, ticket-pack execution state, simulator risk, and recommendation lifecycle. Each row carries sample count, warning count, optional net/ROI evidence, state, evidence-quality label, and the owning UI path.
 
 The backend service writes `LOTTERY_OUTCOME_ATTRIBUTION` audit events when attribution is generated. The frontend route `/lottery/outcomes` shows recent issues, contribution cards, drift rows, prize distribution, and timeline handoffs into tickets, ticket packs, simulator, strategy portfolios, and decision board. Ticket settlement, month-end review, governance, and strategy portfolio pages link back to this route so post-draw review can start from the user's current workflow.
 

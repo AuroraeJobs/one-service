@@ -1,6 +1,7 @@
 package com.one.record.web;
 
 import com.one.record.lottery.LotteryOutcomeAttribution;
+import com.one.record.lottery.LotteryOutcomeAttributionRollup;
 import com.one.record.service.ILotteryOutcomeAttributionService;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MockMvc;
@@ -23,10 +24,25 @@ class LotteryOutcomeAttributionControllerTest {
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new LotteryOutcomeAttributionController(service)).build();
         when(service.recent(2)).thenReturn(List.of(attribution("2026068")));
         when(service.issue("2026068")).thenReturn(attribution("2026068"));
+        when(service.rollup("recent10", 20)).thenReturn(LotteryOutcomeAttributionRollup.builder()
+                .window("recent10")
+                .issueCount(2)
+                .rows(List.of(LotteryOutcomeAttributionRollup.RollupRow.builder()
+                        .dimension("rule")
+                        .label("稳态规则")
+                        .evidenceQuality("STABLE")
+                        .build()))
+                .build());
 
         mockMvc.perform(get("/lottery/outcomes").param("limit", "2"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].issue").value("2026068"));
+
+        mockMvc.perform(get("/lottery/outcomes/rollup").param("window", "recent10").param("limit", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.window").value("recent10"))
+                .andExpect(jsonPath("$.rows[0].dimension").value("rule"))
+                .andExpect(jsonPath("$.rows[0].evidenceQuality").value("STABLE"));
 
         mockMvc.perform(get("/lottery/outcomes/2026068"))
                 .andExpect(status().isOk())

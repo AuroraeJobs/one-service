@@ -134,4 +134,99 @@ class LotteryOutcomeAttributionServiceTest {
 
         assertThat(service.recent(5)).hasSize(1);
     }
+
+    @Test
+    void rollupAggregatesOutcomeDimensionsAcrossIssues() {
+        when(ticketRepository.findByUserIdOrderByPeriodDescCreatedAtDesc("default")).thenReturn(List.of(
+                LotteryTicket.builder().issue("2026069").build(),
+                LotteryTicket.builder().issue("2026068").build()
+        ));
+        when(ticketPackRepository.findByUserIdOrderByUpdatedAtDesc("default", PageRequest.of(0, 100))).thenReturn(List.of(
+                LotteryTicketPack.builder()
+                        .id("pack-1")
+                        .title("执行票包")
+                        .targetIssue("2026068")
+                        .status("SAVED")
+                        .savedTicketIds(List.of("ticket-1"))
+                        .budgetPrecheck(LotteryTicketBudgetPrecheckResult.builder().proposedCost(new BigDecimal("2.00")).build())
+                        .build()
+        ));
+        when(ticketRepository.findByUserIdAndIssueOrderByCreatedAtDesc("default", "2026069")).thenReturn(List.of(LotteryTicket.builder()
+                .id("ticket-2")
+                .issue("2026069")
+                .cost(new BigDecimal("2.00"))
+                .prizeResult(LotteryPrizeResult.builder().winning(false).prizeAmount(0L).build())
+                .build()));
+        when(ticketRepository.findByUserIdAndIssueOrderByCreatedAtDesc("default", "2026068")).thenReturn(List.of(LotteryTicket.builder()
+                .id("ticket-1")
+                .issue("2026068")
+                .cost(new BigDecimal("2.00"))
+                .prizeResult(LotteryPrizeResult.builder().winning(true).prizeAmount(10L).build())
+                .build()));
+        when(decisionSetService.outcomeSummary(false, 100)).thenReturn(LotteryDecisionOutcomeSummary.builder()
+                .items(List.of(
+                        LotteryDecisionOutcomeItem.builder()
+                                .decisionSetId("decision-1")
+                                .title("决策")
+                                .ruleName("稳态规则")
+                                .targetIssue("2026068")
+                                .winningCandidateCount(1)
+                                .netResult(new BigDecimal("8.00"))
+                                .roiPercent(new BigDecimal("400.00"))
+                                .status("ACTIVE")
+                                .build(),
+                        LotteryDecisionOutcomeItem.builder()
+                                .decisionSetId("decision-2")
+                                .title("决策")
+                                .ruleName("稳态规则")
+                                .targetIssue("2026069")
+                                .winningCandidateCount(0)
+                                .netResult(new BigDecimal("-2.00"))
+                                .roiPercent(new BigDecimal("-100.00"))
+                                .status("ACTIVE")
+                                .build()
+                ))
+                .build());
+        when(portfolioService.portfolios(false, 1, 50)).thenReturn(com.one.record.lottery.LotteryPageResponse.<LotteryStrategyPortfolioSummary>builder()
+                .items(List.of(LotteryStrategyPortfolioSummary.builder()
+                        .portfolio(LotteryStrategyPortfolio.builder().id("portfolio-1").name("稳态组合").build())
+                        .healthScore(85)
+                        .warningCount(0)
+                        .evidence(List.of(LotteryStrategyPortfolioSummary.EvidenceSummary.builder()
+                                .evidenceType("DECISION")
+                                .sourceId("decision-1")
+                                .build()))
+                        .build()))
+                .build());
+        LinkedHashMap<String, String> filters = new LinkedHashMap<>();
+        filters.put("targetIssue", "2026068");
+        filters.put("riskLevel", "MEDIUM");
+        filters.put("candidateCount", "2");
+        when(auditEventRepository.findByOrderByGeneratedAtDesc(PageRequest.of(0, 120))).thenReturn(List.of(LotteryAuditEvent.builder()
+                .id("audit-1")
+                .eventType("LOTTERY_SIMULATION_RUN")
+                .filters(filters)
+                .generatedAt(150L)
+                .build()));
+
+        var result = service.rollup("recent10", null);
+
+        assertThat(result.getWindow()).isEqualTo("recent10");
+        assertThat(result.getIssueCount()).isEqualTo(2);
+        assertThat(result.getNetResult()).isEqualByComparingTo("6.00");
+        assertThat(result.getCalibrationDistribution()).containsEntry("PROMOTE_SIGNAL", 1).containsEntry("RECALIBRATE", 1);
+        assertThat(result.getRows()).anySatisfy(row -> {
+            assertThat(row.getDimension()).isEqualTo("rule");
+            assertThat(row.getLabel()).isEqualTo("稳态规则");
+            assertThat(row.getIssueCount()).isEqualTo(2);
+        });
+        assertThat(result.getRows()).anySatisfy(row -> {
+            assertThat(row.getDimension()).isEqualTo("ticket-pack-execution");
+            assertThat(row.getState()).isEqualTo("EXECUTED");
+        });
+        assertThat(result.getRows()).anySatisfy(row -> {
+            assertThat(row.getDimension()).isEqualTo("simulator-risk");
+            assertThat(row.getKey()).isEqualTo("MEDIUM");
+        });
+    }
 }
