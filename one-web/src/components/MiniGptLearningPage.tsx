@@ -415,6 +415,7 @@ type NextExperimentAction = {
   title: string;
   reason: string;
   action: string;
+  formValues?: Partial<MiniGptTrainingRequest>;
 };
 
 type PlannedExperiment = NextExperimentAction & {
@@ -456,6 +457,14 @@ const savePlannedExperiments = (items: PlannedExperiment[]) => {
   }
 };
 
+const formatPlannedValues = (values?: Partial<MiniGptTrainingRequest>) => {
+  if (!values) return '';
+  return Object.entries(values)
+    .filter(([, value]) => value !== undefined && value !== '')
+    .map(([key, value]) => `${key}=${value}`)
+    .join(' / ');
+};
+
 const nextExperimentActions = (
   run: MiniGptRunRecord | undefined,
   logs: MiniGptTrainingLogRecord[],
@@ -468,7 +477,14 @@ const nextExperimentActions = (
         key: 'start-baseline',
         title: '先跑 Tiny 基线',
         reason: '还没有 Mongo run，先确认训练、日志、checkpoint、生成链路都能闭环。',
-        action: '使用 Tiny 基线模板，训练 200 step。'
+        action: '使用 Tiny 基线模板，训练 200 step。',
+        formValues: {
+          preset: 'tiny',
+          maxSteps: 200,
+          valRatio: 0.1,
+          samplePrompt: '语言模型',
+          sampleTokens: 80
+        }
       }
     ];
   }
@@ -495,7 +511,10 @@ const nextExperimentActions = (
       key: 'enable-validation',
       title: '恢复验证集',
       reason: '没有验证集时只能看到训练文本上的拟合，难以判断泛化。',
-      action: '增加语料或调低 valRatio 后重训，直到 eval loss 可稳定记录。'
+      action: '增加语料或调低 valRatio 后重训，直到 eval loss 可稳定记录。',
+      formValues: {
+        valRatio: 0.1
+      }
     });
   }
 
@@ -504,7 +523,10 @@ const nextExperimentActions = (
       key: 'gap-control',
       title: '控制泛化差距',
       reason: `当前 loss gap=${formatLoss(run.lossGap)}，训练和验证表现已经分开。`,
-      action: '优先增加数据；若数据暂时不变，就降低 max steps 或模型尺寸做对照。'
+      action: '优先增加数据；若数据暂时不变，就降低 max steps 或模型尺寸做对照。',
+      formValues: {
+        maxSteps: Math.max(80, Math.floor((run.maxSteps || 200) * 0.7))
+      }
     });
   }
 
@@ -513,7 +535,11 @@ const nextExperimentActions = (
       key: 'regularize',
       title: '做保守训练对照',
       reason: 'eval loss 明显高于 train loss，模型可能更会背训练文本。',
-      action: '复制当前实验，只把 learning rate 降低一档或减少训练步数。'
+      action: '复制当前实验，只把 learning rate 降低一档或减少训练步数。',
+      formValues: {
+        learningRate: Number(((run.learningRate || 0.0003) * 0.5).toPrecision(3)),
+        maxSteps: Math.max(80, Math.floor((run.maxSteps || 200) * 0.8))
+      }
     });
   }
 
@@ -529,7 +555,11 @@ const nextExperimentActions = (
       key: 'reduce-repeat',
       title: '降低重复输出',
       reason: `连续重复比例约 ${(repeatRatio * 100).toFixed(1)}%，生成可能在局部循环。`,
-      action: '先用更低 temperature/top-k 对比；若仍重复，再补语料或减少训练步数。'
+      action: '先用更低 temperature/top-k 对比；若仍重复，再补语料或减少训练步数。',
+      formValues: {
+        temperature: 0.7,
+        topK: 20
+      }
     });
   }
 
@@ -546,7 +576,10 @@ const nextExperimentActions = (
     key: 'one-variable',
     title: '下一轮只改一个变量',
     reason: '单变量对照最容易看清 learning rate、block size、模型容量或采样参数的影响。',
-    action: '从低学习率、长上下文、Small 对照里选一个，和当前 run 做曲线对比。'
+    action: '从低学习率、长上下文、Small 对照里选一个，和当前 run 做曲线对比。',
+    formValues: {
+      learningRate: 0.0001
+    }
   });
 
   return actions.slice(0, 5);
@@ -991,6 +1024,20 @@ const MiniGptLearningPage = () => {
   const handleClearPlans = () => {
     setPlannedExperiments([]);
     message.success('实验计划已清空');
+  };
+
+  const handleApplyPlanToForm = (item: PlannedExperiment) => {
+    if (!item.formValues) {
+      message.info('这条计划没有可自动应用的训练参数');
+      return;
+    }
+    const mergedValues = {
+      ...form.getFieldsValue(),
+      ...item.formValues
+    };
+    form.setFieldsValue(mergedValues);
+    loadCorpusInsight(mergedValues);
+    message.success(`已应用计划到训练表单：${item.title}`);
   };
 
   const loadComparisonLogs = useCallback(async (runNames: string[]) => {
@@ -1597,9 +1644,17 @@ const MiniGptLearningPage = () => {
                     </div>
                     <Text type="secondary">{item.reason}</Text>
                     <p>{item.action}</p>
-                    <Button size="small" onClick={() => handleRemovePlan(item.id)}>
-                      完成/移除
-                    </Button>
+                    {item.formValues && (
+                      <code>{formatPlannedValues(item.formValues)}</code>
+                    )}
+                    <Space wrap>
+                      <Button size="small" onClick={() => handleApplyPlanToForm(item)} disabled={!item.formValues}>
+                        应用到表单
+                      </Button>
+                      <Button size="small" onClick={() => handleRemovePlan(item.id)}>
+                        完成/移除
+                      </Button>
+                    </Space>
                   </section>
                 ))}
               </div>

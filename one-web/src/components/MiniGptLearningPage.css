@@ -838,6 +838,17 @@
   line-height: 1.55;
 }
 
+.mini-gpt-plan-list code {
+  display: block;
+  padding: 8px 10px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 8px;
+  color: var(--mini-gpt-text);
+  background: var(--mini-gpt-code-bg);
+  white-space: normal;
+  word-break: break-word;
+}
+
 .mini-gpt-plan-list .ant-btn {
   justify-self: start;
 }
