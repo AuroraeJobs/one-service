@@ -137,6 +137,33 @@ const buildComparisonChartOption = (comparisonLogs: Record<string, MiniGptTraini
   };
 };
 
+const comparisonSummaryItems = (comparisonLogs: Record<string, MiniGptTrainingLogRecord[]>) => (
+  Object.entries(comparisonLogs).map(([runName, logs]) => {
+    const latestLog = logs[logs.length - 1];
+    const trainLoss = latestLog?.trainLoss;
+    const evalLoss = latestLog?.evalLoss;
+    const gap = Number.isFinite(evalLoss) && Number.isFinite(trainLoss)
+      ? Number(evalLoss) - Number(trainLoss)
+      : undefined;
+    const verdict = !latestLog
+      ? '暂无日志'
+      : Number.isFinite(gap) && Math.abs(Number(gap)) > 0.5
+        ? 'gap 偏大'
+        : Number.isFinite(evalLoss)
+          ? '验证可比'
+          : '仅训练 loss';
+
+    return {
+      runName,
+      step: formatInteger(latestLog?.step),
+      trainLoss: formatLoss(trainLoss),
+      evalLoss: formatLoss(evalLoss),
+      gap: formatLoss(gap),
+      verdict
+    };
+  })
+);
+
 type MiniGptTrainingRecipe = {
   key: string;
   title: string;
@@ -1502,6 +1529,7 @@ const MiniGptLearningPage = () => {
   const architectureStages = useMemo(() => modelStages(run, corpusInsight), [corpusInsight, run]);
   const shapeRows = useMemo(() => tensorShapeRows(run, corpusInsight, encodedSample), [corpusInsight, encodedSample, run]);
   const comparisonChartOption = useMemo(() => buildComparisonChartOption(comparisonLogs), [comparisonLogs]);
+  const comparisonSummary = useMemo(() => comparisonSummaryItems(comparisonLogs), [comparisonLogs]);
   const milestones = useMemo(() => learningMilestones(run, logs, corpusInsight), [corpusInsight, logs, run]);
   const reviewQuestionItems = useMemo(() => reviewQuestions(run, logs, generationResult), [generationResult, logs, run]);
   const generationDiagnosticItems = useMemo(
@@ -2212,7 +2240,27 @@ const MiniGptLearningPage = () => {
                     />
                   </div>
                   {Object.keys(comparisonLogs).length ? (
-                    <ReactECharts option={comparisonChartOption} className="mini-gpt-comparison-chart" notMerge />
+                    <>
+                      <ReactECharts option={comparisonChartOption} className="mini-gpt-comparison-chart" notMerge />
+                      <section className="mini-gpt-comparison-summary">
+                        {comparisonSummary.map(item => (
+                          <div key={item.runName}>
+                            <span>{item.runName}</span>
+                            <strong>{item.verdict}</strong>
+                            <dl>
+                              <dt>step</dt>
+                              <dd>{item.step}</dd>
+                              <dt>train</dt>
+                              <dd>{item.trainLoss}</dd>
+                              <dt>eval</dt>
+                              <dd>{item.evalLoss}</dd>
+                              <dt>gap</dt>
+                              <dd>{item.gap}</dd>
+                            </dl>
+                          </div>
+                        ))}
+                      </section>
+                    </>
                   ) : (
                     <Empty description="暂无可对比的训练日志" />
                   )}

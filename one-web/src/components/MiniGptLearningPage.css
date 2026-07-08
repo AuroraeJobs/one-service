@@ -1054,6 +1054,53 @@
   padding-top: 4px;
 }
 
+.mini-gpt-comparison-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.mini-gpt-comparison-summary div {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 8px;
+  background: var(--mini-gpt-panel-bg);
+}
+
+.mini-gpt-comparison-summary span {
+  color: var(--mini-gpt-muted);
+  font-size: 12px;
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.mini-gpt-comparison-summary strong {
+  color: var(--mini-gpt-text);
+  font-size: 14px;
+}
+
+.mini-gpt-comparison-summary dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 10px;
+  margin: 0;
+}
+
+.mini-gpt-comparison-summary dt {
+  color: var(--mini-gpt-muted);
+  font-size: 12px;
+}
+
+.mini-gpt-comparison-summary dd {
+  margin: 0;
+  color: var(--mini-gpt-text);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
 .mini-gpt-note-form {
   display: grid;
   gap: 2px;
