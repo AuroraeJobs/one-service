@@ -20,6 +20,14 @@ import './LotteryOverviewPage.css';
 
 const syncOperationViewKeys = ['status', 'provider', 'syncPage', 'syncPageSize', 'probePage', 'probePageSize'];
 
+interface ProviderReliabilityTrend {
+  key: string;
+  label: string;
+  value: string;
+  detail: string;
+  status: string;
+}
+
 const formatTime = (value?: number) => {
   if (!value) {
     return '-';
@@ -76,6 +84,16 @@ const failureCategoryLabel = (category?: string) => {
 const diagnosticColor = (record: { networkBlockSuspected?: boolean; failureCategory?: string }) => (
   record.networkBlockSuspected || record.failureCategory === 'PROXY_OR_NETWORK_BLOCK' ? 'red' : 'gold'
 );
+
+const formatDurationHours = (start?: number, end?: number) => {
+  if (!start || !end || end < start) {
+    return '-';
+  }
+  const hours = Math.max(0, Math.round((end - start) / (60 * 60 * 1000)));
+  return hours >= 24 ? `${Math.round(hours / 24)} 天` : `${hours} 小时`;
+};
+
+const percentText = (count: number, total: number) => total ? `${Math.round((count / total) * 100)}%` : '-';
 
 const LotterySyncOperationsPage = () => {
   const navigate = useNavigate();
@@ -331,6 +349,58 @@ const LotterySyncOperationsPage = () => {
   const latestIssueRange = summary?.latestStartIssue || summary?.latestEndIssue
     ? `${summary?.latestStartIssue || '-'} 到 ${summary?.latestEndIssue || '-'}`
     : '-';
+  const providerReliabilityTrends = useMemo<ProviderReliabilityTrend[]>(() => {
+    const failedLogs = logs.filter(item => item.status === 'FAILED');
+    const skippedLogs = logs.filter(item => item.status === 'SKIPPED');
+    const networkBlockedLogs = [...logs, ...probeLogs].filter(item => item.networkBlockSuspected || item.failureCategory === 'PROXY_OR_NETWORK_BLOCK');
+    const failureCategoryCounts = [...logs, ...probeLogs].reduce<Record<string, number>>((acc, item) => {
+      const category = item.failureCategory;
+      if (category) {
+        acc[category] = (acc[category] || 0) + 1;
+      }
+      return acc;
+    }, {});
+    const topFailureCategory = Object.entries(failureCategoryCounts).sort((left, right) => right[1] - left[1])[0];
+    const successfulProbeCount = probeLogs.filter(item => item.success || item.status === 'AVAILABLE').length;
+    const probeTotal = probeLogs.length;
+    return [
+      {
+        key: 'sync-stability',
+        label: '同步稳定性',
+        value: `${summary?.successRate ?? 0}%`,
+        detail: `成功 ${summary?.successCount ?? 0}，失败 ${summary?.failedCount ?? 0}，跳过 ${summary?.skippedCount ?? 0}`,
+        status: (summary?.failedCount || failedLogs.length) ? 'WARNING' : 'PASS'
+      },
+      {
+        key: 'recovery-window',
+        label: '最近恢复间隔',
+        value: formatDurationHours(summary?.lastFailureAt, summary?.lastSuccessAt),
+        detail: `最近失败 ${formatTime(summary?.lastFailureAt)}，最近成功 ${formatTime(summary?.lastSuccessAt)}`,
+        status: summary?.lastFailureAt && (!summary?.lastSuccessAt || summary.lastSuccessAt < summary.lastFailureAt) ? 'FAILED' : summary?.lastFailureAt ? 'WARNING' : 'PASS'
+      },
+      {
+        key: 'probe-success',
+        label: 'Provider 探测成功率',
+        value: percentText(successfulProbeCount, probeTotal),
+        detail: `${probeProvider || '-'} · 成功 ${successfulProbeCount}/${probeTotal}`,
+        status: probeTotal && successfulProbeCount < probeTotal ? 'WARNING' : probeTotal ? 'PASS' : 'MANUAL'
+      },
+      {
+        key: 'failure-category',
+        label: '主要故障分类',
+        value: topFailureCategory ? failureCategoryLabel(topFailureCategory[0]) : '暂无',
+        detail: topFailureCategory ? `${topFailureCategory[1]} 条诊断记录，当前页跳过 ${skippedLogs.length} 条` : '当前页暂无故障分类',
+        status: topFailureCategory ? 'WARNING' : 'PASS'
+      },
+      {
+        key: 'network-block',
+        label: '网络阻断信号',
+        value: `${networkBlockedLogs.length} 条`,
+        detail: `最近请求 ${summary?.latestRequestMode || '-'}${summary?.latestHttpStatus ? ` / HTTP ${summary.latestHttpStatus}` : ''}`,
+        status: networkBlockedLogs.length || summary?.latestNetworkBlockSuspected ? 'FAILED' : 'PASS'
+      }
+    ];
+  }, [logs, probeLogs, probeProvider, summary]);
   const qualityIssueCount = (qualityReport?.missingIssueCount || 0)
     + (qualityReport?.duplicateIssueCount || 0)
     + (qualityReport?.malformedRecordCount || 0)
@@ -448,6 +518,23 @@ const LotterySyncOperationsPage = () => {
           <span>请求：{summary?.latestRequestMode || '-'}{summary?.latestHttpStatus ? ` / HTTP ${summary.latestHttpStatus}` : ''}</span>
           <span>最近消息：{summary?.latestMessage || '-'}</span>
         </Space>
+      </Card>
+
+      <Card
+        className="life-panel-card lottery-clean-panel"
+        title="Provider 可靠性趋势"
+        extra={<Tag color={summary?.latestNetworkBlockSuspected ? 'red' : 'blue'}>{summary?.latestProvider || probeProvider || '-'}</Tag>}
+      >
+        <div className="lottery-provider-reliability-grid">
+          {providerReliabilityTrends.map(item => (
+            <button key={item.key} type="button" onClick={() => item.key === 'network-block' ? updateQuery({ status: 'FAILED' }) : undefined}>
+              <Tag color={statusColor(item.status)}>{lotteryStatusLabel(item.status)}</Tag>
+              <strong>{item.label}</strong>
+              <span>{item.value}</span>
+              <small>{item.detail}</small>
+            </button>
+          ))}
+        </div>
       </Card>
 
       <Card

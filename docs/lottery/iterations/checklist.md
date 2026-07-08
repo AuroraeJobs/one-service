@@ -876,6 +876,28 @@ Goal: make governance review catch operational drift earlier using existing heal
 - [x] Add export evidence labels for anomaly review when a durable report preset is justified. Export maintenance now offers `异常复盘包` and `异常观察证据`.
 - [x] Review mobile and dark-mode behavior after anomaly surfaces expand. Reused existing workbench, month-end list, and evidence-pack responsive/dark-mode styles with smoke guards for the new labels.
 
+## Iteration 32: Provider Reliability Trends
+
+Goal: make provider freshness, sync outcomes, probe diagnostics, and recovery signals easier to review without relying on live provider access during frontend QA.
+
+### Wave 32A: Sync Page Reliability Trend
+
+- [x] Add a provider reliability trend section to `/lottery/sync`. The sync page now shows `Provider 可靠性趋势`.
+- [x] Derive reliability rows from existing sync summary, paged sync logs, and paged provider probe logs. Rows cover sync stability, recovery interval, probe success rate, failure category, and network-block signals.
+- [x] Add route smoke coverage for sync reliability labels. Smoke now includes `/lottery/sync` and checks the new reliability trend strings.
+
+### Wave 32B: Governance Reliability Handoff
+
+- [ ] Add provider reliability trend rows to governance anomaly review.
+- [ ] Keep failure-category copy descriptive and route users back to `/lottery/sync`.
+- [ ] Avoid adding new backend contracts unless existing summaries cannot express recovery state.
+
+### Wave 32C: Reliability Evidence Export
+
+- [ ] Add provider reliability evidence labels to export maintenance.
+- [ ] Connect sync/probe log report presets to governance and release-readiness checks.
+- [ ] Keep smoke independent from live provider networking.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

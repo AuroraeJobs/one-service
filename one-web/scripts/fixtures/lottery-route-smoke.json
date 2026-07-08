@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 31 Wave 31C anomaly review handoff smoke",
+  "target": "Iteration 32 Wave 32A provider reliability trend smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -174,6 +174,20 @@
         "V29推荐跟进",
         "推荐生命周期 rollup 已接入推荐页、治理看板、月末复盘和导出证据包"
       ]
+    },
+    {
+      "scope": "provider reliability trends",
+      "file": "src/components/LotterySyncOperationsPage.tsx",
+      "includes": [
+        "interface ProviderReliabilityTrend",
+        "providerReliabilityTrends",
+        "Provider 可靠性趋势",
+        "同步稳定性",
+        "最近恢复间隔",
+        "Provider 探测成功率",
+        "主要故障分类",
+        "网络阻断信号"
+      ]
     }
   ],
   "routes": [
@@ -220,6 +234,27 @@
             "dueCount": 1,
             "groups": ["开奖准备", "同步", "决策复盘"]
           }
+        }
+      }
+    },
+    {
+      "route": "/lottery/sync",
+      "label": "同步",
+      "component": "LotterySyncOperationsPage",
+      "componentFile": "src/components/LotterySyncOperationsPage.tsx",
+      "mockApis": [
+        "lotteryRecordApi.syncLogsPage",
+        "lotteryRecordApi.syncSummary",
+        "lotteryProviderApi.probeLogsPage",
+        "lotteryProviderApi.probe",
+        "lotteryDataQualityApi.report"
+      ],
+      "emptyStates": ["Provider 可靠性趋势", "同步稳定性", "最近恢复间隔", "Provider 探测成功率", "主要故障分类", "网络阻断信号"],
+      "errorStates": ["读取彩票同步日志失败", "执行彩票同步失败", "探测彩票 Provider 失败"],
+      "fixtureData": {
+        "providerReliability": {
+          "signals": ["sync success rate", "last failure recovery", "probe success rate", "failure category", "network block"],
+          "source": ["syncSummary", "syncLogsPage", "probeLogsPage"]
         }
       }
     },

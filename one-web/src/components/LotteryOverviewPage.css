@@ -148,6 +148,43 @@
   font-size: 22px;
 }
 
+.lottery-provider-reliability-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.lottery-provider-reliability-grid button {
+  display: grid;
+  gap: 8px;
+  min-height: 132px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface-elevated);
+  color: var(--app-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lottery-provider-reliability-grid button:hover {
+  border-color: color-mix(in srgb, var(--module-accent, #ff3b30) 42%, var(--app-border));
+}
+
+.lottery-provider-reliability-grid strong,
+.lottery-provider-reliability-grid span {
+  color: var(--app-text);
+}
+
+.lottery-provider-reliability-grid span {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.lottery-provider-reliability-grid small {
+  color: var(--app-text-muted);
+}
+
 .lottery-history-summary-item div {
   display: grid;
   gap: 2px;
@@ -7582,6 +7619,7 @@ button.lottery-latest-vs-card:hover {
   .lottery-ticket-decision-drilldown,
   .lottery-report-section-grid,
   .lottery-v15-evidence-grid,
+  .lottery-provider-reliability-grid,
   .lottery-maintenance-group-grid,
   .lottery-workbench-action-groups,
   .lottery-month-end-metric-grid,
