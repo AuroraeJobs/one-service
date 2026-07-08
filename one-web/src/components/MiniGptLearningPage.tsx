@@ -586,6 +586,16 @@ const buildSuggestedRunName = (run: MiniGptRunRecord | undefined, diffs: Experim
   return `${baseName}-${slugifyRunPart(diff.key)}-${slugifyRunPart(diff.to)}`.slice(0, 80);
 };
 
+const uniqueRunName = (baseName: string, runs: MiniGptRunRecord[]) => {
+  const existingNames = new Set(runs.map(item => item.runName).filter(Boolean));
+  if (!existingNames.has(baseName)) return baseName;
+  for (let suffix = 2; suffix < 100; suffix += 1) {
+    const candidate = `${baseName}-${suffix}`;
+    if (!existingNames.has(candidate)) return candidate;
+  }
+  return `${baseName}-${Date.now()}`;
+};
+
 const nextExperimentActions = (
   run: MiniGptRunRecord | undefined,
   logs: MiniGptTrainingLogRecord[],
@@ -1073,6 +1083,7 @@ const MiniGptLearningPage = () => {
   const [savingNotes, setSavingNotes] = useState(false);
   const [generating, setGenerating] = useState(false);
   const watchedTrainingValues = Form.useWatch([], form) as MiniGptTrainingRequest | undefined;
+  const watchedRunName = Form.useWatch('runName', form) as string | undefined;
 
   const loadDashboard = useCallback(async (runName?: string, quiet = false) => {
     if (!quiet) {
@@ -1189,7 +1200,7 @@ const MiniGptLearningPage = () => {
       message.info('请先收敛到一个变量，再生成实验名');
       return;
     }
-    const nextRunName = buildSuggestedRunName(run, variableDiffItems);
+    const nextRunName = uniqueRunName(buildSuggestedRunName(run, variableDiffItems), runs);
     form.setFieldsValue({
       ...form.getFieldsValue(),
       runName: nextRunName
@@ -1352,6 +1363,14 @@ const MiniGptLearningPage = () => {
   const suggestedRunName = useMemo(
     () => variableDiffItems.length === 1 ? buildSuggestedRunName(run, variableDiffItems) : '',
     [run, variableDiffItems]
+  );
+  const runNameExists = useMemo(
+    () => Boolean(watchedRunName && runs.some(item => item.runName === watchedRunName)),
+    [runs, watchedRunName]
+  );
+  const fallbackRunName = useMemo(
+    () => watchedRunName ? uniqueRunName(watchedRunName, runs) : uniqueRunName(suggestedRunName || 'minigpt-next', runs),
+    [runs, suggestedRunName, watchedRunName]
   );
   const experimentReport = useMemo(
     () => run ? buildExperimentReport(run, logs, generationResult, corpusInsight, plannedExperiments, variableDiffItems) : '',
@@ -1631,6 +1650,14 @@ const MiniGptLearningPage = () => {
               <p className={`mini-gpt-variable-guard ${variableGuardState.status}`}>{variableGuardState.detail}</p>
               {suggestedRunName && (
                 <p className="mini-gpt-run-name-suggestion">建议实验名：<code>{suggestedRunName}</code></p>
+              )}
+              {runNameExists && (
+                <div className="mini-gpt-run-name-conflict">
+                  <Text type="secondary">实验名已存在，建议改用 <code>{fallbackRunName}</code></Text>
+                  <Button size="small" onClick={() => form.setFieldsValue({ ...form.getFieldsValue(), runName: fallbackRunName })}>
+                    使用替代名
+                  </Button>
+                </div>
               )}
               {run && variableDiffItems.length > 1 && (
                 <Button size="small" onClick={handleKeepFirstVariableOnly}>

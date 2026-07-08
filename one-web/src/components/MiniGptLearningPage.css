@@ -356,6 +356,26 @@
   word-break: break-word;
 }
 
+.mini-gpt-run-name-conflict {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, #ff9500 44%, var(--mini-gpt-border));
+  border-radius: 8px;
+  background: color-mix(in srgb, #ff9500 8%, var(--mini-gpt-panel-bg));
+}
+
+.mini-gpt-run-name-conflict code {
+  padding: 3px 6px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 6px;
+  color: var(--mini-gpt-text);
+  background: var(--mini-gpt-code-bg);
+  word-break: break-word;
+}
+
 .mini-gpt-status-panel {
   display: grid;
   gap: 12px;
