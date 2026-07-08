@@ -25,6 +25,8 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -36,6 +38,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Component
@@ -66,6 +70,12 @@ public class MiniGptLearningService implements IMiniGptLearningService {
     private static final int MAX_GENERATION_TOKENS = 500;
 
     private static final long GENERATION_TIMEOUT_SECONDS = 60;
+
+    private static final Pattern TRAINING_LOSS_LINE = Pattern.compile(
+            "step=(\\d+)\\s+train_loss=([0-9.]+)\\s+eval_loss=([0-9.]+)"
+    );
+
+    private static final DateTimeFormatter DISPLAY_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final MiniGptRunRepository runRepository;
 
@@ -356,6 +366,7 @@ public class MiniGptLearningService implements IMiniGptLearningService {
                 throw new IllegalStateException("未找到 MiniGPT 训练脚本: " + scriptPath);
             }
 
+            initializeTrainingRun(runName, preset, maxSteps, request, startedAt);
             List<String> command = buildTrainingCommand(playgroundDir, request, runName, preset, maxSteps);
             ProcessBuilder builder = new ProcessBuilder(command);
             builder.directory(playgroundDir.toFile());
@@ -363,13 +374,14 @@ public class MiniGptLearningService implements IMiniGptLearningService {
             env.putIfAbsent("PYTHONUNBUFFERED", "1");
             Process process = builder.start();
             trainingProcess.set(process);
-            startLogReader(process.getInputStream(), false);
+            startLogReader(process.getInputStream(), false, runName, maxSteps, startedAt);
             startLogReader(process.getErrorStream(), true);
 
             int exitCode = process.waitFor();
             MiniGptTrainingStatus current = trainingStatus.get();
             boolean cancelled = current.isCancelled();
             boolean failed = exitCode != 0 && !cancelled;
+            updateTrainingRunCompletion(playgroundDir, runName, failed, cancelled, request);
             updateStatus(MiniGptTrainingStatus.builder()
                     .running(false)
                     .failed(failed)
@@ -522,6 +534,10 @@ public class MiniGptLearningService implements IMiniGptLearningService {
     }
 
     private void startLogReader(InputStream stream, boolean error) {
+        startLogReader(stream, error, null, 0, 0);
+    }
+
+    private void startLogReader(InputStream stream, boolean error, String runName, int maxSteps, long startedAt) {
         CompletableFuture.runAsync(() -> {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
                 String line;
@@ -530,12 +546,137 @@ public class MiniGptLearningService implements IMiniGptLearningService {
                         log.warn("[mini-gpt] {}", line);
                     } else {
                         log.info("[mini-gpt] {}", line);
+                        syncTrainingLossLine(runName, line, maxSteps, startedAt);
                     }
                 }
             } catch (IOException exception) {
                 log.debug("MiniGPT 训练日志读取结束", exception);
             }
         });
+    }
+
+    private void initializeTrainingRun(String runName,
+                                       String preset,
+                                       int maxSteps,
+                                       MiniGptTrainingRequest request,
+                                       long startedAt) {
+        long now = System.currentTimeMillis();
+        MiniGptRunRecord run = runRepository.findByRunName(runName).orElseGet(MiniGptRunRecord::new);
+        run.setRunName(runName);
+        run.setPreset(preset);
+        run.setStatus("RUNNING");
+        run.setStartedAt(formatDisplayTime(startedAt));
+        run.setFinishedAt(null);
+        run.setData(hasTextOrDefault(request.getData(), DEFAULT_DATA));
+        run.setCheckpoint(null);
+        run.setLogFile(Path.of("runs", runName, "train_log.csv").toString());
+        run.setMetadataFile(Path.of("runs", runName, "latest.json").toString());
+        run.setMaxSteps(maxSteps);
+        run.setBatchSize(request.getBatchSize());
+        run.setLearningRate(request.getLearningRate());
+        run.setValRatio(request.getValRatio());
+        run.setSamplePrompt(hasTextOrDefault(request.getSamplePrompt(), DEFAULT_SAMPLE_PROMPT));
+        run.setSampleTokens(request.getSampleTokens());
+        run.setFinalTrainLoss(null);
+        run.setFinalEvalLoss(null);
+        run.setLossGap(null);
+        run.setUpdatedAt(now);
+        if (run.getCreatedAt() == null) {
+            run.setCreatedAt(now);
+        }
+        run.setConfig(trainingConfig(request));
+        runRepository.save(run);
+    }
+
+    private void updateTrainingRunCompletion(Path playgroundDir,
+                                             String runName,
+                                             boolean failed,
+                                             boolean cancelled,
+                                             MiniGptTrainingRequest request) {
+        MiniGptRunRecord run = runRepository.findByRunName(runName).orElseGet(MiniGptRunRecord::new);
+        MiniGptTrainingLogRecord latestLog = logRepository.findFirstByRunNameOrderByStepDesc(runName).orElse(null);
+        run.setRunName(runName);
+        run.setStatus(cancelled ? "CANCELLED" : failed ? "FAILED" : "SUCCESS");
+        run.setFinishedAt(formatDisplayTime(System.currentTimeMillis()));
+        if (!failed && !cancelled) {
+            run.setCheckpoint(playgroundDir.resolve("runs").resolve(runName).resolve("checkpoints").resolve("mini_gpt.pt").toString());
+        }
+        if (latestLog != null) {
+            run.setFinalTrainLoss(latestLog.getTrainLoss());
+            run.setFinalEvalLoss(latestLog.getEvalLoss());
+            if (latestLog.getTrainLoss() != null && latestLog.getEvalLoss() != null) {
+                run.setLossGap(latestLog.getEvalLoss() - latestLog.getTrainLoss());
+            }
+        }
+        run.setUpdatedAt(System.currentTimeMillis());
+        if (run.getConfig() == null || run.getConfig().isEmpty()) {
+            run.setConfig(trainingConfig(request));
+        }
+        runRepository.save(run);
+    }
+
+    private void syncTrainingLossLine(String runName, String line, int maxSteps, long startedAt) {
+        if (!StringUtils.hasText(runName)) {
+            return;
+        }
+        Matcher matcher = TRAINING_LOSS_LINE.matcher(line);
+        if (!matcher.find()) {
+            return;
+        }
+
+        Integer step = Integer.parseInt(matcher.group(1));
+        Double trainLoss = Double.parseDouble(matcher.group(2));
+        Double evalLoss = Double.parseDouble(matcher.group(3));
+        long now = System.currentTimeMillis();
+        MiniGptTrainingLogRecord record = logRepository.findByRunNameAndStep(runName, step)
+                .orElseGet(MiniGptTrainingLogRecord::new);
+        record.setRunName(runName);
+        record.setStep(step);
+        record.setTrainLoss(trainLoss);
+        record.setEvalLoss(evalLoss);
+        record.setElapsedSeconds(startedAt > 0 ? (now - startedAt) / 1000.0 : null);
+        record.setUpdatedAt(now);
+        if (record.getCreatedAt() == null) {
+            record.setCreatedAt(now);
+        }
+        MiniGptTrainingLogRecord saved = logRepository.save(record);
+
+        MiniGptTrainingStatus current = trainingStatus.get();
+        if (runName.equals(current.getRunName())) {
+            updateStatus(MiniGptTrainingStatus.builder()
+                    .running(current.isRunning())
+                    .failed(current.isFailed())
+                    .cancelled(current.isCancelled())
+                    .exitCode(current.getExitCode())
+                    .percent(percent(step, maxSteps))
+                    .runName(runName)
+                    .preset(current.getPreset())
+                    .stage(current.getStage())
+                    .message("MiniGPT 训练中，已同步 loss 到 Mongo")
+                    .processedStep(step)
+                    .totalSteps(current.getTotalSteps())
+                    .run(current.getRun())
+                    .latestLog(saved)
+                    .startedAt(current.getStartedAt())
+                    .updatedAt(now)
+                    .build());
+        }
+    }
+
+    private Map<String, Object> trainingConfig(MiniGptTrainingRequest request) {
+        Map<String, Object> config = new LinkedHashMap<>();
+        config.put("blockSize", request.getBlockSize());
+        config.put("nEmbd", request.getNEmbd());
+        config.put("nHead", request.getNHead());
+        config.put("nLayer", request.getNLayer());
+        config.put("temperature", request.getTemperature());
+        config.put("topK", request.getTopK());
+        return config;
+    }
+
+    private static String formatDisplayTime(long millis) {
+        return LocalDateTime.ofInstant(java.time.Instant.ofEpochMilli(millis), java.time.ZoneId.systemDefault())
+                .format(DISPLAY_TIME_FORMATTER);
     }
 
     private static MiniGptTrainingStatus idleStatus() {

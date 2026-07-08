@@ -13,6 +13,8 @@ public interface MiniGptTrainingLogRepository extends MongoRepository<MiniGptTra
 
     List<MiniGptTrainingLogRecord> findByRunNameOrderByStepAsc(String runName, Pageable pageable);
 
+    Optional<MiniGptTrainingLogRecord> findByRunNameAndStep(String runName, Integer step);
+
     Optional<MiniGptTrainingLogRecord> findFirstByRunNameOrderByStepDesc(String runName);
 
     long countByRunName(String runName);
