@@ -272,6 +272,50 @@ const metricItems = (run?: MiniGptRunRecord, logs: MiniGptTrainingLogRecord[] = 
   ];
 };
 
+const lossDiagnostics = (run?: MiniGptRunRecord, logs: MiniGptTrainingLogRecord[] = []) => {
+  const firstLog = logs[0];
+  const latestLog = logs[logs.length - 1];
+  const firstLoss = firstLog?.evalLoss ?? firstLog?.trainLoss;
+  const latestEval = run?.finalEvalLoss ?? latestLog?.evalLoss;
+  const latestTrain = run?.finalTrainLoss ?? latestLog?.trainLoss;
+  const gap = run?.lossGap ?? (
+    Number.isFinite(latestEval) && Number.isFinite(latestTrain)
+      ? Number(latestEval) - Number(latestTrain)
+      : undefined
+  );
+  const improved = Number.isFinite(firstLoss) && Number.isFinite(latestEval)
+    ? Number(firstLoss) - Number(latestEval)
+    : undefined;
+
+  return [
+    {
+      key: 'trend',
+      title: '下降趋势',
+      status: Number.isFinite(improved) && Number(improved) > 0 ? 'PASS' : 'WATCH',
+      value: Number.isFinite(improved) ? formatLoss(improved) : '-',
+      detail: Number.isFinite(improved) && Number(improved) > 0
+        ? 'eval loss 比开头更低'
+        : '日志不足或下降不明显'
+    },
+    {
+      key: 'gap',
+      title: '泛化差距',
+      status: Number.isFinite(gap) && Math.abs(Number(gap)) <= 0.5 ? 'PASS' : 'WATCH',
+      value: formatLoss(gap),
+      detail: Number.isFinite(gap) && Math.abs(Number(gap)) <= 0.5
+        ? 'train/eval 暂时接近'
+        : '注意过拟合或验证集分布差异'
+    },
+    {
+      key: 'validation',
+      title: '验证集',
+      status: run?.validationEnabled ? 'PASS' : 'WATCH',
+      value: run?.validationEnabled ? 'on' : 'off',
+      detail: run?.validationEnabled ? '可以观察泛化' : '语料太短时可能关闭'
+    }
+  ];
+};
+
 const configEntries = (run?: MiniGptRunRecord): [string, string][] => {
   const config = run?.config || {};
   return [
@@ -306,6 +350,7 @@ const buildExperimentReport = (
   generationResult?: MiniGptGenerationResult
 ) => {
   const metrics = metricItems(run, logs);
+  const diagnostics = lossDiagnostics(run, logs);
   const sample = generationResult?.generatedText || latestSample(logs);
   const shapeRows = tensorShapeRows(run, undefined, []);
   const questions = reviewQuestions(run, logs, generationResult);
@@ -320,6 +365,9 @@ const buildExperimentReport = (
     '',
     '## 指标',
     ...metrics.map(item => `- ${item.label}: ${item.value}`),
+    '',
+    '## Loss 诊断',
+    ...diagnostics.map(item => `- ${item.title}: ${item.value} / ${item.detail}`),
     '',
     '## 配置',
     ...configEntries(run).map(([key, value]) => `- ${key}: ${value}`),
@@ -778,6 +826,7 @@ const MiniGptLearningPage = () => {
   const run = dashboard.latestRun;
   const sample = latestSample(logs);
   const chartOption = useMemo(() => buildChartOption(logs), [logs]);
+  const lossDiagnosticItems = useMemo(() => lossDiagnostics(run, logs), [logs, run]);
   const latestStatusLog = trainingStatus.latestLog;
   const trainingPercent = trainingStatus.running ? trainingStatus.percent ?? 1 : trainingStatus.failed ? 100 : trainingStatus.percent ?? 0;
   const encodedSample = useMemo(() => corpusInsight.encodedSample || [], [corpusInsight.encodedSample]);
@@ -1249,6 +1298,16 @@ const MiniGptLearningPage = () => {
                 <div className="mini-gpt-metric" key={item.label}>
                   <span>{item.label}</span>
                   <strong>{item.value}</strong>
+                </div>
+              ))}
+            </section>
+
+            <section className="mini-gpt-diagnostic-grid">
+              {lossDiagnosticItems.map(item => (
+                <div className={item.status === 'PASS' ? 'pass' : 'watch'} key={item.key}>
+                  <span>{item.title}</span>
+                  <strong>{item.value}</strong>
+                  <p>{item.detail}</p>
                 </div>
               ))}
             </section>

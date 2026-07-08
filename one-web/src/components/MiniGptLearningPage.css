@@ -113,6 +113,50 @@
   letter-spacing: 0;
 }
 
+.mini-gpt-diagnostic-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mini-gpt-diagnostic-grid div {
+  display: grid;
+  gap: 8px;
+  min-height: 104px;
+  padding: 14px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 8px;
+  background: var(--mini-gpt-panel-bg);
+}
+
+.mini-gpt-diagnostic-grid div.pass {
+  border-color: color-mix(in srgb, #34c759 42%, var(--mini-gpt-border));
+  background: color-mix(in srgb, #34c759 8%, var(--mini-gpt-panel-bg));
+}
+
+.mini-gpt-diagnostic-grid div.watch {
+  border-color: color-mix(in srgb, #ff9500 42%, var(--mini-gpt-border));
+  background: color-mix(in srgb, #ff9500 9%, var(--mini-gpt-panel-bg));
+}
+
+.mini-gpt-diagnostic-grid span {
+  color: var(--mini-gpt-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mini-gpt-diagnostic-grid strong {
+  color: var(--mini-gpt-text);
+  font-size: 20px;
+}
+
+.mini-gpt-diagnostic-grid p {
+  margin: 0;
+  color: var(--mini-gpt-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .mini-gpt-main-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
@@ -914,6 +958,10 @@
   .mini-gpt-metric-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .mini-gpt-diagnostic-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 620px) {
@@ -922,6 +970,7 @@
   }
 
   .mini-gpt-metric-grid,
+  .mini-gpt-diagnostic-grid,
   .mini-gpt-learning-grid,
   .mini-gpt-training-form,
   .mini-gpt-advanced-form,
