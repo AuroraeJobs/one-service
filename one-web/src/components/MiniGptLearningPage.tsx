@@ -430,6 +430,13 @@ type ExperimentVariableDiff = {
   to: string;
 };
 
+type LaunchChecklistItem = {
+  key: string;
+  label: string;
+  status: 'PASS' | 'WATCH' | 'TODO';
+  detail: string;
+};
+
 const MINI_GPT_PLAN_STORAGE_KEY = 'one-web:minigpt:planned-experiments';
 
 const isPlannedExperiment = (value: unknown): value is PlannedExperiment => {
@@ -577,6 +584,48 @@ const variableGuard = (run: MiniGptRunRecord | undefined, diffs: ExperimentVaria
     title: '多变量变更',
     detail: `当前同时改变 ${diffs.length} 个变量，结论可能难以归因。`
   };
+};
+
+const launchChecklist = (
+  run: MiniGptRunRecord | undefined,
+  corpusItems: ReturnType<typeof corpusDiagnostics>,
+  variableState: ReturnType<typeof variableGuard>,
+  hasRunNameConflict: boolean,
+  plannedExperiments: PlannedExperiment[]
+): LaunchChecklistItem[] => {
+  const corpusReady = corpusItems.find(item => item.key === 'scale')?.status === 'pass';
+  return [
+    {
+      key: 'corpus',
+      label: '语料',
+      status: corpusReady ? 'PASS' : 'WATCH',
+      detail: corpusReady ? '语料规模足够做小基线' : '语料较短，建议先补文本或降低预期'
+    },
+    {
+      key: 'variable',
+      label: '变量',
+      status: variableState.status === 'ready' || variableState.status === 'baseline' ? 'PASS' : variableState.status === 'multi' ? 'WATCH' : 'TODO',
+      detail: variableState.detail
+    },
+    {
+      key: 'run-name',
+      label: '实验名',
+      status: hasRunNameConflict ? 'WATCH' : 'PASS',
+      detail: hasRunNameConflict ? '实验名已存在，先使用替代名' : '实验名不会和已加载历史 run 冲突'
+    },
+    {
+      key: 'plan',
+      label: '计划',
+      status: plannedExperiments.length ? 'PASS' : 'WATCH',
+      detail: plannedExperiments.length ? `已有 ${plannedExperiments.length} 个待做实验` : '可从下一步建议加入计划'
+    },
+    {
+      key: 'review',
+      label: '复盘',
+      status: run?.hypothesis || run?.conclusion ? 'PASS' : run ? 'WATCH' : 'TODO',
+      detail: run ? '建议保留上一轮假设/结论，再启动下一轮' : '首轮实验完成后补复盘'
+    }
+  ];
 };
 
 const buildSuggestedRunName = (run: MiniGptRunRecord | undefined, diffs: ExperimentVariableDiff[]) => {
@@ -1372,6 +1421,10 @@ const MiniGptLearningPage = () => {
     () => watchedRunName ? uniqueRunName(watchedRunName, runs) : uniqueRunName(suggestedRunName || 'minigpt-next', runs),
     [runs, suggestedRunName, watchedRunName]
   );
+  const launchChecklistItems = useMemo(
+    () => launchChecklist(run, corpusDiagnosticItems, variableGuardState, runNameExists, plannedExperiments),
+    [corpusDiagnosticItems, plannedExperiments, run, runNameExists, variableGuardState]
+  );
   const experimentReport = useMemo(
     () => run ? buildExperimentReport(run, logs, generationResult, corpusInsight, plannedExperiments, variableDiffItems) : '',
     [corpusInsight, generationResult, logs, plannedExperiments, run, variableDiffItems]
@@ -1681,6 +1734,23 @@ const MiniGptLearningPage = () => {
               ) : (
                 <p>还没有历史实验，当前表单会作为第一个 Tiny 基线。</p>
               )}
+            </section>
+            <section className="mini-gpt-launch-checklist">
+              <div className="mini-gpt-variable-diff-head">
+                <Text type="secondary">训练启动检查</Text>
+                <Tag color={launchChecklistItems.every(item => item.status === 'PASS') ? 'green' : 'orange'}>
+                  {launchChecklistItems.filter(item => item.status === 'PASS').length} / {launchChecklistItems.length}
+                </Tag>
+              </div>
+              <div className="mini-gpt-launch-checklist-grid">
+                {launchChecklistItems.map(item => (
+                  <div className={item.status.toLowerCase()} key={item.key}>
+                    <span>{item.label}</span>
+                    <strong>{item.status}</strong>
+                    <p>{item.detail}</p>
+                  </div>
+                ))}
+              </div>
             </section>
           </Card>
 

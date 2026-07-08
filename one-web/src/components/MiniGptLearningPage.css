@@ -376,6 +376,65 @@
   word-break: break-word;
 }
 
+.mini-gpt-launch-checklist {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 8px;
+  background: var(--mini-gpt-panel-bg-soft);
+}
+
+.mini-gpt-launch-checklist-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.mini-gpt-launch-checklist-grid div {
+  display: grid;
+  gap: 6px;
+  min-height: 112px;
+  padding: 12px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 8px;
+  background: var(--mini-gpt-panel-bg);
+}
+
+.mini-gpt-launch-checklist-grid div.pass {
+  border-color: color-mix(in srgb, #34c759 40%, var(--mini-gpt-border));
+  background: color-mix(in srgb, #34c759 7%, var(--mini-gpt-panel-bg));
+}
+
+.mini-gpt-launch-checklist-grid div.watch {
+  border-color: color-mix(in srgb, #ff9500 42%, var(--mini-gpt-border));
+  background: color-mix(in srgb, #ff9500 8%, var(--mini-gpt-panel-bg));
+}
+
+.mini-gpt-launch-checklist-grid div.todo {
+  border-color: color-mix(in srgb, #8c8c8c 38%, var(--mini-gpt-border));
+  background: color-mix(in srgb, #8c8c8c 6%, var(--mini-gpt-panel-bg));
+}
+
+.mini-gpt-launch-checklist-grid span {
+  color: var(--mini-gpt-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mini-gpt-launch-checklist-grid strong {
+  color: var(--mini-gpt-text);
+  font-size: 16px;
+}
+
+.mini-gpt-launch-checklist-grid p {
+  margin: 0;
+  color: var(--mini-gpt-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .mini-gpt-status-panel {
   display: grid;
   gap: 12px;
@@ -1233,6 +1292,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .mini-gpt-launch-checklist-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .mini-gpt-training-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1297,6 +1360,7 @@
   .mini-gpt-generation-diagnostics,
   .mini-gpt-next-actions,
   .mini-gpt-variable-diff-grid,
+  .mini-gpt-launch-checklist-grid,
   .mini-gpt-tokenizer-metrics,
   .mini-gpt-status-panel dl,
   .mini-gpt-config-list {
