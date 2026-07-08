@@ -1248,6 +1248,62 @@ export const miniGptApi = {
   }
 };
 
+export interface OpenAiTrainingLifecycleStage {
+  key: string;
+  icon?: string;
+  title?: string;
+  detail?: string;
+}
+
+export interface OpenAiTrainingEntityCard {
+  key: string;
+  label?: string;
+  value?: string;
+  accent?: string;
+}
+
+export interface OpenAiTrainingJob {
+  key: string;
+  jobId?: string;
+  baseModel?: string;
+  dataset?: string;
+  status?: string;
+  trainLoss?: number;
+  validLoss?: number;
+  checkpoint?: string;
+}
+
+export interface OpenAiTrainingEvalRun {
+  key: string;
+  model?: string;
+  evalSet?: string;
+  passRate?: number;
+  score?: number;
+  decision?: string;
+}
+
+export interface OpenAiTrainingNextAction {
+  key: string;
+  icon?: string;
+  title?: string;
+  detail?: string;
+}
+
+export interface OpenAiTrainingManagementDashboard {
+  lifecycleStages?: OpenAiTrainingLifecycleStage[];
+  entities?: OpenAiTrainingEntityCard[];
+  jobs?: OpenAiTrainingJob[];
+  evalRuns?: OpenAiTrainingEvalRun[];
+  nextActions?: OpenAiTrainingNextAction[];
+  generatedAt?: number;
+}
+
+export const openAiTrainingApi = {
+  dashboard: (): Promise<OpenAiTrainingManagementDashboard> => {
+    return apiClient.get('/ai/training/dashboard');
+  }
+};
+
 export interface WechatArticleRequest {
   markdown?: string;
   postPath?: string;
