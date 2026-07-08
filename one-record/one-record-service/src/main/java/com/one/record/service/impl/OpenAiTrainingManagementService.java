@@ -1,13 +1,26 @@
 package com.one.record.service.impl;
 
 import com.one.record.ai.OpenAiTrainingManagementDashboard;
+import com.one.record.ai.OpenAiTrainingReportRequest;
+import com.one.record.model.OpenAiTrainingReportRecord;
+import com.one.record.repository.OpenAiTrainingReportRepository;
 import com.one.record.service.IOpenAiTrainingManagementService;
+import lombok.AllArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
 @Component
+@AllArgsConstructor
 public class OpenAiTrainingManagementService implements IOpenAiTrainingManagementService {
+
+    private static final int DEFAULT_REPORT_LIMIT = 5;
+    private static final int MAX_REPORT_LIMIT = 30;
+
+    private final OpenAiTrainingReportRepository reportRepository;
 
     @Override
     public OpenAiTrainingManagementDashboard dashboard() {
@@ -27,6 +40,38 @@ public class OpenAiTrainingManagementService implements IOpenAiTrainingManagemen
                 .nextActions(nextActions())
                 .generatedAt(System.currentTimeMillis())
                 .build();
+    }
+
+    @Override
+    public List<OpenAiTrainingReportRecord> reports(Integer limit) {
+        Pageable pageable = PageRequest.of(0, normalizedLimit(limit));
+        return reportRepository.findByOrderByCreatedAtDesc(pageable);
+    }
+
+    @Override
+    public OpenAiTrainingReportRecord saveReport(OpenAiTrainingReportRequest request) {
+        OpenAiTrainingReportRequest safeRequest = request == null ? new OpenAiTrainingReportRequest() : request;
+        String content = StringUtils.hasText(safeRequest.getContent()) ? safeRequest.getContent().trim() : "";
+        if (!StringUtils.hasText(content)) {
+            throw new IllegalArgumentException("OpenAI training report content is required");
+        }
+
+        long now = System.currentTimeMillis();
+        OpenAiTrainingReportRecord record = OpenAiTrainingReportRecord.builder()
+                .title(StringUtils.hasText(safeRequest.getTitle()) ? safeRequest.getTitle().trim() : "OpenAI 训练管理报告")
+                .content(content)
+                .source(StringUtils.hasText(safeRequest.getSource()) ? safeRequest.getSource().trim() : "one-web")
+                .dashboardGeneratedAt(safeRequest.getDashboardGeneratedAt())
+                .createdAt(now)
+                .build();
+        return reportRepository.save(record);
+    }
+
+    private int normalizedLimit(Integer limit) {
+        if (limit == null || limit <= 0) {
+            return DEFAULT_REPORT_LIMIT;
+        }
+        return Math.min(limit, MAX_REPORT_LIMIT);
     }
 
     private List<OpenAiTrainingManagementDashboard.LifecycleStage> lifecycleStages() {

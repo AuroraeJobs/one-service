@@ -24,7 +24,8 @@ import {
   type OpenAiTrainingEvalRun,
   type OpenAiTrainingJob,
   type OpenAiTrainingManagementDashboard,
-  type OpenAiTrainingMetric
+  type OpenAiTrainingMetric,
+  type OpenAiTrainingReportRecord
 } from '../services/api';
 import './OpenAiTrainingManagementPage.css';
 
@@ -426,14 +427,50 @@ const deploymentColumns: ColumnsType<OpenAiTrainingDeploymentBinding> = [
   }
 ];
 
+const reportColumns: ColumnsType<OpenAiTrainingReportRecord> = [
+  {
+    title: 'Report',
+    dataIndex: 'title',
+    render: (value?: string) => <strong>{value || '-'}</strong>
+  },
+  {
+    title: 'Source',
+    dataIndex: 'source'
+  },
+  {
+    title: 'Dashboard',
+    dataIndex: 'dashboardGeneratedAt',
+    render: (value?: number) => formatDashboardTime(value)
+  },
+  {
+    title: 'Saved At',
+    dataIndex: 'createdAt',
+    render: (value?: number) => formatDashboardTime(value)
+  }
+];
+
 const OpenAiTrainingManagementPage = () => {
   const [dashboard, setDashboard] = useState<OpenAiTrainingManagementDashboard>({});
+  const [reports, setReports] = useState<OpenAiTrainingReportRecord[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const loadReports = useCallback(async () => {
+    try {
+      setReports(await openAiTrainingApi.reports(5));
+    } catch (error) {
+      console.error('加载 OpenAI 训练报告快照失败:', error);
+    }
+  }, []);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
     try {
-      setDashboard(await openAiTrainingApi.dashboard());
+      const [dashboardData, reportData] = await Promise.all([
+        openAiTrainingApi.dashboard(),
+        openAiTrainingApi.reports(5)
+      ]);
+      setDashboard(dashboardData);
+      setReports(reportData);
     } catch (error) {
       console.error('加载 OpenAI 训练管理数据失败:', error);
       message.error('OpenAI 训练管理数据加载失败');
@@ -467,13 +504,26 @@ const OpenAiTrainingManagementPage = () => {
     }
 
     try {
-      await navigator.clipboard.writeText(buildTrainingReport(dashboard));
-      message.success('训练管理报告已复制');
+      const reportContent = buildTrainingReport(dashboard);
+      await navigator.clipboard.writeText(reportContent);
+      try {
+        await openAiTrainingApi.saveReport({
+          title: 'OpenAI 训练管理报告',
+          content: reportContent,
+          source: 'one-web-copy',
+          dashboardGeneratedAt: dashboard.generatedAt
+        });
+        await loadReports();
+        message.success('训练管理报告已复制并保存');
+      } catch (saveError) {
+        console.error('保存 OpenAI 训练管理报告失败:', saveError);
+        message.warning('训练管理报告已复制，Mongo 快照保存失败');
+      }
     } catch (error) {
       console.error('复制 OpenAI 训练管理报告失败:', error);
       message.error('训练管理报告复制失败');
     }
-  }, [dashboard, lifecycleStages.length]);
+  }, [dashboard, lifecycleStages.length, loadReports]);
 
   return (
     <LifePageShell
@@ -486,7 +536,7 @@ const OpenAiTrainingManagementPage = () => {
           icon={<CopyOutlined />}
           onClick={handleCopyReport}
         >
-          复制报告
+          复制并保存
         </Button>
       )}
     >
@@ -618,6 +668,17 @@ const OpenAiTrainingManagementPage = () => {
                 pagination={false}
                 size="middle"
                 scroll={{ x: 900 }}
+              />
+            </Card>
+
+            <Card className="openai-training-panel" title="报告快照">
+              <Table
+                columns={reportColumns}
+                dataSource={reports}
+                pagination={false}
+                rowKey={(row) => row.id || `${row.title}-${row.createdAt}`}
+                size="middle"
+                scroll={{ x: 760 }}
               />
             </Card>
 

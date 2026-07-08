@@ -1384,9 +1384,35 @@ export interface OpenAiTrainingManagementDashboard {
   generatedAt?: number;
 }
 
+export interface OpenAiTrainingReportRecord {
+  id?: string;
+  title?: string;
+  content?: string;
+  source?: string;
+  dashboardGeneratedAt?: number;
+  createdAt?: number;
+}
+
+export interface OpenAiTrainingReportRequest {
+  title?: string;
+  content?: string;
+  source?: string;
+  dashboardGeneratedAt?: number;
+}
+
 export const openAiTrainingApi = {
   dashboard: (): Promise<OpenAiTrainingManagementDashboard> => {
     return apiClient.get('/ai/training/dashboard');
+  },
+
+  reports: (limit?: number): Promise<OpenAiTrainingReportRecord[]> => {
+    return apiClient.get('/ai/training/reports', {
+      params: limit ? { limit } : undefined
+    });
+  },
+
+  saveReport: (request: OpenAiTrainingReportRequest): Promise<OpenAiTrainingReportRecord> => {
+    return apiClient.post('/ai/training/reports', request);
   }
 };
 
