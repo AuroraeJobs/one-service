@@ -1314,6 +1314,16 @@ export interface OpenAiTrainingEvalRun {
   decision?: string;
 }
 
+export interface OpenAiTrainingEvalFailureCase {
+  key: string;
+  evalRunId?: string;
+  category?: string;
+  prompt?: string;
+  expected?: string;
+  observed?: string;
+  nextAction?: string;
+}
+
 export interface OpenAiTrainingDeploymentBinding {
   key: string;
   featureKey?: string;
@@ -1346,6 +1356,7 @@ export interface OpenAiTrainingManagementDashboard {
   metrics?: OpenAiTrainingMetric[];
   checkpoints?: OpenAiTrainingCheckpoint[];
   evalRuns?: OpenAiTrainingEvalRun[];
+  evalFailureCases?: OpenAiTrainingEvalFailureCase[];
   deploymentBindings?: OpenAiTrainingDeploymentBinding[];
   readinessChecks?: OpenAiTrainingReadinessCheck[];
   nextActions?: OpenAiTrainingNextAction[];

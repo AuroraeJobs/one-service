@@ -19,6 +19,7 @@ public class OpenAiTrainingManagementService implements IOpenAiTrainingManagemen
                 .metrics(metrics())
                 .checkpoints(checkpoints())
                 .evalRuns(evalRuns())
+                .evalFailureCases(evalFailureCases())
                 .deploymentBindings(deploymentBindings())
                 .readinessChecks(readinessChecks())
                 .nextActions(nextActions())
@@ -86,6 +87,38 @@ public class OpenAiTrainingManagementService implements IOpenAiTrainingManagemen
                 evalRun("base", "gpt-4.1-mini", "wechat-publish-eval", 72, 0.78, "baseline"),
                 evalRun("checkpoint", "ft:wechat:step-240", "wechat-publish-eval", 84, 0.86, "candidate"),
                 evalRun("deploy", "ft:wechat:final", "wechat-publish-eval", 89, 0.91, "deploy")
+        );
+    }
+
+    private List<OpenAiTrainingManagementDashboard.EvalFailureCase> evalFailureCases() {
+        return List.of(
+                failureCase(
+                        "format-drift",
+                        "checkpoint",
+                        "格式漂移",
+                        "生成公众号发布计划摘要",
+                        "保留标题、目标读者、发布时间和复盘指标",
+                        "输出风格接近，但遗漏复盘指标",
+                        "补充包含复盘指标的正例，并在 eval 中增加字段完整性断言"
+                ),
+                failureCase(
+                        "weak-evidence",
+                        "deploy",
+                        "证据不足",
+                        "解释为什么选择当前 checkpoint",
+                        "引用 valid loss、pass rate 和失败案例",
+                        "只引用 pass rate，缺少失败案例说明",
+                        "把训练报告里的失败样例摘要加入回答模板"
+                ),
+                failureCase(
+                        "tool-routing",
+                        "base",
+                        "工具路由",
+                        "判断是否需要查询训练任务状态",
+                        "识别为 training job 查询并调用 API",
+                        "误判为普通聊天回答",
+                        "为 tool-routing 数据集补充边界样本"
+                )
         );
     }
 
@@ -224,6 +257,24 @@ public class OpenAiTrainingManagementService implements IOpenAiTrainingManagemen
                 .passRate(passRate)
                 .score(score)
                 .decision(decision)
+                .build();
+    }
+
+    private OpenAiTrainingManagementDashboard.EvalFailureCase failureCase(String key,
+                                                                         String evalRunId,
+                                                                         String category,
+                                                                         String prompt,
+                                                                         String expected,
+                                                                         String observed,
+                                                                         String nextAction) {
+        return OpenAiTrainingManagementDashboard.EvalFailureCase.builder()
+                .key(key)
+                .evalRunId(evalRunId)
+                .category(category)
+                .prompt(prompt)
+                .expected(expected)
+                .observed(observed)
+                .nextAction(nextAction)
                 .build();
     }
 

@@ -37,6 +37,9 @@ public class OpenAiTrainingManagementDashboard implements Serializable {
     private List<EvalRun> evalRuns = new ArrayList<>();
 
     @Builder.Default
+    private List<EvalFailureCase> evalFailureCases = new ArrayList<>();
+
+    @Builder.Default
     private List<DeploymentBinding> deploymentBindings = new ArrayList<>();
 
     @Builder.Default
@@ -184,6 +187,27 @@ public class OpenAiTrainingManagementDashboard implements Serializable {
         private Double score;
 
         private String decision;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class EvalFailureCase implements Serializable {
+
+        private String key;
+
+        private String evalRunId;
+
+        private String category;
+
+        private String prompt;
+
+        private String expected;
+
+        private String observed;
+
+        private String nextAction;
     }
 
     @Data

@@ -17,6 +17,7 @@ import {
   type OpenAiTrainingCheckpoint,
   type OpenAiTrainingDataset,
   type OpenAiTrainingDeploymentBinding,
+  type OpenAiTrainingEvalFailureCase,
   type OpenAiTrainingEvalRun,
   type OpenAiTrainingJob,
   type OpenAiTrainingManagementDashboard,
@@ -227,6 +228,34 @@ const evalColumns: ColumnsType<OpenAiTrainingEvalRun> = [
   }
 ];
 
+const evalFailureColumns: ColumnsType<OpenAiTrainingEvalFailureCase> = [
+  {
+    title: 'Eval',
+    dataIndex: 'evalRunId',
+    render: (value?: string) => <strong>{value || '-'}</strong>
+  },
+  {
+    title: 'Category',
+    dataIndex: 'category'
+  },
+  {
+    title: 'Prompt',
+    dataIndex: 'prompt'
+  },
+  {
+    title: 'Expected',
+    dataIndex: 'expected'
+  },
+  {
+    title: 'Observed',
+    dataIndex: 'observed'
+  },
+  {
+    title: 'Next Action',
+    dataIndex: 'nextAction'
+  }
+];
+
 const deploymentColumns: ColumnsType<OpenAiTrainingDeploymentBinding> = [
   {
     title: 'Feature',
@@ -283,6 +312,7 @@ const OpenAiTrainingManagementPage = () => {
   const metricRows = dashboard.metrics || [];
   const checkpointRows = dashboard.checkpoints || [];
   const evalRows = dashboard.evalRuns || [];
+  const evalFailureRows = dashboard.evalFailureCases || [];
   const deploymentRows = dashboard.deploymentBindings || [];
   const readinessChecks = dashboard.readinessChecks || [];
   const nextActions = dashboard.nextActions || [];
@@ -394,6 +424,16 @@ const OpenAiTrainingManagementPage = () => {
                 />
               </Card>
             </section>
+
+            <Card className="openai-training-panel" title="Eval 失败案例">
+              <Table
+                columns={evalFailureColumns}
+                dataSource={evalFailureRows}
+                pagination={false}
+                size="middle"
+                scroll={{ x: 1100 }}
+              />
+            </Card>
 
             <Card className="openai-training-panel" title="上线门禁检查">
               <section className="openai-training-readiness">
