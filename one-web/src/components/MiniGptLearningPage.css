@@ -991,6 +991,105 @@
   line-height: 1.45;
 }
 
+.mini-gpt-lottery-candidate-check {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 8px;
+  background: var(--mini-gpt-panel-bg-soft);
+}
+
+.mini-gpt-lottery-candidate-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mini-gpt-lottery-balls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mini-gpt-lottery-balls span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.mini-gpt-lottery-balls .red {
+  background: #ff3b30;
+}
+
+.mini-gpt-lottery-balls .blue {
+  background: #0071e3;
+}
+
+.mini-gpt-lottery-candidate-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mini-gpt-lottery-candidate-metrics div {
+  display: grid;
+  gap: 4px;
+  min-height: 58px;
+  padding: 9px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 8px;
+  background: var(--mini-gpt-panel-bg);
+}
+
+.mini-gpt-lottery-candidate-metrics span {
+  color: var(--mini-gpt-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mini-gpt-lottery-candidate-metrics strong {
+  color: var(--mini-gpt-text);
+  font-size: 15px;
+}
+
+.mini-gpt-lottery-candidate-check ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--mini-gpt-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.mini-gpt-lottery-candidate-check p {
+  margin: 0;
+  color: var(--mini-gpt-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.mini-gpt-lottery-candidate-check code {
+  display: block;
+  margin-top: 6px;
+  padding: 7px 8px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 6px;
+  color: var(--mini-gpt-text);
+  background: var(--mini-gpt-code-bg);
+  overflow-wrap: anywhere;
+}
+
 .mini-gpt-chart {
   height: 340px;
 }
@@ -1563,6 +1662,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .mini-gpt-lottery-candidate-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .mini-gpt-review-draft-sources {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1645,6 +1748,7 @@
   .mini-gpt-tokenizer-metrics,
   .mini-gpt-live-loss,
   .mini-gpt-env-check-grid,
+  .mini-gpt-lottery-candidate-metrics,
   .mini-gpt-status-panel dl,
   .mini-gpt-config-list {
     grid-template-columns: 1fr;

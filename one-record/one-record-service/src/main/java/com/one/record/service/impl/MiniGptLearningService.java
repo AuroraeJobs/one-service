@@ -7,6 +7,7 @@ import com.one.record.ai.MiniGptEnvironmentCheck;
 import com.one.record.ai.MiniGptCorpusInsight;
 import com.one.record.ai.MiniGptGenerationRequest;
 import com.one.record.ai.MiniGptGenerationResult;
+import com.one.record.ai.MiniGptLotteryCandidateValidation;
 import com.one.record.ai.MiniGptLotteryCorpusExport;
 import com.one.record.ai.MiniGptRunNoteRequest;
 import com.one.record.ai.MiniGptTrainingRequest;
@@ -82,6 +83,12 @@ public class MiniGptLearningService implements IMiniGptLearningService {
     private static final Pattern TRAINING_LOSS_LINE = Pattern.compile(
             "step=(\\d+)\\s+train_loss=([0-9.]+)\\s+eval_loss=([0-9.]+)"
     );
+
+    private static final Pattern RED_FIELD_PATTERN = Pattern.compile("(?i)red\\s*[=:：]\\s*([0-9,，\\s]+)");
+
+    private static final Pattern BLUE_FIELD_PATTERN = Pattern.compile("(?i)blue\\s*[=:：]\\s*(\\d{1,2})");
+
+    private static final Pattern NUMBER_PATTERN = Pattern.compile("(?<!\\d)\\d{1,2}(?!\\d)");
 
     private static final DateTimeFormatter DISPLAY_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -441,6 +448,7 @@ public class MiniGptLearningService implements IMiniGptLearningService {
                     .topK(safeRequest.getTopK())
                     .exitCode(exitCode)
                     .elapsedMillis(System.currentTimeMillis() - startedAt)
+                    .lotteryCandidate(validateLotteryCandidate(output))
                     .generatedAt(System.currentTimeMillis())
                     .build();
         } catch (InterruptedException exception) {
@@ -449,6 +457,82 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         } catch (IOException exception) {
             throw new IllegalStateException("MiniGPT 生成启动失败", exception);
         }
+    }
+
+    @Override
+    public MiniGptLotteryCandidateValidation validateLotteryCandidate(String text) {
+        String sourceText = hasTextOrDefault(text, "");
+        ParsedLotteryCandidate parsed = parseLotteryCandidate(sourceText);
+        List<Integer> redValues = parsed.redValues();
+        Integer blueValue = parsed.blueValue();
+        List<String> issues = new ArrayList<>();
+
+        if (redValues.isEmpty() && blueValue == null) {
+            issues.add("未解析到候选号码");
+        }
+        if (redValues.size() != 6) {
+            issues.add("红球数量应为 6 个，当前为 " + redValues.size());
+        }
+        if (blueValue == null) {
+            issues.add("未解析到蓝球");
+        }
+
+        List<Integer> outOfRangeRed = redValues.stream()
+                .filter(value -> value < 1 || value > 33)
+                .toList();
+        if (!outOfRangeRed.isEmpty()) {
+            issues.add("红球越界: " + outOfRangeRed);
+        }
+        if (blueValue != null && (blueValue < 1 || blueValue > 16)) {
+            issues.add("蓝球越界: " + blueValue);
+        }
+
+        long distinctRedCount = redValues.stream().distinct().count();
+        int duplicateCount = redValues.size() - (int) distinctRedCount;
+        if (duplicateCount > 0) {
+            issues.add("红球存在重复");
+        }
+
+        boolean redAscending = isAscending(redValues);
+        if (redValues.size() > 1 && !redAscending) {
+            issues.add("红球未按升序排列");
+        }
+
+        List<Integer> repairedRed = redValues.stream()
+                .filter(value -> value >= 1 && value <= 33)
+                .distinct()
+                .sorted()
+                .limit(6)
+                .toList();
+        String repairedBlue = blueValue != null && blueValue >= 1 && blueValue <= 16 ? formatBall(blueValue) : null;
+        int redSum = redValues.stream()
+                .filter(value -> value >= 1 && value <= 33)
+                .mapToInt(Integer::intValue)
+                .sum();
+        int oddCount = (int) redValues.stream().filter(value -> value % 2 != 0).count();
+        int evenCount = redValues.size() - oddCount;
+        int span = repairedRed.size() >= 2 ? repairedRed.get(repairedRed.size() - 1) - repairedRed.get(0) : 0;
+        boolean parseable = !redValues.isEmpty() || blueValue != null;
+        boolean valid = issues.isEmpty();
+
+        return MiniGptLotteryCandidateValidation.builder()
+                .sourceText(sourceText)
+                .redNumbers(redValues.stream().map(MiniGptLearningService::formatBall).toList())
+                .blueNumber(blueValue == null ? null : formatBall(blueValue))
+                .redCount(redValues.size())
+                .valid(valid)
+                .parseable(parseable)
+                .redSum(redSum)
+                .span(span)
+                .oddCount(oddCount)
+                .evenCount(evenCount)
+                .duplicateCount(duplicateCount)
+                .redAscending(redAscending)
+                .status(valid ? "PASS" : parseable ? "WARNING" : "FAILED")
+                .issues(issues)
+                .repairedRedNumbers(repairedRed.stream().map(MiniGptLearningService::formatBall).toList())
+                .repairedBlueNumber(repairedBlue)
+                .build();
     }
 
     @Override
@@ -837,6 +921,70 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         return mongoUri.replaceAll("(?<=://)([^:/@]+):([^@]+)@", "$1:****@");
     }
 
+    private static ParsedLotteryCandidate parseLotteryCandidate(String text) {
+        if (!StringUtils.hasText(text)) {
+            return new ParsedLotteryCandidate(Collections.emptyList(), null);
+        }
+
+        List<Integer> redValues = new ArrayList<>();
+        Matcher redMatcher = RED_FIELD_PATTERN.matcher(text);
+        if (redMatcher.find()) {
+            redValues.addAll(parseNumbers(redMatcher.group(1)));
+        }
+
+        Integer blueValue = null;
+        Matcher blueMatcher = BLUE_FIELD_PATTERN.matcher(text);
+        if (blueMatcher.find()) {
+            blueValue = parseInteger(blueMatcher.group(1));
+        }
+
+        List<Integer> allNumbers = parseNumbers(text);
+        if (redValues.isEmpty() && allNumbers.size() >= 6) {
+            redValues.addAll(allNumbers.subList(0, 6));
+        }
+        if (blueValue == null && allNumbers.size() >= 7) {
+            blueValue = allNumbers.get(6);
+        }
+        if (blueValue == null && allNumbers.size() == 1 && redValues.isEmpty()) {
+            blueValue = allNumbers.get(0);
+        }
+
+        return new ParsedLotteryCandidate(redValues.stream().limit(12).toList(), blueValue);
+    }
+
+    private static List<Integer> parseNumbers(String text) {
+        Matcher matcher = NUMBER_PATTERN.matcher(text);
+        List<Integer> values = new ArrayList<>();
+        while (matcher.find()) {
+            Integer value = parseInteger(matcher.group());
+            if (value != null) {
+                values.add(value);
+            }
+        }
+        return values;
+    }
+
+    private static Integer parseInteger(String value) {
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException exception) {
+            return null;
+        }
+    }
+
+    private static boolean isAscending(List<Integer> values) {
+        for (int index = 1; index < values.size(); index++) {
+            if (values.get(index) < values.get(index - 1)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static String formatBall(Integer value) {
+        return value == null ? null : String.format("%02d", value);
+    }
+
     private List<LotteryDraw> loadLotteryDraws(int limit) {
         List<LotteryDraw> draws = new ArrayList<>();
         int page = 0;
@@ -914,6 +1062,9 @@ public class MiniGptLearningService implements IMiniGptLearningService {
 
     private static String safeInteger(Integer value) {
         return value == null ? "-" : value.toString();
+    }
+
+    private record ParsedLotteryCandidate(List<Integer> redValues, Integer blueValue) {
     }
 
     private Map<String, Object> trainingConfig(MiniGptTrainingRequest request) {

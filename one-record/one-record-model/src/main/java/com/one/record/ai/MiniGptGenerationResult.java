@@ -27,5 +27,7 @@ public class MiniGptGenerationResult implements Serializable {
 
     private Long elapsedMillis;
 
+    private MiniGptLotteryCandidateValidation lotteryCandidate;
+
     private Long generatedAt;
 }

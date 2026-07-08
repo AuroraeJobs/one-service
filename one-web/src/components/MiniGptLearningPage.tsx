@@ -41,6 +41,13 @@ const statusColor = (status?: string) => {
   return 'default';
 };
 
+const lotteryCandidateStatusColor = (status?: string) => {
+  if (status === 'PASS') return 'green';
+  if (status === 'WARNING') return 'orange';
+  if (status === 'FAILED') return 'red';
+  return 'default';
+};
+
 const latestSample = (logs: MiniGptTrainingLogRecord[]) => (
   [...logs].reverse().find(log => log.sample)?.sample || ''
 );
@@ -1621,6 +1628,7 @@ const MiniGptLearningPage = () => {
     () => generationDiagnostics(run, logs, generationResult),
     [generationResult, logs, run]
   );
+  const lotteryCandidate = generationResult?.lotteryCandidate;
   const nextActionItems = useMemo(
     () => nextExperimentActions(run, logs, corpusInsight, generationResult),
     [corpusInsight, generationResult, logs, run]
@@ -2532,6 +2540,59 @@ const MiniGptLearningPage = () => {
                         <p>{item.detail}</p>
                       </div>
                     ))}
+                  </section>
+                  <section className="mini-gpt-lottery-candidate-check">
+                    <div className="mini-gpt-lottery-candidate-head">
+                      <Text type="secondary">双色球候选校验</Text>
+                      <Tag color={lotteryCandidateStatusColor(lotteryCandidate?.status)}>
+                        {lotteryCandidate?.status || 'WAITING'}
+                      </Tag>
+                    </div>
+                    {lotteryCandidate?.parseable ? (
+                      <>
+                        <div className="mini-gpt-lottery-balls">
+                          {(lotteryCandidate.redNumbers || []).map((ball, index) => (
+                            <span className="red" key={`${ball}-${index}`}>{ball}</span>
+                          ))}
+                          <span className="blue">{lotteryCandidate.blueNumber || '--'}</span>
+                        </div>
+                        <div className="mini-gpt-lottery-candidate-metrics">
+                          <div>
+                            <span>红球数</span>
+                            <strong>{lotteryCandidate.redCount ?? '-'}</strong>
+                          </div>
+                          <div>
+                            <span>和值</span>
+                            <strong>{lotteryCandidate.redSum ?? '-'}</strong>
+                          </div>
+                          <div>
+                            <span>跨度</span>
+                            <strong>{lotteryCandidate.span ?? '-'}</strong>
+                          </div>
+                          <div>
+                            <span>奇偶</span>
+                            <strong>{lotteryCandidate.oddCount ?? '-'} / {lotteryCandidate.evenCount ?? '-'}</strong>
+                          </div>
+                        </div>
+                        {lotteryCandidate.issues?.length ? (
+                          <ul>
+                            {lotteryCandidate.issues.map(issue => (
+                              <li key={issue}>{issue}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p>候选满足基础合规约束，可以进入候选池或回测。</p>
+                        )}
+                        {(lotteryCandidate.repairedRedNumbers?.length || lotteryCandidate.repairedBlueNumber) && !lotteryCandidate.valid && (
+                          <p>
+                            修复参考：
+                            <code>{lotteryCandidate.repairedRedNumbers?.join(' ') || '--'} + {lotteryCandidate.repairedBlueNumber || '--'}</code>
+                          </p>
+                        )}
+                      </>
+                    ) : (
+                      <p>生成一段包含 6 个红球和 1 个蓝球的文本后，这里会解析并检查基础约束。</p>
+                    )}
                   </section>
                 </div>
               </Card>

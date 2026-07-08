@@ -4,6 +4,7 @@ import com.one.record.ai.MiniGptDashboard;
 import com.one.record.ai.MiniGptEnvironmentCheck;
 import com.one.record.ai.MiniGptGenerationRequest;
 import com.one.record.ai.MiniGptGenerationResult;
+import com.one.record.ai.MiniGptLotteryCandidateValidation;
 import com.one.record.ai.MiniGptLotteryCorpusExport;
 import com.one.record.ai.MiniGptCorpusInsight;
 import com.one.record.ai.MiniGptRunNoteRequest;
@@ -37,6 +38,8 @@ public interface IMiniGptLearningService {
     MiniGptCorpusInsight corpusInsight(String data, String sample, Integer tokenLimit);
 
     MiniGptGenerationResult generate(MiniGptGenerationRequest request);
+
+    MiniGptLotteryCandidateValidation validateLotteryCandidate(String text);
 
     MiniGptRunRecord updateRunNotes(String runName, MiniGptRunNoteRequest request);
 }

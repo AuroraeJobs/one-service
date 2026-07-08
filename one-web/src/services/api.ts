@@ -1182,6 +1182,25 @@ export interface MiniGptLotteryCorpusExport {
   generatedAt?: number;
 }
 
+export interface MiniGptLotteryCandidateValidation {
+  sourceText?: string;
+  redNumbers?: string[];
+  blueNumber?: string;
+  redCount?: number;
+  valid?: boolean;
+  parseable?: boolean;
+  redSum?: number;
+  span?: number;
+  oddCount?: number;
+  evenCount?: number;
+  duplicateCount?: number;
+  redAscending?: boolean;
+  status?: string;
+  issues?: string[];
+  repairedRedNumbers?: string[];
+  repairedBlueNumber?: string;
+}
+
 export interface MiniGptTokenEntry {
   token?: string;
   tokenId?: number;
@@ -1228,6 +1247,7 @@ export interface MiniGptGenerationResult {
   topK?: number;
   exitCode?: number;
   elapsedMillis?: number;
+  lotteryCandidate?: MiniGptLotteryCandidateValidation;
   generatedAt?: number;
 }
 
@@ -1274,6 +1294,10 @@ export const miniGptApi = {
 
   generate: (request: MiniGptGenerationRequest): Promise<MiniGptGenerationResult> => {
     return apiClient.post('/ai/minigpt/generate', request);
+  },
+
+  validateLotteryCandidate: (text: string): Promise<MiniGptLotteryCandidateValidation> => {
+    return apiClient.post('/ai/minigpt/lottery-candidate/validate', text);
   },
 
   updateRunNotes: (runName: string, request: MiniGptRunNoteRequest): Promise<MiniGptRunRecord> => {

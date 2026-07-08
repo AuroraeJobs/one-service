@@ -5,6 +5,7 @@ import com.one.record.ai.MiniGptEnvironmentCheck;
 import com.one.record.ai.MiniGptCorpusInsight;
 import com.one.record.ai.MiniGptGenerationRequest;
 import com.one.record.ai.MiniGptGenerationResult;
+import com.one.record.ai.MiniGptLotteryCandidateValidation;
 import com.one.record.ai.MiniGptLotteryCorpusExport;
 import com.one.record.ai.MiniGptRunNoteRequest;
 import com.one.record.ai.MiniGptTrainingRequest;
@@ -90,6 +91,11 @@ public class MiniGptLearningController {
     @PostMapping("generate")
     public MiniGptGenerationResult generate(@RequestBody(required = false) MiniGptGenerationRequest request) {
         return service.generate(request);
+    }
+
+    @PostMapping("lottery-candidate/validate")
+    public MiniGptLotteryCandidateValidation validateLotteryCandidate(@RequestBody(required = false) String text) {
+        return service.validateLotteryCandidate(text);
     }
 
     @PatchMapping("runs/{runName}/notes")
