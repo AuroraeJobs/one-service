@@ -423,6 +423,13 @@ type PlannedExperiment = NextExperimentAction & {
   sourceRun?: string;
 };
 
+type ExperimentVariableDiff = {
+  key: string;
+  label: string;
+  from: string;
+  to: string;
+};
+
 const MINI_GPT_PLAN_STORAGE_KEY = 'one-web:minigpt:planned-experiments';
 
 const isPlannedExperiment = (value: unknown): value is PlannedExperiment => {
@@ -463,6 +470,47 @@ const formatPlannedValues = (values?: Partial<MiniGptTrainingRequest>) => {
     .filter(([, value]) => value !== undefined && value !== '')
     .map(([key, value]) => `${key}=${value}`)
     .join(' / ');
+};
+
+const displayVariableValue = (value: unknown) => (
+  value === undefined || value === null || value === '' ? '-' : String(value)
+);
+
+const configNumber = (run: MiniGptRunRecord | undefined, key: string) => {
+  const value = run?.config?.[key];
+  return Number.isFinite(Number(value)) ? Number(value) : undefined;
+};
+
+const experimentVariableDiffs = (
+  run: MiniGptRunRecord | undefined,
+  values: MiniGptTrainingRequest = {}
+): ExperimentVariableDiff[] => {
+  const rows: Array<[keyof MiniGptTrainingRequest, string, unknown]> = [
+    ['preset', '预设', run?.preset],
+    ['data', '语料', run?.data],
+    ['maxSteps', '步数', run?.maxSteps],
+    ['batchSize', 'Batch Size', run?.batchSize],
+    ['learningRate', 'Learning Rate', run?.learningRate],
+    ['blockSize', 'Block Size', configNumber(run, 'block_size')],
+    ['nEmbd', 'Embedding', configNumber(run, 'n_embd')],
+    ['nHead', 'Heads', configNumber(run, 'n_head')],
+    ['nLayer', 'Layers', configNumber(run, 'n_layer')],
+    ['valRatio', '验证比例', run?.valRatio],
+    ['samplePrompt', '采样提示', run?.samplePrompt],
+    ['sampleTokens', '采样长度', run?.sampleTokens],
+    ['temperature', 'Temperature', undefined],
+    ['topK', 'Top-K', undefined]
+  ];
+
+  return rows
+    .filter(([key]) => values[key] !== undefined && values[key] !== '')
+    .map(([key, label, currentValue]) => ({
+      key: String(key),
+      label,
+      from: displayVariableValue(currentValue),
+      to: displayVariableValue(values[key])
+    }))
+    .filter(item => item.from !== item.to);
 };
 
 const nextExperimentActions = (
@@ -618,7 +666,8 @@ const buildExperimentReport = (
   logs: MiniGptTrainingLogRecord[],
   generationResult?: MiniGptGenerationResult,
   corpusInsight?: MiniGptCorpusInsight,
-  plannedExperiments: PlannedExperiment[] = []
+  plannedExperiments: PlannedExperiment[] = [],
+  variableDiffs: ExperimentVariableDiff[] = []
 ) => {
   const metrics = metricItems(run, logs);
   const diagnostics = lossDiagnostics(run, logs);
@@ -656,6 +705,11 @@ const buildExperimentReport = (
     ...(plannedExperiments.length
       ? plannedExperiments.map(item => `- ${item.title}: ${item.action}（来源：${item.sourceRun || '未绑定实验'}）`)
       : ['- 暂无计划']),
+    '',
+    '## 下一轮变量差异',
+    ...(variableDiffs.length
+      ? variableDiffs.map(item => `- ${item.label}: ${item.from} -> ${item.to}`)
+      : ['- 暂无差异']),
     '',
     '## 配置',
     ...configEntries(run).map(([key, value]) => `- ${key}: ${value}`),
@@ -945,6 +999,7 @@ const MiniGptLearningPage = () => {
   const [cancelling, setCancelling] = useState(false);
   const [savingNotes, setSavingNotes] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const watchedTrainingValues = Form.useWatch([], form) as MiniGptTrainingRequest | undefined;
 
   const loadDashboard = useCallback(async (runName?: string, quiet = false) => {
     if (!quiet) {
@@ -1173,9 +1228,17 @@ const MiniGptLearningPage = () => {
     () => nextExperimentActions(run, logs, corpusInsight, generationResult),
     [corpusInsight, generationResult, logs, run]
   );
+  const trainingFormValues = useMemo(
+    () => ({ ...form.getFieldsValue(), ...(watchedTrainingValues || {}) }),
+    [form, watchedTrainingValues]
+  );
+  const variableDiffItems = useMemo(
+    () => experimentVariableDiffs(run, trainingFormValues),
+    [run, trainingFormValues]
+  );
   const experimentReport = useMemo(
-    () => run ? buildExperimentReport(run, logs, generationResult, corpusInsight, plannedExperiments) : '',
-    [corpusInsight, generationResult, logs, plannedExperiments, run]
+    () => run ? buildExperimentReport(run, logs, generationResult, corpusInsight, plannedExperiments, variableDiffItems) : '',
+    [corpusInsight, generationResult, logs, plannedExperiments, run, variableDiffItems]
   );
 
   const handleCopyReport = async () => {
@@ -1426,6 +1489,31 @@ const MiniGptLearningPage = () => {
                 </dl>
               </div>
             </div>
+            <section className="mini-gpt-variable-diff">
+              <div className="mini-gpt-variable-diff-head">
+                <Text type="secondary">下一轮变量差异</Text>
+                <Tag color={variableDiffItems.length === 1 ? 'green' : variableDiffItems.length > 1 ? 'orange' : 'default'}>
+                  {run ? `${variableDiffItems.length} changes` : 'baseline'}
+                </Tag>
+              </div>
+              {run ? (
+                variableDiffItems.length ? (
+                  <div className="mini-gpt-variable-diff-grid">
+                    {variableDiffItems.map(item => (
+                      <div key={item.key}>
+                        <span>{item.label}</span>
+                        <strong>{item.from}</strong>
+                        <em>{item.to}</em>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p>当前训练表单与最新实验一致。应用一个计划项，或只手动改一个变量再开始下一轮。</p>
+                )
+              ) : (
+                <p>还没有历史实验，当前表单会作为第一个 Tiny 基线。</p>
+              )}
+            </section>
           </Card>
 
           <Card className="mini-gpt-panel" title="参数速查">
