@@ -356,6 +356,60 @@ const corpusDiagnostics = (corpusInsight?: MiniGptCorpusInsight) => {
   ];
 };
 
+const repeatedCharRatio = (text: string) => {
+  const chars = Array.from(text.replace(/\s+/g, ''));
+  if (chars.length < 2) return 0;
+  let repeated = 0;
+  for (let index = 1; index < chars.length; index += 1) {
+    if (chars[index] === chars[index - 1]) repeated += 1;
+  }
+  return repeated / (chars.length - 1);
+};
+
+const generationDiagnostics = (
+  run: MiniGptRunRecord | undefined,
+  logs: MiniGptTrainingLogRecord[],
+  generationResult?: MiniGptGenerationResult
+) => {
+  const generatedText = generationResult?.generatedText || latestSample(logs);
+  const prompt = generationResult?.prompt || run?.samplePrompt || '';
+  const outputLength = Array.from(generatedText || '').length;
+  const repeatRatio = repeatedCharRatio(generatedText || '');
+  const continuedPrompt = Boolean(prompt && generatedText?.startsWith(prompt));
+  const elapsedMillis = generationResult?.elapsedMillis;
+
+  return [
+    {
+      key: 'length',
+      title: '输出长度',
+      status: outputLength >= 60 ? 'pass' : outputLength > 0 ? 'watch' : 'todo',
+      value: outputLength ? `${outputLength} chars` : '-',
+      detail: outputLength >= 60 ? '样例足够复盘风格' : '太短时先增加 tokens 或检查 checkpoint'
+    },
+    {
+      key: 'repeat',
+      title: '重复程度',
+      status: outputLength === 0 ? 'todo' : repeatRatio <= 0.08 ? 'pass' : repeatRatio <= 0.18 ? 'watch' : 'todo',
+      value: outputLength ? `${(repeatRatio * 100).toFixed(1)}%` : '-',
+      detail: repeatRatio <= 0.08 ? '连续重复较少' : '重复高时调低温度或增加语料'
+    },
+    {
+      key: 'prompt',
+      title: 'Prompt 延续',
+      status: outputLength === 0 ? 'todo' : continuedPrompt ? 'pass' : 'watch',
+      value: prompt ? (continuedPrompt ? 'matched' : 'check') : '-',
+      detail: prompt ? '确认生成是否接住提示词' : '训练时建议固定采样提示'
+    },
+    {
+      key: 'latency',
+      title: '采样耗时',
+      status: elapsedMillis === undefined ? 'watch' : elapsedMillis <= 3000 ? 'pass' : 'watch',
+      value: elapsedMillis === undefined ? '-' : `${elapsedMillis}ms`,
+      detail: elapsedMillis === undefined ? '历史日志样例无耗时' : '同一 checkpoint 可对比采样参数'
+    }
+  ];
+};
+
 const configEntries = (run?: MiniGptRunRecord): [string, string][] => {
   const config = run?.config || {};
   return [
@@ -393,6 +447,7 @@ const buildExperimentReport = (
   const metrics = metricItems(run, logs);
   const diagnostics = lossDiagnostics(run, logs);
   const corpusRows = corpusDiagnostics(corpusInsight);
+  const generationRows = generationDiagnostics(run, logs, generationResult);
   const sample = generationResult?.generatedText || latestSample(logs);
   const shapeRows = tensorShapeRows(run, undefined, []);
   const questions = reviewQuestions(run, logs, generationResult);
@@ -413,6 +468,9 @@ const buildExperimentReport = (
     '',
     '## 语料诊断',
     ...corpusRows.map(item => `- ${item.title}: ${item.value} / ${item.detail}`),
+    '',
+    '## 生成诊断',
+    ...generationRows.map(item => `- ${item.title}: ${item.value} / ${item.detail}`),
     '',
     '## 配置',
     ...configEntries(run).map(([key, value]) => `- ${key}: ${value}`),
@@ -884,6 +942,10 @@ const MiniGptLearningPage = () => {
   const comparisonChartOption = useMemo(() => buildComparisonChartOption(comparisonLogs), [comparisonLogs]);
   const milestones = useMemo(() => learningMilestones(run, logs, corpusInsight), [corpusInsight, logs, run]);
   const reviewQuestionItems = useMemo(() => reviewQuestions(run, logs, generationResult), [generationResult, logs, run]);
+  const generationDiagnosticItems = useMemo(
+    () => generationDiagnostics(run, logs, generationResult),
+    [generationResult, logs, run]
+  );
   const experimentReport = useMemo(
     () => run ? buildExperimentReport(run, logs, generationResult, corpusInsight) : '',
     [corpusInsight, generationResult, logs, run]
@@ -1471,6 +1533,15 @@ const MiniGptLearningPage = () => {
                   <pre className="mini-gpt-sample">
                     {generationResult?.generatedText || sample || '暂无生成样例'}
                   </pre>
+                  <section className="mini-gpt-generation-diagnostics">
+                    {generationDiagnosticItems.map(item => (
+                      <div className={item.status} key={item.key}>
+                        <span>{item.title}</span>
+                        <strong>{item.value}</strong>
+                        <p>{item.detail}</p>
+                      </div>
+                    ))}
+                  </section>
                 </div>
               </Card>
             </section>
