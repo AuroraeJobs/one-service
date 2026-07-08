@@ -841,6 +841,12 @@ Goal: make the lottery module easier to use as a long-running research archive, 
 - [x] Keep the first slice frontend-derived from existing APIs. Reused month-end page data instead of adding a new backend archive contract.
 - [x] Add route smoke coverage for archive labels and search state. Smoke fixture now checks archive index labels, `archiveItems`, `archiveQuery`, and the empty state.
 
+### Wave 30B: Month-End Narrative Summary
+
+- [x] Add a narrative section backed by ledger, tickets, attribution, recommendations, notes, reminders, and exports. `/lottery/month-end` now shows `月末叙事摘要` with result, action closure, evidence quality, and next-month focus rows.
+- [x] Keep copy evidence-oriented and avoid prediction-confidence language. The summary reports evidence, warnings, pending work, and exports without promising future outcomes.
+- [x] Add route smoke checks for narrative source labels. Smoke fixture now checks `narrativeItems` and the four narrative headings.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

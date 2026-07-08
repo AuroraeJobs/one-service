@@ -10,9 +10,9 @@ Goal: make the lottery module easier to use as a long-running research archive, 
 
 ## Wave 30B: Month-End Narrative Summary
 
-- Add a narrative section backed by ledger, tickets, attribution, recommendations, notes, reminders, and exports.
-- Keep copy evidence-oriented and avoid prediction-confidence language.
-- Add route smoke checks for narrative source labels.
+- Add a narrative section backed by ledger, tickets, attribution, recommendations, notes, reminders, and exports. Added `月末叙事摘要` with result, action closure, evidence quality, and next-month focus rows.
+- Keep copy evidence-oriented and avoid prediction-confidence language. The summary reports ledger, ticket, attribution, recommendation, note, reminder, and export evidence without outcome promises.
+- Add route smoke checks for narrative source labels. Smoke now guards `narrativeItems`, `月末叙事摘要`, and the four summary headings.
 
 ## Wave 30C: Long-Term Retrospective Exports
 

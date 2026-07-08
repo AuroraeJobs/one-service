@@ -64,6 +64,14 @@ interface ArchiveItem {
   count?: number;
 }
 
+interface NarrativeItem {
+  key: string;
+  title: string;
+  body: string;
+  status?: string;
+  path: string;
+}
+
 const formatDateTime = (timestamp?: number) => {
   if (!timestamp) {
     return '-';
@@ -129,6 +137,8 @@ const archiveScopeLabel = (scope: string) => {
   };
   return labels[scope] || scope;
 };
+
+const safeCount = (value?: number) => Number(value || 0);
 
 const LotteryMonthEndReviewPage = () => {
   const navigate = useNavigate();
@@ -354,6 +364,43 @@ const LotteryMonthEndReviewPage = () => {
     return items.filter(item => `${archiveScopeLabel(item.scope)} ${item.title} ${item.detail}`.toLowerCase().includes(keyword)).slice(0, 12);
   }, [archiveQuery, attributionRollup?.issueCount, attributionRows, exportAudits, ledger?.netResult, monthEndScore, notes?.items, recentIssues, recommendationRollup]);
 
+  const narrativeItems = useMemo<NarrativeItem[]>(() => {
+    const pendingTickets = safeCount(tickets?.pendingTicketCount);
+    const attributionWarnings = attributionRows.reduce((sum, item) => sum + safeCount(item.warningCount), 0);
+    const staleRecommendations = safeCount(recommendationRollup?.staleCount);
+    const dueReminders = safeCount(reminders?.dueCount);
+    return [
+      {
+        key: 'result',
+        title: '本月结果',
+        body: `账本净值 ${formatCurrency(ledger?.netResult)}，ROI ${formatPercent(ledger?.roiPercent)}；最近 ${recentIssues.length} 个期号已有 ${recentIssues.reduce((sum, item) => sum + safeCount(item.checkedTicketCount), 0)} 张票据完成核验。`,
+        status: ledger?.netResult && ledger.netResult >= 0 ? 'PASS' : 'WARNING',
+        path: '/lottery/ledger'
+      },
+      {
+        key: 'operations',
+        title: '行动闭环',
+        body: `票据待核 ${pendingTickets} 张，提醒到期 ${dueReminders} 条，发布检查 ${workbench?.releaseCheckSummary?.passedCount || 0}/${workbench?.releaseCheckSummary?.totalCount || 0} 通过。`,
+        status: pendingTickets || dueReminders ? 'WARNING' : 'PASS',
+        path: '/lottery/workbench'
+      },
+      {
+        key: 'evidence',
+        title: '证据质量',
+        body: `归因覆盖 ${attributionRollup?.issueCount || 0} 期，仍有 ${attributionWarnings} 个归因警示；策略笔记 ${notes?.total || notes?.items?.length || 0} 条，当前页证据 ${notes?.items?.reduce((sum, item) => sum + safeCount(item.evidence?.length), 0) || 0} 条。`,
+        status: attributionWarnings ? 'WARNING' : (attributionRollup?.issueCount ? 'PASS' : 'MANUAL'),
+        path: '/lottery/outcomes'
+      },
+      {
+        key: 'next',
+        title: '下月关注',
+        body: `推荐待处理 ${recommendationRollup?.activeCount || 0} 条、过期 ${staleRecommendations} 条；导出证据 ${exportAudits.length} 条，建议优先补齐过期推荐、归因警示和月末包。`,
+        status: staleRecommendations || attributionWarnings || !exportAudits.length ? 'WARNING' : 'PASS',
+        path: staleRecommendations ? '/lottery/recommendations' : '/lottery/exports'
+      }
+    ];
+  }, [attributionRollup?.issueCount, attributionRows, exportAudits.length, ledger?.netResult, ledger?.roiPercent, notes?.items, notes?.total, recentIssues, recommendationRollup?.activeCount, recommendationRollup?.staleCount, reminders?.dueCount, tickets?.pendingTicketCount, workbench?.releaseCheckSummary?.passedCount, workbench?.releaseCheckSummary?.totalCount]);
+
   return (
     <LifePageShell
       className="lottery-prediction-page lottery-month-end-page"
@@ -402,6 +449,18 @@ const LotteryMonthEndReviewPage = () => {
             </button>
           ))}
         </section>
+
+        <Card className="life-panel-card lottery-clean-panel" title="月末叙事摘要">
+          <div className="lottery-month-end-narrative">
+            {narrativeItems.map(item => (
+              <button key={item.key} type="button" onClick={() => navigate(item.path)}>
+                <Tag color={statusColor(item.status)}>{lotteryStatusLabel(item.status)}</Tag>
+                <strong>{item.title}</strong>
+                <span>{item.body}</span>
+              </button>
+            ))}
+          </div>
+        </Card>
 
         <section className="lottery-workbench-main-grid">
           <Card className="life-panel-card lottery-clean-panel" title="最近期号结果">

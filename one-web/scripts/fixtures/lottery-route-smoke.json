@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 30 Wave 30A research archive index smoke",
+  "target": "Iteration 30 Wave 30B month-end narrative smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -116,7 +116,13 @@
         "研究归档索引",
         "archiveItems",
         "archiveQuery",
-        "暂无研究归档"
+        "暂无研究归档",
+        "月末叙事摘要",
+        "narrativeItems",
+        "本月结果",
+        "行动闭环",
+        "证据质量",
+        "下月关注"
       ]
     },
     {
@@ -328,7 +334,7 @@
       "fixtureData": {
         "review": {
           "score": 88,
-          "sections": ["ledger", "tickets", "decisions", "attribution", "recommendation", "archive", "notes", "health", "exports"],
+          "sections": ["ledger", "tickets", "decisions", "attribution", "recommendation", "archive", "narrative", "notes", "health", "exports"],
           "releaseChecks": ["month-end-dashboard", "reminder-center", "strategy-notebook"]
         }
       }
