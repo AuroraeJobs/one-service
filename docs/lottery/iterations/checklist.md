@@ -985,9 +985,9 @@ Goal: make archive review conclusions easy to preserve as research evidence whil
 
 ### Wave 36C: Governance Note Handoff
 
-- [ ] Add governance context for preserving archive-review decisions.
-- [ ] Reuse the V34 archive search evidence export and strategy notebook before adding new persistence.
-- [ ] Decide whether a dedicated review-note export label is justified.
+- [x] Add governance context for preserving archive-review decisions.
+- [x] Reuse the V34 archive search evidence export and strategy notebook before adding new persistence.
+- [x] Decide whether a dedicated review-note export label is justified. Decision: no new export label; V34 archive search evidence remains the package.
 
 ## Documentation And Delivery
 

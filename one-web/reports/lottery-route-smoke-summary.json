@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 36 Wave 36B workbench note handoff smoke",
-  "generatedAt": "2026-07-08T06:31:42.221Z",
+  "target": "Iteration 36 Wave 36C governance note handoff smoke",
+  "generatedAt": "2026-07-08T07:02:48.095Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 18,
-  "checkCount": 581,
+  "checkCount": 585,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [

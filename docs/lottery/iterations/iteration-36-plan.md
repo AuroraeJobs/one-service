@@ -21,3 +21,5 @@ Status: completed with a secondary workbench `记录复核` handoff that opens t
 - Add governance context for preserving archive-review decisions.
 - Reuse the V34 archive search evidence export and strategy notebook before adding new persistence.
 - Decide whether a dedicated review-note export label is justified.
+
+Status: completed with a governance `记录复核` handoff that opens the research notebook with `ARCHIVE_REVIEW` evidence context and reuses the V34 archive search evidence package.

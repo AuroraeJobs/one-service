@@ -112,6 +112,17 @@ const recentAuditEvents = (events: LotteryAuditEvent[], days: number) =>
 const attributionWarningRows = (rollup?: LotteryOutcomeAttributionRollup) =>
   (rollup?.rows || []).filter(item => item.evidenceQuality === 'WATCH' || item.evidenceQuality === 'NEGATIVE' || item.evidenceQuality === 'UNDER_TESTED');
 
+const buildGovernancePath = (base: string, params: Record<string, string | number | undefined>) => {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== '') {
+      query.set(key, String(value));
+    }
+  });
+  const serialized = query.toString();
+  return serialized ? `${base}?${serialized}` : base;
+};
+
 const LotteryGovernancePage = () => {
   const navigate = useNavigate();
   const [preference, setPreference] = useState<LotteryPreference>();
@@ -285,6 +296,16 @@ const LotteryGovernancePage = () => {
       path: '/lottery/month-end'
     };
   }, [attributionRollup, audits, recommendationRollup?.staleCount, reminders?.dueCount, workbench?.releaseCheckSummary?.checks]);
+
+  const archiveReviewNotePath = useMemo(() => buildGovernancePath('/lottery/research/notebook', {
+    title: '治理归档复核',
+    status: 'ACTIVE',
+    evidenceKey: `governance-archive-review:${archiveReviewPressure.count}`,
+    evidenceType: 'ARCHIVE_REVIEW',
+    evidenceTitle: `治理归档复核压力 ${archiveReviewPressure.count} 项`,
+    sourceId: 'governance',
+    path: buildGovernancePath('/lottery/exports', { preset: 'v34-archive-search' })
+  }), [archiveReviewPressure.count]);
 
   const anomalyItems = useMemo<GovernanceAnomaly[]>(() => {
     const highRiskLimit = preference?.governanceSimulatorHighRiskLimit ?? 2;
@@ -523,7 +544,15 @@ const LotteryGovernancePage = () => {
         </section>
 
         <section className="lottery-governance-release-grid">
-          <Card className="life-panel-card lottery-clean-panel" title="异常观察">
+          <Card
+            className="life-panel-card lottery-clean-panel"
+            title="异常观察"
+            extra={archiveReviewPressure.count > 0 ? (
+              <Button size="small" icon={<AuditOutlined />} onClick={() => navigate(archiveReviewNotePath)}>
+                记录复核
+              </Button>
+            ) : undefined}
+          >
             <div className="lottery-governance-anomaly-list">
               {anomalyItems.length ? anomalyItems.map(item => (
                 <button key={item.key} type="button" onClick={() => navigate(item.path)}>
