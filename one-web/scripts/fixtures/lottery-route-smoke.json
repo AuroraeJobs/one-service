@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 38 Wave 38B month-end note quality smoke",
+  "target": "Iteration 38 Wave 38C governance note quality smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -140,6 +140,10 @@
         "const driftTrendItems",
         "archiveReviewPressure",
         "archiveReviewNotePath",
+        "archiveReviewNoteQuality",
+        "lotteryStrategyNoteApi.notes",
+        "复核笔记质量",
+        "evidence=ARCHIVE_REVIEW",
         "buildGovernancePath",
         "ARCHIVE_REVIEW",
         "记录复核",

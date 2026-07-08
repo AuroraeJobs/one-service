@@ -1029,9 +1029,9 @@ Goal: make archive-review notes easier to assess for completeness, status, and e
 
 ### Wave 38C: Governance Note Quality
 
-- [ ] Add archive-review note quality to governance drift or anomaly context.
-- [ ] Reuse the notebook and month-end evidence paths.
-- [ ] Decide whether quality gaps need a release-readiness guard.
+- [x] Add archive-review note quality to governance drift or anomaly context.
+- [x] Reuse the notebook and month-end evidence paths.
+- [x] Decide whether quality gaps need a release-readiness guard. Decision: keep as governance drift signal; no release-readiness guard yet.
 
 ## Documentation And Delivery
 

@@ -23,6 +23,7 @@ import {
   lotteryPreferenceApi,
   lotteryRecommendationApi,
   lotteryReminderApi,
+  lotteryStrategyNoteApi,
   lotteryStrategyPortfolioApi,
   lotteryTicketPackApi,
   lotteryWorkbenchApi,
@@ -32,6 +33,7 @@ import {
   type LotteryPreference,
   type LotteryRecommendationRollup,
   type LotteryReminderSummary,
+  type LotteryStrategyNote,
   type LotteryStrategyPortfolioSummary,
   type LotteryTicketPack,
   type LotteryWorkbenchSummary
@@ -133,6 +135,7 @@ const LotteryGovernancePage = () => {
   const [recommendationRollup, setRecommendationRollup] = useState<LotteryRecommendationRollup>();
   const [portfolios, setPortfolios] = useState<LotteryStrategyPortfolioSummary[]>([]);
   const [ticketPacks, setTicketPacks] = useState<LotteryTicketPack[]>([]);
+  const [notes, setNotes] = useState<LotteryStrategyNote[]>([]);
   const [audits, setAudits] = useState<LotteryAuditEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
@@ -141,7 +144,7 @@ const LotteryGovernancePage = () => {
     setLoading(true);
     setError(undefined);
     try {
-      const [nextPreference, nextWorkbench, nextOperations, nextReminders, nextAttributionRollup, nextRecommendationRollup, nextPortfolios, nextTicketPacks, nextAudits] = await Promise.all([
+      const [nextPreference, nextWorkbench, nextOperations, nextReminders, nextAttributionRollup, nextRecommendationRollup, nextPortfolios, nextTicketPacks, nextNotes, nextAudits] = await Promise.all([
         lotteryPreferenceApi.preference(),
         lotteryWorkbenchApi.summary(),
         lotteryOperationsApi.health(),
@@ -150,6 +153,7 @@ const LotteryGovernancePage = () => {
         lotteryRecommendationApi.rollup({ window: 'recent30', limit: 30 }),
         lotteryStrategyPortfolioApi.portfolios({ page: 1, pageSize: 50 }),
         lotteryTicketPackApi.ticketPacks({ page: 1, pageSize: 50 }),
+        lotteryStrategyNoteApi.notes({ page: 1, pageSize: 30 }),
         lotteryExportApi.auditEvents({ page: 1, pageSize: 80 })
       ]);
       setPreference(nextPreference);
@@ -160,6 +164,7 @@ const LotteryGovernancePage = () => {
       setRecommendationRollup(nextRecommendationRollup);
       setPortfolios(nextPortfolios.items || []);
       setTicketPacks(nextTicketPacks.items || []);
+      setNotes(nextNotes.items || []);
       setAudits(nextAudits.items || []);
     } catch (requestError) {
       console.error('读取彩票治理看板失败:', requestError);
@@ -306,6 +311,20 @@ const LotteryGovernancePage = () => {
     sourceId: 'governance',
     path: buildGovernancePath('/lottery/exports', { preset: 'v34-archive-search' })
   }), [archiveReviewPressure.count]);
+
+  const archiveReviewNoteQuality = useMemo(() => {
+    const archiveNotes = notes.filter(note => (note.evidence || []).some(evidence => evidence.evidenceType === 'ARCHIVE_REVIEW'));
+    const active = archiveNotes.filter(note => note.status === 'ACTIVE').length;
+    const validated = archiveNotes.filter(note => note.status === 'VALIDATED').length;
+    const evidenceCount = archiveNotes.reduce((sum, note) => sum + (note.evidence || []).filter(evidence => evidence.evidenceType === 'ARCHIVE_REVIEW').length, 0);
+    return {
+      total: archiveNotes.length,
+      active,
+      validated,
+      evidenceCount,
+      status: archiveNotes.length ? (active ? 'WARNING' : validated ? 'PASS' : 'MANUAL') : 'MANUAL' as GovernanceStatus
+    };
+  }, [notes]);
 
   const anomalyItems = useMemo<GovernanceAnomaly[]>(() => {
     const highRiskLimit = preference?.governanceSimulatorHighRiskLimit ?? 2;
@@ -481,6 +500,14 @@ const LotteryGovernancePage = () => {
         path: archiveReviewPressure.path
       },
       {
+        key: 'archive-review-note-quality',
+        label: '复核笔记质量',
+        value: `${archiveReviewNoteQuality.validated}/${archiveReviewNoteQuality.total}`,
+        detail: `验证中 ${archiveReviewNoteQuality.active} 条，复核证据 ${archiveReviewNoteQuality.evidenceCount} 条`,
+        status: archiveReviewNoteQuality.status,
+        path: '/lottery/research/notebook?evidence=ARCHIVE_REVIEW'
+      },
+      {
         key: 'operations-freshness',
         label: '运营健康刷新',
         value: formatTime(operations?.generatedAt),
@@ -489,7 +516,7 @@ const LotteryGovernancePage = () => {
         path: '/lottery/workbench'
       }
     ];
-  }, [archiveReviewPressure, attributionRollup, audits, operations, recommendationRollup, workbench]);
+  }, [archiveReviewNoteQuality, archiveReviewPressure, attributionRollup, audits, operations, recommendationRollup, workbench]);
 
   const overallScore = domains.length ? Math.round(domains.reduce((sum, item) => sum + item.score, 0) / domains.length) : 0;
   const warningCount = domains.filter(item => item.status !== 'PASS').length;

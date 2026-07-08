@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 38 Wave 38B month-end note quality smoke",
-  "generatedAt": "2026-07-08T07:21:09.165Z",
+  "target": "Iteration 38 Wave 38C governance note quality smoke",
+  "generatedAt": "2026-07-08T07:26:58.979Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 18,
-  "checkCount": 595,
+  "checkCount": 599,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
