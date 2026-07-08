@@ -437,6 +437,13 @@ type LaunchChecklistItem = {
   detail: string;
 };
 
+type ReviewQualityItem = {
+  key: keyof MiniGptRunNoteRequest;
+  label: string;
+  status: 'PASS' | 'WATCH' | 'TODO';
+  detail: string;
+};
+
 const MINI_GPT_PLAN_STORAGE_KEY = 'one-web:minigpt:planned-experiments';
 
 const isPlannedExperiment = (value: unknown): value is PlannedExperiment => {
@@ -800,7 +807,9 @@ const buildExperimentReport = (
   corpusInsight?: MiniGptCorpusInsight,
   plannedExperiments: PlannedExperiment[] = [],
   variableDiffs: ExperimentVariableDiff[] = [],
-  checklistItems: LaunchChecklistItem[] = []
+  checklistItems: LaunchChecklistItem[] = [],
+  noteValues: MiniGptRunNoteRequest = {},
+  reviewQuality: ReviewQualityItem[] = []
 ) => {
   const metrics = metricItems(run, logs);
   const diagnostics = lossDiagnostics(run, logs);
@@ -862,10 +871,15 @@ const buildExperimentReport = (
     ...hyperparameterGuideRows.map(row => `- ${row.label}: ${row.effect}；观察 ${row.watch}；下一步 ${row.next}`),
     '',
     '## 实验笔记',
-    `- 假设：${run.hypothesis || '-'}`,
-    `- 观察：${run.observation || '-'}`,
-    `- 结论：${run.conclusion || '-'}`,
-    `- 下一步：${run.nextStep || '-'}`,
+    `- 假设：${noteValues.hypothesis || run.hypothesis || '-'}`,
+    `- 观察：${noteValues.observation || run.observation || '-'}`,
+    `- 结论：${noteValues.conclusion || run.conclusion || '-'}`,
+    `- 下一步：${noteValues.nextStep || run.nextStep || '-'}`,
+    '',
+    '## 复盘质量检查',
+    ...(reviewQuality.length
+      ? reviewQuality.map(item => `- ${item.label}: ${item.status} / ${item.detail}`)
+      : ['- 暂无检查']),
     '',
     '## 复盘问题',
     ...questions.map((question, index) => `${index + 1}. ${question}`),
@@ -1184,7 +1198,7 @@ const reviewDraftSources = (
   ];
 };
 
-const reviewQualityItems = (values: MiniGptRunNoteRequest = {}) => {
+const reviewQualityItems = (values: MiniGptRunNoteRequest = {}): ReviewQualityItem[] => {
   const rows: Array<[keyof MiniGptRunNoteRequest, string, string]> = [
     ['hypothesis', '假设', '说明本轮实验要验证什么'],
     ['observation', '观察', '记录 loss、样例或异常现象'],
@@ -1502,6 +1516,10 @@ const MiniGptLearningPage = () => {
     () => ({ ...form.getFieldsValue(), ...(watchedTrainingValues || {}) }),
     [form, watchedTrainingValues]
   );
+  const noteFormValues = useMemo(
+    () => ({ ...noteForm.getFieldsValue(), ...(watchedNoteValues || {}) }),
+    [noteForm, watchedNoteValues]
+  );
   const variableDiffItems = useMemo(
     () => experimentVariableDiffs(run, trainingFormValues),
     [run, trainingFormValues]
@@ -1531,12 +1549,32 @@ const MiniGptLearningPage = () => {
     [generationResult, launchChecklistItems, logs, nextActionItems, run, variableDiffItems]
   );
   const reviewQualityCheckItems = useMemo(
-    () => reviewQualityItems({ ...noteForm.getFieldsValue(), ...(watchedNoteValues || {}) }),
-    [noteForm, watchedNoteValues]
+    () => reviewQualityItems(noteFormValues),
+    [noteFormValues]
   );
   const experimentReport = useMemo(
-    () => run ? buildExperimentReport(run, logs, generationResult, corpusInsight, plannedExperiments, variableDiffItems, launchChecklistItems) : '',
-    [corpusInsight, generationResult, launchChecklistItems, logs, plannedExperiments, run, variableDiffItems]
+    () => run ? buildExperimentReport(
+      run,
+      logs,
+      generationResult,
+      corpusInsight,
+      plannedExperiments,
+      variableDiffItems,
+      launchChecklistItems,
+      noteFormValues,
+      reviewQualityCheckItems
+    ) : '',
+    [
+      corpusInsight,
+      generationResult,
+      launchChecklistItems,
+      logs,
+      noteFormValues,
+      plannedExperiments,
+      reviewQualityCheckItems,
+      run,
+      variableDiffItems
+    ]
   );
 
   const handleCopyReport = async () => {
