@@ -1011,6 +1011,28 @@ Goal: make archive review evidence obvious after users enter the research notebo
 - [x] Prefer frontend-derived summaries from existing strategy notes before adding backend contracts.
 - [x] Decide whether archived review notes need export evidence. Decision: keep notes surfaced through notebook filtering and existing archive evidence packages.
 
+## Iteration 38: Archive Review Note Quality
+
+Goal: make archive-review notes easier to assess for completeness, status, and evidence coverage.
+
+### Wave 38A: Notebook Quality Summary
+
+- [x] Add a compact summary for archive-review note count, active notes, validated notes, and attached archive evidence.
+- [x] Keep the summary frontend-derived from currently loaded strategy notes.
+- [x] Add smoke coverage for the summary labels.
+
+### Wave 38B: Month-End Note Quality
+
+- [ ] Surface the same archive-review note quality signal on month-end review.
+- [ ] Keep month-end summaries linked to the notebook archive-review filter.
+- [ ] Avoid adding backend aggregation unless local data is insufficient.
+
+### Wave 38C: Governance Note Quality
+
+- [ ] Add archive-review note quality to governance drift or anomaly context.
+- [ ] Reuse the notebook and month-end evidence paths.
+- [ ] Decide whether quality gaps need a release-readiness guard.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

@@ -80,6 +80,12 @@ const LotteryResearchNotebookPage = () => {
         : pendingEvidence?.sourceId || '归档复核';
   const notes = useMemo(() => response?.items || [], [response?.items]);
   const archiveReviewNotes = useMemo(() => notes.filter(note => (note.evidence || []).some(item => item.evidenceType === 'ARCHIVE_REVIEW')), [notes]);
+  const archiveReviewSummary = useMemo(() => ({
+    total: archiveReviewNotes.length,
+    active: archiveReviewNotes.filter(note => note.status === 'ACTIVE').length,
+    validated: archiveReviewNotes.filter(note => note.status === 'VALIDATED').length,
+    evidenceCount: archiveReviewNotes.reduce((sum, note) => sum + (note.evidence || []).filter(item => item.evidenceType === 'ARCHIVE_REVIEW').length, 0)
+  }), [archiveReviewNotes]);
   const visibleNotes = evidenceFilter === 'ARCHIVE_REVIEW' ? archiveReviewNotes : notes;
 
   const loadNotes = useCallback(async () => {
@@ -259,6 +265,15 @@ const LotteryResearchNotebookPage = () => {
           {pendingEvidence ? <Tag color="gold">待挂载证据</Tag> : null}
         </Space>
       </Card>
+
+      {archiveReviewSummary.total > 0 ? (
+        <section className="lottery-notebook-archive-summary">
+          <article><strong>{archiveReviewSummary.total}</strong><span>归档复核笔记</span></article>
+          <article><strong>{archiveReviewSummary.active}</strong><span>验证中</span></article>
+          <article><strong>{archiveReviewSummary.validated}</strong><span>已验证</span></article>
+          <article><strong>{archiveReviewSummary.evidenceCount}</strong><span>复核证据</span></article>
+        </section>
+      ) : null}
 
       <Spin spinning={loading}>
         {visibleNotes.length ? (

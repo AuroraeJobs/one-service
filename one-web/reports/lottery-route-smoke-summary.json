@@ -1,6 +1,6 @@
 {
-  "target": "Iteration 37 Wave 37C archive review note surfacing smoke",
-  "generatedAt": "2026-07-08T07:17:30.682Z",
+  "target": "Iteration 38 Wave 38A archive notebook quality smoke",
+  "generatedAt": "2026-07-08T07:18:55.366Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
@@ -135,7 +135,7 @@
       "label": "策略笔记",
       "component": "LotteryResearchNotebookPage",
       "mockApiCount": 4,
-      "emptyStateCount": 13,
+      "emptyStateCount": 18,
       "errorStateCount": 4
     },
     {
