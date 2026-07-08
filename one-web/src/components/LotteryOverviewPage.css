@@ -3352,6 +3352,35 @@
   font-weight: 700;
 }
 
+.lottery-attribution-rollup-summary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.lottery-attribution-rollup-summary article {
+  display: grid;
+  gap: 6px;
+  min-height: 76px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-attribution-rollup-summary strong {
+  overflow-wrap: anywhere;
+  color: var(--app-text);
+  font-size: 19px;
+  line-height: 1.1;
+}
+
+.lottery-attribution-rollup-summary span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
 .lottery-attribution-trend-table {
   display: grid;
   gap: 10px;
@@ -7142,6 +7171,10 @@ button.lottery-latest-vs-card:hover {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .lottery-attribution-rollup-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .lottery-attribution-handoff-map button {
     min-height: 132px;
   }
@@ -7439,6 +7472,7 @@ button.lottery-latest-vs-card:hover {
   .lottery-outcome-summary-grid,
   .lottery-outcome-card-grid,
   .lottery-attribution-handoff-map,
+  .lottery-attribution-rollup-summary,
   .lottery-recommendation-summary,
   .lottery-recommendation-board,
   .lottery-mobile-metrics,

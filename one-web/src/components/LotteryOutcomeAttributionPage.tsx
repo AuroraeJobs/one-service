@@ -12,7 +12,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import {
   lotteryOutcomeApi,
-  type LotteryOutcomeAttribution
+  type LotteryOutcomeAttribution,
+  type LotteryOutcomeAttributionRollup
 } from '../services/api';
 import { lotteryCodeLabel, lotteryStatusLabel } from '../utils/lotteryStatusLabel';
 import './LotteryOverviewPage.css';
@@ -34,6 +35,37 @@ const stateColor = (state?: string) => {
 };
 
 const distributionRows = (distribution?: Record<string, number>) => Object.entries(distribution || {});
+
+const rollupWindows = [
+  { key: 'latest', label: '最新期' },
+  { key: 'recent10', label: '近10期' },
+  { key: 'month-to-date', label: '本月' },
+  { key: 'all', label: '全部' }
+] as const;
+
+const dimensionLabel = (dimension?: string) => {
+  const labels: Record<string, string> = {
+    issue: '期号',
+    portfolio: '组合',
+    rule: '规则',
+    source: '来源',
+    'ticket-pack-execution': '票包执行',
+    'simulator-risk': '沙盘风险',
+    'recommendation-lifecycle': '推荐生命周期'
+  };
+  return labels[dimension || ''] || lotteryCodeLabel(dimension);
+};
+
+const evidenceQualityLabel = (quality?: string) => {
+  const labels: Record<string, string> = {
+    STABLE: '稳定',
+    OBSERVE: '观察中',
+    WATCH: '需复核',
+    UNDER_TESTED: '样本不足',
+    NEGATIVE: '负向'
+  };
+  return labels[quality || ''] || lotteryStatusLabel(quality);
+};
 
 const qualityFor = (params: { samples?: number; warnings?: number; score?: number; stale?: boolean }) => {
   const samples = params.samples || 0;
@@ -155,6 +187,8 @@ const LotteryOutcomeAttributionPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [outcomes, setOutcomes] = useState<LotteryOutcomeAttribution[]>([]);
   const [selected, setSelected] = useState<LotteryOutcomeAttribution>();
+  const [rollup, setRollup] = useState<LotteryOutcomeAttributionRollup>();
+  const [rollupWindow, setRollupWindow] = useState<(typeof rollupWindows)[number]['key']>('recent10');
   const [outcomeFilter, setOutcomeFilter] = useState<'ALL' | 'GAP' | 'PROMOTE' | 'WATCH'>('ALL');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
@@ -165,8 +199,12 @@ const LotteryOutcomeAttributionPage = () => {
     setLoading(true);
     setError(undefined);
     try {
-      const recent = await lotteryOutcomeApi.recent({ limit: 20 });
+      const [recent, rollupSummary] = await Promise.all([
+        lotteryOutcomeApi.recent({ limit: 20 }),
+        lotteryOutcomeApi.rollup({ window: rollupWindow })
+      ]);
       setOutcomes(recent);
+      setRollup(rollupSummary);
       const issue = selectedIssue || recent[0]?.issue;
       if (issue) {
         const detail = await lotteryOutcomeApi.issue(issue);
@@ -179,7 +217,7 @@ const LotteryOutcomeAttributionPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedIssue, setSearchParams]);
+  }, [rollupWindow, selectedIssue, setSearchParams]);
 
   useEffect(() => {
     loadOutcomes();
@@ -210,6 +248,7 @@ const LotteryOutcomeAttributionPage = () => {
   });
   const handoffCards = useMemo(() => buildAttributionHandoffs(selected), [selected]);
   const trendRows = useMemo(() => buildTrendRows(selected), [selected]);
+  const rollupRows = useMemo(() => (rollup?.rows || []).slice(0, 12), [rollup]);
 
   return (
     <LifePageShell
@@ -260,6 +299,39 @@ const LotteryOutcomeAttributionPage = () => {
                   <article><strong>{formatPercent(selected.roiPercent)}</strong><span>ROI</span></article>
                   <article><Tag color={stateColor(selected.calibrationState)}>{lotteryStatusLabel(selected.calibrationState)}</Tag><span>校准状态</span></article>
                 </section>
+
+                <Card className="life-panel-card lottery-clean-panel" title="聚合归因">
+                  <div className="lottery-filter-preset-bar">
+                    {rollupWindows.map(item => (
+                      <Button
+                        key={item.key}
+                        size="small"
+                        type={rollupWindow === item.key ? 'primary' : 'default'}
+                        onClick={() => setRollupWindow(item.key)}
+                      >
+                        {item.label}
+                      </Button>
+                    ))}
+                  </div>
+                  <section className="lottery-attribution-rollup-summary">
+                    <article><strong>{rollup?.issueCount || 0}</strong><span>归因期数</span></article>
+                    <article><strong>{rollup?.ticketCount || 0}</strong><span>票据</span></article>
+                    <article><strong>{rollup?.winningTicketCount || 0}</strong><span>中奖票据</span></article>
+                    <article><strong>{formatMoney(rollup?.netResult)}</strong><span>净收益</span></article>
+                    <article><strong>{formatPercent(rollup?.roiPercent)}</strong><span>ROI</span></article>
+                  </section>
+                  <div className="lottery-attribution-trend-table">
+                    {rollupRows.length ? rollupRows.map(item => (
+                      <button key={`${item.dimension}-${item.key}`} type="button" onClick={() => navigate(item.path || '/lottery/outcomes')}>
+                        <Tag>{dimensionLabel(item.dimension)}</Tag>
+                        <span>{item.label || item.key || '-'}</span>
+                        <small>{item.issueCount || 0} 期 · {item.sampleCount || 0} 样本 · {item.warningCount || 0} 警示</small>
+                        <Tag color={stateColor(item.state)}>{lotteryStatusLabel(item.state)}</Tag>
+                        <Tag color={item.evidenceQuality === 'STABLE' ? 'green' : item.evidenceQuality === 'WATCH' ? 'gold' : item.evidenceQuality === 'NEGATIVE' ? 'red' : 'blue'}>{evidenceQualityLabel(item.evidenceQuality)}</Tag>
+                      </button>
+                    )) : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无聚合归因" />}
+                  </div>
+                </Card>
 
                 <section className="lottery-attribution-handoff-map">
                   {handoffCards.map(item => (
