@@ -27,7 +27,7 @@ public class OpenAiTrainingManagementController {
     }
 
     @GetMapping("reports")
-    public List<OpenAiTrainingReportRecord> reports(@RequestParam(required = false) Integer limit) {
+    public List<OpenAiTrainingReportRecord> reports(@RequestParam(name = "limit", required = false) Integer limit) {
         return service.reports(limit);
     }
 

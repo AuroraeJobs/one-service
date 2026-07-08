@@ -30,14 +30,14 @@ public class MiniGptLearningController {
     private final IMiniGptLearningService service;
 
     @GetMapping("dashboard")
-    public MiniGptDashboard dashboard(@RequestParam(required = false) String runName,
-                                      @RequestParam(required = false) Integer runLimit,
-                                      @RequestParam(required = false) Integer logLimit) {
+    public MiniGptDashboard dashboard(@RequestParam(name = "runName", required = false) String runName,
+                                      @RequestParam(name = "runLimit", required = false) Integer runLimit,
+                                      @RequestParam(name = "logLimit", required = false) Integer logLimit) {
         return service.dashboard(runName, runLimit, logLimit);
     }
 
     @GetMapping("runs")
-    public List<MiniGptRunRecord> runs(@RequestParam(required = false) Integer limit) {
+    public List<MiniGptRunRecord> runs(@RequestParam(name = "limit", required = false) Integer limit) {
         return service.runs(limit);
     }
 
@@ -47,8 +47,8 @@ public class MiniGptLearningController {
     }
 
     @GetMapping("logs")
-    public List<MiniGptTrainingLogRecord> logs(@RequestParam(required = false) String runName,
-                                               @RequestParam(required = false) Integer limit) {
+    public List<MiniGptTrainingLogRecord> logs(@RequestParam(name = "runName", required = false) String runName,
+                                               @RequestParam(name = "limit", required = false) Integer limit) {
         return service.logs(runName, limit);
     }
 
@@ -68,9 +68,9 @@ public class MiniGptLearningController {
     }
 
     @GetMapping("corpus")
-    public MiniGptCorpusInsight corpusInsight(@RequestParam(required = false) String data,
-                                              @RequestParam(required = false) String sample,
-                                              @RequestParam(required = false) Integer tokenLimit) {
+    public MiniGptCorpusInsight corpusInsight(@RequestParam(name = "data", required = false) String data,
+                                              @RequestParam(name = "sample", required = false) String sample,
+                                              @RequestParam(name = "tokenLimit", required = false) Integer tokenLimit) {
         return service.corpusInsight(data, sample, tokenLimit);
     }
 
@@ -80,7 +80,7 @@ public class MiniGptLearningController {
     }
 
     @PatchMapping("runs/{runName}/notes")
-    public MiniGptRunRecord updateRunNotes(@PathVariable String runName,
+    public MiniGptRunRecord updateRunNotes(@PathVariable("runName") String runName,
                                            @RequestBody(required = false) MiniGptRunNoteRequest request) {
         return service.updateRunNotes(runName, request);
     }
