@@ -799,7 +799,8 @@ const buildExperimentReport = (
   generationResult?: MiniGptGenerationResult,
   corpusInsight?: MiniGptCorpusInsight,
   plannedExperiments: PlannedExperiment[] = [],
-  variableDiffs: ExperimentVariableDiff[] = []
+  variableDiffs: ExperimentVariableDiff[] = [],
+  checklistItems: LaunchChecklistItem[] = []
 ) => {
   const metrics = metricItems(run, logs);
   const diagnostics = lossDiagnostics(run, logs);
@@ -842,6 +843,11 @@ const buildExperimentReport = (
     ...(variableDiffs.length
       ? variableDiffs.map(item => `- ${item.label}: ${item.from} -> ${item.to}`)
       : ['- 暂无差异']),
+    '',
+    '## 训练启动检查',
+    ...(checklistItems.length
+      ? checklistItems.map(item => `- ${item.label}: ${item.status} / ${item.detail}`)
+      : ['- 暂无检查']),
     '',
     '## 配置',
     ...configEntries(run).map(([key, value]) => `- ${key}: ${value}`),
@@ -1426,8 +1432,8 @@ const MiniGptLearningPage = () => {
     [corpusDiagnosticItems, plannedExperiments, run, runNameExists, variableGuardState]
   );
   const experimentReport = useMemo(
-    () => run ? buildExperimentReport(run, logs, generationResult, corpusInsight, plannedExperiments, variableDiffItems) : '',
-    [corpusInsight, generationResult, logs, plannedExperiments, run, variableDiffItems]
+    () => run ? buildExperimentReport(run, logs, generationResult, corpusInsight, plannedExperiments, variableDiffItems, launchChecklistItems) : '',
+    [corpusInsight, generationResult, launchChecklistItems, logs, plannedExperiments, run, variableDiffItems]
   );
 
   const handleCopyReport = async () => {
