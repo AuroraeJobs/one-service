@@ -417,9 +417,6 @@ const LotteryMonthEndReviewPage = () => {
           <Button icon={<DownloadOutlined />} onClick={() => navigate('/lottery/exports?type=decision-outcomes&preset=month-end-governance')}>
             月末包
           </Button>
-          <Button icon={<DownloadOutlined />} onClick={() => navigate('/lottery/exports?preset=long-term-research')}>
-            长期复盘包
-          </Button>
           <Button icon={<ReloadOutlined />} loading={loading} onClick={loadReview}>
             刷新
           </Button>

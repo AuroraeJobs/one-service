@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 30 Wave 30C long-term retrospective export smoke",
-  "generatedAt": "2026-07-08T03:58:03.032Z",
+  "target": "Iteration 30 Wave 30B month-end narrative smoke",
+  "generatedAt": "2026-07-08T03:54:45.339Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 17,
-  "checkCount": 462,
+  "checkCount": 455,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
@@ -143,7 +143,7 @@
       "label": "导出审计",
       "component": "LotteryExportMaintenancePage",
       "mockApiCount": 4,
-      "emptyStateCount": 29,
+      "emptyStateCount": 25,
       "errorStateCount": 4
     }
   ]

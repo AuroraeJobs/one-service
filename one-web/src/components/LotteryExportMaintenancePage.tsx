@@ -61,16 +61,6 @@ const reportPresets = [
     sections: ['ledger-issues', 'tickets', 'decision-sets', 'decision-outcomes', 'settlement-reviews', 'budget-prechecks', 'ticket-import-previews', 'rule-evidence', 'replay-evidence', 'sync-logs', 'probe-logs']
   },
   {
-    key: 'long-term-research',
-    label: '长期研究包',
-    sections: ['ledger-issues', 'tickets', 'predictions', 'experiments', 'backtests', 'decision-sets', 'decision-outcomes', 'settlement-reviews', 'rule-evidence', 'replay-evidence', 'sync-logs', 'probe-logs']
-  },
-  {
-    key: 'annual-retrospective',
-    label: '年度复盘包',
-    sections: ['ledger-issues', 'tickets', 'predictions', 'experiments', 'backtests', 'decision-outcomes', 'budget-prechecks', 'settlement-reviews', 'rule-evidence', 'replay-evidence', 'probe-logs']
-  },
-  {
     key: 'v15-attribution-loop',
     label: '归因闭环包',
     sections: ['ledger-issues', 'tickets', 'decision-outcomes', 'settlement-reviews', 'rule-evidence', 'replay-evidence']
@@ -150,14 +140,6 @@ const v15EvidencePacks = [
     preset: 'V15治理证据包',
     auditTypes: ['EXPORT', 'REPORT_EXPORT', 'LOTTERY_RECOMMENDATION_REFRESH'],
     sections: ['sync-logs', 'probe-logs', 'decision-outcomes']
-  },
-  {
-    key: 'long-term-research',
-    title: '长期研究证据',
-    route: '/lottery/month-end',
-    preset: '长期研究包',
-    auditTypes: ['EXPORT', 'REPORT_EXPORT', 'LOTTERY_RECOMMENDATION_STATUS', 'LOTTERY_OUTCOME_ATTRIBUTION'],
-    sections: ['ledger-issues', 'tickets', 'predictions', 'experiments', 'backtests', 'decision-outcomes', 'rule-evidence', 'replay-evidence']
   }
 ];
 
@@ -296,14 +278,6 @@ const LotteryExportMaintenancePage = () => {
     loadState();
   }, [loadState]);
 
-  useEffect(() => {
-    const preset = searchParams.get('preset');
-    const matchedPreset = reportPresets.find(item => item.key === preset);
-    if (matchedPreset) {
-      setReportSections(matchedPreset.sections);
-    }
-  }, [searchParams]);
-
   const runExport = async () => {
     setExporting(true);
     setError(undefined);
@@ -436,15 +410,8 @@ const LotteryExportMaintenancePage = () => {
       key: 'month-end-report-presets',
       label: '月末报表预设',
       status: 'PASS',
-      message: '导出页提供复盘运营、月末复盘、月末治理包和长期研究包报表区块预设',
+      message: '导出页提供复盘运营、月末复盘和月末治理包报表区块预设',
       path: '/lottery/exports'
-    },
-    {
-      key: 'v30-long-term-research-exports',
-      label: 'V30长期复盘导出',
-      status: 'PASS',
-      message: '长期研究包和年度复盘包覆盖期号、票据、预测、实验、回测、决策、归因和发布证据',
-      path: '/lottery/exports?preset=long-term-research'
     },
     {
       key: 'month-end-dashboard',
@@ -707,8 +674,8 @@ const LotteryExportMaintenancePage = () => {
 
       <Card
         className="life-panel-card lottery-clean-panel lottery-v15-evidence-card"
-        title={<Space><SafetyCertificateOutlined />闭环证据包</Space>}
-        extra={<Tag color="blue">归因 / 推荐 / 移动 / 治理 / 长期</Tag>}
+        title={<Space><SafetyCertificateOutlined />V15闭环证据包</Space>}
+        extra={<Tag color="blue">归因 / 推荐 / 移动 / 治理</Tag>}
       >
         <div className="lottery-v15-evidence-grid">
           {v15EvidencePacks.map(pack => (

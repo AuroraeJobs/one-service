@@ -847,12 +847,6 @@ Goal: make the lottery module easier to use as a long-running research archive, 
 - [x] Keep copy evidence-oriented and avoid prediction-confidence language. The summary reports evidence, warnings, pending work, and exports without promising future outcomes.
 - [x] Add route smoke checks for narrative source labels. Smoke fixture now checks `narrativeItems` and the four narrative headings.
 
-### Wave 30C: Long-Term Retrospective Exports
-
-- [x] Add export presets for long-term research retrospectives. Added `长期研究包` and `年度复盘包`.
-- [x] Connect archive and narrative views to export evidence. Month-end review now links to `/lottery/exports?preset=long-term-research`, and export evidence packs include `长期研究证据`.
-- [x] Review mobile/dark-mode behavior for archive-heavy states. Reused existing evidence-pack and report-preset responsive grids, with smoke guards for the new export labels.
-
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

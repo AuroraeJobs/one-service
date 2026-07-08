@@ -16,6 +16,6 @@ Goal: make the lottery module easier to use as a long-running research archive, 
 
 ## Wave 30C: Long-Term Retrospective Exports
 
-- Add export presets for long-term research retrospectives. Added `长期研究包` and `年度复盘包` report presets.
-- Connect archive and narrative views to export evidence. Month-end review now links to the long-term research preset, and export evidence packs include `长期研究证据`.
-- Review mobile/dark-mode behavior for archive-heavy states. Reused existing report preset and evidence-pack responsive grids and smoke guards.
+- Add export presets for long-term research retrospectives.
+- Connect archive and narrative views to export evidence.
+- Review mobile/dark-mode behavior for archive-heavy states.
