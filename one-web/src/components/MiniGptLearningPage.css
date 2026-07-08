@@ -321,6 +321,28 @@
   line-height: 1.55;
 }
 
+.mini-gpt-variable-guard {
+  padding: 10px 12px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 8px;
+  background: var(--mini-gpt-panel-bg);
+}
+
+.mini-gpt-variable-guard.ready {
+  border-color: color-mix(in srgb, #34c759 42%, var(--mini-gpt-border));
+  background: color-mix(in srgb, #34c759 8%, var(--mini-gpt-panel-bg));
+}
+
+.mini-gpt-variable-guard.multi {
+  border-color: color-mix(in srgb, #ff9500 44%, var(--mini-gpt-border));
+  background: color-mix(in srgb, #ff9500 9%, var(--mini-gpt-panel-bg));
+}
+
+.mini-gpt-variable-guard.baseline {
+  border-color: color-mix(in srgb, #0071e3 38%, var(--mini-gpt-border));
+  background: color-mix(in srgb, #0071e3 7%, var(--mini-gpt-panel-bg));
+}
+
 .mini-gpt-status-panel {
   display: grid;
   gap: 12px;

@@ -513,6 +513,39 @@ const experimentVariableDiffs = (
     .filter(item => item.from !== item.to);
 };
 
+const variableGuard = (run: MiniGptRunRecord | undefined, diffs: ExperimentVariableDiff[]) => {
+  if (!run) {
+    return {
+      status: 'baseline',
+      tagColor: 'blue',
+      title: '基线实验',
+      detail: '这是第一轮实验，先确认训练链路和样例输出。'
+    };
+  }
+  if (diffs.length === 0) {
+    return {
+      status: 'idle',
+      tagColor: 'default',
+      title: '未选择变量',
+      detail: '当前表单与最新实验一致，建议先应用一个计划项或手动改一个变量。'
+    };
+  }
+  if (diffs.length === 1) {
+    return {
+      status: 'ready',
+      tagColor: 'green',
+      title: '单变量就绪',
+      detail: `本轮只改变 ${diffs[0].label}，适合做对照实验。`
+    };
+  }
+  return {
+    status: 'multi',
+    tagColor: 'orange',
+    title: '多变量变更',
+    detail: `当前同时改变 ${diffs.length} 个变量，结论可能难以归因。`
+  };
+};
+
 const nextExperimentActions = (
   run: MiniGptRunRecord | undefined,
   logs: MiniGptTrainingLogRecord[],
@@ -1118,6 +1151,13 @@ const MiniGptLearningPage = () => {
   }, []);
 
   const handleStartTraining = async (values: MiniGptTrainingRequest) => {
+    const startDiffs = experimentVariableDiffs(run, values);
+    if (run && startDiffs.length === 0) {
+      message.warning('当前表单与最新实验一致，建议先修改一个变量再训练');
+    }
+    if (run && startDiffs.length > 1) {
+      message.warning(`当前同时修改 ${startDiffs.length} 个变量，复盘时会更难归因`);
+    }
     setStarting(true);
     try {
       const status = await miniGptApi.startTraining(values);
@@ -1235,6 +1275,10 @@ const MiniGptLearningPage = () => {
   const variableDiffItems = useMemo(
     () => experimentVariableDiffs(run, trainingFormValues),
     [run, trainingFormValues]
+  );
+  const variableGuardState = useMemo(
+    () => variableGuard(run, variableDiffItems),
+    [run, variableDiffItems]
   );
   const experimentReport = useMemo(
     () => run ? buildExperimentReport(run, logs, generationResult, corpusInsight, plannedExperiments, variableDiffItems) : '',
@@ -1492,10 +1536,14 @@ const MiniGptLearningPage = () => {
             <section className="mini-gpt-variable-diff">
               <div className="mini-gpt-variable-diff-head">
                 <Text type="secondary">下一轮变量差异</Text>
-                <Tag color={variableDiffItems.length === 1 ? 'green' : variableDiffItems.length > 1 ? 'orange' : 'default'}>
-                  {run ? `${variableDiffItems.length} changes` : 'baseline'}
-                </Tag>
+                <Space wrap>
+                  <Tag color={variableGuardState.tagColor}>{variableGuardState.title}</Tag>
+                  <Tag color={variableDiffItems.length === 1 ? 'green' : variableDiffItems.length > 1 ? 'orange' : 'default'}>
+                    {run ? `${variableDiffItems.length} changes` : 'baseline'}
+                  </Tag>
+                </Space>
               </div>
+              <p className={`mini-gpt-variable-guard ${variableGuardState.status}`}>{variableGuardState.detail}</p>
               {run ? (
                 variableDiffItems.length ? (
                   <div className="mini-gpt-variable-diff-grid">
