@@ -347,6 +347,15 @@
   background: color-mix(in srgb, #0071e3 7%, var(--mini-gpt-panel-bg));
 }
 
+.mini-gpt-run-name-suggestion code {
+  padding: 3px 6px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 6px;
+  color: var(--mini-gpt-text);
+  background: var(--mini-gpt-code-bg);
+  word-break: break-word;
+}
+
 .mini-gpt-status-panel {
   display: grid;
   gap: 12px;

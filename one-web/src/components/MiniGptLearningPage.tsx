@@ -476,6 +476,14 @@ const displayVariableValue = (value: unknown) => (
   value === undefined || value === null || value === '' ? '-' : String(value)
 );
 
+const slugifyRunPart = (value: unknown) => (
+  displayVariableValue(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 28) || 'value'
+);
+
 const configNumber = (run: MiniGptRunRecord | undefined, key: string) => {
   const value = run?.config?.[key];
   return Number.isFinite(Number(value)) ? Number(value) : undefined;
@@ -569,6 +577,13 @@ const variableGuard = (run: MiniGptRunRecord | undefined, diffs: ExperimentVaria
     title: '多变量变更',
     detail: `当前同时改变 ${diffs.length} 个变量，结论可能难以归因。`
   };
+};
+
+const buildSuggestedRunName = (run: MiniGptRunRecord | undefined, diffs: ExperimentVariableDiff[]) => {
+  const diff = diffs[0];
+  const baseName = slugifyRunPart(run?.runName || 'minigpt');
+  if (!diff) return `${baseName}-next`;
+  return `${baseName}-${slugifyRunPart(diff.key)}-${slugifyRunPart(diff.to)}`.slice(0, 80);
 };
 
 const nextExperimentActions = (
@@ -1169,6 +1184,19 @@ const MiniGptLearningPage = () => {
     message.success(`已保留变量：${variableDiffItems[0].label}`);
   };
 
+  const handleSuggestRunName = () => {
+    if (variableDiffItems.length !== 1) {
+      message.info('请先收敛到一个变量，再生成实验名');
+      return;
+    }
+    const nextRunName = buildSuggestedRunName(run, variableDiffItems);
+    form.setFieldsValue({
+      ...form.getFieldsValue(),
+      runName: nextRunName
+    });
+    message.success(`已生成实验名：${nextRunName}`);
+  };
+
   const loadComparisonLogs = useCallback(async (runNames: string[]) => {
     const safeRunNames = runNames.filter(Boolean).slice(0, 4);
     setComparisonRunNames(safeRunNames);
@@ -1321,6 +1349,10 @@ const MiniGptLearningPage = () => {
     () => variableGuard(run, variableDiffItems),
     [run, variableDiffItems]
   );
+  const suggestedRunName = useMemo(
+    () => variableDiffItems.length === 1 ? buildSuggestedRunName(run, variableDiffItems) : '',
+    [run, variableDiffItems]
+  );
   const experimentReport = useMemo(
     () => run ? buildExperimentReport(run, logs, generationResult, corpusInsight, plannedExperiments, variableDiffItems) : '',
     [corpusInsight, generationResult, logs, plannedExperiments, run, variableDiffItems]
@@ -1466,7 +1498,19 @@ const MiniGptLearningPage = () => {
                   />
                 </Form.Item>
                 <Form.Item name="runName" label="实验名">
-                  <Input placeholder="留空自动生成" />
+                  <Input
+                    placeholder="留空自动生成"
+                    addonAfter={(
+                      <Button
+                        type="link"
+                        size="small"
+                        disabled={variableDiffItems.length !== 1}
+                        onClick={handleSuggestRunName}
+                      >
+                        命名
+                      </Button>
+                    )}
+                  />
                 </Form.Item>
                 <Form.Item name="data" label="语料">
                   <Input />
@@ -1585,6 +1629,9 @@ const MiniGptLearningPage = () => {
                 </Space>
               </div>
               <p className={`mini-gpt-variable-guard ${variableGuardState.status}`}>{variableGuardState.detail}</p>
+              {suggestedRunName && (
+                <p className="mini-gpt-run-name-suggestion">建议实验名：<code>{suggestedRunName}</code></p>
+              )}
               {run && variableDiffItems.length > 1 && (
                 <Button size="small" onClick={handleKeepFirstVariableOnly}>
                   只保留第一个变量
