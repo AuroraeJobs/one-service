@@ -2679,6 +2679,9 @@
 }
 
 .lottery-archive-search {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(120px, 150px) minmax(120px, 150px);
+  gap: 8px;
   margin-bottom: 10px;
 }
 
@@ -7648,6 +7651,7 @@ button.lottery-latest-vs-card:hover {
   .lottery-workbench-main-grid,
   .lottery-workbench-recent-grid,
   .lottery-workbench-runbook-grid,
+  .lottery-archive-search,
   .lottery-research-report-grid,
   .lottery-release-readiness-grid,
   .lottery-research-card-grid,
@@ -7758,6 +7762,7 @@ button.lottery-latest-vs-card:hover {
   .lottery-research-report-grid,
   .lottery-release-readiness-grid,
   .lottery-workbench-closure-list,
+  .lottery-archive-search,
   .lottery-workbench-status-grid {
     grid-template-columns: minmax(0, 1fr);
   }

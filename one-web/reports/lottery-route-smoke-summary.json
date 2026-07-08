@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 33 Wave 33C runbook evidence export smoke",
-  "generatedAt": "2026-07-08T05:47:07.222Z",
+  "target": "Iteration 34 Wave 34A archive filter smoke",
+  "generatedAt": "2026-07-08T05:51:28.675Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 18,
-  "checkCount": 535,
+  "checkCount": 540,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
@@ -71,7 +71,7 @@
       "label": "月末复盘",
       "component": "LotteryMonthEndReviewPage",
       "mockApiCount": 11,
-      "emptyStateCount": 7,
+      "emptyStateCount": 9,
       "errorStateCount": 1
     },
     {

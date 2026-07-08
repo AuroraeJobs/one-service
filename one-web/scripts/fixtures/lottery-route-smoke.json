@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 33 Wave 33C runbook evidence export smoke",
+  "target": "Iteration 34 Wave 34A archive filter smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -150,7 +150,12 @@
         "recommendationRollup",
         "研究归档索引",
         "archiveItems",
+        "allArchiveItems",
         "archiveQuery",
+        "archiveScopeFilter",
+        "archiveStatusFilter",
+        "全部范围",
+        "全部状态",
         "暂无研究归档",
         "月末叙事摘要",
         "narrativeItems",
@@ -426,7 +431,7 @@
         "lotteryReminderApi.summary",
         "lotteryExportApi.auditEvents"
       ],
-      "emptyStates": ["暂无期号复盘", "暂无研究证据", "暂无归因质量摘要", "暂无推荐生命周期摘要", "异常复核闭环", "暂无研究归档", "暂无月末导出证据"],
+      "emptyStates": ["暂无期号复盘", "暂无研究证据", "暂无归因质量摘要", "暂无推荐生命周期摘要", "异常复核闭环", "全部范围", "全部状态", "暂无研究归档", "暂无月末导出证据"],
       "errorStates": ["读取彩票月末复盘失败"],
       "fixtureData": {
         "review": {

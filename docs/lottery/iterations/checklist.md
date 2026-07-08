@@ -921,6 +921,29 @@ Goal: make daily, draw-cycle, month-end, and release review steps explicit and r
 - [x] Connect review runbook steps to release readiness and month-end review. Added `V33复核Runbook` release evidence that points to the runbook evidence preset.
 - [x] Keep static smoke independent from live backend or provider availability. Smoke guards the runbook export labels without live backend or provider calls.
 
+## Iteration 34: Research Archive Search 2.0
+
+Goal: make month-end review a faster long-term research entry point by improving the archive index before adding any new backend contract.
+
+### Wave 34A: Month-End Archive Filters
+
+- [x] Add range and status filters to the `研究归档索引` card.
+- [x] Keep the first slice frontend-derived from loaded month-end evidence.
+- [x] Preserve keyword search across scope, status, title, and detail text.
+- [x] Extend route smoke checks so archive filters stay visible in release evidence.
+
+### Wave 34B: Archive Deep Links
+
+- [ ] Add stronger handoffs from archive rows to issue ledger, recommendation, outcome, ticket-pack, and export views.
+- [ ] Keep query parameters aligned with each specialist page's existing filters.
+- [ ] Add smoke checks for the linked destinations.
+
+### Wave 34C: Archive Evidence Export
+
+- [ ] Add export evidence labels for archive searches that need to be reviewed outside the page.
+- [ ] Record the active range/status/search context in export-ready metadata where existing export presets allow it.
+- [ ] Keep the export path explicit and user-triggered.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

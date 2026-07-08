@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Alert, Button, Card, Empty, Input, Progress, Space, Spin, Tag } from 'antd';
+import { Alert, Button, Card, Empty, Input, Progress, Select, Space, Spin, Tag } from 'antd';
 import {
   BellOutlined,
   BookOutlined,
@@ -141,6 +141,24 @@ const archiveScopeLabel = (scope: string) => {
 
 const safeCount = (value?: number) => Number(value || 0);
 
+const archiveScopeOptions = [
+  { label: '全部范围', value: 'all' },
+  { label: '期号', value: 'issue' },
+  { label: '月份', value: 'month' },
+  { label: '归因', value: 'outcome' },
+  { label: '推荐', value: 'recommendation' },
+  { label: '策略', value: 'strategy' },
+  { label: '发布', value: 'release' }
+];
+
+const archiveStatusOptions = [
+  { label: '全部状态', value: 'all' },
+  { label: '通过', value: 'PASS' },
+  { label: '警示', value: 'WARNING' },
+  { label: '失败', value: 'FAILED' },
+  { label: '手动', value: 'MANUAL' }
+];
+
 const LotteryMonthEndReviewPage = () => {
   const navigate = useNavigate();
   const [workbench, setWorkbench] = useState<LotteryWorkbenchSummary>();
@@ -155,6 +173,8 @@ const LotteryMonthEndReviewPage = () => {
   const [reminders, setReminders] = useState<LotteryReminderSummary>();
   const [audits, setAudits] = useState<LotteryAuditEvent[]>([]);
   const [archiveQuery, setArchiveQuery] = useState('');
+  const [archiveScopeFilter, setArchiveScopeFilter] = useState('all');
+  const [archiveStatusFilter, setArchiveStatusFilter] = useState('all');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -291,7 +311,7 @@ const LotteryMonthEndReviewPage = () => {
     }
   ];
 
-  const archiveItems = useMemo<ArchiveItem[]>(() => {
+  const allArchiveItems = useMemo<ArchiveItem[]>(() => {
     const items: ArchiveItem[] = [];
     items.push({
       key: 'month:current',
@@ -358,12 +378,17 @@ const LotteryMonthEndReviewPage = () => {
         count: item.rowCount
       });
     });
+    return items;
+  }, [attributionRollup?.issueCount, attributionRows, exportAudits, ledger?.netResult, monthEndScore, notes?.items, recentIssues, recommendationRollup]);
+
+  const archiveItems = useMemo<ArchiveItem[]>(() => {
     const keyword = archiveQuery.trim().toLowerCase();
-    if (!keyword) {
-      return items.slice(0, 12);
-    }
-    return items.filter(item => `${archiveScopeLabel(item.scope)} ${item.title} ${item.detail}`.toLowerCase().includes(keyword)).slice(0, 12);
-  }, [archiveQuery, attributionRollup?.issueCount, attributionRows, exportAudits, ledger?.netResult, monthEndScore, notes?.items, recentIssues, recommendationRollup]);
+    return allArchiveItems
+      .filter(item => archiveScopeFilter === 'all' || item.scope === archiveScopeFilter)
+      .filter(item => archiveStatusFilter === 'all' || item.status === archiveStatusFilter)
+      .filter(item => !keyword || `${archiveScopeLabel(item.scope)} ${lotteryStatusLabel(item.status)} ${item.title} ${item.detail}`.toLowerCase().includes(keyword))
+      .slice(0, 12);
+  }, [allArchiveItems, archiveQuery, archiveScopeFilter, archiveStatusFilter]);
 
   const narrativeItems = useMemo<NarrativeItem[]>(() => {
     const pendingTickets = safeCount(tickets?.pendingTicketCount);
@@ -643,7 +668,7 @@ const LotteryMonthEndReviewPage = () => {
           <Card
             className="life-panel-card lottery-clean-panel"
             title="研究归档索引"
-            extra={<Tag>{archiveItems.length} 条</Tag>}
+            extra={<Tag>{archiveItems.length}/{allArchiveItems.length} 条</Tag>}
           >
             <div className="lottery-archive-search">
               <Input
@@ -652,6 +677,16 @@ const LotteryMonthEndReviewPage = () => {
                 value={archiveQuery}
                 onChange={event => setArchiveQuery(event.target.value)}
                 placeholder="搜索期号、月份、策略、归因、推荐或发布证据"
+              />
+              <Select
+                value={archiveScopeFilter}
+                onChange={setArchiveScopeFilter}
+                options={archiveScopeOptions}
+              />
+              <Select
+                value={archiveStatusFilter}
+                onChange={setArchiveStatusFilter}
+                options={archiveStatusOptions}
               />
             </div>
             {archiveItems.length ? (
