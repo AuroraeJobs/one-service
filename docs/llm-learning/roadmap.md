@@ -52,7 +52,7 @@
 
 完成标准：能把一个开源模型接入业务数据，做成稳定的产品功能。
 
-参考文档：`docs/llm-learning/openai-training-management.md` 记录了 OpenAI 模型训练管理的生命周期和 one-service 数据实体建议。
+参考文档：`docs/llm-learning/openai-training-management.md` 记录了 OpenAI 模型训练管理的生命周期和 one-service 数据实体建议；`/ai/training` 提供只读学习台。
 
 ## 第一周任务
 
@@ -83,3 +83,4 @@
 - 用同一个 checkpoint 对比 2 组 `temperature/top-k` 生成结果，记录输出稳定性和重复程度。
 - 点击 `复制报告` 把当前实验配置、loss、笔记、复盘质量检查和生成样例整理成 Markdown 复盘。
 - 阅读 `docs/llm-learning/openai-training-management.md`，把 MiniGPT 的 run、logs、checkpoint、report 对应到 OpenAI 的 fine-tuning job、metrics、checkpoint 和 eval。
+- 打开 `/ai/training`，按 baseline eval、dataset、fine-tuning job、checkpoint、deployment binding 的顺序复述一遍托管训练生命周期。

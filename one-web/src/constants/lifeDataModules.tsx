@@ -132,14 +132,14 @@ export const lifeDataModules: LifeDataModule[] = [
     id: 'ai',
     title: 'OpenAI',
     shortTitle: 'OpenAI',
-    description: '统一管理模型对话、MiniGPT 学习实验和模型运行观测。',
+    description: '统一管理模型对话、MiniGPT 学习实验、托管训练管理和模型运行观测。',
     path: '/ai/chat',
     status: 'partial',
     accent: '#00c7be',
     icon: <OpenAIOutlined />,
-    liveCapabilities: ['模型切换', '上下文对话', 'MiniGPT 实验观察', '本地模型接入'],
-    plannedCapabilities: ['Spring AI 深度编排', '工具调用', '对话复盘'],
-    dataSources: ['LocalAI/Ollama', 'DeepSeek', 'Spring AI OpenAI 兼容配置', 'MiniGPT Mongo 实验日志']
+    liveCapabilities: ['模型切换', '上下文对话', 'MiniGPT 实验观察', 'OpenAI 训练管理学习台', '本地模型接入'],
+    plannedCapabilities: ['Spring AI 深度编排', '工具调用', '对话复盘', '训练任务 API 接入'],
+    dataSources: ['LocalAI/Ollama', 'DeepSeek', 'Spring AI OpenAI 兼容配置', 'MiniGPT Mongo 实验日志', 'OpenAI fine-tuning 管理对象']
   },
   {
     id: 'wechat',
@@ -330,7 +330,8 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
   ],
   ai: [
     { id: 'ai-chat', moduleKey: 'ai', path: '/ai/chat', label: '对话', icon: <MessageOutlined />, accent: '#00c7be' },
-    { id: 'ai-minigpt', moduleKey: 'ai', path: '/ai/minigpt', label: 'MiniGPT', icon: <ExperimentOutlined />, accent: '#5856d6' }
+    { id: 'ai-minigpt', moduleKey: 'ai', path: '/ai/minigpt', label: 'MiniGPT', icon: <ExperimentOutlined />, accent: '#5856d6' },
+    { id: 'ai-training', moduleKey: 'ai', path: '/ai/training', label: '训练', icon: <BranchesOutlined />, accent: '#0071e3' }
   ],
   wechat: [
     { id: 'wechat-write', moduleKey: 'wechat', path: '/wechat', label: '写稿', icon: <FileTextOutlined />, accent: '#0071e3' },
