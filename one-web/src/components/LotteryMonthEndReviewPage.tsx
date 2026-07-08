@@ -464,6 +464,16 @@ const LotteryMonthEndReviewPage = () => {
     type: archiveScopeFilter === 'issue' ? 'tickets' : undefined
   }), [archiveQuery, archiveScopeFilter, archiveStatusFilter]);
 
+  const archiveReviewNotePath = useMemo(() => buildArchivePath('/lottery/research/notebook', {
+    title: `归档复核 ${archiveScopeLabel(archiveScopeFilter)} ${archiveQuery.trim() || '月末证据'}`,
+    status: 'ACTIVE',
+    evidenceKey: `archive-review:${archiveScopeFilter}:${archiveStatusFilter}:${archiveQuery.trim() || 'all'}`,
+    evidenceType: 'ARCHIVE_REVIEW',
+    evidenceTitle: `归档复核队列 ${archiveReviewQueueItems.length} 项`,
+    sourceId: archiveScopeFilter,
+    path: archiveEvidenceExportPath
+  }), [archiveEvidenceExportPath, archiveQuery, archiveReviewQueueItems.length, archiveScopeFilter, archiveStatusFilter]);
+
   const narrativeItems = useMemo<NarrativeItem[]>(() => {
     const pendingTickets = safeCount(tickets?.pendingTicketCount);
     const attributionWarnings = attributionRows.reduce((sum, item) => sum + safeCount(item.warningCount), 0);
@@ -789,7 +799,14 @@ const LotteryMonthEndReviewPage = () => {
           <Card
             className="life-panel-card lottery-clean-panel"
             title="归档复核队列"
-            extra={<Tag color={archiveReviewQueueItems.length ? 'orange' : 'green'}>{archiveReviewQueueItems.length ? `${archiveReviewQueueItems.length} 项` : '已清空'}</Tag>}
+            extra={
+              <Space wrap>
+                <Tag color={archiveReviewQueueItems.length ? 'orange' : 'green'}>{archiveReviewQueueItems.length ? `${archiveReviewQueueItems.length} 项` : '已清空'}</Tag>
+                <Button size="small" icon={<BookOutlined />} onClick={() => navigate(archiveReviewNotePath)}>
+                  记录复核
+                </Button>
+              </Space>
+            }
           >
             {archiveReviewQueueItems.length ? (
               <div className="lottery-month-end-list">

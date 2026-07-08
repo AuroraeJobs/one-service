@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 35 Wave 35C archive governance smoke",
+  "target": "Iteration 36 Wave 36A archive note handoff smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -172,6 +172,10 @@
         "archiveEvidenceExportPath",
         "archiveReviewPriority",
         "archiveReviewQueueItems",
+        "archiveReviewNotePath",
+        "ARCHIVE_REVIEW",
+        "记录复核",
+        "/lottery/research/notebook",
         "归档复核队列",
         "当前筛选暂无待复核归档",
         "v34-archive-search",

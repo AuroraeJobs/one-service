@@ -967,6 +967,28 @@ Goal: turn month-end archive search results into explicit next actions without s
 - [x] Reuse existing governance, month-end, and export evidence paths before adding any persistence.
 - [x] Add export evidence labels only if the review queue needs durable report packaging. Decision: reuse the existing V34 archive search export preset; no new preset needed.
 
+## Iteration 36: Archive Review Notes
+
+Goal: make archive review conclusions easy to preserve as research evidence while keeping all write actions explicit and user-triggered.
+
+### Wave 36A: Month-End Review Note Handoff
+
+- [x] Add a `记录复核` handoff from the month-end archive review queue.
+- [x] Carry the active archive scope, status, query, queue count, and export evidence path into the research notebook.
+- [x] Reuse the existing strategy-note evidence query parameters instead of adding a new backend contract.
+
+### Wave 36B: Workbench Note Handoff
+
+- [ ] Add a workbench shortcut from archive-review pressure to the same notebook evidence flow.
+- [ ] Keep the primary workbench action pointed at the review queue.
+- [ ] Add smoke checks for the note handoff.
+
+### Wave 36C: Governance Note Handoff
+
+- [ ] Add governance context for preserving archive-review decisions.
+- [ ] Reuse the V34 archive search evidence export and strategy notebook before adding new persistence.
+- [ ] Decide whether a dedicated review-note export label is justified.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

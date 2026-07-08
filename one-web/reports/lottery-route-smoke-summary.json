@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 35 Wave 35C archive governance smoke",
-  "generatedAt": "2026-07-08T06:15:10.551Z",
+  "target": "Iteration 36 Wave 36A archive note handoff smoke",
+  "generatedAt": "2026-07-08T06:17:33.058Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 18,
-  "checkCount": 572,
+  "checkCount": 576,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
