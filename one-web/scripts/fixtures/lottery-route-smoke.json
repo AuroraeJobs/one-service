@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 35 Wave 35A archive review queue smoke",
+  "target": "Iteration 35 Wave 35B archive workbench handoff smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -19,6 +19,11 @@
         "确认同步健康",
         "确认导出健康",
         "const issueNextItems",
+        "archiveReviewPressure",
+        "archive-review",
+        "归档复核",
+        "归档复核 ${archiveReviewPressure.count}",
+        "monthEnd: '/lottery/month-end'",
         "const workbenchIssueHandoffPaths",
         "ticketPacks: '/lottery/ticket-packs'",
         "governance: '/lottery/governance'",

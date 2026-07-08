@@ -15,6 +15,8 @@ Goal: turn month-end archive search results into explicit next actions without s
 - Keep handoffs explicit and user-triggered.
 - Add smoke checks for the workbench entry.
 
+Status: completed with a frontend-derived `archiveReviewPressure` handoff on the workbench next-step strip and month-end runbook card.
+
 ## Wave 35C: Governance Connection
 
 - Connect recurring archive-review pressure into governance anomaly context.

@@ -957,9 +957,9 @@ Goal: turn month-end archive search results into explicit next actions without s
 
 ### Wave 35B: Workbench Handoff
 
-- [ ] Surface archive-review pressure on the workbench when month-end evidence contains pending review items.
-- [ ] Keep handoffs explicit and user-triggered.
-- [ ] Add smoke checks for the workbench entry.
+- [x] Surface archive-review pressure on the workbench when month-end evidence contains pending review items.
+- [x] Keep handoffs explicit and user-triggered.
+- [x] Add smoke checks for the workbench entry.
 
 ### Wave 35C: Governance Connection
 

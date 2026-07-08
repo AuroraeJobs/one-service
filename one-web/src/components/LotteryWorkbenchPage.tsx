@@ -133,7 +133,8 @@ const workbenchIssueHandoffPaths = {
   governance: '/lottery/governance',
   ticketPacks: '/lottery/ticket-packs',
   recommendations: '/lottery/recommendations',
-  exports: '/lottery/exports'
+  exports: '/lottery/exports',
+  monthEnd: '/lottery/month-end'
 } as const;
 
 interface WorkbenchActionQueueItem {
@@ -1211,6 +1212,20 @@ const LotteryWorkbenchPage = () => {
     return Array.from(groups.entries()).map(([title, items]) => ({ title, items }));
   }, [actionQueueItems]);
 
+  const archiveReviewPressure = useMemo(() => {
+    const releaseBlockers = (releaseCheckSummary?.checks || []).filter(item => item.status && item.status !== 'PASS');
+    const evidenceFollowUps = actionQueueItems.filter(item => item.group === '证据复核' || item.title.includes('证据') || item.title.includes('过期'));
+    const dueReminderCount = reminders?.dueCount || 0;
+    const missingExportEvidence = recentWork.exports.length ? 0 : 1;
+    const count = releaseBlockers.length + evidenceFollowUps.length + dueReminderCount + missingExportEvidence;
+    return {
+      count,
+      status: releaseBlockers.some(item => item.status === 'FAILED') ? 'FAILED' : count ? 'WARNING' : 'PASS',
+      detail: `发布阻塞 ${releaseBlockers.length} · 证据复核 ${evidenceFollowUps.length} · 到期提醒 ${dueReminderCount}`,
+      path: workbenchIssueHandoffPaths.monthEnd
+    };
+  }, [actionQueueItems, recentWork.exports.length, releaseCheckSummary?.checks, reminders?.dueCount]);
+
   const issueNextItems = useMemo<WorkbenchIssueNextItem[]>(() => {
     const items: WorkbenchIssueNextItem[] = [];
     const releaseBlockers = (releaseCheckSummary?.checks || []).filter(item => item.status && item.status !== 'PASS');
@@ -1267,6 +1282,19 @@ const LotteryWorkbenchPage = () => {
         count: releaseBlockers.length,
         path: blocker.path || workbenchIssueHandoffPaths.exports,
         actionLabel: '看证据'
+      });
+    }
+
+    if (archiveReviewPressure.count > 0) {
+      items.push({
+        key: 'archive-review',
+        icon: <BookOutlined />,
+        title: '归档复核',
+        detail: archiveReviewPressure.detail,
+        status: archiveReviewPressure.status,
+        count: archiveReviewPressure.count,
+        path: archiveReviewPressure.path,
+        actionLabel: '看队列'
       });
     }
 
@@ -1328,6 +1356,7 @@ const LotteryWorkbenchPage = () => {
     return items.slice(0, 6);
   }, [
     actionQueueItems,
+    archiveReviewPressure,
     dailyState?.prizeCheckState,
     dailyState?.ticketState?.path,
     dailyState?.ticketState?.status,
@@ -1383,7 +1412,7 @@ const LotteryWorkbenchPage = () => {
     const releaseBlockers = (releaseCheckSummary?.checks || []).filter(item => item.status && item.status !== 'PASS').length;
     const dueReminderCount = reminders?.dueCount || 0;
     const pendingQueueCount = actionQueueItems.length;
-    const monthEndStatus = releaseBlockers || dueReminderCount ? 'WARNING' : recentWork.exports.length ? 'PASS' : 'MANUAL';
+    const monthEndStatus = archiveReviewPressure.count ? archiveReviewPressure.status : recentWork.exports.length ? 'PASS' : 'MANUAL';
     const firstReminder = (reminders?.items || []).find(item => !item.acknowledgedAt);
     const healthContributors = operationsHealth?.contributors || [];
     const firstHealthContributor = healthContributors.find(item => item.status && item.status !== 'PASS');
@@ -1438,10 +1467,11 @@ const LotteryWorkbenchPage = () => {
         status: monthEndStatus,
         evidence: [
           `票据待核 ${summary?.pendingTicketCount || 0}`,
+          `归档复核 ${archiveReviewPressure.count}`,
           `导出 ${recentWork.exports.length}`,
           `发布阻塞 ${releaseBlockers}`
         ],
-        path: '/lottery/month-end',
+        path: archiveReviewPressure.path,
         actionLabel: '看复盘',
         acknowledgeTarget: dueReminderCount && firstReminder?.key && firstReminder.fingerprint ? {
           type: 'reminder',
@@ -1471,6 +1501,7 @@ const LotteryWorkbenchPage = () => {
     ];
   }, [
     actionQueueItems.length,
+    archiveReviewPressure,
     calendar?.currentIssueState,
     calendar?.drawWeekday,
     calendar?.nextDrawDate,
