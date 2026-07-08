@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Alert, Button, Card, Empty, Form, Input, InputNumber, Progress, Select, Space, Spin, Table, Tag, Typography, message } from 'antd';
-import { CloseCircleOutlined, CopyOutlined, DatabaseOutlined, PlayCircleOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons';
+import { BarChartOutlined, BookOutlined, CloseCircleOutlined, CopyOutlined, DatabaseOutlined, PlayCircleOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
 import LifePageShell from './LifePageShell';
 import {
@@ -1324,6 +1325,7 @@ const reviewQualityItems = (values: MiniGptRunNoteRequest = {}): ReviewQualityIt
 };
 
 const MiniGptLearningPage = () => {
+  const navigate = useNavigate();
   const [form] = Form.useForm<MiniGptTrainingRequest>();
   const [noteForm] = Form.useForm<MiniGptRunNoteRequest>();
   const [generationForm] = Form.useForm<MiniGptGenerationRequest>();
@@ -1707,6 +1709,39 @@ const MiniGptLearningPage = () => {
     } finally {
       setRunningCandidateBacktest(false);
     }
+  };
+
+  const openCandidateBacktestDetail = () => {
+    if (!candidateBacktest?.id) {
+      message.warning('当前回测报告缺少 ID，暂时无法打开详情');
+      return;
+    }
+    navigate(`/lottery/backtests/${candidateBacktest.id}`);
+  };
+
+  const openCandidateBacktestResearch = () => {
+    if (!candidateBacktest?.id) {
+      message.warning('当前回测报告缺少 ID，暂时无法进入研究对比');
+      return;
+    }
+    navigate(`/lottery/research?items=${encodeURIComponent(`backtest:${candidateBacktest.id}`)}`);
+  };
+
+  const openCandidateBacktestNotebook = () => {
+    if (!candidateBacktest?.id) {
+      message.warning('当前回测报告缺少 ID，暂时无法挂到笔记');
+      return;
+    }
+    const evidenceKey = `backtest:${candidateBacktest.id}`;
+    const search = new URLSearchParams({
+      evidenceKey,
+      evidenceType: 'BACKTEST',
+      evidenceTitle: candidateBacktest.strategyName || 'MiniGPT 候选池回测',
+      sourceId: candidateBacktest.id,
+      path: `/lottery/backtests/${candidateBacktest.id}`,
+      title: `${candidateBacktest.strategyName || 'MiniGPT 候选池'} 训练复盘`
+    });
+    navigate(`/lottery/research/notebook?${search.toString()}`);
   };
 
   useEffect(() => {
@@ -2797,6 +2832,17 @@ const MiniGptLearningPage = () => {
                           <strong>{Object.entries(candidateBacktest.prizeDistribution || {}).slice(0, 2).map(([key, value]) => `${key}:${value}`).join(' / ') || '-'}</strong>
                           <em>历史窗口表现</em>
                         </div>
+                      </div>
+                      <div className="mini-gpt-candidate-backtest-actions">
+                        <Button size="small" icon={<BarChartOutlined />} onClick={openCandidateBacktestDetail}>
+                          回测详情
+                        </Button>
+                        <Button size="small" icon={<BarChartOutlined />} onClick={openCandidateBacktestResearch}>
+                          研究对比
+                        </Button>
+                        <Button size="small" icon={<BookOutlined />} onClick={openCandidateBacktestNotebook}>
+                          挂到笔记
+                        </Button>
                       </div>
                     </section>
                   )}
