@@ -289,6 +289,60 @@
   line-height: 1.5;
 }
 
+.mini-gpt-lottery-corpus {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 8px;
+  background: var(--mini-gpt-panel-bg-soft);
+}
+
+.mini-gpt-lottery-corpus-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mini-gpt-lottery-corpus > p {
+  margin: 0;
+  color: var(--mini-gpt-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.mini-gpt-lottery-corpus-result {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  gap: 8px 10px;
+  align-items: center;
+}
+
+.mini-gpt-lottery-corpus-result span {
+  color: var(--mini-gpt-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.mini-gpt-lottery-corpus-result code {
+  grid-column: 1 / -1;
+  padding: 8px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 6px;
+  color: var(--mini-gpt-text);
+  background: var(--mini-gpt-code-bg);
+  overflow-wrap: anywhere;
+}
+
+.mini-gpt-lottery-corpus-result p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--mini-gpt-muted);
+  font-size: 12px;
+}
+
 .mini-gpt-env-check {
   display: grid;
   gap: 10px;

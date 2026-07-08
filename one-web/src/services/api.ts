@@ -1171,6 +1171,17 @@ export interface MiniGptEnvironmentCheck {
   checkedAt?: number;
 }
 
+export interface MiniGptLotteryCorpusExport {
+  format?: string;
+  dataPath?: string;
+  filePath?: string;
+  drawCount?: number;
+  firstIssue?: string;
+  latestIssue?: string;
+  preview?: string;
+  generatedAt?: number;
+}
+
 export interface MiniGptTokenEntry {
   token?: string;
   tokenId?: number;
@@ -1251,6 +1262,10 @@ export const miniGptApi = {
 
   environment: (): Promise<MiniGptEnvironmentCheck> => {
     return apiClient.get('/ai/minigpt/environment');
+  },
+
+  exportLotteryCorpus: (params?: { format?: string; limit?: number }): Promise<MiniGptLotteryCorpusExport> => {
+    return apiClient.post('/ai/minigpt/corpus/lottery/export', undefined, { params });
   },
 
   corpusInsight: (params?: { data?: string; sample?: string; tokenLimit?: number }): Promise<MiniGptCorpusInsight> => {

@@ -7,14 +7,18 @@ import com.one.record.ai.MiniGptEnvironmentCheck;
 import com.one.record.ai.MiniGptCorpusInsight;
 import com.one.record.ai.MiniGptGenerationRequest;
 import com.one.record.ai.MiniGptGenerationResult;
+import com.one.record.ai.MiniGptLotteryCorpusExport;
 import com.one.record.ai.MiniGptRunNoteRequest;
 import com.one.record.ai.MiniGptTrainingRequest;
 import com.one.record.ai.MiniGptTrainingStatus;
+import com.one.record.lottery.LotteryDraw;
 import com.one.record.model.MiniGptRunRecord;
 import com.one.record.model.MiniGptTrainingLogRecord;
 import com.one.record.repository.MiniGptRunRepository;
 import com.one.record.repository.MiniGptTrainingLogRepository;
+import com.one.record.request.RecordRequest;
 import com.one.record.service.IMiniGptLearningService;
+import com.one.record.service.IRecordService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -32,6 +36,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,9 +91,17 @@ public class MiniGptLearningService implements IMiniGptLearningService {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
+    private static final int LOTTERY_CORPUS_PAGE_SIZE = 500;
+
+    private static final int DEFAULT_LOTTERY_CORPUS_LIMIT = 2000;
+
+    private static final int MAX_LOTTERY_CORPUS_LIMIT = 5000;
+
     private final MiniGptRunRepository runRepository;
 
     private final MiniGptTrainingLogRepository logRepository;
+
+    private final IRecordService recordService;
 
     private final AtomicBoolean trainingRunning = new AtomicBoolean(false);
 
@@ -100,9 +113,11 @@ public class MiniGptLearningService implements IMiniGptLearningService {
     private String miniGptPlaygroundDir;
 
     public MiniGptLearningService(MiniGptRunRepository runRepository,
-                                  MiniGptTrainingLogRepository logRepository) {
+                                  MiniGptTrainingLogRepository logRepository,
+                                  IRecordService recordService) {
         this.runRepository = runRepository;
         this.logRepository = logRepository;
+        this.recordService = recordService;
     }
 
     @Override
@@ -307,6 +322,43 @@ public class MiniGptLearningService implements IMiniGptLearningService {
                     .message("MiniGPT Python 启动失败: " + exception.getMessage())
                     .build();
         }
+    }
+
+    @Override
+    public MiniGptLotteryCorpusExport exportLotteryCorpus(String format, Integer limit) {
+        String normalizedFormat = normalizeLotteryCorpusFormat(format);
+        List<LotteryDraw> draws = loadLotteryDraws(normalizeLimit(limit, DEFAULT_LOTTERY_CORPUS_LIMIT, MAX_LOTTERY_CORPUS_LIMIT));
+        String content = draws.stream()
+                .map(draw -> "features".equals(normalizedFormat) ? featureCorpusLine(draw) : rawCorpusLine(draw))
+                .filter(StringUtils::hasText)
+                .collect(java.util.stream.Collectors.joining(System.lineSeparator()));
+
+        Path playgroundDir = resolvePlaygroundDir();
+        Path dataDir = playgroundDir.resolve("data").normalize();
+        Path outputPath = dataDir.resolve("lottery-" + normalizedFormat + ".txt").normalize();
+        if (!outputPath.startsWith(dataDir)) {
+            throw new IllegalArgumentException("MiniGPT 彩票语料路径非法");
+        }
+        try {
+            Files.createDirectories(dataDir);
+            Files.writeString(outputPath, content + System.lineSeparator(), StandardCharsets.UTF_8);
+        } catch (IOException exception) {
+            throw new IllegalStateException("写入 MiniGPT 彩票语料失败", exception);
+        }
+
+        LotteryDraw first = draws.isEmpty() ? null : draws.get(0);
+        LotteryDraw latest = draws.isEmpty() ? null : draws.get(draws.size() - 1);
+        String dataPath = playgroundDir.relativize(outputPath).toString();
+        return MiniGptLotteryCorpusExport.builder()
+                .format(normalizedFormat)
+                .dataPath(dataPath)
+                .filePath(outputPath.toString())
+                .drawCount(draws.size())
+                .firstIssue(first == null ? null : first.getIssue())
+                .latestIssue(latest == null ? null : latest.getIssue())
+                .preview(content.substring(0, Math.min(content.length(), PREVIEW_LIMIT)))
+                .generatedAt(System.currentTimeMillis())
+                .build();
     }
 
     @Override
@@ -783,6 +835,85 @@ public class MiniGptLearningService implements IMiniGptLearningService {
             return DEFAULT_MONGO_URI;
         }
         return mongoUri.replaceAll("(?<=://)([^:/@]+):([^@]+)@", "$1:****@");
+    }
+
+    private List<LotteryDraw> loadLotteryDraws(int limit) {
+        List<LotteryDraw> draws = new ArrayList<>();
+        int page = 0;
+        while (draws.size() < limit) {
+            List<LotteryDraw> pageDraws = recordService.findDraws(new RecordRequest(), page, LOTTERY_CORPUS_PAGE_SIZE);
+            if (pageDraws == null || pageDraws.isEmpty()) {
+                break;
+            }
+            draws.addAll(pageDraws);
+            if (pageDraws.size() < LOTTERY_CORPUS_PAGE_SIZE) {
+                break;
+            }
+            page++;
+        }
+        return draws.stream()
+                .filter(draw -> draw != null && draw.getRedNumbers() != null && draw.getBlueNumber() != null)
+                .sorted(Comparator.comparing(MiniGptLearningService::safeIssue))
+                .limit(limit)
+                .toList();
+    }
+
+    private static String normalizeLotteryCorpusFormat(String format) {
+        if ("features".equalsIgnoreCase(format)) {
+            return "features";
+        }
+        return "raw";
+    }
+
+    private static String rawCorpusLine(LotteryDraw draw) {
+        return String.format(
+                "%s: %s + %s",
+                safeIssue(draw),
+                String.join(" ", draw.getRedNumbers()),
+                draw.getBlueNumber()
+        );
+    }
+
+    private static String featureCorpusLine(LotteryDraw draw) {
+        return String.format(
+                "issue=%s red=%s blue=%s sum=%s odd=%s even=%s big=%s small=%s span=%s consecutive=%s zone=%s",
+                safeIssue(draw),
+                String.join(",", draw.getRedNumbers()),
+                draw.getBlueNumber(),
+                safeInteger(draw.getRedSum()),
+                safeInteger(draw.getOddCount()),
+                safeInteger(draw.getEvenCount()),
+                safeInteger(draw.getBigCount()),
+                safeInteger(draw.getSmallCount()),
+                safeInteger(draw.getSpan()),
+                safeInteger(draw.getConsecutivePairs()),
+                zoneSignature(draw.getRedNumbers())
+        );
+    }
+
+    private static String zoneSignature(List<String> redNumbers) {
+        int low = 0;
+        int middle = 0;
+        int high = 0;
+        for (String number : redNumbers) {
+            int value = Integer.parseInt(number);
+            if (value <= 11) {
+                low++;
+            } else if (value <= 22) {
+                middle++;
+            } else {
+                high++;
+            }
+        }
+        return low + "," + middle + "," + high;
+    }
+
+    private static String safeIssue(LotteryDraw draw) {
+        return StringUtils.hasText(draw.getIssue()) ? draw.getIssue() : String.valueOf(draw.getPeriod());
+    }
+
+    private static String safeInteger(Integer value) {
+        return value == null ? "-" : value.toString();
     }
 
     private Map<String, Object> trainingConfig(MiniGptTrainingRequest request) {

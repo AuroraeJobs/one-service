@@ -10,6 +10,7 @@ import {
   type MiniGptEnvironmentCheck,
   type MiniGptGenerationRequest,
   type MiniGptGenerationResult,
+  type MiniGptLotteryCorpusExport,
   type MiniGptRunRecord,
   type MiniGptTokenEntry,
   type MiniGptTrainingLogRecord,
@@ -1273,6 +1274,7 @@ const MiniGptLearningPage = () => {
   const [corpusInsight, setCorpusInsight] = useState<MiniGptCorpusInsight>({});
   const [trainingStatus, setTrainingStatus] = useState<MiniGptTrainingStatus>({});
   const [environmentCheck, setEnvironmentCheck] = useState<MiniGptEnvironmentCheck>({});
+  const [lotteryCorpusExport, setLotteryCorpusExport] = useState<MiniGptLotteryCorpusExport>();
   const [generationResult, setGenerationResult] = useState<MiniGptGenerationResult>();
   const [selectedRun, setSelectedRun] = useState<string>();
   const [comparisonRunNames, setComparisonRunNames] = useState<string[]>([]);
@@ -1281,6 +1283,7 @@ const MiniGptLearningPage = () => {
   const [loading, setLoading] = useState(false);
   const [corpusLoading, setCorpusLoading] = useState(false);
   const [environmentLoading, setEnvironmentLoading] = useState(false);
+  const [lotteryCorpusLoading, setLotteryCorpusLoading] = useState(false);
   const [comparisonLoading, setComparisonLoading] = useState(false);
   const [starting, setStarting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -1358,6 +1361,29 @@ const MiniGptLearningPage = () => {
       setEnvironmentLoading(false);
     }
   }, []);
+
+  const handleExportLotteryCorpus = useCallback(async (format: 'raw' | 'features') => {
+    setLotteryCorpusLoading(true);
+    try {
+      const exported = await miniGptApi.exportLotteryCorpus({ format, limit: 2000 });
+      setLotteryCorpusExport(exported);
+      const nextValues = {
+        ...form.getFieldsValue(),
+        data: exported.dataPath || `data/lottery-${format}.txt`,
+        samplePrompt: format === 'features'
+          ? 'target=next strategy=balanced'
+          : exported.latestIssue ? `${exported.latestIssue}:` : '2026001:'
+      };
+      form.setFieldsValue(nextValues);
+      await loadCorpusInsight(nextValues);
+      message.success(`已导出 ${exported.drawCount || 0} 期双色球语料`);
+    } catch (error) {
+      console.error('导出 MiniGPT 双色球语料失败:', error);
+      message.error('双色球语料导出失败');
+    } finally {
+      setLotteryCorpusLoading(false);
+    }
+  }, [form, loadCorpusInsight]);
 
   const handleApplyTrainingRecipe = (recipe: MiniGptTrainingRecipe) => {
     const mergedValues = {
@@ -1871,6 +1897,41 @@ const MiniGptLearningPage = () => {
                       <span>{recipe.description}</span>
                     </button>
                   ))}
+                </section>
+                <section className="mini-gpt-lottery-corpus">
+                  <div className="mini-gpt-lottery-corpus-head">
+                    <Text type="secondary">双色球训练语料</Text>
+                    <Space wrap>
+                      <Button
+                        size="small"
+                        icon={<DatabaseOutlined />}
+                        loading={lotteryCorpusLoading}
+                        disabled={trainingStatus.running}
+                        onClick={() => handleExportLotteryCorpus('raw')}
+                      >
+                        开奖格式
+                      </Button>
+                      <Button
+                        size="small"
+                        icon={<DatabaseOutlined />}
+                        loading={lotteryCorpusLoading}
+                        disabled={trainingStatus.running}
+                        onClick={() => handleExportLotteryCorpus('features')}
+                      >
+                        结构特征
+                      </Button>
+                    </Space>
+                  </div>
+                  {lotteryCorpusExport ? (
+                    <div className="mini-gpt-lottery-corpus-result">
+                      <Tag color="cyan">{lotteryCorpusExport.format}</Tag>
+                      <span>{lotteryCorpusExport.drawCount || 0} 期</span>
+                      <code>{lotteryCorpusExport.dataPath || '-'}</code>
+                      <p>{lotteryCorpusExport.firstIssue || '-'} - {lotteryCorpusExport.latestIssue || '-'}</p>
+                    </div>
+                  ) : (
+                    <p>从 Mongo 开奖记录导出 MiniGPT 训练文本，并自动填入语料路径。</p>
+                  )}
                 </section>
                 <Form.Item className="mini-gpt-training-actions">
                   <Space wrap>

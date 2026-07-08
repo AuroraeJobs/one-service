@@ -5,6 +5,7 @@ import com.one.record.ai.MiniGptEnvironmentCheck;
 import com.one.record.ai.MiniGptCorpusInsight;
 import com.one.record.ai.MiniGptGenerationRequest;
 import com.one.record.ai.MiniGptGenerationResult;
+import com.one.record.ai.MiniGptLotteryCorpusExport;
 import com.one.record.ai.MiniGptRunNoteRequest;
 import com.one.record.ai.MiniGptTrainingRequest;
 import com.one.record.ai.MiniGptTrainingStatus;
@@ -71,6 +72,12 @@ public class MiniGptLearningController {
     @GetMapping("environment")
     public MiniGptEnvironmentCheck environment() {
         return service.environment();
+    }
+
+    @PostMapping("corpus/lottery/export")
+    public MiniGptLotteryCorpusExport exportLotteryCorpus(@RequestParam(name = "format", required = false) String format,
+                                                          @RequestParam(name = "limit", required = false) Integer limit) {
+        return service.exportLotteryCorpus(format, limit);
     }
 
     @GetMapping("corpus")

@@ -4,6 +4,7 @@ import com.one.record.ai.MiniGptDashboard;
 import com.one.record.ai.MiniGptEnvironmentCheck;
 import com.one.record.ai.MiniGptGenerationRequest;
 import com.one.record.ai.MiniGptGenerationResult;
+import com.one.record.ai.MiniGptLotteryCorpusExport;
 import com.one.record.ai.MiniGptCorpusInsight;
 import com.one.record.ai.MiniGptRunNoteRequest;
 import com.one.record.ai.MiniGptTrainingRequest;
@@ -30,6 +31,8 @@ public interface IMiniGptLearningService {
     MiniGptTrainingStatus cancelTraining();
 
     MiniGptEnvironmentCheck environment();
+
+    MiniGptLotteryCorpusExport exportLotteryCorpus(String format, Integer limit);
 
     MiniGptCorpusInsight corpusInsight(String data, String sample, Integer tokenLimit);
 
