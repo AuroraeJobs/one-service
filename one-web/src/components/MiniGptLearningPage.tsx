@@ -1184,6 +1184,25 @@ const reviewDraftSources = (
   ];
 };
 
+const reviewQualityItems = (values: MiniGptRunNoteRequest = {}) => {
+  const rows: Array<[keyof MiniGptRunNoteRequest, string, string]> = [
+    ['hypothesis', '假设', '说明本轮实验要验证什么'],
+    ['observation', '观察', '记录 loss、样例或异常现象'],
+    ['conclusion', '结论', '写出当前能确认和不能确认的判断'],
+    ['nextStep', '下一步', '明确下一轮只改哪个变量']
+  ];
+
+  return rows.map(([key, label, hint]) => {
+    const length = (values[key] || '').trim().length;
+    return {
+      key,
+      label,
+      status: length >= 18 ? 'PASS' : length > 0 ? 'WATCH' : 'TODO',
+      detail: length >= 18 ? '内容足够复盘' : length > 0 ? '再补一点具体依据' : hint
+    };
+  });
+};
+
 const MiniGptLearningPage = () => {
   const [form] = Form.useForm<MiniGptTrainingRequest>();
   const [noteForm] = Form.useForm<MiniGptRunNoteRequest>();
@@ -1205,6 +1224,7 @@ const MiniGptLearningPage = () => {
   const [generating, setGenerating] = useState(false);
   const watchedTrainingValues = Form.useWatch([], form) as MiniGptTrainingRequest | undefined;
   const watchedRunName = Form.useWatch('runName', form) as string | undefined;
+  const watchedNoteValues = Form.useWatch([], noteForm) as MiniGptRunNoteRequest | undefined;
 
   const loadDashboard = useCallback(async (runName?: string, quiet = false) => {
     if (!quiet) {
@@ -1509,6 +1529,10 @@ const MiniGptLearningPage = () => {
   const reviewDraftSourceItems = useMemo(
     () => reviewDraftSources(run, logs, variableDiffItems, launchChecklistItems, nextActionItems, generationResult),
     [generationResult, launchChecklistItems, logs, nextActionItems, run, variableDiffItems]
+  );
+  const reviewQualityCheckItems = useMemo(
+    () => reviewQualityItems({ ...noteForm.getFieldsValue(), ...(watchedNoteValues || {}) }),
+    [noteForm, watchedNoteValues]
   );
   const experimentReport = useMemo(
     () => run ? buildExperimentReport(run, logs, generationResult, corpusInsight, plannedExperiments, variableDiffItems, launchChecklistItems) : '',
@@ -2167,6 +2191,15 @@ const MiniGptLearningPage = () => {
                       <div key={item.key}>
                         <span>{item.label}</span>
                         <strong>{item.value}</strong>
+                      </div>
+                    ))}
+                  </section>
+                  <section className="mini-gpt-review-quality">
+                    {reviewQualityCheckItems.map(item => (
+                      <div className={item.status.toLowerCase()} key={item.key}>
+                        <span>{item.label}</span>
+                        <strong>{item.status}</strong>
+                        <p>{item.detail}</p>
                       </div>
                     ))}
                   </section>
