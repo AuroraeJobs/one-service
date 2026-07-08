@@ -898,6 +898,29 @@ Goal: make provider freshness, sync outcomes, probe diagnostics, and recovery si
 - [x] Connect sync/probe log report presets to governance and release-readiness checks. Added `V32Provider可靠性` release evidence that points to the sync/probe log preset.
 - [x] Keep smoke independent from live provider networking. Route smoke checks the new export labels without live provider access.
 
+## Iteration 33: Review Automation Runbook
+
+Goal: make daily, draw-cycle, month-end, and release review steps explicit and repeatable without starting hidden background work.
+
+### Wave 33A: Workbench Review Runbook Cards
+
+- [x] Add explicit review runbook cards to `/lottery/workbench`. The runbook widget now shows `日常复核`, `开奖周期`, `月末复盘`, and `发布归档`.
+- [x] Keep each card evidence-backed and route to the page where the user can complete the review. Cards show closure, pending work, reminders, sync, ticket, export, release, and provider evidence.
+- [x] Preserve the existing scheduled-sync runbook as a status note. `定时同步 Runbook` remains visible under the review cards.
+- [x] Add smoke coverage for runbook labels and disabled/manual states. Smoke now guards the review runbook item names and implementation key.
+
+### Wave 33B: Manual Acknowledgement Trail
+
+- [ ] Add lightweight acknowledgement states for runbook steps where existing reminder or health acknowledgement APIs can be reused.
+- [ ] Keep acknowledgement explicit and user-triggered.
+- [ ] Avoid starting prediction, sync, or export work in the background.
+
+### Wave 33C: Runbook Evidence Export
+
+- [ ] Add runbook evidence labels to export maintenance.
+- [ ] Connect review runbook steps to release readiness and month-end review.
+- [ ] Keep static smoke independent from live backend or provider availability.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

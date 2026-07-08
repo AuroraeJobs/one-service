@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 32 Wave 32C reliability evidence export smoke",
+  "target": "Iteration 33 Wave 33A review runbook smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -12,6 +12,7 @@
         "key: 'closure'",
         "label: '本期闭环'",
         "const closureSteps",
+        "reviewRunbookItems",
         "const issueNextItems",
         "const workbenchIssueHandoffPaths",
         "ticketPacks: '/lottery/ticket-packs'",
@@ -24,7 +25,12 @@
         "异常复盘",
         "治理复核",
         "推荐复核",
-        "移动复核"
+        "移动复核",
+        "日常复核",
+        "开奖周期",
+        "月末复盘",
+        "发布归档",
+        "定时同步 Runbook"
       ]
     },
     {
@@ -217,7 +223,7 @@
         "lotteryReminderApi.snooze",
         "lotteryTicketApi.checkLatestPrizes"
       ],
-      "emptyStates": ["今日优先事项", "暂无优先事项", "暂无待办", "暂无提醒", "暂无预测快照", "暂无保存决策复盘结果", "暂无发布检查", "运营健康", "暂无健康评分"],
+      "emptyStates": ["今日优先事项", "暂无优先事项", "暂无待办", "暂无提醒", "暂无预测快照", "暂无保存决策复盘结果", "暂无发布检查", "运营健康", "暂无健康评分", "日常复核", "开奖周期", "月末复盘", "发布归档"],
       "errorStates": ["读取彩票工作台失败", "执行彩票日常任务失败", "确认提醒失败", "稍后提醒失败"],
       "fixtureData": {
         "summary": {

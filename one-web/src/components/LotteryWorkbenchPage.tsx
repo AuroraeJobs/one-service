@@ -178,6 +178,16 @@ interface WorkbenchClosureStep {
   actionLabel: string;
 }
 
+interface WorkbenchReviewRunbookItem {
+  key: string;
+  title: string;
+  detail: string;
+  status?: string;
+  evidence: string[];
+  path: string;
+  actionLabel: string;
+}
+
 const workbenchWidgetStorageKey = 'one:lottery:workbench:widgets:v1';
 
 const workbenchWidgetMeta: WorkbenchWidgetMeta[] = [
@@ -1362,6 +1372,88 @@ const LotteryWorkbenchPage = () => {
     [releaseCheckSummary?.checks]
   );
 
+  const reviewRunbookItems = useMemo<WorkbenchReviewRunbookItem[]>(() => {
+    const releaseBlockers = (releaseCheckSummary?.checks || []).filter(item => item.status && item.status !== 'PASS').length;
+    const dueReminderCount = reminders?.dueCount || 0;
+    const pendingQueueCount = actionQueueItems.length;
+    const monthEndStatus = releaseBlockers || dueReminderCount ? 'WARNING' : recentWork.exports.length ? 'PASS' : 'MANUAL';
+    return [
+      {
+        key: 'daily-review',
+        title: '日常复核',
+        detail: operationSummary?.message || '检查同步、数据质量、预测回填和中奖核验',
+        status: pendingQueueCount ? 'WARNING' : operationSummary?.status || 'PASS',
+        evidence: [
+          `闭环 ${closureCompleteCount}/${closureSteps.length}`,
+          `待办 ${pendingQueueCount}`,
+          `提醒 ${reminders?.activeCount || 0}`
+        ],
+        path: '/lottery/workbench',
+        actionLabel: '看待办'
+      },
+      {
+        key: 'draw-cycle-review',
+        title: '开奖周期',
+        detail: calendar?.nextDrawDate ? `${calendar.nextDrawDate} ${calendar.drawWeekday || ''} · ${calendar.currentIssueState || '-'}` : '等待开奖日历和同步窗口',
+        status: closureNeedsAttentionCount ? 'WARNING' : calendar?.currentIssueState || dailyState?.syncState?.status || 'MANUAL',
+        evidence: [
+          `当前 ${latestDrawIssue}`,
+          `下一期 ${nextIssue}`,
+          `同步 ${lotteryStatusLabel(dailyState?.syncState?.status || summary?.latestSyncSummary?.latestStatus)}`
+        ],
+        path: '/lottery/sync',
+        actionLabel: '看同步'
+      },
+      {
+        key: 'month-end-review',
+        title: '月末复盘',
+        detail: `账本 ${formatCurrency(summary?.ledgerSummary?.netResult)} · ROI ${formatPercent(summary?.ledgerSummary?.roiPercent)}`,
+        status: monthEndStatus,
+        evidence: [
+          `票据待核 ${summary?.pendingTicketCount || 0}`,
+          `导出 ${recentWork.exports.length}`,
+          `发布阻塞 ${releaseBlockers}`
+        ],
+        path: '/lottery/month-end',
+        actionLabel: '看复盘'
+      },
+      {
+        key: 'release-archive-review',
+        title: '发布归档',
+        detail: releaseCheckSummary?.message || '确认 smoke、导出、治理和可靠性证据',
+        status: releaseCheckSummary?.status || (recentWork.exports.length ? 'PASS' : 'MANUAL'),
+        evidence: [
+          `检查 ${releaseCheckSummary?.passedCount || 0}/${releaseCheckSummary?.totalCount || 0}`,
+          `近期导出 ${recentWork.exports.length}`,
+          `Provider ${lotteryStatusLabel(summary?.latestSyncSummary?.latestStatus)}`
+        ],
+        path: '/lottery/exports',
+        actionLabel: '看证据'
+      }
+    ];
+  }, [
+    actionQueueItems.length,
+    calendar?.currentIssueState,
+    calendar?.drawWeekday,
+    calendar?.nextDrawDate,
+    closureCompleteCount,
+    closureNeedsAttentionCount,
+    closureSteps.length,
+    dailyState?.syncState?.status,
+    latestDrawIssue,
+    nextIssue,
+    operationSummary?.message,
+    operationSummary?.status,
+    recentWork.exports.length,
+    releaseCheckSummary,
+    reminders?.activeCount,
+    reminders?.dueCount,
+    summary?.latestSyncSummary?.latestStatus,
+    summary?.ledgerSummary?.netResult,
+    summary?.ledgerSummary?.roiPercent,
+    summary?.pendingTicketCount
+  ]);
+
   const recentWorkGroups = useMemo(() => {
     const groups: Array<{
       key: string;
@@ -1802,19 +1894,22 @@ const LotteryWorkbenchPage = () => {
       case 'runbook':
         return (
           <section className="lottery-workbench-runbook-grid">
-            <article className="lottery-workbench-runbook-panel">
-              <div>
-                <strong>日常运维摘要</strong>
-                <span>{operationSummary?.message || '暂无日常摘要'}</span>
-              </div>
-              <Space wrap>
-                <Tag color={dailyStateColor(operationSummary?.status)}>{lotteryStatusLabel(operationSummary?.status)}</Tag>
-                <Tag>完成 {operationSummary?.completedCount ?? 0}/{operationSummary?.totalCount ?? 0}</Tag>
-                <Tag>提醒 {operationSummary?.activeReminderCount ?? 0}</Tag>
-                <Tag>预测回填 {operationSummary?.latestPredictionAttachmentCount ?? 0}</Tag>
-              </Space>
-            </article>
-            <article className="lottery-workbench-runbook-panel">
+            {reviewRunbookItems.map(item => (
+              <button key={item.key} type="button" className="lottery-workbench-runbook-panel" onClick={() => navigate(item.path)}>
+                <div>
+                  <strong>{item.title}</strong>
+                  <span>{item.detail}</span>
+                  <Space wrap>
+                    {item.evidence.map(label => <Tag key={label}>{label}</Tag>)}
+                  </Space>
+                </div>
+                <Space direction="vertical" align="end">
+                  <Tag color={dailyStateColor(item.status)}>{lotteryStatusLabel(item.status)}</Tag>
+                  <small>{item.actionLabel}</small>
+                </Space>
+              </button>
+            ))}
+            <article className="lottery-workbench-runbook-panel lottery-workbench-runbook-note">
               <div>
                 <strong>定时同步 Runbook</strong>
                 <span>{scheduledRunbook?.message || '暂无定时同步状态'}</span>

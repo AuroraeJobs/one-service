@@ -1197,6 +1197,20 @@
   border: 1px solid var(--app-border);
   border-radius: 8px;
   background: var(--app-surface);
+  color: var(--app-text);
+  text-align: left;
+}
+
+button.lottery-workbench-runbook-panel {
+  cursor: pointer;
+}
+
+button.lottery-workbench-runbook-panel:hover {
+  border-color: color-mix(in srgb, var(--module-accent, #ff3b30) 42%, var(--app-border));
+}
+
+.lottery-workbench-runbook-note {
+  grid-column: 1 / -1;
 }
 
 .lottery-workbench-runbook-panel > div {
@@ -1215,6 +1229,11 @@
   color: var(--app-text-muted);
   font-size: 12px;
   line-height: 1.45;
+}
+
+.lottery-workbench-runbook-panel small {
+  color: var(--app-text-muted);
+  font-size: 12px;
 }
 
 .lottery-workbench-quick-rail {
