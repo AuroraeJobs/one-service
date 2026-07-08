@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Empty, Form, Input, InputNumber, Progress, Select, Space, Spin, Table, Tag, Typography, message } from 'antd';
-import { CloseCircleOutlined, DatabaseOutlined, PlayCircleOutlined, ReloadOutlined } from '@ant-design/icons';
+import { CloseCircleOutlined, CopyOutlined, DatabaseOutlined, PlayCircleOutlined, ReloadOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
 import LifePageShell from './LifePageShell';
 import {
@@ -237,6 +237,48 @@ const configEntries = (run?: MiniGptRunRecord): [string, string][] => {
     ['vocab_size', config.vocab_size]
   ].filter(([, value]) => value !== undefined && value !== '')
     .map(([key, value]) => [String(key), String(value)]);
+};
+
+const fencedText = (value?: string) => (value || '-').replaceAll('```', "'''");
+
+const buildExperimentReport = (
+  run: MiniGptRunRecord,
+  logs: MiniGptTrainingLogRecord[],
+  generationResult?: MiniGptGenerationResult
+) => {
+  const metrics = metricItems(run, logs);
+  const sample = generationResult?.generatedText || latestSample(logs);
+  return [
+    `# MiniGPT 实验报告：${run.runName || '未命名实验'}`,
+    '',
+    '## 摘要',
+    `- 状态：${run.status || 'UNKNOWN'}`,
+    `- 预设：${run.preset || '-'}`,
+    `- 开始：${formatTime(run.startedAt)}`,
+    `- 结束：${formatTime(run.finishedAt)}`,
+    '',
+    '## 指标',
+    ...metrics.map(item => `- ${item.label}: ${item.value}`),
+    '',
+    '## 配置',
+    ...configEntries(run).map(([key, value]) => `- ${key}: ${value}`),
+    '',
+    '## 实验笔记',
+    `- 假设：${run.hypothesis || '-'}`,
+    `- 观察：${run.observation || '-'}`,
+    `- 结论：${run.conclusion || '-'}`,
+    `- 下一步：${run.nextStep || '-'}`,
+    '',
+    '## 生成样例',
+    '```text',
+    fencedText(sample),
+    '```',
+    '',
+    '## 日志',
+    ...logs.slice(-8).map(log => (
+      `- step ${formatInteger(log.step)}: train=${formatLoss(log.trainLoss)}, eval=${formatLoss(log.evalLoss)}, elapsed=${formatInteger(log.elapsedSeconds)}s`
+    ))
+  ].join('\n');
 };
 
 const getTokenLabel = (tokenId: number | undefined, tokens: MiniGptTokenEntry[]) => {
@@ -541,6 +583,24 @@ const MiniGptLearningPage = () => {
   const architectureStages = useMemo(() => modelStages(run, corpusInsight), [corpusInsight, run]);
   const comparisonChartOption = useMemo(() => buildComparisonChartOption(comparisonLogs), [comparisonLogs]);
   const milestones = useMemo(() => learningMilestones(run, logs, corpusInsight), [corpusInsight, logs, run]);
+  const experimentReport = useMemo(
+    () => run ? buildExperimentReport(run, logs, generationResult) : '',
+    [generationResult, logs, run]
+  );
+
+  const handleCopyReport = async () => {
+    if (!experimentReport) {
+      message.warning('请先选择一个实验');
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(experimentReport);
+      message.success('实验报告已复制');
+    } catch (error) {
+      console.error('复制 MiniGPT 实验报告失败:', error);
+      message.error('实验报告复制失败');
+    }
+  };
 
   useEffect(() => {
     if (!comparisonRunNames.length && runs.length) {
@@ -943,7 +1003,15 @@ const MiniGptLearningPage = () => {
               ))}
             </section>
 
-            <Card className="mini-gpt-panel" title="实验对比与笔记">
+            <Card
+              className="mini-gpt-panel"
+              title="实验对比与笔记"
+              extra={(
+                <Button size="small" icon={<CopyOutlined />} onClick={handleCopyReport} disabled={!run}>
+                  复制报告
+                </Button>
+              )}
+            >
               <div className="mini-gpt-comparison-grid">
                 <section className="mini-gpt-comparison-chart-panel">
                   <div className="mini-gpt-comparison-toolbar">
