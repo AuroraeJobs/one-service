@@ -186,6 +186,13 @@ interface WorkbenchReviewRunbookItem {
   evidence: string[];
   path: string;
   actionLabel: string;
+  acknowledgeTarget?: {
+    type: 'reminder' | 'health';
+    label: string;
+    key?: string;
+    fingerprint?: string;
+    contributorKey?: string;
+  };
 }
 
 const workbenchWidgetStorageKey = 'one:lottery:workbench:widgets:v1';
@@ -1377,6 +1384,11 @@ const LotteryWorkbenchPage = () => {
     const dueReminderCount = reminders?.dueCount || 0;
     const pendingQueueCount = actionQueueItems.length;
     const monthEndStatus = releaseBlockers || dueReminderCount ? 'WARNING' : recentWork.exports.length ? 'PASS' : 'MANUAL';
+    const firstReminder = (reminders?.items || []).find(item => !item.acknowledgedAt);
+    const healthContributors = operationsHealth?.contributors || [];
+    const firstHealthContributor = healthContributors.find(item => item.status && item.status !== 'PASS');
+    const syncContributor = healthContributors.find(item => item.key && /provider|sync/i.test(item.key) && item.status && item.status !== 'PASS');
+    const exportContributor = healthContributors.find(item => item.key && /export/i.test(item.key) && item.status && item.status !== 'PASS');
     return [
       {
         key: 'daily-review',
@@ -1389,7 +1401,17 @@ const LotteryWorkbenchPage = () => {
           `提醒 ${reminders?.activeCount || 0}`
         ],
         path: '/lottery/workbench',
-        actionLabel: '看待办'
+        actionLabel: '看待办',
+        acknowledgeTarget: firstReminder?.key && firstReminder.fingerprint ? {
+          type: 'reminder',
+          label: '确认提醒',
+          key: firstReminder.key,
+          fingerprint: firstReminder.fingerprint
+        } : firstHealthContributor?.key ? {
+          type: 'health',
+          label: '确认健康',
+          contributorKey: firstHealthContributor.key
+        } : undefined
       },
       {
         key: 'draw-cycle-review',
@@ -1402,7 +1424,12 @@ const LotteryWorkbenchPage = () => {
           `同步 ${lotteryStatusLabel(dailyState?.syncState?.status || summary?.latestSyncSummary?.latestStatus)}`
         ],
         path: '/lottery/sync',
-        actionLabel: '看同步'
+        actionLabel: '看同步',
+        acknowledgeTarget: syncContributor?.key ? {
+          type: 'health',
+          label: '确认同步健康',
+          contributorKey: syncContributor.key
+        } : undefined
       },
       {
         key: 'month-end-review',
@@ -1415,7 +1442,13 @@ const LotteryWorkbenchPage = () => {
           `发布阻塞 ${releaseBlockers}`
         ],
         path: '/lottery/month-end',
-        actionLabel: '看复盘'
+        actionLabel: '看复盘',
+        acknowledgeTarget: dueReminderCount && firstReminder?.key && firstReminder.fingerprint ? {
+          type: 'reminder',
+          label: '确认月末提醒',
+          key: firstReminder.key,
+          fingerprint: firstReminder.fingerprint
+        } : undefined
       },
       {
         key: 'release-archive-review',
@@ -1428,7 +1461,12 @@ const LotteryWorkbenchPage = () => {
           `Provider ${lotteryStatusLabel(summary?.latestSyncSummary?.latestStatus)}`
         ],
         path: '/lottery/exports',
-        actionLabel: '看证据'
+        actionLabel: '看证据',
+        acknowledgeTarget: exportContributor?.key ? {
+          type: 'health',
+          label: '确认导出健康',
+          contributorKey: exportContributor.key
+        } : undefined
       }
     ];
   }, [
@@ -1444,10 +1482,12 @@ const LotteryWorkbenchPage = () => {
     nextIssue,
     operationSummary?.message,
     operationSummary?.status,
+    operationsHealth?.contributors,
     recentWork.exports.length,
     releaseCheckSummary,
     reminders?.activeCount,
     reminders?.dueCount,
+    reminders?.items,
     summary?.latestSyncSummary?.latestStatus,
     summary?.ledgerSummary?.netResult,
     summary?.ledgerSummary?.roiPercent,
@@ -1895,7 +1935,18 @@ const LotteryWorkbenchPage = () => {
         return (
           <section className="lottery-workbench-runbook-grid">
             {reviewRunbookItems.map(item => (
-              <button key={item.key} type="button" className="lottery-workbench-runbook-panel" onClick={() => navigate(item.path)}>
+              <article
+                key={item.key}
+                role="button"
+                tabIndex={0}
+                className="lottery-workbench-runbook-panel"
+                onClick={() => navigate(item.path)}
+                onKeyDown={event => {
+                  if (event.key === 'Enter') {
+                    navigate(item.path);
+                  }
+                }}
+              >
                 <div>
                   <strong>{item.title}</strong>
                   <span>{item.detail}</span>
@@ -1905,9 +1956,24 @@ const LotteryWorkbenchPage = () => {
                 </div>
                 <Space direction="vertical" align="end">
                   <Tag color={dailyStateColor(item.status)}>{lotteryStatusLabel(item.status)}</Tag>
+                  {item.acknowledgeTarget ? (
+                    <Button
+                      size="small"
+                      onClick={event => {
+                        event.stopPropagation();
+                        if (item.acknowledgeTarget?.type === 'reminder') {
+                          acknowledgeReminder(item.acknowledgeTarget.key, item.acknowledgeTarget.fingerprint);
+                        } else {
+                          acknowledgeHealth(item.acknowledgeTarget?.contributorKey);
+                        }
+                      }}
+                    >
+                      {item.acknowledgeTarget.label}
+                    </Button>
+                  ) : null}
                   <small>{item.actionLabel}</small>
                 </Space>
-              </button>
+              </article>
             ))}
             <article className="lottery-workbench-runbook-panel lottery-workbench-runbook-note">
               <div>

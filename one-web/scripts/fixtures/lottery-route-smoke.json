@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 33 Wave 33A review runbook smoke",
+  "target": "Iteration 33 Wave 33B runbook acknowledgement smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -13,6 +13,11 @@
         "label: '本期闭环'",
         "const closureSteps",
         "reviewRunbookItems",
+        "acknowledgeTarget",
+        "确认提醒",
+        "确认健康",
+        "确认同步健康",
+        "确认导出健康",
         "const issueNextItems",
         "const workbenchIssueHandoffPaths",
         "ticketPacks: '/lottery/ticket-packs'",

@@ -911,9 +911,9 @@ Goal: make daily, draw-cycle, month-end, and release review steps explicit and r
 
 ### Wave 33B: Manual Acknowledgement Trail
 
-- [ ] Add lightweight acknowledgement states for runbook steps where existing reminder or health acknowledgement APIs can be reused.
-- [ ] Keep acknowledgement explicit and user-triggered.
-- [ ] Avoid starting prediction, sync, or export work in the background.
+- [x] Add lightweight acknowledgement states for runbook steps where existing reminder or health acknowledgement APIs can be reused. Runbook cards now expose explicit confirmation buttons for reminder and health contributors.
+- [x] Keep acknowledgement explicit and user-triggered. Confirmation buttons stop card navigation and call only the selected reminder or health acknowledgement API.
+- [x] Avoid starting prediction, sync, or export work in the background. The runbook acknowledgement flow does not call sync, prediction, ticket, prize-check, or export actions.
 
 ### Wave 33C: Runbook Evidence Export
 

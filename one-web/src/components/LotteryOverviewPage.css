@@ -1201,11 +1201,11 @@
   text-align: left;
 }
 
-button.lottery-workbench-runbook-panel {
+.lottery-workbench-runbook-panel[role='button'] {
   cursor: pointer;
 }
 
-button.lottery-workbench-runbook-panel:hover {
+.lottery-workbench-runbook-panel[role='button']:hover {
   border-color: color-mix(in srgb, var(--module-accent, #ff3b30) 42%, var(--app-border));
 }
 

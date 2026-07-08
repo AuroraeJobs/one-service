@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 33 Wave 33A review runbook smoke",
-  "generatedAt": "2026-07-08T05:44:14.745Z",
+  "target": "Iteration 33 Wave 33B runbook acknowledgement smoke",
+  "generatedAt": "2026-07-08T05:45:56.860Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 18,
-  "checkCount": 526,
+  "checkCount": 531,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
