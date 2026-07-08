@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import os
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -62,6 +63,99 @@ PRESETS = {
         "log_every": 60,
     },
 }
+
+
+class MongoRunSink:
+    def __init__(self, args: argparse.Namespace, run_name: str) -> None:
+        self.enabled = False
+        self.run_name = run_name
+        if args.no_mongo:
+            return
+        try:
+            from pymongo import MongoClient, ReplaceOne
+            from pymongo.errors import PyMongoError
+        except ImportError:
+            print("pymongo is not installed; skip Mongo sync")
+            return
+
+        self.ReplaceOne = ReplaceOne
+        self.PyMongoError = PyMongoError
+        try:
+            self.client = MongoClient(args.mongo_uri, serverSelectionTimeoutMS=800)
+            self.client.admin.command("ping")
+            database = self.client[args.mongo_db]
+            self.runs = database["mini_gpt_runs"]
+            self.logs = database["mini_gpt_training_logs"]
+            self.enabled = True
+        except PyMongoError as error:
+            print(f"Mongo sync unavailable: {error}")
+
+    def upsert_run(self, metadata: dict[str, object], status: str) -> None:
+        if not self.enabled:
+            return
+        now_ms = int(time.time() * 1000)
+        document = {
+            "runName": self.run_name,
+            "preset": metadata.get("preset"),
+            "status": status,
+            "startedAt": metadata.get("started_at"),
+            "finishedAt": metadata.get("finished_at"),
+            "data": metadata.get("data"),
+            "checkpoint": metadata.get("checkpoint"),
+            "logFile": metadata.get("log_file"),
+            "metadataFile": metadata.get("metadata_file"),
+            "device": metadata.get("device"),
+            "maxSteps": metadata.get("max_steps"),
+            "batchSize": metadata.get("batch_size"),
+            "learningRate": metadata.get("learning_rate"),
+            "valRatio": metadata.get("val_ratio"),
+            "validationEnabled": metadata.get("validation_enabled"),
+            "trainTokens": metadata.get("train_tokens"),
+            "evalTokens": metadata.get("eval_tokens"),
+            "samplePrompt": metadata.get("sample_prompt"),
+            "sampleTokens": metadata.get("sample_tokens"),
+            "finalTrainLoss": metadata.get("final_train_loss"),
+            "finalEvalLoss": metadata.get("final_eval_loss"),
+            "lossGap": metadata.get("loss_gap"),
+            "config": metadata.get("config") or {},
+            "updatedAt": now_ms,
+        }
+        try:
+            self.runs.update_one(
+                {"runName": self.run_name},
+                {"$set": document, "$setOnInsert": {"createdAt": now_ms}},
+                upsert=True,
+            )
+        except self.PyMongoError as error:
+            print(f"Mongo run sync failed: {error}")
+
+    def upsert_log(self, row: dict[str, object]) -> None:
+        if not self.enabled:
+            return
+        now_ms = int(time.time() * 1000)
+        sample_value = row.get("sample") or ""
+        if isinstance(sample_value, str):
+            try:
+                sample_value = json.loads(sample_value)
+            except json.JSONDecodeError:
+                pass
+        document = {
+            "runName": self.run_name,
+            "step": int(row["step"]),
+            "trainLoss": float(row["train_loss"]),
+            "evalLoss": float(row["eval_loss"]),
+            "elapsedSeconds": float(row["elapsed_seconds"]),
+            "sample": sample_value,
+            "updatedAt": now_ms,
+        }
+        try:
+            self.logs.update_one(
+                {"runName": self.run_name, "step": document["step"]},
+                {"$set": document, "$setOnInsert": {"createdAt": now_ms}},
+                upsert=True,
+            )
+        except self.PyMongoError as error:
+            print(f"Mongo log sync failed: {error}")
 
 
 @dataclass
@@ -313,6 +407,27 @@ def train(args: argparse.Namespace) -> None:
     latest_path = runs_dir / "latest.json"
     run_latest_path = run_dir / "latest.json"
     last_log_row = None
+    mongo_sink = MongoRunSink(args, run_name)
+    initial_metadata = {
+        "run_name": run_name,
+        "preset": args.preset,
+        "started_at": started_at,
+        "data": args.data,
+        "log_file": str(log_path),
+        "metadata_file": str(run_latest_path),
+        "device": str(device),
+        "max_steps": args.max_steps,
+        "batch_size": args.batch_size,
+        "learning_rate": args.learning_rate,
+        "val_ratio": args.val_ratio,
+        "validation_enabled": validation_enabled,
+        "train_tokens": int(len(train_data)),
+        "eval_tokens": int(len(eval_data)),
+        "sample_prompt": args.sample_prompt,
+        "sample_tokens": args.sample_tokens,
+        "config": asdict(config),
+    }
+    mongo_sink.upsert_run(initial_metadata, "RUNNING")
 
     fieldnames = ["step", "train_loss", "eval_loss", "elapsed_seconds", "sample"]
     with log_path.open("w", encoding="utf-8", newline="") as log_file:
@@ -347,6 +462,7 @@ def train(args: argparse.Namespace) -> None:
                     "sample": json.dumps(sample, ensure_ascii=False),
                 }
                 writer.writerow(last_log_row)
+                mongo_sink.upsert_log(last_log_row)
                 log_file.flush()
                 print(f"step={step} train_loss={loss.item():.4f} eval_loss={eval_loss:.4f}")
 
@@ -391,6 +507,7 @@ def train(args: argparse.Namespace) -> None:
     }
     latest_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
     run_latest_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
+    mongo_sink.upsert_run(metadata, "SUCCESS")
     append_run_index(runs_dir, {
         "run_name": run_name,
         "preset": args.preset,
@@ -452,6 +569,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--log-file", default="train_log.csv")
     parser.add_argument("--sample-prompt", default="语言模型")
     parser.add_argument("--sample-tokens", type=int)
+    parser.add_argument("--mongo-uri", default=os.getenv("MINI_GPT_MONGO_URI", "mongodb://localhost:27017"))
+    parser.add_argument("--mongo-db", default=os.getenv("MINI_GPT_MONGO_DB", "test"))
+    parser.add_argument("--no-mongo", action="store_true")
     return parser
 
 

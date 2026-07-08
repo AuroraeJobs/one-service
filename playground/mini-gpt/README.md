@@ -52,6 +52,47 @@ runs/index.json
 runs/latest.json
 ```
 
+训练脚本也会默认把实验状态同步到 one-service 使用的 Mongo：
+
+```text
+mini_gpt_runs
+mini_gpt_training_logs
+```
+
+默认连接 `mongodb://localhost:27017/test`，与 `one-starter` 的本地配置一致。可以通过参数或环境变量切换：
+
+```bash
+python mini_gpt.py --mode train --preset tiny --run-name tiny-mongo \
+  --mongo-uri mongodb://localhost:27017 \
+  --mongo-db test
+```
+
+如果只想保留本地 `runs/` 文件，不写 Mongo：
+
+```bash
+python mini_gpt.py --mode train --preset tiny --run-name tiny-local --no-mongo
+```
+
+## 在 one-web 中训练
+
+one-service 提供了 MiniGPT 训练 API，one-web 的 `/ai/minigpt` 页面可以直接启动训练并持续刷新状态。后端会调用：
+
+```text
+playground/mini-gpt/.venv/bin/python mini_gpt.py --mode train ...
+```
+
+如果 Spring Boot 不是从仓库根目录启动，可以通过环境变量指定 playground 目录：
+
+```bash
+MINI_GPT_PLAYGROUND_DIR=/Users/aurorae/Program/Hello/one-service/playground/mini-gpt
+```
+
+页面里的 `语料与 Tokenizer` 面板会读取当前语料，展示字符数、行数、词表大小、字符到 token id 的映射，以及采样提示的 encode/decode 结果。这个面板对应代码里的 `CharTokenizer`，可以用来理解文本进入模型前发生了什么。
+
+页面里的 `训练过程解释` 面板会把采样提示拆成 `x -> y` 的 next-token 训练对，展示 causal mask，并把当前 run 的配置串成模型数据流。它分别对应代码里的 `get_batch`、`CausalSelfAttention` 和 `MiniGPT`。
+
+训练完成后，`生成试验台` 会使用当前实验保存的 checkpoint 调用 `mini_gpt.py --mode generate`，可以直接调整 prompt、生成长度、temperature 和 top-k，观察采样策略如何改变输出。
+
 ## Web 观察台
 
 训练后启动本地静态服务：

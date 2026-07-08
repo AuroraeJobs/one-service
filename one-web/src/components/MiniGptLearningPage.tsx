@@ -1,0 +1,1002 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Alert, Button, Card, Empty, Form, Input, InputNumber, Progress, Select, Space, Spin, Table, Tag, Typography, message } from 'antd';
+import { CloseCircleOutlined, DatabaseOutlined, PlayCircleOutlined, ReloadOutlined } from '@ant-design/icons';
+import ReactECharts from 'echarts-for-react';
+import LifePageShell from './LifePageShell';
+import {
+  miniGptApi,
+  type MiniGptCorpusInsight,
+  type MiniGptDashboard,
+  type MiniGptGenerationRequest,
+  type MiniGptGenerationResult,
+  type MiniGptRunRecord,
+  type MiniGptTokenEntry,
+  type MiniGptTrainingLogRecord,
+  type MiniGptRunNoteRequest,
+  type MiniGptTrainingRequest,
+  type MiniGptTrainingStatus
+} from '../services/api';
+import './MiniGptLearningPage.css';
+
+const { Text } = Typography;
+
+const formatLoss = (value?: number) => Number.isFinite(value) ? value!.toFixed(4) : '-';
+
+const formatInteger = (value?: number) => Number.isFinite(value) ? value!.toLocaleString('zh-CN') : '-';
+
+const formatTime = (value?: string | number) => {
+  if (!value) return '-';
+  if (typeof value === 'number') {
+    return new Date(value).toLocaleString('zh-CN', { hour12: false });
+  }
+  return value;
+};
+
+const statusColor = (status?: string) => {
+  if (status === 'SUCCESS') return 'success';
+  if (status === 'RUNNING') return 'processing';
+  if (status === 'FAILED') return 'error';
+  return 'default';
+};
+
+const latestSample = (logs: MiniGptTrainingLogRecord[]) => (
+  [...logs].reverse().find(log => log.sample)?.sample || ''
+);
+
+const buildChartOption = (logs: MiniGptTrainingLogRecord[]) => ({
+  color: ['#0071e3', '#ff9500'],
+  tooltip: {
+    trigger: 'axis'
+  },
+  legend: {
+    top: 0,
+    data: ['train_loss', 'eval_loss']
+  },
+  grid: {
+    top: 40,
+    right: 20,
+    bottom: 36,
+    left: 48
+  },
+  xAxis: {
+    type: 'category',
+    boundaryGap: false,
+    data: logs.map(log => log.step ?? 0)
+  },
+  yAxis: {
+    type: 'value',
+    scale: true
+  },
+  series: [
+    {
+      name: 'train_loss',
+      type: 'line',
+      smooth: true,
+      symbolSize: 6,
+      data: logs.map(log => log.trainLoss)
+    },
+    {
+      name: 'eval_loss',
+      type: 'line',
+      smooth: true,
+      symbolSize: 6,
+      data: logs.map(log => log.evalLoss)
+    }
+  ]
+});
+
+const buildComparisonChartOption = (comparisonLogs: Record<string, MiniGptTrainingLogRecord[]>) => {
+  const runNames = Object.keys(comparisonLogs);
+  const steps = Array.from(new Set(runNames.flatMap(runName => (
+    comparisonLogs[runName].map(log => log.step ?? 0)
+  )))).sort((left, right) => left - right);
+  return {
+    color: ['#0071e3', '#ff9500', '#00c7be', '#af52de', '#34c759', '#ff3b30'],
+    tooltip: {
+      trigger: 'axis'
+    },
+    legend: {
+      top: 0,
+      data: runNames.flatMap(runName => [`${runName} eval`, `${runName} train`])
+    },
+    grid: {
+      top: 58,
+      right: 20,
+      bottom: 36,
+      left: 48
+    },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: steps
+    },
+    yAxis: {
+      type: 'value',
+      scale: true
+    },
+    series: runNames.flatMap(runName => {
+      const byStep = new Map(comparisonLogs[runName].map(log => [log.step ?? 0, log]));
+      return [
+        {
+          name: `${runName} eval`,
+          type: 'line',
+          smooth: true,
+          symbolSize: 5,
+          data: steps.map(step => byStep.get(step)?.evalLoss ?? null)
+        },
+        {
+          name: `${runName} train`,
+          type: 'line',
+          smooth: true,
+          symbolSize: 4,
+          lineStyle: { type: 'dashed' },
+          data: steps.map(step => byStep.get(step)?.trainLoss ?? null)
+        }
+      ];
+    })
+  };
+};
+
+const metricItems = (run?: MiniGptRunRecord, logs: MiniGptTrainingLogRecord[] = []) => {
+  const latestLog = logs[logs.length - 1];
+  return [
+    { label: 'Step', value: formatInteger(latestLog?.step ?? run?.maxSteps) },
+    { label: 'Train Loss', value: formatLoss(run?.finalTrainLoss ?? latestLog?.trainLoss) },
+    { label: 'Eval Loss', value: formatLoss(run?.finalEvalLoss ?? latestLog?.evalLoss) },
+    { label: 'Gap', value: formatLoss(run?.lossGap) },
+    { label: 'Train Tokens', value: formatInteger(run?.trainTokens) },
+    { label: 'Eval Tokens', value: formatInteger(run?.evalTokens) }
+  ];
+};
+
+const configEntries = (run?: MiniGptRunRecord): [string, string][] => {
+  const config = run?.config || {};
+  return [
+    ['preset', run?.preset],
+    ['device', run?.device],
+    ['data', run?.data],
+    ['checkpoint', run?.checkpoint],
+    ['started_at', run?.startedAt],
+    ['finished_at', run?.finishedAt],
+    ['max_steps', run?.maxSteps],
+    ['batch_size', run?.batchSize],
+    ['learning_rate', run?.learningRate],
+    ['val_ratio', run?.valRatio],
+    ['validation_enabled', run?.validationEnabled === undefined ? undefined : String(run.validationEnabled)],
+    ['sample_prompt', run?.samplePrompt],
+    ['sample_tokens', run?.sampleTokens],
+    ['block_size', config.block_size],
+    ['n_layer', config.n_layer],
+    ['n_head', config.n_head],
+    ['n_embd', config.n_embd],
+    ['dropout', config.dropout],
+    ['vocab_size', config.vocab_size]
+  ].filter(([, value]) => value !== undefined && value !== '')
+    .map(([key, value]) => [String(key), String(value)]);
+};
+
+const getTokenLabel = (tokenId: number | undefined, tokens: MiniGptTokenEntry[]) => {
+  if (tokenId === undefined) return '-';
+  const token = tokens.find(item => item.tokenId === tokenId);
+  return token?.display || String(tokenId);
+};
+
+const buildBatchRows = (encodedSample: number[], tokens: MiniGptTokenEntry[]) => (
+  encodedSample.slice(0, Math.max(0, Math.min(encodedSample.length - 1, 8))).map((tokenId, index) => {
+    const targetId = encodedSample[index + 1];
+    return {
+      position: index,
+      inputId: tokenId,
+      inputToken: getTokenLabel(tokenId, tokens),
+      targetId,
+      targetToken: getTokenLabel(targetId, tokens)
+    };
+  })
+);
+
+const buildMaskSize = (run?: MiniGptRunRecord, encodedSample: number[] = []) => {
+  const blockSize = Number(run?.config?.block_size);
+  const candidates = [8, encodedSample.length || 8, Number.isFinite(blockSize) ? blockSize : 8];
+  return Math.max(2, Math.min(...candidates.filter(value => value > 0)));
+};
+
+const modelStages = (run?: MiniGptRunRecord, corpusInsight?: MiniGptCorpusInsight) => {
+  const config = run?.config || {};
+  return [
+    { key: 'tokens', label: 'Token IDs', value: `vocab=${formatInteger(corpusInsight?.vocabSize)}` },
+    { key: 'token-embedding', label: 'Token Embedding', value: `n_embd=${config.n_embd || '-'}` },
+    { key: 'position-embedding', label: 'Position Embedding', value: `block=${config.block_size || '-'}` },
+    { key: 'blocks', label: 'Transformer Blocks', value: `layers=${config.n_layer || '-'} heads=${config.n_head || '-'}` },
+    { key: 'logits', label: 'Logits', value: `vocab=${formatInteger(run?.config?.vocab_size as number | undefined)}` },
+    { key: 'loss', label: 'Cross Entropy Loss', value: `eval=${formatLoss(run?.finalEvalLoss)}` }
+  ];
+};
+
+type LearningMilestoneStatus = 'done' | 'active' | 'todo';
+
+const learningMilestones = (
+  run: MiniGptRunRecord | undefined,
+  logs: MiniGptTrainingLogRecord[],
+  corpusInsight: MiniGptCorpusInsight | undefined
+) => {
+  const hasCorpus = Boolean(corpusInsight?.charCount && corpusInsight.charCount > 0 && corpusInsight.vocabSize);
+  const hasBatch = Boolean((corpusInsight?.encodedSample?.length || 0) > 1);
+  const hasTraining = Boolean(run?.runName);
+  const hasEnoughLogs = logs.length >= 2;
+  const hasEval = logs.some(log => Number.isFinite(log.evalLoss));
+  const hasSample = logs.some(log => log.sample);
+  const hasNotes = Boolean(run?.hypothesis || run?.observation || run?.conclusion || run?.nextStep);
+  const isFinished = run?.status === 'SUCCESS' || run?.status === 'FAILED' || run?.status === 'CANCELLED';
+
+  const status = (done: boolean, active: boolean): LearningMilestoneStatus => {
+    if (done) return 'done';
+    if (active) return 'active';
+    return 'todo';
+  };
+
+  return [
+    {
+      key: 'tokenizer',
+      title: 'Tokenizer',
+      target: '理解字符如何映射为 token id',
+      evidence: hasCorpus ? `vocab=${formatInteger(corpusInsight?.vocabSize)}` : '等待语料',
+      status: status(hasCorpus, !hasCorpus)
+    },
+    {
+      key: 'batch',
+      title: 'Batch',
+      target: '看清 x/y 错位一位的 next-token 目标',
+      evidence: hasBatch ? `${Math.max(0, (corpusInsight?.encodedSample?.length || 1) - 1)} pairs` : '等待样例',
+      status: status(hasBatch, hasCorpus)
+    },
+    {
+      key: 'attention',
+      title: 'Causal Attention',
+      target: '确认当前位置只能看见历史 token',
+      evidence: hasBatch ? `${buildMaskSize(run, corpusInsight?.encodedSample || [])}x mask` : '等待 batch',
+      status: status(hasBatch && hasTraining, hasBatch)
+    },
+    {
+      key: 'loss',
+      title: 'Loss',
+      target: '比较 train/eval loss 是否一起下降',
+      evidence: hasEval ? `eval=${formatLoss(run?.finalEvalLoss ?? logs[logs.length - 1]?.evalLoss)}` : '等待验证',
+      status: status(hasEnoughLogs && hasEval, hasTraining)
+    },
+    {
+      key: 'sample',
+      title: 'Generate',
+      target: '观察生成文本是否从重复变得更像语料',
+      evidence: hasSample ? '已有样例' : '等待采样',
+      status: status(hasSample, hasEnoughLogs)
+    },
+    {
+      key: 'review',
+      title: 'Review',
+      target: '写下假设、观察、结论和下一步',
+      evidence: hasNotes ? '已有笔记' : isFinished ? '待复盘' : '等待实验结束',
+      status: status(hasNotes, isFinished)
+    }
+  ];
+};
+
+const MiniGptLearningPage = () => {
+  const [form] = Form.useForm<MiniGptTrainingRequest>();
+  const [noteForm] = Form.useForm<MiniGptRunNoteRequest>();
+  const [generationForm] = Form.useForm<MiniGptGenerationRequest>();
+  const [dashboard, setDashboard] = useState<MiniGptDashboard>({});
+  const [corpusInsight, setCorpusInsight] = useState<MiniGptCorpusInsight>({});
+  const [trainingStatus, setTrainingStatus] = useState<MiniGptTrainingStatus>({});
+  const [generationResult, setGenerationResult] = useState<MiniGptGenerationResult>();
+  const [selectedRun, setSelectedRun] = useState<string>();
+  const [comparisonRunNames, setComparisonRunNames] = useState<string[]>([]);
+  const [comparisonLogs, setComparisonLogs] = useState<Record<string, MiniGptTrainingLogRecord[]>>({});
+  const [loading, setLoading] = useState(false);
+  const [corpusLoading, setCorpusLoading] = useState(false);
+  const [comparisonLoading, setComparisonLoading] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [savingNotes, setSavingNotes] = useState(false);
+  const [generating, setGenerating] = useState(false);
+
+  const loadDashboard = useCallback(async (runName?: string, quiet = false) => {
+    if (!quiet) {
+      setLoading(true);
+    }
+    try {
+      const data = await miniGptApi.dashboard({ runName, runLimit: 50, logLimit: 500 });
+      setDashboard(data);
+      setSelectedRun(data.latestRun?.runName);
+    } catch (error) {
+      console.error('加载 MiniGPT 学习数据失败:', error);
+      message.error('MiniGPT 学习数据加载失败');
+    } finally {
+      if (!quiet) {
+        setLoading(false);
+      }
+    }
+  }, []);
+
+  const loadTrainingStatus = useCallback(async (quiet = true) => {
+    try {
+      const status = await miniGptApi.trainingStatus();
+      setTrainingStatus(status);
+      if (status.runName) {
+        setSelectedRun(status.runName);
+      }
+      if (status.running && status.runName) {
+        await loadDashboard(status.runName, quiet);
+      }
+    } catch (error) {
+      console.error('加载 MiniGPT 训练状态失败:', error);
+    }
+  }, [loadDashboard]);
+
+  const loadCorpusInsight = useCallback(async (values?: MiniGptTrainingRequest) => {
+    const currentValues = values || form.getFieldsValue();
+    setCorpusLoading(true);
+    try {
+      const data = await miniGptApi.corpusInsight({
+        data: currentValues.data || 'data/sample.txt',
+        sample: currentValues.samplePrompt || '语言模型',
+        tokenLimit: 120
+      });
+      setCorpusInsight(data);
+    } catch (error) {
+      console.error('加载 MiniGPT 语料洞察失败:', error);
+      message.error('MiniGPT 语料洞察加载失败');
+    } finally {
+      setCorpusLoading(false);
+    }
+  }, [form]);
+
+  const loadComparisonLogs = useCallback(async (runNames: string[]) => {
+    const safeRunNames = runNames.filter(Boolean).slice(0, 4);
+    setComparisonRunNames(safeRunNames);
+    if (!safeRunNames.length) {
+      setComparisonLogs({});
+      return;
+    }
+    setComparisonLoading(true);
+    try {
+      const entries = await Promise.all(safeRunNames.map(async runName => {
+        const items = await miniGptApi.logs({ runName, limit: 500 });
+        return [runName, items] as const;
+      }));
+      setComparisonLogs(Object.fromEntries(entries));
+    } catch (error) {
+      console.error('加载 MiniGPT 对比日志失败:', error);
+      message.error('MiniGPT 对比日志加载失败');
+    } finally {
+      setComparisonLoading(false);
+    }
+  }, []);
+
+  const handleStartTraining = async (values: MiniGptTrainingRequest) => {
+    setStarting(true);
+    try {
+      const status = await miniGptApi.startTraining(values);
+      setTrainingStatus(status);
+      setSelectedRun(status.runName);
+      message.success('MiniGPT 训练已启动');
+      await loadDashboard(status.runName, true);
+    } catch (error) {
+      console.error('启动 MiniGPT 训练失败:', error);
+      message.error('启动 MiniGPT 训练失败');
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  const handleCancelTraining = async () => {
+    setCancelling(true);
+    try {
+      const status = await miniGptApi.cancelTraining();
+      setTrainingStatus(status);
+      message.info(status.message || '已发送取消请求');
+    } catch (error) {
+      console.error('取消 MiniGPT 训练失败:', error);
+      message.error('取消 MiniGPT 训练失败');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const handleSaveNotes = async (values: MiniGptRunNoteRequest) => {
+    if (!run?.runName) {
+      message.warning('请先选择一个实验');
+      return;
+    }
+    setSavingNotes(true);
+    try {
+      await miniGptApi.updateRunNotes(run.runName, values);
+      message.success('实验笔记已保存');
+      await loadDashboard(run.runName, true);
+    } catch (error) {
+      console.error('保存 MiniGPT 实验笔记失败:', error);
+      message.error('实验笔记保存失败');
+    } finally {
+      setSavingNotes(false);
+    }
+  };
+
+  const handleGenerate = async (values: MiniGptGenerationRequest) => {
+    if (!run?.runName) {
+      message.warning('请先选择一个已完成训练的实验');
+      return;
+    }
+    setGenerating(true);
+    try {
+      const result = await miniGptApi.generate({
+        ...values,
+        runName: run.runName
+      });
+      setGenerationResult(result);
+    } catch (error) {
+      console.error('MiniGPT 生成失败:', error);
+      message.error('MiniGPT 生成失败');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDashboard();
+    loadTrainingStatus();
+    loadCorpusInsight({
+      data: 'data/sample.txt',
+      samplePrompt: '语言模型'
+    });
+    const timer = window.setInterval(() => {
+      loadTrainingStatus(true);
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, [loadCorpusInsight, loadDashboard, loadTrainingStatus]);
+
+  const runs = useMemo(() => dashboard.runs || [], [dashboard.runs]);
+  const logs = useMemo(() => dashboard.logs || [], [dashboard.logs]);
+  const run = dashboard.latestRun;
+  const sample = latestSample(logs);
+  const chartOption = useMemo(() => buildChartOption(logs), [logs]);
+  const latestStatusLog = trainingStatus.latestLog;
+  const trainingPercent = trainingStatus.running ? trainingStatus.percent ?? 1 : trainingStatus.failed ? 100 : trainingStatus.percent ?? 0;
+  const encodedSample = useMemo(() => corpusInsight.encodedSample || [], [corpusInsight.encodedSample]);
+  const tokenRows = useMemo(() => corpusInsight.tokens || [], [corpusInsight.tokens]);
+  const batchRows = useMemo(() => buildBatchRows(encodedSample, tokenRows), [encodedSample, tokenRows]);
+  const maskSize = useMemo(() => buildMaskSize(run, encodedSample), [encodedSample, run]);
+  const architectureStages = useMemo(() => modelStages(run, corpusInsight), [corpusInsight, run]);
+  const comparisonChartOption = useMemo(() => buildComparisonChartOption(comparisonLogs), [comparisonLogs]);
+  const milestones = useMemo(() => learningMilestones(run, logs, corpusInsight), [corpusInsight, logs, run]);
+
+  useEffect(() => {
+    if (!comparisonRunNames.length && runs.length) {
+      loadComparisonLogs(runs.slice(0, 3).map(item => item.runName).filter(Boolean) as string[]);
+    }
+  }, [comparisonRunNames.length, loadComparisonLogs, runs]);
+
+  useEffect(() => {
+    noteForm.setFieldsValue({
+      hypothesis: run?.hypothesis,
+      observation: run?.observation,
+      conclusion: run?.conclusion,
+      nextStep: run?.nextStep
+    });
+    generationForm.setFieldsValue({
+      prompt: run?.samplePrompt || '语言模型',
+      maxNewTokens: run?.sampleTokens || 120,
+      temperature: 0.9,
+      topK: 20
+    });
+    setGenerationResult(undefined);
+  }, [generationForm, noteForm, run]);
+
+  const columns = [
+    {
+      title: 'Step',
+      dataIndex: 'step',
+      width: 90
+    },
+    {
+      title: 'Train Loss',
+      dataIndex: 'trainLoss',
+      width: 130,
+      render: (value?: number) => formatLoss(value)
+    },
+    {
+      title: 'Eval Loss',
+      dataIndex: 'evalLoss',
+      width: 130,
+      render: (value?: number) => formatLoss(value)
+    },
+    {
+      title: '耗时',
+      dataIndex: 'elapsedSeconds',
+      width: 100,
+      render: (value?: number) => Number.isFinite(value) ? `${value}s` : '-'
+    },
+    {
+      title: '样例',
+      dataIndex: 'sample',
+      render: (value?: string) => <pre className="mini-gpt-table-sample">{value || '-'}</pre>
+    }
+  ];
+
+  const tokenColumns = [
+    {
+      title: 'ID',
+      dataIndex: 'tokenId',
+      width: 76
+    },
+    {
+      title: 'Token',
+      dataIndex: 'display',
+      width: 110,
+      render: (value?: string) => <code>{value || '-'}</code>
+    },
+    {
+      title: 'Code Point',
+      dataIndex: 'codePoint',
+      width: 130
+    }
+  ];
+
+  return (
+    <LifePageShell
+      eyebrow="OneAI / MiniGPT"
+      title="MiniGPT 学习实验"
+      className="mini-gpt-page"
+      actions={(
+        <Space wrap>
+          <Select
+            className="mini-gpt-run-select"
+            placeholder="选择实验"
+            value={selectedRun}
+            options={runs.map(item => ({
+              value: item.runName,
+              label: [item.runName, item.preset, item.finalEvalLoss !== undefined ? `eval=${formatLoss(item.finalEvalLoss)}` : '']
+                .filter(Boolean)
+                .join(' · ')
+            }))}
+            onChange={(value) => loadDashboard(value)}
+          />
+          <Button icon={<ReloadOutlined />} onClick={() => loadDashboard(selectedRun)} loading={loading}>
+            刷新
+          </Button>
+        </Space>
+      )}
+    >
+      <Spin spinning={loading}>
+        <div className="mini-gpt-workspace">
+          <Card className="mini-gpt-panel mini-gpt-training-card" title="训练控制">
+            <div className="mini-gpt-training-grid">
+              <Form
+                form={form}
+                layout="vertical"
+                className="mini-gpt-training-form"
+                initialValues={{
+                  preset: 'tiny',
+                  data: 'data/sample.txt',
+                  maxSteps: 120,
+                  valRatio: 0.1,
+                  samplePrompt: '语言模型',
+                  sampleTokens: 80
+                }}
+                onFinish={handleStartTraining}
+              >
+                <Form.Item name="preset" label="预设">
+                  <Select
+                    options={[
+                      { value: 'tiny', label: 'tiny' },
+                      { value: 'small', label: 'small' },
+                      { value: 'medium', label: 'medium' },
+                      { value: 'custom', label: 'custom' }
+                    ]}
+                  />
+                </Form.Item>
+                <Form.Item name="runName" label="实验名">
+                  <Input placeholder="留空自动生成" />
+                </Form.Item>
+                <Form.Item name="data" label="语料">
+                  <Input />
+                </Form.Item>
+                <Form.Item name="maxSteps" label="步数">
+                  <InputNumber min={1} max={5000} />
+                </Form.Item>
+                <Form.Item name="valRatio" label="验证比例">
+                  <InputNumber min={0} max={0.5} step={0.05} />
+                </Form.Item>
+                <Form.Item name="samplePrompt" label="采样提示">
+                  <Input />
+                </Form.Item>
+                <Form.Item name="sampleTokens" label="采样长度">
+                  <InputNumber min={1} max={500} />
+                </Form.Item>
+                <section className="mini-gpt-advanced-form">
+                  <Form.Item name="batchSize" label="Batch Size">
+                    <InputNumber min={1} max={256} />
+                  </Form.Item>
+                  <Form.Item name="learningRate" label="Learning Rate">
+                    <InputNumber min={0.000001} max={0.1} step={0.0001} />
+                  </Form.Item>
+                  <Form.Item name="blockSize" label="Block Size">
+                    <InputNumber min={4} max={512} />
+                  </Form.Item>
+                  <Form.Item name="nEmbd" label="Embedding">
+                    <InputNumber min={8} max={1024} />
+                  </Form.Item>
+                  <Form.Item name="nHead" label="Heads">
+                    <InputNumber min={1} max={32} />
+                  </Form.Item>
+                  <Form.Item name="nLayer" label="Layers">
+                    <InputNumber min={1} max={48} />
+                  </Form.Item>
+                  <Form.Item name="temperature" label="Temperature">
+                    <InputNumber min={0.1} max={2} step={0.1} />
+                  </Form.Item>
+                  <Form.Item name="topK" label="Top-K">
+                    <InputNumber min={1} max={200} />
+                  </Form.Item>
+                </section>
+                <Form.Item className="mini-gpt-training-actions">
+                  <Space wrap>
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      icon={<PlayCircleOutlined />}
+                      loading={starting}
+                      disabled={trainingStatus.running}
+                    >
+                      开始训练
+                    </Button>
+                    <Button
+                      danger
+                      icon={<CloseCircleOutlined />}
+                      loading={cancelling}
+                      disabled={!trainingStatus.running}
+                      onClick={handleCancelTraining}
+                    >
+                      取消
+                    </Button>
+                  </Space>
+                </Form.Item>
+              </Form>
+
+              <div className="mini-gpt-status-panel">
+                <Space wrap>
+                  <Tag color={trainingStatus.running ? 'processing' : trainingStatus.failed ? 'error' : trainingStatus.cancelled ? 'warning' : 'default'}>
+                    {trainingStatus.stage || '空闲'}
+                  </Tag>
+                  {trainingStatus.runName && <Tag>{trainingStatus.runName}</Tag>}
+                </Space>
+                <Progress
+                  percent={trainingPercent}
+                  status={trainingStatus.failed ? 'exception' : trainingStatus.running ? 'active' : 'normal'}
+                />
+                <p>{trainingStatus.message || '暂无运行中的 MiniGPT 训练'}</p>
+                <dl>
+                  <div>
+                    <dt>当前 Step</dt>
+                    <dd>{formatInteger(trainingStatus.processedStep)} / {formatInteger(trainingStatus.totalSteps)}</dd>
+                  </div>
+                  <div>
+                    <dt>最近 Loss</dt>
+                    <dd>{formatLoss(latestStatusLog?.evalLoss)}</dd>
+                  </div>
+                  <div>
+                    <dt>更新时间</dt>
+                    <dd>{formatTime(trainingStatus.updatedAt)}</dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
+          </Card>
+
+          <Card
+            className="mini-gpt-panel"
+            title="语料与 Tokenizer"
+            extra={<Button size="small" icon={<ReloadOutlined />} onClick={() => loadCorpusInsight()}>刷新语料</Button>}
+          >
+            <Spin spinning={corpusLoading}>
+              <div className="mini-gpt-tokenizer-grid">
+                <div className="mini-gpt-corpus-overview">
+                  <section className="mini-gpt-tokenizer-metrics">
+                    <div>
+                      <span>字符数</span>
+                      <strong>{formatInteger(corpusInsight.charCount)}</strong>
+                    </div>
+                    <div>
+                      <span>行数</span>
+                      <strong>{formatInteger(corpusInsight.lineCount)}</strong>
+                    </div>
+                    <div>
+                      <span>词表大小</span>
+                      <strong>{formatInteger(corpusInsight.vocabSize)}</strong>
+                    </div>
+                  </section>
+                  <div className="mini-gpt-tokenizer-block">
+                    <Text type="secondary">语料预览</Text>
+                    <pre>{corpusInsight.preview || '暂无语料预览'}</pre>
+                  </div>
+                  <div className="mini-gpt-tokenizer-block">
+                    <Text type="secondary">Encode / Decode</Text>
+                    <p className="mini-gpt-tokenizer-sample">{corpusInsight.sampleText || '-'}</p>
+                    <pre>{encodedSample.length ? encodedSample.join(', ') : '-'}</pre>
+                    <p className="mini-gpt-tokenizer-sample">{corpusInsight.decodedSample || '-'}</p>
+                  </div>
+                </div>
+                <Table
+                  rowKey={(record) => String(record.tokenId)}
+                  columns={tokenColumns}
+                  dataSource={tokenRows}
+                  pagination={{ pageSize: 8, showSizeChanger: false }}
+                  size="small"
+                  scroll={{ x: 320 }}
+                />
+              </div>
+            </Spin>
+          </Card>
+
+          <Card className="mini-gpt-panel" title="训练过程解释">
+            <div className="mini-gpt-explain-grid">
+              <section className="mini-gpt-explain-section">
+                <div className="mini-gpt-explain-heading">
+                  <Text type="secondary">Batch x / y</Text>
+                  <Tag>{batchRows.length} pairs</Tag>
+                </div>
+                <div className="mini-gpt-batch-rows">
+                  {batchRows.length ? batchRows.map(row => (
+                    <div className="mini-gpt-batch-row" key={row.position}>
+                      <span>{row.position}</span>
+                      <code>{row.inputToken}</code>
+                      <strong>→</strong>
+                      <code>{row.targetToken}</code>
+                    </div>
+                  )) : (
+                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无 batch 样例" />
+                  )}
+                </div>
+              </section>
+
+              <section className="mini-gpt-explain-section">
+                <div className="mini-gpt-explain-heading">
+                  <Text type="secondary">Causal Mask</Text>
+                  <Tag>{maskSize}x{maskSize}</Tag>
+                </div>
+                <div
+                  className="mini-gpt-mask-grid"
+                  style={{ gridTemplateColumns: `repeat(${maskSize}, minmax(0, 1fr))` }}
+                >
+                  {Array.from({ length: maskSize * maskSize }).map((_, index) => {
+                    const row = Math.floor(index / maskSize);
+                    const col = index % maskSize;
+                    const visible = col <= row;
+                    return (
+                      <span
+                        key={`${row}-${col}`}
+                        className={visible ? 'visible' : 'blocked'}
+                        title={`query ${row}, key ${col}`}
+                      >
+                        {visible ? '1' : '0'}
+                      </span>
+                    );
+                  })}
+                </div>
+              </section>
+
+              <section className="mini-gpt-explain-section mini-gpt-architecture-section">
+                <div className="mini-gpt-explain-heading">
+                  <Text type="secondary">Model Flow</Text>
+                  <Tag>{run?.preset || 'preset'}</Tag>
+                </div>
+                <div className="mini-gpt-architecture-flow">
+                  {architectureStages.map(stage => (
+                    <div className="mini-gpt-architecture-node" key={stage.key}>
+                      <strong>{stage.label}</strong>
+                      <span>{stage.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </div>
+          </Card>
+
+          <Card className="mini-gpt-panel" title="学习阶段清单">
+            <div className="mini-gpt-learning-grid">
+              {milestones.map(item => (
+                <section className={`mini-gpt-learning-card ${item.status}`} key={item.key}>
+                  <div className="mini-gpt-learning-card-head">
+                    <strong>{item.title}</strong>
+                    <Tag color={item.status === 'done' ? 'success' : item.status === 'active' ? 'processing' : 'default'}>
+                      {item.status === 'done' ? '完成' : item.status === 'active' ? '进行中' : '待开始'}
+                    </Tag>
+                  </div>
+                  <p>{item.target}</p>
+                  <span>{item.evidence}</span>
+                </section>
+              ))}
+            </div>
+          </Card>
+
+          {!run ? (
+            <Alert
+              type="info"
+              showIcon
+              icon={<DatabaseOutlined />}
+              message="暂无 MiniGPT Mongo 数据"
+              description="可以直接使用上方训练控制启动一次 tiny 训练；完成后这里会显示实验、loss 曲线和生成样例。"
+            />
+          ) : (
+            <>
+            <section className="mini-gpt-summary-band">
+              <div>
+                <Text type="secondary">当前实验</Text>
+                <h2>{run.runName}</h2>
+                <Space wrap>
+                  <Tag color={statusColor(run.status)}>{run.status || 'UNKNOWN'}</Tag>
+                  {run.preset && <Tag color="cyan">{run.preset}</Tag>}
+                  {run.validationEnabled !== undefined && (
+                    <Tag color={run.validationEnabled ? 'green' : 'orange'}>
+                      validation={String(run.validationEnabled)}
+                    </Tag>
+                  )}
+                </Space>
+              </div>
+              <div className="mini-gpt-time-stack">
+                <span>{formatTime(run.startedAt)}</span>
+                <strong>{formatTime(run.finishedAt)}</strong>
+              </div>
+            </section>
+
+            <section className="mini-gpt-metric-grid">
+              {metricItems(run, logs).map(item => (
+                <div className="mini-gpt-metric" key={item.label}>
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
+                </div>
+              ))}
+            </section>
+
+            <Card className="mini-gpt-panel" title="实验对比与笔记">
+              <div className="mini-gpt-comparison-grid">
+                <section className="mini-gpt-comparison-chart-panel">
+                  <div className="mini-gpt-comparison-toolbar">
+                    <Text type="secondary">对比实验</Text>
+                    <Select
+                      mode="multiple"
+                      placeholder="选择最多 4 个实验"
+                      value={comparisonRunNames}
+                      options={runs.map(item => ({
+                        value: item.runName,
+                        label: item.runName
+                      }))}
+                      onChange={(values) => loadComparisonLogs(values.slice(0, 4))}
+                      loading={comparisonLoading}
+                      maxTagCount="responsive"
+                    />
+                  </div>
+                  {Object.keys(comparisonLogs).length ? (
+                    <ReactECharts option={comparisonChartOption} className="mini-gpt-comparison-chart" notMerge />
+                  ) : (
+                    <Empty description="暂无可对比的训练日志" />
+                  )}
+                </section>
+
+                <Form
+                  form={noteForm}
+                  layout="vertical"
+                  className="mini-gpt-note-form"
+                  onFinish={handleSaveNotes}
+                >
+                  <Form.Item name="hypothesis" label="训练假设">
+                    <Input.TextArea rows={3} placeholder="例如：更小学习率会降低 eval loss 抖动" />
+                  </Form.Item>
+                  <Form.Item name="observation" label="观察记录">
+                    <Input.TextArea rows={3} placeholder="记录 loss、样例输出、过拟合迹象" />
+                  </Form.Item>
+                  <Form.Item name="conclusion" label="阶段结论">
+                    <Input.TextArea rows={3} placeholder="这次实验说明了什么" />
+                  </Form.Item>
+                  <Form.Item name="nextStep" label="下一步">
+                    <Input.TextArea rows={2} placeholder="下一次要调整的参数或语料" />
+                  </Form.Item>
+                  <Button type="primary" htmlType="submit" loading={savingNotes} disabled={!run?.runName}>
+                    保存笔记
+                  </Button>
+                </Form>
+              </div>
+            </Card>
+
+            <section className="mini-gpt-main-grid">
+              <Card className="mini-gpt-panel" title="Loss 曲线">
+                {logs.length > 1 ? (
+                  <ReactECharts option={chartOption} className="mini-gpt-chart" notMerge />
+                ) : (
+                  <Empty description="训练日志不足" />
+                )}
+              </Card>
+
+              <Card className="mini-gpt-panel" title="生成试验台">
+                <Form
+                  form={generationForm}
+                  layout="vertical"
+                  className="mini-gpt-generation-form"
+                  onFinish={handleGenerate}
+                >
+                  <Form.Item name="prompt" label="Prompt">
+                    <Input.TextArea rows={2} />
+                  </Form.Item>
+                  <div className="mini-gpt-generation-controls">
+                    <Form.Item name="maxNewTokens" label="Tokens">
+                      <InputNumber min={1} max={500} />
+                    </Form.Item>
+                    <Form.Item name="temperature" label="Temp">
+                      <InputNumber min={0.1} max={2} step={0.1} />
+                    </Form.Item>
+                    <Form.Item name="topK" label="Top-K">
+                      <InputNumber min={1} max={200} />
+                    </Form.Item>
+                    <Button type="primary" htmlType="submit" loading={generating} disabled={!run?.checkpoint}>
+                      生成
+                    </Button>
+                  </div>
+                </Form>
+                <div className="mini-gpt-generation-result">
+                  <Text type="secondary">
+                    {generationResult?.elapsedMillis !== undefined
+                      ? `${generationResult.runName || run.runName} · ${generationResult.elapsedMillis}ms`
+                      : '当前 checkpoint 生成结果'}
+                  </Text>
+                  <pre className="mini-gpt-sample">
+                    {generationResult?.generatedText || sample || '暂无生成样例'}
+                  </pre>
+                </div>
+              </Card>
+            </section>
+
+            <section className="mini-gpt-main-grid">
+              <Card className="mini-gpt-panel" title="实验配置">
+                <dl className="mini-gpt-config-list">
+                  {configEntries(run).map(([key, value]) => (
+                    <div key={key}>
+                      <dt>{key}</dt>
+                      <dd>{String(value)}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </Card>
+
+              <Card className="mini-gpt-panel" title="历史实验">
+                <div className="mini-gpt-run-list">
+                  {runs.map(item => (
+                    <button
+                      type="button"
+                      key={item.runName}
+                      className={item.runName === run.runName ? 'active' : ''}
+                      onClick={() => item.runName && loadDashboard(item.runName)}
+                    >
+                      <span>{item.runName}</span>
+                      <strong>{formatLoss(item.finalEvalLoss)}</strong>
+                    </button>
+                  ))}
+                </div>
+              </Card>
+            </section>
+
+            <Card className="mini-gpt-panel" title="训练日志">
+              <Table
+                rowKey={(record) => `${record.runName}-${record.step}`}
+                columns={columns}
+                dataSource={logs}
+                pagination={{ pageSize: 8, showSizeChanger: false }}
+                scroll={{ x: 820 }}
+              />
+            </Card>
+            </>
+          )}
+        </div>
+      </Spin>
+    </LifePageShell>
+  );
+};
+
+export default MiniGptLearningPage;

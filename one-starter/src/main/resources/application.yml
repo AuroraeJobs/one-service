@@ -83,6 +83,9 @@ hello:
     update: false
     reset: false
 
+minigpt:
+  playground-dir: ${MINI_GPT_PLAYGROUND_DIR:playground/mini-gpt}
+
 github:
   oauth:
     auth-base-url: ${GITHUB_OAUTH_AUTH_BASE_URL:https://github.com/login/oauth}

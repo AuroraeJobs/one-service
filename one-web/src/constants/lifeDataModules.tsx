@@ -32,12 +32,13 @@ import {
   ThunderboltOutlined,
   TrophyOutlined,
   UserOutlined,
-  WalletOutlined
+  WalletOutlined,
+  WechatOutlined
 } from '@ant-design/icons';
 import type { ReactNode } from 'react';
 
 export type LifeModuleStatus = 'live' | 'partial' | 'planned';
-export type LifeModuleKey = 'overview' | 'vehicle' | 'finance' | 'investment' | 'lottery' | 'ai' | 'connectors';
+export type LifeModuleKey = 'overview' | 'vehicle' | 'finance' | 'investment' | 'lottery' | 'ai' | 'wechat' | 'connectors';
 
 export interface LifeDataModule {
   id: string;
@@ -125,16 +126,29 @@ export const lifeDataModules: LifeDataModule[] = [
   },
   {
     id: 'ai',
-    title: '模型对话',
+    title: '模型学习',
     shortTitle: '模型',
-    description: '统一管理本地模型与在线模型的对话入口。',
+    description: '统一管理模型对话、MiniGPT 学习实验和模型运行观测。',
     path: '/ai/chat',
     status: 'partial',
     accent: '#00c7be',
     icon: <MessageOutlined />,
-    liveCapabilities: ['模型切换', '上下文对话', '本地模型接入'],
+    liveCapabilities: ['模型切换', '上下文对话', 'MiniGPT 实验观察', '本地模型接入'],
     plannedCapabilities: ['Spring AI 深度编排', '工具调用', '对话复盘'],
-    dataSources: ['LocalAI/Ollama', 'DeepSeek', 'Spring AI OpenAI 兼容配置']
+    dataSources: ['LocalAI/Ollama', 'DeepSeek', 'Spring AI OpenAI 兼容配置', 'MiniGPT Mongo 实验日志']
+  },
+  {
+    id: 'wechat',
+    title: '微信公众号',
+    shortTitle: '微信',
+    description: '管理公众号写稿、发布规划、草稿箱和已发布文章。',
+    path: '/wechat',
+    status: 'partial',
+    accent: '#07c160',
+    icon: <WechatOutlined />,
+    liveCapabilities: ['写稿', '发布规划', '草稿箱', '已发布文章'],
+    plannedCapabilities: ['素材管理', '发布复盘', '数据看板'],
+    dataSources: ['微信公众号 API', '本地文章与封面路径', '发布计划']
   },
   {
     id: 'accounts',
@@ -170,7 +184,8 @@ export const lifeNavItems: LifeNavItem[] = [
   { path: '/investments', key: 'investment', label: '股票', icon: <StockOutlined /> },
   { path: '/finance/salary', key: 'finance', label: '钞票', icon: <MoneyCollectOutlined /> },
   { path: '/vehicle/charging', key: 'vehicle', label: '能源', icon: <CarOutlined /> },
-  { path: '/ai/chat', key: 'ai', label: '模型', icon: <MessageOutlined /> }
+  { path: '/ai/chat', key: 'ai', label: '模型', icon: <MessageOutlined /> },
+  { path: '/wechat', key: 'wechat', label: '微信', icon: <WechatOutlined /> }
 ];
 
 export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
@@ -311,10 +326,13 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
   ],
   ai: [
     { id: 'ai-chat', moduleKey: 'ai', path: '/ai/chat', label: '对话', icon: <MessageOutlined />, accent: '#00c7be' },
-    { id: 'ai-wechat', moduleKey: 'ai', path: '/ai/wechat', label: '写稿', icon: <FileTextOutlined />, accent: '#0071e3' },
-    { id: 'ai-wechat-plans', moduleKey: 'ai', path: '/ai/wechat/plans', label: '规划', icon: <CalendarOutlined />, accent: '#ff9500' },
-    { id: 'ai-wechat-drafts', moduleKey: 'ai', path: '/ai/wechat/drafts', label: '草稿箱', icon: <DatabaseOutlined />, accent: '#00c7be' },
-    { id: 'ai-wechat-published', moduleKey: 'ai', path: '/ai/wechat/published', label: '已发布', icon: <HistoryOutlined />, accent: '#34c759' }
+    { id: 'ai-minigpt', moduleKey: 'ai', path: '/ai/minigpt', label: 'MiniGPT', icon: <ExperimentOutlined />, accent: '#5856d6' }
+  ],
+  wechat: [
+    { id: 'wechat-write', moduleKey: 'wechat', path: '/wechat', label: '写稿', icon: <FileTextOutlined />, accent: '#0071e3' },
+    { id: 'wechat-plans', moduleKey: 'wechat', path: '/wechat/plans', label: '规划', icon: <CalendarOutlined />, accent: '#ff9500' },
+    { id: 'wechat-drafts', moduleKey: 'wechat', path: '/wechat/drafts', label: '草稿箱', icon: <DatabaseOutlined />, accent: '#00c7be' },
+    { id: 'wechat-published', moduleKey: 'wechat', path: '/wechat/published', label: '已发布', icon: <HistoryOutlined />, accent: '#34c759' }
   ]
 };
 
@@ -334,7 +352,11 @@ export const legacyPathMap: Record<string, string> = {
   '/analysis': '/lottery/analysis',
   '/prediction': '/lottery/prediction',
   '/record': '/lottery/records',
-  '/taiji': '/lottery/taiji'
+  '/taiji': '/lottery/taiji',
+  '/ai/wechat': '/wechat',
+  '/ai/wechat/plans': '/wechat/plans',
+  '/ai/wechat/drafts': '/wechat/drafts',
+  '/ai/wechat/published': '/wechat/published'
 };
 
 const splitLifePath = (pathname: string) => {
@@ -358,6 +380,7 @@ export const getLifeModuleKeyByPath = (pathname: string): LifeModuleKey | '' => 
   if (canonicalPath.startsWith('/finance')) return 'finance';
   if (canonicalPath.startsWith('/investments')) return 'investment';
   if (canonicalPath.startsWith('/connections')) return 'connectors';
+  if (canonicalPath.startsWith('/wechat')) return 'wechat';
   if (canonicalPath.startsWith('/ai')) return 'ai';
   if (canonicalPath.startsWith('/lottery')) return 'lottery';
 
@@ -386,6 +409,7 @@ export const getLifeSubNavAriaLabel = (pathname: string) => {
     investment: '投资数据导航',
     lottery: '彩票数据导航',
     ai: 'AI 对话导航',
+    wechat: '微信公众号导航',
     connectors: '数据接入导航'
   };
 

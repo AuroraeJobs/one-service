@@ -99,6 +99,10 @@ body {
   --module-accent: #00c7be;
 }
 
+.life-module-wechat {
+  --module-accent: #07c160;
+}
+
 .app-main.life-module-ai {
   height: 100vh;
   padding-top: var(--header-height);

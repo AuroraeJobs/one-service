@@ -21,6 +21,7 @@ import LifeStockDetailPage from '../components/LifeStockDetailPage';
 import LifeStockSyncPage from '../components/LifeStockSyncPage';
 import LifeStockTradesPage from '../components/LifeStockTradesPage';
 import LifeOverviewPage from '../components/LifeOverviewPage';
+import MiniGptLearningPage from '../components/MiniGptLearningPage';
 import LotteryOverviewPage from '../components/LotteryOverviewPage';
 import LotteryAstronautPage from '../components/LotteryAstronautPage';
 import LotteryAstronautVoyagePage from '../components/LotteryAstronautVoyagePage';
@@ -75,6 +76,11 @@ export const createProtectedRoutes = (isTabVisible: boolean): ProtectedRouteConf
   { path: '/settings', element: <PersonalSettingsPage /> },
   { path: '/connections', element: <LifeDataConnectionsPage /> },
   { path: '/ai/chat', element: <AiChatPage /> },
+  { path: '/ai/minigpt', element: <MiniGptLearningPage /> },
+  { path: '/wechat', element: <WechatOfficialAccountPage /> },
+  { path: '/wechat/plans', element: <WechatOfficialAccountPlanPage /> },
+  { path: '/wechat/drafts', element: <WechatOfficialAccountArticlesPage type="drafts" /> },
+  { path: '/wechat/published', element: <WechatOfficialAccountArticlesPage type="published" /> },
   { path: '/ai/wechat', element: <WechatOfficialAccountPage /> },
   { path: '/ai/wechat/plans', element: <WechatOfficialAccountPlanPage /> },
   { path: '/ai/wechat/drafts', element: <WechatOfficialAccountArticlesPage type="drafts" /> },
