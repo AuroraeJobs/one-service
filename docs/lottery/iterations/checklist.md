@@ -1054,6 +1054,27 @@ Goal: turn archive-review note quality into visible release and review evidence 
 - [x] Add a compact closure summary that connects notebook, month-end, governance, and release evidence paths.
 - [x] Decide whether repeated quality gaps should become a future release-readiness guard. Decision: keep observing as a non-blocking signal; revisit after repeated quality gaps appear in review history.
 
+## Iteration 40: Five-Iteration Planning Review
+
+Goal: make the 35-39 archive-review work visible as a planning checkpoint, then promote the next practical review improvements without changing backend contracts first.
+
+### Wave 40A: Month-End Planning Checkpoint
+
+- [x] Add a month-end planning checkpoint that explains the 35-39 review window.
+- [x] Link the checkpoint to long-term exports, archive-review notes, governance trends, and the workbench.
+- [x] Keep the checkpoint informational and user-triggered.
+
+### Wave 40B: Next-Phase Candidate Surfacing
+
+- [ ] Surface the next recommended review themes from the long-term plan.
+- [ ] Keep candidate themes tied to existing pages before adding new routes.
+- [ ] Add smoke coverage for candidate labels.
+
+### Wave 40C: Release Evidence Handoff
+
+- [ ] Add a release-evidence handoff for the five-iteration planning review.
+- [ ] Decide whether planning checkpoints need archived report snapshots or can remain month-end evidence.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

@@ -567,6 +567,37 @@ const LotteryMonthEndReviewPage = () => {
     ];
   }, [attributionRollup?.issueCount, attributionRows, health, recommendationRollup, releaseChecks, reminders?.dueCount]);
 
+  const longTermPlanningItems = useMemo(() => [
+    {
+      key: 'review-window',
+      label: '35-39 复盘窗口',
+      value: '5 轮',
+      detail: '归档队列、策略笔记、质量信号和发布证据已闭环',
+      path: '/lottery/month-end'
+    },
+    {
+      key: 'long-term-export',
+      label: '长期研究包',
+      value: exportAudits.length,
+      detail: '导出长期研究和年度复盘证据',
+      path: '/lottery/exports?preset=long-term-research'
+    },
+    {
+      key: 'archive-notes',
+      label: '复核笔记',
+      value: notes?.total || notes?.items?.length || 0,
+      detail: '查看 ARCHIVE_REVIEW 筛选和闭环摘要',
+      path: '/lottery/research/notebook?evidence=ARCHIVE_REVIEW'
+    },
+    {
+      key: 'next-ops',
+      label: '下轮执行',
+      value: '40',
+      detail: '从工作台继续拆解候选复盘主题',
+      path: '/lottery/workbench'
+    }
+  ], [exportAudits.length, notes?.items?.length, notes?.total]);
+
   return (
     <LifePageShell
       className="lottery-prediction-page lottery-month-end-page"
@@ -629,6 +660,23 @@ const LotteryMonthEndReviewPage = () => {
                 <Tag color={statusColor(item.status)}>{lotteryStatusLabel(item.status)}</Tag>
                 <strong>{item.title}</strong>
                 <span>{item.body}</span>
+              </button>
+            ))}
+          </div>
+        </Card>
+
+        <Card
+          className="life-panel-card lottery-clean-panel"
+          title={<Space><BookOutlined />长期计划复盘</Space>}
+          extra={<Tag color="blue">35-39</Tag>}
+        >
+          <div className="lottery-month-end-list">
+            {longTermPlanningItems.map(item => (
+              <button key={item.key} type="button" onClick={() => navigate(item.path)}>
+                <Tag color="blue">{item.label}</Tag>
+                <span>{item.detail}</span>
+                <strong>{item.value}</strong>
+                <small>长期计划检查点</small>
               </button>
             ))}
           </div>

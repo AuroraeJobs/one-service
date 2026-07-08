@@ -1,6 +1,6 @@
 {
-  "target": "Iteration 39 Wave 39C review closure summary smoke",
-  "generatedAt": "2026-07-08T10:30:03.248Z",
+  "target": "Iteration 40 Wave 40A month-end planning checkpoint smoke",
+  "generatedAt": "2026-07-08T10:33:27.155Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
@@ -71,7 +71,7 @@
       "label": "月末复盘",
       "component": "LotteryMonthEndReviewPage",
       "mockApiCount": 11,
-      "emptyStateCount": 9,
+      "emptyStateCount": 15,
       "errorStateCount": 1
     },
     {

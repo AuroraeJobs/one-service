@@ -1,6 +1,6 @@
 # Lottery Long-Term Plan
 
-Last updated: 2026-07-07
+Last updated: 2026-07-08
 
 ## North Star
 
@@ -135,6 +135,7 @@ Completed in the previous planning block: Iterations 26-30 covered release histo
 
 ## Review Cadence
 
+- 2026-07-08 planning review: Iterations 35-39 completed archive review queue, notebook visibility, note quality, release evidence, workbench follow-up, and closure summaries. Iteration 40 promotes the next checkpoint into month-end review first, with future waves focused on candidate surfacing and release evidence handoff.
 - Review this long-term plan after every five completed iterations.
 - Promote only the next one or two candidate iterations into `docs/lottery/iterations/checklist.md`.
 - Keep completed tactical plans as historical evidence, but let this file carry the long-horizon direction.
