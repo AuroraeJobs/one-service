@@ -38,7 +38,7 @@
 
 完成标准：能用自己的中文文本训练一个小模型，并让它续写。
 
-已完成工具：`playground/mini-gpt` 支持 tiny/small/medium 训练预设、独立 run 保存、loss/验证集/生成样例记录、Loss 诊断、语料诊断、生成诊断、实验模板、实验对比、复盘问题、复盘笔记、实验报告复制、高级训练参数、参数速查、tensor shape 速查、代码定位与学习动作、checkpoint 生成试验台，以及可选择历史实验的 Web 观察台。`/ai/minigpt` 页面会按 Tokenizer、Batch、Causal Attention、Loss、Generate、Review 给出学习阶段清单。
+已完成工具：`playground/mini-gpt` 支持 tiny/small/medium 训练预设、独立 run 保存、loss/验证集/生成样例记录、Loss 诊断、语料诊断、生成诊断、下一步实验建议、实验模板、实验对比、复盘问题、复盘笔记、实验报告复制、高级训练参数、参数速查、tensor shape 速查、代码定位与学习动作、checkpoint 生成试验台，以及可选择历史实验的 Web 观察台。`/ai/minigpt` 页面会按 Tokenizer、Batch、Causal Attention、Loss、Generate、Review 给出学习阶段清单。
 
 ## 阶段 4：开源模型开发者
 
@@ -64,6 +64,7 @@
 - 训练 200 到 1000 step，观察 loss 下降和生成文本变化。
 - 用 `/ai/minigpt` 的 Loss 诊断检查下降趋势、泛化差距和验证集状态。
 - 用 `/ai/minigpt` 的生成诊断检查输出长度、重复程度、Prompt 延续和采样耗时。
+- 按 `/ai/minigpt` 的下一步实验建议，只选择一个变量继续下一轮训练。
 - 写一份复盘：模型为什么会胡说，数据量和上下文长度如何影响结果。
 - 按 `/ai/minigpt` 的复盘问题检查 loss gap、验证集、生成样例和下一步实验变量。
 - 在 `/ai/minigpt` 里保存每次实验的假设、观察、结论和下一步，并至少对比 2 个不同学习率、block size 或模型尺寸的实验。

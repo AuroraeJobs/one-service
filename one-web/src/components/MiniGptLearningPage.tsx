@@ -410,6 +410,109 @@ const generationDiagnostics = (
   ];
 };
 
+type NextExperimentAction = {
+  key: string;
+  title: string;
+  reason: string;
+  action: string;
+};
+
+const nextExperimentActions = (
+  run: MiniGptRunRecord | undefined,
+  logs: MiniGptTrainingLogRecord[],
+  corpusInsight: MiniGptCorpusInsight | undefined,
+  generationResult?: MiniGptGenerationResult
+): NextExperimentAction[] => {
+  if (!run) {
+    return [
+      {
+        key: 'start-baseline',
+        title: '先跑 Tiny 基线',
+        reason: '还没有 Mongo run，先确认训练、日志、checkpoint、生成链路都能闭环。',
+        action: '使用 Tiny 基线模板，训练 200 step。'
+      }
+    ];
+  }
+
+  const charCount = corpusInsight?.charCount || 0;
+  const latestLog = logs[logs.length - 1];
+  const trainLoss = run.finalTrainLoss ?? latestLog?.trainLoss;
+  const evalLoss = run.finalEvalLoss ?? latestLog?.evalLoss;
+  const sampleText = generationResult?.generatedText || latestSample(logs);
+  const repeatRatio = repeatedCharRatio(sampleText || '');
+  const actions: NextExperimentAction[] = [];
+
+  if (charCount > 0 && charCount < 1000) {
+    actions.push({
+      key: 'expand-corpus',
+      title: '先扩充语料',
+      reason: `当前只有 ${formatInteger(charCount)} 字，loss 和生成质量容易被小样本噪声主导。`,
+      action: '把 data/sample.txt 替换为更长、更统一风格的文本，再重复 Tiny 基线。'
+    });
+  }
+
+  if (run.validationEnabled === false) {
+    actions.push({
+      key: 'enable-validation',
+      title: '恢复验证集',
+      reason: '没有验证集时只能看到训练文本上的拟合，难以判断泛化。',
+      action: '增加语料或调低 valRatio 后重训，直到 eval loss 可稳定记录。'
+    });
+  }
+
+  if (Number.isFinite(run.lossGap) && Math.abs(run.lossGap || 0) > 0.5) {
+    actions.push({
+      key: 'gap-control',
+      title: '控制泛化差距',
+      reason: `当前 loss gap=${formatLoss(run.lossGap)}，训练和验证表现已经分开。`,
+      action: '优先增加数据；若数据暂时不变，就降低 max steps 或模型尺寸做对照。'
+    });
+  }
+
+  if (logs.length >= 2 && Number.isFinite(trainLoss) && Number.isFinite(evalLoss) && Number(evalLoss) > Number(trainLoss) + 0.2) {
+    actions.push({
+      key: 'regularize',
+      title: '做保守训练对照',
+      reason: 'eval loss 明显高于 train loss，模型可能更会背训练文本。',
+      action: '复制当前实验，只把 learning rate 降低一档或减少训练步数。'
+    });
+  }
+
+  if (!sampleText) {
+    actions.push({
+      key: 'generate-sample',
+      title: '补一次生成样例',
+      reason: '没有生成文本时，loss 只能说明优化过程，不能说明输出行为。',
+      action: '使用固定 Prompt 生成一次，并把结果写入观察笔记。'
+    });
+  } else if (repeatRatio > 0.12) {
+    actions.push({
+      key: 'reduce-repeat',
+      title: '降低重复输出',
+      reason: `连续重复比例约 ${(repeatRatio * 100).toFixed(1)}%，生成可能在局部循环。`,
+      action: '先用更低 temperature/top-k 对比；若仍重复，再补语料或减少训练步数。'
+    });
+  }
+
+  if (!run.hypothesis || !run.conclusion) {
+    actions.push({
+      key: 'write-notes',
+      title: '补齐实验笔记',
+      reason: '假设和结论缺失时，下一个实验很容易同时改多个变量。',
+      action: '写一句假设、一句观察、一句结论，再只选择一个变量继续。'
+    });
+  }
+
+  actions.push({
+    key: 'one-variable',
+    title: '下一轮只改一个变量',
+    reason: '单变量对照最容易看清 learning rate、block size、模型容量或采样参数的影响。',
+    action: '从低学习率、长上下文、Small 对照里选一个，和当前 run 做曲线对比。'
+  });
+
+  return actions.slice(0, 5);
+};
+
 const configEntries = (run?: MiniGptRunRecord): [string, string][] => {
   const config = run?.config || {};
   return [
@@ -448,6 +551,7 @@ const buildExperimentReport = (
   const diagnostics = lossDiagnostics(run, logs);
   const corpusRows = corpusDiagnostics(corpusInsight);
   const generationRows = generationDiagnostics(run, logs, generationResult);
+  const actionRows = nextExperimentActions(run, logs, corpusInsight, generationResult);
   const sample = generationResult?.generatedText || latestSample(logs);
   const shapeRows = tensorShapeRows(run, undefined, []);
   const questions = reviewQuestions(run, logs, generationResult);
@@ -471,6 +575,9 @@ const buildExperimentReport = (
     '',
     '## 生成诊断',
     ...generationRows.map(item => `- ${item.title}: ${item.value} / ${item.detail}`),
+    '',
+    '## 下一步建议',
+    ...actionRows.map(item => `- ${item.title}: ${item.action}（${item.reason}）`),
     '',
     '## 配置',
     ...configEntries(run).map(([key, value]) => `- ${key}: ${value}`),
@@ -946,6 +1053,10 @@ const MiniGptLearningPage = () => {
     () => generationDiagnostics(run, logs, generationResult),
     [generationResult, logs, run]
   );
+  const nextActionItems = useMemo(
+    () => nextExperimentActions(run, logs, corpusInsight, generationResult),
+    [corpusInsight, generationResult, logs, run]
+  );
   const experimentReport = useMemo(
     () => run ? buildExperimentReport(run, logs, generationResult, corpusInsight) : '',
     [corpusInsight, generationResult, logs, run]
@@ -1381,6 +1492,18 @@ const MiniGptLearningPage = () => {
                 <li key={question}>{question}</li>
               ))}
             </ol>
+          </Card>
+
+          <Card className="mini-gpt-panel" title="下一步实验建议">
+            <div className="mini-gpt-next-actions">
+              {nextActionItems.map(item => (
+                <section key={item.key}>
+                  <Text type="secondary">{item.reason}</Text>
+                  <strong>{item.title}</strong>
+                  <p>{item.action}</p>
+                </section>
+              ))}
+            </div>
           </Card>
 
           {!run ? (

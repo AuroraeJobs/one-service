@@ -772,6 +772,34 @@
   font-weight: 800;
 }
 
+.mini-gpt-next-actions {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.mini-gpt-next-actions section {
+  display: grid;
+  gap: 8px;
+  min-height: 150px;
+  padding: 14px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 8px;
+  background: var(--mini-gpt-panel-bg-soft);
+}
+
+.mini-gpt-next-actions strong {
+  color: var(--mini-gpt-text);
+  font-size: 15px;
+}
+
+.mini-gpt-next-actions p {
+  margin: 0;
+  color: var(--mini-gpt-text);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
 .mini-gpt-comparison-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
@@ -1027,6 +1055,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .mini-gpt-next-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .mini-gpt-training-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1089,6 +1121,7 @@
   .mini-gpt-hparam-grid,
   .mini-gpt-corpus-diagnostics,
   .mini-gpt-generation-diagnostics,
+  .mini-gpt-next-actions,
   .mini-gpt-tokenizer-metrics,
   .mini-gpt-status-panel dl,
   .mini-gpt-config-list {
