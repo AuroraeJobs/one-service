@@ -8,7 +8,7 @@ import {
   ReloadOutlined,
   StopOutlined
 } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import {
   lotteryRecommendationApi,
@@ -57,13 +57,18 @@ type RecommendationPreset = 'ALL' | 'OPEN' | 'HIGH_CONFIDENCE' | 'STALE_EVIDENCE
 
 const isOpenRecommendation = (item: LotteryRecommendation) => item.lifecycleStatus !== 'APPLIED' && item.lifecycleStatus !== 'ARCHIVED';
 const isStaleRecommendation = (item: LotteryRecommendation) => isOpenRecommendation(item) && (item.evidenceAgeHours || 0) >= 24;
+const recommendationPresets: RecommendationPreset[] = ['ALL', 'OPEN', 'HIGH_CONFIDENCE', 'STALE_EVIDENCE'];
 
 const LotteryRecommendationPage = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [items, setItems] = useState<LotteryRecommendation[]>([]);
   const [rollup, setRollup] = useState<LotteryRecommendationRollup>();
-  const [filterState, setFilterState] = useState<string>();
-  const [preset, setPreset] = useState<RecommendationPreset>('ALL');
+  const [filterState, setFilterState] = useState<string | undefined>(searchParams.get('recommendationState') || undefined);
+  const [preset, setPreset] = useState<RecommendationPreset>(() => {
+    const requestedPreset = searchParams.get('preset') as RecommendationPreset | null;
+    return requestedPreset && recommendationPresets.includes(requestedPreset) ? requestedPreset : 'ALL';
+  });
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [actingId, setActingId] = useState<string>();
@@ -86,6 +91,23 @@ const LotteryRecommendationPage = () => {
       setLoading(false);
     }
   }, [filterState]);
+
+  const updateRecommendationQuery = (nextState?: string, nextPreset: RecommendationPreset = preset) => {
+    const next = new URLSearchParams(searchParams);
+    if (nextState) {
+      next.set('recommendationState', nextState);
+    } else {
+      next.delete('recommendationState');
+    }
+    if (nextPreset !== 'ALL') {
+      next.set('preset', nextPreset);
+    } else {
+      next.delete('preset');
+    }
+    setFilterState(nextState);
+    setPreset(nextPreset);
+    setSearchParams(next, { replace: true });
+  };
 
   useEffect(() => {
     loadRecommendations();
@@ -198,16 +220,16 @@ const LotteryRecommendationPage = () => {
         <Space wrap>
           <Button onClick={() => navigate('/lottery/outcomes')}>归因</Button>
           <div className="lottery-filter-preset-bar">
-            <Button size="small" type={preset === 'ALL' ? 'primary' : 'default'} onClick={() => setPreset('ALL')}>全部</Button>
-            <Button size="small" type={preset === 'OPEN' ? 'primary' : 'default'} onClick={() => setPreset('OPEN')}>待处理</Button>
-            <Button size="small" type={preset === 'HIGH_CONFIDENCE' ? 'primary' : 'default'} onClick={() => setPreset('HIGH_CONFIDENCE')}>高置信</Button>
-            <Button size="small" type={preset === 'STALE_EVIDENCE' ? 'primary' : 'default'} onClick={() => setPreset('STALE_EVIDENCE')}>证据过期</Button>
+            <Button size="small" type={preset === 'ALL' ? 'primary' : 'default'} onClick={() => updateRecommendationQuery(filterState, 'ALL')}>全部</Button>
+            <Button size="small" type={preset === 'OPEN' ? 'primary' : 'default'} onClick={() => updateRecommendationQuery(filterState, 'OPEN')}>待处理</Button>
+            <Button size="small" type={preset === 'HIGH_CONFIDENCE' ? 'primary' : 'default'} onClick={() => updateRecommendationQuery(filterState, 'HIGH_CONFIDENCE')}>高置信</Button>
+            <Button size="small" type={preset === 'STALE_EVIDENCE' ? 'primary' : 'default'} onClick={() => updateRecommendationQuery(filterState, 'STALE_EVIDENCE')}>证据过期</Button>
           </div>
           <Select
             allowClear
             placeholder="状态"
             value={filterState}
-            onChange={setFilterState}
+            onChange={value => updateRecommendationQuery(value, preset)}
             style={{ width: 120 }}
             options={lanes.map(lane => ({ label: lane.label, value: lane.key }))}
           />

@@ -934,9 +934,9 @@ Goal: make month-end review a faster long-term research entry point by improving
 
 ### Wave 34B: Archive Deep Links
 
-- [ ] Add stronger handoffs from archive rows to issue ledger, recommendation, outcome, ticket-pack, and export views.
-- [ ] Keep query parameters aligned with each specialist page's existing filters.
-- [ ] Add smoke checks for the linked destinations.
+- [x] Add stronger handoffs from archive rows to issue ledger, recommendation, outcome, strategy-note, and export views.
+- [x] Keep query parameters aligned with each specialist page's existing filters.
+- [x] Add smoke checks for the linked destinations.
 
 ### Wave 34C: Archive Evidence Export
 

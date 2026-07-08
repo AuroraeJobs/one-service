@@ -141,6 +141,23 @@ const archiveScopeLabel = (scope: string) => {
 
 const safeCount = (value?: number) => Number(value || 0);
 
+const archiveSupportedExportTypes = new Set([
+  'tickets',
+  'ledger-issues',
+  'predictions',
+  'experiments',
+  'backtests',
+  'rule-evidence',
+  'replay-evidence',
+  'decision-sets',
+  'decision-outcomes',
+  'ticket-import-previews',
+  'budget-prechecks',
+  'settlement-reviews',
+  'sync-logs',
+  'probe-logs'
+]);
+
 const archiveScopeOptions = [
   { label: '全部范围', value: 'all' },
   { label: '期号', value: 'issue' },
@@ -158,6 +175,40 @@ const archiveStatusOptions = [
   { label: '失败', value: 'FAILED' },
   { label: '手动', value: 'MANUAL' }
 ];
+
+const buildArchivePath = (base: string, params: Record<string, string | number | undefined>) => {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== '') {
+      query.set(key, String(value));
+    }
+  });
+  const serialized = query.toString();
+  return serialized ? `${base}?${serialized}` : base;
+};
+
+const archivePathForIssue = (issue: string) => buildArchivePath('/lottery/tickets', { issue });
+
+const archivePathForStrategyNote = (item: LotteryStrategyNote) => buildArchivePath('/lottery/research/notebook', {
+  targetIssue: item.targetIssue,
+  title: item.title || item.ruleName,
+  status: item.status
+});
+
+const archivePathForExportAudit = (item: LotteryAuditEvent) => {
+  const exportType = archiveSupportedExportTypes.has(item.targetType || '')
+    ? item.targetType
+    : archiveSupportedExportTypes.has(item.eventType || '')
+      ? item.eventType
+      : undefined;
+  return buildArchivePath('/lottery/exports', {
+    type: exportType,
+    preset: exportType ? undefined : 'long-term-research',
+    issue: exportType === 'tickets' || exportType === 'ledger-issues' || exportType === 'settlement-reviews' ? item.targetId : undefined,
+    targetIssue: exportType === 'decision-sets' || exportType === 'decision-outcomes' ? item.targetId : undefined,
+    ruleName: exportType === 'rule-evidence' ? item.targetId : undefined
+  });
+};
 
 const LotteryMonthEndReviewPage = () => {
   const navigate = useNavigate();
@@ -318,7 +369,7 @@ const LotteryMonthEndReviewPage = () => {
       scope: 'month',
       title: '本月复盘',
       detail: `账本 ${formatCurrency(ledger?.netResult)} · 归因 ${attributionRollup?.issueCount || 0} 期 · 推荐 ${recommendationRollup?.recommendationCount || 0} 条`,
-      path: '/lottery/month-end',
+      path: '/lottery/exports?preset=month-end',
       status: monthEndScore >= 85 ? 'PASS' : monthEndScore >= 65 ? 'WARNING' : 'FAILED',
       count: monthEndScore
     });
@@ -329,7 +380,7 @@ const LotteryMonthEndReviewPage = () => {
         scope: 'issue',
         title: `第 ${issue} 期`,
         detail: `票据 ${item.checkedTicketCount || 0}/${item.ticketCount || 0} · ROI ${formatPercent(item.roiPercent)} · ${formatCurrency(item.netResult)}`,
-        path: `/lottery/tickets?issue=${issue}`,
+        path: archivePathForIssue(issue),
         status: item.netResult && item.netResult >= 0 ? 'PASS' : 'WARNING',
         count: item.ticketCount
       });
@@ -351,7 +402,10 @@ const LotteryMonthEndReviewPage = () => {
         scope: 'recommendation',
         title: `${item.day || '-'} 推荐流转`,
         detail: `${lotteryStatusLabel(item.lifecycleStatus, 'OPEN')} · ${lotteryStatusLabel(item.recommendationState, 'WATCH')}`,
-        path: '/lottery/recommendations',
+        path: buildArchivePath('/lottery/recommendations', {
+          recommendationState: item.recommendationState,
+          preset: item.lifecycleStatus === 'ARCHIVED' ? 'STALE_EVIDENCE' : 'OPEN'
+        }),
         status: item.lifecycleStatus,
         count: item.count
       });
@@ -362,7 +416,7 @@ const LotteryMonthEndReviewPage = () => {
         scope: 'strategy',
         title: item.title || '策略笔记',
         detail: `${item.ruleName || item.targetIssue || '研究假设'} · 证据 ${item.evidence?.length || 0} 条`,
-        path: '/lottery/research/notebook',
+        path: archivePathForStrategyNote(item),
         status: item.status,
         count: item.evidence?.length
       });
@@ -373,7 +427,7 @@ const LotteryMonthEndReviewPage = () => {
         scope: 'release',
         title: item.targetType || item.eventType || '导出证据',
         detail: `${formatDateTime(item.generatedAt)} · ${item.rowCount || 0} 行`,
-        path: '/lottery/exports',
+        path: archivePathForExportAudit(item),
         status: 'PASS',
         count: item.rowCount
       });

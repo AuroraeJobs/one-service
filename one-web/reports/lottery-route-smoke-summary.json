@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 34 Wave 34A archive filter smoke",
-  "generatedAt": "2026-07-08T05:51:28.675Z",
+  "target": "Iteration 34 Wave 34B archive deep-link smoke",
+  "generatedAt": "2026-07-08T05:58:44.096Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 18,
-  "checkCount": 540,
+  "checkCount": 549,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
