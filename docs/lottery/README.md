@@ -35,6 +35,7 @@ mvn -version
 ## Module Docs
 
 - [Technical design overview](modules/technical-design.md)
+- [Selection strategy and model training direction](modules/selection-training-strategy.md): use lottery draw records as MiniGPT/model training material for compliant candidate generation, strategy filtering, and backtest planning.
 
 ## Current Baseline
 
