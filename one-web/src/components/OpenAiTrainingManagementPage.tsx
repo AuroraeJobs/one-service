@@ -14,6 +14,7 @@ import {
 import LifePageShell from './LifePageShell';
 import {
   openAiTrainingApi,
+  type OpenAiTrainingDataset,
   type OpenAiTrainingDeploymentBinding,
   type OpenAiTrainingEvalRun,
   type OpenAiTrainingJob,
@@ -60,6 +61,43 @@ const readinessColor: Record<string, string> = {
   PASS: 'success',
   WARNING: 'warning'
 };
+
+const qualityColor: Record<string, string> = {
+  approved: 'success',
+  draft: 'default',
+  rejected: 'error',
+  reviewed: 'processing'
+};
+
+const datasetColumns: ColumnsType<OpenAiTrainingDataset> = [
+  {
+    title: 'Dataset',
+    dataIndex: 'name',
+    render: (value?: string) => <strong>{value || '-'}</strong>
+  },
+  {
+    title: 'Purpose',
+    dataIndex: 'purpose'
+  },
+  {
+    title: 'Source',
+    dataIndex: 'source'
+  },
+  {
+    title: 'File',
+    dataIndex: 'fileId'
+  },
+  {
+    title: 'Records',
+    dataIndex: 'recordCount',
+    render: (value?: number) => value === undefined ? '-' : value.toLocaleString('zh-CN')
+  },
+  {
+    title: 'Quality',
+    dataIndex: 'qualityStatus',
+    render: (value?: string) => <Tag color={qualityColor[value || ''] || 'default'}>{value || '-'}</Tag>
+  }
+];
 
 const jobColumns: ColumnsType<OpenAiTrainingJob> = [
   {
@@ -170,6 +208,7 @@ const OpenAiTrainingManagementPage = () => {
 
   const lifecycleStages = dashboard.lifecycleStages || [];
   const entityCards = dashboard.entities || [];
+  const datasetRows = dashboard.datasets || [];
   const jobRows = dashboard.jobs || [];
   const evalRows = dashboard.evalRuns || [];
   const deploymentRows = dashboard.deploymentBindings || [];
@@ -221,6 +260,16 @@ const OpenAiTrainingManagementPage = () => {
                 </div>
               </Card>
             </section>
+
+            <Card className="openai-training-panel" title="数据集资产">
+              <Table
+                columns={datasetColumns}
+                dataSource={datasetRows}
+                pagination={false}
+                size="middle"
+                scroll={{ x: 820 }}
+              />
+            </Card>
 
             <Card className="openai-training-panel" title="训练任务观测">
               <Table

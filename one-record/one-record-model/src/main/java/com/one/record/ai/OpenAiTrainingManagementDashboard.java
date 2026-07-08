@@ -22,6 +22,9 @@ public class OpenAiTrainingManagementDashboard implements Serializable {
     private List<EntityCard> entities = new ArrayList<>();
 
     @Builder.Default
+    private List<TrainingDataset> datasets = new ArrayList<>();
+
+    @Builder.Default
     private List<TrainingJob> jobs = new ArrayList<>();
 
     @Builder.Default
@@ -66,6 +69,29 @@ public class OpenAiTrainingManagementDashboard implements Serializable {
         private String value;
 
         private String accent;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TrainingDataset implements Serializable {
+
+        private String key;
+
+        private String datasetId;
+
+        private String name;
+
+        private String purpose;
+
+        private String source;
+
+        private String fileId;
+
+        private Integer recordCount;
+
+        private String qualityStatus;
     }
 
     @Data

@@ -1262,6 +1262,17 @@ export interface OpenAiTrainingEntityCard {
   accent?: string;
 }
 
+export interface OpenAiTrainingDataset {
+  key: string;
+  datasetId?: string;
+  name?: string;
+  purpose?: string;
+  source?: string;
+  fileId?: string;
+  recordCount?: number;
+  qualityStatus?: string;
+}
+
 export interface OpenAiTrainingJob {
   key: string;
   jobId?: string;
@@ -1309,6 +1320,7 @@ export interface OpenAiTrainingNextAction {
 export interface OpenAiTrainingManagementDashboard {
   lifecycleStages?: OpenAiTrainingLifecycleStage[];
   entities?: OpenAiTrainingEntityCard[];
+  datasets?: OpenAiTrainingDataset[];
   jobs?: OpenAiTrainingJob[];
   evalRuns?: OpenAiTrainingEvalRun[];
   deploymentBindings?: OpenAiTrainingDeploymentBinding[];

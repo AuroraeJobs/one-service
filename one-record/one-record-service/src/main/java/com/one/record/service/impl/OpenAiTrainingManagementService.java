@@ -14,6 +14,7 @@ public class OpenAiTrainingManagementService implements IOpenAiTrainingManagemen
         return OpenAiTrainingManagementDashboard.builder()
                 .lifecycleStages(lifecycleStages())
                 .entities(entities())
+                .datasets(datasets())
                 .jobs(jobs())
                 .evalRuns(evalRuns())
                 .deploymentBindings(deploymentBindings())
@@ -41,6 +42,14 @@ public class OpenAiTrainingManagementService implements IOpenAiTrainingManagemen
                 entity("checkpoint", "llm_model_checkpoint", "中间模型版本", "#5856d6"),
                 entity("eval", "llm_eval_run", "上线前评测", "#00c7be"),
                 entity("deployment", "llm_model_deployment", "业务绑定与回滚", "#ff3b30")
+        );
+    }
+
+    private List<OpenAiTrainingManagementDashboard.TrainingDataset> datasets() {
+        return List.of(
+                dataset("wechat-style", "ds_wechat_style_v1", "wechat-style-sft.jsonl", "fine_tune", "公众号人工精选样本", "file-wechat-style-v1", 420, "approved"),
+                dataset("review-quality", "ds_review_quality_v2", "review-quality-sft.jsonl", "fine_tune", "MiniGPT 复盘笔记", "file-review-quality-v2", 180, "reviewed"),
+                dataset("wechat-publish-eval", "ds_wechat_publish_eval", "wechat-publish-eval.jsonl", "eval", "发布回归用例", "file-wechat-eval-v1", 96, "approved")
         );
     }
 
@@ -101,6 +110,26 @@ public class OpenAiTrainingManagementService implements IOpenAiTrainingManagemen
                 .label(label)
                 .value(value)
                 .accent(accent)
+                .build();
+    }
+
+    private OpenAiTrainingManagementDashboard.TrainingDataset dataset(String key,
+                                                                     String datasetId,
+                                                                     String name,
+                                                                     String purpose,
+                                                                     String source,
+                                                                     String fileId,
+                                                                     Integer recordCount,
+                                                                     String qualityStatus) {
+        return OpenAiTrainingManagementDashboard.TrainingDataset.builder()
+                .key(key)
+                .datasetId(datasetId)
+                .name(name)
+                .purpose(purpose)
+                .source(source)
+                .fileId(fileId)
+                .recordCount(recordCount)
+                .qualityStatus(qualityStatus)
                 .build();
     }
 
