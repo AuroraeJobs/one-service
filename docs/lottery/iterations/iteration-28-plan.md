@@ -24,9 +24,9 @@ Make `/lottery/outcomes` a closed-loop attribution hub that explains how portfol
 
 ## Wave 28C: Review And Export Connections
 
-- Connect attribution quality summaries into governance and month-end review surfaces.
-- Add export preset metadata for attribution closure packages.
-- Record stale or missing attribution links as release evidence warnings.
+- Connect attribution quality summaries into governance and month-end review surfaces. Shipped with governance `归因质量` and month-end `归因闭环` review rows.
+- Add export preset metadata for attribution closure packages. Shipped with `归因质量包` and the attribution quality evidence card.
+- Record stale or missing attribution links as release evidence warnings. Release readiness now includes `V28归因质量` and route smoke guards the handoffs.
 
 ## Verification
 

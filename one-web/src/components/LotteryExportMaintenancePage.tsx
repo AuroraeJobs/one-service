@@ -66,6 +66,11 @@ const reportPresets = [
     sections: ['ledger-issues', 'tickets', 'decision-outcomes', 'settlement-reviews', 'rule-evidence', 'replay-evidence']
   },
   {
+    key: 'v28-attribution-quality',
+    label: '归因质量包',
+    sections: ['ledger-issues', 'tickets', 'decision-outcomes', 'settlement-reviews', 'budget-prechecks', 'rule-evidence', 'replay-evidence']
+  },
+  {
     key: 'v15-recommendation-lifecycle',
     label: '推荐生命周期包',
     sections: ['decision-outcomes', 'settlement-reviews', 'rule-evidence', 'replay-evidence', 'sync-logs', 'probe-logs']
@@ -90,6 +95,14 @@ const v15EvidencePacks = [
     preset: '归因闭环包',
     auditTypes: ['LOTTERY_OUTCOME_ATTRIBUTION'],
     sections: ['decision-outcomes', 'settlement-reviews', 'ledger-issues']
+  },
+  {
+    key: 'attribution-quality',
+    title: '归因质量证据',
+    route: '/lottery/outcomes',
+    preset: '归因质量包',
+    auditTypes: ['LOTTERY_OUTCOME_ATTRIBUTION', 'decision-outcomes', 'settlement-reviews'],
+    sections: ['decision-outcomes', 'settlement-reviews', 'budget-prechecks', 'rule-evidence']
   },
   {
     key: 'recommendations',
@@ -463,6 +476,13 @@ const LotteryExportMaintenancePage = () => {
       status: 'PASS',
       message: '导出页提供归因、推荐、移动指挥和治理闭环证据包',
       path: '/lottery/exports'
+    },
+    {
+      key: 'v28-attribution-quality',
+      label: 'V28归因质量',
+      status: 'PASS',
+      message: '归因聚合已接入治理看板、月末复盘和导出证据包，支持质量警示复核',
+      path: '/lottery/outcomes'
     },
     {
       key: 'v16-navigation-usability',

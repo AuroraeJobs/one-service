@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 28 Wave 28B attribution rollup smoke",
-  "generatedAt": "2026-07-08T00:47:00.188Z",
+  "target": "Iteration 28 Wave 28C attribution review smoke",
+  "generatedAt": "2026-07-08T02:13:31.912Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 17,
-  "checkCount": 404,
+  "checkCount": 408,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
@@ -62,8 +62,8 @@
       "route": "/lottery/month-end",
       "label": "月末复盘",
       "component": "LotteryMonthEndReviewPage",
-      "mockApiCount": 9,
-      "emptyStateCount": 3,
+      "mockApiCount": 10,
+      "emptyStateCount": 4,
       "errorStateCount": 1
     },
     {
@@ -110,7 +110,7 @@
       "route": "/lottery/governance",
       "label": "治理",
       "component": "LotteryGovernancePage",
-      "mockApiCount": 7,
+      "mockApiCount": 8,
       "emptyStateCount": 2,
       "errorStateCount": 1
     },
@@ -143,7 +143,7 @@
       "label": "导出审计",
       "component": "LotteryExportMaintenancePage",
       "mockApiCount": 4,
-      "emptyStateCount": 21,
+      "emptyStateCount": 23,
       "errorStateCount": 4
     }
   ]

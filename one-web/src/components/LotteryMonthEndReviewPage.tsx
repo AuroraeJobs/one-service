@@ -21,6 +21,7 @@ import {
   lotteryExportApi,
   lotteryLedgerApi,
   lotteryOperationsApi,
+  lotteryOutcomeApi,
   lotteryReminderApi,
   lotteryStrategyNoteApi,
   lotteryTicketApi,
@@ -30,6 +31,7 @@ import {
   type LotteryIssueLedger,
   type LotteryLedgerSummary,
   type LotteryOperationsHealthSummary,
+  type LotteryOutcomeAttributionRollup,
   type LotteryPageResponse,
   type LotteryReminderSummary,
   type LotteryStrategyNote,
@@ -86,6 +88,23 @@ const statusColor = (status?: string) => {
 const sortIssueLedgers = (items: LotteryIssueLedger[]) =>
   [...items].sort((left, right) => Number(right.period || right.issue || 0) - Number(left.period || left.issue || 0));
 
+const attributionReviewRows = (rollup?: LotteryOutcomeAttributionRollup) =>
+  (rollup?.rows || [])
+    .filter(item => item.dimension !== 'issue')
+    .sort((left, right) => (right.warningCount || 0) - (left.warningCount || 0))
+    .slice(0, 5);
+
+const attributionQualityLabel = (quality?: string) => {
+  const labels: Record<string, string> = {
+    STABLE: '稳定',
+    OBSERVE: '观察中',
+    WATCH: '需复核',
+    UNDER_TESTED: '样本不足',
+    NEGATIVE: '负向'
+  };
+  return labels[quality || ''] || lotteryStatusLabel(quality);
+};
+
 const LotteryMonthEndReviewPage = () => {
   const navigate = useNavigate();
   const [workbench, setWorkbench] = useState<LotteryWorkbenchSummary>();
@@ -94,6 +113,7 @@ const LotteryMonthEndReviewPage = () => {
   const [issues, setIssues] = useState<LotteryIssueLedger[]>([]);
   const [tickets, setTickets] = useState<LotteryTicketSummary>();
   const [decisions, setDecisions] = useState<LotteryDecisionOutcomeSummary>();
+  const [attributionRollup, setAttributionRollup] = useState<LotteryOutcomeAttributionRollup>();
   const [notes, setNotes] = useState<LotteryPageResponse<LotteryStrategyNote>>();
   const [reminders, setReminders] = useState<LotteryReminderSummary>();
   const [audits, setAudits] = useState<LotteryAuditEvent[]>([]);
@@ -104,13 +124,14 @@ const LotteryMonthEndReviewPage = () => {
     setLoading(true);
     setError(undefined);
     try {
-      const [workbenchData, healthData, ledgerData, issueData, ticketData, decisionData, noteData, reminderData, auditData] = await Promise.all([
+      const [workbenchData, healthData, ledgerData, issueData, ticketData, decisionData, attributionData, noteData, reminderData, auditData] = await Promise.all([
         lotteryWorkbenchApi.summary(),
         lotteryOperationsApi.health(),
         lotteryLedgerApi.summary(),
         lotteryLedgerApi.issues(),
         lotteryTicketApi.summary(),
         lotteryDecisionSetApi.outcomes({ limit: 12 }),
+        lotteryOutcomeApi.rollup({ window: 'month-to-date' }),
         lotteryStrategyNoteApi.notes({ page: 1, pageSize: 6 }),
         lotteryReminderApi.summary(),
         lotteryExportApi.auditEvents({ page: 1, pageSize: 8 })
@@ -121,6 +142,7 @@ const LotteryMonthEndReviewPage = () => {
       setIssues(issueData || []);
       setTickets(ticketData);
       setDecisions(decisionData);
+      setAttributionRollup(attributionData);
       setNotes(noteData);
       setReminders(reminderData);
       setAudits(auditData?.items || []);
@@ -142,14 +164,16 @@ const LotteryMonthEndReviewPage = () => {
     [audits]
   );
   const releaseChecks = workbench?.releaseCheckSummary?.checks || [];
+  const attributionRows = useMemo(() => attributionReviewRows(attributionRollup), [attributionRollup]);
   const monthEndScore = useMemo(() => {
     const healthScore = health?.score ?? 0;
     const ticketScore = tickets?.pendingTicketCount ? Math.max(40, 100 - tickets.pendingTicketCount * 12) : 100;
     const decisionScore = decisions?.warningCount ? Math.max(40, 100 - decisions.warningCount * 8) : 100;
+    const attributionScore = attributionRows.length ? Math.max(45, 100 - attributionRows.reduce((sum, item) => sum + (item.warningCount || 0), 0) * 8) : 100;
     const exportScore = exportAudits.length ? 100 : 60;
     const reminderScore = reminders?.activeCount ? Math.max(40, 100 - reminders.activeCount * 8) : 100;
-    return Math.round((healthScore + ticketScore + decisionScore + exportScore + reminderScore) / 5);
-  }, [decisions?.warningCount, exportAudits.length, health?.score, reminders?.activeCount, tickets?.pendingTicketCount]);
+    return Math.round((healthScore + ticketScore + decisionScore + attributionScore + exportScore + reminderScore) / 6);
+  }, [attributionRows, decisions?.warningCount, exportAudits.length, health?.score, reminders?.activeCount, tickets?.pendingTicketCount]);
 
   const metrics: MonthEndMetric[] = [
     {
@@ -178,6 +202,15 @@ const LotteryMonthEndReviewPage = () => {
       detail: `候选 ${decisions?.candidateCount || 0} · 警示 ${decisions?.warningCount || 0}`,
       path: '/lottery/predictions/decision',
       status: decisions?.warningCount ? 'WARNING' : 'PASS'
+    },
+    {
+      key: 'attribution',
+      icon: <BranchesOutlined />,
+      label: '归因闭环',
+      value: attributionRollup?.issueCount || 0,
+      detail: `样本 ${attributionRollup?.ticketCount || 0} · 警示 ${attributionRows.reduce((sum, item) => sum + (item.warningCount || 0), 0)}`,
+      path: '/lottery/outcomes',
+      status: attributionRows.some(item => (item.warningCount || 0) > 0) ? 'WARNING' : (attributionRollup?.issueCount ? 'PASS' : 'MANUAL')
     },
     {
       key: 'notes',
@@ -322,6 +355,23 @@ const LotteryMonthEndReviewPage = () => {
               </div>
             ) : (
               <Empty description="暂无研究证据" />
+            )}
+          </Card>
+
+          <Card className="life-panel-card lottery-clean-panel" title="归因质量摘要">
+            {attributionRows.length ? (
+              <div className="lottery-month-end-list">
+                {attributionRows.map(item => (
+                  <button key={`${item.dimension}-${item.key}`} type="button" onClick={() => navigate(item.path || '/lottery/outcomes')}>
+                    <Tag color={(item.warningCount || 0) ? 'gold' : 'green'}>{attributionQualityLabel(item.evidenceQuality)}</Tag>
+                    <span>{item.label || item.key || '-'}</span>
+                    <strong>{item.sampleCount || 0}</strong>
+                    <small>{item.issueCount || 0} 期 · 警示 {item.warningCount || 0}</small>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <Empty description="暂无归因质量摘要" />
             )}
           </Card>
 

@@ -801,9 +801,9 @@ Goal: make `/lottery/outcomes` explain the closed loop from strategy evidence to
 
 ### Wave 28C: Review And Export Connections
 
-- [ ] Connect attribution quality summaries into governance and month-end review.
-- [ ] Add attribution closure preset metadata to exports.
-- [ ] Record stale or missing attribution links in release evidence warnings.
+- [x] Connect attribution quality summaries into governance and month-end review. Governance now includes a `归因质量` domain, and month-end review shows `归因闭环` plus attribution quality rows.
+- [x] Add attribution closure preset metadata to exports. Added the `归因质量包` preset and export evidence card.
+- [x] Record stale or missing attribution links in release evidence warnings. Export release readiness now includes `V28归因质量`, and route smoke checks the governance/month-end/export rollup handoffs.
 
 ## Documentation And Delivery
 

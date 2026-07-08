@@ -17,6 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import {
   lotteryExportApi,
+  lotteryOutcomeApi,
   lotteryOperationsApi,
   lotteryPreferenceApi,
   lotteryReminderApi,
@@ -25,6 +26,7 @@ import {
   lotteryWorkbenchApi,
   type LotteryAuditEvent,
   type LotteryOperationsHealthSummary,
+  type LotteryOutcomeAttributionRollup,
   type LotteryPreference,
   type LotteryReminderSummary,
   type LotteryStrategyPortfolioSummary,
@@ -71,12 +73,16 @@ const latestEvents = (events: LotteryAuditEvent[], type: string) => events.filte
 
 const ageHours = (timestamp?: number) => timestamp ? (Date.now() - timestamp) / (60 * 60 * 1000) : Number.POSITIVE_INFINITY;
 
+const attributionWarningRows = (rollup?: LotteryOutcomeAttributionRollup) =>
+  (rollup?.rows || []).filter(item => item.evidenceQuality === 'WATCH' || item.evidenceQuality === 'NEGATIVE' || item.evidenceQuality === 'UNDER_TESTED');
+
 const LotteryGovernancePage = () => {
   const navigate = useNavigate();
   const [preference, setPreference] = useState<LotteryPreference>();
   const [workbench, setWorkbench] = useState<LotteryWorkbenchSummary>();
   const [operations, setOperations] = useState<LotteryOperationsHealthSummary>();
   const [reminders, setReminders] = useState<LotteryReminderSummary>();
+  const [attributionRollup, setAttributionRollup] = useState<LotteryOutcomeAttributionRollup>();
   const [portfolios, setPortfolios] = useState<LotteryStrategyPortfolioSummary[]>([]);
   const [ticketPacks, setTicketPacks] = useState<LotteryTicketPack[]>([]);
   const [audits, setAudits] = useState<LotteryAuditEvent[]>([]);
@@ -87,11 +93,12 @@ const LotteryGovernancePage = () => {
     setLoading(true);
     setError(undefined);
     try {
-      const [nextPreference, nextWorkbench, nextOperations, nextReminders, nextPortfolios, nextTicketPacks, nextAudits] = await Promise.all([
+      const [nextPreference, nextWorkbench, nextOperations, nextReminders, nextAttributionRollup, nextPortfolios, nextTicketPacks, nextAudits] = await Promise.all([
         lotteryPreferenceApi.preference(),
         lotteryWorkbenchApi.summary(),
         lotteryOperationsApi.health(),
         lotteryReminderApi.summary(),
+        lotteryOutcomeApi.rollup({ window: 'recent10' }),
         lotteryStrategyPortfolioApi.portfolios({ page: 1, pageSize: 50 }),
         lotteryTicketPackApi.ticketPacks({ page: 1, pageSize: 50 }),
         lotteryExportApi.auditEvents({ page: 1, pageSize: 80 })
@@ -100,6 +107,7 @@ const LotteryGovernancePage = () => {
       setWorkbench(nextWorkbench);
       setOperations(nextOperations);
       setReminders(nextReminders);
+      setAttributionRollup(nextAttributionRollup);
       setPortfolios(nextPortfolios.items || []);
       setTicketPacks(nextTicketPacks.items || []);
       setAudits(nextAudits.items || []);
@@ -132,6 +140,7 @@ const LotteryGovernancePage = () => {
       return usage >= ticketPackExposureThreshold || pack.budgetPrecheck?.status === 'OVER';
     });
     const staleEvidence = portfolios.filter(item => ageHours(item.generatedAt) > freshnessDays * 24);
+    const attributionWarnings = attributionWarningRows(attributionRollup);
     const exportEvents = audits.filter(event => event.eventType?.includes('EXPORT'));
     const release = workbench?.releaseCheckSummary;
 
@@ -177,6 +186,16 @@ const LotteryGovernancePage = () => {
         icon: <BellOutlined />
       },
       {
+        key: 'attribution',
+        title: '归因质量',
+        status: attributionWarnings.length ? 'WARNING' : (attributionRollup?.issueCount ? 'PASS' : 'MANUAL'),
+        score: attributionRollup?.issueCount ? Math.max(45, 100 - attributionWarnings.length * 12) : statusScore('MANUAL'),
+        message: attributionWarnings.length ? `${attributionWarnings.length} 个归因维度需要复核` : '归因聚合质量稳定',
+        detail: `近10期 ${attributionRollup?.issueCount || 0} 期 · 警示 ${attributionWarnings.length}`,
+        path: '/lottery/outcomes',
+        icon: <BranchesOutlined />
+      },
+      {
         key: 'evidence',
         title: '证据新鲜度',
         status: staleEvidence.length ? 'WARNING' : 'PASS',
@@ -197,7 +216,7 @@ const LotteryGovernancePage = () => {
         icon: <CheckCircleOutlined />
       }
     ];
-  }, [audits, operations, portfolios, preference, reminders, ticketPacks, workbench]);
+  }, [attributionRollup, audits, operations, portfolios, preference, reminders, ticketPacks, workbench]);
 
   const overallScore = domains.length ? Math.round(domains.reduce((sum, item) => sum + item.score, 0) / domains.length) : 0;
   const warningCount = domains.filter(item => item.status !== 'PASS').length;

@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 28 Wave 28B attribution rollup smoke",
+  "target": "Iteration 28 Wave 28C attribution review smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -257,11 +257,12 @@
         "lotteryLedgerApi.issues",
         "lotteryTicketApi.summary",
         "lotteryDecisionSetApi.outcomes",
+        "lotteryOutcomeApi.rollup",
         "lotteryStrategyNoteApi.notes",
         "lotteryReminderApi.summary",
         "lotteryExportApi.auditEvents"
       ],
-      "emptyStates": ["暂无期号复盘", "暂无研究证据", "暂无月末导出证据"],
+      "emptyStates": ["暂无期号复盘", "暂无研究证据", "暂无归因质量摘要", "暂无月末导出证据"],
       "errorStates": ["读取彩票月末复盘失败"],
       "fixtureData": {
         "review": {
@@ -440,6 +441,7 @@
         "lotteryWorkbenchApi.summary",
         "lotteryOperationsApi.health",
         "lotteryReminderApi.summary",
+        "lotteryOutcomeApi.rollup",
         "lotteryStrategyPortfolioApi.portfolios",
         "lotteryTicketPackApi.ticketPacks",
         "lotteryExportApi.auditEvents"
@@ -449,7 +451,7 @@
       "fixtureData": {
         "governance": {
           "score": 88,
-          "domains": ["portfolio", "simulator", "ticket-pack", "reminders", "evidence", "release"],
+          "domains": ["portfolio", "simulator", "ticket-pack", "reminders", "attribution", "evidence", "release"],
           "thresholds": ["portfolioScore", "simulatorRisk", "ticketPackExposure", "evidenceFreshness", "staleApproval"]
         }
       }
@@ -534,7 +536,7 @@
         "lotteryExportApi.maintenanceSummary",
         "lotteryExportApi.cleanupDryRun"
       ],
-      "emptyStates": ["本次导出没有数据", "暂无数据", "暂无审计事件", "暂无集合状态", "暂无缓存状态", "复盘运营", "月末复盘", "归因闭环包", "推荐生命周期包", "移动指挥包", "V15治理证据包", "V15闭环证据包", "V16导航易用性", "V16操作体验", "V16筛选可读性", "V16响应式打磨", "V18今日优先事项", "V18航行记录分析", "V18号码综合可能性", "V18深度规律分析", "前端发布就绪"],
+      "emptyStates": ["本次导出没有数据", "暂无数据", "暂无审计事件", "暂无集合状态", "暂无缓存状态", "复盘运营", "月末复盘", "归因闭环包", "归因质量包", "推荐生命周期包", "移动指挥包", "V15治理证据包", "V15闭环证据包", "V28归因质量", "V16导航易用性", "V16操作体验", "V16筛选可读性", "V16响应式打磨", "V18今日优先事项", "V18航行记录分析", "V18号码综合可能性", "V18深度规律分析", "前端发布就绪"],
       "errorStates": ["读取彩票导出审计失败", "导出彩票数据失败", "生成彩票报表失败", "执行彩票维护 dry-run 失败"],
       "fixtureData": {
         "releaseEvidence": {
