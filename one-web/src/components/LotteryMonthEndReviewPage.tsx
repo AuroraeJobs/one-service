@@ -444,6 +444,14 @@ const LotteryMonthEndReviewPage = () => {
       .slice(0, 12);
   }, [allArchiveItems, archiveQuery, archiveScopeFilter, archiveStatusFilter]);
 
+  const archiveEvidenceExportPath = useMemo(() => buildArchivePath('/lottery/exports', {
+    preset: 'v34-archive-search',
+    archiveScope: archiveScopeFilter,
+    archiveStatus: archiveStatusFilter,
+    archiveQuery: archiveQuery.trim(),
+    type: archiveScopeFilter === 'issue' ? 'tickets' : undefined
+  }), [archiveQuery, archiveScopeFilter, archiveStatusFilter]);
+
   const narrativeItems = useMemo<NarrativeItem[]>(() => {
     const pendingTickets = safeCount(tickets?.pendingTicketCount);
     const attributionWarnings = attributionRows.reduce((sum, item) => sum + safeCount(item.warningCount), 0);
@@ -722,7 +730,14 @@ const LotteryMonthEndReviewPage = () => {
           <Card
             className="life-panel-card lottery-clean-panel"
             title="研究归档索引"
-            extra={<Tag>{archiveItems.length}/{allArchiveItems.length} 条</Tag>}
+            extra={
+              <Space wrap>
+                <Tag>{archiveItems.length}/{allArchiveItems.length} 条</Tag>
+                <Button size="small" icon={<DownloadOutlined />} onClick={() => navigate(archiveEvidenceExportPath)}>
+                  导出证据
+                </Button>
+              </Space>
+            }
           >
             <div className="lottery-archive-search">
               <Input

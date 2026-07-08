@@ -940,9 +940,9 @@ Goal: make month-end review a faster long-term research entry point by improving
 
 ### Wave 34C: Archive Evidence Export
 
-- [ ] Add export evidence labels for archive searches that need to be reviewed outside the page.
-- [ ] Record the active range/status/search context in export-ready metadata where existing export presets allow it.
-- [ ] Keep the export path explicit and user-triggered.
+- [x] Add export evidence labels for archive searches that need to be reviewed outside the page.
+- [x] Record the active range/status/search context in export-ready metadata where existing export presets allow it.
+- [x] Keep the export path explicit and user-triggered.
 
 ## Documentation And Delivery
 

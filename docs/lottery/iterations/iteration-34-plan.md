@@ -20,3 +20,5 @@ Goal: make month-end review a faster long-term research entry point by improving
 - Add export evidence labels for archive searches that need to be reviewed outside the page.
 - Record the active range/status/search context in export-ready metadata where existing export presets allow it.
 - Keep the export path explicit and user-triggered.
+
+Status: completed with the `v34-archive-search` export preset and explicit month-end archive export handoff.

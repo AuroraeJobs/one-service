@@ -66,6 +66,11 @@ const reportPresets = [
     sections: ['ledger-issues', 'tickets', 'predictions', 'experiments', 'backtests', 'decision-sets', 'decision-outcomes', 'settlement-reviews', 'rule-evidence', 'replay-evidence', 'sync-logs', 'probe-logs']
   },
   {
+    key: 'v34-archive-search',
+    label: '归档搜索包',
+    sections: ['ledger-issues', 'tickets', 'decision-outcomes', 'settlement-reviews', 'rule-evidence', 'replay-evidence', 'sync-logs', 'probe-logs']
+  },
+  {
     key: 'annual-retrospective',
     label: '年度复盘包',
     sections: ['ledger-issues', 'tickets', 'predictions', 'experiments', 'backtests', 'decision-outcomes', 'budget-prechecks', 'settlement-reviews', 'rule-evidence', 'replay-evidence', 'probe-logs']
@@ -197,6 +202,14 @@ const v15EvidencePacks = [
     preset: '长期研究包',
     auditTypes: ['EXPORT', 'REPORT_EXPORT', 'LOTTERY_RECOMMENDATION_STATUS', 'LOTTERY_OUTCOME_ATTRIBUTION'],
     sections: ['ledger-issues', 'tickets', 'predictions', 'experiments', 'backtests', 'decision-outcomes', 'rule-evidence', 'replay-evidence']
+  },
+  {
+    key: 'v34-archive-search',
+    title: '归档搜索证据',
+    route: '/lottery/month-end',
+    preset: '归档搜索包',
+    auditTypes: ['EXPORT', 'REPORT_EXPORT', 'archiveScope', 'archiveStatus', 'archiveQuery'],
+    sections: ['ledger-issues', 'tickets', 'decision-outcomes', 'settlement-reviews', 'rule-evidence', 'replay-evidence']
   }
 ];
 
@@ -279,7 +292,7 @@ const LotteryExportMaintenancePage = () => {
     return isSupportedExportType(requestedType) ? requestedType || 'tickets' : 'tickets';
   });
   const [primaryFilter, setPrimaryFilter] = useState(() =>
-    searchParams.get('targetIssue') || searchParams.get('issue') || searchParams.get('ruleName') || ''
+    searchParams.get('targetIssue') || searchParams.get('issue') || searchParams.get('ruleName') || searchParams.get('archiveQuery') || ''
   );
   const [limit, setLimit] = useState('500');
   const [result, setResult] = useState<LotteryExportResult>();
@@ -300,6 +313,19 @@ const LotteryExportMaintenancePage = () => {
   const [exporting, setExporting] = useState(false);
   const [dryRunning, setDryRunning] = useState(false);
   const [error, setError] = useState<string>();
+  const archiveEvidenceContext = useMemo(() => {
+    const scope = searchParams.get('archiveScope');
+    const status = searchParams.get('archiveStatus');
+    const query = searchParams.get('archiveQuery');
+    if (!scope && !status && !query) {
+      return '';
+    }
+    return [
+      scope && scope !== 'all' ? `范围 ${scope}` : '范围 全部',
+      status && status !== 'all' ? `状态 ${lotteryStatusLabel(status)}` : '状态 全部',
+      query ? `关键词 ${query}` : undefined
+    ].filter(Boolean).join(' · ');
+  }, [searchParams]);
 
   const updateExportType = (value: string) => {
     setExportType(value);
@@ -761,6 +787,7 @@ const LotteryExportMaintenancePage = () => {
             <span>共用筛选 {primaryFilter.trim() || '全部'}</span>
             <span>行数上限 {Number(limit) > 0 ? Number(limit) : 500}</span>
             <span>已生成 {reportResults.length} 个区块 / {reportTotalRows} 行</span>
+            {archiveEvidenceContext ? <Tag color="purple">归档上下文：{archiveEvidenceContext}</Tag> : null}
           </Space>
         </div>
       </Card>
