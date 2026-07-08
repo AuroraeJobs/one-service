@@ -24,6 +24,7 @@ import {
   MessageOutlined,
   MobileOutlined,
   MoneyCollectOutlined,
+  OpenAIOutlined,
   PieChartOutlined,
   SafetyCertificateOutlined,
   SettingOutlined,
@@ -126,13 +127,13 @@ export const lifeDataModules: LifeDataModule[] = [
   },
   {
     id: 'ai',
-    title: '模型学习',
-    shortTitle: '模型',
+    title: 'OpenAI',
+    shortTitle: 'OpenAI',
     description: '统一管理模型对话、MiniGPT 学习实验和模型运行观测。',
     path: '/ai/chat',
     status: 'partial',
     accent: '#00c7be',
-    icon: <MessageOutlined />,
+    icon: <OpenAIOutlined />,
     liveCapabilities: ['模型切换', '上下文对话', 'MiniGPT 实验观察', '本地模型接入'],
     plannedCapabilities: ['Spring AI 深度编排', '工具调用', '对话复盘'],
     dataSources: ['LocalAI/Ollama', 'DeepSeek', 'Spring AI OpenAI 兼容配置', 'MiniGPT Mongo 实验日志']
@@ -184,7 +185,7 @@ export const lifeNavItems: LifeNavItem[] = [
   { path: '/investments', key: 'investment', label: '股票', icon: <StockOutlined /> },
   { path: '/finance/salary', key: 'finance', label: '钞票', icon: <MoneyCollectOutlined /> },
   { path: '/vehicle/charging', key: 'vehicle', label: '能源', icon: <CarOutlined /> },
-  { path: '/ai/chat', key: 'ai', label: '模型', icon: <MessageOutlined /> },
+  { path: '/ai/chat', key: 'ai', label: 'OpenAI', icon: <OpenAIOutlined /> },
   { path: '/wechat', key: 'wechat', label: '微信', icon: <WechatOutlined /> }
 ];
 
