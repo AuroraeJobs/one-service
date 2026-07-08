@@ -268,6 +268,9 @@ const buildExperimentReport = (
     '## Tensor Shapes',
     ...shapeRows.map(row => `- ${row.label}: ${row.shape} (${row.note})`),
     '',
+    '## 代码定位',
+    ...codeReferenceRows.map(row => `- ${row.concept} / ${row.symbol}: ${row.action}`),
+    '',
     '## 实验笔记',
     `- 假设：${run.hypothesis || '-'}`,
     `- 观察：${run.observation || '-'}`,
@@ -376,43 +379,50 @@ const codeReferenceRows = [
     key: 'tokenizer',
     concept: 'Tokenizer',
     symbol: 'CharTokenizer',
-    note: '字符与 token id 互转'
+    note: '字符与 token id 互转',
+    action: '替换语料后检查 vocab 是否变化'
   },
   {
     key: 'batch',
     concept: 'Batch',
     symbol: 'get_batch',
-    note: '构造 x/y next-token 样本'
+    note: '构造 x/y next-token 样本',
+    action: '确认 y 正好比 x 向后错一位'
   },
   {
     key: 'attention',
     concept: 'Causal Attention',
     symbol: 'CausalSelfAttention',
-    note: 'mask、Q/K/V 和注意力权重'
+    note: 'mask、Q/K/V 和注意力权重',
+    action: '对照 mask 看未来 token 是否被遮住'
   },
   {
     key: 'block',
     concept: 'Transformer Block',
     symbol: 'Block',
-    note: 'attention、MLP、残差和 layer norm'
+    note: 'attention、MLP、残差和 layer norm',
+    action: '跟踪残差连接前后的张量形状'
   },
   {
     key: 'model',
     concept: 'Model',
     symbol: 'MiniGPT',
-    note: 'embedding、blocks、logits、loss'
+    note: 'embedding、blocks、logits、loss',
+    action: '确认 logits 最后一维等于 vocab size'
   },
   {
     key: 'train',
     concept: 'Train',
     symbol: 'train',
-    note: 'AdamW、eval、checkpoint 和日志'
+    note: 'AdamW、eval、checkpoint 和日志',
+    action: '比较 train/eval loss 和生成样例'
   },
   {
     key: 'generate',
     concept: 'Generate',
     symbol: 'generate',
-    note: 'temperature、top-k 和采样'
+    note: 'temperature、top-k 和采样',
+    action: '用同一 prompt 对比采样参数'
   }
 ];
 
@@ -1096,6 +1106,7 @@ const MiniGptLearningPage = () => {
                   <span>{row.concept}</span>
                   <code>{row.symbol}</code>
                   <p>{row.note}</p>
+                  <strong>{row.action}</strong>
                 </section>
               ))}
             </div>

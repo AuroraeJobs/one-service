@@ -519,6 +519,12 @@
   line-height: 1.45;
 }
 
+.mini-gpt-code-card strong {
+  color: var(--mini-gpt-text);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .mini-gpt-chart {
   height: 340px;
 }
