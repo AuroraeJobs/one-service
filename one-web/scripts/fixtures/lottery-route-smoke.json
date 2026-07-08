@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 29 Wave 29A recommendation lifecycle analytics smoke",
+  "target": "Iteration 29 Wave 29B recommendation lifecycle rollup smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -76,10 +76,23 @@
         "生命周期分析",
         "行动结果回看",
         "过期证据清理",
+        "近 30 天状态流转",
+        "暂无状态流转记录",
         "归档过期",
         "cleanupStaleRecommendations",
         "isStaleRecommendation",
+        "lotteryRecommendationApi.rollup",
         "lotteryRecommendationApi.updateStatus"
+      ]
+    },
+    {
+      "scope": "recommendation rollup api contract",
+      "file": "src/services/api.ts",
+      "includes": [
+        "LotteryRecommendationRollup",
+        "LotteryRecommendationTransitionRow",
+        "rollup: (params?: { window?: string; limit?: number })",
+        "/lottery/recommendations/rollup"
       ]
     }
   ],
@@ -417,10 +430,11 @@
       "componentFile": "src/components/LotteryRecommendationPage.tsx",
       "mockApis": [
         "lotteryRecommendationApi.recommendations",
+        "lotteryRecommendationApi.rollup",
         "lotteryRecommendationApi.refresh",
         "lotteryRecommendationApi.updateStatus"
       ],
-      "emptyStates": ["暂无推广推荐", "暂无观察推荐", "暂无暂停推荐", "暂无退役推荐", "暂无行动结果回看"],
+      "emptyStates": ["暂无推广推荐", "暂无观察推荐", "暂无暂停推荐", "暂无退役推荐", "暂无行动结果回看", "暂无状态流转记录"],
       "errorStates": ["读取彩票推荐失败", "刷新彩票推荐失败", "更新彩票推荐失败"],
       "fixtureData": {
         "recommendations": {
@@ -465,6 +479,25 @@
           "page": 1,
           "pageSize": 20,
           "total": 3
+        },
+        "recommendationRollup": {
+          "window": "recent30",
+          "requestedLimit": 30,
+          "recommendationCount": 3,
+          "activeCount": 2,
+          "watchCount": 1,
+          "pausedCount": 1,
+          "retiredCount": 0,
+          "staleCount": 1,
+          "appliedCount": 1,
+          "transitions": [
+            {
+              "day": "2026-07-08",
+              "lifecycleStatus": "APPLIED",
+              "recommendationState": "WATCH",
+              "count": 1
+            }
+          ]
         }
       }
     },

@@ -4,6 +4,7 @@ import com.one.common.exception.NotFoundException;
 import com.one.record.lottery.LotteryAuditMetadata;
 import com.one.record.lottery.LotteryOutcomeAttribution;
 import com.one.record.lottery.LotteryPageResponse;
+import com.one.record.lottery.LotteryRecommendationRollup;
 import com.one.record.lottery.LotteryRecommendationStatusRequest;
 import com.one.record.model.LotteryAuditEvent;
 import com.one.record.model.LotteryRecommendation;
@@ -18,6 +19,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -34,6 +39,8 @@ public class LotteryRecommendationService implements ILotteryRecommendationServi
     private static final int DEFAULT_PAGE_SIZE = 20;
 
     private static final int MAX_PAGE_SIZE = 100;
+
+    private static final DateTimeFormatter DAY_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneId.systemDefault());
 
     private final LotteryRecommendationRepository repository;
 
@@ -62,6 +69,37 @@ public class LotteryRecommendationService implements ILotteryRecommendationServi
     @Override
     public LotteryRecommendation detail(String id) {
         return loadOwned(id);
+    }
+
+    @Override
+    public LotteryRecommendationRollup rollup(String window, Integer limit) {
+        String safeWindow = normalizeWindow(window);
+        int safeLimit = rollupLimit(safeWindow, limit);
+        List<LotteryRecommendation> recommendations = repository.findByUserIdOrderByUpdatedAtDesc(DEFAULT_USER_ID, PageRequest.of(0, safeLimit));
+        Map<String, Integer> recommendationStateDistribution = new LinkedHashMap<>();
+        Map<String, Integer> lifecycleStatusDistribution = new LinkedHashMap<>();
+        Map<String, Integer> targetTypeDistribution = new LinkedHashMap<>();
+        for (LotteryRecommendation recommendation : recommendations) {
+            increment(recommendationStateDistribution, recommendation.getRecommendationState());
+            increment(lifecycleStatusDistribution, recommendation.getLifecycleStatus());
+            increment(targetTypeDistribution, recommendation.getTargetType());
+        }
+        return LotteryRecommendationRollup.builder()
+                .window(safeWindow)
+                .requestedLimit(safeLimit)
+                .recommendationCount(recommendations.size())
+                .activeCount((int) recommendations.stream().filter(this::isOpenRecommendation).count())
+                .watchCount((int) recommendations.stream().filter(item -> "WATCH".equals(item.getRecommendationState())).count())
+                .pausedCount((int) recommendations.stream().filter(item -> "PAUSE".equals(item.getRecommendationState()) || "SNOOZED".equals(item.getLifecycleStatus())).count())
+                .retiredCount((int) recommendations.stream().filter(item -> "RETIRE".equals(item.getRecommendationState()) || "ARCHIVED".equals(item.getLifecycleStatus())).count())
+                .staleCount((int) recommendations.stream().filter(this::isStaleRecommendation).count())
+                .appliedCount((int) recommendations.stream().filter(item -> "APPLIED".equals(item.getLifecycleStatus())).count())
+                .recommendationStateDistribution(recommendationStateDistribution)
+                .lifecycleStatusDistribution(lifecycleStatusDistribution)
+                .targetTypeDistribution(targetTypeDistribution)
+                .transitions(transitionRows(safeLimit))
+                .generatedAt(System.currentTimeMillis())
+                .build();
     }
 
     @Override
@@ -237,6 +275,25 @@ public class LotteryRecommendationService implements ILotteryRecommendationServi
                 .build());
     }
 
+    private List<LotteryRecommendationRollup.TransitionRow> transitionRows(int limit) {
+        Map<String, TransitionAccumulator> transitions = new LinkedHashMap<>();
+        auditEventRepository.findByOrderByGeneratedAtDesc(PageRequest.of(0, limit)).stream()
+                .filter(event -> "LOTTERY_RECOMMENDATION_STATUS".equals(event.getEventType()))
+                .forEach(event -> {
+                    String day = DAY_FORMATTER.format(Instant.ofEpochMilli(event.getGeneratedAt() == null ? System.currentTimeMillis() : event.getGeneratedAt()));
+                    String lifecycleStatus = value(event.getFilters() == null ? null : event.getFilters().get("lifecycleStatus"));
+                    String recommendationState = value(event.getFilters() == null ? null : event.getFilters().get("recommendationState"));
+                    String key = day + ":" + lifecycleStatus + ":" + recommendationState;
+                    transitions.computeIfAbsent(key, ignored -> new TransitionAccumulator(day, lifecycleStatus, recommendationState)).increment();
+                });
+        return transitions.values().stream()
+                .map(TransitionAccumulator::toRow)
+                .sorted(Comparator.comparing(LotteryRecommendationRollup.TransitionRow::getDay).reversed()
+                        .thenComparing(LotteryRecommendationRollup.TransitionRow::getLifecycleStatus)
+                        .thenComparing(LotteryRecommendationRollup.TransitionRow::getRecommendationState))
+                .toList();
+    }
+
     private LotteryAuditMetadata audit(String action, Long createdAt, Long updatedAt) {
         return LotteryAuditMetadata.builder()
                 .action(action)
@@ -273,6 +330,36 @@ public class LotteryRecommendationService implements ILotteryRecommendationServi
         };
     }
 
+    private String normalizeWindow(String window) {
+        if (!StringUtils.hasText(window)) {
+            return "recent30";
+        }
+        String normalized = window.trim().toLowerCase();
+        return switch (normalized) {
+            case "latest", "recent30", "all" -> normalized;
+            default -> "recent30";
+        };
+    }
+
+    private int rollupLimit(String window, Integer limit) {
+        if (limit != null && limit > 0) {
+            return Math.min(MAX_PAGE_SIZE, limit);
+        }
+        return switch (window) {
+            case "latest" -> 20;
+            case "all" -> MAX_PAGE_SIZE;
+            default -> 30;
+        };
+    }
+
+    private boolean isOpenRecommendation(LotteryRecommendation recommendation) {
+        return !"APPLIED".equals(recommendation.getLifecycleStatus()) && !"ARCHIVED".equals(recommendation.getLifecycleStatus());
+    }
+
+    private boolean isStaleRecommendation(LotteryRecommendation recommendation) {
+        return isOpenRecommendation(recommendation) && safeInt(recommendation.getEvidenceAgeHours()) >= 24;
+    }
+
     private int normalizePage(Integer page) {
         return page == null || page < 1 ? DEFAULT_PAGE : page;
     }
@@ -288,7 +375,45 @@ public class LotteryRecommendationService implements ILotteryRecommendationServi
         return recommendation.getCreatedAt() == null ? fallback : recommendation.getCreatedAt();
     }
 
+    private void increment(Map<String, Integer> target, String key) {
+        target.merge(value(key), 1, Integer::sum);
+    }
+
+    private int safeInt(Integer value) {
+        return value == null ? 0 : value;
+    }
+
     private String value(String value) {
         return StringUtils.hasText(value) ? value : "-";
+    }
+
+    private static class TransitionAccumulator {
+
+        private final String day;
+
+        private final String lifecycleStatus;
+
+        private final String recommendationState;
+
+        private int count;
+
+        TransitionAccumulator(String day, String lifecycleStatus, String recommendationState) {
+            this.day = day;
+            this.lifecycleStatus = lifecycleStatus;
+            this.recommendationState = recommendationState;
+        }
+
+        void increment() {
+            count++;
+        }
+
+        LotteryRecommendationRollup.TransitionRow toRow() {
+            return LotteryRecommendationRollup.TransitionRow.builder()
+                    .day(day)
+                    .lifecycleStatus(lifecycleStatus)
+                    .recommendationState(recommendationState)
+                    .count(count)
+                    .build();
+        }
     }
 }

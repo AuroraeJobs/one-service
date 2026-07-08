@@ -2,6 +2,7 @@ package com.one.record.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.one.record.lottery.LotteryPageResponse;
+import com.one.record.lottery.LotteryRecommendationRollup;
 import com.one.record.lottery.LotteryRecommendationStatusRequest;
 import com.one.record.model.LotteryRecommendation;
 import com.one.record.service.ILotteryRecommendationService;
@@ -29,6 +30,7 @@ class LotteryRecommendationControllerTest {
         ILotteryRecommendationService service = mock(ILotteryRecommendationService.class);
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new LotteryRecommendationController(service)).build();
         when(service.recommendations("PROMOTE", 1, 20)).thenReturn(page());
+        when(service.rollup("recent30", 30)).thenReturn(rollup());
         when(service.refresh(5)).thenReturn(page());
         when(service.updateStatus(org.mockito.Mockito.eq("rec-1"), org.mockito.Mockito.any())).thenReturn(recommendation("APPLIED"));
 
@@ -39,6 +41,11 @@ class LotteryRecommendationControllerTest {
         mockMvc.perform(post("/lottery/recommendations/refresh").param("limit", "5"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(1));
+
+        mockMvc.perform(get("/lottery/recommendations/rollup").param("window", "recent30").param("limit", "30"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.recommendationCount").value(1))
+                .andExpect(jsonPath("$.transitions[0].lifecycleStatus").value("APPLIED"));
 
         mockMvc.perform(patch("/lottery/recommendations/rec-1/status")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -53,6 +60,26 @@ class LotteryRecommendationControllerTest {
                 .page(1)
                 .pageSize(20)
                 .total(1L)
+                .build();
+    }
+
+    private LotteryRecommendationRollup rollup() {
+        return LotteryRecommendationRollup.builder()
+                .window("recent30")
+                .requestedLimit(30)
+                .recommendationCount(1)
+                .activeCount(1)
+                .watchCount(0)
+                .pausedCount(0)
+                .retiredCount(0)
+                .staleCount(0)
+                .appliedCount(1)
+                .transitions(List.of(LotteryRecommendationRollup.TransitionRow.builder()
+                        .day("2026-07-08")
+                        .lifecycleStatus("APPLIED")
+                        .recommendationState("PROMOTE")
+                        .count(1)
+                        .build()))
                 .build();
     }
 

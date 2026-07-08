@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageRequest;
 
 import java.math.BigDecimal;
+import java.util.Map;
 import java.util.List;
 import java.util.Optional;
 
@@ -105,5 +106,57 @@ class LotteryRecommendationServiceTest {
         assertThat(saved.getLifecycleStatus()).isEqualTo("ARCHIVED");
         assertThat(saved.getArchived()).isTrue();
         assertThat(saved.getReasons()).contains("初始原因", "已处理");
+    }
+
+    @Test
+    void rollupSummarizesLifecycleAndTransitionRows() {
+        when(repository.findByUserIdOrderByUpdatedAtDesc("default", PageRequest.of(0, 30))).thenReturn(List.of(
+                LotteryRecommendation.builder()
+                        .id("rec-1")
+                        .targetType("PORTFOLIO")
+                        .recommendationState("PROMOTE")
+                        .lifecycleStatus("OPEN")
+                        .evidenceAgeHours(30)
+                        .build(),
+                LotteryRecommendation.builder()
+                        .id("rec-2")
+                        .targetType("RULE")
+                        .recommendationState("WATCH")
+                        .lifecycleStatus("APPLIED")
+                        .evidenceAgeHours(2)
+                        .build(),
+                LotteryRecommendation.builder()
+                        .id("rec-3")
+                        .targetType("SIMULATION")
+                        .recommendationState("PAUSE")
+                        .lifecycleStatus("SNOOZED")
+                        .evidenceAgeHours(12)
+                        .build()
+        ));
+        when(auditEventRepository.findByOrderByGeneratedAtDesc(PageRequest.of(0, 30))).thenReturn(List.of(
+                LotteryAuditEvent.builder()
+                        .eventType("LOTTERY_RECOMMENDATION_STATUS")
+                        .filters(Map.of("lifecycleStatus", "APPLIED", "recommendationState", "WATCH"))
+                        .generatedAt(1782864000000L)
+                        .build(),
+                LotteryAuditEvent.builder()
+                        .eventType("LOTTERY_EXPORT")
+                        .filters(Map.of())
+                        .generatedAt(1782864000000L)
+                        .build()
+        ));
+
+        var rollup = service.rollup("recent30", null);
+
+        assertThat(rollup.getRecommendationCount()).isEqualTo(3);
+        assertThat(rollup.getActiveCount()).isEqualTo(2);
+        assertThat(rollup.getWatchCount()).isEqualTo(1);
+        assertThat(rollup.getPausedCount()).isEqualTo(1);
+        assertThat(rollup.getRetiredCount()).isZero();
+        assertThat(rollup.getStaleCount()).isEqualTo(1);
+        assertThat(rollup.getAppliedCount()).isEqualTo(1);
+        assertThat(rollup.getRecommendationStateDistribution()).containsEntry("PROMOTE", 1).containsEntry("WATCH", 1).containsEntry("PAUSE", 1);
+        assertThat(rollup.getTransitions()).hasSize(1);
+        assertThat(rollup.getTransitions().get(0).getLifecycleStatus()).isEqualTo("APPLIED");
     }
 }

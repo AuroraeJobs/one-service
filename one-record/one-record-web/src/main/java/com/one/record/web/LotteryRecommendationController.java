@@ -1,6 +1,7 @@
 package com.one.record.web;
 
 import com.one.record.lottery.LotteryPageResponse;
+import com.one.record.lottery.LotteryRecommendationRollup;
 import com.one.record.lottery.LotteryRecommendationStatusRequest;
 import com.one.record.model.LotteryRecommendation;
 import com.one.record.service.ILotteryRecommendationService;
@@ -38,6 +39,13 @@ public class LotteryRecommendationController {
     @Operation(summary = "查询彩票校准推荐详情", description = "按 ID 查询推荐证据、原因和生命周期状态")
     public LotteryRecommendation detail(@PathVariable("id") String id) {
         return service.detail(id);
+    }
+
+    @GetMapping("rollup")
+    @Operation(summary = "查询彩票推荐生命周期汇总", description = "按窗口汇总推荐状态、生命周期状态、目标类型和状态转移")
+    public LotteryRecommendationRollup rollup(@RequestParam(name = "window", required = false, defaultValue = "recent30") String window,
+                                              @RequestParam(name = "limit", required = false) Integer limit) {
+        return service.rollup(window, limit);
     }
 
     @PostMapping("refresh")

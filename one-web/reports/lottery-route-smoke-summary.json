@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 29 Wave 29A recommendation lifecycle analytics smoke",
-  "generatedAt": "2026-07-08T02:17:55.716Z",
+  "target": "Iteration 29 Wave 29B recommendation lifecycle rollup smoke",
+  "generatedAt": "2026-07-08T02:22:46.614Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 17,
-  "checkCount": 416,
+  "checkCount": 426,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
@@ -102,8 +102,8 @@
       "route": "/lottery/recommendations",
       "label": "推荐",
       "component": "LotteryRecommendationPage",
-      "mockApiCount": 3,
-      "emptyStateCount": 5,
+      "mockApiCount": 4,
+      "emptyStateCount": 6,
       "errorStateCount": 3
     },
     {

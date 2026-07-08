@@ -3515,6 +3515,26 @@
   font-size: 12px;
 }
 
+.lottery-recommendation-transition-list {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-recommendation-transition-list strong {
+  color: var(--app-text);
+}
+
+.lottery-recommendation-transition-list span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .lottery-recommendation-cleanup {
   display: flex;
   align-items: center;

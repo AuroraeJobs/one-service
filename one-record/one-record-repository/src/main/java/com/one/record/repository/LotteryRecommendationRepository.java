@@ -9,6 +9,8 @@ import java.util.Optional;
 
 public interface LotteryRecommendationRepository extends MongoRepository<LotteryRecommendation, String> {
 
+    List<LotteryRecommendation> findByUserIdOrderByUpdatedAtDesc(String userId, Pageable pageable);
+
     List<LotteryRecommendation> findByUserIdAndArchivedFalseOrderByUpdatedAtDesc(String userId, Pageable pageable);
 
     List<LotteryRecommendation> findByUserIdAndArchivedFalseAndRecommendationStateOrderByUpdatedAtDesc(String userId, String recommendationState, Pageable pageable);

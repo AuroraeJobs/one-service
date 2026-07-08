@@ -12,9 +12,9 @@ Goal: make `/lottery/recommendations` show whether recommendation actions are mo
 
 ## Wave 29B: Transition History
 
-- Add backend transition rollups grouped by lifecycle status, recommendation state, target type, and day.
-- Expose transition counts in `/lottery/recommendations` without overloading the recommendation list endpoint.
-- Add service and controller tests for empty state and bounded rollup windows.
+- Add backend transition rollups grouped by lifecycle status, recommendation state, target type, and day. Shipped as `GET /lottery/recommendations/rollup`.
+- Expose transition counts in `/lottery/recommendations` without overloading the recommendation list endpoint. The page now loads `recent30` rollup data beside the recommendation queue.
+- Add service and controller tests for empty state and bounded rollup windows. Added service and web tests for rollup counts plus status transition rows.
 
 ## Wave 29C: Outcome Follow-Through
 

@@ -2523,6 +2523,30 @@ export interface LotteryRecommendation {
   updatedAt?: number;
 }
 
+export interface LotteryRecommendationTransitionRow {
+  day?: string;
+  lifecycleStatus?: string;
+  recommendationState?: string;
+  count?: number;
+}
+
+export interface LotteryRecommendationRollup {
+  window?: string;
+  requestedLimit?: number;
+  recommendationCount?: number;
+  activeCount?: number;
+  watchCount?: number;
+  pausedCount?: number;
+  retiredCount?: number;
+  staleCount?: number;
+  appliedCount?: number;
+  recommendationStateDistribution?: Record<string, number>;
+  lifecycleStatusDistribution?: Record<string, number>;
+  targetTypeDistribution?: Record<string, number>;
+  transitions?: LotteryRecommendationTransitionRow[];
+  generatedAt?: number;
+}
+
 export interface LotteryTicketSummary {
   ticketCount?: number;
   checkedTicketCount?: number;
@@ -3334,6 +3358,9 @@ export const lotteryRecommendationApi = {
   },
   detail: (id: string): Promise<LotteryRecommendation> => {
     return apiClient.get(`/lottery/recommendations/${id}`);
+  },
+  rollup: (params?: { window?: string; limit?: number }): Promise<LotteryRecommendationRollup> => {
+    return apiClient.get('/lottery/recommendations/rollup', { params });
   },
   refresh: (params?: { limit?: number }): Promise<LotteryPageResponse<LotteryRecommendation>> => {
     return apiClient.post('/lottery/recommendations/refresh', undefined, { params });

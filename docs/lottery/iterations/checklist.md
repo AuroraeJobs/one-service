@@ -817,6 +817,13 @@ Goal: make `/lottery/recommendations` show lifecycle health, action follow-throu
 - [x] Keep the first slice frontend-derived from the existing recommendation API. Reused `lotteryRecommendationApi.recommendations` and `updateStatus` without expanding the backend contract.
 - [x] Extend route smoke coverage for lifecycle analytics. Smoke fixture now checks lifecycle analytics labels, cleanup code paths, and action-review empty state.
 
+### Wave 29B: Transition History
+
+- [x] Add backend transition rollups grouped by lifecycle status, recommendation state, target type, and day. Added `GET /lottery/recommendations/rollup` with recommendation state, lifecycle status, target type, and audit-backed transition rows.
+- [x] Expose transition counts in `/lottery/recommendations` without overloading the list endpoint. The recommendation page now loads the `recent30` rollup and shows recent status transitions in the lifecycle panel.
+- [x] Add service and controller tests for bounded rollup windows. Added focused service and web tests for lifecycle counts and `/rollup` routing.
+- [x] Extend route smoke coverage for rollup wiring. Smoke fixture now checks the rollup API method, frontend contract types, and transition empty state.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

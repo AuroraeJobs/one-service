@@ -12,7 +12,8 @@ import { useNavigate } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import {
   lotteryRecommendationApi,
-  type LotteryRecommendation
+  type LotteryRecommendation,
+  type LotteryRecommendationRollup
 } from '../services/api';
 import { lotteryCodeLabel, lotteryStatusLabel } from '../utils/lotteryStatusLabel';
 import './LotteryOverviewPage.css';
@@ -60,6 +61,7 @@ const isStaleRecommendation = (item: LotteryRecommendation) => isOpenRecommendat
 const LotteryRecommendationPage = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState<LotteryRecommendation[]>([]);
+  const [rollup, setRollup] = useState<LotteryRecommendationRollup>();
   const [filterState, setFilterState] = useState<string>();
   const [preset, setPreset] = useState<RecommendationPreset>('ALL');
   const [loading, setLoading] = useState(false);
@@ -71,8 +73,12 @@ const LotteryRecommendationPage = () => {
     setLoading(true);
     setError(undefined);
     try {
-      const response = await lotteryRecommendationApi.recommendations({ recommendationState: filterState, page: 1, pageSize: 80 });
+      const [response, rollupResponse] = await Promise.all([
+        lotteryRecommendationApi.recommendations({ recommendationState: filterState, page: 1, pageSize: 80 }),
+        lotteryRecommendationApi.rollup({ window: 'recent30', limit: 30 })
+      ]);
       setItems(response.items || []);
+      setRollup(rollupResponse);
     } catch (requestError) {
       console.error('读取彩票推荐失败:', requestError);
       setError(requestError instanceof Error ? requestError.message : '读取彩票推荐失败');
@@ -90,7 +96,9 @@ const LotteryRecommendationPage = () => {
     setError(undefined);
     try {
       const response = await lotteryRecommendationApi.refresh({ limit: 12 });
+      const rollupResponse = await lotteryRecommendationApi.rollup({ window: 'recent30', limit: 30 });
       setItems(response.items || []);
+      setRollup(rollupResponse);
       message.success('推荐已刷新');
     } catch (requestError) {
       console.error('刷新彩票推荐失败:', requestError);
@@ -166,18 +174,20 @@ const LotteryRecommendationPage = () => {
     const source = visibleItems;
     const countBy = (predicate: (item: LotteryRecommendation) => boolean) => source.filter(predicate).length;
     return {
-      active: countBy(isOpenRecommendation),
-      watch: countBy(item => item.recommendationState === 'WATCH'),
-      paused: countBy(item => item.recommendationState === 'PAUSE' || item.lifecycleStatus === 'SNOOZED'),
-      retired: countBy(item => item.recommendationState === 'RETIRE' || item.lifecycleStatus === 'ARCHIVED'),
-      stale: countBy(isStaleRecommendation),
-      applied: countBy(item => item.lifecycleStatus === 'APPLIED')
+      active: rollup?.activeCount ?? countBy(isOpenRecommendation),
+      watch: rollup?.watchCount ?? countBy(item => item.recommendationState === 'WATCH'),
+      paused: rollup?.pausedCount ?? countBy(item => item.recommendationState === 'PAUSE' || item.lifecycleStatus === 'SNOOZED'),
+      retired: rollup?.retiredCount ?? countBy(item => item.recommendationState === 'RETIRE' || item.lifecycleStatus === 'ARCHIVED'),
+      stale: rollup?.staleCount ?? countBy(isStaleRecommendation),
+      applied: rollup?.appliedCount ?? countBy(item => item.lifecycleStatus === 'APPLIED')
     };
-  }, [visibleItems]);
+  }, [rollup, visibleItems]);
 
   const actionSummary = useMemo(() => visibleItems
     .filter(item => item.lifecycleStatus === 'APPLIED' || item.lifecycleStatus === 'ARCHIVED' || item.recommendationState === 'PROMOTE' || item.recommendationState === 'RETIRE')
     .slice(0, 4), [visibleItems]);
+
+  const transitionRows = useMemo(() => (rollup?.transitions || []).slice(0, 3), [rollup]);
 
   return (
     <LifePageShell
@@ -220,6 +230,14 @@ const LotteryRecommendationPage = () => {
             <article><strong>{lifecycleAnalytics.watch}</strong><span>观察</span></article>
             <article><strong>{lifecycleAnalytics.paused}</strong><span>暂停</span></article>
             <article><strong>{lifecycleAnalytics.retired}</strong><span>退役</span></article>
+          </div>
+          <div className="lottery-recommendation-transition-list">
+            <strong>近 30 天状态流转</strong>
+            {transitionRows.length ? transitionRows.map(row => (
+              <span key={`${row.day}-${row.lifecycleStatus}-${row.recommendationState}`}>
+                {row.day || '-'} · {lotteryStatusLabel(row.lifecycleStatus, 'OPEN')} · {lotteryStatusLabel(row.recommendationState, 'WATCH')}：{row.count || 0} 条
+              </span>
+            )) : <span>暂无状态流转记录</span>}
           </div>
           <div className="lottery-recommendation-cleanup">
             <div>
