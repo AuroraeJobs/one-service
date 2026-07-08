@@ -1118,6 +1118,32 @@ const reviewQuestions = (
   return questions.slice(0, 6);
 };
 
+const buildReviewDraft = (
+  run: MiniGptRunRecord | undefined,
+  logs: MiniGptTrainingLogRecord[],
+  variableDiffs: ExperimentVariableDiff[],
+  checklistItems: LaunchChecklistItem[],
+  actionItems: NextExperimentAction[],
+  generationResult?: MiniGptGenerationResult
+): MiniGptRunNoteRequest => {
+  const latestLog = logs[logs.length - 1];
+  const primaryDiff = variableDiffs[0];
+  const sampleText = generationResult?.generatedText || latestSample(logs);
+  const watchItems = checklistItems.filter(item => item.status !== 'PASS').map(item => item.label).join('、') || '暂无明显风险';
+  const nextAction = actionItems[0];
+
+  return {
+    hypothesis: primaryDiff
+      ? `如果只调整 ${primaryDiff.label}（${primaryDiff.from} -> ${primaryDiff.to}），应该能更清楚地观察它对 eval loss 和生成样例的影响。`
+      : `本次 ${run?.preset || 'MiniGPT'} 实验先作为观察基线，确认训练链路、loss 记录和生成样例是否稳定。`,
+    observation: `当前 train=${formatLoss(run?.finalTrainLoss ?? latestLog?.trainLoss)}，eval=${formatLoss(run?.finalEvalLoss ?? latestLog?.evalLoss)}；启动检查风险：${watchItems}；生成样例${sampleText ? '已有可复盘输出' : '暂缺，需要补一次采样'}。`,
+    conclusion: run?.lossGap !== undefined
+      ? `当前 loss gap=${formatLoss(run.lossGap)}，先把它作为判断过拟合和验证集差异的主要信号。`
+      : '当前日志还不足以下强结论，先保留为待观察状态。',
+    nextStep: nextAction ? `${nextAction.title}：${nextAction.action}` : '下一轮保持单变量对照，并补齐生成样例。'
+  };
+};
+
 const MiniGptLearningPage = () => {
   const [form] = Form.useForm<MiniGptTrainingRequest>();
   const [noteForm] = Form.useForm<MiniGptRunNoteRequest>();
@@ -1338,6 +1364,15 @@ const MiniGptLearningPage = () => {
     } finally {
       setSavingNotes(false);
     }
+  };
+
+  const handleDraftReviewNotes = () => {
+    const draft = buildReviewDraft(run, logs, variableDiffItems, launchChecklistItems, nextActionItems, generationResult);
+    noteForm.setFieldsValue({
+      ...noteForm.getFieldsValue(),
+      ...draft
+    });
+    message.success('复盘草稿已填入');
   };
 
   const handleGenerate = async (values: MiniGptGenerationRequest) => {
@@ -2095,9 +2130,14 @@ const MiniGptLearningPage = () => {
                   <Form.Item name="nextStep" label="下一步">
                     <Input.TextArea rows={2} placeholder="下一次要调整的参数或语料" />
                   </Form.Item>
-                  <Button type="primary" htmlType="submit" loading={savingNotes} disabled={!run?.runName}>
-                    保存笔记
-                  </Button>
+                  <Space wrap>
+                    <Button onClick={handleDraftReviewNotes} disabled={!run?.runName}>
+                      生成复盘草稿
+                    </Button>
+                    <Button type="primary" htmlType="submit" loading={savingNotes} disabled={!run?.runName}>
+                      保存笔记
+                    </Button>
+                  </Space>
                 </Form>
               </div>
             </Card>
