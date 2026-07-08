@@ -1198,6 +1198,7 @@ const LotteryWorkbenchPage = () => {
     const items: WorkbenchIssueNextItem[] = [];
     const releaseBlockers = (releaseCheckSummary?.checks || []).filter(item => item.status && item.status !== 'PASS');
     const staleEvidence = actionQueueItems.find(item => item.group === '证据复核' || item.title.includes('过期'));
+    const anomalyCount = (operationsHealth?.warningCount || 0) + releaseBlockers.length + (staleEvidence?.count || 0);
 
     if ((summary?.pendingTicketCount || 0) > 0) {
       items.push({
@@ -1249,6 +1250,19 @@ const LotteryWorkbenchPage = () => {
         count: releaseBlockers.length,
         path: blocker.path || workbenchIssueHandoffPaths.exports,
         actionLabel: '看证据'
+      });
+    }
+
+    if (anomalyCount > 0) {
+      items.push({
+        key: 'anomaly-review',
+        icon: <WarningOutlined />,
+        title: '异常复盘',
+        detail: `${operationsHealth?.warningCount || 0} 个健康警示，${releaseBlockers.length} 个发布阻塞`,
+        status: releaseBlockers.some(item => item.status === 'FAILED') ? 'FAILED' : 'WARNING',
+        count: anomalyCount,
+        path: '/lottery/governance',
+        actionLabel: '看异常'
       });
     }
 

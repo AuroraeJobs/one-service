@@ -133,6 +133,7 @@ const archiveScopeLabel = (scope: string) => {
     outcome: '归因',
     recommendation: '推荐',
     strategy: '策略',
+    operations: '运营',
     release: '发布'
   };
   return labels[scope] || scope;
@@ -202,7 +203,7 @@ const LotteryMonthEndReviewPage = () => {
     () => audits.filter(item => item.eventType === 'EXPORT' || item.eventType === 'REPORT_EXPORT' || item.targetType === 'decision-outcomes'),
     [audits]
   );
-  const releaseChecks = workbench?.releaseCheckSummary?.checks || [];
+  const releaseChecks = useMemo(() => workbench?.releaseCheckSummary?.checks || [], [workbench?.releaseCheckSummary?.checks]);
   const attributionRows = useMemo(() => attributionReviewRows(attributionRollup), [attributionRollup]);
   const monthEndScore = useMemo(() => {
     const healthScore = health?.score ?? 0;
@@ -401,6 +402,52 @@ const LotteryMonthEndReviewPage = () => {
     ];
   }, [attributionRollup?.issueCount, attributionRows, exportAudits.length, ledger?.netResult, ledger?.roiPercent, notes?.items, notes?.total, recentIssues, recommendationRollup?.activeCount, recommendationRollup?.staleCount, reminders?.dueCount, tickets?.pendingTicketCount, workbench?.releaseCheckSummary?.passedCount, workbench?.releaseCheckSummary?.totalCount]);
 
+  const anomalyReviewItems = useMemo<ArchiveItem[]>(() => {
+    const healthWarnings = (health?.contributors || []).filter(item => item.status && item.status !== 'PASS');
+    const releaseWarnings = releaseChecks.filter(item => item.status && item.status !== 'PASS');
+    const attributionWarnings = attributionRows.reduce((sum, item) => sum + safeCount(item.warningCount), 0);
+    const staleRecommendations = safeCount(recommendationRollup?.staleCount);
+    const dueReminders = safeCount(reminders?.dueCount);
+    return [
+      {
+        key: 'anomaly:health',
+        scope: 'operations',
+        title: '运营健康异常',
+        detail: healthWarnings.map(item => item.label || item.key).filter(Boolean).slice(0, 3).join('、') || lotteryMessageLabel(health?.message, '暂无健康警示'),
+        path: '/lottery/governance',
+        status: healthWarnings.length ? 'WARNING' : health?.status || 'MANUAL',
+        count: healthWarnings.length
+      },
+      {
+        key: 'anomaly:attribution',
+        scope: 'outcome',
+        title: '归因漂移复核',
+        detail: `归因警示 ${attributionWarnings} 项，覆盖 ${attributionRollup?.issueCount || 0} 期`,
+        path: '/lottery/outcomes',
+        status: attributionWarnings ? 'WARNING' : (attributionRollup?.issueCount ? 'PASS' : 'MANUAL'),
+        count: attributionWarnings
+      },
+      {
+        key: 'anomaly:recommendation',
+        scope: 'recommendation',
+        title: '推荐滞留复核',
+        detail: `${staleRecommendations} 条过期，${recommendationRollup?.activeCount || 0} 条待处理`,
+        path: '/lottery/recommendations',
+        status: staleRecommendations ? 'WARNING' : (recommendationRollup?.recommendationCount ? 'PASS' : 'MANUAL'),
+        count: staleRecommendations
+      },
+      {
+        key: 'anomaly:release',
+        scope: 'release',
+        title: '发布证据复核',
+        detail: `${releaseWarnings.length} 项未通过，到期提醒 ${dueReminders} 条`,
+        path: '/lottery/exports?preset=v31-anomaly-review',
+        status: releaseWarnings.length || dueReminders ? 'WARNING' : (releaseChecks.length ? 'PASS' : 'MANUAL'),
+        count: releaseWarnings.length + dueReminders
+      }
+    ];
+  }, [attributionRollup?.issueCount, attributionRows, health, recommendationRollup, releaseChecks, reminders?.dueCount]);
+
   return (
     <LifePageShell
       className="lottery-prediction-page lottery-month-end-page"
@@ -416,6 +463,9 @@ const LotteryMonthEndReviewPage = () => {
           </Button>
           <Button icon={<DownloadOutlined />} onClick={() => navigate('/lottery/exports?type=decision-outcomes&preset=month-end-governance')}>
             月末包
+          </Button>
+          <Button icon={<WarningOutlined />} onClick={() => navigate('/lottery/exports?preset=v31-anomaly-review')}>
+            异常复盘包
           </Button>
           <Button icon={<DownloadOutlined />} onClick={() => navigate('/lottery/exports?preset=long-term-research')}>
             长期复盘包
@@ -571,6 +621,23 @@ const LotteryMonthEndReviewPage = () => {
             ) : (
               <Empty description="暂无推荐生命周期摘要" />
             )}
+          </Card>
+
+          <Card
+            className="life-panel-card lottery-clean-panel"
+            title="异常复核闭环"
+            extra={<Tag>{anomalyReviewItems.reduce((sum, item) => sum + safeCount(item.count), 0)} 条</Tag>}
+          >
+            <div className="lottery-month-end-list">
+              {anomalyReviewItems.map(item => (
+                <button key={item.key} type="button" onClick={() => navigate(item.path)}>
+                  <Tag color={statusColor(item.status)}>{archiveScopeLabel(item.scope)}</Tag>
+                  <span>{item.title}</span>
+                  <strong>{item.count ?? '-'}</strong>
+                  <small>{item.detail}</small>
+                </button>
+              ))}
+            </div>
           </Card>
 
           <Card

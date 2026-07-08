@@ -71,6 +71,11 @@ const reportPresets = [
     sections: ['ledger-issues', 'tickets', 'predictions', 'experiments', 'backtests', 'decision-outcomes', 'budget-prechecks', 'settlement-reviews', 'rule-evidence', 'replay-evidence', 'probe-logs']
   },
   {
+    key: 'v31-anomaly-review',
+    label: '异常复盘包',
+    sections: ['decision-outcomes', 'settlement-reviews', 'budget-prechecks', 'rule-evidence', 'replay-evidence', 'sync-logs', 'probe-logs']
+  },
+  {
     key: 'v15-attribution-loop',
     label: '归因闭环包',
     sections: ['ledger-issues', 'tickets', 'decision-outcomes', 'settlement-reviews', 'rule-evidence', 'replay-evidence']
@@ -150,6 +155,14 @@ const v15EvidencePacks = [
     preset: 'V15治理证据包',
     auditTypes: ['EXPORT', 'REPORT_EXPORT', 'LOTTERY_RECOMMENDATION_REFRESH'],
     sections: ['sync-logs', 'probe-logs', 'decision-outcomes']
+  },
+  {
+    key: 'anomaly-review',
+    title: '异常观察证据',
+    route: '/lottery/governance',
+    preset: '异常复盘包',
+    auditTypes: ['EXPORT', 'REPORT_EXPORT', 'LOTTERY_OUTCOME_ATTRIBUTION', 'LOTTERY_RECOMMENDATION_STATUS'],
+    sections: ['decision-outcomes', 'settlement-reviews', 'budget-prechecks', 'sync-logs', 'probe-logs']
   },
   {
     key: 'long-term-research',
@@ -447,6 +460,13 @@ const LotteryExportMaintenancePage = () => {
       path: '/lottery/exports?preset=long-term-research'
     },
     {
+      key: 'v31-anomaly-review',
+      label: 'V31异常复盘',
+      status: 'PASS',
+      message: '治理异常观察已接入工作台、月末复盘和异常复盘导出证据包',
+      path: '/lottery/exports?preset=v31-anomaly-review'
+    },
+    {
       key: 'month-end-dashboard',
       label: '月末复盘仪表盘',
       status: 'PASS',
@@ -708,7 +728,7 @@ const LotteryExportMaintenancePage = () => {
       <Card
         className="life-panel-card lottery-clean-panel lottery-v15-evidence-card"
         title={<Space><SafetyCertificateOutlined />闭环证据包</Space>}
-        extra={<Tag color="blue">归因 / 推荐 / 移动 / 治理 / 长期</Tag>}
+        extra={<Tag color="blue">归因 / 推荐 / 移动 / 治理 / 异常 / 长期</Tag>}
       >
         <div className="lottery-v15-evidence-grid">
           {v15EvidencePacks.map(pack => (

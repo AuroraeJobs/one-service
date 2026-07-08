@@ -872,9 +872,9 @@ Goal: make governance review catch operational drift earlier using existing heal
 
 ### Wave 31C: Review Handoffs
 
-- [ ] Connect recurring anomaly categories to workbench and month-end review handoffs.
-- [ ] Add export evidence labels for anomaly review when a durable report preset is justified.
-- [ ] Review mobile and dark-mode behavior after anomaly surfaces expand.
+- [x] Connect recurring anomaly categories to workbench and month-end review handoffs. Workbench now exposes `异常复盘` when health, release, or evidence warnings exist, and month-end review includes `异常复核闭环`.
+- [x] Add export evidence labels for anomaly review when a durable report preset is justified. Export maintenance now offers `异常复盘包` and `异常观察证据`.
+- [x] Review mobile and dark-mode behavior after anomaly surfaces expand. Reused existing workbench, month-end list, and evidence-pack responsive/dark-mode styles with smoke guards for the new labels.
 
 ## Documentation And Delivery
 
