@@ -28,6 +28,9 @@ public class OpenAiTrainingManagementDashboard implements Serializable {
     private List<EvalRun> evalRuns = new ArrayList<>();
 
     @Builder.Default
+    private List<DeploymentBinding> deploymentBindings = new ArrayList<>();
+
+    @Builder.Default
     private List<NextAction> nextActions = new ArrayList<>();
 
     private Long generatedAt;
@@ -102,6 +105,27 @@ public class OpenAiTrainingManagementDashboard implements Serializable {
         private Double score;
 
         private String decision;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DeploymentBinding implements Serializable {
+
+        private String key;
+
+        private String featureKey;
+
+        private String modelId;
+
+        private String promptVersion;
+
+        private String evalRunId;
+
+        private String rolloutStatus;
+
+        private String rollbackModelId;
     }
 
     @Data

@@ -16,6 +16,7 @@ public class OpenAiTrainingManagementService implements IOpenAiTrainingManagemen
                 .entities(entities())
                 .jobs(jobs())
                 .evalRuns(evalRuns())
+                .deploymentBindings(deploymentBindings())
                 .nextActions(nextActions())
                 .generatedAt(System.currentTimeMillis())
                 .build();
@@ -55,6 +56,14 @@ public class OpenAiTrainingManagementService implements IOpenAiTrainingManagemen
                 evalRun("base", "gpt-4.1-mini", "wechat-publish-eval", 72, 0.78, "baseline"),
                 evalRun("checkpoint", "ft:wechat:step-240", "wechat-publish-eval", 84, 0.86, "candidate"),
                 evalRun("deploy", "ft:wechat:final", "wechat-publish-eval", 89, 0.91, "deploy")
+        );
+    }
+
+    private List<OpenAiTrainingManagementDashboard.DeploymentBinding> deploymentBindings() {
+        return List.of(
+                deployment("wechat-draft", "wechat-draft", "ft:wechat:final", "wechat-draft-v3", "deploy", "active", "gpt-4.1-mini"),
+                deployment("minigpt-review", "minigpt-review", "ft:review:step-120", "review-v2", "checkpoint", "canary", "gpt-4.1-mini"),
+                deployment("tool-routing", "tool-routing", "gpt-4.1", "tool-route-v1", "base", "draft", "gpt-4.1-mini")
         );
     }
 
@@ -117,6 +126,24 @@ public class OpenAiTrainingManagementService implements IOpenAiTrainingManagemen
                 .passRate(passRate)
                 .score(score)
                 .decision(decision)
+                .build();
+    }
+
+    private OpenAiTrainingManagementDashboard.DeploymentBinding deployment(String key,
+                                                                          String featureKey,
+                                                                          String modelId,
+                                                                          String promptVersion,
+                                                                          String evalRunId,
+                                                                          String rolloutStatus,
+                                                                          String rollbackModelId) {
+        return OpenAiTrainingManagementDashboard.DeploymentBinding.builder()
+                .key(key)
+                .featureKey(featureKey)
+                .modelId(modelId)
+                .promptVersion(promptVersion)
+                .evalRunId(evalRunId)
+                .rolloutStatus(rolloutStatus)
+                .rollbackModelId(rollbackModelId)
                 .build();
     }
 

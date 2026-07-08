@@ -71,6 +71,10 @@
   gap: 16px;
 }
 
+.openai-training-grid > .openai-training-panel:only-child {
+  grid-column: 1 / -1;
+}
+
 .openai-training-panel {
   border: 1px solid var(--openai-training-border);
   border-radius: 8px;

@@ -14,6 +14,7 @@ import {
 import LifePageShell from './LifePageShell';
 import {
   openAiTrainingApi,
+  type OpenAiTrainingDeploymentBinding,
   type OpenAiTrainingEvalRun,
   type OpenAiTrainingJob,
   type OpenAiTrainingManagementDashboard
@@ -45,6 +46,13 @@ const decisionColor: Record<string, string> = {
   baseline: 'default',
   candidate: 'processing',
   deploy: 'success'
+};
+
+const rolloutColor: Record<string, string> = {
+  active: 'success',
+  canary: 'processing',
+  draft: 'default',
+  rolled_back: 'error'
 };
 
 const jobColumns: ColumnsType<OpenAiTrainingJob> = [
@@ -105,6 +113,35 @@ const evalColumns: ColumnsType<OpenAiTrainingEvalRun> = [
   }
 ];
 
+const deploymentColumns: ColumnsType<OpenAiTrainingDeploymentBinding> = [
+  {
+    title: 'Feature',
+    dataIndex: 'featureKey',
+    render: (value?: string) => <strong>{value || '-'}</strong>
+  },
+  {
+    title: 'Model',
+    dataIndex: 'modelId'
+  },
+  {
+    title: 'Prompt',
+    dataIndex: 'promptVersion'
+  },
+  {
+    title: 'Eval',
+    dataIndex: 'evalRunId'
+  },
+  {
+    title: 'Rollout',
+    dataIndex: 'rolloutStatus',
+    render: (value?: string) => <Tag color={rolloutColor[value || ''] || 'default'}>{value || '-'}</Tag>
+  },
+  {
+    title: 'Rollback',
+    dataIndex: 'rollbackModelId'
+  }
+];
+
 const OpenAiTrainingManagementPage = () => {
   const [dashboard, setDashboard] = useState<OpenAiTrainingManagementDashboard>({});
   const [loading, setLoading] = useState(true);
@@ -129,6 +166,7 @@ const OpenAiTrainingManagementPage = () => {
   const entityCards = dashboard.entities || [];
   const jobRows = dashboard.jobs || [];
   const evalRows = dashboard.evalRuns || [];
+  const deploymentRows = dashboard.deploymentBindings || [];
   const nextActions = dashboard.nextActions || [];
 
   return (
@@ -198,6 +236,18 @@ const OpenAiTrainingManagementPage = () => {
                 />
               </Card>
 
+              <Card className="openai-training-panel" title="模型部署绑定">
+                <Table
+                  columns={deploymentColumns}
+                  dataSource={deploymentRows}
+                  pagination={false}
+                  size="middle"
+                  scroll={{ x: 760 }}
+                />
+              </Card>
+            </section>
+
+            <section className="openai-training-grid">
               <Card className="openai-training-panel" title="下一步实现">
                 <div className="openai-training-next">
                   {nextActions.map(action => (

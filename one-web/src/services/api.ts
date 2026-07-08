@@ -1282,6 +1282,16 @@ export interface OpenAiTrainingEvalRun {
   decision?: string;
 }
 
+export interface OpenAiTrainingDeploymentBinding {
+  key: string;
+  featureKey?: string;
+  modelId?: string;
+  promptVersion?: string;
+  evalRunId?: string;
+  rolloutStatus?: string;
+  rollbackModelId?: string;
+}
+
 export interface OpenAiTrainingNextAction {
   key: string;
   icon?: string;
@@ -1294,6 +1304,7 @@ export interface OpenAiTrainingManagementDashboard {
   entities?: OpenAiTrainingEntityCard[];
   jobs?: OpenAiTrainingJob[];
   evalRuns?: OpenAiTrainingEvalRun[];
+  deploymentBindings?: OpenAiTrainingDeploymentBinding[];
   nextActions?: OpenAiTrainingNextAction[];
   generatedAt?: number;
 }
