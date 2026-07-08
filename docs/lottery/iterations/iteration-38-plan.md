@@ -14,6 +14,8 @@ Goal: make archive-review notes easier to assess for completeness, status, and e
 - Keep month-end summaries linked to the notebook archive-review filter.
 - Avoid adding backend aggregation unless local data is insufficient.
 
+Status: completed with a frontend-derived archive-review note quality strip on month-end review.
+
 ## Wave 38C: Governance Note Quality
 
 - Add archive-review note quality to governance drift or anomaly context.

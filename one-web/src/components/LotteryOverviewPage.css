@@ -2700,6 +2700,37 @@
   gap: 8px;
 }
 
+.lottery-month-end-note-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.lottery-month-end-note-summary article {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding: 9px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface);
+}
+
+.lottery-month-end-note-summary strong {
+  color: var(--app-text);
+  font-size: 17px;
+  line-height: 1.1;
+}
+
+.lottery-month-end-note-summary span {
+  overflow: hidden;
+  color: var(--app-text-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .lottery-archive-search {
   display: grid;
   grid-template-columns: minmax(180px, 1fr) minmax(120px, 150px) minmax(120px, 150px);
@@ -7737,6 +7768,7 @@ button.lottery-latest-vs-card:hover {
   .lottery-workbench-recent-grid,
   .lottery-workbench-runbook-grid,
   .lottery-archive-search,
+  .lottery-month-end-note-summary,
   .lottery-research-report-grid,
   .lottery-release-readiness-grid,
   .lottery-research-card-grid,
@@ -7850,6 +7882,7 @@ button.lottery-latest-vs-card:hover {
   .lottery-release-readiness-grid,
   .lottery-workbench-closure-list,
   .lottery-archive-search,
+  .lottery-month-end-note-summary,
   .lottery-workbench-status-grid {
     grid-template-columns: minmax(0, 1fr);
   }

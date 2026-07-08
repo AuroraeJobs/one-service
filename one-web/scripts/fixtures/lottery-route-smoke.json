@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 38 Wave 38A archive notebook quality smoke",
+  "target": "Iteration 38 Wave 38B month-end note quality smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -183,6 +183,11 @@
         "archiveReviewQueueItems",
         "archiveReviewNotePath",
         "archiveReviewNotes",
+        "archiveReviewNoteSummary",
+        "lottery-month-end-note-summary",
+        "复核证据",
+        "验证中",
+        "已验证",
         "复核笔记回看",
         "全部笔记",
         "暂无归档复核笔记",

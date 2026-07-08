@@ -477,6 +477,12 @@ const LotteryMonthEndReviewPage = () => {
   const archiveReviewNotes = useMemo(() => (notes?.items || [])
     .filter(item => (item.evidence || []).some(evidence => evidence.evidenceType === 'ARCHIVE_REVIEW'))
     .slice(0, 4), [notes?.items]);
+  const archiveReviewNoteSummary = useMemo(() => ({
+    total: archiveReviewNotes.length,
+    active: archiveReviewNotes.filter(item => item.status === 'ACTIVE').length,
+    validated: archiveReviewNotes.filter(item => item.status === 'VALIDATED').length,
+    evidenceCount: archiveReviewNotes.reduce((sum, item) => sum + (item.evidence || []).filter(evidence => evidence.evidenceType === 'ARCHIVE_REVIEW').length, 0)
+  }), [archiveReviewNotes]);
 
   const narrativeItems = useMemo<NarrativeItem[]>(() => {
     const pendingTickets = safeCount(tickets?.pendingTicketCount);
@@ -833,6 +839,12 @@ const LotteryMonthEndReviewPage = () => {
             title="复核笔记回看"
             extra={<Button size="small" icon={<BookOutlined />} onClick={() => navigate('/lottery/research/notebook?evidence=ARCHIVE_REVIEW')}>全部笔记</Button>}
           >
+            <div className="lottery-month-end-note-summary">
+              <article><strong>{archiveReviewNoteSummary.total}</strong><span>笔记</span></article>
+              <article><strong>{archiveReviewNoteSummary.active}</strong><span>验证中</span></article>
+              <article><strong>{archiveReviewNoteSummary.validated}</strong><span>已验证</span></article>
+              <article><strong>{archiveReviewNoteSummary.evidenceCount}</strong><span>复核证据</span></article>
+            </div>
             {archiveReviewNotes.length ? (
               <div className="lottery-month-end-list">
                 {archiveReviewNotes.map(item => (

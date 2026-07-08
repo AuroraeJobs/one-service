@@ -1023,9 +1023,9 @@ Goal: make archive-review notes easier to assess for completeness, status, and e
 
 ### Wave 38B: Month-End Note Quality
 
-- [ ] Surface the same archive-review note quality signal on month-end review.
-- [ ] Keep month-end summaries linked to the notebook archive-review filter.
-- [ ] Avoid adding backend aggregation unless local data is insufficient.
+- [x] Surface the same archive-review note quality signal on month-end review.
+- [x] Keep month-end summaries linked to the notebook archive-review filter.
+- [x] Avoid adding backend aggregation unless local data is insufficient.
 
 ### Wave 38C: Governance Note Quality
 
