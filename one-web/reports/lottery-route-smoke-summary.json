@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 41 Wave 41B workbench evidence quality handoff smoke",
-  "generatedAt": "2026-07-08T11:26:19.832Z",
+  "target": "Iteration 41 Wave 41C governance release evidence smoke",
+  "generatedAt": "2026-07-08T11:29:45.469Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 18,
-  "checkCount": 617,
+  "checkCount": 621,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
@@ -151,7 +151,7 @@
       "label": "导出审计",
       "component": "LotteryExportMaintenancePage",
       "mockApiCount": 4,
-      "emptyStateCount": 40,
+      "emptyStateCount": 41,
       "errorStateCount": 4
     }
   ]

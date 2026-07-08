@@ -547,6 +547,13 @@ const LotteryExportMaintenancePage = () => {
       path: '/lottery/month-end'
     },
     {
+      key: 'v41-evidence-quality-trend',
+      label: 'V41证据质量趋势',
+      status: 'PASS',
+      message: '证据质量趋势已接入月末、工作台、归因焦点和治理；当前复用归因与长期研究证据，不新增导出标签',
+      path: '/lottery/outcomes?focus=evidence-quality'
+    },
+    {
       key: 'month-end-dashboard',
       label: '月末复盘仪表盘',
       status: 'PASS',

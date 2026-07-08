@@ -249,7 +249,7 @@ const LotteryGovernancePage = () => {
         score: attributionRollup?.issueCount ? Math.max(45, 100 - attributionWarnings.length * 12) : statusScore('MANUAL'),
         message: attributionWarnings.length ? `${attributionWarnings.length} 个归因维度需要复核` : '归因聚合质量稳定',
         detail: `近10期 ${attributionRollup?.issueCount || 0} 期 · 警示 ${attributionWarnings.length}`,
-        path: '/lottery/outcomes',
+        path: '/lottery/outcomes?focus=evidence-quality',
         icon: <BranchesOutlined />
       },
       {
@@ -391,7 +391,7 @@ const LotteryGovernancePage = () => {
         count: attributionWarnings.length,
         detail: attributionWarnings.map(item => item.label || item.key || item.dimension).filter(Boolean).slice(0, 3).join('、') || '归因质量需要复核',
         trend: `近10期样本 ${attributionRollup?.issueCount || 0} 期`,
-        path: '/lottery/outcomes'
+        path: '/lottery/outcomes?focus=evidence-quality'
       });
     }
 
@@ -489,7 +489,7 @@ const LotteryGovernancePage = () => {
         value: `${attributionWarnings.length} 项`,
         detail: `近10期 ${attributionRollup?.issueCount || 0} 期，样本 ${attributionRollup?.ticketCount || 0} 张`,
         status: attributionWarnings.length ? 'WARNING' : attributionRollup?.issueCount ? 'PASS' : 'MANUAL',
-        path: '/lottery/outcomes'
+        path: '/lottery/outcomes?focus=evidence-quality'
       },
       {
         key: 'archive-review-pressure',
@@ -530,7 +530,7 @@ const LotteryGovernancePage = () => {
         <Space wrap>
           <Button icon={<MobileOutlined />} onClick={() => navigate('/lottery/mobile')}>移动指挥</Button>
           <Button icon={<SyncOutlined />} onClick={() => navigate('/lottery/sync')}>同步</Button>
-          <Button icon={<BranchesOutlined />} onClick={() => navigate('/lottery/outcomes')}>归因</Button>
+          <Button icon={<BranchesOutlined />} onClick={() => navigate('/lottery/outcomes?focus=evidence-quality')}>归因</Button>
           <Button icon={<CompassOutlined />} onClick={() => navigate('/lottery/recommendations')}>推荐</Button>
           <Button onClick={() => navigate('/lottery/settings')}>阈值设置</Button>
           <Button icon={<ReloadOutlined />} loading={loading} onClick={loadGovernance}>刷新</Button>

@@ -22,3 +22,5 @@ Status: completed with a workbench `证据质量趋势` next-step handoff to `/l
 
 - Connect the focused evidence-quality path to governance or release evidence when useful.
 - Decide whether a dedicated quality-trend export label is needed.
+
+Status: completed by routing governance attribution quality and release-readiness evidence to `/lottery/outcomes?focus=evidence-quality`; no dedicated export label yet.

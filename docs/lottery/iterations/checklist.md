@@ -1093,8 +1093,8 @@ Goal: turn the next-phase evidence-quality candidate into a focused review path 
 
 ### Wave 41C: Governance Evidence Quality Release Link
 
-- [ ] Connect the focused evidence-quality path to governance or release evidence when useful.
-- [ ] Decide whether a dedicated quality-trend export label is needed.
+- [x] Connect the focused evidence-quality path to governance or release evidence when useful.
+- [x] Decide whether a dedicated quality-trend export label is needed. Decision: no dedicated export label yet; reuse attribution and long-term research evidence.
 
 ## Documentation And Delivery
 
