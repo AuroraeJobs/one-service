@@ -533,6 +533,13 @@ const LotteryExportMaintenancePage = () => {
       path: '/lottery/exports?preset=v33-review-runbook'
     },
     {
+      key: 'v39-archive-note-quality',
+      label: 'V39复核笔记质量',
+      status: 'PASS',
+      message: '复核笔记质量已接入笔记本、月末复盘和治理趋势；当前作为发布证据展示，不作为阻塞项',
+      path: '/lottery/research/notebook?evidence=ARCHIVE_REVIEW'
+    },
+    {
       key: 'month-end-dashboard',
       label: '月末复盘仪表盘',
       status: 'PASS',

@@ -1033,6 +1033,27 @@ Goal: make archive-review notes easier to assess for completeness, status, and e
 - [x] Reuse the notebook and month-end evidence paths.
 - [x] Decide whether quality gaps need a release-readiness guard. Decision: keep as governance drift signal; no release-readiness guard yet.
 
+## Iteration 39: Archive Review Evidence Closure
+
+Goal: turn archive-review note quality into visible release and review evidence without making it a blocking gate before the signal has enough history.
+
+### Wave 39A: Release Evidence Visibility
+
+- [x] Add a non-blocking release-readiness evidence item for archive-review note quality.
+- [x] Link the item to the strategy notebook archive-review filter.
+- [x] Keep the release status passing while the signal remains informational.
+
+### Wave 39B: Workbench Quality Follow-Up
+
+- [ ] Surface archive-review note quality as a daily follow-up when notes are still active or missing evidence.
+- [ ] Reuse the existing workbench archive-review handoff.
+- [ ] Keep the copy action-oriented and compact.
+
+### Wave 39C: Review Closure Summary
+
+- [ ] Add a compact closure summary that connects notebook, month-end, governance, and release evidence paths.
+- [ ] Decide whether repeated quality gaps should become a future release-readiness guard.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.
