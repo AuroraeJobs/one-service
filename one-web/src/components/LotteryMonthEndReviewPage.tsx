@@ -22,6 +22,7 @@ import {
   lotteryLedgerApi,
   lotteryOperationsApi,
   lotteryOutcomeApi,
+  lotteryRecommendationApi,
   lotteryReminderApi,
   lotteryStrategyNoteApi,
   lotteryTicketApi,
@@ -33,6 +34,7 @@ import {
   type LotteryOperationsHealthSummary,
   type LotteryOutcomeAttributionRollup,
   type LotteryPageResponse,
+  type LotteryRecommendationRollup,
   type LotteryReminderSummary,
   type LotteryStrategyNote,
   type LotteryTicketSummary,
@@ -114,6 +116,7 @@ const LotteryMonthEndReviewPage = () => {
   const [tickets, setTickets] = useState<LotteryTicketSummary>();
   const [decisions, setDecisions] = useState<LotteryDecisionOutcomeSummary>();
   const [attributionRollup, setAttributionRollup] = useState<LotteryOutcomeAttributionRollup>();
+  const [recommendationRollup, setRecommendationRollup] = useState<LotteryRecommendationRollup>();
   const [notes, setNotes] = useState<LotteryPageResponse<LotteryStrategyNote>>();
   const [reminders, setReminders] = useState<LotteryReminderSummary>();
   const [audits, setAudits] = useState<LotteryAuditEvent[]>([]);
@@ -124,7 +127,7 @@ const LotteryMonthEndReviewPage = () => {
     setLoading(true);
     setError(undefined);
     try {
-      const [workbenchData, healthData, ledgerData, issueData, ticketData, decisionData, attributionData, noteData, reminderData, auditData] = await Promise.all([
+      const [workbenchData, healthData, ledgerData, issueData, ticketData, decisionData, attributionData, recommendationData, noteData, reminderData, auditData] = await Promise.all([
         lotteryWorkbenchApi.summary(),
         lotteryOperationsApi.health(),
         lotteryLedgerApi.summary(),
@@ -132,6 +135,7 @@ const LotteryMonthEndReviewPage = () => {
         lotteryTicketApi.summary(),
         lotteryDecisionSetApi.outcomes({ limit: 12 }),
         lotteryOutcomeApi.rollup({ window: 'month-to-date' }),
+        lotteryRecommendationApi.rollup({ window: 'recent30', limit: 30 }),
         lotteryStrategyNoteApi.notes({ page: 1, pageSize: 6 }),
         lotteryReminderApi.summary(),
         lotteryExportApi.auditEvents({ page: 1, pageSize: 8 })
@@ -143,6 +147,7 @@ const LotteryMonthEndReviewPage = () => {
       setTickets(ticketData);
       setDecisions(decisionData);
       setAttributionRollup(attributionData);
+      setRecommendationRollup(recommendationData);
       setNotes(noteData);
       setReminders(reminderData);
       setAudits(auditData?.items || []);
@@ -170,10 +175,11 @@ const LotteryMonthEndReviewPage = () => {
     const ticketScore = tickets?.pendingTicketCount ? Math.max(40, 100 - tickets.pendingTicketCount * 12) : 100;
     const decisionScore = decisions?.warningCount ? Math.max(40, 100 - decisions.warningCount * 8) : 100;
     const attributionScore = attributionRows.length ? Math.max(45, 100 - attributionRows.reduce((sum, item) => sum + (item.warningCount || 0), 0) * 8) : 100;
+    const recommendationScore = recommendationRollup?.recommendationCount ? Math.max(45, 100 - (recommendationRollup.staleCount || 0) * 12 - Math.max(0, (recommendationRollup.activeCount || 0) - (recommendationRollup.appliedCount || 0)) * 5) : 70;
     const exportScore = exportAudits.length ? 100 : 60;
     const reminderScore = reminders?.activeCount ? Math.max(40, 100 - reminders.activeCount * 8) : 100;
-    return Math.round((healthScore + ticketScore + decisionScore + attributionScore + exportScore + reminderScore) / 6);
-  }, [attributionRows, decisions?.warningCount, exportAudits.length, health?.score, reminders?.activeCount, tickets?.pendingTicketCount]);
+    return Math.round((healthScore + ticketScore + decisionScore + attributionScore + recommendationScore + exportScore + reminderScore) / 7);
+  }, [attributionRows, decisions?.warningCount, exportAudits.length, health?.score, recommendationRollup, reminders?.activeCount, tickets?.pendingTicketCount]);
 
   const metrics: MonthEndMetric[] = [
     {
@@ -211,6 +217,15 @@ const LotteryMonthEndReviewPage = () => {
       detail: `样本 ${attributionRollup?.ticketCount || 0} · 警示 ${attributionRows.reduce((sum, item) => sum + (item.warningCount || 0), 0)}`,
       path: '/lottery/outcomes',
       status: attributionRows.some(item => (item.warningCount || 0) > 0) ? 'WARNING' : (attributionRollup?.issueCount ? 'PASS' : 'MANUAL')
+    },
+    {
+      key: 'recommendation',
+      icon: <CheckCircleOutlined />,
+      label: '推荐跟进',
+      value: recommendationRollup?.appliedCount || 0,
+      detail: `待处理 ${recommendationRollup?.activeCount || 0} · 过期 ${recommendationRollup?.staleCount || 0}`,
+      path: '/lottery/recommendations',
+      status: recommendationRollup?.staleCount ? 'WARNING' : (recommendationRollup?.recommendationCount ? 'PASS' : 'MANUAL')
     },
     {
       key: 'notes',
@@ -372,6 +387,29 @@ const LotteryMonthEndReviewPage = () => {
               </div>
             ) : (
               <Empty description="暂无归因质量摘要" />
+            )}
+          </Card>
+
+          <Card className="life-panel-card lottery-clean-panel" title="推荐生命周期跟进">
+            {(recommendationRollup?.transitions?.length || recommendationRollup?.recommendationCount) ? (
+              <div className="lottery-month-end-list">
+                <button type="button" onClick={() => navigate('/lottery/recommendations')}>
+                  <Tag color={(recommendationRollup?.staleCount || 0) ? 'gold' : 'green'}>推荐</Tag>
+                  <span>已应用 {recommendationRollup?.appliedCount || 0} · 待处理 {recommendationRollup?.activeCount || 0}</span>
+                  <strong>{recommendationRollup?.recommendationCount || 0}</strong>
+                  <small>过期 {recommendationRollup?.staleCount || 0} · 退役 {recommendationRollup?.retiredCount || 0}</small>
+                </button>
+                {(recommendationRollup?.transitions || []).slice(0, 4).map(item => (
+                  <button key={`${item.day}-${item.lifecycleStatus}-${item.recommendationState}`} type="button" onClick={() => navigate('/lottery/recommendations')}>
+                    <Tag color={statusColor(item.lifecycleStatus)}>{lotteryStatusLabel(item.lifecycleStatus, 'OPEN')}</Tag>
+                    <span>{item.day || '-'}</span>
+                    <strong>{item.count || 0}</strong>
+                    <small>{lotteryStatusLabel(item.recommendationState, 'WATCH')}</small>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <Empty description="暂无推荐生命周期摘要" />
             )}
           </Card>
 

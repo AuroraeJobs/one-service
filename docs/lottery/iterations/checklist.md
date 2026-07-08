@@ -824,6 +824,13 @@ Goal: make `/lottery/recommendations` show lifecycle health, action follow-throu
 - [x] Add service and controller tests for bounded rollup windows. Added focused service and web tests for lifecycle counts and `/rollup` routing.
 - [x] Extend route smoke coverage for rollup wiring. Smoke fixture now checks the rollup API method, frontend contract types, and transition empty state.
 
+### Wave 29C: Outcome Follow-Through
+
+- [x] Connect promoted and retired recommendation rows to attribution outcomes and export evidence. Added the V29 `推荐跟进包`, export evidence card, and release-readiness row.
+- [x] Add governance/month-end review rows for stale recommendation cleanup and applied recommendation follow-through. Governance now includes `推荐跟进`, and month-end review includes a recommendation lifecycle follow-through card.
+- [x] Review mobile and dark-mode behavior after backend rollups land. Reused the existing governance/month-end/export responsive grids and added smoke guards for the new labels.
+- [x] Extend route smoke coverage for connected evidence. Smoke fixture now checks governance, month-end, and export recommendation follow-through wiring.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

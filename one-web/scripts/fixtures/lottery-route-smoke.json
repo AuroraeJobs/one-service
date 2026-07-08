@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 29 Wave 29B recommendation lifecycle rollup smoke",
+  "target": "Iteration 29 Wave 29C recommendation follow-through evidence smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -93,6 +93,36 @@
         "LotteryRecommendationTransitionRow",
         "rollup: (params?: { window?: string; limit?: number })",
         "/lottery/recommendations/rollup"
+      ]
+    },
+    {
+      "scope": "recommendation follow-through evidence",
+      "file": "src/components/LotteryGovernancePage.tsx",
+      "includes": [
+        "lotteryRecommendationApi.rollup",
+        "推荐跟进",
+        "recommendationRollup",
+        "近30条"
+      ]
+    },
+    {
+      "scope": "recommendation month-end follow-through",
+      "file": "src/components/LotteryMonthEndReviewPage.tsx",
+      "includes": [
+        "lotteryRecommendationApi.rollup",
+        "推荐生命周期跟进",
+        "暂无推荐生命周期摘要",
+        "recommendationRollup"
+      ]
+    },
+    {
+      "scope": "recommendation export evidence",
+      "file": "src/components/LotteryExportMaintenancePage.tsx",
+      "includes": [
+        "v29-recommendation-follow-through",
+        "推荐跟进包",
+        "V29推荐跟进",
+        "推荐生命周期 rollup 已接入推荐页、治理看板、月末复盘和导出证据包"
       ]
     }
   ],
@@ -284,16 +314,17 @@
         "lotteryTicketApi.summary",
         "lotteryDecisionSetApi.outcomes",
         "lotteryOutcomeApi.rollup",
+        "lotteryRecommendationApi.rollup",
         "lotteryStrategyNoteApi.notes",
         "lotteryReminderApi.summary",
         "lotteryExportApi.auditEvents"
       ],
-      "emptyStates": ["暂无期号复盘", "暂无研究证据", "暂无归因质量摘要", "暂无月末导出证据"],
+      "emptyStates": ["暂无期号复盘", "暂无研究证据", "暂无归因质量摘要", "暂无推荐生命周期摘要", "暂无月末导出证据"],
       "errorStates": ["读取彩票月末复盘失败"],
       "fixtureData": {
         "review": {
           "score": 88,
-          "sections": ["ledger", "tickets", "decisions", "notes", "health", "exports"],
+          "sections": ["ledger", "tickets", "decisions", "attribution", "recommendation", "notes", "health", "exports"],
           "releaseChecks": ["month-end-dashboard", "reminder-center", "strategy-notebook"]
         }
       }
@@ -512,6 +543,7 @@
         "lotteryOperationsApi.health",
         "lotteryReminderApi.summary",
         "lotteryOutcomeApi.rollup",
+        "lotteryRecommendationApi.rollup",
         "lotteryStrategyPortfolioApi.portfolios",
         "lotteryTicketPackApi.ticketPacks",
         "lotteryExportApi.auditEvents"
@@ -521,7 +553,7 @@
       "fixtureData": {
         "governance": {
           "score": 88,
-          "domains": ["portfolio", "simulator", "ticket-pack", "reminders", "attribution", "evidence", "release"],
+          "domains": ["portfolio", "simulator", "ticket-pack", "reminders", "attribution", "recommendation", "evidence", "release"],
           "thresholds": ["portfolioScore", "simulatorRisk", "ticketPackExposure", "evidenceFreshness", "staleApproval"]
         }
       }
@@ -606,7 +638,7 @@
         "lotteryExportApi.maintenanceSummary",
         "lotteryExportApi.cleanupDryRun"
       ],
-      "emptyStates": ["本次导出没有数据", "暂无数据", "暂无审计事件", "暂无集合状态", "暂无缓存状态", "复盘运营", "月末复盘", "归因闭环包", "归因质量包", "推荐生命周期包", "移动指挥包", "V15治理证据包", "V15闭环证据包", "V28归因质量", "V16导航易用性", "V16操作体验", "V16筛选可读性", "V16响应式打磨", "V18今日优先事项", "V18航行记录分析", "V18号码综合可能性", "V18深度规律分析", "前端发布就绪"],
+      "emptyStates": ["本次导出没有数据", "暂无数据", "暂无审计事件", "暂无集合状态", "暂无缓存状态", "复盘运营", "月末复盘", "归因闭环包", "归因质量包", "推荐生命周期包", "推荐跟进包", "移动指挥包", "V15治理证据包", "V15闭环证据包", "V29推荐跟进", "V28归因质量", "V16导航易用性", "V16操作体验", "V16筛选可读性", "V16响应式打磨", "V18今日优先事项", "V18航行记录分析", "V18号码综合可能性", "V18深度规律分析", "前端发布就绪"],
       "errorStates": ["读取彩票导出审计失败", "导出彩票数据失败", "生成彩票报表失败", "执行彩票维护 dry-run 失败"],
       "fixtureData": {
         "releaseEvidence": {

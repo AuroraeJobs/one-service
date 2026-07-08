@@ -76,6 +76,11 @@ const reportPresets = [
     sections: ['decision-outcomes', 'settlement-reviews', 'rule-evidence', 'replay-evidence', 'sync-logs', 'probe-logs']
   },
   {
+    key: 'v29-recommendation-follow-through',
+    label: '推荐跟进包',
+    sections: ['decision-outcomes', 'settlement-reviews', 'rule-evidence', 'replay-evidence', 'budget-prechecks', 'sync-logs', 'probe-logs']
+  },
+  {
     key: 'v15-mobile-command',
     label: '移动指挥包',
     sections: ['tickets', 'decision-sets', 'decision-outcomes', 'budget-prechecks', 'settlement-reviews']
@@ -111,6 +116,14 @@ const v15EvidencePacks = [
     preset: '推荐生命周期包',
     auditTypes: ['LOTTERY_RECOMMENDATION_REFRESH', 'LOTTERY_RECOMMENDATION_STATUS'],
     sections: ['decision-outcomes', 'rule-evidence', 'replay-evidence']
+  },
+  {
+    key: 'recommendation-follow-through',
+    title: '推荐跟进证据',
+    route: '/lottery/recommendations',
+    preset: '推荐跟进包',
+    auditTypes: ['LOTTERY_RECOMMENDATION_STATUS', 'LOTTERY_RECOMMENDATION_REFRESH', 'decision-outcomes'],
+    sections: ['decision-outcomes', 'settlement-reviews', 'rule-evidence', 'replay-evidence']
   },
   {
     key: 'mobile',
@@ -464,6 +477,13 @@ const LotteryExportMaintenancePage = () => {
       path: '/lottery/recommendations'
     },
     {
+      key: 'v29-recommendation-follow-through',
+      label: 'V29推荐跟进',
+      status: 'PASS',
+      message: '推荐生命周期 rollup 已接入推荐页、治理看板、月末复盘和导出证据包',
+      path: '/lottery/recommendations'
+    },
+    {
       key: 'v15-mobile-command',
       label: 'V15移动指挥',
       status: 'PASS',
@@ -746,6 +766,10 @@ const LotteryExportMaintenancePage = () => {
                 setAuditTypeFilter('LOTTERY_RECOMMENDATION_STATUS');
                 setAuditTargetFilter('');
               }}>推荐</Button>
+              <Button size="small" onClick={() => {
+                setAuditTypeFilter('LOTTERY_RECOMMENDATION_STATUS');
+                setAuditTargetFilter('lottery-recommendation');
+              }}>V29</Button>
               <Button size="small" onClick={clearAuditFilters}>清除</Button>
             </div>
             <Select

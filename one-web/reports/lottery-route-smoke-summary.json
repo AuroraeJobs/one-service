@@ -1,12 +1,12 @@
 {
-  "target": "Iteration 29 Wave 29B recommendation lifecycle rollup smoke",
-  "generatedAt": "2026-07-08T02:22:46.614Z",
+  "target": "Iteration 29 Wave 29C recommendation follow-through evidence smoke",
+  "generatedAt": "2026-07-08T02:33:33.795Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 17,
-  "checkCount": 426,
+  "checkCount": 445,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
@@ -62,8 +62,8 @@
       "route": "/lottery/month-end",
       "label": "月末复盘",
       "component": "LotteryMonthEndReviewPage",
-      "mockApiCount": 10,
-      "emptyStateCount": 4,
+      "mockApiCount": 11,
+      "emptyStateCount": 5,
       "errorStateCount": 1
     },
     {
@@ -110,7 +110,7 @@
       "route": "/lottery/governance",
       "label": "治理",
       "component": "LotteryGovernancePage",
-      "mockApiCount": 8,
+      "mockApiCount": 9,
       "emptyStateCount": 2,
       "errorStateCount": 1
     },
@@ -143,7 +143,7 @@
       "label": "导出审计",
       "component": "LotteryExportMaintenancePage",
       "mockApiCount": 4,
-      "emptyStateCount": 23,
+      "emptyStateCount": 25,
       "errorStateCount": 4
     }
   ]

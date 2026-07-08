@@ -20,6 +20,7 @@ import {
   lotteryOutcomeApi,
   lotteryOperationsApi,
   lotteryPreferenceApi,
+  lotteryRecommendationApi,
   lotteryReminderApi,
   lotteryStrategyPortfolioApi,
   lotteryTicketPackApi,
@@ -28,6 +29,7 @@ import {
   type LotteryOperationsHealthSummary,
   type LotteryOutcomeAttributionRollup,
   type LotteryPreference,
+  type LotteryRecommendationRollup,
   type LotteryReminderSummary,
   type LotteryStrategyPortfolioSummary,
   type LotteryTicketPack,
@@ -83,6 +85,7 @@ const LotteryGovernancePage = () => {
   const [operations, setOperations] = useState<LotteryOperationsHealthSummary>();
   const [reminders, setReminders] = useState<LotteryReminderSummary>();
   const [attributionRollup, setAttributionRollup] = useState<LotteryOutcomeAttributionRollup>();
+  const [recommendationRollup, setRecommendationRollup] = useState<LotteryRecommendationRollup>();
   const [portfolios, setPortfolios] = useState<LotteryStrategyPortfolioSummary[]>([]);
   const [ticketPacks, setTicketPacks] = useState<LotteryTicketPack[]>([]);
   const [audits, setAudits] = useState<LotteryAuditEvent[]>([]);
@@ -93,12 +96,13 @@ const LotteryGovernancePage = () => {
     setLoading(true);
     setError(undefined);
     try {
-      const [nextPreference, nextWorkbench, nextOperations, nextReminders, nextAttributionRollup, nextPortfolios, nextTicketPacks, nextAudits] = await Promise.all([
+      const [nextPreference, nextWorkbench, nextOperations, nextReminders, nextAttributionRollup, nextRecommendationRollup, nextPortfolios, nextTicketPacks, nextAudits] = await Promise.all([
         lotteryPreferenceApi.preference(),
         lotteryWorkbenchApi.summary(),
         lotteryOperationsApi.health(),
         lotteryReminderApi.summary(),
         lotteryOutcomeApi.rollup({ window: 'recent10' }),
+        lotteryRecommendationApi.rollup({ window: 'recent30', limit: 30 }),
         lotteryStrategyPortfolioApi.portfolios({ page: 1, pageSize: 50 }),
         lotteryTicketPackApi.ticketPacks({ page: 1, pageSize: 50 }),
         lotteryExportApi.auditEvents({ page: 1, pageSize: 80 })
@@ -108,6 +112,7 @@ const LotteryGovernancePage = () => {
       setOperations(nextOperations);
       setReminders(nextReminders);
       setAttributionRollup(nextAttributionRollup);
+      setRecommendationRollup(nextRecommendationRollup);
       setPortfolios(nextPortfolios.items || []);
       setTicketPacks(nextTicketPacks.items || []);
       setAudits(nextAudits.items || []);
@@ -141,6 +146,8 @@ const LotteryGovernancePage = () => {
     });
     const staleEvidence = portfolios.filter(item => ageHours(item.generatedAt) > freshnessDays * 24);
     const attributionWarnings = attributionWarningRows(attributionRollup);
+    const recommendationOpenGap = Math.max(0, (recommendationRollup?.activeCount || 0) - (recommendationRollup?.appliedCount || 0));
+    const recommendationWarnings = (recommendationRollup?.staleCount || 0) + recommendationOpenGap;
     const exportEvents = audits.filter(event => event.eventType?.includes('EXPORT'));
     const release = workbench?.releaseCheckSummary;
 
@@ -196,6 +203,16 @@ const LotteryGovernancePage = () => {
         icon: <BranchesOutlined />
       },
       {
+        key: 'recommendation',
+        title: '推荐跟进',
+        status: recommendationWarnings ? 'WARNING' : (recommendationRollup?.recommendationCount ? 'PASS' : 'MANUAL'),
+        score: recommendationRollup?.recommendationCount ? Math.max(45, 100 - (recommendationRollup.staleCount || 0) * 15 - recommendationOpenGap * 6) : statusScore('MANUAL'),
+        message: recommendationWarnings ? `${recommendationRollup?.staleCount || 0} 条过期，${recommendationRollup?.activeCount || 0} 条待处理` : '推荐生命周期已跟进',
+        detail: `近30条 ${recommendationRollup?.recommendationCount || 0} 条 · 已应用 ${recommendationRollup?.appliedCount || 0}`,
+        path: '/lottery/recommendations',
+        icon: <CompassOutlined />
+      },
+      {
         key: 'evidence',
         title: '证据新鲜度',
         status: staleEvidence.length ? 'WARNING' : 'PASS',
@@ -216,7 +233,7 @@ const LotteryGovernancePage = () => {
         icon: <CheckCircleOutlined />
       }
     ];
-  }, [attributionRollup, audits, operations, portfolios, preference, reminders, ticketPacks, workbench]);
+  }, [attributionRollup, audits, operations, portfolios, preference, recommendationRollup, reminders, ticketPacks, workbench]);
 
   const overallScore = domains.length ? Math.round(domains.reduce((sum, item) => sum + item.score, 0) / domains.length) : 0;
   const warningCount = domains.filter(item => item.status !== 'PASS').length;
