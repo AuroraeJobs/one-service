@@ -1985,9 +1985,14 @@ const LotteryWorkbenchPage = () => {
             {archiveReviewPressure.count > 0 ? (
               <div className="lottery-workbench-archive-note-bar">
                 <span>归档复核可沉淀为研究笔记，保存复核原因、证据入口和后续动作。</span>
-                <Button size="small" icon={<BookOutlined />} onClick={() => navigate(archiveReviewNotePath)}>
-                  记录复核
-                </Button>
+                <Space wrap size={8}>
+                  <Button size="small" icon={<BookOutlined />} onClick={() => navigate(archiveReviewNotePath)}>
+                    记录复核
+                  </Button>
+                  <Button size="small" icon={<DownloadOutlined />} onClick={() => navigate('/lottery/exports?preset=v34-archive-search')}>
+                    证据包
+                  </Button>
+                </Space>
               </div>
             ) : null}
             <div className="lottery-workbench-issue-focus">

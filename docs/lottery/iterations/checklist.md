@@ -1171,14 +1171,14 @@ Goal: turn archive-review pressure into a focused handoff that reuses month-end 
 
 ### Wave 45B: Workbench Archive Review Priority
 
-- [ ] Make archive-review pressure easier to spot in workbench next actions.
-- [ ] Keep the action tied to existing archive pressure and note-quality signals.
-- [ ] Add smoke coverage for the workbench handoff label.
+- [x] Make archive-review pressure easier to spot in workbench next actions.
+- [x] Keep the action tied to existing archive pressure and note-quality signals.
+- [x] Add smoke coverage for the workbench handoff label.
 
 ### Wave 45C: Release Evidence Archive Review Link
 
-- [ ] Connect archive-review pressure to release evidence when useful.
-- [ ] Decide whether the existing archive-search evidence package is enough or needs a focused release row.
+- [x] Connect archive-review pressure to release evidence when useful.
+- [x] Decide whether the existing archive-search evidence package is enough or needs a focused release row. Decision: existing archive-search evidence package is enough; add V45 release visibility pointing at `v34-archive-search`.
 
 ## Documentation And Delivery
 

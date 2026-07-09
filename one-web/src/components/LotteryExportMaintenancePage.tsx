@@ -539,6 +539,13 @@ const LotteryExportMaintenancePage = () => {
       path: '/lottery/recommendations?focus=retirement-review&preset=STALE_EVIDENCE'
     },
     {
+      key: 'v45-archive-review-pressure',
+      label: 'V45归档复核压力',
+      status: 'PASS',
+      message: '归档复核压力已接入月末候选、工作台优先项、治理和归档搜索证据包',
+      path: '/lottery/exports?preset=v34-archive-search'
+    },
+    {
       key: 'v33-review-runbook',
       label: 'V33复核Runbook',
       status: 'PASS',

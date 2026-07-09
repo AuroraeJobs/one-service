@@ -16,7 +16,11 @@ Status: completed with the month-end `归档复核压力` candidate pointing at 
 - Keep the action tied to existing archive pressure and note-quality signals.
 - Add smoke coverage for the workbench handoff label.
 
+Status: completed by keeping archive-review pressure in workbench next actions and adding explicit `记录复核` plus `证据包` actions in the issue-focus panel.
+
 ## Wave 45C: Release Evidence Archive Review Link
 
 - Connect archive-review pressure to release evidence when useful.
 - Decide whether the existing archive-search evidence package is enough or needs a focused release row.
+
+Status: completed with the V45 release-readiness row pointing to the existing `v34-archive-search` evidence package; no new export preset is needed.

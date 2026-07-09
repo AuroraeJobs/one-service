@@ -1066,12 +1066,14 @@
 
 .lottery-workbench-archive-note-bar span {
   min-width: 0;
-  overflow: hidden;
   color: var(--app-text-muted);
   font-size: 12px;
   line-height: 1.4;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+}
+
+.lottery-workbench-archive-note-bar .ant-space {
+  flex-shrink: 0;
 }
 
 .lottery-workbench-issue-next b {

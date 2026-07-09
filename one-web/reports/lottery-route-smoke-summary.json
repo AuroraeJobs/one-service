@@ -1,6 +1,6 @@
 {
-  "target": "Iteration 45 Wave 45A archive review pressure candidate smoke",
-  "generatedAt": "2026-07-09T00:55:08.300Z",
+  "target": "Iteration 45 Wave 45C archive review release evidence smoke",
+  "generatedAt": "2026-07-09T01:07:19.030Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
@@ -15,7 +15,7 @@
       "label": "工作台",
       "component": "LotteryWorkbenchPage",
       "mockApiCount": 12,
-      "emptyStateCount": 14,
+      "emptyStateCount": 17,
       "errorStateCount": 4
     },
     {
@@ -151,7 +151,7 @@
       "label": "导出审计",
       "component": "LotteryExportMaintenancePage",
       "mockApiCount": 4,
-      "emptyStateCount": 46,
+      "emptyStateCount": 47,
       "errorStateCount": 4
     }
   ]
