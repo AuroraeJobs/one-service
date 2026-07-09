@@ -75,7 +75,7 @@ one:
 logging:
   level:
     org.springframework.security: DEBUG
-    org.springframework.data.mongodb: DEBUG
+    org.springframework.data.mongodb: INFO
 
 hello:
   record:
