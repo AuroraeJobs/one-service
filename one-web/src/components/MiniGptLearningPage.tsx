@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Button, Card, Empty, Form, Input, InputNumber, Progress, Select, Space, Spin, Table, Tag, Typography, message } from 'antd';
-import { BarChartOutlined, BookOutlined, CloseCircleOutlined, CopyOutlined, DatabaseOutlined, DownloadOutlined, PlayCircleOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons';
+import { BarChartOutlined, BookOutlined, BulbOutlined, CloseCircleOutlined, CopyOutlined, DatabaseOutlined, DownloadOutlined, PlayCircleOutlined, ReloadOutlined, SaveOutlined, TrophyOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
 import LifePageShell from './LifePageShell';
 import {
@@ -322,6 +322,45 @@ const hyperparameterGuideRows = [
   }
 ];
 
+const promptPresetRows = [
+  {
+    key: 'lottery-balanced',
+    title: '平衡选号',
+    prompt: 'target=next strategy=balanced',
+    tokens: 120,
+    temperature: 0.9,
+    topK: 20,
+    intent: '观察模型能否输出结构化候选'
+  },
+  {
+    key: 'lottery-risk',
+    title: '大胆探索',
+    prompt: 'target=next strategy=explore risk=medium',
+    tokens: 140,
+    temperature: 1.1,
+    topK: 40,
+    intent: '测试高随机性下的候选多样性'
+  },
+  {
+    key: 'explain-mini-gpt',
+    title: '概念解释',
+    prompt: '语言模型',
+    tokens: 100,
+    temperature: 0.8,
+    topK: 20,
+    intent: '看训练语料风格是否被学到'
+  },
+  {
+    key: 'low-temperature',
+    title: '保守续写',
+    prompt: 'target=next strategy=balanced',
+    tokens: 100,
+    temperature: 0.7,
+    topK: 12,
+    intent: '降低重复和跑题风险'
+  }
+];
+
 const metricItems = (run?: MiniGptRunRecord, logs: MiniGptTrainingLogRecord[] = []) => {
   const latestLog = logs[logs.length - 1];
   return [
@@ -506,6 +545,32 @@ type ReviewQualityItem = {
   detail: string;
 };
 
+type GenerationRankItem = {
+  key: string;
+  index: number;
+  result: MiniGptGenerationResult;
+  score: number;
+  status: string;
+  summary: string;
+  diversity: number;
+  structure: number;
+  validity: number;
+  speed: number;
+  repeatPenalty: number;
+  candidateText: string;
+};
+
+type GenerationTokenTraceItem = {
+  key: string;
+  index: number;
+  char: string;
+  display: string;
+  role: 'prompt' | 'generated';
+  codePoint: number;
+  isRepeated: boolean;
+  localRepeatCount: number;
+};
+
 const MINI_GPT_PLAN_STORAGE_KEY = 'one-web:minigpt:planned-experiments';
 
 const isPlannedExperiment = (value: unknown): value is PlannedExperiment => {
@@ -597,6 +662,130 @@ const uniqueDecisionCandidates = (results: MiniGptGenerationResult[]) => {
   return Array.from(byKey.values());
 };
 
+const resultCandidateText = (result: MiniGptGenerationResult) => {
+  const candidate = result.lotteryCandidate;
+  if (!candidate?.parseable) return '未解析';
+  const redNumbers = candidate.valid ? candidate.redNumbers : candidate.repairedRedNumbers;
+  const blueNumber = candidate.valid ? candidate.blueNumber : candidate.repairedBlueNumber;
+  return `${(redNumbers || []).join(' ')} + ${blueNumber || '--'}`;
+};
+
+const scoreGenerationResult = (result: MiniGptGenerationResult) => {
+  const text = result.generatedText || '';
+  const chars = Array.from(text.replace(/\s+/g, ''));
+  const uniqueRatio = chars.length ? new Set(chars).size / chars.length : 0;
+  const repeatRatio = repeatedCharRatio(text);
+  const candidate = result.lotteryCandidate;
+  const diversity = Math.min(25, Math.round(uniqueRatio * 45));
+  const structure = candidate?.parseable ? 25 : text.length >= 40 ? 12 : 4;
+  const validity = candidate?.valid ? 30 : candidate?.parseable ? 18 : 0;
+  const speed = result.elapsedMillis === undefined ? 10 : Math.max(0, Math.min(10, Math.round(10 - result.elapsedMillis / 700)));
+  const repeatPenalty = Math.round(Math.min(20, repeatRatio * 90));
+  return Math.max(0, Math.min(100, diversity + structure + validity + speed - repeatPenalty));
+};
+
+const generationRankItems = (results: MiniGptGenerationResult[]): GenerationRankItem[] => (
+  results
+    .filter(item => item.generatedText || item.lotteryCandidate)
+    .map((result, index) => {
+      const text = result.generatedText || '';
+      const chars = Array.from(text.replace(/\s+/g, ''));
+      const diversity = chars.length ? Math.round((new Set(chars).size / chars.length) * 100) : 0;
+      const repeat = repeatedCharRatio(text);
+      const candidate = result.lotteryCandidate;
+      const status = candidate?.valid ? 'VALID' : candidate?.parseable ? 'REPAIR' : text ? 'TEXT' : 'EMPTY';
+      const summary = candidate?.valid
+        ? '号码结构合规，可进入候选池'
+        : candidate?.parseable
+          ? '能解析号码，但需要按规则修复'
+          : repeat > 0.16
+            ? '文本重复偏高，适合降低温度'
+            : '更适合做文本风格观察';
+      return {
+        key: `${result.temperature ?? 't'}-${result.topK ?? 'k'}-${index}`,
+        index,
+        result,
+        score: scoreGenerationResult(result),
+        status,
+        summary,
+        diversity,
+        structure: candidate?.parseable ? 100 : text.length >= 40 ? 55 : 20,
+        validity: candidate?.valid ? 100 : candidate?.parseable ? 60 : 15,
+        speed: result.elapsedMillis === undefined ? 60 : Math.max(0, Math.min(100, Math.round(100 - result.elapsedMillis / 35))),
+        repeatPenalty: Math.round(repeat * 100),
+        candidateText: resultCandidateText(result)
+      };
+    })
+    .sort((left, right) => right.score - left.score)
+);
+
+const buildGenerationRadarOption = (item?: GenerationRankItem) => ({
+  color: ['#00c7be'],
+  tooltip: {},
+  radar: {
+    radius: '68%',
+    indicator: [
+      { name: '结构', max: 100 },
+      { name: '合规', max: 100 },
+      { name: '多样', max: 100 },
+      { name: '速度', max: 100 },
+      { name: '低重复', max: 100 }
+    ],
+    axisName: {
+      color: 'inherit'
+    }
+  },
+  series: [
+    {
+      type: 'radar',
+      areaStyle: {
+        opacity: 0.18
+      },
+      data: [
+        {
+          name: item?.candidateText || 'generation',
+          value: item ? [
+            item.structure,
+            item.validity,
+            item.diversity,
+            item.speed,
+            Math.max(0, 100 - item.repeatPenalty)
+          ] : [0, 0, 0, 0, 0]
+        }
+      ]
+    }
+  ]
+});
+
+const displayGeneratedChar = (char: string) => {
+  if (char === '\n') return '↵';
+  if (char === '\t') return '⇥';
+  if (char === ' ') return '·';
+  return char;
+};
+
+const buildGenerationTokenTrace = (result?: MiniGptGenerationResult): GenerationTokenTraceItem[] => {
+  const text = result?.generatedText || '';
+  const promptChars = Array.from(result?.prompt || '');
+  const promptLength = promptChars.length;
+  const chars = Array.from(text).slice(0, 180);
+  const seenCounts = new Map<string, number>();
+  return chars.map((char, index) => {
+    const previousCount = seenCounts.get(char) || 0;
+    seenCounts.set(char, previousCount + 1);
+    return {
+      key: `${index}-${char.codePointAt(0) || 0}`,
+      index,
+      char,
+      display: displayGeneratedChar(char),
+      role: index < promptLength ? 'prompt' : 'generated',
+      codePoint: char.codePointAt(0) || 0,
+      isRepeated: index > 0 && chars[index - 1] === char,
+      localRepeatCount: previousCount + 1
+    };
+  });
+};
+
 const slugifyRunPart = (value: unknown) => (
   displayVariableValue(value)
     .toLowerCase()
@@ -618,6 +807,7 @@ const currentTrainingValue = (
   const config = run.config || {};
   const values: Partial<MiniGptTrainingRequest> = {
     preset: run.preset,
+    resumeFromRun: run.parentRunName,
     data: run.data,
     maxSteps: run.maxSteps,
     batchSize: run.batchSize,
@@ -641,6 +831,7 @@ const experimentVariableDiffs = (
 ): ExperimentVariableDiff[] => {
   const rows: Array<[keyof MiniGptTrainingRequest, string, unknown]> = [
     ['preset', '预设', run?.preset],
+    ['resumeFromRun', '续训来源', run?.parentRunName],
     ['data', '语料', run?.data],
     ['maxSteps', '步数', run?.maxSteps],
     ['batchSize', 'Batch Size', run?.batchSize],
@@ -895,6 +1086,10 @@ const configEntries = (run?: MiniGptRunRecord): [string, string][] => {
     ['validation_enabled', run?.validationEnabled === undefined ? undefined : String(run.validationEnabled)],
     ['sample_prompt', run?.samplePrompt],
     ['sample_tokens', run?.sampleTokens],
+    ['parent_run_name', run?.parentRunName],
+    ['parent_checkpoint', run?.parentCheckpoint],
+    ['resume_step', run?.resumeStep],
+    ['train_step', run?.trainStep],
     ['block_size', config.block_size],
     ['n_layer', config.n_layer],
     ['n_head', config.n_head],
@@ -1336,6 +1531,8 @@ const MiniGptLearningPage = () => {
   const [lotteryCorpusExport, setLotteryCorpusExport] = useState<MiniGptLotteryCorpusExport>();
   const [generationResult, setGenerationResult] = useState<MiniGptGenerationResult>();
   const [generationComparisons, setGenerationComparisons] = useState<MiniGptGenerationResult[]>([]);
+  const [selectedGenerationKey, setSelectedGenerationKey] = useState<string>();
+  const [selectedTraceTokenKey, setSelectedTraceTokenKey] = useState<string>();
   const [savedCandidateSet, setSavedCandidateSet] = useState<LotteryDecisionSet>();
   const [candidateBacktest, setCandidateBacktest] = useState<LotteryBacktestReport>();
   const [selectedRun, setSelectedRun] = useState<string>();
@@ -1458,6 +1655,17 @@ const MiniGptLearningPage = () => {
     form.setFieldsValue(mergedValues);
     loadCorpusInsight(mergedValues);
     message.info(`已应用实验模板：${recipe.title}`);
+  };
+
+  const handleApplyPromptPreset = (preset: typeof promptPresetRows[number]) => {
+    generationForm.setFieldsValue({
+      ...generationForm.getFieldsValue(),
+      prompt: preset.prompt,
+      maxNewTokens: preset.tokens,
+      temperature: preset.temperature,
+      topK: preset.topK
+    });
+    message.info(`已应用 Prompt：${preset.title}`);
   };
 
   const handleAddPlan = (item: NextExperimentAction) => {
@@ -1620,6 +1828,8 @@ const MiniGptLearningPage = () => {
         runName: run.runName
       });
       setGenerationResult(result);
+      setSelectedGenerationKey(undefined);
+      setSelectedTraceTokenKey(undefined);
       setSavedCandidateSet(undefined);
       setCandidateBacktest(undefined);
     } catch (error) {
@@ -1649,6 +1859,8 @@ const MiniGptLearningPage = () => {
       if (results[0]) {
         setGenerationResult(results[0]);
       }
+      setSelectedGenerationKey(undefined);
+      setSelectedTraceTokenKey(undefined);
       setSavedCandidateSet(undefined);
       setCandidateBacktest(undefined);
       message.success(`已完成 ${results.length} 组采样参数对比`);
@@ -1816,6 +2028,29 @@ const MiniGptLearningPage = () => {
     [generationResult, logs, run]
   );
   const lotteryCandidate = generationResult?.lotteryCandidate;
+  const generationRankRows = useMemo(
+    () => generationRankItems([
+      ...(generationResult ? [generationResult] : []),
+      ...generationComparisons
+    ]),
+    [generationComparisons, generationResult]
+  );
+  const selectedGenerationRank = useMemo(
+    () => generationRankRows.find(item => item.key === selectedGenerationKey) || generationRankRows[0],
+    [generationRankRows, selectedGenerationKey]
+  );
+  const generationRadarOption = useMemo(
+    () => buildGenerationRadarOption(selectedGenerationRank),
+    [selectedGenerationRank]
+  );
+  const generationTokenTrace = useMemo(
+    () => buildGenerationTokenTrace(generationResult),
+    [generationResult]
+  );
+  const selectedTraceToken = useMemo(
+    () => generationTokenTrace.find(item => item.key === selectedTraceTokenKey) || generationTokenTrace.find(item => item.role === 'generated') || generationTokenTrace[0],
+    [generationTokenTrace, selectedTraceTokenKey]
+  );
   const decisionCandidateSelections = useMemo(
     () => uniqueDecisionCandidates([
       ...(generationResult ? [generationResult] : []),
@@ -1927,6 +2162,8 @@ const MiniGptLearningPage = () => {
     });
     setGenerationResult(undefined);
     setGenerationComparisons([]);
+    setSelectedGenerationKey(undefined);
+    setSelectedTraceTokenKey(undefined);
     setSavedCandidateSet(undefined);
     setCandidateBacktest(undefined);
   }, [generationForm, noteForm, run]);
@@ -2047,6 +2284,20 @@ const MiniGptLearningPage = () => {
                         命名
                       </Button>
                     )}
+                  />
+                </Form.Item>
+                <Form.Item name="resumeFromRun" label="续训来源">
+                  <Select
+                    allowClear
+                    placeholder="从已有 checkpoint 继续"
+                    options={runs
+                      .filter(item => item.runName && item.checkpoint)
+                      .map(item => ({
+                        value: item.runName,
+                        label: [item.runName, item.trainStep !== undefined ? `step=${formatInteger(item.trainStep)}` : '', item.finalEvalLoss !== undefined ? `eval=${formatLoss(item.finalEvalLoss)}` : '']
+                          .filter(Boolean)
+                          .join(' · ')
+                      }))}
                   />
                 </Form.Item>
                 <Form.Item name="data" label="语料">
@@ -2539,6 +2790,8 @@ const MiniGptLearningPage = () => {
                       validation={String(run.validationEnabled)}
                     </Tag>
                   )}
+                  {run.parentRunName && <Tag color="purple">parent={run.parentRunName}</Tag>}
+                  {run.trainStep !== undefined && <Tag color="blue">train_step={formatInteger(run.trainStep)}</Tag>}
                 </Space>
               </div>
               <div className="mini-gpt-time-stack">
@@ -2696,6 +2949,22 @@ const MiniGptLearningPage = () => {
               </Card>
 
               <Card className="mini-gpt-panel" title="生成试验台">
+                <section className="mini-gpt-prompt-presets">
+                  {promptPresetRows.map(preset => (
+                    <button
+                      type="button"
+                      key={preset.key}
+                      onClick={() => handleApplyPromptPreset(preset)}
+                    >
+                      <div>
+                        <BulbOutlined />
+                        <strong>{preset.title}</strong>
+                      </div>
+                      <span>{preset.intent}</span>
+                      <code>temp={preset.temperature} / topK={preset.topK}</code>
+                    </button>
+                  ))}
+                </section>
                 <Form
                   form={generationForm}
                   layout="vertical"
@@ -2743,6 +3012,84 @@ const MiniGptLearningPage = () => {
                       </div>
                     ))}
                   </section>
+                  {selectedGenerationRank && (
+                    <section className="mini-gpt-generation-cockpit">
+                      <div className="mini-gpt-generation-best">
+                        <div>
+                          <Text type="secondary">当前最佳输出</Text>
+                          <strong>{selectedGenerationRank.candidateText}</strong>
+                        </div>
+                        <Tag color={selectedGenerationRank.status === 'VALID' ? 'green' : selectedGenerationRank.status === 'REPAIR' ? 'orange' : 'blue'}>
+                          {selectedGenerationRank.score} pts
+                        </Tag>
+                        <p>{selectedGenerationRank.summary}</p>
+                        <dl>
+                          <div>
+                            <dt>Temp</dt>
+                            <dd>{selectedGenerationRank.result.temperature ?? '-'}</dd>
+                          </div>
+                          <div>
+                            <dt>Top-K</dt>
+                            <dd>{selectedGenerationRank.result.topK ?? '-'}</dd>
+                          </div>
+                          <div>
+                            <dt>重复</dt>
+                            <dd>{selectedGenerationRank.repeatPenalty}%</dd>
+                          </div>
+                        </dl>
+                      </div>
+                      <ReactECharts option={generationRadarOption} className="mini-gpt-generation-radar" notMerge />
+                    </section>
+                  )}
+                  {generationTokenTrace.length > 0 && (
+                    <section className="mini-gpt-token-replay">
+                      <div className="mini-gpt-lottery-candidate-head">
+                        <Text type="secondary">Token 回放</Text>
+                        <Space wrap>
+                          <Tag color="blue">prompt</Tag>
+                          <Tag color="green">generated</Tag>
+                          <Tag>{generationTokenTrace.length} chars</Tag>
+                        </Space>
+                      </div>
+                      <div className="mini-gpt-token-replay-grid">
+                        {generationTokenTrace.map(item => (
+                          <button
+                            type="button"
+                            key={item.key}
+                            className={[
+                              item.role,
+                              item.isRepeated ? 'repeated' : '',
+                              item.key === selectedTraceToken?.key ? 'active' : ''
+                            ].filter(Boolean).join(' ')}
+                            title={`#${item.index} U+${item.codePoint.toString(16).toUpperCase()}`}
+                            onClick={() => setSelectedTraceTokenKey(item.key)}
+                          >
+                            {item.display}
+                          </button>
+                        ))}
+                      </div>
+                      {selectedTraceToken && (
+                        <div className="mini-gpt-token-replay-detail">
+                          <div>
+                            <span>位置</span>
+                            <strong>#{selectedTraceToken.index}</strong>
+                          </div>
+                          <div>
+                            <span>来源</span>
+                            <strong>{selectedTraceToken.role === 'prompt' ? 'Prompt' : '模型生成'}</strong>
+                          </div>
+                          <div>
+                            <span>Code Point</span>
+                            <strong>U+{selectedTraceToken.codePoint.toString(16).toUpperCase()}</strong>
+                          </div>
+                          <div>
+                            <span>重复计数</span>
+                            <strong>{selectedTraceToken.localRepeatCount}</strong>
+                          </div>
+                        </div>
+                      )}
+                    </section>
+                  )}
                   <section className="mini-gpt-lottery-candidate-check">
                     <div className="mini-gpt-lottery-candidate-head">
                       <Text type="secondary">双色球候选校验</Text>
@@ -2868,6 +3215,26 @@ const MiniGptLearningPage = () => {
                         <Text type="secondary">采样参数对比</Text>
                         <Tag>{generationComparisons.length} runs</Tag>
                       </div>
+                      {generationRankRows.length > 0 && (
+                        <div className="mini-gpt-generation-rank-list">
+                          {generationRankRows.map(item => (
+                            <button
+                              type="button"
+                              key={item.key}
+                              className={item.key === selectedGenerationRank?.key ? 'active' : ''}
+                              onClick={() => {
+                                setSelectedGenerationKey(item.key);
+                                setGenerationResult(item.result);
+                              }}
+                            >
+                              <TrophyOutlined />
+                              <span>#{item.index + 1}</span>
+                              <strong>{item.score}</strong>
+                              <em>{item.candidateText}</em>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                       <div className="mini-gpt-generation-comparison-grid">
                         {generationComparisons.map((item, index) => (
                           <article key={`${item.temperature}-${item.topK}-${index}`}>

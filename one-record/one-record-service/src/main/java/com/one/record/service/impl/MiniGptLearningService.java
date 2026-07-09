@@ -698,6 +698,12 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         addArgument(command, "--data", hasTextOrDefault(request.getData(), DEFAULT_DATA));
         addArgument(command, "--max-steps", maxSteps);
         addArgument(command, "--sample-prompt", hasTextOrDefault(request.getSamplePrompt(), DEFAULT_SAMPLE_PROMPT));
+        ResumeSource resumeSource = resolveResumeSource(playgroundDir, request);
+        if (resumeSource != null) {
+            addArgument(command, "--resume-checkpoint", resumeSource.checkpointPath().toString());
+            addOptionalArgument(command, "--parent-run-name", resumeSource.runName());
+            addArgument(command, "--parent-checkpoint", resumeSource.checkpointPath().toString());
+        }
         addOptionalArgument(command, "--batch-size", request.getBatchSize());
         addOptionalArgument(command, "--learning-rate", request.getLearningRate());
         addOptionalArgument(command, "--block-size", request.getBlockSize());
@@ -843,6 +849,11 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         run.setFinishedAt(null);
         run.setData(hasTextOrDefault(request.getData(), DEFAULT_DATA));
         run.setCheckpoint(null);
+        ResumeSource resumeSource = resolveResumeSource(resolvePlaygroundDir(), request);
+        run.setParentRunName(resumeSource == null ? null : resumeSource.runName());
+        run.setParentCheckpoint(resumeSource == null ? null : resumeSource.checkpointPath().toString());
+        run.setResumeStep(null);
+        run.setTrainStep(null);
         run.setLogFile(Path.of("runs", runName, "train_log.csv").toString());
         run.setMetadataFile(Path.of("runs", runName, "latest.json").toString());
         run.setMaxSteps(maxSteps);
@@ -875,6 +886,12 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         if (!failed && !cancelled) {
             run.setCheckpoint(playgroundDir.resolve("runs").resolve(runName).resolve("checkpoints").resolve("mini_gpt.pt").toString());
         }
+        ResumeSource resumeSource = resolveResumeSource(playgroundDir, request);
+        run.setParentRunName(resumeSource == null ? run.getParentRunName() : resumeSource.runName());
+        run.setParentCheckpoint(resumeSource == null ? run.getParentCheckpoint() : resumeSource.checkpointPath().toString());
+        Map<String, Object> latestMetadata = readRunMetadata(playgroundDir, runName);
+        run.setResumeStep(asInteger(latestMetadata.get("resume_step")));
+        run.setTrainStep(asInteger(latestMetadata.get("train_step")));
         if (latestLog != null) {
             run.setFinalTrainLoss(latestLog.getTrainLoss());
             run.setFinalEvalLoss(latestLog.getEvalLoss());
@@ -1123,6 +1140,9 @@ public class MiniGptLearningService implements IMiniGptLearningService {
     private record ParsedLotteryCandidate(List<Integer> redValues, Integer blueValue) {
     }
 
+    private record ResumeSource(String runName, Path checkpointPath) {
+    }
+
     private Map<String, Object> trainingConfig(MiniGptTrainingRequest request) {
         Map<String, Object> config = new LinkedHashMap<>();
         config.put("blockSize", request.getBlockSize());
@@ -1131,7 +1151,61 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         config.put("nLayer", request.getNLayer());
         config.put("temperature", request.getTemperature());
         config.put("topK", request.getTopK());
+        config.put("resumeFromRun", request.getResumeFromRun());
+        config.put("resumeCheckpoint", request.getResumeCheckpoint());
         return config;
+    }
+
+    private ResumeSource resolveResumeSource(Path playgroundDir, MiniGptTrainingRequest request) {
+        if (request == null) {
+            return null;
+        }
+        String checkpoint = trimToNull(request.getResumeCheckpoint());
+        String parentRunName = trimToNull(request.getResumeFromRun());
+        if (!StringUtils.hasText(checkpoint) && StringUtils.hasText(parentRunName)) {
+            MiniGptRunRecord parentRun = runRepository.findByRunName(parentRunName)
+                    .orElseThrow(() -> new IllegalArgumentException("未找到续训来源实验: " + parentRunName));
+            checkpoint = parentRun.getCheckpoint();
+        }
+        if (!StringUtils.hasText(checkpoint)) {
+            return null;
+        }
+        Path checkpointPath = resolveCheckpointPath(playgroundDir, checkpoint);
+        if (!checkpointPath.startsWith(playgroundDir) && !checkpointPath.isAbsolute()) {
+            throw new IllegalArgumentException("MiniGPT 续训 checkpoint 路径非法: " + checkpoint);
+        }
+        if (!Files.exists(checkpointPath)) {
+            throw new IllegalArgumentException("MiniGPT 续训 checkpoint 不存在: " + checkpointPath);
+        }
+        return new ResumeSource(parentRunName, checkpointPath);
+    }
+
+    private Map<String, Object> readRunMetadata(Path playgroundDir, String runName) {
+        Path metadataPath = playgroundDir.resolve("runs").resolve(runName).resolve("latest.json").normalize();
+        if (!metadataPath.startsWith(playgroundDir) || !Files.exists(metadataPath)) {
+            return Collections.emptyMap();
+        }
+        try {
+            return OBJECT_MAPPER.readValue(metadataPath.toFile(), new TypeReference<>() {
+            });
+        } catch (IOException exception) {
+            log.warn("MiniGPT 训练元数据读取失败: {}", metadataPath, exception);
+            return Collections.emptyMap();
+        }
+    }
+
+    private static Integer asInteger(Object value) {
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        if (value instanceof String text && StringUtils.hasText(text)) {
+            try {
+                return Integer.parseInt(text);
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
     }
 
     private static String formatDisplayTime(long millis) {

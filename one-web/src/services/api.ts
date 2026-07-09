@@ -1076,6 +1076,10 @@ export interface MiniGptRunRecord {
   finishedAt?: string;
   data?: string;
   checkpoint?: string;
+  parentRunName?: string;
+  parentCheckpoint?: string;
+  resumeStep?: number;
+  trainStep?: number;
   logFile?: string;
   metadataFile?: string;
   device?: string;
@@ -1124,6 +1128,8 @@ export interface MiniGptDashboard {
 export interface MiniGptTrainingRequest {
   preset?: string;
   runName?: string;
+  resumeFromRun?: string;
+  resumeCheckpoint?: string;
   data?: string;
   maxSteps?: number;
   batchSize?: number;

@@ -11,6 +11,10 @@ public class MiniGptTrainingRequest implements Serializable {
 
     private String runName;
 
+    private String resumeFromRun;
+
+    private String resumeCheckpoint;
+
     private String data = "data/sample.txt";
 
     private Integer maxSteps;

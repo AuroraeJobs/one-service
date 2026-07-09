@@ -102,6 +102,10 @@ class MongoRunSink:
             "finishedAt": metadata.get("finished_at"),
             "data": metadata.get("data"),
             "checkpoint": metadata.get("checkpoint"),
+            "parentRunName": metadata.get("parent_run_name"),
+            "parentCheckpoint": metadata.get("parent_checkpoint"),
+            "resumeStep": metadata.get("resume_step"),
+            "trainStep": metadata.get("train_step"),
             "logFile": metadata.get("log_file"),
             "metadataFile": metadata.get("metadata_file"),
             "device": metadata.get("device"),
@@ -382,20 +386,34 @@ def train(args: argparse.Namespace) -> None:
     apply_training_defaults(args)
     started_at = time.strftime("%Y-%m-%d %H:%M:%S")
     text = load_text(Path(args.data))
-    tokenizer = CharTokenizer(text)
-    config = ModelConfig(
-        block_size=args.block_size,
-        n_embd=args.n_embd,
-        n_head=args.n_head,
-        n_layer=args.n_layer,
-        dropout=args.dropout,
-        vocab_size=tokenizer.vocab_size,
-    )
     device = select_device()
+    resume_payload = None
+    resume_step = 0
+    if args.resume_checkpoint:
+        resume_payload = torch.load(args.resume_checkpoint, map_location=device)
+        tokenizer = CharTokenizer.from_dict(resume_payload["tokenizer"])
+        config = ModelConfig(**resume_payload["config"])
+        resume_step = int(resume_payload.get("train_step") or 0)
+    else:
+        tokenizer = CharTokenizer(text)
+        config = ModelConfig(
+            block_size=args.block_size,
+            n_embd=args.n_embd,
+            n_head=args.n_head,
+            n_layer=args.n_layer,
+            dropout=args.dropout,
+            vocab_size=tokenizer.vocab_size,
+        )
     encoded = torch.tensor(tokenizer.encode(text), dtype=torch.long)
     train_data, eval_data, validation_enabled = split_dataset(encoded, args.val_ratio, config.block_size)
     model = MiniGPT(config).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate)
+    if resume_payload:
+        model.load_state_dict(resume_payload["model"])
+        if "optimizer" in resume_payload:
+            optimizer.load_state_dict(resume_payload["optimizer"])
+            for group in optimizer.param_groups:
+                group["lr"] = args.learning_rate
     runs_dir = Path(args.runs_dir)
     runs_dir.mkdir(parents=True, exist_ok=True)
     run_name = safe_run_name(args.run_name or f"{time.strftime('%Y%m%d-%H%M%S')}-{args.preset}")
@@ -413,6 +431,10 @@ def train(args: argparse.Namespace) -> None:
         "preset": args.preset,
         "started_at": started_at,
         "data": args.data,
+        "parent_run_name": args.parent_run_name,
+        "parent_checkpoint": args.resume_checkpoint or args.parent_checkpoint,
+        "resume_step": resume_step,
+        "train_step": resume_step,
         "log_file": str(log_path),
         "metadata_file": str(run_latest_path),
         "device": str(device),
@@ -436,6 +458,7 @@ def train(args: argparse.Namespace) -> None:
 
         train_started = time.time()
         for step in range(1, args.max_steps + 1):
+            global_step = resume_step + step
             x, y = get_batch(train_data, config.block_size, args.batch_size, device)
             _, loss = model(x, y)
             optimizer.zero_grad(set_to_none=True)
@@ -464,14 +487,19 @@ def train(args: argparse.Namespace) -> None:
                 writer.writerow(last_log_row)
                 mongo_sink.upsert_log(last_log_row)
                 log_file.flush()
-                print(f"step={step} train_loss={loss.item():.4f} eval_loss={eval_loss:.4f}")
+                print(f"step={step} train_loss={loss.item():.4f} eval_loss={eval_loss:.4f} global_step={global_step}")
 
     checkpoint_path = checkpoint_dir / "mini_gpt.pt"
+    train_step = resume_step + args.max_steps
     torch.save(
         {
             "model": model.state_dict(),
+            "optimizer": optimizer.state_dict(),
             "config": asdict(config),
             "tokenizer": tokenizer.to_dict(),
+            "train_step": train_step,
+            "parent_run_name": args.parent_run_name,
+            "parent_checkpoint": args.resume_checkpoint or args.parent_checkpoint,
         },
         checkpoint_path,
     )
@@ -488,6 +516,10 @@ def train(args: argparse.Namespace) -> None:
         "finished_at": time.strftime("%Y-%m-%d %H:%M:%S"),
         "data": args.data,
         "checkpoint": str(checkpoint_path),
+        "parent_run_name": args.parent_run_name,
+        "parent_checkpoint": args.resume_checkpoint or args.parent_checkpoint,
+        "resume_step": resume_step,
+        "train_step": train_step,
         "log_file": str(log_path),
         "metadata_file": str(run_latest_path),
         "device": str(device),
@@ -515,6 +547,10 @@ def train(args: argparse.Namespace) -> None:
         "log_file": metadata["log_file"],
         "metadata_file": metadata["metadata_file"],
         "checkpoint": metadata["checkpoint"],
+        "parent_run_name": metadata["parent_run_name"],
+        "parent_checkpoint": metadata["parent_checkpoint"],
+        "resume_step": resume_step,
+        "train_step": train_step,
         "final_train_loss": final_train_loss,
         "final_eval_loss": final_eval_loss,
         "loss_gap": loss_gap,
@@ -553,6 +589,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-new-tokens", type=int, default=120)
     parser.add_argument("--preset", choices=sorted(PRESETS), default="custom")
     parser.add_argument("--run-name")
+    parser.add_argument("--resume-checkpoint")
+    parser.add_argument("--parent-run-name")
+    parser.add_argument("--parent-checkpoint")
     parser.add_argument("--max-steps", type=int)
     parser.add_argument("--batch-size", type=int)
     parser.add_argument("--block-size", type=int)

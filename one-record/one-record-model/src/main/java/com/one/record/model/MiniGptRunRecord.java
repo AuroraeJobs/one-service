@@ -36,6 +36,14 @@ public class MiniGptRunRecord {
 
     private String checkpoint;
 
+    private String parentRunName;
+
+    private String parentCheckpoint;
+
+    private Integer resumeStep;
+
+    private Integer trainStep;
+
     private String logFile;
 
     private String metadataFile;
