@@ -4,6 +4,14 @@
   --openai-training-border: var(--life-border, rgba(0, 0, 0, 0.08));
   --openai-training-text: var(--life-text, #1d1d1f);
   --openai-training-muted: var(--life-muted, #6e6e73);
+  min-height: 100vh;
+  overflow: visible;
+}
+
+.app-main.life-module-ai:has(.openai-training-page) {
+  height: auto;
+  min-height: 100vh;
+  overflow: auto;
 }
 
 .openai-training-intro {
