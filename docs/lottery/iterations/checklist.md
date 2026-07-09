@@ -1129,9 +1129,9 @@ Goal: turn the next-phase release-evidence archive candidate into a focused hand
 
 ### Wave 43B: Workbench Release Archive Handoff
 
-- [ ] Surface the focused release archive path from workbench release review.
-- [ ] Keep the action tied to existing release check signals.
-- [ ] Add smoke coverage for the handoff label.
+- [x] Surface the focused release archive path from workbench release review.
+- [x] Keep the action tied to existing release check signals.
+- [x] Add smoke coverage for the handoff label.
 
 ### Wave 43C: Governance Release Archive Link
 

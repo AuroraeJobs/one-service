@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 43 Wave 43A release archive focus smoke",
+  "target": "Iteration 43 Wave 43B workbench release archive handoff smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -329,7 +329,7 @@
         "lotteryReminderApi.snooze",
         "lotteryTicketApi.checkLatestPrizes"
       ],
-      "emptyStates": ["今日优先事项", "暂无优先事项", "暂无待办", "暂无提醒", "暂无预测快照", "暂无保存决策复盘结果", "暂无发布检查", "运营健康", "暂无健康评分", "日常复核", "开奖周期", "月末复盘", "发布归档"],
+      "emptyStates": ["今日优先事项", "暂无优先事项", "暂无待办", "暂无提醒", "暂无预测快照", "暂无保存决策复盘结果", "暂无发布检查", "运营健康", "暂无健康评分", "日常复核", "开奖周期", "月末复盘", "发布归档", "focus=release-archive"],
       "errorStates": ["读取彩票工作台失败", "执行彩票日常任务失败", "确认提醒失败", "稍后提醒失败"],
       "fixtureData": {
         "summary": {

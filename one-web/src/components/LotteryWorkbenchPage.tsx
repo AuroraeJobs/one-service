@@ -1580,7 +1580,7 @@ const LotteryWorkbenchPage = () => {
           `近期导出 ${recentWork.exports.length}`,
           `Provider ${lotteryStatusLabel(summary?.latestSyncSummary?.latestStatus)}`
         ],
-        path: '/lottery/exports',
+        path: '/lottery/exports?focus=release-archive',
         actionLabel: '看证据',
         acknowledgeTarget: exportContributor?.key ? {
           type: 'health',
@@ -2225,7 +2225,7 @@ const LotteryWorkbenchPage = () => {
                     <button
                       key={item.key || item.label}
                       type="button"
-                      onClick={() => item.path && navigate(item.path)}
+                      onClick={() => navigate(item.path || '/lottery/exports?focus=release-archive')}
                     >
                       <Tag color={releaseStatusColor(item.status)}>{lotteryStatusLabel(item.status)}</Tag>
                       <span>
