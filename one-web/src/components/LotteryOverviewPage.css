@@ -1,3 +1,14 @@
+:root,
+:root[data-theme='light'] {
+  --lottery-yearly-slice-separator: rgba(255, 255, 255, 0.92);
+  --lottery-yearly-label-line: rgba(100, 116, 139, 0.34);
+}
+
+:root[data-theme='dark'] {
+  --lottery-yearly-slice-separator: rgba(29, 29, 31, 0.96);
+  --lottery-yearly-label-line: rgba(148, 163, 184, 0.42);
+}
+
 .lottery-status-grid,
 .lottery-chart-grid {
   display: grid;

@@ -16,6 +16,17 @@ import { buildLotteryStats, getRecentDraws, type LotteryDraw } from '../utils/lo
 import './LotteryOverviewPage.css';
 
 const YEARLY_PIE_COLORS = [
+  '#5f8ea0',
+  '#7aa8b7',
+  '#91b8c4',
+  '#abc9d1',
+  '#c2d8dd',
+  '#d9e7ea',
+  '#9fb4b8',
+  '#82999e'
+];
+
+const YEARLY_PIE_DARK_COLORS = [
   '#2f6f88',
   '#4f8fa8',
   '#72a9bd',
@@ -34,47 +45,51 @@ const getThemeValue = (name: string, fallback: string) => {
   return value || fallback;
 };
 
-const createYearlyPieOption = (yearlyCounts: RecordYearCount[]): EChartsOption => ({
+const getCurrentThemeKey = () => {
+  if (typeof document === 'undefined') {
+    return 'dark';
+  }
+  return document.documentElement.dataset.theme || 'dark';
+};
+
+const createYearlyPieOption = (yearlyCounts: RecordYearCount[], themeKey: string): EChartsOption => ({
   backgroundColor: 'transparent',
-  color: YEARLY_PIE_COLORS,
+  color: themeKey === 'light' ? YEARLY_PIE_COLORS : YEARLY_PIE_DARK_COLORS,
   tooltip: {
-    trigger: 'item',
-    formatter: params => {
-      const item = params as { name: string; value: number; percent: number };
-      return `${item.name} 年<br/>${item.value} 条，占比 ${item.percent}%`;
-    }
+    show: false
   },
   series: [
     {
       name: '年度记录数',
       type: 'pie',
-      radius: ['58%', '78%'],
+      radius: ['56%', '74%'],
       center: ['50%', '50%'],
+      silent: true,
       selectedMode: false,
       selectedOffset: 0,
       avoidLabelOverlap: true,
-      padAngle: 1,
+      padAngle: 1.6,
       minShowLabelAngle: 8,
       itemStyle: {
-        borderWidth: 2,
-        borderColor: getThemeValue('--app-bg', 'rgba(255, 255, 255, 0.72)')
+        borderWidth: 1,
+        borderColor: getThemeValue('--lottery-yearly-slice-separator', 'rgba(255, 255, 255, 0.9)')
       },
       label: {
         show: true,
         formatter: params => {
           const item = params as { name: string; value: number };
-          return `${item.name}\n${item.value}`;
+          return `${item.name}年\n${item.value}条`;
         },
         color: getThemeValue('--app-text-muted', '#6b7280'),
-        fontSize: 11,
-        lineHeight: 15
+        fontSize: 10,
+        lineHeight: 14
       },
       labelLine: {
         show: true,
-        length: 10,
-        length2: 8,
+        length: 8,
+        length2: 6,
         lineStyle: {
-          color: 'rgba(120, 136, 148, 0.62)'
+          color: getThemeValue('--lottery-yearly-label-line', 'rgba(120, 136, 148, 0.38)')
         }
       },
       emphasis: {
@@ -115,6 +130,7 @@ const LotteryOverviewPage = () => {
   const [yearlyCounts, setYearlyCounts] = useState<RecordYearCount[]>([]);
   const [yearlyCountsLoading, setYearlyCountsLoading] = useState(false);
   const [yearlyCountsRefreshing, setYearlyCountsRefreshing] = useState(false);
+  const [yearlyThemeKey, setYearlyThemeKey] = useState(getCurrentThemeKey);
   const stats = useMemo(() => buildLotteryStats(allRecords), [allRecords]);
   const redFrequency = statisticsSummary?.redFrequency ?? stats.redFrequency;
   const blueFrequency = statisticsSummary?.blueFrequency ?? stats.blueFrequency;
@@ -134,9 +150,18 @@ const LotteryOverviewPage = () => {
     [yearlyCounts]
   );
   const yearlyPieOption = useMemo(
-    () => createYearlyPieOption(sortedYearlyCounts),
-    [sortedYearlyCounts]
+    () => createYearlyPieOption(sortedYearlyCounts, yearlyThemeKey),
+    [sortedYearlyCounts, yearlyThemeKey]
   );
+
+  useEffect(() => {
+    if (typeof MutationObserver === 'undefined') {
+      return undefined;
+    }
+    const observer = new MutationObserver(() => setYearlyThemeKey(getCurrentThemeKey()));
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => observer.disconnect();
+  }, []);
 
   const fetchYearlyCounts = async () => {
     setYearlyCountsLoading(true);
