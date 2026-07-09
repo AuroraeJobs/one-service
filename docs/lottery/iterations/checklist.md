@@ -1135,8 +1135,8 @@ Goal: turn the next-phase release-evidence archive candidate into a focused hand
 
 ### Wave 43C: Governance Release Archive Link
 
-- [ ] Connect the focused release archive path to governance release evidence.
-- [ ] Decide whether release archive history should remain docs-only or become an export page data source.
+- [x] Connect the focused release archive path to governance release evidence.
+- [x] Decide whether release archive history should remain docs-only or become an export page data source. Decision: keep release history docs-only until a backend/export contract is explicitly needed.
 
 ## Documentation And Delivery
 

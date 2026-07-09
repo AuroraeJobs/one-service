@@ -279,7 +279,7 @@ const LotteryGovernancePage = () => {
         score: release?.totalCount ? Math.round(((release.passedCount || 0) / release.totalCount) * 100) : statusScore('MANUAL'),
         message: release?.message || '等待发布检查证据',
         detail: `${release?.passedCount || 0}/${release?.totalCount || 0} 通过`,
-        path: '/lottery/exports',
+        path: '/lottery/exports?focus=release-archive',
         icon: <CheckCircleOutlined />
       }
     ];
@@ -415,7 +415,7 @@ const LotteryGovernancePage = () => {
         count: releaseWarnings.length,
         detail: releaseWarnings.map(item => item.label || item.key).filter(Boolean).slice(0, 3).join('、') || '发布检查需要补证据',
         trend: `检查更新时间 ${formatTime(workbench?.releaseCheckSummary?.generatedAt)}`,
-        path: '/lottery/exports'
+        path: '/lottery/exports?focus=release-archive'
       });
     }
 
@@ -608,7 +608,7 @@ const LotteryGovernancePage = () => {
           </Card>
           <Card className="life-panel-card lottery-clean-panel" title="发布检查">
             {workbench?.releaseCheckSummary?.checks?.length ? workbench.releaseCheckSummary.checks.map(check => (
-              <button key={check.key} type="button" onClick={() => navigate(check.path || '/lottery/exports')}>
+              <button key={check.key} type="button" onClick={() => navigate(check.path || '/lottery/exports?focus=release-archive')}>
                 <span><WarningOutlined /> {check.label || check.key}</span>
                 <Tag color={statusColor(check.status)}>{lotteryStatusLabel(check.status)}</Tag>
               </button>

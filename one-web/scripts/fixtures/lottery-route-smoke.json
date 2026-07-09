@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 43 Wave 43B workbench release archive handoff smoke",
+  "target": "Iteration 43 Wave 43C governance release archive link smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -752,7 +752,7 @@
         "lotteryTicketPackApi.ticketPacks",
         "lotteryExportApi.auditEvents"
       ],
-      "emptyStates": ["暂无异常观察", "暂无发布检查", "暂无治理证据"],
+      "emptyStates": ["暂无异常观察", "暂无发布检查", "暂无治理证据", "focus=release-archive"],
       "errorStates": ["读取彩票治理看板失败"],
       "fixtureData": {
         "governance": {

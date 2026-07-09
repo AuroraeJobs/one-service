@@ -1,6 +1,6 @@
 {
-  "target": "Iteration 43 Wave 43B workbench release archive handoff smoke",
-  "generatedAt": "2026-07-09T00:49:28.064Z",
+  "target": "Iteration 43 Wave 43C governance release archive link smoke",
+  "generatedAt": "2026-07-09T00:51:18.608Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
@@ -119,7 +119,7 @@
       "label": "治理",
       "component": "LotteryGovernancePage",
       "mockApiCount": 9,
-      "emptyStateCount": 3,
+      "emptyStateCount": 4,
       "errorStateCount": 1
     },
     {
