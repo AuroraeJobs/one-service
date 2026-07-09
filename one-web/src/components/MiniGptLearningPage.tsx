@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Alert, Button, Card, Empty, Form, Input, InputNumber, Progress, Segmented, Select, Space, Spin, Table, Tag, Typography, message } from 'antd';
+import { Alert, AutoComplete, Button, Card, Empty, Form, Input, InputNumber, Progress, Segmented, Select, Space, Spin, Table, Tag, Typography, message } from 'antd';
 import { BarChartOutlined, BookOutlined, BulbOutlined, CloseCircleOutlined, CopyOutlined, DatabaseOutlined, DownloadOutlined, PlayCircleOutlined, ReloadOutlined, SaveOutlined, TrophyOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
 import LifePageShell from './LifePageShell';
@@ -2120,6 +2120,21 @@ const MiniGptLearningPage = () => {
     [currentTrainingData, runs]
   );
   const runGroupsByData = useMemo(() => groupRunsByData(runs), [runs]);
+  const trainingDataOptions = useMemo(() => {
+    const dataPaths = [
+      'data/sample.txt',
+      ...runGroupsByData.map(group => group.data),
+      lotteryCorpusExport?.dataPath
+    ]
+      .map(item => normalizeTrainingData(item))
+      .filter(Boolean);
+    return Array.from(new Set(dataPaths)).map(dataPath => ({
+      value: dataPath,
+      label: dataPath === lotteryCorpusExport?.dataPath
+        ? `${dataPath} · 已导出`
+        : dataPath
+    }));
+  }, [lotteryCorpusExport?.dataPath, runGroupsByData]);
   const noteFormValues = useMemo(
     () => ({ ...noteForm.getFieldsValue(), ...(watchedNoteValues || {}) }),
     [noteForm, watchedNoteValues]
@@ -2349,7 +2364,13 @@ const MiniGptLearningPage = () => {
                   </div>
                   <div className="mini-gpt-corpus-step-grid">
                     <Form.Item name="data" label="训练语料">
-                      <Input placeholder="例如 data/sample.txt" />
+                      <AutoComplete
+                        options={trainingDataOptions}
+                        placeholder="选择或输入语料路径"
+                        filterOption={(inputValue, option) => (
+                          String(option?.value || '').toLowerCase().includes(inputValue.toLowerCase())
+                        )}
+                      />
                     </Form.Item>
                     <Form.Item name="evalData" label="固定评估集">
                       <Input placeholder="例如 data/eval.txt" />
