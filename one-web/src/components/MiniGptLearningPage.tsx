@@ -54,6 +54,13 @@ const lotteryCandidateStatusColor = (status?: string) => {
   return 'default';
 };
 
+const qualityGateStatusColor = (status?: string) => {
+  if (status === 'PASS') return 'green';
+  if (status === 'FAILED') return 'red';
+  if (status === 'NOT_CONFIGURED') return 'default';
+  return 'orange';
+};
+
 const latestSample = (logs: MiniGptTrainingLogRecord[]) => (
   [...logs].reverse().find(log => log.sample)?.sample || ''
 );
@@ -368,6 +375,8 @@ const metricItems = (run?: MiniGptRunRecord, logs: MiniGptTrainingLogRecord[] = 
     { label: 'Train Loss', value: formatLoss(run?.finalTrainLoss ?? latestLog?.trainLoss) },
     { label: 'Eval Loss', value: formatLoss(run?.finalEvalLoss ?? latestLog?.evalLoss) },
     { label: 'Gap', value: formatLoss(run?.lossGap) },
+    { label: 'Fixed Eval', value: formatLoss(run?.fixedEvalLoss) },
+    { label: 'Gate', value: run?.qualityGateStatus || '-' },
     { label: 'Train Tokens', value: formatInteger(run?.trainTokens) },
     { label: 'Eval Tokens', value: formatInteger(run?.evalTokens) }
   ];
@@ -809,6 +818,9 @@ const currentTrainingValue = (
     preset: run.preset,
     resumeFromRun: run.parentRunName,
     data: run.data,
+    evalData: run.evalData,
+    qualityGateMaxEvalLoss: run.qualityGateMaxEvalLoss,
+    qualityGateMaxLossGap: run.qualityGateMaxLossGap,
     maxSteps: run.maxSteps,
     batchSize: run.batchSize,
     learningRate: run.learningRate,
@@ -833,6 +845,9 @@ const experimentVariableDiffs = (
     ['preset', '预设', run?.preset],
     ['resumeFromRun', '续训来源', run?.parentRunName],
     ['data', '语料', run?.data],
+    ['evalData', '固定评估集', run?.evalData],
+    ['qualityGateMaxEvalLoss', 'Eval 门禁', run?.qualityGateMaxEvalLoss],
+    ['qualityGateMaxLossGap', 'Gap 门禁', run?.qualityGateMaxLossGap],
     ['maxSteps', '步数', run?.maxSteps],
     ['batchSize', 'Batch Size', run?.batchSize],
     ['learningRate', 'Learning Rate', run?.learningRate],
@@ -1077,6 +1092,7 @@ const configEntries = (run?: MiniGptRunRecord): [string, string][] => {
     ['device', run?.device],
     ['data', run?.data],
     ['checkpoint', run?.checkpoint],
+    ['eval_data', run?.evalData],
     ['started_at', run?.startedAt],
     ['finished_at', run?.finishedAt],
     ['max_steps', run?.maxSteps],
@@ -1086,6 +1102,11 @@ const configEntries = (run?: MiniGptRunRecord): [string, string][] => {
     ['validation_enabled', run?.validationEnabled === undefined ? undefined : String(run.validationEnabled)],
     ['sample_prompt', run?.samplePrompt],
     ['sample_tokens', run?.sampleTokens],
+    ['fixed_eval_loss', run?.fixedEvalLoss],
+    ['quality_gate_status', run?.qualityGateStatus],
+    ['quality_gate_reasons', run?.qualityGateReasons],
+    ['quality_gate_max_eval_loss', run?.qualityGateMaxEvalLoss],
+    ['quality_gate_max_loss_gap', run?.qualityGateMaxLossGap],
     ['parent_run_name', run?.parentRunName],
     ['parent_checkpoint', run?.parentCheckpoint],
     ['resume_step', run?.resumeStep],
@@ -2303,6 +2324,9 @@ const MiniGptLearningPage = () => {
                 <Form.Item name="data" label="语料">
                   <Input />
                 </Form.Item>
+                <Form.Item name="evalData" label="固定评估集">
+                  <Input placeholder="例如 data/eval.txt" />
+                </Form.Item>
                 <Form.Item name="maxSteps" label="步数">
                   <InputNumber min={1} max={5000} />
                 </Form.Item>
@@ -2339,6 +2363,12 @@ const MiniGptLearningPage = () => {
                   </Form.Item>
                   <Form.Item name="topK" label="Top-K">
                     <InputNumber min={1} max={200} />
+                  </Form.Item>
+                  <Form.Item name="qualityGateMaxEvalLoss" label="Eval 门禁">
+                    <InputNumber min={0} max={20} step={0.1} />
+                  </Form.Item>
+                  <Form.Item name="qualityGateMaxLossGap" label="Gap 门禁">
+                    <InputNumber min={0} max={10} step={0.05} />
                   </Form.Item>
                 </section>
                 <section className="mini-gpt-recipe-grid">
@@ -2792,7 +2822,15 @@ const MiniGptLearningPage = () => {
                   )}
                   {run.parentRunName && <Tag color="purple">parent={run.parentRunName}</Tag>}
                   {run.trainStep !== undefined && <Tag color="blue">train_step={formatInteger(run.trainStep)}</Tag>}
+                  {run.qualityGateStatus && (
+                    <Tag color={qualityGateStatusColor(run.qualityGateStatus)}>
+                      gate={run.qualityGateStatus}
+                    </Tag>
+                  )}
                 </Space>
+                {run.qualityGateReasons && (
+                  <p className="mini-gpt-quality-gate-reasons">{run.qualityGateReasons}</p>
+                )}
               </div>
               <div className="mini-gpt-time-stack">
                 <span>{formatTime(run.startedAt)}</span>

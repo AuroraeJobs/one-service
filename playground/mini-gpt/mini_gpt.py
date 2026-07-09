@@ -101,6 +101,7 @@ class MongoRunSink:
             "startedAt": metadata.get("started_at"),
             "finishedAt": metadata.get("finished_at"),
             "data": metadata.get("data"),
+            "evalData": metadata.get("eval_data"),
             "checkpoint": metadata.get("checkpoint"),
             "parentRunName": metadata.get("parent_run_name"),
             "parentCheckpoint": metadata.get("parent_checkpoint"),
@@ -121,6 +122,11 @@ class MongoRunSink:
             "finalTrainLoss": metadata.get("final_train_loss"),
             "finalEvalLoss": metadata.get("final_eval_loss"),
             "lossGap": metadata.get("loss_gap"),
+            "fixedEvalLoss": metadata.get("fixed_eval_loss"),
+            "qualityGateMaxEvalLoss": metadata.get("quality_gate_max_eval_loss"),
+            "qualityGateMaxLossGap": metadata.get("quality_gate_max_loss_gap"),
+            "qualityGateStatus": metadata.get("quality_gate_status"),
+            "qualityGateReasons": metadata.get("quality_gate_reasons"),
             "config": metadata.get("config") or {},
             "updatedAt": now_ms,
         }
@@ -382,6 +388,41 @@ def append_run_index(runs_dir: Path, entry: dict[str, object]) -> None:
     index_path.write_text(json.dumps(entries[:50], ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def load_optional_eval_data(path_value: str | None, tokenizer: CharTokenizer, block_size: int) -> tuple[torch.Tensor | None, bool]:
+    if not path_value:
+        return None, False
+    path = Path(path_value)
+    if not path.exists():
+        raise ValueError(f"eval data file does not exist: {path_value}")
+    text = load_text(path)
+    encoded = torch.tensor(tokenizer.encode(text), dtype=torch.long)
+    if len(encoded) <= block_size + 1:
+        return None, False
+    return encoded, True
+
+
+def quality_gate(
+    fixed_eval_loss: float | None,
+    loss_gap: float | None,
+    max_eval_loss: float | None,
+    max_loss_gap: float | None,
+) -> tuple[str, list[str]]:
+    reasons: list[str] = []
+    if max_eval_loss is not None:
+        if fixed_eval_loss is None:
+            reasons.append("fixed eval loss unavailable")
+        elif fixed_eval_loss > max_eval_loss:
+            reasons.append(f"fixed eval loss {fixed_eval_loss:.4f} > {max_eval_loss:.4f}")
+    if max_loss_gap is not None:
+        if loss_gap is None:
+            reasons.append("loss gap unavailable")
+        elif abs(loss_gap) > max_loss_gap:
+            reasons.append(f"loss gap {loss_gap:.4f} exceeds {max_loss_gap:.4f}")
+    if max_eval_loss is None and max_loss_gap is None:
+        return "NOT_CONFIGURED", []
+    return ("PASS" if not reasons else "FAILED"), reasons
+
+
 def train(args: argparse.Namespace) -> None:
     apply_training_defaults(args)
     started_at = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -406,6 +447,7 @@ def train(args: argparse.Namespace) -> None:
         )
     encoded = torch.tensor(tokenizer.encode(text), dtype=torch.long)
     train_data, eval_data, validation_enabled = split_dataset(encoded, args.val_ratio, config.block_size)
+    fixed_eval_data, fixed_eval_enabled = load_optional_eval_data(args.eval_data, tokenizer, config.block_size)
     model = MiniGPT(config).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate)
     if resume_payload:
@@ -431,6 +473,8 @@ def train(args: argparse.Namespace) -> None:
         "preset": args.preset,
         "started_at": started_at,
         "data": args.data,
+        "eval_data": args.eval_data,
+        "fixed_eval_enabled": fixed_eval_enabled,
         "parent_run_name": args.parent_run_name,
         "parent_checkpoint": args.resume_checkpoint or args.parent_checkpoint,
         "resume_step": resume_step,
@@ -447,6 +491,8 @@ def train(args: argparse.Namespace) -> None:
         "eval_tokens": int(len(eval_data)),
         "sample_prompt": args.sample_prompt,
         "sample_tokens": args.sample_tokens,
+        "quality_gate_max_eval_loss": args.quality_gate_max_eval_loss,
+        "quality_gate_max_loss_gap": args.quality_gate_max_loss_gap,
         "config": asdict(config),
     }
     mongo_sink.upsert_run(initial_metadata, "RUNNING")
@@ -509,12 +555,23 @@ def train(args: argparse.Namespace) -> None:
     loss_gap = None
     if final_train_loss is not None and final_eval_loss is not None:
         loss_gap = round(float(final_eval_loss) - float(final_train_loss), 6)
+    fixed_eval_loss = None
+    if fixed_eval_data is not None:
+        fixed_eval_loss = round(estimate_loss(model, fixed_eval_data, config.block_size, args.batch_size, device), 6)
+    quality_gate_status, quality_gate_reasons = quality_gate(
+        fixed_eval_loss,
+        loss_gap,
+        args.quality_gate_max_eval_loss,
+        args.quality_gate_max_loss_gap,
+    )
     metadata = {
         "run_name": run_name,
         "preset": args.preset,
         "started_at": started_at,
         "finished_at": time.strftime("%Y-%m-%d %H:%M:%S"),
         "data": args.data,
+        "eval_data": args.eval_data,
+        "fixed_eval_enabled": fixed_eval_enabled,
         "checkpoint": str(checkpoint_path),
         "parent_run_name": args.parent_run_name,
         "parent_checkpoint": args.resume_checkpoint or args.parent_checkpoint,
@@ -535,6 +592,11 @@ def train(args: argparse.Namespace) -> None:
         "final_train_loss": final_train_loss,
         "final_eval_loss": final_eval_loss,
         "loss_gap": loss_gap,
+        "fixed_eval_loss": fixed_eval_loss,
+        "quality_gate_max_eval_loss": args.quality_gate_max_eval_loss,
+        "quality_gate_max_loss_gap": args.quality_gate_max_loss_gap,
+        "quality_gate_status": quality_gate_status,
+        "quality_gate_reasons": "; ".join(quality_gate_reasons),
         "config": asdict(config),
     }
     latest_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -554,6 +616,8 @@ def train(args: argparse.Namespace) -> None:
         "final_train_loss": final_train_loss,
         "final_eval_loss": final_eval_loss,
         "loss_gap": loss_gap,
+        "fixed_eval_loss": fixed_eval_loss,
+        "quality_gate_status": quality_gate_status,
         "max_steps": args.max_steps,
         "n_layer": config.n_layer,
         "n_embd": config.n_embd,
@@ -583,6 +647,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Train or sample a tiny character-level GPT.")
     parser.add_argument("--mode", choices=["train", "generate"], required=True)
     parser.add_argument("--data", default="data/sample.txt")
+    parser.add_argument("--eval-data")
     parser.add_argument("--checkpoint", default="checkpoints/mini_gpt.pt")
     parser.add_argument("--out-dir", default="checkpoints")
     parser.add_argument("--prompt", default="语言模型")
@@ -603,6 +668,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--val-ratio", type=float)
     parser.add_argument("--temperature", type=float, default=0.9)
     parser.add_argument("--top-k", type=int, default=20)
+    parser.add_argument("--quality-gate-max-eval-loss", type=float)
+    parser.add_argument("--quality-gate-max-loss-gap", type=float)
     parser.add_argument("--log-every", type=int)
     parser.add_argument("--runs-dir", default="runs")
     parser.add_argument("--log-file", default="train_log.csv")

@@ -696,6 +696,7 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         addArgument(command, "--preset", preset);
         addArgument(command, "--run-name", runName);
         addArgument(command, "--data", hasTextOrDefault(request.getData(), DEFAULT_DATA));
+        addOptionalArgument(command, "--eval-data", request.getEvalData());
         addArgument(command, "--max-steps", maxSteps);
         addArgument(command, "--sample-prompt", hasTextOrDefault(request.getSamplePrompt(), DEFAULT_SAMPLE_PROMPT));
         ResumeSource resumeSource = resolveResumeSource(playgroundDir, request);
@@ -714,6 +715,8 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         addOptionalArgument(command, "--sample-tokens", request.getSampleTokens());
         addOptionalArgument(command, "--temperature", request.getTemperature());
         addOptionalArgument(command, "--top-k", request.getTopK());
+        addOptionalArgument(command, "--quality-gate-max-eval-loss", request.getQualityGateMaxEvalLoss());
+        addOptionalArgument(command, "--quality-gate-max-loss-gap", request.getQualityGateMaxLossGap());
         return command;
     }
 
@@ -848,6 +851,7 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         run.setStartedAt(formatDisplayTime(startedAt));
         run.setFinishedAt(null);
         run.setData(hasTextOrDefault(request.getData(), DEFAULT_DATA));
+        run.setEvalData(trimToNull(request.getEvalData()));
         run.setCheckpoint(null);
         ResumeSource resumeSource = resolveResumeSource(resolvePlaygroundDir(), request);
         run.setParentRunName(resumeSource == null ? null : resumeSource.runName());
@@ -865,6 +869,11 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         run.setFinalTrainLoss(null);
         run.setFinalEvalLoss(null);
         run.setLossGap(null);
+        run.setFixedEvalLoss(null);
+        run.setQualityGateMaxEvalLoss(request.getQualityGateMaxEvalLoss());
+        run.setQualityGateMaxLossGap(request.getQualityGateMaxLossGap());
+        run.setQualityGateStatus(null);
+        run.setQualityGateReasons(null);
         run.setUpdatedAt(now);
         if (run.getCreatedAt() == null) {
             run.setCreatedAt(now);
@@ -892,6 +901,12 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         Map<String, Object> latestMetadata = readRunMetadata(playgroundDir, runName);
         run.setResumeStep(asInteger(latestMetadata.get("resume_step")));
         run.setTrainStep(asInteger(latestMetadata.get("train_step")));
+        run.setEvalData(asString(latestMetadata.get("eval_data")));
+        run.setFixedEvalLoss(asDouble(latestMetadata.get("fixed_eval_loss")));
+        run.setQualityGateMaxEvalLoss(asDouble(latestMetadata.get("quality_gate_max_eval_loss")));
+        run.setQualityGateMaxLossGap(asDouble(latestMetadata.get("quality_gate_max_loss_gap")));
+        run.setQualityGateStatus(asString(latestMetadata.get("quality_gate_status")));
+        run.setQualityGateReasons(asString(latestMetadata.get("quality_gate_reasons")));
         if (latestLog != null) {
             run.setFinalTrainLoss(latestLog.getTrainLoss());
             run.setFinalEvalLoss(latestLog.getEvalLoss());
@@ -1153,6 +1168,9 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         config.put("topK", request.getTopK());
         config.put("resumeFromRun", request.getResumeFromRun());
         config.put("resumeCheckpoint", request.getResumeCheckpoint());
+        config.put("evalData", request.getEvalData());
+        config.put("qualityGateMaxEvalLoss", request.getQualityGateMaxEvalLoss());
+        config.put("qualityGateMaxLossGap", request.getQualityGateMaxLossGap());
         return config;
     }
 
@@ -1206,6 +1224,24 @@ public class MiniGptLearningService implements IMiniGptLearningService {
             }
         }
         return null;
+    }
+
+    private static Double asDouble(Object value) {
+        if (value instanceof Number number) {
+            return number.doubleValue();
+        }
+        if (value instanceof String text && StringUtils.hasText(text)) {
+            try {
+                return Double.parseDouble(text);
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private static String asString(Object value) {
+        return value == null ? null : String.valueOf(value);
     }
 
     private static String formatDisplayTime(long millis) {

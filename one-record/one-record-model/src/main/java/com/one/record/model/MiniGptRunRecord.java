@@ -34,6 +34,8 @@ public class MiniGptRunRecord {
 
     private String data;
 
+    private String evalData;
+
     private String checkpoint;
 
     private String parentRunName;
@@ -73,6 +75,16 @@ public class MiniGptRunRecord {
     private Double finalEvalLoss;
 
     private Double lossGap;
+
+    private Double fixedEvalLoss;
+
+    private Double qualityGateMaxEvalLoss;
+
+    private Double qualityGateMaxLossGap;
+
+    private String qualityGateStatus;
+
+    private String qualityGateReasons;
 
     private String hypothesis;
 

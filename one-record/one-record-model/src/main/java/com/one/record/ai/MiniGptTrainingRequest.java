@@ -17,6 +17,12 @@ public class MiniGptTrainingRequest implements Serializable {
 
     private String data = "data/sample.txt";
 
+    private String evalData;
+
+    private Double qualityGateMaxEvalLoss;
+
+    private Double qualityGateMaxLossGap;
+
     private Integer maxSteps;
 
     private Integer batchSize;

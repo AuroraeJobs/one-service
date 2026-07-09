@@ -1075,6 +1075,7 @@ export interface MiniGptRunRecord {
   startedAt?: string;
   finishedAt?: string;
   data?: string;
+  evalData?: string;
   checkpoint?: string;
   parentRunName?: string;
   parentCheckpoint?: string;
@@ -1095,6 +1096,11 @@ export interface MiniGptRunRecord {
   finalTrainLoss?: number;
   finalEvalLoss?: number;
   lossGap?: number;
+  fixedEvalLoss?: number;
+  qualityGateMaxEvalLoss?: number;
+  qualityGateMaxLossGap?: number;
+  qualityGateStatus?: string;
+  qualityGateReasons?: string;
   hypothesis?: string;
   observation?: string;
   conclusion?: string;
@@ -1131,6 +1137,9 @@ export interface MiniGptTrainingRequest {
   resumeFromRun?: string;
   resumeCheckpoint?: string;
   data?: string;
+  evalData?: string;
+  qualityGateMaxEvalLoss?: number;
+  qualityGateMaxLossGap?: number;
   maxSteps?: number;
   batchSize?: number;
   learningRate?: number;
