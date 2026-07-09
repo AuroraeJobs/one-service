@@ -88,14 +88,18 @@ const fallbackTrainingDashboard: OpenAiTrainingManagementDashboard = {
   ]
 };
 
-const formatNumber = (value?: number) => value === undefined ? '-' : value.toLocaleString('zh-CN');
+const isNil = (value: unknown) => value === undefined || value === null;
 
-const formatDecimal = (value?: number) => value === undefined ? '-' : value.toFixed(2);
+const formatNumber = (value?: number | null) => isNil(value) ? '-' : value.toLocaleString('zh-CN');
 
-const formatPercent = (value?: number) => value === undefined ? '-' : `${Math.round(value * 100)}%`;
+const formatDecimal = (value?: number | null) => isNil(value) ? '-' : value.toFixed(2);
+
+const formatPercent = (value?: number | null) => isNil(value) ? '-' : `${Math.round(value * 100)}%`;
+
+const formatProgressPercent = (value?: number | null) => isNil(value) ? 0 : Math.round(value * 100);
 
 const formatDashboardTime = (value?: number) => (
-  value === undefined ? '-' : new Date(value).toLocaleString('zh-CN', { hour12: false })
+  isNil(value) ? '-' : new Date(value).toLocaleString('zh-CN', { hour12: false })
 );
 
 const listLines = <T,>(items: T[] | undefined, render: (item: T) => string) => (
@@ -125,7 +129,7 @@ const buildTrainingReport = (dashboard: OpenAiTrainingManagementDashboard) => [
   '## 训练指标快照',
   ...listLines(
     dashboard.metrics,
-    metric => `- ${metric.jobId || '-'} step ${formatNumber(metric.step)}：train=${formatDecimal(metric.trainLoss)}, valid=${formatDecimal(metric.validLoss)}, acc=${formatPercent(metric.validTokenAccuracy)}, elapsed=${metric.elapsedSeconds === undefined ? '-' : `${metric.elapsedSeconds}s`}`
+    metric => `- ${metric.jobId || '-'} step ${formatNumber(metric.step)}：train=${formatDecimal(metric.trainLoss)}, valid=${formatDecimal(metric.validLoss)}, acc=${formatPercent(metric.validTokenAccuracy)}, elapsed=${isNil(metric.elapsedSeconds) ? '-' : `${metric.elapsedSeconds}s`}`
   ),
   '',
   '## Checkpoint 资产',
@@ -137,7 +141,7 @@ const buildTrainingReport = (dashboard: OpenAiTrainingManagementDashboard) => [
   '## Eval 决策',
   ...listLines(
     dashboard.evalRuns,
-    evalRun => `- ${evalRun.model || '-'}：${evalRun.evalSet || '-'} / pass=${evalRun.passRate === undefined ? '-' : `${evalRun.passRate}%`} / score=${formatDecimal(evalRun.score)} / decision=${evalRun.decision || '-'}`
+    evalRun => `- ${evalRun.model || '-'}：${evalRun.evalSet || '-'} / pass=${isNil(evalRun.passRate) ? '-' : `${evalRun.passRate}%`} / score=${formatDecimal(evalRun.score)} / decision=${evalRun.decision || '-'}`
   ),
   '',
   '## Eval 失败案例',
@@ -237,7 +241,7 @@ const datasetColumns: ColumnsType<OpenAiTrainingDataset> = [
   {
     title: 'Records',
     dataIndex: 'recordCount',
-    render: (value?: number) => value === undefined ? '-' : value.toLocaleString('zh-CN')
+    render: (value?: number | null) => formatNumber(value)
   },
   {
     title: 'Quality',
@@ -267,9 +271,9 @@ const jobColumns: ColumnsType<OpenAiTrainingJob> = [
   },
   {
     title: 'Train / Valid',
-    render: (_, row) => row.trainLoss === undefined || row.validLoss === undefined
+    render: (_, row) => isNil(row.trainLoss) || isNil(row.validLoss)
       ? '-'
-      : `${row.trainLoss.toFixed(2)} / ${row.validLoss.toFixed(2)}`
+      : `${formatDecimal(row.trainLoss)} / ${formatDecimal(row.validLoss)}`
   },
   {
     title: 'Checkpoint',
@@ -286,29 +290,29 @@ const metricColumns: ColumnsType<OpenAiTrainingMetric> = [
   {
     title: 'Step',
     dataIndex: 'step',
-    render: (value?: number) => value === undefined ? '-' : value.toLocaleString('zh-CN')
+    render: (value?: number | null) => formatNumber(value)
   },
   {
     title: 'Train Loss',
     dataIndex: 'trainLoss',
-    render: (value?: number) => value === undefined ? '-' : value.toFixed(2)
+    render: (value?: number | null) => formatDecimal(value)
   },
   {
     title: 'Valid Loss',
     dataIndex: 'validLoss',
-    render: (value?: number) => value === undefined ? '-' : value.toFixed(2)
+    render: (value?: number | null) => formatDecimal(value)
   },
   {
     title: 'Token Accuracy',
     dataIndex: 'validTokenAccuracy',
-    render: (value?: number) => (
-      <Progress percent={value === undefined ? 0 : Math.round(value * 100)} size="small" />
+    render: (value?: number | null) => (
+      <Progress percent={formatProgressPercent(value)} size="small" />
     )
   },
   {
     title: 'Elapsed',
     dataIndex: 'elapsedSeconds',
-    render: (value?: number) => value === undefined ? '-' : `${value}s`
+    render: (value?: number | null) => isNil(value) ? '-' : `${value}s`
   }
 ];
 
@@ -325,18 +329,18 @@ const checkpointColumns: ColumnsType<OpenAiTrainingCheckpoint> = [
   {
     title: 'Step',
     dataIndex: 'step',
-    render: (value?: number) => value === undefined ? '-' : value.toLocaleString('zh-CN')
+    render: (value?: number | null) => formatNumber(value)
   },
   {
     title: 'Valid Loss',
     dataIndex: 'validLoss',
-    render: (value?: number) => value === undefined ? '-' : value.toFixed(2)
+    render: (value?: number | null) => formatDecimal(value)
   },
   {
     title: 'Token Accuracy',
     dataIndex: 'validTokenAccuracy',
-    render: (value?: number) => (
-      <Progress percent={value === undefined ? 0 : Math.round(value * 100)} size="small" />
+    render: (value?: number | null) => (
+      <Progress percent={formatProgressPercent(value)} size="small" />
     )
   },
   {
@@ -358,12 +362,12 @@ const evalColumns: ColumnsType<OpenAiTrainingEvalRun> = [
   {
     title: 'Pass Rate',
     dataIndex: 'passRate',
-    render: (value?: number) => <Progress percent={value || 0} size="small" />
+    render: (value?: number | null) => <Progress percent={isNil(value) ? 0 : value} size="small" />
   },
   {
     title: 'Score',
     dataIndex: 'score',
-    render: (value?: number) => value === undefined ? '-' : value.toFixed(2)
+    render: (value?: number | null) => formatDecimal(value)
   },
   {
     title: 'Decision',
@@ -413,17 +417,17 @@ const costColumns: ColumnsType<OpenAiTrainingCostItem> = [
   {
     title: 'Input Tokens',
     dataIndex: 'inputTokens',
-    render: (value?: number) => value === undefined ? '-' : value.toLocaleString('zh-CN')
+    render: (value?: number | null) => formatNumber(value)
   },
   {
     title: 'Output Tokens',
     dataIndex: 'outputTokens',
-    render: (value?: number) => value === undefined ? '-' : value.toLocaleString('zh-CN')
+    render: (value?: number | null) => formatNumber(value)
   },
   {
     title: 'Estimated USD',
     dataIndex: 'estimatedUsd',
-    render: (value?: number) => value === undefined ? '-' : `$${value.toFixed(2)}`
+    render: (value?: number | null) => isNil(value) ? '-' : `$${formatDecimal(value)}`
   },
   {
     title: 'Note',
