@@ -1962,6 +1962,30 @@
   gap: 8px;
 }
 
+.mini-gpt-run-group {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 8px;
+  background: var(--mini-gpt-panel-bg-soft);
+}
+
+.mini-gpt-run-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mini-gpt-run-group-head span {
+  min-width: 0;
+  color: var(--mini-gpt-muted);
+  font-size: 12px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
 .mini-gpt-run-list button {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

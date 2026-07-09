@@ -626,6 +626,17 @@ const displayVariableValue = (value: unknown) => (
   value === undefined || value === null || value === '' ? '-' : String(value)
 );
 
+const normalizeTrainingData = (value?: string) => (value || 'data/sample.txt').trim() || 'data/sample.txt';
+
+const groupRunsByData = (runs: MiniGptRunRecord[]) => {
+  const groups = new Map<string, MiniGptRunRecord[]>();
+  runs.forEach(item => {
+    const dataKey = normalizeTrainingData(item.data);
+    groups.set(dataKey, [...(groups.get(dataKey) || []), item]);
+  });
+  return Array.from(groups.entries()).map(([data, items]) => ({ data, items }));
+};
+
 const candidateKeyFromBalls = (redNumbers: string[] = [], blueNumber?: string) => (
   `${redNumbers.join('-')}+${blueNumber || '--'}`
 );
@@ -2087,10 +2098,29 @@ const MiniGptLearningPage = () => {
     () => ({ ...form.getFieldsValue(), ...(watchedTrainingValues || {}) }),
     [form, watchedTrainingValues]
   );
+  const currentTrainingData = normalizeTrainingData(trainingFormValues.data);
+  const resumeSourceRuns = useMemo(
+    () => runs.filter(item => item.runName && item.checkpoint && normalizeTrainingData(item.data) === currentTrainingData),
+    [currentTrainingData, runs]
+  );
+  const runGroupsByData = useMemo(() => groupRunsByData(runs), [runs]);
   const noteFormValues = useMemo(
     () => ({ ...noteForm.getFieldsValue(), ...(watchedNoteValues || {}) }),
     [noteForm, watchedNoteValues]
   );
+
+  useEffect(() => {
+    const selectedResume = trainingFormValues.resumeFromRun;
+    if (!selectedResume) return;
+    const stillValid = resumeSourceRuns.some(item => item.runName === selectedResume);
+    if (!stillValid) {
+      form.setFieldsValue({
+        ...form.getFieldsValue(),
+        resumeFromRun: undefined
+      });
+    }
+  }, [form, resumeSourceRuns, trainingFormValues.resumeFromRun]);
+
   const variableDiffItems = useMemo(
     () => experimentVariableDiffs(run, trainingFormValues),
     [run, trainingFormValues]
@@ -2250,11 +2280,14 @@ const MiniGptLearningPage = () => {
             className="mini-gpt-run-select"
             placeholder="选择实验"
             value={selectedRun}
-            options={runs.map(item => ({
-              value: item.runName,
-              label: [item.runName, item.preset, item.finalEvalLoss !== undefined ? `eval=${formatLoss(item.finalEvalLoss)}` : '']
-                .filter(Boolean)
-                .join(' · ')
+            options={runGroupsByData.map(group => ({
+              label: group.data,
+              options: group.items.map(item => ({
+                value: item.runName,
+                label: [item.runName, item.preset, item.finalEvalLoss !== undefined ? `eval=${formatLoss(item.finalEvalLoss)}` : '']
+                  .filter(Boolean)
+                  .join(' · ')
+              }))
             }))}
             onChange={(value) => loadDashboard(value)}
           />
@@ -2310,9 +2343,8 @@ const MiniGptLearningPage = () => {
                 <Form.Item name="resumeFromRun" label="续训来源">
                   <Select
                     allowClear
-                    placeholder="从已有 checkpoint 继续"
-                    options={runs
-                      .filter(item => item.runName && item.checkpoint)
+                    placeholder="仅显示同语料 checkpoint"
+                    options={resumeSourceRuns
                       .map(item => ({
                         value: item.runName,
                         label: [item.runName, item.trainStep !== undefined ? `step=${formatInteger(item.trainStep)}` : '', item.finalEvalLoss !== undefined ? `eval=${formatLoss(item.finalEvalLoss)}` : '']
@@ -3316,16 +3348,24 @@ const MiniGptLearningPage = () => {
 
               <Card className="mini-gpt-panel" title="历史实验">
                 <div className="mini-gpt-run-list">
-                  {runs.map(item => (
-                    <button
-                      type="button"
-                      key={item.runName}
-                      className={item.runName === run.runName ? 'active' : ''}
-                      onClick={() => item.runName && loadDashboard(item.runName)}
-                    >
-                      <span>{item.runName}</span>
-                      <strong>{formatLoss(item.finalEvalLoss)}</strong>
-                    </button>
+                  {runGroupsByData.map(group => (
+                    <section className="mini-gpt-run-group" key={group.data}>
+                      <div className="mini-gpt-run-group-head">
+                        <span>{group.data}</span>
+                        <Tag>{group.items.length} runs</Tag>
+                      </div>
+                      {group.items.map(item => (
+                        <button
+                          type="button"
+                          key={item.runName}
+                          className={item.runName === run.runName ? 'active' : ''}
+                          onClick={() => item.runName && loadDashboard(item.runName)}
+                        >
+                          <span>{item.runName}</span>
+                          <strong>{formatLoss(item.finalEvalLoss)}</strong>
+                        </button>
+                      ))}
+                    </section>
                   ))}
                 </div>
               </Card>

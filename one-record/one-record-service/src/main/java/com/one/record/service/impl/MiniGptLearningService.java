@@ -1183,7 +1183,15 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         if (!StringUtils.hasText(checkpoint) && StringUtils.hasText(parentRunName)) {
             MiniGptRunRecord parentRun = runRepository.findByRunName(parentRunName)
                     .orElseThrow(() -> new IllegalArgumentException("未找到续训来源实验: " + parentRunName));
+            String requestData = hasTextOrDefault(request.getData(), DEFAULT_DATA);
+            String parentData = hasTextOrDefault(parentRun.getData(), DEFAULT_DATA);
+            if (!requestData.equals(parentData)) {
+                throw new IllegalArgumentException("续训来源语料不一致: 当前语料=" + requestData + ", 来源语料=" + parentData);
+            }
             checkpoint = parentRun.getCheckpoint();
+            if (!StringUtils.hasText(checkpoint)) {
+                throw new IllegalArgumentException("续训来源实验没有可用 checkpoint: " + parentRunName);
+            }
         }
         if (!StringUtils.hasText(checkpoint)) {
             return null;
