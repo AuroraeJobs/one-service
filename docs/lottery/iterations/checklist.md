@@ -1138,6 +1138,27 @@ Goal: turn the next-phase release-evidence archive candidate into a focused hand
 - [x] Connect the focused release archive path to governance release evidence.
 - [x] Decide whether release archive history should remain docs-only or become an export page data source. Decision: keep release history docs-only until a backend/export contract is explicitly needed.
 
+## Iteration 44: Recommendation Retirement Review
+
+Goal: turn stale recommendation cleanup into a focused review path that reuses existing recommendation lifecycle, attribution, governance, and export evidence.
+
+### Wave 44A: Recommendation Retirement Focus
+
+- [x] Add a focused recommendation view for stale evidence, retirement candidates, watch/pause candidates, and applied records.
+- [x] Keep the first slice frontend-derived from existing recommendation rollups and visible recommendation rows.
+- [x] Preserve explicit user-triggered cleanup; do not archive recommendations in the background.
+
+### Wave 44B: Workbench And Month-End Handoff
+
+- [x] Surface the focused retirement path from month-end planning candidates.
+- [x] Route workbench recommendation review into the same focused path.
+- [x] Keep stale cleanup and evidence export actions explicit.
+
+### Wave 44C: Governance And Release Evidence
+
+- [x] Connect governance recommendation warnings and transition rows to the focused retirement path.
+- [x] Decide whether a dedicated export label is needed. Decision: existing recommendation follow-through package is enough; keep V29 release evidence and add V44 release visibility pointing at the focused recommendation view.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

@@ -1,5 +1,5 @@
 {
-  "target": "Iteration 43 Wave 43C governance release archive link smoke",
+  "target": "Iteration 44 Wave 44C recommendation retirement review smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
@@ -669,7 +669,7 @@
         "lotteryRecommendationApi.refresh",
         "lotteryRecommendationApi.updateStatus"
       ],
-      "emptyStates": ["暂无推广推荐", "暂无观察推荐", "暂无暂停推荐", "暂无退役推荐", "暂无行动结果回看", "暂无状态流转记录"],
+      "emptyStates": ["暂无推广推荐", "暂无观察推荐", "暂无暂停推荐", "暂无退役推荐", "暂无行动结果回看", "暂无状态流转记录", "策略退休复盘焦点", "证据过期待归档", "退休候选", "观察/暂停候选", "已应用留档", "导出证据"],
       "errorStates": ["读取彩票推荐失败", "刷新彩票推荐失败", "更新彩票推荐失败"],
       "fixtureData": {
         "recommendations": {
@@ -843,7 +843,7 @@
         "lotteryExportApi.maintenanceSummary",
         "lotteryExportApi.cleanupDryRun"
       ],
-      "emptyStates": ["本次导出没有数据", "暂无数据", "暂无审计事件", "暂无集合状态", "暂无缓存状态", "复盘运营", "月末复盘", "长期研究包", "年度复盘包", "异常复盘包", "Provider可靠性包", "复核Runbook包", "归因闭环包", "归因质量包", "推荐生命周期包", "推荐跟进包", "移动指挥包", "V15治理证据包", "异常观察证据", "Provider可靠性证据", "复核Runbook证据", "长期研究证据", "闭环证据包", "V33复核Runbook", "V39复核笔记质量", "V40长期计划复盘", "V41证据质量趋势", "V32Provider可靠性", "发布证据归档焦点", "reports/lottery-release-evidence.md", "reports/lottery-release-history/README.md", "npm run lottery:release-archive", "V31异常复盘", "V30长期复盘导出", "V29推荐跟进", "V28归因质量", "V16导航易用性", "V16操作体验", "V16筛选可读性", "V16响应式打磨", "V18今日优先事项", "V18航行记录分析", "V18号码综合可能性", "V18深度规律分析", "前端发布就绪"],
+      "emptyStates": ["本次导出没有数据", "暂无数据", "暂无审计事件", "暂无集合状态", "暂无缓存状态", "复盘运营", "月末复盘", "长期研究包", "年度复盘包", "异常复盘包", "Provider可靠性包", "复核Runbook包", "归因闭环包", "归因质量包", "推荐生命周期包", "推荐跟进包", "移动指挥包", "V15治理证据包", "异常观察证据", "Provider可靠性证据", "复核Runbook证据", "长期研究证据", "闭环证据包", "V33复核Runbook", "V39复核笔记质量", "V40长期计划复盘", "V41证据质量趋势", "V32Provider可靠性", "V44策略退休复盘", "发布证据归档焦点", "reports/lottery-release-evidence.md", "reports/lottery-release-history/README.md", "npm run lottery:release-archive", "V31异常复盘", "V30长期复盘导出", "V29推荐跟进", "V28归因质量", "V16导航易用性", "V16操作体验", "V16筛选可读性", "V16响应式打磨", "V18今日优先事项", "V18航行记录分析", "V18号码综合可能性", "V18深度规律分析", "前端发布就绪"],
       "errorStates": ["读取彩票导出审计失败", "导出彩票数据失败", "生成彩票报表失败", "执行彩票维护 dry-run 失败"],
       "fixtureData": {
         "releaseEvidence": {

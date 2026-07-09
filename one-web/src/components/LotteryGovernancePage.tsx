@@ -259,7 +259,7 @@ const LotteryGovernancePage = () => {
         score: recommendationRollup?.recommendationCount ? Math.max(45, 100 - (recommendationRollup.staleCount || 0) * 15 - recommendationOpenGap * 6) : statusScore('MANUAL'),
         message: recommendationWarnings ? `${recommendationRollup?.staleCount || 0} 条过期，${recommendationRollup?.activeCount || 0} 条待处理` : '推荐生命周期已跟进',
         detail: `近30条 ${recommendationRollup?.recommendationCount || 0} 条 · 已应用 ${recommendationRollup?.appliedCount || 0}`,
-        path: '/lottery/recommendations',
+        path: '/lottery/recommendations?focus=retirement-review&preset=STALE_EVIDENCE',
         icon: <CompassOutlined />
       },
       {
@@ -403,7 +403,7 @@ const LotteryGovernancePage = () => {
         count: (recommendationRollup?.staleCount || 0) + recommendationOpenGap,
         detail: `${recommendationRollup?.staleCount || 0} 条过期，${recommendationOpenGap} 条未闭环`,
         trend: `近30条流转 ${recommendationRollup?.transitions?.length || 0} 类`,
-        path: '/lottery/recommendations'
+        path: '/lottery/recommendations?focus=retirement-review&preset=STALE_EVIDENCE'
       });
     }
 
@@ -481,7 +481,7 @@ const LotteryGovernancePage = () => {
         value: `${recommendationTransitions.length} 类`,
         detail: `${recommendationRollup?.staleCount || 0} 条过期，${recommendationRollup?.appliedCount || 0} 条已应用`,
         status: recommendationRollup?.staleCount ? 'WARNING' : recommendationTransitions.length ? 'PASS' : 'MANUAL',
-        path: '/lottery/recommendations'
+        path: '/lottery/recommendations?focus=retirement-review&preset=STALE_EVIDENCE'
       },
       {
         key: 'attribution-quality',
@@ -531,7 +531,7 @@ const LotteryGovernancePage = () => {
           <Button icon={<MobileOutlined />} onClick={() => navigate('/lottery/mobile')}>移动指挥</Button>
           <Button icon={<SyncOutlined />} onClick={() => navigate('/lottery/sync')}>同步</Button>
           <Button icon={<BranchesOutlined />} onClick={() => navigate('/lottery/outcomes?focus=evidence-quality')}>归因</Button>
-          <Button icon={<CompassOutlined />} onClick={() => navigate('/lottery/recommendations')}>推荐</Button>
+          <Button icon={<CompassOutlined />} onClick={() => navigate('/lottery/recommendations?focus=retirement-review&preset=STALE_EVIDENCE')}>推荐</Button>
           <Button onClick={() => navigate('/lottery/settings')}>阈值设置</Button>
           <Button icon={<ReloadOutlined />} loading={loading} onClick={loadGovernance}>刷新</Button>
         </Space>

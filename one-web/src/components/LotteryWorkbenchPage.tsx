@@ -135,7 +135,7 @@ const workbenchIssueHandoffPaths = {
   mobile: '/lottery/mobile',
   governance: '/lottery/governance',
   ticketPacks: '/lottery/ticket-packs',
-  recommendations: '/lottery/recommendations',
+  recommendations: '/lottery/recommendations?focus=retirement-review&preset=STALE_EVIDENCE',
   exports: '/lottery/exports',
   monthEnd: '/lottery/month-end'
 } as const;
@@ -1433,7 +1433,7 @@ const LotteryWorkbenchPage = () => {
       key: 'recommendation-review',
       icon: <SafetyCertificateOutlined />,
       title: '推荐复核',
-      detail: '检查推荐生命周期和 stale evidence',
+      detail: '检查过期推荐、退役候选和已应用留档',
       status: staleEvidence ? 'WARNING' : 'MANUAL',
       path: workbenchIssueHandoffPaths.recommendations,
       actionLabel: '看推荐'

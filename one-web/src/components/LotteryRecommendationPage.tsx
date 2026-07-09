@@ -4,6 +4,7 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   CompassOutlined,
+  DownloadOutlined,
   PauseCircleOutlined,
   ReloadOutlined,
   StopOutlined
@@ -65,6 +66,7 @@ const LotteryRecommendationPage = () => {
   const [items, setItems] = useState<LotteryRecommendation[]>([]);
   const [rollup, setRollup] = useState<LotteryRecommendationRollup>();
   const [filterState, setFilterState] = useState<string | undefined>(searchParams.get('recommendationState') || undefined);
+  const focus = searchParams.get('focus') || '';
   const [preset, setPreset] = useState<RecommendationPreset>(() => {
     const requestedPreset = searchParams.get('preset') as RecommendationPreset | null;
     return requestedPreset && recommendationPresets.includes(requestedPreset) ? requestedPreset : 'ALL';
@@ -211,6 +213,27 @@ const LotteryRecommendationPage = () => {
 
   const transitionRows = useMemo(() => (rollup?.transitions || []).slice(0, 3), [rollup]);
 
+  const retirementReview = useMemo(() => {
+    const staleOpen = visibleItems.filter(isStaleRecommendation);
+    const retireCandidates = visibleItems.filter(item => (
+      item.recommendationState === 'RETIRE'
+      || item.lifecycleStatus === 'ARCHIVED'
+      || isStaleRecommendation(item)
+    ));
+    const watchCandidates = visibleItems.filter(item => (
+      item.recommendationState === 'WATCH'
+      || item.recommendationState === 'PAUSE'
+      || item.lifecycleStatus === 'SNOOZED'
+    ));
+    return {
+      staleOpen,
+      retireCandidates,
+      watchCandidates,
+      applied: visibleItems.filter(item => item.lifecycleStatus === 'APPLIED'),
+      status: staleOpen.length ? 'WARNING' : retireCandidates.length ? 'WATCH' : 'PASS'
+    };
+  }, [visibleItems]);
+
   return (
     <LifePageShell
       className="lottery-prediction-page lottery-recommendation-page"
@@ -219,6 +242,12 @@ const LotteryRecommendationPage = () => {
       actions={
         <Space wrap>
           <Button onClick={() => navigate('/lottery/outcomes')}>归因</Button>
+          <Button
+            type={focus === 'retirement-review' ? 'primary' : 'default'}
+            onClick={() => navigate('/lottery/recommendations?focus=retirement-review&preset=STALE_EVIDENCE')}
+          >
+            退休复盘
+          </Button>
           <div className="lottery-filter-preset-bar">
             <Button size="small" type={preset === 'ALL' ? 'primary' : 'default'} onClick={() => updateRecommendationQuery(filterState, 'ALL')}>全部</Button>
             <Button size="small" type={preset === 'OPEN' ? 'primary' : 'default'} onClick={() => updateRecommendationQuery(filterState, 'OPEN')}>待处理</Button>
@@ -244,6 +273,45 @@ const LotteryRecommendationPage = () => {
         <article><strong>{totals.watch}</strong><span>观察</span></article>
         <article><strong>{totals.open}</strong><span>待处理</span></article>
       </section>
+
+      {focus === 'retirement-review' ? (
+        <Card
+          className="life-panel-card lottery-clean-panel lottery-recommendation-focus-card"
+          title="策略退休复盘焦点"
+          extra={<Tag color={retirementReview.status === 'WARNING' ? 'orange' : 'green'}>{lotteryStatusLabel(retirementReview.status)}</Tag>}
+        >
+          <div className="lottery-recommendation-focus-grid">
+            <article>
+              <strong>{retirementReview.staleOpen.length}</strong>
+              <span>证据过期待归档</span>
+            </article>
+            <article>
+              <strong>{retirementReview.retireCandidates.length}</strong>
+              <span>退休候选</span>
+            </article>
+            <article>
+              <strong>{retirementReview.watchCandidates.length}</strong>
+              <span>观察/暂停候选</span>
+            </article>
+            <article>
+              <strong>{retirementReview.applied.length}</strong>
+              <span>已应用留档</span>
+            </article>
+          </div>
+          <div className="lottery-recommendation-focus-actions">
+            <Button size="small" icon={<CompassOutlined />} onClick={() => updateRecommendationQuery(undefined, 'STALE_EVIDENCE')}>
+              只看过期
+            </Button>
+            <Button size="small" icon={<CheckCircleOutlined />} onClick={() => navigate('/lottery/outcomes?focus=evidence-quality')}>
+              对照归因
+            </Button>
+            <Button size="small" icon={<DownloadOutlined />} onClick={() => navigate('/lottery/exports?preset=recommendation-follow-through')}>
+              导出证据
+            </Button>
+          </div>
+          <p>优先处理证据超过 24 小时且未应用的推荐；已应用推荐保留为归因回看，观察/暂停候选继续进入下一轮验证。</p>
+        </Card>
+      ) : null}
 
       <section className="lottery-recommendation-analytics">
         <Card className="life-panel-card lottery-clean-panel" title="生命周期分析" extra={<Tag color={lifecycleAnalytics.stale ? 'orange' : 'green'}>{lifecycleAnalytics.stale} 条过期</Tag>}>

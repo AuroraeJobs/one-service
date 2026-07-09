@@ -532,6 +532,13 @@ const LotteryExportMaintenancePage = () => {
       path: '/lottery/sync?focus=provider-reliability'
     },
     {
+      key: 'v44-recommendation-retirement',
+      label: 'V44策略退休复盘',
+      status: 'PASS',
+      message: '推荐退休复盘已接入推荐页、月末候选、工作台和治理；继续复用推荐跟进证据包',
+      path: '/lottery/recommendations?focus=retirement-review&preset=STALE_EVIDENCE'
+    },
+    {
       key: 'v33-review-runbook',
       label: 'V33复核Runbook',
       status: 'PASS',

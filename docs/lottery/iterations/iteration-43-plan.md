@@ -16,7 +16,11 @@ Status: completed with `/lottery/exports?focus=release-archive` and a focused re
 - Keep the action tied to existing release check signals.
 - Add smoke coverage for the handoff label.
 
+Status: completed with the workbench `发布归档` next-step card and static smoke coverage for `focus=release-archive`.
+
 ## Wave 43C: Governance Release Archive Link
 
 - Connect the focused release archive path to governance release evidence.
 - Decide whether release archive history should remain docs-only or become an export page data source.
+
+Status: completed by routing governance release-readiness warnings to `/lottery/exports?focus=release-archive`; release history remains docs-only until a backend/export contract is explicitly needed.

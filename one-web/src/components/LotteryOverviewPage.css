@@ -3685,6 +3685,51 @@
   font-size: 12px;
 }
 
+.lottery-recommendation-focus-card {
+  margin-bottom: 16px;
+}
+
+.lottery-recommendation-focus-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.lottery-recommendation-focus-grid article {
+  display: grid;
+  gap: 5px;
+  min-height: 72px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface-elevated);
+  color: var(--app-text);
+}
+
+.lottery-recommendation-focus-grid strong {
+  color: var(--app-text);
+  font-size: 20px;
+  line-height: 1.1;
+}
+
+.lottery-recommendation-focus-grid span,
+.lottery-recommendation-focus-card p {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.lottery-recommendation-focus-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.lottery-recommendation-focus-card p {
+  margin: 10px 0 0;
+}
+
 .lottery-recommendation-analytics {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
@@ -7828,6 +7873,7 @@ button.lottery-latest-vs-card:hover {
   .lottery-workbench-runbook-grid,
   .lottery-archive-search,
   .lottery-month-end-note-summary,
+  .lottery-recommendation-focus-grid,
   .lottery-research-report-grid,
   .lottery-release-readiness-grid,
   .lottery-research-card-grid,
