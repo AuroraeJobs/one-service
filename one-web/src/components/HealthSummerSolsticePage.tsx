@@ -178,7 +178,7 @@ const HealthSummerSolsticePage: React.FC = () => {
             border: '1px solid rgba(255, 152, 0, 0.4)',
             backgroundColor: '#2D2D2D',
             backgroundImage: 'linear-gradient(145deg, #2A2A2A, #1D1D1D)',
-            padding: '24px',
+            padding: 0,
             borderTop: 'none'
           }}
           extra={
