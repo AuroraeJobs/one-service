@@ -6,6 +6,10 @@
   --openai-training-muted: var(--life-muted, #6e6e73);
 }
 
+.openai-training-intro {
+  margin-bottom: 16px;
+}
+
 .theme-dark .openai-training-page,
 .dark .openai-training-page,
 [data-theme='dark'] .openai-training-page {

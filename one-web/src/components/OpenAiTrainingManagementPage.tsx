@@ -31,6 +31,63 @@ import './OpenAiTrainingManagementPage.css';
 
 const { Text } = Typography;
 
+const fallbackTrainingDashboard: OpenAiTrainingManagementDashboard = {
+  generatedAt: Date.now(),
+  lifecycleStages: [
+    { key: 'eval', icon: 'experiment', title: 'Baseline Eval', detail: '先测基础模型，确认问题来自 prompt、数据、工具还是模型行为。' },
+    { key: 'dataset', icon: 'database', title: 'Dataset', detail: '整理 supervised 样本，记录来源、用途、审核状态和训练文件。' },
+    { key: 'job', icon: 'upload', title: 'Fine-tuning Job', detail: '创建训练任务，跟踪 queued、running、succeeded、failed 等状态。' },
+    { key: 'checkpoint', icon: 'branches', title: 'Checkpoint', detail: '比较中间模型的 loss、accuracy、样例输出和失败案例。' },
+    { key: 'deploy', icon: 'rocket', title: 'Deployment Binding', detail: '只有 eval 达标后，才把模型版本绑定到具体业务能力。' }
+  ],
+  entities: [
+    { key: 'dataset', label: 'llm_training_dataset', value: '训练/评测数据集', accent: '#0071e3' },
+    { key: 'job', label: 'llm_training_job', value: '托管训练任务', accent: '#ff9500' },
+    { key: 'metric', label: 'llm_training_metric', value: 'step 与 loss 指标', accent: '#34c759' },
+    { key: 'checkpoint', label: 'llm_model_checkpoint', value: '中间模型版本', accent: '#5856d6' },
+    { key: 'eval', label: 'llm_eval_run', value: '上线前评测', accent: '#00c7be' },
+    { key: 'deployment', label: 'llm_model_deployment', value: '业务绑定与回滚', accent: '#ff3b30' }
+  ],
+  datasets: [
+    { key: 'wechat-style', name: 'wechat-style-sft.jsonl', purpose: 'fine_tune', source: '公众号人工精选样本', fileId: 'file-wechat-style-v1', recordCount: 420, qualityStatus: 'approved' },
+    { key: 'wechat-publish-eval', name: 'wechat-publish-eval.jsonl', purpose: 'eval', source: '发布回归用例', fileId: 'file-wechat-eval-v1', recordCount: 96, qualityStatus: 'approved' }
+  ],
+  jobs: [
+    { key: 'job-1', jobId: 'ftjob_wechat_draft_v1', baseModel: 'gpt-4.1-mini', dataset: 'wechat-style-sft.jsonl', status: 'succeeded', trainLoss: 0.92, validLoss: 1.04, checkpoint: 'step-240' }
+  ],
+  metrics: [
+    { key: 'wechat-120', jobId: 'ftjob_wechat_draft_v1', step: 120, trainLoss: 1.12, validLoss: 1.18, validTokenAccuracy: 0.74, elapsedSeconds: 365 },
+    { key: 'wechat-240', jobId: 'ftjob_wechat_draft_v1', step: 240, trainLoss: 0.92, validLoss: 1.04, validTokenAccuracy: 0.81, elapsedSeconds: 720 }
+  ],
+  checkpoints: [
+    { key: 'wechat-240', providerCheckpointId: 'ckpt_wechat_240', checkpointId: 'ft:wechat:step-240', jobId: 'ftjob_wechat_draft_v1', step: 240, validLoss: 1.04, validTokenAccuracy: 0.81, notes: '候选 checkpoint，Eval 提升明显。' }
+  ],
+  evalRuns: [
+    { key: 'base', model: 'gpt-4.1-mini', evalSet: 'wechat-publish-eval', passRate: 72, score: 0.78, decision: 'baseline' },
+    { key: 'checkpoint', model: 'ft:wechat:step-240', evalSet: 'wechat-publish-eval', passRate: 84, score: 0.86, decision: 'candidate' }
+  ],
+  evalFailureCases: [
+    { key: 'format-drift', evalRunId: 'checkpoint', category: '格式漂移', prompt: '生成公众号发布计划摘要', expected: '保留标题、目标读者、发布时间和复盘指标', observed: '遗漏复盘指标', nextAction: '补充包含复盘指标的正例，并在 eval 中增加字段完整性断言' }
+  ],
+  costItems: [
+    { key: 'training-wechat', scope: 'fine_tune', model: 'gpt-4.1-mini', inputTokens: 620000, outputTokens: 0, estimatedUsd: 3.10, note: '训练样本和验证集 token 估算。' }
+  ],
+  auditEvents: [
+    { key: 'dataset-approved', happenedAt: '2026-07-08 09:30', actor: 'learning-admin', action: 'approve_dataset', target: 'ds_wechat_style_v1', note: '训练集完成用途、来源和质量审核。' }
+  ],
+  deploymentBindings: [
+    { key: 'wechat-draft', featureKey: 'wechat-draft', modelId: 'ft:wechat:final', promptVersion: 'wechat-draft-v3', evalRunId: 'checkpoint', rolloutStatus: 'canary', rollbackModelId: 'gpt-4.1-mini' }
+  ],
+  readinessChecks: [
+    { key: 'dataset-reviewed', label: '数据集审核', status: 'PASS', detail: '训练样本已标注用途、来源和审核状态。' },
+    { key: 'eval-threshold', label: 'Eval 门槛', status: 'WARNING', detail: '需要用固定评测集确认候选模型是否优于 baseline。' }
+  ],
+  nextActions: [
+    { key: 'api', icon: 'api', title: '接真实 API', detail: '逐步接入 OpenAI file、fine-tuning job、checkpoint、eval API。' },
+    { key: 'gate', icon: 'check', title: '上线门禁', detail: '用 eval pass rate、失败案例和回滚模型决定是否灰度。' }
+  ]
+};
+
 const formatNumber = (value?: number) => value === undefined ? '-' : value.toLocaleString('zh-CN');
 
 const formatDecimal = (value?: number) => value === undefined ? '-' : value.toFixed(2);
@@ -450,9 +507,10 @@ const reportColumns: ColumnsType<OpenAiTrainingReportRecord> = [
 ];
 
 const OpenAiTrainingManagementPage = () => {
-  const [dashboard, setDashboard] = useState<OpenAiTrainingManagementDashboard>({});
+  const [dashboard, setDashboard] = useState<OpenAiTrainingManagementDashboard>(fallbackTrainingDashboard);
   const [reports, setReports] = useState<OpenAiTrainingReportRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dashboardError, setDashboardError] = useState(false);
 
   const loadReports = useCallback(async () => {
     try {
@@ -464,16 +522,21 @@ const OpenAiTrainingManagementPage = () => {
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
+    setDashboardError(false);
     try {
-      const [dashboardData, reportData] = await Promise.all([
-        openAiTrainingApi.dashboard(),
-        openAiTrainingApi.reports(5)
-      ]);
+      const dashboardData = await openAiTrainingApi.dashboard();
       setDashboard(dashboardData);
-      setReports(reportData);
     } catch (error) {
       console.error('加载 OpenAI 训练管理数据失败:', error);
-      message.error('OpenAI 训练管理数据加载失败');
+      setDashboard(fallbackTrainingDashboard);
+      setDashboardError(true);
+      message.warning('训练台接口暂不可用，已显示本地企业训练蓝图');
+    }
+
+    try {
+      setReports(await openAiTrainingApi.reports(5));
+    } catch (error) {
+      console.error('加载 OpenAI 训练报告快照失败:', error);
     } finally {
       setLoading(false);
     }
@@ -541,6 +604,15 @@ const OpenAiTrainingManagementPage = () => {
       )}
     >
       <Spin spinning={loading}>
+        <Alert
+          className="openai-training-intro"
+          type={dashboardError ? 'warning' : 'info'}
+          showIcon
+          message="训练台是企业模型训练管理页，不是直接开始 MiniGPT 训练的按钮"
+          description={dashboardError
+            ? '当前后端训练台接口不可用，页面已降级展示本地蓝图；MiniGPT 实际训练仍在 MiniGPT 页面里操作。'
+            : '这里用于学习和管理企业正规训练流程：数据集、训练任务、指标、checkpoint、评测、部署绑定、成本、审计和上线门禁。'}
+        />
         {!loading && !lifecycleStages.length ? (
           <Alert type="warning" showIcon message="暂无 OpenAI 训练管理数据" />
         ) : (
