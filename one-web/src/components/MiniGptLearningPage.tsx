@@ -557,7 +557,7 @@ type ReviewQualityItem = {
 type LabSectionKey = 'training' | 'corpus' | 'explain' | 'review' | 'generate' | 'records';
 
 const labSectionOptions: Array<{ label: string; value: LabSectionKey }> = [
-  { label: 'ChatGPT', value: 'training' },
+  { label: '训练', value: 'training' },
   { label: '语料', value: 'corpus' },
   { label: '解释', value: 'explain' },
   { label: '复盘', value: 'review' },
