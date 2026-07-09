@@ -614,13 +614,20 @@ const LotteryMonthEndReviewPage = () => {
       path: '/lottery/sync?focus=provider-reliability'
     },
     {
+      key: 'recommendation-retirement',
+      label: '策略退休复盘',
+      detail: '集中处理过期推荐、退役候选和已应用推荐的归因留档',
+      status: (recommendationRollup?.staleCount || 0) ? 'WARNING' : recommendationRollup?.recommendationCount ? 'PASS' : 'MANUAL',
+      path: '/lottery/recommendations?focus=retirement-review&preset=STALE_EVIDENCE'
+    },
+    {
       key: 'release-evidence-archive',
       label: '发布证据归档',
       detail: '把长期计划复盘接入发布证据和历史快照',
       status: exportAudits.length ? 'PASS' : 'MANUAL',
-      path: '/lottery/exports'
+      path: '/lottery/exports?focus=release-archive'
     }
-  ], [archiveReviewNoteSummary.active, attributionRows, exportAudits.length, health?.status, health?.warningCount]);
+  ], [archiveReviewNoteSummary.active, attributionRows, exportAudits.length, health?.status, health?.warningCount, recommendationRollup?.recommendationCount, recommendationRollup?.staleCount]);
 
   return (
     <LifePageShell

@@ -1,6 +1,6 @@
 {
-  "target": "Iteration 42 Wave 42C governance release provider reliability smoke",
-  "generatedAt": "2026-07-08T14:35:45.827Z",
+  "target": "Iteration 43 Wave 43A release archive focus smoke",
+  "generatedAt": "2026-07-09T00:46:54.508Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
@@ -71,7 +71,7 @@
       "label": "月末复盘",
       "component": "LotteryMonthEndReviewPage",
       "mockApiCount": 11,
-      "emptyStateCount": 21,
+      "emptyStateCount": 22,
       "errorStateCount": 1
     },
     {
@@ -151,7 +151,7 @@
       "label": "导出审计",
       "component": "LotteryExportMaintenancePage",
       "mockApiCount": 4,
-      "emptyStateCount": 41,
+      "emptyStateCount": 45,
       "errorStateCount": 4
     }
   ]

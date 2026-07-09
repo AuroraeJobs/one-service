@@ -1117,6 +1117,27 @@ Goal: turn the next-phase Provider reliability candidate into a focused review p
 - [x] Connect the focused Provider reliability path to governance or release evidence when useful.
 - [x] Decide whether the existing Provider reliability package is enough or needs a more specific review label. Decision: existing Provider reliability package is enough; keep V32 release evidence and point it at the focused sync view.
 
+## Iteration 43: Release Evidence Archive Focus
+
+Goal: turn the next-phase release-evidence archive candidate into a focused handoff that keeps local release history docs-only while making the runbook visible in the app.
+
+### Wave 43A: Export Archive Focus
+
+- [x] Link the month-end release-evidence archive candidate to a focused export maintenance view.
+- [x] Show the release evidence report, history index, and archive command without adding backend contracts.
+- [x] Keep release history docs-only until archived evidence needs an API-backed surface.
+
+### Wave 43B: Workbench Release Archive Handoff
+
+- [ ] Surface the focused release archive path from workbench release review.
+- [ ] Keep the action tied to existing release check signals.
+- [ ] Add smoke coverage for the handoff label.
+
+### Wave 43C: Governance Release Archive Link
+
+- [ ] Connect the focused release archive path to governance release evidence.
+- [ ] Decide whether release archive history should remain docs-only or become an export page data source.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

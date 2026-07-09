@@ -318,6 +318,7 @@ const LotteryExportMaintenancePage = () => {
   const [exporting, setExporting] = useState(false);
   const [dryRunning, setDryRunning] = useState(false);
   const [error, setError] = useState<string>();
+  const releaseArchiveFocus = searchParams.get('focus') === 'release-archive';
   const archiveEvidenceContext = useMemo(() => {
     const scope = searchParams.get('archiveScope');
     const status = searchParams.get('archiveStatus');
@@ -871,6 +872,35 @@ const LotteryExportMaintenancePage = () => {
                 {section.content ? <pre className="lottery-export-preview">{csvPreview(section.content, 8)}</pre> : <Empty description="暂无数据" />}
               </article>
             ))}
+          </div>
+        </Card>
+      ) : null}
+
+      {releaseArchiveFocus ? (
+        <Card
+          className="life-panel-card lottery-clean-panel"
+          title={<Space><SafetyCertificateOutlined />发布证据归档焦点</Space>}
+          extra={<Tag color="blue">docs-only</Tag>}
+        >
+          <div className="lottery-release-readiness-grid">
+            <button type="button" onClick={() => window.location.assign('/lottery/exports')}>
+              <span><FileTextOutlined /></span>
+              <Tag color="blue">报告</Tag>
+              <strong>reports/lottery-release-evidence.md</strong>
+              <small>最新前端彩票发布证据</small>
+            </button>
+            <button type="button" onClick={() => window.location.assign('/lottery/exports')}>
+              <span><FileTextOutlined /></span>
+              <Tag color="blue">历史</Tag>
+              <strong>reports/lottery-release-history/README.md</strong>
+              <small>本地 Markdown 快照索引</small>
+            </button>
+            <button type="button" onClick={() => window.location.assign('/lottery/exports')}>
+              <span><ThunderboltOutlined /></span>
+              <Tag color="green">命令</Tag>
+              <strong>npm run lottery:release-archive</strong>
+              <small>release-check 通过后生成历史快照</small>
+            </button>
           </div>
         </Card>
       ) : null}
