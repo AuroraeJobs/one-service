@@ -184,11 +184,10 @@ const HealthSummerSolsticePage: React.FC = () => {
           extra={
             <Button 
               type="primary" 
+              className="finance-salary-add-button"
               icon={<PlusOutlined />} 
               onClick={showAddDrawer}
               style={{
-                background: 'linear-gradient(135deg, #FF9800, #FF5722)',
-                border: 'none',
                 borderRadius: '50%',
                 width: '40px',
                 height: '40px',

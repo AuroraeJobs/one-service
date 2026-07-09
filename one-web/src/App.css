@@ -2925,6 +2925,33 @@ body {
   padding-left: 0 !important;
 }
 
+.finance-salary-add-button.ant-btn-primary {
+  background: linear-gradient(135deg, #ff9800, #ff5722) !important;
+  border: 0 !important;
+  box-shadow: 0 10px 24px rgba(255, 112, 16, 0.32) !important;
+  color: #fff !important;
+}
+
+.finance-salary-add-button.ant-btn-primary:hover,
+.finance-salary-add-button.ant-btn-primary:focus-visible {
+  background: linear-gradient(135deg, #ffa726, #ff7043) !important;
+  color: #fff !important;
+}
+
+.app-theme-light .finance-salary-add-button.ant-btn-primary {
+  background: #fff7ed !important;
+  border: 1px solid rgba(234, 88, 12, 0.28) !important;
+  box-shadow: 0 8px 20px rgba(234, 88, 12, 0.14) !important;
+  color: #c2410c !important;
+}
+
+.app-theme-light .finance-salary-add-button.ant-btn-primary:hover,
+.app-theme-light .finance-salary-add-button.ant-btn-primary:focus-visible {
+  background: #ffedd5 !important;
+  border-color: rgba(234, 88, 12, 0.42) !important;
+  color: #9a3412 !important;
+}
+
 .themed-route-page .lottery-records-list-card {
   background: transparent !important;
   border-color: transparent !important;
