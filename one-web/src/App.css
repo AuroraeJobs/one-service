@@ -648,6 +648,148 @@ body {
   background-color: #f5f5f7;
 }
 
+.user-management-page.life-page-shell {
+  padding-right: clamp(48px, 6vw, 112px);
+  padding-left: clamp(48px, 6vw, 112px);
+}
+
+.user-management-page.life-page-shell > * {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.user-management-list-shell,
+.user-management-list-shell > .ant-space-item,
+.user-management-list-shell .ant-spin-nested-loading,
+.user-management-list-shell .ant-spin-container {
+  width: 100%;
+}
+
+.user-management-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.user-management-card.ant-card {
+  margin-bottom: 0;
+}
+
+.user-management-card.ant-card > .ant-card-head {
+  min-height: 56px;
+  padding-right: 22px;
+  padding-left: 22px;
+}
+
+.user-management-card.ant-card > .ant-card-body {
+  padding-right: 22px;
+  padding-left: 22px;
+}
+
+.user-management-card .ant-card-head-title,
+.user-management-card .ant-card-extra {
+  min-width: 0;
+}
+
+.user-management-card-title {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-management-card-avatar {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--app-border);
+  border-radius: 50%;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+}
+
+.user-management-card-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-management-card-avatar span {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+}
+
+.user-management-card-fields {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.user-management-card-field {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.user-management-card-field span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.user-management-card-field strong {
+  min-width: 0;
+  color: var(--app-text);
+  font-size: 14px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.user-management-card-actions {
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.user-management-pagination {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.user-management-modal-alert {
+  margin-bottom: 16px;
+}
+
+@media (max-width: 640px) {
+  .user-management-page.life-page-shell {
+    padding-right: var(--app-page-inline-padding);
+    padding-left: var(--app-page-inline-padding);
+  }
+
+  .user-management-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-management-pagination {
+    justify-content: flex-start;
+  }
+
+  .user-management-card-actions {
+    align-items: stretch;
+  }
+}
+
 /* Shared themed chrome */
 .app-header,
 .app-footer {

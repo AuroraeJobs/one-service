@@ -3,21 +3,15 @@ import AppHeader from './AppHeader';
 import ProtectedRoute from './ProtectedRoute';
 import SeasonFooterNav from './SeasonFooterNav';
 
-type ColorMode = 'light' | 'dark';
-
 interface ProtectedPageProps {
   children: ReactNode;
-  colorMode: ColorMode;
-  onToggleColorMode: () => void;
 }
 
 const ProtectedPage = ({
-  children,
-  colorMode,
-  onToggleColorMode
+  children
 }: ProtectedPageProps) => (
   <ProtectedRoute>
-    <AppHeader colorMode={colorMode} onToggleColorMode={onToggleColorMode} />
+    <AppHeader />
     {children}
     <SeasonFooterNav />
   </ProtectedRoute>

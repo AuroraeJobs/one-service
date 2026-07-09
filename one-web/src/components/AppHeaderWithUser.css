@@ -95,6 +95,7 @@
 
 .header-user-dropdown .ant-dropdown-menu {
   min-width: 160px;
+  max-width: min(280px, calc(100vw - 24px));
 }
 
 .header-user-dropdown .ant-dropdown-menu-item {
@@ -118,6 +119,50 @@
   text-align: left;
 }
 
+.header-user-language-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.header-user-language-value {
+  flex: 0 0 auto;
+  min-width: 38px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--app-text) 10%, transparent);
+  color: var(--app-text);
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+  white-space: nowrap;
+}
+
 .header-user-dropdown .header-user-menu-profile-item {
   cursor: default;
+}
+
+@media (max-width: 520px) {
+  .header-user-dropdown .ant-dropdown-menu {
+    min-width: 184px;
+    padding: 6px;
+  }
+
+  .header-user-dropdown .ant-dropdown-menu-item {
+    min-height: 40px;
+    padding-inline: 8px;
+  }
+
+  .header-user-dropdown .ant-dropdown-menu-item-icon {
+    flex-basis: 28px;
+    width: 28px;
+    margin-inline-end: 8px !important;
+  }
+
+  .header-user-language-label {
+    gap: 8px;
+  }
 }

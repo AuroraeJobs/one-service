@@ -348,6 +348,48 @@ export interface UpdatePasswordRequest {
   newPassword: string;
 }
 
+export interface AdminUserSummary {
+  id: string;
+  username: string;
+  avatar?: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+  enabled?: boolean;
+  createTime?: number;
+  updateTime?: number;
+}
+
+export interface AdminUserPageResponse {
+  items: AdminUserSummary[];
+  total: number;
+  page: number;
+  size: number;
+}
+
+export interface AdminCreateUserRequest {
+  username: string;
+  password: string;
+  avatar?: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+}
+
+export interface AdminUpdateUserRequest {
+  username: string;
+  avatar?: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+  enabled?: boolean;
+}
+
+export interface AdminResetUserCredentialsRequest {
+  username: string;
+  password: string;
+}
+
 interface ApiResponse<T> {
   code: number | string;
   message?: string;
@@ -363,8 +405,14 @@ interface AuthActionResult {
 const isSuccessCode = (code: number | string) => Number(code) === 200;
 
 const getApiErrorMessage = (error: unknown, fallback: string) => {
-  if (axios.isAxiosError<{ message?: string; error?: string }>(error)) {
-    return error.response?.data?.message || error.response?.data?.error || error.message || fallback;
+  if (axios.isAxiosError<{ message?: string; error?: string; msg?: string; detail?: string }>(error)) {
+    const responseData = error.response?.data;
+    return responseData?.message
+      || responseData?.error
+      || responseData?.msg
+      || responseData?.detail
+      || error.message
+      || fallback;
   }
   if (error instanceof Error) {
     return error.message;
@@ -1689,6 +1737,101 @@ export const authApi = {
       });
     } catch (error) {
       console.error('登出失败:', error);
+    }
+  }
+};
+
+export const adminUserApi = {
+  listUsers: async (params: { page: number; size: number }): Promise<AdminUserPageResponse> => {
+    try {
+      const { data: response } = await axios.get<ApiResponse<AdminUserPageResponse>>('/auth/admin/users', {
+        params,
+        withCredentials: true
+      });
+      if (isSuccessCode(response.code)) {
+        return response.data;
+      }
+      throw new Error(response.message || '用户列表获取失败');
+    } catch (error: unknown) {
+      throw new Error(getApiErrorMessage(error, '用户列表获取失败'));
+    }
+  },
+  createUser: async (request: AdminCreateUserRequest): Promise<AdminUserSummary> => {
+    try {
+      const { data: response } = await axios.post<ApiResponse<AdminUserSummary>>('/auth/admin/users', request, {
+        withCredentials: true
+      });
+      if (isSuccessCode(response.code)) {
+        return response.data;
+      }
+      throw new Error(response.message || '用户创建失败');
+    } catch (error: unknown) {
+      throw new Error(getApiErrorMessage(error, '用户创建失败'));
+    }
+  },
+  disableUser: async (id: string): Promise<AdminUserSummary> => {
+    try {
+      const { data: response } = await axios.patch<ApiResponse<AdminUserSummary>>(`/auth/admin/users/${id}/disable`, null, {
+        withCredentials: true
+      });
+      if (isSuccessCode(response.code)) {
+        return response.data;
+      }
+      throw new Error(response.message || '用户禁用失败');
+    } catch (error: unknown) {
+      throw new Error(getApiErrorMessage(error, '用户禁用失败'));
+    }
+  },
+  enableUser: async (id: string): Promise<AdminUserSummary> => {
+    try {
+      const { data: response } = await axios.patch<ApiResponse<AdminUserSummary>>(`/auth/admin/users/${id}/enable`, null, {
+        withCredentials: true
+      });
+      if (isSuccessCode(response.code)) {
+        return response.data;
+      }
+      throw new Error(response.message || '用户启用失败');
+    } catch (error: unknown) {
+      throw new Error(getApiErrorMessage(error, '用户启用失败'));
+    }
+  },
+  updateUser: async (id: string, request: AdminUpdateUserRequest): Promise<AdminUserSummary> => {
+    try {
+      const { data: response } = await axios.put<ApiResponse<AdminUserSummary>>(`/auth/admin/users/${id}`, request, {
+        withCredentials: true
+      });
+      if (isSuccessCode(response.code)) {
+        return response.data;
+      }
+      throw new Error(response.message || '用户资料更新失败');
+    } catch (error: unknown) {
+      throw new Error(getApiErrorMessage(error, '用户资料更新失败'));
+    }
+  },
+  resetCredentials: async (id: string, request: AdminResetUserCredentialsRequest): Promise<AdminUserSummary> => {
+    try {
+      const { data: response } = await axios.put<ApiResponse<AdminUserSummary>>(`/auth/admin/users/${id}/credentials`, request, {
+        withCredentials: true
+      });
+      if (isSuccessCode(response.code)) {
+        return response.data;
+      }
+      throw new Error(response.message || '用户名密码重置失败');
+    } catch (error: unknown) {
+      throw new Error(getApiErrorMessage(error, '用户名密码重置失败'));
+    }
+  },
+  deleteDisabledUser: async (id: string): Promise<void> => {
+    try {
+      const { data: response } = await axios.delete<ApiResponse<string>>(`/auth/admin/users/${id}`, {
+        withCredentials: true
+      });
+      if (isSuccessCode(response.code)) {
+        return;
+      }
+      throw new Error(response.message || '用户删除失败');
+    } catch (error: unknown) {
+      throw new Error(getApiErrorMessage(error, '用户删除失败'));
     }
   }
 };

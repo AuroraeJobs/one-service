@@ -1,18 +1,13 @@
 import { CloudFilled } from '@ant-design/icons';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getLifeModuleKeyByPath, lifeNavItems } from '../constants/lifeDataModules';
+import { getLifeItemLabel, getLifeModuleKeyByPath, lifeNavItems } from '../constants/lifeDataModules';
+import { useAppPreferences } from '../contexts/AppPreferencesContext';
 import AppHeaderWithUser from './AppHeaderWithUser';
 
-type ColorMode = 'light' | 'dark';
-
-interface AppHeaderProps {
-  colorMode: ColorMode;
-  onToggleColorMode: () => void;
-}
-
-const AppHeader = ({ colorMode, onToggleColorMode }: AppHeaderProps) => {
+const AppHeader = () => {
   const { isAuthenticated } = useAuth();
+  const { isEnglish, language } = useAppPreferences();
   const location = useLocation();
   const currentNav = getLifeModuleKeyByPath(location.pathname);
 
@@ -20,11 +15,11 @@ const AppHeader = ({ colorMode, onToggleColorMode }: AppHeaderProps) => {
     <header className="app-header">
       <div className="app-header-inner">
         <div className="app-header-left">
-          <Link to="/" className="app-header-brand" aria-label="返回首页">
+          <Link to="/" className="app-header-brand" aria-label={isEnglish ? 'Back to home' : '返回首页'}>
             <CloudFilled />
           </Link>
 
-          <nav className="app-header-nav" aria-label="主导航">
+          <nav className="app-header-nav" aria-label={isEnglish ? 'Main navigation' : '主导航'}>
             {lifeNavItems.map(item => (
               <Link
                 key={item.path}
@@ -32,17 +27,14 @@ const AppHeader = ({ colorMode, onToggleColorMode }: AppHeaderProps) => {
                 className={`nav-link ${currentNav === item.key ? 'nav-link-active' : ''}`}
               >
                 {item.icon}
-                {item.label}
+                {getLifeItemLabel(item, language)}
               </Link>
             ))}
           </nav>
         </div>
 
         {isAuthenticated && (
-          <AppHeaderWithUser
-            colorMode={colorMode}
-            onToggleColorMode={onToggleColorMode}
-          />
+          <AppHeaderWithUser />
         )}
       </div>
     </header>

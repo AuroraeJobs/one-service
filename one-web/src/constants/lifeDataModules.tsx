@@ -40,6 +40,7 @@ import {
 } from '@ant-design/icons';
 import type { ReactNode } from 'react';
 import TeslaIcon from '../components/TeslaIcon';
+import type { AppLanguage } from '../types/appPreferences';
 
 export type LifeModuleStatus = 'live' | 'partial' | 'planned';
 export type LifeModuleKey = 'overview' | 'vehicle' | 'finance' | 'investment' | 'lottery' | 'ai' | 'wechat' | 'connectors';
@@ -62,6 +63,7 @@ export interface LifeNavItem {
   path: string;
   key: LifeModuleKey;
   label: string;
+  labelEn?: string;
   icon: ReactNode;
 }
 
@@ -74,6 +76,15 @@ export interface LifeSubNavItem {
   accent: string;
   children?: LifeSubNavItem[];
 }
+
+type LifeModuleEnglishText = {
+  title: string;
+  shortTitle?: string;
+  description: string;
+  liveCapabilities: string[];
+  plannedCapabilities: string[];
+  dataSources: string[];
+};
 
 export const lifeDataModules: LifeDataModule[] = [
   {
@@ -182,12 +193,101 @@ export const lifeDataModules: LifeDataModule[] = [
   }
 ];
 
+const lifeModuleEnglish: Record<string, LifeModuleEnglishText> = {
+  vehicle: {
+    title: 'Vehicle Energy',
+    shortTitle: 'Tesla',
+    description: 'Manage fuel records, EV charging, charging stations, and vehicle interface data in one place.',
+    liveCapabilities: ['EV charging records', 'Charging station management', 'Charging cost statistics'],
+    plannedCapabilities: ['Fuel records', 'Tesla Fleet API', 'Mileage and energy trends'],
+    dataSources: ['Manual records', 'Charging station data', 'Tesla Fleet API', 'Fuel receipts']
+  },
+  finance: {
+    title: 'Income and Cash Flow',
+    shortTitle: 'Alipay',
+    description: 'Track salary, social insurance, tax, daily expenses, and account transactions.',
+    liveCapabilities: ['Salary records', 'Social insurance', 'Tax and net income statistics'],
+    plannedCapabilities: ['Alipay and WeChat bills', 'Bank transactions', 'Budgets and ledgers'],
+    dataSources: ['Manual salary records', 'Alipay bills', 'WeChat bills', 'Bank Open API']
+  },
+  investment: {
+    title: 'Investment Assets',
+    shortTitle: 'Stocks',
+    description: 'Collect stock accounts, funds, cash assets, and market quotes.',
+    liveCapabilities: [],
+    plannedCapabilities: ['Position sync', 'Return attribution', 'Market quotes', 'Risk exposure'],
+    dataSources: ['Brokerage accounts', 'Fund accounts', 'Market data', 'Custom assets']
+  },
+  lottery: {
+    title: 'Lottery Research',
+    shortTitle: 'Lottery',
+    description: 'Manage Double Color Ball history, tickets, prize checks, and statistical models.',
+    liveCapabilities: ['Draw history sync', 'Number prediction', 'Red and blue ball statistics', 'Trend analysis', 'Hexagram views'],
+    plannedCapabilities: ['Personal tickets', 'Prize records', 'Cost and return tracking'],
+    dataSources: ['Draw API', 'Manual ticket records', 'Prize verification data']
+  },
+  ai: {
+    title: 'OpenAI',
+    shortTitle: 'OpenAI',
+    description: 'Manage model chat, MiniGPT learning experiments, hosted training, and model operations.',
+    liveCapabilities: ['Model switching', 'Context chat', 'MiniGPT experiment tracking', 'OpenAI training console', 'Local model integration'],
+    plannedCapabilities: ['Spring AI orchestration', 'Tool calls', 'Conversation review', 'Training task API integration'],
+    dataSources: ['LocalAI/Ollama', 'DeepSeek', 'Spring AI OpenAI-compatible config', 'MiniGPT Mongo logs', 'OpenAI fine-tuning objects']
+  },
+  wechat: {
+    title: 'WeChat Official Account',
+    shortTitle: 'WeChat',
+    description: 'Manage article drafting, publishing plans, drafts, and published posts.',
+    liveCapabilities: ['Writing', 'Publishing plans', 'Draft box', 'Published articles'],
+    plannedCapabilities: ['Asset management', 'Publishing review', 'Analytics dashboard'],
+    dataSources: ['WeChat Official Account API', 'Local article and cover paths', 'Publishing plan']
+  },
+  accounts: {
+    title: 'Accounts and Bills',
+    shortTitle: 'Bills',
+    description: 'Provide one entry point for Alipay, WeChat, bank card, and credit card bills.',
+    liveCapabilities: [],
+    plannedCapabilities: ['Account authorization', 'Bill import', 'Auto categorization', 'Cross-account reconciliation'],
+    dataSources: ['Alipay', 'WeChat Pay', 'Bank cards', 'Credit cards']
+  },
+  connectors: {
+    title: 'Data Connections',
+    shortTitle: 'Connect',
+    description: 'Manage connection status, sync strategy, and privacy boundaries for all life data sources.',
+    liveCapabilities: ['Local API aggregation', 'Authenticated page protection'],
+    plannedCapabilities: ['OAuth authorization', 'Sync jobs', 'Field mapping', 'Privacy audit'],
+    dataSources: ['Backend API', 'Third-party authorization', 'File import', 'Manual entry']
+  }
+};
+
+const isEnglishLanguage = (language: AppLanguage) => language === 'en-US';
+
+export const getLifeModuleTitle = (module: LifeDataModule, language: AppLanguage) => (
+  isEnglishLanguage(language) ? lifeModuleEnglish[module.id]?.title || module.title : module.title
+);
+
+export const getLifeModuleShortTitle = (module: LifeDataModule, language: AppLanguage) => (
+  isEnglishLanguage(language) ? lifeModuleEnglish[module.id]?.shortTitle || module.shortTitle : module.shortTitle
+);
+
+export const getLifeModuleDescription = (module: LifeDataModule, language: AppLanguage) => (
+  isEnglishLanguage(language) ? lifeModuleEnglish[module.id]?.description || module.description : module.description
+);
+
+export const getLifeModuleLiveCapabilities = (module: LifeDataModule, language: AppLanguage) => (
+  isEnglishLanguage(language) ? lifeModuleEnglish[module.id]?.liveCapabilities || module.liveCapabilities : module.liveCapabilities
+);
+
+export const getLifeModuleDataSources = (module: LifeDataModule, language: AppLanguage) => (
+  isEnglishLanguage(language) ? lifeModuleEnglish[module.id]?.dataSources || module.dataSources : module.dataSources
+);
+
 export const lifeNavItems: LifeNavItem[] = [
-  { path: '/overview', key: 'overview', label: '首页', icon: <DashboardOutlined /> },
-  { path: '/lottery', key: 'lottery', label: '彩票', icon: <AppleOutlined /> },
-  { path: '/investments', key: 'investment', label: '股票', icon: <ChromeOutlined /> },
-  { path: '/wechat', key: 'wechat', label: '微信', icon: <WechatOutlined /> },
-  { path: '/finance/salary', key: 'finance', label: '支付宝', icon: <AlipayOutlined /> },
+  { path: '/overview', key: 'overview', label: '首页', labelEn: 'Home', icon: <DashboardOutlined /> },
+  { path: '/lottery', key: 'lottery', label: '彩票', labelEn: 'Lottery', icon: <AppleOutlined /> },
+  { path: '/investments', key: 'investment', label: '股票', labelEn: 'Stocks', icon: <ChromeOutlined /> },
+  { path: '/wechat', key: 'wechat', label: '微信', labelEn: 'WeChat', icon: <WechatOutlined /> },
+  { path: '/finance/salary', key: 'finance', label: '支付宝', labelEn: 'Alipay', icon: <AlipayOutlined /> },
   { path: '/vehicle/charging', key: 'vehicle', label: 'Tesla', icon: <TeslaIcon /> },
   { path: '/ai/chat', key: 'ai', label: 'OpenAI', icon: <OpenAIOutlined /> }
 ];
@@ -341,6 +441,96 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
   ]
 };
 
+const lifeSubNavEnglishLabels: Record<string, string> = {
+  'overview-home': 'Home',
+  'investment-overview': 'Overview',
+  'investment-watchlist': 'Watchlist',
+  'investment-market': 'Market',
+  'investment-positions': 'Positions',
+  'investment-trades': 'Trades',
+  'investment-klines': 'K-Line',
+  'investment-alerts': 'Alerts',
+  'investment-analysis': 'Analysis',
+  'investment-sync': 'Sync',
+  'investment-providers': 'Providers',
+  'investment-settings': 'Settings',
+  'connectors-overview': 'Connect',
+  'vehicle-charging': 'Charging',
+  'vehicle-stations': 'Stations',
+  'vehicle-fleet': 'Vehicles',
+  'finance-salary': 'Salary',
+  'finance-expense': 'Expenses',
+  'finance-accounts': 'Accounts',
+  'finance-tax': 'Tax',
+  'lottery-overview': 'Overview',
+  'lottery-workbench': 'Workbench',
+  'lottery-mobile': 'Mobile',
+  'lottery-predictions': 'Predict',
+  'lottery-prediction-current': 'Current',
+  'lottery-deep-analysis': 'Deep',
+  'lottery-prediction-decision': 'Decision',
+  'lottery-experiments': 'Experiments',
+  'lottery-backtests': 'Backtests',
+  'lottery-research': 'Research',
+  'lottery-strategy-portfolios': 'Portfolios',
+  'lottery-simulator': 'Simulator',
+  'lottery-research-notebook': 'Notes',
+  'lottery-prediction-history': 'History',
+  'lottery-execution': 'Execute',
+  'lottery-ticket-packs': 'Packs',
+  'lottery-tickets': 'Tickets',
+  'lottery-alerts': 'Reminders',
+  'lottery-month-end': 'Month End',
+  'lottery-ledger': 'Ledger',
+  'lottery-review': 'Review',
+  'lottery-outcomes': 'Attribution',
+  'lottery-recommendations': 'Recommend',
+  'lottery-governance': 'Governance',
+  'lottery-exports': 'Exports',
+  'lottery-data': 'Data',
+  'lottery-records': 'Draws',
+  'lottery-sync': 'Sync',
+  'lottery-data-quality': 'Quality',
+  'lottery-statistics-frequency': 'Frequency',
+  'lottery-statistics-group': 'Groups',
+  'lottery-statistics-distribution': 'Distribution',
+  'lottery-astronauts': 'Astronauts',
+  'lottery-insights': 'Maps',
+  'lottery-analysis-illusion': 'Illusion',
+  'lottery-analysis-planet': 'Planet',
+  'lottery-analysis-energy': 'Energy',
+  'lottery-analysis-accumulate': 'Accumulated',
+  'lottery-analysis-collect': 'Collect',
+  'lottery-analysis-position': 'Position',
+  'lottery-pixel-universe': 'Universe',
+  'lottery-pixel-card': 'Pixels',
+  'lottery-pixel-stats': 'Rows',
+  'lottery-taiji': 'Taiji',
+  'lottery-hexagram': 'Hexagram',
+  'lottery-space': 'Space',
+  'lottery-parasite': 'Parasite',
+  'lottery-dingfengbo': 'Dingfengbo',
+  'lottery-autumn-beginning': 'Autumn',
+  'lottery-winter-beginning': 'Winter',
+  'lottery-settings': 'Settings',
+  'ai-chat': 'ChatGPT',
+  'ai-minigpt': 'MiniGPT',
+  'ai-training': 'Training',
+  'wechat-write': 'Write',
+  'wechat-plans': 'Plans',
+  'wechat-drafts': 'Drafts',
+  'wechat-published': 'Published'
+};
+
+export const getLifeItemLabel = (
+  item: LifeNavItem | LifeSubNavItem,
+  language: AppLanguage
+) => {
+  if (!isEnglishLanguage(language)) return item.label;
+  if ('labelEn' in item && item.labelEn) return item.labelEn;
+  return 'id' in item ? lifeSubNavEnglishLabels[item.id] || item.label : item.label;
+};
+
 export const legacyPathMap: Record<string, string> = {
   '/fitness': '/vehicle/charging',
   '/fitness/spring-equinox': '/vehicle/charging',
@@ -405,46 +595,67 @@ export const getLifeActiveSubNavPath = (pathname: string) => {
   return canonicalPath;
 };
 
-export const getLifeSubNavAriaLabel = (pathname: string) => {
+export const getLifeSubNavAriaLabel = (pathname: string, language: AppLanguage = 'zh-CN') => {
   const moduleKey = getLifeModuleKeyByPath(pathname);
-  const labels: Record<LifeModuleKey, string> = {
-    overview: '生活数据总览导航',
-    vehicle: '车辆数据导航',
-    finance: '财务数据导航',
-    investment: '投资数据导航',
-    lottery: '彩票数据导航',
-    ai: 'AI 对话导航',
-    wechat: '微信公众号导航',
-    connectors: '数据接入导航'
+  const labels: Record<LifeModuleKey, { zh: string; en: string }> = {
+    overview: { zh: '生活数据总览导航', en: 'Life data overview navigation' },
+    vehicle: { zh: '车辆数据导航', en: 'Vehicle data navigation' },
+    finance: { zh: '财务数据导航', en: 'Finance data navigation' },
+    investment: { zh: '投资数据导航', en: 'Investment data navigation' },
+    lottery: { zh: '彩票数据导航', en: 'Lottery data navigation' },
+    ai: { zh: 'AI 对话导航', en: 'AI navigation' },
+    wechat: { zh: '微信公众号导航', en: 'WeChat Official Account navigation' },
+    connectors: { zh: '数据接入导航', en: 'Data connection navigation' }
   };
 
-  return moduleKey ? labels[moduleKey] : '模块导航';
+  if (!moduleKey) return isEnglishLanguage(language) ? 'Module navigation' : '模块导航';
+  return isEnglishLanguage(language) ? labels[moduleKey].en : labels[moduleKey].zh;
 };
+
+export const lifeStatusText: Record<LifeModuleStatus, { zh: string; en: string }> = {
+  live: { zh: '已运行', en: 'Live' },
+  partial: { zh: '建设中', en: 'In Progress' },
+  planned: { zh: '待接入', en: 'Planned' }
+};
+
+export const getLifeStatusText = (status: LifeModuleStatus, language: AppLanguage) => (
+  isEnglishLanguage(language) ? lifeStatusText[status].en : lifeStatusText[status].zh
+);
 
 export const integrationPrinciples = [
   {
     title: '先记录，再同步',
+    titleEn: 'Record First, Sync Later',
     description: '每个模块都保留手动记录能力，再逐步接入第三方 API。',
+    descriptionEn: 'Every module keeps manual entry first, then gradually connects third-party APIs.',
     icon: <SafetyCertificateOutlined />
   },
   {
     title: '先归一，再分析',
+    titleEn: 'Normalize Before Analysis',
     description: '第三方字段进入统一数据模型后，再做趋势、预算和预测。',
+    descriptionEn: 'External fields enter a unified model before trends, budgets, and predictions are calculated.',
     icon: <BarChartOutlined />
   },
   {
     title: '先本地，再自动',
+    titleEn: 'Local First, Then Automation',
     description: '敏感账户数据优先走本地后端和授权边界，自动化同步单独配置。',
+    descriptionEn: 'Sensitive account data stays behind local backend and authorization boundaries before automation is enabled.',
     icon: <BankOutlined />
   },
   {
     title: '成本可追踪',
+    titleEn: 'Track Every Cost',
     description: '车辆、消费、投资和彩票都统一沉淀投入、收益和时间成本。',
+    descriptionEn: 'Vehicles, spending, investments, and lottery research share cost, return, and time tracking.',
     icon: <DollarOutlined />
   },
   {
     title: '能源可量化',
+    titleEn: 'Quantify Energy',
     description: '电耗、油耗、里程、充电站和车辆状态最终归为车辆能源模型。',
+    descriptionEn: 'Power use, fuel use, mileage, charging stations, and vehicle states roll up into a vehicle energy model.',
     icon: <ThunderboltOutlined />
   }
 ];

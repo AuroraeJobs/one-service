@@ -12,19 +12,21 @@ import {
 } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
-import { integrationPrinciples, lifeDataModules, type LifeModuleStatus } from '../constants/lifeDataModules';
+import { useAppPreferences } from '../contexts/AppPreferencesContext';
+import {
+  getLifeModuleDataSources,
+  getLifeModuleTitle,
+  getLifeStatusText,
+  integrationPrinciples,
+  lifeDataModules,
+  type LifeModuleStatus
+} from '../constants/lifeDataModules';
 import {
   teslaFleetApi,
   type TeslaFleetTokenResponse,
   type TeslaVehicle,
   type TeslaVehicleListResponse
 } from '../services/api';
-
-const statusText: Record<LifeModuleStatus, string> = {
-  live: '已运行',
-  partial: '建设中',
-  planned: '待接入'
-};
 
 const statusColor: Record<LifeModuleStatus, string> = {
   live: 'success',
@@ -55,9 +57,33 @@ const connectorRoadmap = [
   }
 ];
 
+const connectorRoadmapEn = [
+  {
+    title: 'Vehicle Interfaces',
+    accent: '#0071e3',
+    items: ['Tesla Fleet API', 'Charging platform bills', 'Fuel records', 'Mileage and energy use']
+  },
+  {
+    title: 'Financial Accounts',
+    accent: '#34c759',
+    items: ['Alipay bills', 'WeChat Pay bills', 'Bank transactions', 'Credit card bills']
+  },
+  {
+    title: 'Investment Assets',
+    accent: '#5856d6',
+    items: ['Brokerage positions', 'Fund accounts', 'Market quotes', 'Return attribution']
+  },
+  {
+    title: 'Lottery Account',
+    accent: '#ff3b30',
+    items: ['Draw sync', 'Ticket records', 'Prize verification', 'Cost and return']
+  }
+];
+
 const LifeDataConnectionsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { language, isEnglish } = useAppPreferences();
   const defaultTeslaRedirectUri = typeof window === 'undefined' ? '' : `${window.location.origin}/connections`;
   const defaultTeslaDomain = typeof window === 'undefined' ? '' : window.location.hostname;
   const [teslaDomain, setTeslaDomain] = useState(defaultTeslaDomain);
@@ -100,7 +126,7 @@ const LifeDataConnectionsPage = () => {
       });
       setTeslaAuthorizeUrl(url);
     } catch (error: unknown) {
-      setTeslaError(error instanceof Error ? error.message : 'Tesla 授权链接生成失败');
+      setTeslaError(error instanceof Error ? error.message : (isEnglish ? 'Failed to generate Tesla authorization URL' : 'Tesla 授权链接生成失败'));
     } finally {
       setTeslaAuthLoading(false);
     }
@@ -109,7 +135,7 @@ const LifeDataConnectionsPage = () => {
   const exchangeTeslaToken = async () => {
     const code = teslaAuthCode.trim();
     if (!code) {
-      setTeslaError('请输入 Tesla 授权回调 code');
+      setTeslaError(isEnglish ? 'Enter the Tesla authorization callback code' : '请输入 Tesla 授权回调 code');
       return;
     }
 
@@ -128,7 +154,7 @@ const LifeDataConnectionsPage = () => {
         setTeslaRefreshToken(result.refresh_token);
       }
     } catch (error: unknown) {
-      setTeslaError(error instanceof Error ? error.message : 'Tesla access token 获取失败');
+      setTeslaError(error instanceof Error ? error.message : (isEnglish ? 'Failed to get Tesla access token' : 'Tesla access token 获取失败'));
     } finally {
       setTeslaTokenLoading(false);
     }
@@ -144,7 +170,7 @@ const LifeDataConnectionsPage = () => {
       }
       setTeslaPartnerResult(result as unknown as Record<string, unknown>);
     } catch (error: unknown) {
-      setTeslaError(error instanceof Error ? error.message : 'Tesla partner token 获取失败');
+      setTeslaError(error instanceof Error ? error.message : (isEnglish ? 'Failed to get Tesla partner token' : 'Tesla partner token 获取失败'));
     } finally {
       setTeslaPartnerLoading(false);
     }
@@ -154,11 +180,11 @@ const LifeDataConnectionsPage = () => {
     const domain = teslaDomain.trim();
     const token = teslaPartnerToken.trim();
     if (!domain) {
-      setTeslaError('请输入 Tesla partner 注册域名');
+      setTeslaError(isEnglish ? 'Enter the Tesla partner registration domain' : '请输入 Tesla partner 注册域名');
       return;
     }
     if (!token) {
-      setTeslaError('请先获取或填写 Tesla partner token');
+      setTeslaError(isEnglish ? 'Get or enter the Tesla partner token first' : '请先获取或填写 Tesla partner token');
       return;
     }
 
@@ -168,7 +194,7 @@ const LifeDataConnectionsPage = () => {
       const result = await teslaFleetApi.registerPartnerAccount(token, domain);
       setTeslaPartnerResult(result);
     } catch (error: unknown) {
-      setTeslaError(error instanceof Error ? error.message : 'Tesla partner account 注册失败');
+      setTeslaError(error instanceof Error ? error.message : (isEnglish ? 'Failed to register Tesla partner account' : 'Tesla partner account 注册失败'));
     } finally {
       setTeslaRegisterLoading(false);
     }
@@ -178,11 +204,11 @@ const LifeDataConnectionsPage = () => {
     const domain = teslaDomain.trim();
     const token = teslaPartnerToken.trim();
     if (!domain) {
-      setTeslaError('请输入 Tesla partner 注册域名');
+      setTeslaError(isEnglish ? 'Enter the Tesla partner registration domain' : '请输入 Tesla partner 注册域名');
       return;
     }
     if (!token) {
-      setTeslaError('请先获取或填写 Tesla partner token');
+      setTeslaError(isEnglish ? 'Get or enter the Tesla partner token first' : '请先获取或填写 Tesla partner token');
       return;
     }
 
@@ -192,7 +218,7 @@ const LifeDataConnectionsPage = () => {
       const result = await teslaFleetApi.getPartnerPublicKey(token, domain);
       setTeslaPartnerResult(result);
     } catch (error: unknown) {
-      setTeslaError(error instanceof Error ? error.message : 'Tesla public key 校验失败');
+      setTeslaError(error instanceof Error ? error.message : (isEnglish ? 'Failed to validate Tesla public key' : 'Tesla public key 校验失败'));
     } finally {
       setTeslaPublicKeyLoading(false);
     }
@@ -201,7 +227,7 @@ const LifeDataConnectionsPage = () => {
   const testTeslaVehicles = async () => {
     const token = teslaAccessToken.trim();
     if (!token) {
-      setTeslaError('请输入 Tesla access token');
+      setTeslaError(isEnglish ? 'Enter the Tesla access token' : '请输入 Tesla access token');
       setTeslaResult(null);
       return;
     }
@@ -213,7 +239,7 @@ const LifeDataConnectionsPage = () => {
       setTeslaResult(result);
     } catch (error: unknown) {
       setTeslaResult(null);
-      setTeslaError(error instanceof Error ? error.message : 'Tesla 车辆信息获取失败');
+      setTeslaError(error instanceof Error ? error.message : (isEnglish ? 'Failed to get Tesla vehicle information' : 'Tesla 车辆信息获取失败'));
     } finally {
       setTeslaLoading(false);
     }
@@ -222,11 +248,13 @@ const LifeDataConnectionsPage = () => {
   return (
     <LifePageShell
       className="life-connections-page"
-      eyebrow="数据接入"
-      title="所有生活数据源都先进入统一模型，再进入分析和决策。"
+      eyebrow={isEnglish ? 'Data Connections' : '数据接入'}
+      title={isEnglish
+        ? 'All life data sources enter one unified model before analysis and decisions.'
+        : '所有生活数据源都先进入统一模型，再进入分析和决策。'}
       actions={
         <Button type="primary" icon={<CloudSyncOutlined />} onClick={() => navigate('/')}>
-          回到总览
+          {isEnglish ? 'Back to Overview' : '回到总览'}
         </Button>
       }
     >
@@ -234,8 +262,8 @@ const LifeDataConnectionsPage = () => {
         {integrationPrinciples.map(principle => (
           <Card key={principle.title} className="life-principle-card">
             <span>{principle.icon}</span>
-            <h2>{principle.title}</h2>
-            <p>{principle.description}</p>
+            <h2>{isEnglish ? principle.titleEn : principle.title}</h2>
+            <p>{isEnglish ? principle.descriptionEn : principle.description}</p>
           </Card>
         ))}
       </section>
@@ -243,7 +271,7 @@ const LifeDataConnectionsPage = () => {
       <section className="life-two-column">
         <Card className="life-panel-card">
           <div className="life-panel-title-row">
-            <h2>模块接入状态</h2>
+            <h2>{isEnglish ? 'Module Connection Status' : '模块接入状态'}</h2>
             <ApiOutlined />
           </div>
           <div className="life-connection-list">
@@ -253,10 +281,10 @@ const LifeDataConnectionsPage = () => {
                   {module.icon}
                 </span>
                 <div>
-                  <strong>{module.title}</strong>
-                  <small>{module.dataSources.join(' / ')}</small>
+                  <strong>{getLifeModuleTitle(module, language)}</strong>
+                  <small>{getLifeModuleDataSources(module, language).join(' / ')}</small>
                 </div>
-                <Tag color={statusColor[module.status]}>{statusText[module.status]}</Tag>
+                <Tag color={statusColor[module.status]}>{getLifeStatusText(module.status, language)}</Tag>
               </button>
             ))}
           </div>
@@ -264,21 +292,21 @@ const LifeDataConnectionsPage = () => {
 
         <Card className="life-panel-card">
           <div className="life-panel-title-row">
-            <h2>授权边界</h2>
+            <h2>{isEnglish ? 'Authorization Boundaries' : '授权边界'}</h2>
             <LockOutlined />
           </div>
           <div className="life-privacy-stack">
             <div>
               <CheckCircleFilled />
-              <span>账户授权与数据同步分离，先接入只读数据。</span>
+              <span>{isEnglish ? 'Account authorization and data sync stay separate; connect read-only data first.' : '账户授权与数据同步分离，先接入只读数据。'}</span>
             </div>
             <div>
               <CheckCircleFilled />
-              <span>原始流水保留来源和时间戳，分类结果单独存储。</span>
+              <span>{isEnglish ? 'Raw transactions keep source and timestamps; categorization results are stored separately.' : '原始流水保留来源和时间戳，分类结果单独存储。'}</span>
             </div>
             <div>
               <CheckCircleFilled />
-              <span>第三方密钥不进入前端，统一由后端连接器托管。</span>
+              <span>{isEnglish ? 'Third-party secrets never enter the frontend; backend connectors manage them centrally.' : '第三方密钥不进入前端，统一由后端连接器托管。'}</span>
             </div>
           </div>
         </Card>
@@ -287,38 +315,38 @@ const LifeDataConnectionsPage = () => {
       <section className="tesla-fleet-test-panel">
         <Card className="life-panel-card">
           <div className="life-panel-title-row">
-            <h2>Tesla Fleet API 测试</h2>
+            <h2>{isEnglish ? 'Tesla Fleet API Test' : 'Tesla Fleet API 测试'}</h2>
             <CarOutlined />
           </div>
           <div className="tesla-fleet-partner-panel">
             <div className="tesla-fleet-field">
-              <span>Partner 注册域名</span>
+              <span>{isEnglish ? 'Partner Domain' : 'Partner 注册域名'}</span>
               <Input
                 value={teslaDomain}
                 onChange={event => setTeslaDomain(event.target.value)}
-                placeholder="例如 example.com，需匹配 Tesla allowed_origins 根域"
+                placeholder={isEnglish ? 'Example: example.com, must match Tesla allowed_origins root domain' : '例如 example.com，需匹配 Tesla allowed_origins 根域'}
               />
             </div>
             <Input.Password
               value={teslaPartnerToken}
               onChange={event => setTeslaPartnerToken(event.target.value)}
-              placeholder="Tesla partner token，可点击生成后自动填入"
+              placeholder={isEnglish ? 'Tesla partner token, can be generated automatically' : 'Tesla partner token，可点击生成后自动填入'}
               autoComplete="off"
             />
             <Space wrap>
               <Button loading={teslaPartnerLoading} onClick={createTeslaPartnerToken}>
-                生成 partner token
+                {isEnglish ? 'Generate Partner Token' : '生成 partner token'}
               </Button>
               <Button type="primary" loading={teslaRegisterLoading} onClick={registerTeslaPartnerAccount}>
-                注册 Partner
+                {isEnglish ? 'Register Partner' : '注册 Partner'}
               </Button>
               <Button loading={teslaPublicKeyLoading} onClick={checkTeslaPublicKey}>
-                校验公钥
+                {isEnglish ? 'Check Public Key' : '校验公钥'}
               </Button>
             </Space>
             {teslaPartnerResult && (
               <details className="tesla-fleet-json">
-                <summary>Partner 响应</summary>
+                <summary>{isEnglish ? 'Partner Response' : 'Partner 响应'}</summary>
                 <pre>{JSON.stringify(teslaPartnerResult, null, 2)}</pre>
               </details>
             )}
@@ -326,7 +354,7 @@ const LifeDataConnectionsPage = () => {
 
           <div className="tesla-fleet-auth-grid">
             <div className="tesla-fleet-field">
-              <span>回调地址</span>
+              <span>{isEnglish ? 'Redirect URI' : '回调地址'}</span>
               <Input
                 value={teslaRedirectUri}
                 onChange={event => setTeslaRedirectUri(event.target.value)}
@@ -339,7 +367,7 @@ const LifeDataConnectionsPage = () => {
               loading={teslaAuthLoading}
               onClick={createTeslaAuthorizeUrl}
             >
-              生成授权链接
+              {isEnglish ? 'Generate Authorization Link' : '生成授权链接'}
             </Button>
           </div>
 
@@ -348,10 +376,10 @@ const LifeDataConnectionsPage = () => {
               <Input.TextArea value={teslaAuthorizeUrl} autoSize readOnly />
               <Space wrap>
                 <Button href={teslaAuthorizeUrl} target="_blank" icon={<LinkOutlined />}>
-                  打开授权
+                  {isEnglish ? 'Open Authorization' : '打开授权'}
                 </Button>
                 <Button onClick={() => navigator.clipboard.writeText(teslaAuthorizeUrl)}>
-                  复制链接
+                  {isEnglish ? 'Copy Link' : '复制链接'}
                 </Button>
               </Space>
             </div>
@@ -359,11 +387,11 @@ const LifeDataConnectionsPage = () => {
 
           <div className="tesla-fleet-token-grid">
             <div className="tesla-fleet-field">
-              <span>授权回调 code</span>
+              <span>{isEnglish ? 'Authorization Callback Code' : '授权回调 code'}</span>
               <Input
                 value={teslaAuthCode}
                 onChange={event => setTeslaAuthCode(event.target.value)}
-                placeholder="Tesla 授权后回调 URL 中的 code"
+                placeholder={isEnglish ? 'Code from the Tesla callback URL after authorization' : 'Tesla 授权后回调 URL 中的 code'}
               />
             </div>
             <Button
@@ -371,7 +399,7 @@ const LifeDataConnectionsPage = () => {
               loading={teslaTokenLoading}
               onClick={exchangeTeslaToken}
             >
-              换取 token
+              {isEnglish ? 'Exchange Token' : '换取 token'}
             </Button>
           </div>
 
@@ -380,7 +408,7 @@ const LifeDataConnectionsPage = () => {
               className="tesla-fleet-alert"
               type="success"
               showIcon
-              message="access_token 已获取，并已自动填入下方测试输入框"
+              message={isEnglish ? 'access_token acquired and filled into the test input below' : 'access_token 已获取，并已自动填入下方测试输入框'}
             />
           )}
 
@@ -397,7 +425,7 @@ const LifeDataConnectionsPage = () => {
               loading={teslaLoading}
               onClick={testTeslaVehicles}
             >
-              获取车辆
+              {isEnglish ? 'Get Vehicles' : '获取车辆'}
             </Button>
           </div>
 
@@ -415,7 +443,7 @@ const LifeDataConnectionsPage = () => {
           {teslaResult && (
             <div className="tesla-fleet-result">
               <div className="tesla-fleet-summary">
-                <strong>车辆数量</strong>
+                <strong>{isEnglish ? 'Vehicle Count' : '车辆数量'}</strong>
                 <Tag color={teslaVehicles.length > 0 ? 'success' : 'default'}>
                   {teslaResult.count ?? teslaVehicles.length}
                 </Tag>
@@ -426,8 +454,8 @@ const LifeDataConnectionsPage = () => {
                   {teslaVehicles.map(vehicle => (
                     <div key={vehicle.vin || vehicle.id || vehicle.vehicle_id} className="tesla-fleet-vehicle">
                       <div>
-                        <strong>{vehicle.display_name || '未命名车辆'}</strong>
-                        <span>{vehicle.vin || 'VIN 未返回'}</span>
+                        <strong>{vehicle.display_name || (isEnglish ? 'Unnamed vehicle' : '未命名车辆')}</strong>
+                        <span>{vehicle.vin || (isEnglish ? 'VIN not returned' : 'VIN 未返回')}</span>
                       </div>
                       <Tag color={vehicle.state === 'online' ? 'success' : 'processing'}>
                         {vehicle.state || 'unknown'}
@@ -438,7 +466,7 @@ const LifeDataConnectionsPage = () => {
               )}
 
               <details className="tesla-fleet-json">
-                <summary>原始响应</summary>
+                <summary>{isEnglish ? 'Raw Response' : '原始响应'}</summary>
                 <pre>{JSON.stringify(teslaResult, null, 2)}</pre>
               </details>
             </div>
@@ -447,7 +475,7 @@ const LifeDataConnectionsPage = () => {
       </section>
 
       <section className="life-roadmap-grid">
-        {connectorRoadmap.map(group => (
+        {(isEnglish ? connectorRoadmapEn : connectorRoadmap).map(group => (
           <Card key={group.title} className="life-roadmap-card">
             <div className="life-roadmap-card-head">
               <h2>{group.title}</h2>
