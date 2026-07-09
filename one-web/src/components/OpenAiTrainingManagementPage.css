@@ -18,6 +18,11 @@
   margin-bottom: 16px;
 }
 
+.openai-training-page .ant-spin-container {
+  display: grid;
+  gap: 16px;
+}
+
 .theme-dark .openai-training-page,
 .dark .openai-training-page,
 [data-theme='dark'] .openai-training-page {
@@ -46,9 +51,11 @@
 
 .openai-training-overview div {
   display: grid;
-  gap: 10px;
-  min-height: 160px;
-  padding: 16px;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 10px;
+  align-items: start;
+  min-height: 104px;
+  padding: 14px;
 }
 
 .openai-training-overview span {
@@ -57,6 +64,7 @@
   justify-content: center;
   width: 34px;
   height: 34px;
+  grid-row: 1 / span 2;
   border-radius: 8px;
   color: #00c7be;
   background: color-mix(in srgb, #00c7be 12%, transparent);
@@ -74,8 +82,8 @@
 .openai-training-next p {
   margin: 0;
   color: var(--openai-training-muted);
-  font-size: 13px;
-  line-height: 1.65;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .openai-training-grid {
@@ -92,6 +100,14 @@
   border: 1px solid var(--openai-training-border);
   border-radius: 8px;
   background: var(--openai-training-bg);
+}
+
+.openai-training-panel .ant-card-head {
+  min-height: 52px;
+}
+
+.openai-training-panel .ant-card-body {
+  padding: 16px;
 }
 
 .openai-training-entity-grid,
@@ -114,7 +130,7 @@
 .openai-training-map div {
   display: grid;
   gap: 8px;
-  min-height: 92px;
+  min-height: 76px;
   padding: 12px;
 }
 
@@ -158,7 +174,7 @@
 .openai-training-map div {
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr);
   align-items: center;
-  min-height: 56px;
+  min-height: 48px;
 }
 
 .openai-training-map span {
@@ -206,5 +222,13 @@
   .openai-training-map,
   .openai-training-readiness {
     grid-template-columns: 1fr;
+  }
+
+  .openai-training-overview div {
+    grid-template-columns: 1fr;
+  }
+
+  .openai-training-overview span {
+    grid-row: auto;
   }
 }
