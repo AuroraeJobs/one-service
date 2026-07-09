@@ -2339,62 +2339,119 @@ const MiniGptLearningPage = () => {
                 }}
                 onFinish={handleStartTraining}
               >
-                <Form.Item name="preset" label="预设">
-                  <Select
-                    options={[
-                      { value: 'tiny', label: 'tiny' },
-                      { value: 'small', label: 'small' },
-                      { value: 'medium', label: 'medium' },
-                      { value: 'custom', label: 'custom' }
-                    ]}
-                  />
-                </Form.Item>
-                <Form.Item name="runName" label="实验名">
-                  <Input
-                    placeholder="留空自动生成"
-                    addonAfter={(
-                      <Button
-                        type="link"
-                        size="small"
-                        disabled={variableDiffItems.length !== 1}
-                        onClick={handleSuggestRunName}
-                      >
-                        命名
-                      </Button>
+                <section className="mini-gpt-corpus-step">
+                  <div className="mini-gpt-step-head">
+                    <Tag color="cyan">1</Tag>
+                    <div>
+                      <strong>选择语料</strong>
+                      <p>先确定训练数据，续训来源会只保留同一语料的 checkpoint。</p>
+                    </div>
+                  </div>
+                  <div className="mini-gpt-corpus-step-grid">
+                    <Form.Item name="data" label="训练语料">
+                      <Input placeholder="例如 data/sample.txt" />
+                    </Form.Item>
+                    <Form.Item name="evalData" label="固定评估集">
+                      <Input placeholder="例如 data/eval.txt" />
+                    </Form.Item>
+                  </div>
+                  <section className="mini-gpt-lottery-corpus">
+                    <div className="mini-gpt-lottery-corpus-head">
+                      <Text type="secondary">双色球训练语料</Text>
+                      <Space wrap>
+                        <Button
+                          size="small"
+                          icon={<DatabaseOutlined />}
+                          loading={lotteryCorpusLoading}
+                          disabled={trainingStatus.running}
+                          onClick={() => handleExportLotteryCorpus('raw')}
+                        >
+                          开奖格式
+                        </Button>
+                        <Button
+                          size="small"
+                          icon={<DatabaseOutlined />}
+                          loading={lotteryCorpusLoading}
+                          disabled={trainingStatus.running}
+                          onClick={() => handleExportLotteryCorpus('features')}
+                        >
+                          结构特征
+                        </Button>
+                      </Space>
+                    </div>
+                    {lotteryCorpusExport ? (
+                      <div className="mini-gpt-lottery-corpus-result">
+                        <Tag color="cyan">{lotteryCorpusExport.format}</Tag>
+                        <span>{lotteryCorpusExport.drawCount || 0} 期</span>
+                        <code>{lotteryCorpusExport.dataPath || '-'}</code>
+                        <p>{lotteryCorpusExport.firstIssue || '-'} - {lotteryCorpusExport.latestIssue || '-'}</p>
+                      </div>
+                    ) : (
+                      <p>从 Mongo 开奖记录导出 MiniGPT 训练文本，并自动填入语料路径。</p>
                     )}
-                  />
-                </Form.Item>
-                <Form.Item name="resumeFromRun" label="续训来源">
-                  <Select
-                    allowClear
-                    placeholder="仅显示同语料 checkpoint"
-                    options={resumeSourceRuns
-                      .map(item => ({
-                        value: item.runName,
-                        label: [item.runName, item.trainStep !== undefined ? `step=${formatInteger(item.trainStep)}` : '', item.finalEvalLoss !== undefined ? `eval=${formatLoss(item.finalEvalLoss)}` : '']
-                          .filter(Boolean)
-                          .join(' · ')
-                      }))}
-                  />
-                </Form.Item>
-                <Form.Item name="data" label="语料">
-                  <Input />
-                </Form.Item>
-                <Form.Item name="evalData" label="固定评估集">
-                  <Input placeholder="例如 data/eval.txt" />
-                </Form.Item>
-                <Form.Item name="maxSteps" label="步数">
-                  <InputNumber min={1} max={5000} />
-                </Form.Item>
-                <Form.Item name="valRatio" label="验证比例">
-                  <InputNumber min={0} max={0.5} step={0.05} />
-                </Form.Item>
-                <Form.Item name="samplePrompt" label="采样提示">
-                  <Input />
-                </Form.Item>
-                <Form.Item name="sampleTokens" label="采样长度">
-                  <InputNumber min={1} max={500} />
-                </Form.Item>
+                  </section>
+                </section>
+                <section className="mini-gpt-training-step">
+                  <div className="mini-gpt-step-head">
+                    <Tag color="blue">2</Tag>
+                    <div>
+                      <strong>设置训练</strong>
+                      <p>语料确定后，再配置预设、实验名、续训来源和训练参数。</p>
+                    </div>
+                  </div>
+                  <div className="mini-gpt-training-step-grid">
+                    <Form.Item name="preset" label="预设">
+                      <Select
+                        options={[
+                          { value: 'tiny', label: 'tiny' },
+                          { value: 'small', label: 'small' },
+                          { value: 'medium', label: 'medium' },
+                          { value: 'custom', label: 'custom' }
+                        ]}
+                      />
+                    </Form.Item>
+                    <Form.Item name="runName" label="实验名">
+                      <Input
+                        placeholder="留空自动生成"
+                        addonAfter={(
+                          <Button
+                            type="link"
+                            size="small"
+                            disabled={variableDiffItems.length !== 1}
+                            onClick={handleSuggestRunName}
+                          >
+                            命名
+                          </Button>
+                        )}
+                      />
+                    </Form.Item>
+                    <Form.Item name="resumeFromRun" label="续训来源">
+                      <Select
+                        allowClear
+                        placeholder="仅显示同语料 checkpoint"
+                        options={resumeSourceRuns
+                          .map(item => ({
+                            value: item.runName,
+                            label: [item.runName, item.trainStep !== undefined ? `step=${formatInteger(item.trainStep)}` : '', item.finalEvalLoss !== undefined ? `eval=${formatLoss(item.finalEvalLoss)}` : '']
+                              .filter(Boolean)
+                              .join(' · ')
+                          }))}
+                      />
+                    </Form.Item>
+                    <Form.Item name="maxSteps" label="步数">
+                      <InputNumber min={1} max={5000} />
+                    </Form.Item>
+                    <Form.Item name="valRatio" label="验证比例">
+                      <InputNumber min={0} max={0.5} step={0.05} />
+                    </Form.Item>
+                    <Form.Item name="samplePrompt" label="采样提示">
+                      <Input />
+                    </Form.Item>
+                    <Form.Item name="sampleTokens" label="采样长度">
+                      <InputNumber min={1} max={500} />
+                    </Form.Item>
+                  </div>
+                </section>
                 <section className="mini-gpt-advanced-form">
                   <Form.Item name="batchSize" label="Batch Size">
                     <InputNumber min={1} max={256} />
@@ -2439,41 +2496,6 @@ const MiniGptLearningPage = () => {
                       <span>{recipe.description}</span>
                     </button>
                   ))}
-                </section>
-                <section className="mini-gpt-lottery-corpus">
-                  <div className="mini-gpt-lottery-corpus-head">
-                    <Text type="secondary">双色球训练语料</Text>
-                    <Space wrap>
-                      <Button
-                        size="small"
-                        icon={<DatabaseOutlined />}
-                        loading={lotteryCorpusLoading}
-                        disabled={trainingStatus.running}
-                        onClick={() => handleExportLotteryCorpus('raw')}
-                      >
-                        开奖格式
-                      </Button>
-                      <Button
-                        size="small"
-                        icon={<DatabaseOutlined />}
-                        loading={lotteryCorpusLoading}
-                        disabled={trainingStatus.running}
-                        onClick={() => handleExportLotteryCorpus('features')}
-                      >
-                        结构特征
-                      </Button>
-                    </Space>
-                  </div>
-                  {lotteryCorpusExport ? (
-                    <div className="mini-gpt-lottery-corpus-result">
-                      <Tag color="cyan">{lotteryCorpusExport.format}</Tag>
-                      <span>{lotteryCorpusExport.drawCount || 0} 期</span>
-                      <code>{lotteryCorpusExport.dataPath || '-'}</code>
-                      <p>{lotteryCorpusExport.firstIssue || '-'} - {lotteryCorpusExport.latestIssue || '-'}</p>
-                    </div>
-                  ) : (
-                    <p>从 Mongo 开奖记录导出 MiniGPT 训练文本，并自动填入语料路径。</p>
-                  )}
                 </section>
                 <Form.Item className="mini-gpt-training-actions">
                   <Space wrap>

@@ -271,6 +271,51 @@
   align-self: end;
 }
 
+.mini-gpt-corpus-step,
+.mini-gpt-training-step {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 8px;
+  background: var(--mini-gpt-panel-bg-soft);
+}
+
+.mini-gpt-corpus-step {
+  background: color-mix(in srgb, var(--module-accent, #00c7be) 8%, var(--mini-gpt-panel-bg-soft));
+}
+
+.mini-gpt-step-head {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.mini-gpt-step-head strong {
+  display: block;
+  color: var(--mini-gpt-text);
+  font-size: 14px;
+}
+
+.mini-gpt-step-head p {
+  margin: 4px 0 0;
+  color: var(--mini-gpt-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.mini-gpt-corpus-step-grid,
+.mini-gpt-training-step-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mini-gpt-training-step-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .mini-gpt-advanced-form {
   display: grid;
   grid-column: 1 / -1;
@@ -2142,6 +2187,11 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .mini-gpt-corpus-step-grid,
+  .mini-gpt-training-step-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .mini-gpt-advanced-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2197,6 +2247,8 @@
   .mini-gpt-diagnostic-grid,
   .mini-gpt-learning-grid,
   .mini-gpt-training-form,
+  .mini-gpt-corpus-step-grid,
+  .mini-gpt-training-step-grid,
   .mini-gpt-advanced-form,
   .mini-gpt-recipe-grid,
   .mini-gpt-shape-grid,
