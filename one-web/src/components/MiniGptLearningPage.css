@@ -49,6 +49,32 @@
   margin: 0 auto;
 }
 
+.mini-gpt-lab-switcher {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  display: flex;
+  justify-content: center;
+  padding: 10px;
+  border: 1px solid var(--mini-gpt-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--mini-gpt-panel-bg) 92%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.mini-gpt-lab-switcher .ant-segmented {
+  max-width: 100%;
+}
+
+.mini-gpt-lab-section {
+  display: none;
+}
+
+.mini-gpt-lab-section.active {
+  display: grid;
+  gap: 16px;
+}
+
 .mini-gpt-summary-band {
   display: flex;
   align-items: flex-end;

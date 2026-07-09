@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Alert, Button, Card, Empty, Form, Input, InputNumber, Progress, Select, Space, Spin, Table, Tag, Typography, message } from 'antd';
+import { Alert, Button, Card, Empty, Form, Input, InputNumber, Progress, Segmented, Select, Space, Spin, Table, Tag, Typography, message } from 'antd';
 import { BarChartOutlined, BookOutlined, BulbOutlined, CloseCircleOutlined, CopyOutlined, DatabaseOutlined, DownloadOutlined, PlayCircleOutlined, ReloadOutlined, SaveOutlined, TrophyOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
 import LifePageShell from './LifePageShell';
@@ -553,6 +553,17 @@ type ReviewQualityItem = {
   status: 'PASS' | 'WATCH' | 'TODO';
   detail: string;
 };
+
+type LabSectionKey = 'training' | 'corpus' | 'explain' | 'review' | 'generate' | 'records';
+
+const labSectionOptions: Array<{ label: string; value: LabSectionKey }> = [
+  { label: '训练', value: 'training' },
+  { label: '语料', value: 'corpus' },
+  { label: '解释', value: 'explain' },
+  { label: '复盘', value: 'review' },
+  { label: '生成', value: 'generate' },
+  { label: '记录', value: 'records' }
+];
 
 type GenerationRankItem = {
   key: string;
@@ -1565,6 +1576,7 @@ const MiniGptLearningPage = () => {
   const [generationComparisons, setGenerationComparisons] = useState<MiniGptGenerationResult[]>([]);
   const [selectedGenerationKey, setSelectedGenerationKey] = useState<string>();
   const [selectedTraceTokenKey, setSelectedTraceTokenKey] = useState<string>();
+  const [activeLabSection, setActiveLabSection] = useState<LabSectionKey>('training');
   const [savedCandidateSet, setSavedCandidateSet] = useState<LotteryDecisionSet>();
   const [candidateBacktest, setCandidateBacktest] = useState<LotteryBacktestReport>();
   const [selectedRun, setSelectedRun] = useState<string>();
@@ -1586,6 +1598,10 @@ const MiniGptLearningPage = () => {
   const watchedTrainingValues = Form.useWatch([], form) as MiniGptTrainingRequest | undefined;
   const watchedRunName = Form.useWatch('runName', form) as string | undefined;
   const watchedNoteValues = Form.useWatch([], noteForm) as MiniGptRunNoteRequest | undefined;
+
+  const labSectionClass = useCallback((section: LabSectionKey) => (
+    `mini-gpt-lab-section ${activeLabSection === section ? 'active' : ''}`
+  ), [activeLabSection]);
 
   const loadDashboard = useCallback(async (runName?: string, quiet = false) => {
     if (!quiet) {
@@ -2299,6 +2315,14 @@ const MiniGptLearningPage = () => {
     >
       <Spin spinning={loading}>
         <div className="mini-gpt-workspace">
+          <section className="mini-gpt-lab-switcher">
+            <Segmented
+              value={activeLabSection}
+              options={labSectionOptions}
+              onChange={(value) => setActiveLabSection(value as LabSectionKey)}
+            />
+          </section>
+          <section className={labSectionClass('training')}>
           <Card className="mini-gpt-panel mini-gpt-training-card" title="训练控制">
             <div className="mini-gpt-training-grid">
               <Form
@@ -2609,7 +2633,9 @@ const MiniGptLearningPage = () => {
               ))}
             </div>
           </Card>
+          </section>
 
+          <section className={labSectionClass('corpus')}>
           <Card
             className="mini-gpt-panel"
             title="语料与 Tokenizer"
@@ -2666,7 +2692,9 @@ const MiniGptLearningPage = () => {
               </div>
             </Spin>
           </Card>
+          </section>
 
+          <section className={labSectionClass('explain')}>
           <Card className="mini-gpt-panel" title="训练过程解释">
             <div className="mini-gpt-explain-grid">
               <section className="mini-gpt-explain-section">
@@ -2768,7 +2796,9 @@ const MiniGptLearningPage = () => {
               ))}
             </div>
           </Card>
+          </section>
 
+          <section className={labSectionClass('review')}>
           <Card className="mini-gpt-panel" title="复盘问题">
             <ol className="mini-gpt-review-list">
               {reviewQuestionItems.map(question => (
@@ -2829,6 +2859,7 @@ const MiniGptLearningPage = () => {
               <Empty description="从下一步建议加入计划，本机自动保存" />
             )}
           </Card>
+          </section>
 
           {!run ? (
             <Alert
@@ -2840,6 +2871,7 @@ const MiniGptLearningPage = () => {
             />
           ) : (
             <>
+            <section className={labSectionClass('records')}>
             <section className="mini-gpt-summary-band">
               <div>
                 <Text type="secondary">当前实验</Text>
@@ -2888,7 +2920,9 @@ const MiniGptLearningPage = () => {
                 </div>
               ))}
             </section>
+            </section>
 
+            <section className={labSectionClass('review')}>
             <Card
               className="mini-gpt-panel"
               title="实验对比与笔记"
@@ -2988,7 +3022,9 @@ const MiniGptLearningPage = () => {
                 </Form>
               </div>
             </Card>
+            </section>
 
+            <section className={labSectionClass('generate')}>
             <section className="mini-gpt-main-grid">
               <Card className="mini-gpt-panel" title="Loss 曲线">
                 {trainingStatus.runName && (
@@ -3333,7 +3369,9 @@ const MiniGptLearningPage = () => {
                 </div>
               </Card>
             </section>
+            </section>
 
+            <section className={labSectionClass('records')}>
             <section className="mini-gpt-main-grid">
               <Card className="mini-gpt-panel" title="实验配置">
                 <dl className="mini-gpt-config-list">
@@ -3380,6 +3418,7 @@ const MiniGptLearningPage = () => {
                 scroll={{ x: 820 }}
               />
             </Card>
+            </section>
             </>
           )}
         </div>
