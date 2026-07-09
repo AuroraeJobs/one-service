@@ -621,13 +621,20 @@ const LotteryMonthEndReviewPage = () => {
       path: '/lottery/recommendations?focus=retirement-review&preset=STALE_EVIDENCE'
     },
     {
+      key: 'archive-review-pressure',
+      label: '归档复核压力',
+      detail: '把待复核归档队列沉淀为 ARCHIVE_REVIEW 笔记',
+      status: archiveReviewQueueItems.length || archiveReviewNoteSummary.active ? 'WARNING' : archiveReviewNoteSummary.total ? 'PASS' : 'MANUAL',
+      path: archiveReviewNotePath
+    },
+    {
       key: 'release-evidence-archive',
       label: '发布证据归档',
       detail: '把长期计划复盘接入发布证据和历史快照',
       status: exportAudits.length ? 'PASS' : 'MANUAL',
       path: '/lottery/exports?focus=release-archive'
     }
-  ], [archiveReviewNoteSummary.active, attributionRows, exportAudits.length, health?.status, health?.warningCount, recommendationRollup?.recommendationCount, recommendationRollup?.staleCount]);
+  ], [archiveReviewNotePath, archiveReviewNoteSummary.active, archiveReviewNoteSummary.total, archiveReviewQueueItems.length, attributionRows, exportAudits.length, health?.status, health?.warningCount, recommendationRollup?.recommendationCount, recommendationRollup?.staleCount]);
 
   return (
     <LifePageShell

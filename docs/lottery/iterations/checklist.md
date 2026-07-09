@@ -1159,6 +1159,27 @@ Goal: turn stale recommendation cleanup into a focused review path that reuses e
 - [x] Connect governance recommendation warnings and transition rows to the focused retirement path.
 - [x] Decide whether a dedicated export label is needed. Decision: existing recommendation follow-through package is enough; keep V29 release evidence and add V44 release visibility pointing at the focused recommendation view.
 
+## Iteration 45: Archive Review Pressure Focus
+
+Goal: turn archive-review pressure into a focused handoff that reuses month-end archive queues, strategy notes, governance pressure, and export evidence without adding a backend contract.
+
+### Wave 45A: Month-End Archive Review Candidate
+
+- [x] Add archive-review pressure to the month-end next-phase candidates.
+- [x] Route the candidate to the existing ARCHIVE_REVIEW strategy-note handoff.
+- [x] Keep the first slice frontend-derived from the current archive queue and note summary.
+
+### Wave 45B: Workbench Archive Review Priority
+
+- [ ] Make archive-review pressure easier to spot in workbench next actions.
+- [ ] Keep the action tied to existing archive pressure and note-quality signals.
+- [ ] Add smoke coverage for the workbench handoff label.
+
+### Wave 45C: Release Evidence Archive Review Link
+
+- [ ] Connect archive-review pressure to release evidence when useful.
+- [ ] Decide whether the existing archive-search evidence package is enough or needs a focused release row.
+
 ## Documentation And Delivery
 
 - [x] Update `docs/lottery/modules/technical-design.md` after key architecture changes. Updated with ticket, ledger, provider, preference, data quality, probe-log, sync-summary, and ticket-automation contracts.

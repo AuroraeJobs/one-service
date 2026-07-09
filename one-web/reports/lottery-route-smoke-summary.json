@@ -1,6 +1,6 @@
 {
-  "target": "Iteration 44 Wave 44C recommendation retirement review smoke",
-  "generatedAt": "2026-07-09T00:51:55.880Z",
+  "target": "Iteration 45 Wave 45A archive review pressure candidate smoke",
+  "generatedAt": "2026-07-09T00:55:08.300Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
@@ -71,7 +71,7 @@
       "label": "月末复盘",
       "component": "LotteryMonthEndReviewPage",
       "mockApiCount": 11,
-      "emptyStateCount": 22,
+      "emptyStateCount": 24,
       "errorStateCount": 1
     },
     {
