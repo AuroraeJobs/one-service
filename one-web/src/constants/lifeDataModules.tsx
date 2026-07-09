@@ -184,7 +184,7 @@ export const lifeDataModules: LifeDataModule[] = [
 
 export const lifeNavItems: LifeNavItem[] = [
   { path: '/overview', key: 'overview', label: '首页', icon: <DashboardOutlined /> },
-  { path: '/lottery/workbench', key: 'lottery', label: '彩票', icon: <AppleOutlined /> },
+  { path: '/lottery', key: 'lottery', label: '彩票', icon: <AppleOutlined /> },
   { path: '/investments', key: 'investment', label: '股票', icon: <ChromeOutlined /> },
   { path: '/wechat', key: 'wechat', label: '微信', icon: <WechatOutlined /> },
   { path: '/finance/salary', key: 'finance', label: '支付宝', icon: <AlipayOutlined /> },

@@ -1,10 +1,28 @@
 {
-  "target": "Iteration 45 Wave 45C archive review release evidence smoke",
+  "target": "Lottery unified overview default smoke",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "consoleErrors": [],
   "sourceChecks": [
+    {
+      "scope": "lottery unified overview default routes",
+      "file": "src/routes/lifeRoutes.tsx",
+      "includes": [
+        "{ path: '/', element: <LotteryOverviewPage /> }",
+        "{ path: '/lottery', element: <LotteryOverviewPage /> }",
+        "{ path: '/lottery/workbench', element: <LotteryWorkbenchPage /> }"
+      ]
+    },
+    {
+      "scope": "lottery unified overview default navigation",
+      "file": "src/constants/lifeDataModules.tsx",
+      "includes": [
+        "{ path: '/lottery', key: 'lottery', label: '彩票'",
+        "{ id: 'lottery-overview', moduleKey: 'lottery', path: '/lottery', label: '概览'",
+        "if (canonicalPath === '/') return '/lottery'"
+      ]
+    },
     {
       "scope": "workbench closure path",
       "file": "src/components/LotteryWorkbenchPage.tsx",
