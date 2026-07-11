@@ -7,12 +7,12 @@ Generated from `npm run lottery:smoke`.
 | Field | Value |
 | --- | --- |
 | Target | Lottery unified overview default smoke |
-| Generated at | 2026-07-11T12:11:38.531Z |
+| Generated at | 2026-07-11T13:14:33.848Z |
 | Status | PASSED |
 | Mode | mocked-fixture |
 | Provider network | not-required |
 | Routes | 18 |
-| Checks | 831 |
+| Checks | 906 |
 | Failures | 0 |
 
 ## Protected Browser QA
@@ -39,6 +39,8 @@ Generated from `npm run lottery:smoke`.
 | lottery english chart localization | `src/components/LotteryLocalizedECharts.tsx` | 4 | 0 |
 | iteration 47A MiniGPT corpus workflow | `src/components/MiniGptLearningPage.tsx` | 14 | 0 |
 | iteration 47A MiniGPT corpus API contract | `src/services/api.ts` | 7 | 0 |
+| iteration 47B MiniGPT context and generation provenance workflow | `src/components/MiniGptLearningPage.tsx` | 41 | 0 |
+| iteration 47B MiniGPT provenance and batch API contract | `src/services/api.ts` | 32 | 0 |
 | workbench closure path | `src/components/LotteryWorkbenchPage.tsx` | 49 | 0 |
 | mobile dark-mode CSS safeguards | `src/components/LotteryOverviewPage.css` | 7 | 0 |
 | visible lottery label helpers | `src/utils/lotteryStatusLabel.ts` | 4 | 0 |

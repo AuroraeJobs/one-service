@@ -152,6 +152,36 @@ data/lottery-corpora/<format>/<corpusVersion>/manifest.json
 - `Temperature`：生成候选号码时的随机程度。低温更保守，高温更发散。
 - `Top-K`：每次生成下一个 token 时只从概率最高的 K 个候选里选，过滤明显离谱的 token。
 
+## Iteration 47B 训练与生成证据
+
+正式彩票语料不能只凭“训练成功”进入研究链。训练启动前必须验证当前模型真正生效的上下文长度能够容纳语料中的每一条完整结构化样本：
+
+```text
+requiredBlockSize = 最长非空样本行的 Unicode code point 数 + 行终止符 token
+effectiveBlockSize = 续训 checkpoint 中的 block_size，否则为请求或 preset 的实际值
+通过条件 = effectiveBlockSize >= requiredBlockSize
+```
+
+`recommendedBlockSize` 将 `requiredBlockSize` 向上对齐到 16 的倍数，便于页面快速采用，但硬门禁始终以原始 required 值为准。这个门禁证明完整行能够进入上下文，不代表随机窗口采样的每个 batch 都从行首开始。
+
+正式时间切分语料还必须保持以下验证语义：
+
+- `train.txt` 全部用于训练，不能再在脚本内部按字符切走尾部。
+- `validation.txt` 直接作为训练日志与最终质量门禁的验证来源。
+- 显式验证文件过短、包含训练 tokenizer 无法表示的字符或与 manifest/hash 不一致时立即失败，不能静默降级为同源验证。
+- 续训时以 checkpoint 的实际模型配置为准；页面提交一个更大的 `blockSize` 不能掩盖旧 checkpoint 的短上下文。
+
+每个正式 run 至少持久化 corpus format/version、schema/template version、manifest、train/validation SHA-256、run id、实际模型配置、seed、effective/required block size、validation source、checkpoint 及 checkpoint SHA-256。每条生成结果再复制这些训练证据，并记录 generation id、batch id、prompt、实际 temperature、top-k、seed、原始输出与解析/修复结果。
+
+生成质量的统一分母是该批次实际完成的 `generatedCount`：
+
+- `parseableRate = parseableCount / generatedCount`。
+- `legalRate = legalCount / generatedCount`，只计算未经修复已经合法的输出。
+- `postRepairLegalRate = postRepairLegalCount / generatedCount`，其中合法判定统一为 `valid || postRepairValid`。
+- 修复必须保留稳定 issue code、动作和是否真正得到合法号码，不能仅凭修复数组长度推断成功。
+
+批量生成采用显式 seed、策略标签、最大红球重叠和最小蓝球覆盖目标。候选选择只能报告实际达到的 overlap、blue coverage 与 strategy composition；当原始模型输出不足时应保留拒绝原因，不能伪造满足约束的候选。不同 seed 带来的是可复现采样差异，不是中奖概率提升证据。
+
 ## 选号策略方向
 
 后续候选策略可以分为四类，每类都要能独立回测。

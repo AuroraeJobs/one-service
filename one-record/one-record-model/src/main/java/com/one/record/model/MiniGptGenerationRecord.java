@@ -1,17 +1,31 @@
-package com.one.record.ai;
+package com.one.record.model;
 
+import com.one.record.ai.MiniGptLotteryCandidateValidation;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 @Data
 @Builder
-public class MiniGptGenerationResult implements Serializable {
+@NoArgsConstructor
+@AllArgsConstructor
+@Document(collection = "mini_gpt_generations")
+@CompoundIndex(name = "run_generated_at", def = "{'runId': 1, 'generatedAt': -1}")
+public class MiniGptGenerationRecord {
 
+    @Id
+    private String id;
+
+    @Indexed(unique = true)
     private String generationId;
 
     private String batchId;
@@ -20,22 +34,22 @@ public class MiniGptGenerationResult implements Serializable {
 
     private String runName;
 
-    private String prompt;
-
-    private String generatedText;
-
-    private String checkpoint;
-
-    private String checkpointSha256;
-
     private String corpusVersion;
 
     private String trainSha256;
 
     private String validationSha256;
 
+    private String checkpoint;
+
+    private String checkpointSha256;
+
     @Builder.Default
     private Map<String, Object> modelConfig = new LinkedHashMap<>();
+
+    private String prompt;
+
+    private String generatedText;
 
     private Integer maxNewTokens;
 

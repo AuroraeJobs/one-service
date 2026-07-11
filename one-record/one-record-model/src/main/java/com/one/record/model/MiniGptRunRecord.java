@@ -36,7 +36,42 @@ public class MiniGptRunRecord {
 
     private String evalData;
 
+    private String manifestDataPath;
+
+    private String corpusVersion;
+
+    private String corpusFormat;
+
+    private Integer schemaVersion;
+
+    private String templateVersion;
+
+    private String trainSha256;
+
+    private String validationSha256;
+
+    private String provenanceStatus;
+
+    private Integer minimumSampleTokens;
+
+    private Integer maximumSampleTokens;
+
+    private Integer requiredBlockSize;
+
+    private Integer recommendedBlockSize;
+
+    private Integer effectiveBlockSize;
+
+    private String validationSource;
+
+    private Long seed;
+
+    @Builder.Default
+    private Map<String, Object> provenance = new LinkedHashMap<>();
+
     private String checkpoint;
+
+    private String checkpointSha256;
 
     private String parentRunName;
 

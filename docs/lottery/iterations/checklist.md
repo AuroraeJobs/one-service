@@ -1240,9 +1240,9 @@ Formal plan: [Iteration 47 plan](iteration-47-plan.md).
 
 ### Wave 47B: Training And Generation Provenance
 
-- [ ] Validate that training context contains a complete structured sample and record corpus/run/checkpoint/model/generation provenance.
-- [ ] Measure parseable rate, legal-number rate, repair outcomes, and post-repair legal-number rate instead of relying on training loss alone.
-- [ ] Produce differentiated candidate batches with controlled overlap, blue-ball coverage, and traceable strategy composition.
+- [x] Validate that training context contains a complete structured sample and record corpus/run/checkpoint/model/generation provenance.
+- [x] Measure parseable rate, legal-number rate, repair outcomes, and post-repair legal-number rate instead of relying on training loss alone.
+- [x] Produce differentiated candidate batches with controlled overlap, blue-ball coverage, and traceable strategy composition.
 
 ### Wave 47C: Random-Baseline And Outcome Chain
 

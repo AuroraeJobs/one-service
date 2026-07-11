@@ -6,6 +6,7 @@ import com.one.common.exception.NotFoundException;
 import com.one.record.dto.Response;
 import com.one.record.exception.LotteryRecordSyncLogConflictException;
 import com.one.record.exception.MiniGptLotteryCorpusException;
+import com.one.record.exception.MiniGptTrainingValidationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -45,6 +46,13 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
     public Response<Object> handleMiniGptLotteryCorpusException(MiniGptLotteryCorpusException e) {
         log.warn("MiniGPT lottery corpus export rejected: {}", e.getMessage());
+        return Response.error(422, e.getMessage());
+    }
+
+    @ExceptionHandler(MiniGptTrainingValidationException.class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    public Response<Object> handleMiniGptTrainingValidationException(MiniGptTrainingValidationException e) {
+        log.warn("MiniGPT training or generation request rejected: {}", e.getMessage());
         return Response.error(422, e.getMessage());
     }
 

@@ -19,6 +19,32 @@ public class MiniGptCorpusInsight implements Serializable {
 
     private Integer lineCount;
 
+    private Integer sampleCount;
+
+    private Integer minimumSampleTokens;
+
+    private Integer maximumSampleTokens;
+
+    private Integer requiredBlockSize;
+
+    private Integer recommendedBlockSize;
+
+    private String tokenizerType;
+
+    private String corpusVersion;
+
+    private String corpusFormat;
+
+    private Integer schemaVersion;
+
+    private String templateVersion;
+
+    private String trainSha256;
+
+    private String validationSha256;
+
+    private String provenanceStatus;
+
     private Integer vocabSize;
 
     private String preview;

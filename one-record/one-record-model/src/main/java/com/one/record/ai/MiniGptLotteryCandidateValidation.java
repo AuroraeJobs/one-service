@@ -42,6 +42,14 @@ public class MiniGptLotteryCandidateValidation implements Serializable {
 
     private List<String> issues;
 
+    private List<String> issueCodes;
+
+    private Boolean repairApplied;
+
+    private List<String> repairActions;
+
+    private Boolean postRepairValid;
+
     private List<String> repairedRedNumbers;
 
     private String repairedBlueNumber;

@@ -188,6 +188,40 @@ Compatibility rules:
 
 The `strategy` serializer emits complete `target/strategy/red/blue/reason` rows from versioned deterministic templates. It must use normalized legal numbers and documented reason labels, and it must not read validation outcomes to construct training rows. This corpus supports format, constraint, and explanation learning; it is not a prediction-success claim.
 
+## MiniGPT Training And Generation Provenance Contract
+
+Iteration 47B connects a versioned corpus to the training and generation records without changing the Iteration 47A export identity. A formal lottery training request supplies the versioned `train.txt`, paired `validation.txt`, and `manifest.json`; the backend resolves all three inside the MiniGPT playground and recalculates their SHA-256 values before starting Python.
+
+Training preflight is synchronous and runs before the in-process training lock is acquired. For the character tokenizer:
+
+```text
+sampleTokens = Unicode code points in a nonblank complete row + its line terminator token
+requiredBlockSize = max(sampleTokens)
+recommendedBlockSize = ceil(requiredBlockSize / 16) * 16
+effectiveBlockSize = resume checkpoint config.block_size
+                     or explicit request blockSize
+                     or preset blockSize
+```
+
+A formal run is rejected with HTTP 422 when the manifest paths or hashes do not match, the effective context is shorter than `requiredBlockSize`, the training stream is too short for a batch, or the fixed validation file is too short or contains characters outside the training tokenizer. Legacy unversioned text remains available for learning experiments, but its run is marked `LEGACY_UNVERIFIED` and must not be presented as formal lottery evidence.
+
+When a fixed validation file is present, Python uses the entire training file for updates and the fixed file for periodic `eval_loss` and the final validation loss. Only legacy requests without `evalData` may use the historical train-tail character split. The saved run exposes `validationSource` so consumers can distinguish the two modes.
+
+`mini_gpt_runs` remains the durable training source and gains corpus/manifest hashes, actual context and model configuration, seed, validation source, checkpoint path, and checkpoint SHA-256. Every generated sample is additionally persisted to `mini_gpt_generations` with:
+
+```text
+generationId, batchId, runId, runName
+corpusVersion, trainSha256, validationSha256
+checkpoint, checkpointSha256, modelConfig
+prompt, maxNewTokens, temperature, topK, seed
+generatedText, lotteryCandidate, strategyLabel
+poolSelected, poolDecision, elapsedMillis, generatedAt
+```
+
+`POST /ai/minigpt/generate` remains the single-sample compatibility endpoint and `POST /ai/minigpt/generate/compare` remains parameter comparison. `POST /ai/minigpt/generation/batch` is the evidence-producing batch endpoint. A batch assigns deterministic per-item seeds, records strategy composition, parses and repairs every item, then greedily selects legal candidates while enforcing the requested red-ball overlap and preferring additional blue-ball coverage.
+
+Batch rates always use `generatedCount` as the denominator. `legalCount` means legal before repair; `postRepairLegalCount` uses the shared `valid || postRepairValid` predicate. The response also records repair issue counts, maximum/average pairwise red overlap, distinct blue count/coverage, strategy composition, and every accepted or rejected item's reason. Requested diversity is a target; the response reports only what the generated candidates actually achieve.
+
 ## Statistics Contract
 
 `LotteryStatisticsSummary` is the first public statistics DTO for the lottery cockpit. `GET /lottery/statistics/summary` returns record count, first/latest draw metadata, red/blue frequency, and structural distributions for red sum, odd count, big count, and span. `POST /lottery/statistics/summary/refresh` forces a recalculation and rewrites the Redis cache. `GET /lottery/statistics/frequency` and `GET /lottery/statistics/distribution` expose the same data in smaller endpoint-specific shapes for pages that do not need the full summary.

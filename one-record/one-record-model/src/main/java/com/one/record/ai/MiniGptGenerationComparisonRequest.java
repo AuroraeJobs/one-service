@@ -17,4 +17,6 @@ public class MiniGptGenerationComparisonRequest implements Serializable {
     private List<Double> temperatures;
 
     private List<Integer> topKs;
+
+    private Long baseSeed = 42L;
 }

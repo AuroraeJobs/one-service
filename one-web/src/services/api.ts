@@ -1120,7 +1120,23 @@ export interface MiniGptRunRecord {
   finishedAt?: string;
   data?: string;
   evalData?: string;
+  corpusFormat?: string;
+  schemaVersion?: number;
+  templateVersion?: string;
+  manifestDataPath?: string;
+  corpusVersion?: string;
+  trainSha256?: string;
+  validationSha256?: string;
+  provenanceStatus?: string;
+  minimumSampleTokens?: number;
+  maximumSampleTokens?: number;
+  requiredBlockSize?: number;
+  recommendedBlockSize?: number;
+  effectiveBlockSize?: number;
+  validationSource?: string;
+  seed?: number;
   checkpoint?: string;
+  checkpointSha256?: string;
   parentRunName?: string;
   parentCheckpoint?: string;
   resumeStep?: number;
@@ -1182,6 +1198,11 @@ export interface MiniGptTrainingRequest {
   resumeCheckpoint?: string;
   data?: string;
   evalData?: string;
+  manifestDataPath?: string;
+  corpusVersion?: string;
+  trainSha256?: string;
+  validationSha256?: string;
+  seed?: number;
   qualityGateMaxEvalLoss?: number;
   qualityGateMaxLossGap?: number;
   maxSteps?: number;
@@ -1280,6 +1301,10 @@ export interface MiniGptLotteryCandidateValidation {
   redAscending?: boolean;
   status?: string;
   issues?: string[];
+  issueCodes?: string[];
+  repairApplied?: boolean;
+  repairActions?: string[];
+  postRepairValid?: boolean;
   repairedRedNumbers?: string[];
   repairedBlueNumber?: string;
 }
@@ -1296,6 +1321,19 @@ export interface MiniGptCorpusInsight {
   resolvedPath?: string;
   charCount?: number;
   lineCount?: number;
+  sampleCount?: number;
+  minimumSampleTokens?: number;
+  maximumSampleTokens?: number;
+  requiredBlockSize?: number;
+  recommendedBlockSize?: number;
+  tokenizerType?: string;
+  corpusVersion?: string;
+  corpusFormat?: string;
+  schemaVersion?: number;
+  templateVersion?: string;
+  trainSha256?: string;
+  validationSha256?: string;
+  provenanceStatus?: string;
   vocabSize?: number;
   preview?: string;
   sampleText?: string;
@@ -1318,6 +1356,7 @@ export interface MiniGptGenerationRequest {
   maxNewTokens?: number;
   temperature?: number;
   topK?: number;
+  seed?: number;
 }
 
 export interface MiniGptGenerationComparisonRequest {
@@ -1326,19 +1365,86 @@ export interface MiniGptGenerationComparisonRequest {
   maxNewTokens?: number;
   temperatures?: number[];
   topKs?: number[];
+  baseSeed?: number;
 }
 
 export interface MiniGptGenerationResult {
+  generationId?: string;
+  batchId?: string;
+  runId?: string;
   runName?: string;
+  seed?: number;
   prompt?: string;
   generatedText?: string;
   checkpoint?: string;
+  corpusVersion?: string;
+  trainSha256?: string;
+  validationSha256?: string;
+  checkpointSha256?: string;
+  modelConfig?: Record<string, unknown>;
+  strategyLabel?: string;
+  poolSelected?: boolean;
+  poolDecision?: string;
+  batchBaseSeed?: number;
+  batchMaxRedOverlap?: number;
+  batchMinimumBlueCoverage?: number;
+  batchMinimumBlueCoverageMet?: boolean;
+  batchStrategies?: string[];
   maxNewTokens?: number;
   temperature?: number;
   topK?: number;
   exitCode?: number;
   elapsedMillis?: number;
   lotteryCandidate?: MiniGptLotteryCandidateValidation;
+  generatedAt?: number;
+}
+
+export interface MiniGptGenerationBatchRequest {
+  runName?: string;
+  prompt?: string;
+  maxNewTokens?: number;
+  temperature?: number;
+  topK?: number;
+  candidateCount?: number;
+  baseSeed?: number;
+  maxRedOverlap?: number;
+  minimumBlueCoverage?: number;
+  strategies?: string[];
+}
+
+export interface MiniGptGenerationBatchResult {
+  batchId?: string;
+  runId?: string;
+  runName?: string;
+  corpusVersion?: string;
+  trainSha256?: string;
+  validationSha256?: string;
+  checkpoint?: string;
+  checkpointSha256?: string;
+  modelConfig?: Record<string, unknown>;
+  requestedCount?: number;
+  baseSeed?: number;
+  maxRedOverlap?: number;
+  minimumBlueCoverage?: number;
+  minimumBlueCoverageMet?: boolean;
+  requestedStrategies?: string[];
+  generatedCount?: number;
+  generatedRate?: number;
+  parseableCount?: number;
+  parseableRate?: number;
+  legalCount?: number;
+  legalRate?: number;
+  repairedCount?: number;
+  repairedRate?: number;
+  postRepairLegalCount?: number;
+  postRepairLegalRate?: number;
+  repairReasonCounts?: Record<string, number>;
+  redOverlapMax?: number;
+  redOverlapAverage?: number;
+  distinctBlueCount?: number;
+  blueCoverage?: number;
+  strategyComposition?: Record<string, number>;
+  items: MiniGptGenerationResult[];
   generatedAt?: number;
 }
 
@@ -1389,6 +1495,10 @@ export const miniGptApi = {
 
   compareGeneration: (request: MiniGptGenerationComparisonRequest): Promise<MiniGptGenerationResult[]> => {
     return apiClient.post('/ai/minigpt/generate/compare', request);
+  },
+
+  generateBatch: (request: MiniGptGenerationBatchRequest): Promise<MiniGptGenerationBatchResult> => {
+    return apiClient.post('/ai/minigpt/generation/batch', request);
   },
 
   validateLotteryCandidate: (text: string): Promise<MiniGptLotteryCandidateValidation> => {

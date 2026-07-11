@@ -16,4 +16,6 @@ public class MiniGptGenerationRequest implements Serializable {
     private Double temperature;
 
     private Integer topK;
+
+    private Long seed = 42L;
 }

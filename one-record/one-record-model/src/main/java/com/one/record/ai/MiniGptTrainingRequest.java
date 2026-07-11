@@ -19,6 +19,16 @@ public class MiniGptTrainingRequest implements Serializable {
 
     private String evalData;
 
+    private String manifestDataPath;
+
+    private String corpusVersion;
+
+    private String trainSha256;
+
+    private String validationSha256;
+
+    private Long seed = 42L;
+
     private Double qualityGateMaxEvalLoss;
 
     private Double qualityGateMaxLossGap;

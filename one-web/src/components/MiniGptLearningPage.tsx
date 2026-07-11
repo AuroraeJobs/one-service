@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, AutoComplete, Button, Card, Empty, Form, Input, InputNumber, Progress, Segmented, Select, Space, Spin, Table, Tag, Typography, message } from 'antd';
 import { BarChartOutlined, BookOutlined, BulbOutlined, CloseCircleOutlined, CopyOutlined, DatabaseOutlined, DownloadOutlined, PlayCircleOutlined, ReloadOutlined, SaveOutlined, TrophyOutlined } from '@ant-design/icons';
@@ -15,6 +15,8 @@ import {
   type MiniGptCorpusInsight,
   type MiniGptDashboard,
   type MiniGptEnvironmentCheck,
+  type MiniGptGenerationBatchRequest,
+  type MiniGptGenerationBatchResult,
   type MiniGptGenerationRequest,
   type MiniGptGenerationResult,
   type MiniGptLotteryCorpusExport,
@@ -32,6 +34,25 @@ const { Text } = Typography;
 const formatLoss = (value?: number) => Number.isFinite(value) ? value!.toFixed(4) : '-';
 
 const formatInteger = (value?: number) => Number.isFinite(value) ? value!.toLocaleString('zh-CN') : '-';
+
+const formatPercentage = (value?: number) => Number.isFinite(value) ? `${(value! * 100).toFixed(1)}%` : '-';
+
+const formatShortHash = (value?: string) => value?.slice(0, 16) || '-';
+
+const MINI_GPT_PRESET_BLOCK_SIZES: Record<string, number> = {
+  tiny: 32,
+  small: 48,
+  medium: 64
+};
+
+const MINI_GPT_FALLBACK_LOTTERY_BLOCK_SIZE = 160;
+
+const MINI_GPT_BATCH_STRATEGIES = ['balanced', 'blue-focus', 'zone-balance', 'low-overlap'];
+
+type MiniGptGenerationFormValues = MiniGptGenerationRequest & Pick<
+  MiniGptGenerationBatchRequest,
+  'candidateCount' | 'baseSeed' | 'maxRedOverlap' | 'minimumBlueCoverage' | 'strategies'
+>;
 
 const formatTime = (value?: string | number) => {
   if (!value) return '-';
@@ -745,6 +766,11 @@ const displayVariableValue = (value: unknown) => (
 
 const normalizeTrainingData = (value?: string) => (value || 'data/sample.txt').trim() || 'data/sample.txt';
 
+const isLotteryCorpusPath = (value?: string) => {
+  const dataPath = normalizeTrainingData(value);
+  return dataPath.startsWith('data/lottery-corpora/') || /^data\/lottery-(raw|features|strategy)\.txt$/.test(dataPath);
+};
+
 const groupRunsByData = (runs: MiniGptRunRecord[]) => {
   const groups = new Map<string, MiniGptRunRecord[]>();
   runs.forEach(item => {
@@ -763,22 +789,26 @@ const generationToDecisionCandidate = (
   index: number
 ): LotteryDecisionCandidateSelection | undefined => {
   const candidate = result.lotteryCandidate;
-  if (!candidate?.parseable) return undefined;
+  const postRepairValid = candidate?.postRepairValid === true;
+  if (!candidate?.parseable || (!candidate.valid && !postRepairValid) || result.poolSelected === false) return undefined;
   const rawRedNumbers = candidate.valid ? candidate.redNumbers : candidate.repairedRedNumbers;
   const rawBlueNumber = candidate.valid ? candidate.blueNumber : candidate.repairedBlueNumber;
   const redNumbers = (rawRedNumbers || []).filter(Boolean).slice(0, 6);
   if (redNumbers.length !== 6 || !rawBlueNumber) return undefined;
-  const warning = candidate.valid ? undefined : (candidate.issues || []).join('；') || '由 MiniGPT 输出修复得到';
+  const warning = candidate.valid
+    ? undefined
+    : (candidate.repairActions || candidate.issues || []).join('；') || '由 MiniGPT 输出修复得到';
+  const strategyLabel = result.strategyLabel || 'default';
   return {
-    key: `minigpt-${candidateKeyFromBalls(redNumbers, rawBlueNumber)}`,
-    candidateTitle: `MiniGPT 候选 ${index + 1}`,
+    key: result.generationId || `minigpt-${candidateKeyFromBalls(redNumbers, rawBlueNumber)}`,
+    candidateTitle: `MiniGPT ${strategyLabel} ${index + 1}`,
     source: 'MINIGPT',
-    ruleName: `MiniGPT temp=${result.temperature ?? '-'} topK=${result.topK ?? '-'}`,
+    ruleName: `MiniGPT ${strategyLabel} temp=${result.temperature ?? '-'} topK=${result.topK ?? '-'}`,
     redNumbers,
     blueNumber: rawBlueNumber,
     score: candidate.valid ? 80 : 55,
     replayText: result.generatedText,
-    driftLabel: result.temperature !== undefined ? `temp=${result.temperature}` : undefined,
+    driftLabel: result.seed !== undefined ? `seed=${result.seed}` : result.temperature !== undefined ? `temp=${result.temperature}` : undefined,
     resultState: 'PENDING',
     ticketCount: 0,
     ticketState: '未转票',
@@ -802,9 +832,35 @@ const uniqueDecisionCandidates = (results: MiniGptGenerationResult[]) => {
 const resultCandidateText = (result: MiniGptGenerationResult, isEnglish = false) => {
   const candidate = result.lotteryCandidate;
   if (!candidate?.parseable) return isEnglish ? 'Unparsed' : '未解析';
-  const redNumbers = candidate.valid ? candidate.redNumbers : candidate.repairedRedNumbers;
-  const blueNumber = candidate.valid ? candidate.blueNumber : candidate.repairedBlueNumber;
+  const useRepair = !candidate.valid && candidate.postRepairValid;
+  const redNumbers = useRepair ? candidate.repairedRedNumbers : candidate.redNumbers;
+  const blueNumber = useRepair ? candidate.repairedBlueNumber : candidate.blueNumber;
   return `${(redNumbers || []).join(' ')} + ${blueNumber || '--'}`;
+};
+
+const lotteryCandidateDisplayStatus = (candidate?: MiniGptGenerationResult['lotteryCandidate']) => {
+  if (candidate?.valid) return candidate.status || 'PASS';
+  if (candidate?.postRepairValid) return 'REPAIRED_PASS';
+  return candidate?.status || 'WAITING';
+};
+
+const lotteryCandidateDisplayMetrics = (candidate?: MiniGptGenerationResult['lotteryCandidate']) => {
+  const useRepair = Boolean(candidate && !candidate.valid && candidate.postRepairValid);
+  const redNumbers = useRepair ? candidate?.repairedRedNumbers || [] : candidate?.redNumbers || [];
+  const blueNumber = useRepair ? candidate?.repairedBlueNumber : candidate?.blueNumber;
+  const redValues = redNumbers.map(Number).filter(Number.isFinite);
+  const redSum = redValues.reduce((total, value) => total + value, 0);
+  const oddCount = redValues.filter(value => value % 2 !== 0).length;
+  const span = redValues.length >= 2 ? Math.max(...redValues) - Math.min(...redValues) : 0;
+  return {
+    redNumbers,
+    blueNumber,
+    redCount: redValues.length || candidate?.redCount,
+    redSum: redValues.length ? redSum : candidate?.redSum,
+    span: redValues.length ? span : candidate?.span,
+    oddCount: redValues.length ? oddCount : candidate?.oddCount,
+    evenCount: redValues.length ? redValues.length - oddCount : candidate?.evenCount
+  };
 };
 
 const scoreGenerationResult = (result: MiniGptGenerationResult) => {
@@ -815,7 +871,7 @@ const scoreGenerationResult = (result: MiniGptGenerationResult) => {
   const candidate = result.lotteryCandidate;
   const diversity = Math.min(25, Math.round(uniqueRatio * 45));
   const structure = candidate?.parseable ? 25 : text.length >= 40 ? 12 : 4;
-  const validity = candidate?.valid ? 30 : candidate?.parseable ? 18 : 0;
+  const validity = candidate?.valid ? 30 : candidate?.postRepairValid ? 24 : candidate?.parseable ? 18 : 0;
   const speed = result.elapsedMillis === undefined ? 10 : Math.max(0, Math.min(10, Math.round(10 - result.elapsedMillis / 700)));
   const repeatPenalty = Math.round(Math.min(20, repeatRatio * 90));
   return Math.max(0, Math.min(100, diversity + structure + validity + speed - repeatPenalty));
@@ -830,9 +886,11 @@ const generationRankItems = (results: MiniGptGenerationResult[], isEnglish = fal
       const diversity = chars.length ? Math.round((new Set(chars).size / chars.length) * 100) : 0;
       const repeat = repeatedCharRatio(text);
       const candidate = result.lotteryCandidate;
-      const status = candidate?.valid ? 'VALID' : candidate?.parseable ? 'REPAIR' : text ? 'TEXT' : 'EMPTY';
+      const status = candidate?.valid ? 'VALID' : candidate?.postRepairValid ? 'REPAIRED' : candidate?.parseable ? 'REPAIR' : text ? 'TEXT' : 'EMPTY';
       const summary = candidate?.valid
         ? (isEnglish ? 'Number structure is valid and can enter the candidate pool' : '号码结构合规，可进入候选池')
+        : candidate?.postRepairValid
+          ? (isEnglish ? 'Rule repair produced a legal candidate' : '规则修复后已形成合规候选')
         : candidate?.parseable
           ? (isEnglish ? 'Numbers are parseable, but need rule-based repair' : '能解析号码，但需要按规则修复')
           : repeat > 0.16
@@ -847,7 +905,7 @@ const generationRankItems = (results: MiniGptGenerationResult[], isEnglish = fal
         summary,
         diversity,
         structure: candidate?.parseable ? 100 : text.length >= 40 ? 55 : 20,
-        validity: candidate?.valid ? 100 : candidate?.parseable ? 60 : 15,
+        validity: candidate?.valid ? 100 : candidate?.postRepairValid ? 82 : candidate?.parseable ? 60 : 15,
         speed: result.elapsedMillis === undefined ? 60 : Math.max(0, Math.min(100, Math.round(100 - result.elapsedMillis / 35))),
         repeatPenalty: Math.round(repeat * 100),
         candidateText: resultCandidateText(result, isEnglish)
@@ -936,6 +994,10 @@ const configNumber = (run: MiniGptRunRecord | undefined, key: string) => {
   return Number.isFinite(Number(value)) ? Number(value) : undefined;
 };
 
+const blockSizeFromRun = (run?: MiniGptRunRecord) => (
+  run?.effectiveBlockSize ?? configNumber(run, 'block_size') ?? configNumber(run, 'blockSize')
+);
+
 const currentTrainingValue = (
   run: MiniGptRunRecord | undefined,
   key: keyof MiniGptTrainingRequest
@@ -952,10 +1014,11 @@ const currentTrainingValue = (
     maxSteps: run.maxSteps,
     batchSize: run.batchSize,
     learningRate: run.learningRate,
-    blockSize: configNumber(run, 'block_size'),
+    blockSize: blockSizeFromRun(run),
     nEmbd: configNumber(run, 'n_embd'),
     nHead: configNumber(run, 'n_head'),
     nLayer: configNumber(run, 'n_layer'),
+    seed: run?.seed ?? configNumber(run, 'seed'),
     valRatio: run.valRatio,
     samplePrompt: run.samplePrompt,
     sampleTokens: run.sampleTokens,
@@ -980,10 +1043,11 @@ const experimentVariableDiffs = (
     ['maxSteps', isEnglish ? 'Steps' : '步数', run?.maxSteps],
     ['batchSize', 'Batch Size', run?.batchSize],
     ['learningRate', 'Learning Rate', run?.learningRate],
-    ['blockSize', 'Block Size', configNumber(run, 'block_size')],
+    ['blockSize', 'Block Size', blockSizeFromRun(run)],
     ['nEmbd', 'Embedding', configNumber(run, 'n_embd')],
     ['nHead', 'Heads', configNumber(run, 'n_head')],
     ['nLayer', 'Layers', configNumber(run, 'n_layer')],
+    ['seed', 'Seed', run?.seed ?? configNumber(run, 'seed')],
     ['valRatio', isEnglish ? 'Validation Ratio' : '验证比例', run?.valRatio],
     ['samplePrompt', isEnglish ? 'Sample Prompt' : '采样提示', run?.samplePrompt],
     ['sampleTokens', isEnglish ? 'Sample Tokens' : '采样长度', run?.sampleTokens],
@@ -1234,10 +1298,26 @@ const localizePlannedExperiment = (item: PlannedExperiment, isEnglish = false): 
 const configEntries = (run?: MiniGptRunRecord): [string, string][] => {
   const config = run?.config || {};
   return [
+    ['run_id', run?.id],
     ['preset', run?.preset],
     ['device', run?.device],
     ['data', run?.data],
+    ['corpus_format', run?.corpusFormat],
+    ['corpus_version', run?.corpusVersion],
+    ['schema_version', run?.schemaVersion],
+    ['template_version', run?.templateVersion],
+    ['manifest', run?.manifestDataPath],
+    ['train_sha256', run?.trainSha256],
+    ['validation_sha256', run?.validationSha256],
+    ['provenance_status', run?.provenanceStatus],
+    ['minimum_sample_tokens', run?.minimumSampleTokens],
+    ['maximum_sample_tokens', run?.maximumSampleTokens],
+    ['required_block_size', run?.requiredBlockSize],
+    ['recommended_block_size', run?.recommendedBlockSize],
+    ['effective_block_size', run?.effectiveBlockSize],
+    ['validation_source', run?.validationSource],
     ['checkpoint', run?.checkpoint],
+    ['checkpoint_sha256', run?.checkpointSha256],
     ['eval_data', run?.evalData],
     ['started_at', run?.startedAt],
     ['finished_at', run?.finishedAt],
@@ -1257,6 +1337,7 @@ const configEntries = (run?: MiniGptRunRecord): [string, string][] => {
     ['parent_checkpoint', run?.parentCheckpoint],
     ['resume_step', run?.resumeStep],
     ['train_step', run?.trainStep],
+    ['seed', run?.seed ?? config.seed],
     ['block_size', config.block_size],
     ['n_layer', config.n_layer],
     ['n_head', config.n_head],
@@ -1266,6 +1347,81 @@ const configEntries = (run?: MiniGptRunRecord): [string, string][] => {
   ].filter(([, value]) => value !== undefined && value !== '')
     .map(([key, value]) => [String(key), String(value)]);
 };
+
+const generationProvenanceEntries = (
+  result?: MiniGptGenerationResult,
+  batch?: MiniGptGenerationBatchResult
+): [string, string][] => {
+  const modelConfig = result?.modelConfig || batch?.modelConfig;
+  const batchStrategies = result?.batchStrategies || batch?.requestedStrategies;
+  return [
+    ['generation_id', result?.generationId],
+    ['batch_id', result?.batchId || batch?.batchId],
+    ['run_id', result?.runId || batch?.runId],
+    ['run_name', result?.runName || batch?.runName],
+    ['strategy', result?.strategyLabel],
+    ['seed', result?.seed],
+    ['corpus_version', result?.corpusVersion || batch?.corpusVersion],
+    ['train_sha256', result?.trainSha256 || batch?.trainSha256],
+    ['validation_sha256', result?.validationSha256 || batch?.validationSha256],
+    ['checkpoint', result?.checkpoint || batch?.checkpoint],
+    ['checkpoint_sha256', result?.checkpointSha256 || batch?.checkpointSha256],
+    ['temperature', result?.temperature],
+    ['top_k', result?.topK],
+    ['batch_base_seed', result?.batchBaseSeed ?? batch?.baseSeed],
+    ['batch_max_red_overlap', result?.batchMaxRedOverlap ?? batch?.maxRedOverlap],
+    ['batch_minimum_blue_coverage', result?.batchMinimumBlueCoverage ?? batch?.minimumBlueCoverage],
+    ['batch_blue_coverage_met', result?.batchMinimumBlueCoverageMet ?? batch?.minimumBlueCoverageMet],
+    ['batch_strategies', batchStrategies?.join(',')],
+    ['model_config', modelConfig ? JSON.stringify(modelConfig) : undefined]
+  ].filter(([, value]) => value !== undefined && value !== '')
+    .map(([key, value]) => [String(key), String(value)]);
+};
+
+const batchQualityItems = (batch: MiniGptGenerationBatchResult, isEnglish = false) => [
+  {
+    key: 'generated',
+    label: isEnglish ? 'Generated' : '已生成',
+    value: `${batch.generatedCount ?? 0} / ${batch.requestedCount ?? 0}`,
+    detail: formatPercentage(batch.generatedRate)
+  },
+  {
+    key: 'parseable',
+    label: isEnglish ? 'Parseable' : '可解析',
+    value: formatInteger(batch.parseableCount),
+    detail: formatPercentage(batch.parseableRate)
+  },
+  {
+    key: 'legal',
+    label: isEnglish ? 'Legal Before Repair' : '修复前合规',
+    value: formatInteger(batch.legalCount),
+    detail: formatPercentage(batch.legalRate)
+  },
+  {
+    key: 'repaired',
+    label: isEnglish ? 'Repair Applied' : '已执行修复',
+    value: formatInteger(batch.repairedCount),
+    detail: formatPercentage(batch.repairedRate)
+  },
+  {
+    key: 'post-repair',
+    label: isEnglish ? 'Legal After Repair' : '修复后合规',
+    value: formatInteger(batch.postRepairLegalCount),
+    detail: formatPercentage(batch.postRepairLegalRate)
+  },
+  {
+    key: 'overlap',
+    label: isEnglish ? 'Red Overlap' : '红球重叠',
+    value: `${batch.redOverlapMax ?? '-'} ${isEnglish ? 'max' : '最大'}`,
+    detail: `${batch.redOverlapAverage ?? '-'} ${isEnglish ? 'avg' : '平均'}`
+  },
+  {
+    key: 'blue',
+    label: isEnglish ? 'Candidate Blue Diversity Ratio' : '候选内蓝球去重率',
+    value: `${formatInteger(batch.distinctBlueCount)} ${isEnglish ? 'distinct' : '个去重'}`,
+    detail: formatPercentage(batch.blueCoverage)
+  }
+];
 
 const fencedText = (value?: string) => (value || '-').replaceAll('```', "'''");
 
@@ -1744,7 +1900,9 @@ const MiniGptLearningPage = () => {
   const { isEnglish } = useAppPreferences();
   const [form] = Form.useForm<MiniGptTrainingRequest>();
   const [noteForm] = Form.useForm<MiniGptRunNoteRequest>();
-  const [generationForm] = Form.useForm<MiniGptGenerationRequest>();
+  const [generationForm] = Form.useForm<MiniGptGenerationFormValues>();
+  const generationRequestSequence = useRef(0);
+  const generationRequestRunName = useRef<string | undefined>(undefined);
   const [dashboard, setDashboard] = useState<MiniGptDashboard>({});
   const [corpusInsight, setCorpusInsight] = useState<MiniGptCorpusInsight>({});
   const [trainingStatus, setTrainingStatus] = useState<MiniGptTrainingStatus>({});
@@ -1752,6 +1910,7 @@ const MiniGptLearningPage = () => {
   const [lotteryCorpusExport, setLotteryCorpusExport] = useState<MiniGptLotteryCorpusExport>();
   const [generationResult, setGenerationResult] = useState<MiniGptGenerationResult>();
   const [generationComparisons, setGenerationComparisons] = useState<MiniGptGenerationResult[]>([]);
+  const [generationBatch, setGenerationBatch] = useState<MiniGptGenerationBatchResult>();
   const [selectedGenerationKey, setSelectedGenerationKey] = useState<string>();
   const [selectedTraceTokenKey, setSelectedTraceTokenKey] = useState<string>();
   const [activeLabSection, setActiveLabSection] = useState<LabSectionKey>('training');
@@ -1771,11 +1930,13 @@ const MiniGptLearningPage = () => {
   const [savingNotes, setSavingNotes] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [comparingGeneration, setComparingGeneration] = useState(false);
+  const [generatingBatch, setGeneratingBatch] = useState(false);
   const [savingCandidateSet, setSavingCandidateSet] = useState(false);
   const [runningCandidateBacktest, setRunningCandidateBacktest] = useState(false);
   const watchedTrainingValues = Form.useWatch([], form) as MiniGptTrainingRequest | undefined;
   const watchedRunName = Form.useWatch('runName', form) as string | undefined;
   const watchedNoteValues = Form.useWatch([], noteForm) as MiniGptRunNoteRequest | undefined;
+  const generationBusy = generating || comparingGeneration || generatingBatch || savingCandidateSet;
   const text = useMemo(() => ({
     title: isEnglish ? 'MiniGPT Learning Lab' : 'MiniGPT 学习实验',
     selectRun: isEnglish ? 'Select run' : '选择实验',
@@ -1806,6 +1967,20 @@ const MiniGptLearningPage = () => {
     trainSplit: isEnglish ? 'Train' : '训练集',
     validationSplit: isEnglish ? 'Validation' : '验证集',
     manifest: isEnglish ? 'Manifest' : '清单',
+    completeSampleContext: isEnglish ? 'Complete Sample Context' : '完整样本上下文',
+    contextReady: isEnglish ? 'Context Ready' : '上下文已满足',
+    contextBlocked: isEnglish ? 'Context Too Short' : '上下文不足',
+    contextUnknown: isEnglish ? 'Context Pending' : '上下文待检查',
+    minimumSample: isEnglish ? 'Shortest Sample' : '最短样本',
+    maximumSample: isEnglish ? 'Longest Sample' : '最长样本',
+    requiredBlock: isEnglish ? 'Required Block' : '最低 Block',
+    recommendedBlock: isEnglish ? 'Recommended Block' : '推荐 Block',
+    effectiveBlock: isEnglish ? 'Effective Block' : '实际 Block',
+    useRecommendedBlock: isEnglish ? 'Use Recommended' : '采用推荐值',
+    resumeBlockLocked: isEnglish ? 'Resume uses the checkpoint block size' : '续训使用 checkpoint 的 Block Size',
+    contextTrainingBlocked: isEnglish
+      ? 'The effective block size cannot contain a complete structured sample.'
+      : '实际 Block Size 无法容纳一条完整结构化样本。',
     exported: isEnglish ? 'Exported' : '已导出',
     lotteryCorpusExportSuccess: (count: number) => isEnglish
       ? `Exported ${count} lottery draws`
@@ -1891,6 +2066,28 @@ const MiniGptLearningPage = () => {
     defaultPrompt: isEnglish ? 'language model' : '语言模型',
     generate: isEnglish ? 'Generate' : '生成',
     compareParams: isEnglish ? 'Parameter Compare' : '参数对比',
+    generateBatch: isEnglish ? 'Generate Candidate Batch' : '生成候选批次',
+    batchGenerationSuccess: (count: number) => isEnglish ? `Generated ${count} candidates` : `已生成 ${count} 个候选`,
+    batchGenerationFailed: isEnglish ? 'Candidate batch generation failed' : '候选批次生成失败',
+    candidateCount: isEnglish ? 'Candidate Count' : '候选数量',
+    baseSeed: isEnglish ? 'Base Seed' : '基础 Seed',
+    maxRedOverlap: isEnglish ? 'Max Red Overlap' : '最大红球重叠',
+    minimumBlueCoverage: isEnglish ? 'Target Distinct Blue Count' : '目标蓝球去重数',
+    strategies: isEnglish ? 'Strategies' : '策略组合',
+    batchQuality: isEnglish ? 'Batch Quality Evidence' : '批次质量证据',
+    normalizedBatchPolicy: isEnglish ? 'Normalized Batch Policy' : '归一化批次策略',
+    blueCoverageMet: isEnglish ? 'Blue Diversity Target Met' : '蓝球去重目标已达到',
+    blueCoverageWatch: isEnglish ? 'Blue Diversity Target Not Met' : '蓝球去重目标未达到',
+    batchItems: isEnglish ? 'Candidate Batch Details' : '候选批次明细',
+    parameterComparison: isEnglish ? 'Sampling Parameter Comparison' : '采样参数对比',
+    validationIssueDistribution: isEnglish ? 'Validation Issue Distribution' : '校验问题分布',
+    generatedStrategyComposition: isEnglish ? 'Generated Strategy Composition' : '生成策略组成',
+    generationProvenance: isEnglish ? 'Generation Provenance' : '生成溯源',
+    selectedForPool: isEnglish ? 'Selected' : '已选入',
+    rejectedFromPool: isEnglish ? 'Rejected' : '未选入',
+    savableCandidates: isEnglish ? 'legal unique candidates can be saved' : '个合规去重候选可保存',
+    saveCandidateSet: isEnglish ? 'Save Decision Set' : '保存到决策集',
+    runBacktest: isEnglish ? 'Run Backtest' : '立即回测',
     currentCheckpointOutput: isEnglish ? 'Current checkpoint output' : '当前 checkpoint 生成结果',
     noGeneratedSample: isEnglish ? 'No generated sample' : '暂无生成样例',
     currentBestOutput: isEnglish ? 'Current Best Output' : '当前最佳输出',
@@ -1966,6 +2163,21 @@ const MiniGptLearningPage = () => {
     `mini-gpt-lab-section ${activeLabSection === section ? 'active' : ''}`
   ), [activeLabSection]);
 
+  const invalidateGenerationRequests = useCallback((nextRunName?: string) => {
+    generationRequestSequence.current += 1;
+    generationRequestRunName.current = nextRunName;
+  }, []);
+
+  const beginGenerationRequest = useCallback((runName: string) => {
+    generationRequestRunName.current = runName;
+    generationRequestSequence.current += 1;
+    return generationRequestSequence.current;
+  }, []);
+
+  const generationResponseIsCurrent = useCallback((sequence: number, runName: string) => (
+    generationRequestSequence.current === sequence && generationRequestRunName.current === runName
+  ), []);
+
   const loadDashboard = useCallback(async (runName?: string, quiet = false) => {
     if (!quiet) {
       setLoading(true);
@@ -1983,6 +2195,11 @@ const MiniGptLearningPage = () => {
       }
     }
   }, []);
+
+  const handleRunSelectionChange = useCallback((runName: string) => {
+    invalidateGenerationRequests(runName);
+    loadDashboard(runName);
+  }, [invalidateGenerationRequests, loadDashboard]);
 
   const loadTrainingStatus = useCallback(async (quiet = true) => {
     try {
@@ -2009,9 +2226,11 @@ const MiniGptLearningPage = () => {
         tokenLimit: 120
       });
       setCorpusInsight(data);
+      return data;
     } catch (error) {
       console.error('加载 MiniGPT 语料洞察失败:', error);
       message.error('MiniGPT 语料洞察加载失败');
+      return undefined;
     } finally {
       setCorpusLoading(false);
     }
@@ -2041,16 +2260,27 @@ const MiniGptLearningPage = () => {
       const exported = await miniGptApi.exportLotteryCorpus({ format, limit: 2000 });
       setLotteryCorpusExport(exported);
       const trainDataPath = exported.trainDataPath || exported.dataPath || `data/lottery-${format}.txt`;
-      const nextValues = {
+      const nextValues: MiniGptTrainingRequest = {
         ...form.getFieldsValue(),
         data: trainDataPath,
         evalData: exported.validationDataPath || form.getFieldValue('evalData'),
+        manifestDataPath: exported.manifestDataPath,
+        corpusVersion: exported.corpusVersion,
+        trainSha256: exported.trainSha256,
+        validationSha256: exported.validationSha256,
+        blockSize: MINI_GPT_FALLBACK_LOTTERY_BLOCK_SIZE,
         samplePrompt: format === 'features' || format === 'strategy'
           ? 'target=next strategy=balanced'
           : exported.latestIssue ? `${exported.latestIssue}:` : '2026001:'
       };
       form.setFieldsValue(nextValues);
-      await loadCorpusInsight(nextValues);
+      const insight = await loadCorpusInsight(nextValues);
+      const recommendedBlockSize = insight?.recommendedBlockSize
+        ?? Math.max(insight?.requiredBlockSize || 0, MINI_GPT_FALLBACK_LOTTERY_BLOCK_SIZE);
+      form.setFieldsValue({
+        ...form.getFieldsValue(),
+        blockSize: recommendedBlockSize
+      });
       message.success(text.lotteryCorpusExportSuccess(exported.drawCount || 0));
     } catch (error) {
       console.error('导出 MiniGPT 双色球语料失败:', error);
@@ -2068,6 +2298,16 @@ const MiniGptLearningPage = () => {
     form.setFieldsValue(mergedValues);
     loadCorpusInsight(mergedValues);
     message.info(`已应用实验模板：${recipe.title}`);
+  };
+
+  const handleUseRecommendedBlockSize = () => {
+    if (selectedResumeRun) {
+      message.info(text.resumeBlockLocked);
+      return;
+    }
+    const nextBlockSize = recommendedBlockSize || requiredBlockSize || MINI_GPT_FALLBACK_LOTTERY_BLOCK_SIZE;
+    form.setFieldValue('blockSize', nextBlockSize);
+    message.success(`${text.recommendedBlock}: ${nextBlockSize}`);
   };
 
   const handleApplyPromptPreset = (preset: typeof promptPresetRows[number]) => {
@@ -2166,6 +2406,10 @@ const MiniGptLearningPage = () => {
   }, []);
 
   const handleStartTraining = async (values: MiniGptTrainingRequest) => {
+    if (formalLotteryCorpus && !completeSampleFits) {
+      message.error(`${text.contextTrainingBlocked} ${text.effectiveBlock}=${effectiveBlockSize ?? '-'}, ${text.requiredBlock}=${requiredBlockSize ?? '-'}`);
+      return;
+    }
     const startDiffs = experimentVariableDiffs(run, values, isEnglish);
     if (run && startDiffs.length === 0) {
       message.warning('当前表单与最新实验一致，建议先修改一个变量再训练');
@@ -2175,7 +2419,18 @@ const MiniGptLearningPage = () => {
     }
     setStarting(true);
     try {
-      const status = await miniGptApi.startTraining(values);
+      const exportedTrainingPath = lotteryCorpusExport?.trainDataPath || lotteryCorpusExport?.dataPath;
+      const matchingExport = exportedTrainingPath && normalizeTrainingData(values.data) === normalizeTrainingData(exportedTrainingPath)
+        ? lotteryCorpusExport
+        : undefined;
+      const status = await miniGptApi.startTraining({
+        ...values,
+        seed: values.seed ?? 42,
+        manifestDataPath: matchingExport?.manifestDataPath || values.manifestDataPath,
+        corpusVersion: matchingExport?.corpusVersion || values.corpusVersion || (corpusInsightMatchesTrainingData ? corpusInsight.corpusVersion : undefined),
+        trainSha256: matchingExport?.trainSha256 || values.trainSha256 || (corpusInsightMatchesTrainingData ? corpusInsight.trainSha256 : undefined),
+        validationSha256: matchingExport?.validationSha256 || values.validationSha256 || (corpusInsightMatchesTrainingData ? corpusInsight.validationSha256 : undefined)
+      });
       setTrainingStatus(status);
       setSelectedRun(status.runName);
       message.success('MiniGPT 训练已启动');
@@ -2221,7 +2476,7 @@ const MiniGptLearningPage = () => {
   };
 
   const handleDraftReviewNotes = () => {
-    const draft = buildReviewDraft(run, logs, variableDiffItems, launchChecklistItems, nextActionItems, generationResult, isEnglish);
+    const draft = buildReviewDraft(run, logs, variableDiffItems, launchChecklistItems, nextActionItems, displayedGenerationResult, isEnglish);
     noteForm.setFieldsValue({
       ...noteForm.getFieldsValue(),
       ...draft
@@ -2229,25 +2484,37 @@ const MiniGptLearningPage = () => {
     message.success('复盘草稿已填入');
   };
 
-  const handleGenerate = async (values: MiniGptGenerationRequest) => {
+  const handleGenerate = async (values: MiniGptGenerationFormValues) => {
     if (!run?.runName) {
       message.warning('请先选择一个已完成训练的实验');
       return;
     }
+    if (generationBusy) return;
+    const requestRunName = run.runName;
+    const requestSequence = beginGenerationRequest(requestRunName);
     setGenerating(true);
     try {
       const result = await miniGptApi.generate({
-        ...values,
-        runName: run.runName
+        runName: requestRunName,
+        prompt: values.prompt,
+        maxNewTokens: values.maxNewTokens,
+        temperature: values.temperature,
+        topK: values.topK,
+        seed: values.baseSeed ?? 42
       });
+      if (!generationResponseIsCurrent(requestSequence, requestRunName)) return;
       setGenerationResult(result);
+      setGenerationComparisons([]);
+      setGenerationBatch(undefined);
       setSelectedGenerationKey(undefined);
       setSelectedTraceTokenKey(undefined);
       setSavedCandidateSet(undefined);
       setCandidateBacktest(undefined);
     } catch (error) {
       console.error('MiniGPT 生成失败:', error);
-      message.error('MiniGPT 生成失败');
+      if (generationResponseIsCurrent(requestSequence, requestRunName)) {
+        message.error('MiniGPT 生成失败');
+      }
     } finally {
       setGenerating(false);
     }
@@ -2258,17 +2525,23 @@ const MiniGptLearningPage = () => {
       message.warning('请先选择一个有 checkpoint 的实验');
       return;
     }
+    if (generationBusy) return;
+    const requestRunName = run.runName;
+    const requestSequence = beginGenerationRequest(requestRunName);
     const values = generationForm.getFieldsValue();
     setComparingGeneration(true);
     try {
       const results = await miniGptApi.compareGeneration({
-        runName: run.runName,
+        runName: requestRunName,
         prompt: values.prompt || run.samplePrompt || 'target=next strategy=balanced',
         maxNewTokens: values.maxNewTokens || run.sampleTokens || 120,
         temperatures: [0.7, values.temperature || 0.9, 1.1],
-        topKs: [values.topK || 20]
+        topKs: [values.topK || 20],
+        baseSeed: values.baseSeed ?? 42
       });
+      if (!generationResponseIsCurrent(requestSequence, requestRunName)) return;
       setGenerationComparisons(results);
+      setGenerationBatch(undefined);
       if (results[0]) {
         setGenerationResult(results[0]);
       }
@@ -2279,9 +2552,53 @@ const MiniGptLearningPage = () => {
       message.success(`已完成 ${results.length} 组采样参数对比`);
     } catch (error) {
       console.error('MiniGPT 采样参数对比失败:', error);
-      message.error('MiniGPT 采样参数对比失败');
+      if (generationResponseIsCurrent(requestSequence, requestRunName)) {
+        message.error('MiniGPT 采样参数对比失败');
+      }
     } finally {
       setComparingGeneration(false);
+    }
+  };
+
+  const handleGenerateBatch = async () => {
+    if (!run?.runName || !run.checkpoint) {
+      message.warning(isEnglish ? 'Select a run with a checkpoint first' : '请先选择一个有 checkpoint 的实验');
+      return;
+    }
+    if (generationBusy) return;
+    const requestRunName = run.runName;
+    const requestSequence = beginGenerationRequest(requestRunName);
+    try {
+      const values = await generationForm.validateFields();
+      setGeneratingBatch(true);
+      const batch = await miniGptApi.generateBatch({
+        runName: requestRunName,
+        prompt: values.prompt || run.samplePrompt || 'target=next strategy=balanced',
+        maxNewTokens: values.maxNewTokens || run.sampleTokens || 120,
+        temperature: values.temperature,
+        topK: values.topK,
+        candidateCount: values.candidateCount || 8,
+        baseSeed: values.baseSeed ?? 42,
+        maxRedOverlap: values.maxRedOverlap ?? 3,
+        minimumBlueCoverage: values.minimumBlueCoverage,
+        strategies: values.strategies?.length ? values.strategies : MINI_GPT_BATCH_STRATEGIES
+      });
+      if (!generationResponseIsCurrent(requestSequence, requestRunName)) return;
+      setGenerationBatch(batch);
+      setGenerationComparisons([]);
+      setGenerationResult(batch.items?.[0]);
+      setSelectedGenerationKey(undefined);
+      setSelectedTraceTokenKey(undefined);
+      setSavedCandidateSet(undefined);
+      setCandidateBacktest(undefined);
+      message.success(text.batchGenerationSuccess(batch.generatedCount || 0));
+    } catch (error) {
+      console.error('MiniGPT 候选批次生成失败:', error);
+      if (generationResponseIsCurrent(requestSequence, requestRunName)) {
+        message.error(text.batchGenerationFailed);
+      }
+    } finally {
+      setGeneratingBatch(false);
     }
   };
 
@@ -2290,24 +2607,43 @@ const MiniGptLearningPage = () => {
       message.warning('当前没有可保存的合规或可修复候选');
       return;
     }
+    if (generationBusy) return;
+    const requestRunName = run?.runName || generationBatch?.runName || displayedGenerationResult?.runName || '';
+    const requestSequence = beginGenerationRequest(requestRunName);
     setSavingCandidateSet(true);
     try {
       const timestamp = new Date().toLocaleString('zh-CN', { hour12: false });
+      const provenance = generationProvenanceEntries(displayedGenerationResult, generationBatch)
+        .filter(([key]) => ['batch_id', 'run_id', 'corpus_version', 'checkpoint_sha256'].includes(key))
+        .map(([key, value]) => `${key}=${value}`)
+        .join(', ');
+      const batchPolicy = generationBatch
+        ? [
+            `base_seed=${generationBatch.baseSeed ?? '-'}`,
+            `max_red_overlap=${generationBatch.maxRedOverlap ?? '-'}`,
+            `target_blue_diversity=${generationBatch.minimumBlueCoverage ?? '-'}`,
+            `blue_diversity_met=${generationBatch.minimumBlueCoverageMet ?? '-'}`,
+            `strategies=${(generationBatch.requestedStrategies || []).join('|') || '-'}`
+          ].join(', ')
+        : '';
       const saved = await lotteryDecisionSetApi.createDecisionSet({
         title: `MiniGPT 候选池 ${timestamp}`,
         ruleName: run?.runName ? `MiniGPT:${run.runName}` : 'MiniGPT',
         evidenceState: 'MINIGPT',
         resultState: 'PENDING',
         conversionState: 'DRAFT',
-        note: `由 MiniGPT 生成试验台保存，prompt=${generationForm.getFieldValue('prompt') || run?.samplePrompt || '-'}`,
+        note: `由 MiniGPT 生成试验台保存，prompt=${generationForm.getFieldValue('prompt') || run?.samplePrompt || '-'}${provenance ? `，${provenance}` : ''}${batchPolicy ? `，${batchPolicy}` : ''}`,
         selectedCandidates: decisionCandidateSelections
       });
+      if (!generationResponseIsCurrent(requestSequence, requestRunName)) return;
       setSavedCandidateSet(saved);
       setCandidateBacktest(undefined);
       message.success(`已保存候选池：${saved.title || saved.id || 'MiniGPT 决策集'}`);
     } catch (error) {
       console.error('保存 MiniGPT 候选池失败:', error);
-      message.error('保存 MiniGPT 候选池失败');
+      if (generationResponseIsCurrent(requestSequence, requestRunName)) {
+        message.error('保存 MiniGPT 候选池失败');
+      }
     } finally {
       setSavingCandidateSet(false);
     }
@@ -2416,6 +2752,11 @@ const MiniGptLearningPage = () => {
     };
   }, [trainingStatus]);
   const run = (trainingStatus.running && activeTrainingRun) ? activeTrainingRun : dashboard.latestRun || activeTrainingRun;
+  useEffect(() => {
+    if (generationRequestRunName.current !== run?.runName) {
+      invalidateGenerationRequests(run?.runName);
+    }
+  }, [invalidateGenerationRequests, run?.runName]);
   const logs = useMemo(
     () => mergeStatusLog(run?.runName, dashboardLogs, trainingStatus.latestLog),
     [dashboardLogs, run?.runName, trainingStatus.latestLog]
@@ -2437,45 +2778,71 @@ const MiniGptLearningPage = () => {
   const comparisonChartOption = useMemo(() => buildComparisonChartOption(comparisonLogs), [comparisonLogs]);
   const comparisonSummary = useMemo(() => comparisonSummaryItems(comparisonLogs, isEnglish), [comparisonLogs, isEnglish]);
   const milestones = useMemo(() => learningMilestones(run, logs, corpusInsight, isEnglish), [corpusInsight, isEnglish, logs, run]);
-  const reviewQuestionItems = useMemo(() => reviewQuestions(run, logs, generationResult, isEnglish), [generationResult, isEnglish, logs, run]);
-  const generationDiagnosticItems = useMemo(
-    () => generationDiagnostics(run, logs, generationResult, isEnglish),
-    [generationResult, isEnglish, logs, run]
-  );
-  const lotteryCandidate = generationResult?.lotteryCandidate;
+  const activeGenerationResults = useMemo(() => {
+    if (generationBatch?.items?.length) return generationBatch.items;
+    if (generationComparisons.length) return generationComparisons;
+    return generationResult ? [generationResult] : [];
+  }, [generationBatch?.items, generationComparisons, generationResult]);
   const generationRankRows = useMemo(
-    () => generationRankItems([
-      ...(generationResult ? [generationResult] : []),
-      ...generationComparisons
-    ], isEnglish),
-    [generationComparisons, generationResult, isEnglish]
+    () => generationRankItems(activeGenerationResults, isEnglish),
+    [activeGenerationResults, isEnglish]
   );
   const selectedGenerationRank = useMemo(
     () => generationRankRows.find(item => item.key === selectedGenerationKey) || generationRankRows[0],
     [generationRankRows, selectedGenerationKey]
+  );
+  const displayedGenerationResult = selectedGenerationRank?.result || generationResult;
+  const reviewQuestionItems = useMemo(
+    () => reviewQuestions(run, logs, displayedGenerationResult, isEnglish),
+    [displayedGenerationResult, isEnglish, logs, run]
+  );
+  const generationDiagnosticItems = useMemo(
+    () => generationDiagnostics(run, logs, displayedGenerationResult, isEnglish),
+    [displayedGenerationResult, isEnglish, logs, run]
+  );
+  const lotteryCandidate = displayedGenerationResult?.lotteryCandidate;
+  const displayedLotteryCandidateIssues = isEnglish
+    ? lotteryCandidate?.issueCodes?.length ? lotteryCandidate.issueCodes : lotteryCandidate?.issues || []
+    : lotteryCandidate?.issues?.length ? lotteryCandidate.issues : lotteryCandidate?.issueCodes || [];
+  const displayedLotteryCandidateMetrics = useMemo(
+    () => lotteryCandidateDisplayMetrics(lotteryCandidate),
+    [lotteryCandidate]
   );
   const generationRadarOption = useMemo(
     () => buildGenerationRadarOption(selectedGenerationRank, isEnglish),
     [isEnglish, selectedGenerationRank]
   );
   const generationTokenTrace = useMemo(
-    () => buildGenerationTokenTrace(generationResult),
-    [generationResult]
+    () => buildGenerationTokenTrace(displayedGenerationResult),
+    [displayedGenerationResult]
   );
   const selectedTraceToken = useMemo(
     () => generationTokenTrace.find(item => item.key === selectedTraceTokenKey) || generationTokenTrace.find(item => item.role === 'generated') || generationTokenTrace[0],
     [generationTokenTrace, selectedTraceTokenKey]
   );
   const decisionCandidateSelections = useMemo(
-    () => uniqueDecisionCandidates([
-      ...(generationResult ? [generationResult] : []),
-      ...generationComparisons
-    ]),
-    [generationComparisons, generationResult]
+    () => uniqueDecisionCandidates(activeGenerationResults),
+    [activeGenerationResults]
+  );
+  const selectedGenerationProvenance = useMemo(
+    () => generationProvenanceEntries(displayedGenerationResult, generationBatch),
+    [displayedGenerationResult, generationBatch]
+  );
+  const generationBatchQualityItems = useMemo(
+    () => generationBatch ? batchQualityItems(generationBatch, isEnglish) : [],
+    [generationBatch, isEnglish]
+  );
+  const batchRepairReasonEntries = useMemo(
+    () => Object.entries(generationBatch?.repairReasonCounts || {}),
+    [generationBatch?.repairReasonCounts]
+  );
+  const batchStrategyCompositionEntries = useMemo(
+    () => Object.entries(generationBatch?.strategyComposition || {}),
+    [generationBatch?.strategyComposition]
   );
   const nextActionItems = useMemo(
-    () => nextExperimentActions(run, logs, corpusInsight, generationResult, isEnglish),
-    [corpusInsight, generationResult, isEnglish, logs, run]
+    () => nextExperimentActions(run, logs, corpusInsight, displayedGenerationResult, isEnglish),
+    [corpusInsight, displayedGenerationResult, isEnglish, logs, run]
   );
   const trainingFormValues = useMemo(
     () => ({ ...form.getFieldsValue(), ...(watchedTrainingValues || {}) }),
@@ -2503,6 +2870,27 @@ const MiniGptLearningPage = () => {
         : dataPath
     }));
   }, [lotteryCorpusExport?.dataPath, lotteryCorpusExport?.trainDataPath, runGroupsByData, text.exported]);
+  const selectedResumeRun = useMemo(
+    () => resumeSourceRuns.find(item => item.runName === trainingFormValues.resumeFromRun),
+    [resumeSourceRuns, trainingFormValues.resumeFromRun]
+  );
+  const corpusInsightMatchesTrainingData = normalizeTrainingData(corpusInsight.data) === currentTrainingData;
+  const formalLotteryCorpus = isLotteryCorpusPath(currentTrainingData);
+  const requiredBlockSize = corpusInsightMatchesTrainingData ? corpusInsight.requiredBlockSize : undefined;
+  const recommendedBlockSize = corpusInsightMatchesTrainingData
+    ? corpusInsight.recommendedBlockSize ?? corpusInsight.requiredBlockSize
+    : undefined;
+  const effectiveBlockSize = selectedResumeRun
+    ? blockSizeFromRun(selectedResumeRun)
+    : trainingFormValues.blockSize
+      ?? MINI_GPT_PRESET_BLOCK_SIZES[trainingFormValues.preset || 'tiny']
+      ?? MINI_GPT_PRESET_BLOCK_SIZES.tiny;
+  const completeSampleFits = !formalLotteryCorpus || Boolean(
+    corpusInsightMatchesTrainingData
+    && Number.isFinite(requiredBlockSize)
+    && Number.isFinite(effectiveBlockSize)
+    && effectiveBlockSize! >= requiredBlockSize!
+  );
   const noteFormValues = useMemo(
     () => ({ ...noteForm.getFieldsValue(), ...(watchedNoteValues || {}) }),
     [noteForm, watchedNoteValues]
@@ -2541,16 +2929,43 @@ const MiniGptLearningPage = () => {
     [runs, suggestedRunName, watchedRunName]
   );
   const launchChecklistItems = useMemo(
-    () => launchChecklist(run, corpusDiagnosticItems, variableGuardState, runNameExists, plannedExperiments, isEnglish),
-    [corpusDiagnosticItems, isEnglish, plannedExperiments, run, runNameExists, variableGuardState]
+    () => {
+      const items = launchChecklist(run, corpusDiagnosticItems, variableGuardState, runNameExists, plannedExperiments, isEnglish);
+      if (!formalLotteryCorpus) return items;
+      const contextItem: LaunchChecklistItem = {
+        key: 'complete-sample-context',
+        label: text.completeSampleContext,
+        status: completeSampleFits ? 'PASS' : 'TODO',
+        detail: completeSampleFits
+          ? `${text.effectiveBlock} ${effectiveBlockSize} >= ${text.requiredBlock} ${requiredBlockSize}`
+          : text.contextTrainingBlocked
+      };
+      return [items[0], contextItem, ...items.slice(1)];
+    },
+    [
+      completeSampleFits,
+      corpusDiagnosticItems,
+      effectiveBlockSize,
+      formalLotteryCorpus,
+      isEnglish,
+      plannedExperiments,
+      requiredBlockSize,
+      run,
+      runNameExists,
+      text.completeSampleContext,
+      text.contextTrainingBlocked,
+      text.effectiveBlock,
+      text.requiredBlock,
+      variableGuardState
+    ]
   );
   const displayPlannedExperiments = useMemo(
     () => plannedExperiments.map(item => localizePlannedExperiment(item, isEnglish)),
     [isEnglish, plannedExperiments]
   );
   const reviewDraftSourceItems = useMemo(
-    () => reviewDraftSources(run, logs, variableDiffItems, launchChecklistItems, nextActionItems, generationResult, isEnglish),
-    [generationResult, isEnglish, launchChecklistItems, logs, nextActionItems, run, variableDiffItems]
+    () => reviewDraftSources(run, logs, variableDiffItems, launchChecklistItems, nextActionItems, displayedGenerationResult, isEnglish),
+    [displayedGenerationResult, isEnglish, launchChecklistItems, logs, nextActionItems, run, variableDiffItems]
   );
   const reviewQualityCheckItems = useMemo(
     () => reviewQualityItems(noteFormValues, isEnglish),
@@ -2560,7 +2975,7 @@ const MiniGptLearningPage = () => {
     () => run ? buildExperimentReport(
       run,
       logs,
-      generationResult,
+      displayedGenerationResult,
       corpusInsight,
       plannedExperiments,
       variableDiffItems,
@@ -2570,7 +2985,7 @@ const MiniGptLearningPage = () => {
     ) : '',
     [
       corpusInsight,
-      generationResult,
+      displayedGenerationResult,
       launchChecklistItems,
       logs,
       noteFormValues,
@@ -2612,10 +3027,16 @@ const MiniGptLearningPage = () => {
       prompt: run?.samplePrompt || text.defaultPrompt,
       maxNewTokens: run?.sampleTokens || 120,
       temperature: 0.9,
-      topK: 20
+      topK: 20,
+      candidateCount: 8,
+      baseSeed: 42,
+      maxRedOverlap: 3,
+      minimumBlueCoverage: 4,
+      strategies: MINI_GPT_BATCH_STRATEGIES
     });
     setGenerationResult(undefined);
     setGenerationComparisons([]);
+    setGenerationBatch(undefined);
     setSelectedGenerationKey(undefined);
     setSelectedTraceTokenKey(undefined);
     setSavedCandidateSet(undefined);
@@ -2692,7 +3113,7 @@ const MiniGptLearningPage = () => {
                   .join(' · ')
               }))
             }))}
-            onChange={(value) => loadDashboard(value)}
+            onChange={handleRunSelectionChange}
           />
           <Button icon={<ReloadOutlined />} onClick={() => loadDashboard(selectedRun)} loading={loading}>
             {text.refresh}
@@ -2722,7 +3143,8 @@ const MiniGptLearningPage = () => {
                   maxSteps: 120,
                   valRatio: 0.1,
                   samplePrompt: '语言模型',
-                  sampleTokens: 80
+                  sampleTokens: 80,
+                  seed: 42
                 }}
                 onFinish={handleStartTraining}
               >
@@ -2809,6 +3231,58 @@ const MiniGptLearningPage = () => {
                       </div>
                     ) : (
                       <p>{text.lotteryCorpusDesc}</p>
+                    )}
+                    {formalLotteryCorpus && (
+                      <section className={`mini-gpt-context-gate ${completeSampleFits ? 'pass' : 'blocked'}`}>
+                        <div className="mini-gpt-context-gate-head">
+                          <div>
+                            <Text type="secondary">{text.completeSampleContext}</Text>
+                            <strong>
+                              {corpusInsightMatchesTrainingData && requiredBlockSize
+                                ? completeSampleFits ? text.contextReady : text.contextBlocked
+                                : text.contextUnknown}
+                            </strong>
+                          </div>
+                          <Space wrap>
+                            <Tag color={completeSampleFits ? 'green' : corpusInsightMatchesTrainingData ? 'red' : 'orange'}>
+                              {completeSampleFits ? 'PASS' : corpusInsightMatchesTrainingData ? 'BLOCKED' : 'PENDING'}
+                            </Tag>
+                            <Button
+                              size="small"
+                              disabled={Boolean(selectedResumeRun)}
+                              onClick={handleUseRecommendedBlockSize}
+                            >
+                              {text.useRecommendedBlock}
+                            </Button>
+                          </Space>
+                        </div>
+                        <div className="mini-gpt-context-gate-grid">
+                          <div>
+                            <span>{text.minimumSample}</span>
+                            <strong>{formatInteger(corpusInsight.minimumSampleTokens)}</strong>
+                          </div>
+                          <div>
+                            <span>{text.maximumSample}</span>
+                            <strong>{formatInteger(corpusInsight.maximumSampleTokens)}</strong>
+                          </div>
+                          <div>
+                            <span>{text.requiredBlock}</span>
+                            <strong>{formatInteger(requiredBlockSize)}</strong>
+                          </div>
+                          <div>
+                            <span>{text.recommendedBlock}</span>
+                            <strong>{formatInteger(recommendedBlockSize)}</strong>
+                          </div>
+                          <div>
+                            <span>{text.effectiveBlock}</span>
+                            <strong>{formatInteger(effectiveBlockSize)}</strong>
+                          </div>
+                        </div>
+                        <p>
+                          {corpusInsight.tokenizerType || 'UNICODE_CODE_POINT'} · {formatInteger(corpusInsight.sampleCount)} {isEnglish ? 'samples' : '条样本'}
+                          {selectedResumeRun ? ` · ${text.resumeBlockLocked}` : ''}
+                        </p>
+                      </section>
                     )}
                   </section>
                 </section>
@@ -2898,6 +3372,9 @@ const MiniGptLearningPage = () => {
                   <Form.Item name="topK" label="Top-K">
                     <InputNumber min={1} max={200} />
                   </Form.Item>
+                  <Form.Item name="seed" label="Seed">
+                    <InputNumber min={0} max={2147483647} />
+                  </Form.Item>
                   <Form.Item name="qualityGateMaxEvalLoss" label={text.evalGate}>
                     <InputNumber min={0} max={20} step={0.1} />
                   </Form.Item>
@@ -2925,7 +3402,7 @@ const MiniGptLearningPage = () => {
                       htmlType="submit"
                       icon={<PlayCircleOutlined />}
                       loading={starting}
-                      disabled={trainingStatus.running}
+                      disabled={trainingStatus.running || (formalLotteryCorpus && !completeSampleFits)}
                     >
                       {text.startTraining}
                     </Button>
@@ -3333,6 +3810,9 @@ const MiniGptLearningPage = () => {
                   )}
                   {run.parentRunName && <Tag color="purple">parent={run.parentRunName}</Tag>}
                   {run.trainStep !== undefined && <Tag color="blue">train_step={formatInteger(run.trainStep)}</Tag>}
+                  {run.corpusVersion && <Tag color="cyan" title={run.corpusVersion}>corpus={formatShortHash(run.corpusVersion)}</Tag>}
+                  {run.provenanceStatus && <Tag color={run.provenanceStatus === 'VERIFIED' ? 'green' : 'orange'}>provenance={run.provenanceStatus}</Tag>}
+                  {run.effectiveBlockSize !== undefined && <Tag>block={run.effectiveBlockSize}</Tag>}
                   {run.qualityGateStatus && (
                     <Tag color={qualityGateStatusColor(run.qualityGateStatus)}>
                       gate={run.qualityGateStatus}
@@ -3538,23 +4018,50 @@ const MiniGptLearningPage = () => {
                       <InputNumber min={1} max={200} />
                     </Form.Item>
                     <Space wrap className="mini-gpt-generation-buttons">
-                      <Button type="primary" htmlType="submit" loading={generating} disabled={!run?.checkpoint}>
+                      <Button type="primary" htmlType="submit" loading={generating} disabled={!run?.checkpoint || generationBusy}>
                         {text.generate}
                       </Button>
-                      <Button loading={comparingGeneration} disabled={!run?.checkpoint} onClick={handleCompareGeneration}>
+                      <Button loading={comparingGeneration} disabled={!run?.checkpoint || generationBusy} onClick={handleCompareGeneration}>
                         {text.compareParams}
+                      </Button>
+                      <Button loading={generatingBatch} disabled={!run?.checkpoint || generationBusy} onClick={handleGenerateBatch}>
+                        {text.generateBatch}
                       </Button>
                     </Space>
                   </div>
+                  <section className="mini-gpt-batch-controls">
+                    <Form.Item name="candidateCount" label={text.candidateCount}>
+                      <InputNumber min={2} max={32} />
+                    </Form.Item>
+                    <Form.Item name="baseSeed" label={text.baseSeed}>
+                      <InputNumber min={0} max={2147483647} />
+                    </Form.Item>
+                    <Form.Item name="maxRedOverlap" label={text.maxRedOverlap}>
+                      <InputNumber min={0} max={6} />
+                    </Form.Item>
+                    <Form.Item name="minimumBlueCoverage" label={text.minimumBlueCoverage}>
+                      <InputNumber min={1} max={16} />
+                    </Form.Item>
+                    <Form.Item className="mini-gpt-batch-strategies" name="strategies" label={text.strategies}>
+                      <Select
+                        mode="multiple"
+                        maxTagCount="responsive"
+                        options={MINI_GPT_BATCH_STRATEGIES.map(strategy => ({
+                          value: strategy,
+                          label: strategy
+                        }))}
+                      />
+                    </Form.Item>
+                  </section>
                 </Form>
                 <div className="mini-gpt-generation-result">
                   <Text type="secondary">
-                    {generationResult?.elapsedMillis !== undefined
-                      ? `${generationResult.runName || run.runName} · ${generationResult.elapsedMillis}ms`
+                    {displayedGenerationResult?.elapsedMillis !== undefined
+                      ? `${displayedGenerationResult.runName || run.runName} · ${displayedGenerationResult.elapsedMillis}ms`
                       : text.currentCheckpointOutput}
                   </Text>
                   <pre className="mini-gpt-sample">
-                    {generationResult?.generatedText || sample || text.noGeneratedSample}
+                    {displayedGenerationResult?.generatedText || sample || text.noGeneratedSample}
                   </pre>
                   <section className="mini-gpt-generation-diagnostics">
                     {generationDiagnosticItems.map(item => (
@@ -3565,6 +4072,74 @@ const MiniGptLearningPage = () => {
                       </div>
                     ))}
                   </section>
+                  {generationBatch && (
+                    <section className="mini-gpt-batch-quality">
+                      <div className="mini-gpt-lottery-candidate-head">
+                        <Text type="secondary">{text.batchQuality}</Text>
+                        <Space wrap>
+                          <Tag color="blue" title={generationBatch.batchId}>{generationBatch.batchId?.slice(0, 16) || 'batch'}</Tag>
+                          <Tag>{generationBatch.generatedCount ?? 0} / {generationBatch.requestedCount ?? 0}</Tag>
+                        </Space>
+                      </div>
+                      <div className="mini-gpt-batch-quality-grid">
+                        {generationBatchQualityItems.map(item => (
+                          <div key={item.key}>
+                            <span>{item.label}</span>
+                            <strong>{item.value}</strong>
+                            <em>{item.detail}</em>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mini-gpt-batch-evidence-grid">
+                        <div>
+                          <span>{text.validationIssueDistribution}</span>
+                          <Space wrap>
+                            {batchRepairReasonEntries.length
+                              ? batchRepairReasonEntries.map(([reason, count]) => (
+                                  <Tag key={reason}>{reason}: {count}</Tag>
+                                ))
+                              : <Tag>{isEnglish ? 'None' : '无'}</Tag>}
+                          </Space>
+                        </div>
+                        <div>
+                          <span>{text.generatedStrategyComposition}</span>
+                          <Space wrap>
+                            {batchStrategyCompositionEntries.map(([strategy, count]) => (
+                              <Tag color="cyan" key={strategy}>{strategy}: {count}</Tag>
+                            ))}
+                          </Space>
+                        </div>
+                        <div>
+                          <span>{text.normalizedBatchPolicy}</span>
+                          <Space wrap>
+                            <Tag>baseSeed={generationBatch.baseSeed ?? '-'}</Tag>
+                            <Tag>maxRedOverlap={generationBatch.maxRedOverlap ?? '-'}</Tag>
+                            <Tag>{text.minimumBlueCoverage}={generationBatch.minimumBlueCoverage ?? '-'}</Tag>
+                            <Tag color={generationBatch.minimumBlueCoverageMet ? 'green' : 'orange'}>
+                              minimumBlueCoverageMet: {generationBatch.minimumBlueCoverageMet ? 'PASS' : 'WATCH'}
+                            </Tag>
+                            {(generationBatch.requestedStrategies || []).map(strategy => (
+                              <Tag color="purple" key={strategy}>{strategy}</Tag>
+                            ))}
+                          </Space>
+                          <em>{generationBatch.minimumBlueCoverageMet ? text.blueCoverageMet : text.blueCoverageWatch}</em>
+                        </div>
+                      </div>
+                    </section>
+                  )}
+                  {selectedGenerationProvenance.length > 0 && (
+                    <section className="mini-gpt-generation-provenance">
+                      <Text type="secondary">{text.generationProvenance}</Text>
+                      <dl>
+                        {selectedGenerationProvenance.map(([key, value]) => (
+                          <div key={key}>
+                            <dt>{key}</dt>
+                            <dd title={value}>{key.includes('sha256') ? formatShortHash(value) : value}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </section>
+                  )}
                   {selectedGenerationRank && (
                     <section className="mini-gpt-generation-cockpit">
                       <div className="mini-gpt-generation-best">
@@ -3572,7 +4147,7 @@ const MiniGptLearningPage = () => {
                           <Text type="secondary">{text.currentBestOutput}</Text>
                           <strong>{selectedGenerationRank.candidateText}</strong>
                         </div>
-                        <Tag color={selectedGenerationRank.status === 'VALID' ? 'green' : selectedGenerationRank.status === 'REPAIR' ? 'orange' : 'blue'}>
+                        <Tag color={selectedGenerationRank.status === 'VALID' || selectedGenerationRank.status === 'REPAIRED' ? 'green' : selectedGenerationRank.status === 'REPAIR' ? 'orange' : 'blue'}>
                           {selectedGenerationRank.score} {text.points}
                         </Tag>
                         <p>{selectedGenerationRank.summary}</p>
@@ -3646,39 +4221,39 @@ const MiniGptLearningPage = () => {
                   <section className="mini-gpt-lottery-candidate-check">
                     <div className="mini-gpt-lottery-candidate-head">
                       <Text type="secondary">{text.lotteryCandidateCheck}</Text>
-                      <Tag color={lotteryCandidateStatusColor(lotteryCandidate?.status)}>
-                        {lotteryCandidate?.status || 'WAITING'}
+                      <Tag color={lotteryCandidate?.valid || lotteryCandidate?.postRepairValid ? 'green' : lotteryCandidateStatusColor(lotteryCandidate?.status)}>
+                        {lotteryCandidateDisplayStatus(lotteryCandidate)}
                       </Tag>
                     </div>
                     {lotteryCandidate?.parseable ? (
                       <>
                         <div className="mini-gpt-lottery-balls">
-                          {(lotteryCandidate.redNumbers || []).map((ball, index) => (
+                          {displayedLotteryCandidateMetrics.redNumbers.map((ball, index) => (
                             <span className="red" key={`${ball}-${index}`}>{ball}</span>
                           ))}
-                          <span className="blue">{lotteryCandidate.blueNumber || '--'}</span>
+                          <span className="blue">{displayedLotteryCandidateMetrics.blueNumber || '--'}</span>
                         </div>
                         <div className="mini-gpt-lottery-candidate-metrics">
                           <div>
                             <span>{text.redCount}</span>
-                            <strong>{lotteryCandidate.redCount ?? '-'}</strong>
+                            <strong>{displayedLotteryCandidateMetrics.redCount ?? '-'}</strong>
                           </div>
                           <div>
                             <span>{text.redSum}</span>
-                            <strong>{lotteryCandidate.redSum ?? '-'}</strong>
+                            <strong>{displayedLotteryCandidateMetrics.redSum ?? '-'}</strong>
                           </div>
                           <div>
                             <span>{text.span}</span>
-                            <strong>{lotteryCandidate.span ?? '-'}</strong>
+                            <strong>{displayedLotteryCandidateMetrics.span ?? '-'}</strong>
                           </div>
                           <div>
                             <span>{text.oddEven}</span>
-                            <strong>{lotteryCandidate.oddCount ?? '-'} / {lotteryCandidate.evenCount ?? '-'}</strong>
+                            <strong>{displayedLotteryCandidateMetrics.oddCount ?? '-'} / {displayedLotteryCandidateMetrics.evenCount ?? '-'}</strong>
                           </div>
                         </div>
-                        {lotteryCandidate.issues?.length ? (
+                        {displayedLotteryCandidateIssues.length ? (
                           <ul>
-                            {lotteryCandidate.issues.map(issue => (
+                            {displayedLotteryCandidateIssues.map(issue => (
                               <li key={issue}>{issue}</li>
                             ))}
                           </ul>
@@ -3691,6 +4266,9 @@ const MiniGptLearningPage = () => {
                             <code>{lotteryCandidate.repairedRedNumbers?.join(' ') || '--'} + {lotteryCandidate.repairedBlueNumber || '--'}</code>
                           </p>
                         )}
+                        {lotteryCandidate.repairActions?.length ? (
+                          <p>{lotteryCandidate.repairActions.join(' · ')}</p>
+                        ) : null}
                       </>
                     ) : (
                       <p>{text.lotteryCandidateWaiting}</p>
@@ -3699,22 +4277,23 @@ const MiniGptLearningPage = () => {
                   {decisionCandidateSelections.length > 0 && (
                     <section className="mini-gpt-candidate-set-save">
                       <div>
-                        <Text type="secondary">候选池草稿</Text>
-                        <strong>{decisionCandidateSelections.length} 注可保存</strong>
+                        <Text type="secondary">{isEnglish ? 'Candidate Pool Draft' : '候选池草稿'}</Text>
+                        <strong>{decisionCandidateSelections.length} {text.savableCandidates}</strong>
                       </div>
                       <Button
                         icon={<SaveOutlined />}
                         loading={savingCandidateSet}
+                        disabled={generationBusy}
                         onClick={handleSaveCandidateSet}
                       >
-                        保存到决策集
+                        {text.saveCandidateSet}
                       </Button>
                       <Button
                         loading={runningCandidateBacktest}
                         disabled={!savedCandidateSet?.id}
                         onClick={handleRunCandidateBacktest}
                       >
-                        立即回测
+                        {text.runBacktest}
                       </Button>
                     </section>
                   )}
@@ -3762,11 +4341,11 @@ const MiniGptLearningPage = () => {
                       </div>
                     </section>
                   )}
-                  {generationComparisons.length > 0 && (
+                  {activeGenerationResults.length > 1 && (
                     <section className="mini-gpt-generation-comparison">
                       <div className="mini-gpt-lottery-candidate-head">
-                        <Text type="secondary">采样参数对比</Text>
-                        <Tag>{generationComparisons.length} runs</Tag>
+                        <Text type="secondary">{generationBatch ? text.batchItems : text.parameterComparison}</Text>
+                        <Tag>{activeGenerationResults.length} runs</Tag>
                       </div>
                       {generationRankRows.length > 0 && (
                         <div className="mini-gpt-generation-rank-list">
@@ -3789,24 +4368,28 @@ const MiniGptLearningPage = () => {
                         </div>
                       )}
                       <div className="mini-gpt-generation-comparison-grid">
-                        {generationComparisons.map((item, index) => (
-                          <article key={`${item.temperature}-${item.topK}-${index}`}>
+                        {activeGenerationResults.map((item, index) => (
+                          <article key={item.generationId || `${item.temperature}-${item.topK}-${index}`}>
                             <div>
-                              <strong>temp={item.temperature ?? '-'}</strong>
-                              <Tag color={lotteryCandidateStatusColor(item.lotteryCandidate?.status)}>
-                                {item.lotteryCandidate?.status || 'CHECK'}
-                              </Tag>
+                              <strong>{item.strategyLabel || `temp=${item.temperature ?? '-'}`}</strong>
+                              <Space wrap>
+                                {item.poolSelected !== undefined && (
+                                  <Tag color={item.poolSelected ? 'green' : 'red'}>
+                                    {item.poolSelected ? text.selectedForPool : text.rejectedFromPool}
+                                  </Tag>
+                                )}
+                                <Tag color={item.lotteryCandidate?.valid || item.lotteryCandidate?.postRepairValid ? 'green' : lotteryCandidateStatusColor(item.lotteryCandidate?.status)}>
+                                  {lotteryCandidateDisplayStatus(item.lotteryCandidate)}
+                                </Tag>
+                              </Space>
                             </div>
-                            <span>topK={item.topK ?? '-'} · {item.elapsedMillis ?? '-'}ms</span>
+                            <span>seed={item.seed ?? '-'} · topK={item.topK ?? '-'} · {item.elapsedMillis ?? '-'}ms</span>
                             {item.lotteryCandidate?.parseable ? (
-                              <p>
-                                {(item.lotteryCandidate.redNumbers || []).join(' ')}
-                                {' + '}
-                                {item.lotteryCandidate.blueNumber || '--'}
-                              </p>
+                              <p>{resultCandidateText(item, isEnglish)}</p>
                             ) : (
                               <p>{text.incompleteCandidate}</p>
                             )}
+                            {item.poolDecision && <em>{item.poolDecision}</em>}
                             <pre>{item.generatedText || '-'}</pre>
                           </article>
                         ))}

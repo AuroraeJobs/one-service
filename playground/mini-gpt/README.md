@@ -93,6 +93,28 @@ MINI_GPT_PLAYGROUND_DIR=/Users/aurorae/Program/Hello/one-service/playground/mini
 
 训练完成后，`生成试验台` 会使用当前实验保存的 checkpoint 调用 `mini_gpt.py --mode generate`，可以直接调整 prompt、生成长度、temperature 和 top-k，观察采样策略如何改变输出。
 
+### 正式彩票语料与可复现参数
+
+Iteration 47 的正式彩票训练使用同一版本目录里的训练、验证和 manifest 文件。页面会提交这些路径及服务端重新校验过的 hash；直接运行脚本时也可以显式传入相同证据：
+
+```bash
+python mini_gpt.py --mode train \
+  --data data/lottery-corpora/strategy/<version>/train.txt \
+  --eval-data data/lottery-corpora/strategy/<version>/validation.txt \
+  --manifest-data data/lottery-corpora/strategy/<version>/manifest.json \
+  --corpus-version <version> \
+  --train-sha256 <sha256> \
+  --validation-sha256 <sha256> \
+  --required-block-size 155 \
+  --block-size 160 \
+  --seed 42 \
+  --run-name strategy-47b
+```
+
+脚本在这种模式下不会再把 `train.txt` 的尾部按字符切成验证集。完整训练文件用于更新模型，显式 `validation.txt` 用于周期 `eval_loss` 和最终验证。验证文件过短或含有训练字符词表之外的字符会直接失败。
+
+`required-block-size` 表示最长完整样本行加换行 token 的长度；续训时实际生效值来自 checkpoint 的 `config.block_size`。固定 `seed`、语料 hash、checkpoint hash 和模型配置可以复现采样过程，但不构成提高未来中奖概率的证据。
+
 ## Web 观察台
 
 训练后启动本地静态服务：
@@ -130,8 +152,10 @@ python mini_gpt.py --mode train \
 ## 生成
 
 ```bash
-python mini_gpt.py --mode generate --checkpoint checkpoints/mini_gpt.pt --prompt "模型"
+python mini_gpt.py --mode generate --checkpoint checkpoints/mini_gpt.pt --prompt "模型" --seed 42
 ```
+
+生成结果 JSON 会记录实际模型配置、seed 和采样参数。one-service 还会把每条结果及 corpus/run/checkpoint provenance 持久化，并由批量生成接口统一计算可解析率、原始合法率、修复结果、修复后合法率和候选池多样性。
 
 ## 你应该重点看懂什么
 

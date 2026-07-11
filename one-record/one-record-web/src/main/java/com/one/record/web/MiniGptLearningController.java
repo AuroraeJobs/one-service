@@ -4,6 +4,8 @@ import com.one.record.ai.MiniGptDashboard;
 import com.one.record.ai.MiniGptEnvironmentCheck;
 import com.one.record.ai.MiniGptCorpusInsight;
 import com.one.record.ai.MiniGptGenerationComparisonRequest;
+import com.one.record.ai.MiniGptGenerationBatchRequest;
+import com.one.record.ai.MiniGptGenerationBatchResult;
 import com.one.record.ai.MiniGptGenerationRequest;
 import com.one.record.ai.MiniGptGenerationResult;
 import com.one.record.ai.MiniGptLotteryCandidateValidation;
@@ -97,6 +99,11 @@ public class MiniGptLearningController {
     @PostMapping("generate/compare")
     public List<MiniGptGenerationResult> compareGeneration(@RequestBody(required = false) MiniGptGenerationComparisonRequest request) {
         return service.compareGeneration(request);
+    }
+
+    @PostMapping("generation/batch")
+    public MiniGptGenerationBatchResult generateBatch(@RequestBody(required = false) MiniGptGenerationBatchRequest request) {
+        return service.generateBatch(request);
     }
 
     @PostMapping("lottery-candidate/validate")

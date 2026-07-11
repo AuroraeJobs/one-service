@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import os
 import time
@@ -64,6 +65,20 @@ PRESETS = {
     },
 }
 
+PROVENANCE_FIELDS = (
+    "manifest_data",
+    "corpus_version",
+    "corpus_format",
+    "schema_version",
+    "template_version",
+    "train_sha256",
+    "validation_sha256",
+    "required_block_size",
+)
+
+VALIDATION_SOURCE_FIXED_FILE = "FIXED_FILE"
+VALIDATION_SOURCE_TRAIN_TAIL_SPLIT = "TRAIN_TAIL_SPLIT"
+
 
 class MongoRunSink:
     def __init__(self, args: argparse.Namespace, run_name: str) -> None:
@@ -96,6 +111,7 @@ class MongoRunSink:
         now_ms = int(time.time() * 1000)
         document = {
             "runName": self.run_name,
+            "runId": metadata.get("run_id"),
             "preset": metadata.get("preset"),
             "status": status,
             "startedAt": metadata.get("started_at"),
@@ -115,8 +131,20 @@ class MongoRunSink:
             "learningRate": metadata.get("learning_rate"),
             "valRatio": metadata.get("val_ratio"),
             "validationEnabled": metadata.get("validation_enabled"),
+            "validationSource": metadata.get("validation_source"),
             "trainTokens": metadata.get("train_tokens"),
             "evalTokens": metadata.get("eval_tokens"),
+            "seed": metadata.get("seed"),
+            "manifestDataPath": metadata.get("manifest_data"),
+            "corpusVersion": metadata.get("corpus_version"),
+            "corpusFormat": metadata.get("corpus_format"),
+            "schemaVersion": metadata.get("schema_version"),
+            "templateVersion": metadata.get("template_version"),
+            "trainSha256": metadata.get("train_sha256"),
+            "validationSha256": metadata.get("validation_sha256"),
+            "requiredBlockSize": metadata.get("required_block_size"),
+            "effectiveBlockSize": metadata.get("effective_block_size"),
+            "checkpointSha256": metadata.get("checkpoint_sha256"),
             "samplePrompt": metadata.get("sample_prompt"),
             "sampleTokens": metadata.get("sample_tokens"),
             "finalTrainLoss": metadata.get("final_train_loss"),
@@ -128,6 +156,7 @@ class MongoRunSink:
             "qualityGateStatus": metadata.get("quality_gate_status"),
             "qualityGateReasons": metadata.get("quality_gate_reasons"),
             "config": metadata.get("config") or {},
+            "provenance": metadata.get("provenance") or {},
             "updatedAt": now_ms,
         }
         try:
@@ -178,6 +207,16 @@ class ModelConfig:
     vocab_size: int = 0
 
 
+@dataclass
+class PreparedDatasets:
+    train_data: torch.Tensor
+    eval_data: torch.Tensor
+    fixed_eval_data: torch.Tensor | None
+    validation_enabled: bool
+    fixed_eval_enabled: bool
+    validation_source: str
+
+
 class CharTokenizer:
     def __init__(self, text: str) -> None:
         chars = sorted(set(text))
@@ -190,6 +229,9 @@ class CharTokenizer:
 
     def encode(self, text: str) -> list[int]:
         return [self.stoi[ch] for ch in text if ch in self.stoi]
+
+    def unknown_characters(self, text: str) -> list[str]:
+        return sorted(set(text).difference(self.stoi))
 
     def decode(self, ids: list[int]) -> str:
         return "".join(self.itos[index] for index in ids)
@@ -304,11 +346,111 @@ def select_device() -> torch.device:
     return torch.device("cpu")
 
 
+def seed_everything(seed: int) -> int:
+    actual_seed = int(seed)
+    torch.manual_seed(actual_seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(actual_seed)
+    return actual_seed
+
+
+def file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def load_text(path: Path) -> str:
     text = path.read_text(encoding="utf-8")
     if len(text) < 10:
         raise ValueError("training text is too short")
     return text
+
+
+def load_training_state(
+    args: argparse.Namespace,
+    text: str,
+    device: torch.device,
+) -> tuple[dict[str, object] | None, CharTokenizer, ModelConfig, int]:
+    if args.resume_checkpoint:
+        payload = torch.load(args.resume_checkpoint, map_location=device)
+        tokenizer = CharTokenizer.from_dict(payload["tokenizer"])
+        config = ModelConfig(**payload["config"])
+        resume_step = int(payload.get("train_step") or 0)
+        return payload, tokenizer, config, resume_step
+    tokenizer = CharTokenizer(text)
+    config = ModelConfig(
+        block_size=args.block_size,
+        n_embd=args.n_embd,
+        n_head=args.n_head,
+        n_layer=args.n_layer,
+        dropout=args.dropout,
+        vocab_size=tokenizer.vocab_size,
+    )
+    return None, tokenizer, config, 0
+
+
+def resolve_provenance(
+    args: argparse.Namespace,
+    resume_payload: dict[str, object] | None,
+    run_id: str,
+) -> dict[str, object]:
+    provenance: dict[str, object] = {
+        "run_id": getattr(args, "run_id", None) or run_id,
+    }
+    for field in PROVENANCE_FIELDS:
+        value = getattr(args, field, None)
+        if value is None and resume_payload is not None:
+            value = resume_payload.get(field)
+        provenance[field] = value
+    return provenance
+
+
+def has_formal_provenance(provenance: dict[str, object]) -> bool:
+    return any(provenance.get(field) is not None for field in PROVENANCE_FIELDS)
+
+
+def validate_training_tokenizer(
+    text: str,
+    tokenizer: CharTokenizer,
+    formal_provenance: bool,
+) -> None:
+    if not formal_provenance:
+        return
+    unknown_characters = tokenizer.unknown_characters(text)
+    if not unknown_characters:
+        return
+    preview = ", ".join(repr(value) for value in unknown_characters[:8])
+    suffix = "..." if len(unknown_characters) > 8 else ""
+    raise ValueError(
+        "training data contains out-of-vocabulary characters for the checkpoint tokenizer: "
+        f"{preview}{suffix}"
+    )
+
+
+def validate_training_context(
+    train_data: torch.Tensor,
+    block_size: int,
+    required_block_size: int | None = None,
+) -> None:
+    if block_size <= 0:
+        raise ValueError("block_size must be positive")
+    if required_block_size is not None:
+        if required_block_size <= 0:
+            raise ValueError("required_block_size must be positive")
+        if block_size < required_block_size:
+            raise ValueError(
+                "effective checkpoint block_size "
+                f"{block_size} is smaller than required_block_size {required_block_size}"
+            )
+    minimum_tokens = block_size + 2
+    if len(train_data) < minimum_tokens:
+        raise ValueError(
+            f"training data has {len(train_data)} tokens; at least {minimum_tokens} "
+            f"are required for block_size {block_size}"
+        )
 
 
 def get_batch(data: torch.Tensor, block_size: int, batch_size: int, device: torch.device) -> tuple[torch.Tensor, torch.Tensor]:
@@ -394,11 +536,51 @@ def load_optional_eval_data(path_value: str | None, tokenizer: CharTokenizer, bl
     path = Path(path_value)
     if not path.exists():
         raise ValueError(f"eval data file does not exist: {path_value}")
-    text = load_text(path)
+    text = path.read_text(encoding="utf-8")
+    unknown_characters = tokenizer.unknown_characters(text)
+    if unknown_characters:
+        preview = ", ".join(repr(value) for value in unknown_characters[:8])
+        suffix = "..." if len(unknown_characters) > 8 else ""
+        raise ValueError(
+            "eval data contains out-of-vocabulary characters for the training tokenizer: "
+            f"{preview}{suffix}"
+        )
     encoded = torch.tensor(tokenizer.encode(text), dtype=torch.long)
-    if len(encoded) <= block_size + 1:
-        return None, False
+    minimum_tokens = block_size + 2
+    if len(encoded) < minimum_tokens:
+        raise ValueError(
+            f"eval data has {len(encoded)} encoded tokens; at least {minimum_tokens} "
+            f"are required for block_size {block_size}"
+        )
     return encoded, True
+
+
+def prepare_datasets(
+    encoded_train: torch.Tensor,
+    val_ratio: float,
+    block_size: int,
+    fixed_eval_data: torch.Tensor | None = None,
+    required_block_size: int | None = None,
+) -> PreparedDatasets:
+    validate_training_context(encoded_train, block_size, required_block_size)
+    if fixed_eval_data is not None:
+        return PreparedDatasets(
+            train_data=encoded_train,
+            eval_data=fixed_eval_data,
+            fixed_eval_data=fixed_eval_data,
+            validation_enabled=True,
+            fixed_eval_enabled=True,
+            validation_source=VALIDATION_SOURCE_FIXED_FILE,
+        )
+    train_data, eval_data, validation_enabled = split_dataset(encoded_train, val_ratio, block_size)
+    return PreparedDatasets(
+        train_data=train_data,
+        eval_data=eval_data,
+        fixed_eval_data=None,
+        validation_enabled=validation_enabled,
+        fixed_eval_enabled=False,
+        validation_source=VALIDATION_SOURCE_TRAIN_TAIL_SPLIT,
+    )
 
 
 def quality_gate(
@@ -425,29 +607,40 @@ def quality_gate(
 
 def train(args: argparse.Namespace) -> None:
     apply_training_defaults(args)
+    actual_seed = seed_everything(getattr(args, "seed", 42))
     started_at = time.strftime("%Y-%m-%d %H:%M:%S")
     text = load_text(Path(args.data))
     device = select_device()
-    resume_payload = None
-    resume_step = 0
-    if args.resume_checkpoint:
-        resume_payload = torch.load(args.resume_checkpoint, map_location=device)
-        tokenizer = CharTokenizer.from_dict(resume_payload["tokenizer"])
-        config = ModelConfig(**resume_payload["config"])
-        resume_step = int(resume_payload.get("train_step") or 0)
-    else:
-        tokenizer = CharTokenizer(text)
-        config = ModelConfig(
-            block_size=args.block_size,
-            n_embd=args.n_embd,
-            n_head=args.n_head,
-            n_layer=args.n_layer,
-            dropout=args.dropout,
-            vocab_size=tokenizer.vocab_size,
-        )
+    resume_payload, tokenizer, config, resume_step = load_training_state(args, text, device)
+    run_name = safe_run_name(args.run_name or f"{time.strftime('%Y%m%d-%H%M%S')}-{args.preset}")
+    provenance = resolve_provenance(args, resume_payload, run_name)
+    validate_training_tokenizer(text, tokenizer, has_formal_provenance(provenance))
     encoded = torch.tensor(tokenizer.encode(text), dtype=torch.long)
-    train_data, eval_data, validation_enabled = split_dataset(encoded, args.val_ratio, config.block_size)
     fixed_eval_data, fixed_eval_enabled = load_optional_eval_data(args.eval_data, tokenizer, config.block_size)
+    required_block_size_value = provenance.get("required_block_size")
+    required_block_size = int(required_block_size_value) if required_block_size_value is not None else None
+    provenance["required_block_size"] = required_block_size
+    datasets = prepare_datasets(
+        encoded,
+        args.val_ratio,
+        config.block_size,
+        fixed_eval_data,
+        required_block_size,
+    )
+    train_data = datasets.train_data
+    eval_data = datasets.eval_data
+    fixed_eval_data = datasets.fixed_eval_data
+    validation_enabled = datasets.validation_enabled
+    fixed_eval_enabled = datasets.fixed_eval_enabled
+    validation_source = datasets.validation_source
+    provenance_record = {
+        **provenance,
+        "data": args.data,
+        "eval_data": args.eval_data,
+        "seed": actual_seed,
+        "validation_source": validation_source,
+        "effective_block_size": config.block_size,
+    }
     model = MiniGPT(config).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate)
     if resume_payload:
@@ -458,7 +651,6 @@ def train(args: argparse.Namespace) -> None:
                 group["lr"] = args.learning_rate
     runs_dir = Path(args.runs_dir)
     runs_dir.mkdir(parents=True, exist_ok=True)
-    run_name = safe_run_name(args.run_name or f"{time.strftime('%Y%m%d-%H%M%S')}-{args.preset}")
     run_dir = runs_dir / run_name
     run_dir.mkdir(parents=True, exist_ok=True)
     checkpoint_dir = run_dir / "checkpoints"
@@ -469,6 +661,7 @@ def train(args: argparse.Namespace) -> None:
     last_log_row = None
     mongo_sink = MongoRunSink(args, run_name)
     initial_metadata = {
+        **provenance,
         "run_name": run_name,
         "preset": args.preset,
         "started_at": started_at,
@@ -487,13 +680,17 @@ def train(args: argparse.Namespace) -> None:
         "learning_rate": args.learning_rate,
         "val_ratio": args.val_ratio,
         "validation_enabled": validation_enabled,
+        "validation_source": validation_source,
         "train_tokens": int(len(train_data)),
         "eval_tokens": int(len(eval_data)),
+        "seed": actual_seed,
+        "effective_block_size": config.block_size,
         "sample_prompt": args.sample_prompt,
         "sample_tokens": args.sample_tokens,
         "quality_gate_max_eval_loss": args.quality_gate_max_eval_loss,
         "quality_gate_max_loss_gap": args.quality_gate_max_loss_gap,
         "config": asdict(config),
+        "provenance": provenance_record,
     }
     mongo_sink.upsert_run(initial_metadata, "RUNNING")
 
@@ -537,18 +734,26 @@ def train(args: argparse.Namespace) -> None:
 
     checkpoint_path = checkpoint_dir / "mini_gpt.pt"
     train_step = resume_step + args.max_steps
-    torch.save(
-        {
-            "model": model.state_dict(),
-            "optimizer": optimizer.state_dict(),
-            "config": asdict(config),
-            "tokenizer": tokenizer.to_dict(),
-            "train_step": train_step,
-            "parent_run_name": args.parent_run_name,
-            "parent_checkpoint": args.resume_checkpoint or args.parent_checkpoint,
-        },
-        checkpoint_path,
-    )
+    checkpoint_payload = {
+        **provenance,
+        "run_name": run_name,
+        "preset": args.preset,
+        "data": args.data,
+        "eval_data": args.eval_data,
+        "seed": actual_seed,
+        "validation_source": validation_source,
+        "effective_block_size": config.block_size,
+        "model": model.state_dict(),
+        "optimizer": optimizer.state_dict(),
+        "config": asdict(config),
+        "tokenizer": tokenizer.to_dict(),
+        "train_step": train_step,
+        "parent_run_name": args.parent_run_name,
+        "parent_checkpoint": args.resume_checkpoint or args.parent_checkpoint,
+        "provenance": provenance_record,
+    }
+    torch.save(checkpoint_payload, checkpoint_path)
+    checkpoint_sha256 = file_sha256(checkpoint_path)
     (checkpoint_dir / "config.json").write_text(json.dumps(asdict(config), ensure_ascii=False, indent=2), encoding="utf-8")
     final_train_loss = last_log_row["train_loss"] if last_log_row else None
     final_eval_loss = last_log_row["eval_loss"] if last_log_row else None
@@ -565,6 +770,7 @@ def train(args: argparse.Namespace) -> None:
         args.quality_gate_max_loss_gap,
     )
     metadata = {
+        **provenance,
         "run_name": run_name,
         "preset": args.preset,
         "started_at": started_at,
@@ -573,6 +779,7 @@ def train(args: argparse.Namespace) -> None:
         "eval_data": args.eval_data,
         "fixed_eval_enabled": fixed_eval_enabled,
         "checkpoint": str(checkpoint_path),
+        "checkpoint_sha256": checkpoint_sha256,
         "parent_run_name": args.parent_run_name,
         "parent_checkpoint": args.resume_checkpoint or args.parent_checkpoint,
         "resume_step": resume_step,
@@ -585,8 +792,11 @@ def train(args: argparse.Namespace) -> None:
         "learning_rate": args.learning_rate,
         "val_ratio": args.val_ratio,
         "validation_enabled": validation_enabled,
+        "validation_source": validation_source,
         "train_tokens": int(len(train_data)),
         "eval_tokens": int(len(eval_data)),
+        "seed": actual_seed,
+        "effective_block_size": config.block_size,
         "sample_prompt": args.sample_prompt,
         "sample_tokens": args.sample_tokens,
         "final_train_loss": final_train_loss,
@@ -598,17 +808,27 @@ def train(args: argparse.Namespace) -> None:
         "quality_gate_status": quality_gate_status,
         "quality_gate_reasons": "; ".join(quality_gate_reasons),
         "config": asdict(config),
+        "provenance": provenance_record,
     }
     latest_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
     run_latest_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
     mongo_sink.upsert_run(metadata, "SUCCESS")
     append_run_index(runs_dir, {
+        "run_id": metadata["run_id"],
         "run_name": run_name,
         "preset": args.preset,
+        "corpus_version": metadata["corpus_version"],
+        "corpus_format": metadata["corpus_format"],
+        "manifest_data": metadata["manifest_data"],
+        "train_sha256": metadata["train_sha256"],
+        "validation_sha256": metadata["validation_sha256"],
+        "seed": actual_seed,
+        "validation_source": validation_source,
         "finished_at": metadata["finished_at"],
         "log_file": metadata["log_file"],
         "metadata_file": metadata["metadata_file"],
         "checkpoint": metadata["checkpoint"],
+        "checkpoint_sha256": checkpoint_sha256,
         "parent_run_name": metadata["parent_run_name"],
         "parent_checkpoint": metadata["parent_checkpoint"],
         "resume_step": resume_step,
@@ -627,7 +847,8 @@ def train(args: argparse.Namespace) -> None:
     print(f"saved training log to {log_path}")
 
 
-def generate(args: argparse.Namespace) -> None:
+def generation_payload(args: argparse.Namespace) -> dict[str, object]:
+    actual_seed = seed_everything(getattr(args, "seed", 42))
     device = select_device()
     payload = torch.load(args.checkpoint, map_location=device)
     config = ModelConfig(**payload["config"])
@@ -640,7 +861,15 @@ def generate(args: argparse.Namespace) -> None:
         prompt_ids = [0]
     idx = torch.tensor([prompt_ids], dtype=torch.long, device=device)
     output = model.generate(idx, max_new_tokens=args.max_new_tokens, temperature=args.temperature, top_k=args.top_k)
-    print(tokenizer.decode(output[0].tolist()))
+    return {
+        "generated_text": tokenizer.decode(output[0].tolist()),
+        "seed": actual_seed,
+        "model_config": asdict(config),
+    }
+
+
+def generate(args: argparse.Namespace) -> None:
+    print(json.dumps(generation_payload(args), ensure_ascii=False))
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -652,8 +881,18 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--out-dir", default="checkpoints")
     parser.add_argument("--prompt", default="语言模型")
     parser.add_argument("--max-new-tokens", type=int, default=120)
+    parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--preset", choices=sorted(PRESETS), default="custom")
     parser.add_argument("--run-name")
+    parser.add_argument("--run-id")
+    parser.add_argument("--manifest-data")
+    parser.add_argument("--corpus-version")
+    parser.add_argument("--corpus-format")
+    parser.add_argument("--schema-version", type=int)
+    parser.add_argument("--template-version")
+    parser.add_argument("--train-sha256")
+    parser.add_argument("--validation-sha256")
+    parser.add_argument("--required-block-size", type=int)
     parser.add_argument("--resume-checkpoint")
     parser.add_argument("--parent-run-name")
     parser.add_argument("--parent-checkpoint")

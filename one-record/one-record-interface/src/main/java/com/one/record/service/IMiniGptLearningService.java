@@ -3,6 +3,8 @@ package com.one.record.service;
 import com.one.record.ai.MiniGptDashboard;
 import com.one.record.ai.MiniGptEnvironmentCheck;
 import com.one.record.ai.MiniGptGenerationComparisonRequest;
+import com.one.record.ai.MiniGptGenerationBatchRequest;
+import com.one.record.ai.MiniGptGenerationBatchResult;
 import com.one.record.ai.MiniGptGenerationRequest;
 import com.one.record.ai.MiniGptGenerationResult;
 import com.one.record.ai.MiniGptLotteryCandidateValidation;
@@ -41,6 +43,8 @@ public interface IMiniGptLearningService {
     MiniGptGenerationResult generate(MiniGptGenerationRequest request);
 
     List<MiniGptGenerationResult> compareGeneration(MiniGptGenerationComparisonRequest request);
+
+    MiniGptGenerationBatchResult generateBatch(MiniGptGenerationBatchRequest request);
 
     MiniGptLotteryCandidateValidation validateLotteryCandidate(String text);
 

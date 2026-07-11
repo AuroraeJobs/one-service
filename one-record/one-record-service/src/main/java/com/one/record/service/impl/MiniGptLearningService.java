@@ -7,6 +7,8 @@ import com.one.record.ai.MiniGptDashboard;
 import com.one.record.ai.MiniGptEnvironmentCheck;
 import com.one.record.ai.MiniGptCorpusInsight;
 import com.one.record.ai.MiniGptGenerationComparisonRequest;
+import com.one.record.ai.MiniGptGenerationBatchRequest;
+import com.one.record.ai.MiniGptGenerationBatchResult;
 import com.one.record.ai.MiniGptGenerationRequest;
 import com.one.record.ai.MiniGptGenerationResult;
 import com.one.record.ai.MiniGptLotteryCandidateValidation;
@@ -15,9 +17,12 @@ import com.one.record.ai.MiniGptRunNoteRequest;
 import com.one.record.ai.MiniGptTrainingRequest;
 import com.one.record.ai.MiniGptTrainingStatus;
 import com.one.record.exception.MiniGptLotteryCorpusException;
+import com.one.record.exception.MiniGptTrainingValidationException;
 import com.one.record.lottery.LotteryDraw;
+import com.one.record.model.MiniGptGenerationRecord;
 import com.one.record.model.MiniGptRunRecord;
 import com.one.record.model.MiniGptTrainingLogRecord;
+import com.one.record.repository.MiniGptGenerationRepository;
 import com.one.record.repository.MiniGptRunRepository;
 import com.one.record.repository.MiniGptTrainingLogRepository;
 import com.one.record.request.RecordRequest;
@@ -46,11 +51,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -90,6 +97,26 @@ public class MiniGptLearningService implements IMiniGptLearningService {
     private static final long GENERATION_TIMEOUT_SECONDS = 60;
 
     private static final int MAX_GENERATION_COMPARISONS = 6;
+
+    private static final int DEFAULT_GENERATION_TOP_K = 20;
+
+    private static final double DEFAULT_GENERATION_TEMPERATURE = 0.9;
+
+    private static final long DEFAULT_GENERATION_SEED = 42L;
+
+    private static final int DEFAULT_BATCH_CANDIDATES = 8;
+
+    private static final int MAX_BATCH_CANDIDATES = 32;
+
+    private static final int DEFAULT_MAX_RED_OVERLAP = 3;
+
+    private static final String TOKENIZER_TYPE = "CHAR_CODE_POINT";
+
+    private static final String PROVENANCE_VERIFIED = "VERIFIED";
+
+    private static final String PROVENANCE_LEGACY = "LEGACY_UNVERIFIED";
+
+    private static final Pattern STRATEGY_FIELD_PATTERN = Pattern.compile("(?i)strategy\\s*[=:]\\s*([a-z0-9-]+)");
 
     private static final Pattern TRAINING_LOSS_LINE = Pattern.compile(
             "step=(\\d+)\\s+train_loss=([0-9.]+)\\s+eval_loss=([0-9.]+)"
@@ -135,6 +162,8 @@ public class MiniGptLearningService implements IMiniGptLearningService {
 
     private final MiniGptTrainingLogRepository logRepository;
 
+    private final MiniGptGenerationRepository generationRepository;
+
     private final IRecordService recordService;
 
     private final AtomicBoolean trainingRunning = new AtomicBoolean(false);
@@ -148,9 +177,11 @@ public class MiniGptLearningService implements IMiniGptLearningService {
 
     public MiniGptLearningService(MiniGptRunRepository runRepository,
                                   MiniGptTrainingLogRepository logRepository,
+                                  MiniGptGenerationRepository generationRepository,
                                   IRecordService recordService) {
         this.runRepository = runRepository;
         this.logRepository = logRepository;
+        this.generationRepository = generationRepository;
         this.recordService = recordService;
     }
 
@@ -196,6 +227,8 @@ public class MiniGptLearningService implements IMiniGptLearningService {
     @Override
     public MiniGptTrainingStatus startTraining(MiniGptTrainingRequest request) {
         MiniGptTrainingRequest safeRequest = request == null ? new MiniGptTrainingRequest() : request;
+        String preset = hasTextOrDefault(safeRequest.getPreset(), DEFAULT_PRESET);
+        TrainingContext context = validateTrainingContext(safeRequest, preset);
         if (!trainingRunning.compareAndSet(false, true)) {
             return trainingStatus();
         }
@@ -204,28 +237,36 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         String runName = safeRunName(StringUtils.hasText(safeRequest.getRunName())
                 ? safeRequest.getRunName()
                 : "web-" + now);
-        String preset = hasTextOrDefault(safeRequest.getPreset(), DEFAULT_PRESET);
         int maxSteps = safeRequest.getMaxSteps() == null || safeRequest.getMaxSteps() <= 0
                 ? presetDefaultMaxSteps(preset)
                 : safeRequest.getMaxSteps();
+        try {
+            if (runRepository.findByRunName(runName).isPresent()) {
+                throw new MiniGptTrainingValidationException("MiniGPT 实验名称已存在: " + runName);
+            }
+            MiniGptRunRecord run = initializeTrainingRun(runName, preset, maxSteps, safeRequest, context, now);
+            updateStatus(MiniGptTrainingStatus.builder()
+                    .running(true)
+                    .failed(false)
+                    .cancelled(false)
+                    .exitCode(0)
+                    .percent(1)
+                    .runName(runName)
+                    .preset(preset)
+                    .stage("准备训练")
+                    .message("正在启动 MiniGPT 训练进程")
+                    .processedStep(0)
+                    .totalSteps(maxSteps)
+                    .run(run)
+                    .startedAt(now)
+                    .updatedAt(now)
+                    .build());
+        } catch (RuntimeException exception) {
+            trainingRunning.set(false);
+            throw exception;
+        }
 
-        updateStatus(MiniGptTrainingStatus.builder()
-                .running(true)
-                .failed(false)
-                .cancelled(false)
-                .exitCode(0)
-                .percent(1)
-                .runName(runName)
-                .preset(preset)
-                .stage("准备训练")
-                .message("正在启动 MiniGPT 训练进程")
-                .processedStep(0)
-                .totalSteps(maxSteps)
-                .startedAt(now)
-                .updatedAt(now)
-                .build());
-
-        CompletableFuture.runAsync(() -> runTrainingProcess(safeRequest, runName, preset, maxSteps, now));
+        CompletableFuture.runAsync(() -> runTrainingProcess(safeRequest, runName, preset, maxSteps, context, now));
         return trainingStatus();
     }
 
@@ -518,6 +559,8 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         }
         try {
             String text = Files.readString(dataPath, StandardCharsets.UTF_8);
+            SampleStats sampleStats = sampleStats(text);
+            InsightProvenance provenance = insightProvenance(dataPath, text);
             List<Integer> vocab = sortedCodePoints(text);
             Map<Integer, Integer> stoi = new LinkedHashMap<>();
             for (int index = 0; index < vocab.size(); index++) {
@@ -529,7 +572,20 @@ public class MiniGptLearningService implements IMiniGptLearningService {
                     .data(safeData)
                     .resolvedPath(dataPath.toString())
                     .charCount(text.codePointCount(0, text.length()))
-                    .lineCount(text.isEmpty() ? 0 : text.split("\\R", -1).length)
+                    .lineCount(text.isEmpty() ? 0 : (int) text.lines().count())
+                    .sampleCount(sampleStats.sampleCount())
+                    .minimumSampleTokens(sampleStats.minimumTokens())
+                    .maximumSampleTokens(sampleStats.maximumTokens())
+                    .requiredBlockSize(sampleStats.requiredBlockSize())
+                    .recommendedBlockSize(sampleStats.recommendedBlockSize())
+                    .tokenizerType(TOKENIZER_TYPE)
+                    .corpusVersion(provenance.corpusVersion())
+                    .corpusFormat(provenance.corpusFormat())
+                    .schemaVersion(provenance.schemaVersion())
+                    .templateVersion(provenance.templateVersion())
+                    .trainSha256(provenance.trainSha256())
+                    .validationSha256(provenance.validationSha256())
+                    .provenanceStatus(provenance.status())
                     .vocabSize(vocab.size())
                     .preview(text.substring(0, Math.min(text.length(), PREVIEW_LIMIT)))
                     .sampleText(sampleText)
@@ -546,7 +602,7 @@ public class MiniGptLearningService implements IMiniGptLearningService {
     @Override
     public MiniGptGenerationResult generate(MiniGptGenerationRequest request) {
         MiniGptGenerationRequest safeRequest = request == null ? new MiniGptGenerationRequest() : request;
-        return runGeneration(safeRequest);
+        return runGeneration(safeRequest, null, strategyLabel(safeRequest.getPrompt()), false);
     }
 
     @Override
@@ -554,6 +610,8 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         MiniGptGenerationComparisonRequest safeRequest = request == null ? new MiniGptGenerationComparisonRequest() : request;
         List<Double> temperatures = normalizeTemperatures(safeRequest.getTemperatures());
         List<Integer> topKs = normalizeTopKs(safeRequest.getTopKs());
+        String batchId = UUID.randomUUID().toString();
+        long baseSeed = normalizeSeed(safeRequest.getBaseSeed());
         List<MiniGptGenerationRequest> requests = new ArrayList<>();
         for (Double temperature : temperatures) {
             for (Integer topK : topKs) {
@@ -566,29 +624,115 @@ public class MiniGptLearningService implements IMiniGptLearningService {
                 generationRequest.setMaxNewTokens(safeRequest.getMaxNewTokens());
                 generationRequest.setTemperature(temperature);
                 generationRequest.setTopK(topK);
+                generationRequest.setSeed(baseSeed + requests.size());
                 requests.add(generationRequest);
             }
         }
         return requests.stream()
-                .map(this::runGeneration)
+                .map(generationRequest -> runGeneration(
+                        generationRequest,
+                        batchId,
+                        strategyLabel(generationRequest.getPrompt()),
+                        false
+                ))
                 .toList();
     }
 
-    private MiniGptGenerationResult runGeneration(MiniGptGenerationRequest safeRequest) {
+    @Override
+    public MiniGptGenerationBatchResult generateBatch(MiniGptGenerationBatchRequest request) {
+        MiniGptGenerationBatchRequest safeRequest = request == null ? new MiniGptGenerationBatchRequest() : request;
+        int candidateCount = normalizeLimit(safeRequest.getCandidateCount(), DEFAULT_BATCH_CANDIDATES, MAX_BATCH_CANDIDATES);
+        int maxRedOverlap = safeRequest.getMaxRedOverlap() == null
+                ? DEFAULT_MAX_RED_OVERLAP
+                : Math.max(0, Math.min(6, safeRequest.getMaxRedOverlap()));
+        int minimumBlueCoverage = safeRequest.getMinimumBlueCoverage() == null
+                ? 0
+                : Math.max(0, Math.min(16, safeRequest.getMinimumBlueCoverage()));
+        long baseSeed = normalizeSeed(safeRequest.getBaseSeed());
+        List<String> strategies = normalizeStrategies(safeRequest.getStrategies());
+        String batchId = UUID.randomUUID().toString();
+        List<MiniGptGenerationResult> results = new ArrayList<>();
+        RuntimeException lastFailure = null;
+
+        for (int index = 0; index < candidateCount; index++) {
+            String strategy = strategies.get(index % strategies.size());
+            MiniGptGenerationRequest generationRequest = new MiniGptGenerationRequest();
+            generationRequest.setRunName(safeRequest.getRunName());
+            generationRequest.setPrompt(promptForStrategy(safeRequest.getPrompt(), strategy));
+            generationRequest.setMaxNewTokens(safeRequest.getMaxNewTokens());
+            generationRequest.setTemperature(safeRequest.getTemperature());
+            generationRequest.setTopK(safeRequest.getTopK());
+            generationRequest.setSeed(baseSeed + index);
+            try {
+                results.add(runGeneration(generationRequest, batchId, strategy, true));
+            } catch (RuntimeException exception) {
+                lastFailure = exception;
+                log.warn("MiniGPT batch generation failed: batchId={}, seed={}", batchId, baseSeed + index, exception);
+            }
+        }
+
+        if (results.isEmpty() && lastFailure != null) {
+            throw lastFailure;
+        }
+
+        selectCandidatePool(results, maxRedOverlap, minimumBlueCoverage);
+        boolean minimumBlueCoverageMet = applyBatchPolicy(
+                results,
+                baseSeed,
+                maxRedOverlap,
+                minimumBlueCoverage,
+                strategies
+        );
+        results.forEach(this::persistGeneration);
+        return generationBatchResult(
+                batchId,
+                candidateCount,
+                baseSeed,
+                maxRedOverlap,
+                minimumBlueCoverage,
+                minimumBlueCoverageMet,
+                strategies,
+                results
+        );
+    }
+
+    private MiniGptGenerationResult runGeneration(MiniGptGenerationRequest safeRequest,
+                                                   String batchId,
+                                                   String strategy,
+                                                   boolean poolEvaluation) {
         MiniGptRunRecord run = selectedGenerationRun(safeRequest.getRunName());
         if (run == null || !StringUtils.hasText(run.getCheckpoint())) {
-            throw new IllegalArgumentException("当前 MiniGPT 实验没有可用 checkpoint");
+            throw new MiniGptTrainingValidationException("当前 MiniGPT 实验没有可用 checkpoint");
         }
         Path playgroundDir = resolvePlaygroundDir();
         Path checkpointPath = resolveCheckpointPath(playgroundDir, run.getCheckpoint());
+        if (!checkpointPath.startsWith(playgroundDir)) {
+            throw new MiniGptTrainingValidationException("MiniGPT checkpoint 路径必须位于 playground 目录内");
+        }
         if (!Files.exists(checkpointPath)) {
-            throw new IllegalArgumentException("MiniGPT checkpoint 不存在: " + checkpointPath);
+            throw new MiniGptTrainingValidationException("MiniGPT checkpoint 不存在: " + checkpointPath);
+        }
+
+        String checkpointSha256 = sha256File(checkpointPath);
+        if (StringUtils.hasText(run.getCheckpointSha256()) && !run.getCheckpointSha256().equals(checkpointSha256)) {
+            throw new MiniGptTrainingValidationException("MiniGPT checkpoint SHA-256 与实验记录不一致");
         }
 
         String prompt = hasTextOrDefault(safeRequest.getPrompt(), DEFAULT_SAMPLE_PROMPT);
         int maxNewTokens = normalizeLimit(safeRequest.getMaxNewTokens(), DEFAULT_GENERATION_TOKENS, MAX_GENERATION_TOKENS);
+        double temperature = normalizeTemperature(safeRequest.getTemperature());
+        int topK = normalizeTopK(safeRequest.getTopK());
+        long seed = normalizeSeed(safeRequest.getSeed());
         long startedAt = System.currentTimeMillis();
-        List<String> command = buildGenerationCommand(playgroundDir, checkpointPath, prompt, maxNewTokens, safeRequest);
+        List<String> command = buildGenerationCommand(
+                playgroundDir,
+                checkpointPath,
+                prompt,
+                maxNewTokens,
+                temperature,
+                topK,
+                seed
+        );
         try {
             Process process = new ProcessBuilder(command)
                     .directory(playgroundDir.toFile())
@@ -604,19 +748,37 @@ public class MiniGptLearningService implements IMiniGptLearningService {
             if (exitCode != 0) {
                 throw new IllegalStateException("MiniGPT 生成失败: " + output);
             }
-            return MiniGptGenerationResult.builder()
+            GenerationOutput generationOutput = parseGenerationOutput(output, seed, run.getConfig());
+            MiniGptLotteryCandidateValidation validation = validateLotteryCandidate(generationOutput.generatedText());
+            MiniGptGenerationResult result = MiniGptGenerationResult.builder()
+                    .generationId(UUID.randomUUID().toString())
+                    .batchId(batchId)
+                    .runId(run.getId())
                     .runName(run.getRunName())
                     .prompt(prompt)
-                    .generatedText(output)
+                    .generatedText(generationOutput.generatedText())
                     .checkpoint(checkpointPath.toString())
+                    .checkpointSha256(checkpointSha256)
+                    .corpusVersion(run.getCorpusVersion())
+                    .trainSha256(run.getTrainSha256())
+                    .validationSha256(run.getValidationSha256())
+                    .modelConfig(generationOutput.modelConfig())
                     .maxNewTokens(maxNewTokens)
-                    .temperature(safeRequest.getTemperature())
-                    .topK(safeRequest.getTopK())
+                    .temperature(temperature)
+                    .topK(topK)
+                    .seed(generationOutput.seed())
+                    .strategyLabel(hasTextOrDefault(strategy, strategyLabel(generationOutput.generatedText())))
+                    .poolSelected(poolEvaluation ? Boolean.FALSE : null)
+                    .poolDecision(poolEvaluation ? "PENDING_POOL_SELECTION" : null)
                     .exitCode(exitCode)
                     .elapsedMillis(System.currentTimeMillis() - startedAt)
-                    .lotteryCandidate(validateLotteryCandidate(output))
+                    .lotteryCandidate(validation)
                     .generatedAt(System.currentTimeMillis())
                     .build();
+            if (!poolEvaluation) {
+                persistGeneration(result);
+            }
+            return result;
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("MiniGPT 生成线程被中断", exception);
@@ -632,15 +794,23 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         List<Integer> redValues = parsed.redValues();
         Integer blueValue = parsed.blueValue();
         List<String> issues = new ArrayList<>();
+        List<String> issueCodes = new ArrayList<>();
+        Set<String> repairActions = new LinkedHashSet<>();
 
         if (redValues.isEmpty() && blueValue == null) {
             issues.add("未解析到候选号码");
+            issueCodes.add("NO_CANDIDATE");
         }
         if (redValues.size() != 6) {
             issues.add("红球数量应为 6 个，当前为 " + redValues.size());
+            issueCodes.add("RED_COUNT");
+            if (redValues.size() > 6) {
+                repairActions.add("TRIM_RED_TO_SIX");
+            }
         }
         if (blueValue == null) {
             issues.add("未解析到蓝球");
+            issueCodes.add("BLUE_MISSING");
         }
 
         List<Integer> outOfRangeRed = redValues.stream()
@@ -648,20 +818,28 @@ public class MiniGptLearningService implements IMiniGptLearningService {
                 .toList();
         if (!outOfRangeRed.isEmpty()) {
             issues.add("红球越界: " + outOfRangeRed);
+            issueCodes.add("RED_OUT_OF_RANGE");
+            repairActions.add("FILTER_RED_OUT_OF_RANGE");
         }
         if (blueValue != null && (blueValue < 1 || blueValue > 16)) {
             issues.add("蓝球越界: " + blueValue);
+            issueCodes.add("BLUE_OUT_OF_RANGE");
+            repairActions.add("DROP_BLUE_OUT_OF_RANGE");
         }
 
         long distinctRedCount = redValues.stream().distinct().count();
         int duplicateCount = redValues.size() - (int) distinctRedCount;
         if (duplicateCount > 0) {
             issues.add("红球存在重复");
+            issueCodes.add("RED_DUPLICATE");
+            repairActions.add("DEDUPLICATE_RED");
         }
 
         boolean redAscending = isAscending(redValues);
         if (redValues.size() > 1 && !redAscending) {
             issues.add("红球未按升序排列");
+            issueCodes.add("RED_NOT_ASCENDING");
+            repairActions.add("SORT_RED_ASCENDING");
         }
 
         List<Integer> repairedRed = redValues.stream()
@@ -680,6 +858,7 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         int span = repairedRed.size() >= 2 ? repairedRed.get(repairedRed.size() - 1) - repairedRed.get(0) : 0;
         boolean parseable = !redValues.isEmpty() || blueValue != null;
         boolean valid = issues.isEmpty();
+        boolean postRepairValid = repairedRed.size() == 6 && repairedBlue != null;
 
         return MiniGptLotteryCandidateValidation.builder()
                 .sourceText(sourceText)
@@ -696,6 +875,10 @@ public class MiniGptLearningService implements IMiniGptLearningService {
                 .redAscending(redAscending)
                 .status(valid ? "PASS" : parseable ? "WARNING" : "FAILED")
                 .issues(issues)
+                .issueCodes(issueCodes)
+                .repairApplied(!repairActions.isEmpty())
+                .repairActions(new ArrayList<>(repairActions))
+                .postRepairValid(postRepairValid)
                 .repairedRedNumbers(repairedRed.stream().map(MiniGptLearningService::formatBall).toList())
                 .repairedBlueNumber(repairedBlue)
                 .build();
@@ -735,6 +918,316 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         return latestRun();
     }
 
+    private TrainingContext validateTrainingContext(MiniGptTrainingRequest request, String preset) {
+        Path playgroundDir = resolvePlaygroundDir();
+        String dataValue = hasTextOrDefault(request.getData(), DEFAULT_DATA);
+        Path dataPath = resolvePlaygroundPath(playgroundDir, dataValue, "训练语料");
+        if (!Files.isRegularFile(dataPath)) {
+            throw new MiniGptTrainingValidationException("未找到 MiniGPT 训练语料文件: " + dataValue);
+        }
+
+        String manifestValue = trimToNull(request.getManifestDataPath());
+        boolean versionedLotteryCorpus = StringUtils.hasText(manifestValue)
+                || dataPath.toString().contains(LOTTERY_CORPUS_VERSION_ROOT);
+        SampleStats stats = readSampleStats(dataPath);
+        int effectiveBlockSize = effectiveBlockSize(playgroundDir, request, preset);
+        String validationSource = StringUtils.hasText(request.getEvalData()) ? "FIXED_FILE" : "TRAIN_TAIL_SPLIT";
+
+        if (!versionedLotteryCorpus) {
+            return new TrainingContext(
+                    PROVENANCE_LEGACY,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    stats.minimumTokens(),
+                    stats.maximumTokens(),
+                    stats.requiredBlockSize(),
+                    stats.recommendedBlockSize(),
+                    effectiveBlockSize,
+                    validationSource
+            );
+        }
+
+        if (!StringUtils.hasText(manifestValue)) {
+            Path inferredManifest = dataPath.getParent() == null ? null : dataPath.getParent().resolve("manifest.json");
+            if (inferredManifest == null || !Files.isRegularFile(inferredManifest)) {
+                throw new MiniGptTrainingValidationException("正式版本化彩票语料必须提供 manifestDataPath");
+            }
+            manifestValue = playgroundRelativePath(playgroundDir, inferredManifest);
+        }
+
+        Path manifestPath = resolvePlaygroundPath(playgroundDir, manifestValue, "语料 manifest");
+        Map<String, Object> manifest = readJsonObject(manifestPath, "读取 MiniGPT 语料 manifest 失败");
+        String corpusVersion = requiredManifestText(manifest, "corpusVersion");
+        String corpusFormat = requiredManifestText(manifest, "format");
+        Integer schemaVersion = requiredManifestInteger(manifest, "schemaVersion");
+        String templateVersion = requiredManifestText(manifest, "templateVersion");
+        String manifestTrainSha = requiredManifestText(manifest, "trainSha256");
+        String manifestValidationSha = requiredManifestText(manifest, "validationSha256");
+        Path manifestTrainPath = manifestArtifactPath(playgroundDir, manifest, "trainDataPath", "trainFilePath");
+        Path manifestValidationPath = manifestArtifactPath(playgroundDir, manifest, "validationDataPath", "validationFilePath");
+
+        if (!dataPath.equals(manifestTrainPath)) {
+            throw new MiniGptTrainingValidationException("训练语料路径与 manifest trainDataPath 不一致");
+        }
+        if (!StringUtils.hasText(request.getEvalData())) {
+            throw new MiniGptTrainingValidationException("正式版本化彩票语料必须使用 manifest 配对的 validationDataPath");
+        }
+        Path evalPath = resolvePlaygroundPath(playgroundDir, request.getEvalData(), "验证语料");
+        if (!evalPath.equals(manifestValidationPath)) {
+            throw new MiniGptTrainingValidationException("验证语料路径与 manifest validationDataPath 不一致");
+        }
+        if (!Files.isRegularFile(evalPath)) {
+            throw new MiniGptTrainingValidationException("未找到 MiniGPT 验证语料文件: " + request.getEvalData());
+        }
+
+        String actualTrainSha = sha256File(dataPath);
+        String actualValidationSha = sha256File(evalPath);
+        requireMatchingValue("manifest trainSha256", manifestTrainSha, actualTrainSha);
+        requireMatchingValue("manifest validationSha256", manifestValidationSha, actualValidationSha);
+        requireOptionalMatchingValue("请求 corpusVersion", request.getCorpusVersion(), corpusVersion);
+        requireOptionalMatchingValue("请求 trainSha256", request.getTrainSha256(), actualTrainSha);
+        requireOptionalMatchingValue("请求 validationSha256", request.getValidationSha256(), actualValidationSha);
+
+        if (stats.sampleCount() == 0) {
+            throw new MiniGptTrainingValidationException("正式版本化彩票训练语料不包含完整非空样本");
+        }
+        if (effectiveBlockSize < stats.requiredBlockSize()) {
+            throw new MiniGptTrainingValidationException(
+                    "MiniGPT Block Size=" + effectiveBlockSize
+                            + " 无法容纳最长完整样本，至少需要 " + stats.requiredBlockSize()
+                            + "，建议使用 " + stats.recommendedBlockSize()
+            );
+        }
+        String trainText = readTrainingText(dataPath, "训练语料");
+        String validationText = readTrainingText(evalPath, "验证语料");
+        int minimumCorpusTokens = effectiveBlockSize + 2;
+        int trainTokenCount = trainText.codePointCount(0, trainText.length());
+        int validationTokenCount = validationText.codePointCount(0, validationText.length());
+        if (trainTokenCount < minimumCorpusTokens) {
+            throw new MiniGptTrainingValidationException(
+                    "MiniGPT 训练语料 token 数=" + trainTokenCount + "，至少需要 " + minimumCorpusTokens
+            );
+        }
+        if (validationTokenCount < minimumCorpusTokens) {
+            throw new MiniGptTrainingValidationException(
+                    "MiniGPT 验证语料 token 数=" + validationTokenCount + "，至少需要 " + minimumCorpusTokens
+            );
+        }
+        Set<Integer> trainVocabulary = new TreeSet<>();
+        trainText.codePoints().forEach(trainVocabulary::add);
+        Set<Integer> validationOnlyTokens = new TreeSet<>();
+        validationText.codePoints().forEach(validationOnlyTokens::add);
+        validationOnlyTokens.removeAll(trainVocabulary);
+        if (!validationOnlyTokens.isEmpty()) {
+            throw new MiniGptTrainingValidationException(
+                    "MiniGPT 验证语料包含训练 tokenizer 未见字符: " + validationOnlyTokens
+            );
+        }
+
+        return new TrainingContext(
+                PROVENANCE_VERIFIED,
+                playgroundRelativePath(playgroundDir, manifestPath),
+                corpusVersion,
+                corpusFormat,
+                schemaVersion,
+                templateVersion,
+                actualTrainSha,
+                actualValidationSha,
+                stats.minimumTokens(),
+                stats.maximumTokens(),
+                stats.requiredBlockSize(),
+                stats.recommendedBlockSize(),
+                effectiveBlockSize,
+                "FIXED_FILE"
+        );
+    }
+
+    private int effectiveBlockSize(Path playgroundDir, MiniGptTrainingRequest request, String preset) {
+        try {
+            ResumeSource resumeSource = resolveResumeSource(playgroundDir, request);
+            if (resumeSource != null) {
+                Path configPath = resumeSource.checkpointPath().getParent().resolve("config.json");
+                if (Files.isRegularFile(configPath)) {
+                    Integer blockSize = asInteger(readJsonObject(configPath, "读取 MiniGPT checkpoint config 失败").get("block_size"));
+                    if (blockSize != null && blockSize > 0) {
+                        return blockSize;
+                    }
+                }
+                throw new MiniGptTrainingValidationException(
+                        "MiniGPT 续训 checkpoint 缺少有效 config.block_size: " + configPath
+                );
+            }
+        } catch (IllegalArgumentException exception) {
+            throw new MiniGptTrainingValidationException(exception.getMessage(), exception);
+        }
+        if (request.getBlockSize() != null && request.getBlockSize() > 0) {
+            return request.getBlockSize();
+        }
+        return presetDefaultBlockSize(preset);
+    }
+
+    private static Path resolvePlaygroundPath(Path playgroundDir, String value, String label) {
+        if (!StringUtils.hasText(value)) {
+            throw new MiniGptTrainingValidationException(label + "路径不能为空");
+        }
+        Path configured = Path.of(value);
+        Path resolved = configured.isAbsolute()
+                ? configured.normalize()
+                : playgroundDir.resolve(configured).normalize();
+        if (!resolved.startsWith(playgroundDir)) {
+            throw new MiniGptTrainingValidationException(label + "路径必须位于 MiniGPT playground 目录内");
+        }
+        return resolved;
+    }
+
+    private static String playgroundRelativePath(Path playgroundDir, Path path) {
+        return playgroundDir.relativize(path.normalize()).toString();
+    }
+
+    private static Path manifestArtifactPath(Path playgroundDir,
+                                             Map<String, Object> manifest,
+                                             String dataPathKey,
+                                             String filePathKey) {
+        String dataPath = asString(manifest.get(dataPathKey));
+        if (StringUtils.hasText(dataPath)) {
+            return resolvePlaygroundPath(playgroundDir, dataPath, "manifest " + dataPathKey);
+        }
+        String filePath = requiredManifestText(manifest, filePathKey);
+        return resolvePlaygroundPath(playgroundDir, filePath, "manifest " + filePathKey);
+    }
+
+    private static Map<String, Object> readJsonObject(Path path, String message) {
+        if (!Files.isRegularFile(path)) {
+            throw new MiniGptTrainingValidationException("未找到文件: " + path);
+        }
+        try {
+            return OBJECT_MAPPER.readValue(path.toFile(), new TypeReference<>() {
+            });
+        } catch (IOException exception) {
+            throw new MiniGptTrainingValidationException(message + ": " + path, exception);
+        }
+    }
+
+    private static String requiredManifestText(Map<String, Object> manifest, String field) {
+        String value = asString(manifest.get(field));
+        if (!StringUtils.hasText(value)) {
+            throw new MiniGptTrainingValidationException("MiniGPT 语料 manifest 缺少字段: " + field);
+        }
+        return value;
+    }
+
+    private static Integer requiredManifestInteger(Map<String, Object> manifest, String field) {
+        Integer value = asInteger(manifest.get(field));
+        if (value == null) {
+            throw new MiniGptTrainingValidationException("MiniGPT 语料 manifest 缺少字段: " + field);
+        }
+        return value;
+    }
+
+    private static void requireMatchingValue(String label, String expected, String actual) {
+        if (!expected.equalsIgnoreCase(actual)) {
+            throw new MiniGptTrainingValidationException(label + " 与实际文件 SHA-256 不一致");
+        }
+    }
+
+    private static void requireOptionalMatchingValue(String label, String expected, String actual) {
+        if (StringUtils.hasText(expected) && !expected.equalsIgnoreCase(actual)) {
+            throw new MiniGptTrainingValidationException(label + " 与服务端 provenance 不一致");
+        }
+    }
+
+    private static SampleStats readSampleStats(Path path) {
+        try {
+            return sampleStats(Files.readString(path, StandardCharsets.UTF_8));
+        } catch (IOException exception) {
+            throw new MiniGptTrainingValidationException("读取 MiniGPT 训练语料失败: " + path, exception);
+        }
+    }
+
+    private static String readTrainingText(Path path, String label) {
+        try {
+            return Files.readString(path, StandardCharsets.UTF_8);
+        } catch (IOException exception) {
+            throw new MiniGptTrainingValidationException("读取 MiniGPT " + label + "失败: " + path, exception);
+        }
+    }
+
+    private static SampleStats sampleStats(String text) {
+        List<Integer> lengths = new ArrayList<>();
+        int lineStart = 0;
+        int index = 0;
+        while (index < text.length()) {
+            char value = text.charAt(index);
+            if (value != '\r' && value != '\n') {
+                index++;
+                continue;
+            }
+            String line = text.substring(lineStart, index);
+            int terminatorTokens = 1;
+            if (value == '\r' && index + 1 < text.length() && text.charAt(index + 1) == '\n') {
+                terminatorTokens = 2;
+                index++;
+            }
+            if (!line.isBlank()) {
+                lengths.add(line.codePointCount(0, line.length()) + terminatorTokens);
+            }
+            index++;
+            lineStart = index;
+        }
+        if (lineStart < text.length()) {
+            String line = text.substring(lineStart);
+            if (!line.isBlank()) {
+                lengths.add(line.codePointCount(0, line.length()) + 1);
+            }
+        }
+        if (lengths.isEmpty()) {
+            return new SampleStats(0, 0, 0, 0, 0);
+        }
+        int minimum = lengths.stream().mapToInt(Integer::intValue).min().orElse(0);
+        int maximum = lengths.stream().mapToInt(Integer::intValue).max().orElse(0);
+        int required = maximum;
+        int recommended = ((required + 15) / 16) * 16;
+        return new SampleStats(lengths.size(), minimum, maximum, required, recommended);
+    }
+
+    private static InsightProvenance insightProvenance(Path dataPath, String text) {
+        Path parent = dataPath.getParent();
+        Path manifestPath = parent == null ? null : parent.resolve("manifest.json");
+        if (manifestPath == null || !Files.isRegularFile(manifestPath)) {
+            return InsightProvenance.legacy();
+        }
+        try {
+            Map<String, Object> manifest = OBJECT_MAPPER.readValue(manifestPath.toFile(), new TypeReference<>() {
+            });
+            String fileName = dataPath.getFileName().toString();
+            String expectedHash = switch (fileName) {
+                case "train.txt" -> asString(manifest.get("trainSha256"));
+                case "validation.txt" -> asString(manifest.get("validationSha256"));
+                case "all.txt" -> asString(manifest.get("contentSha256"));
+                default -> null;
+            };
+            String status = StringUtils.hasText(expectedHash) && expectedHash.equalsIgnoreCase(sha256(text))
+                    ? PROVENANCE_VERIFIED
+                    : "HASH_MISMATCH";
+            return new InsightProvenance(
+                    asString(manifest.get("corpusVersion")),
+                    asString(manifest.get("format")),
+                    asInteger(manifest.get("schemaVersion")),
+                    asString(manifest.get("templateVersion")),
+                    asString(manifest.get("trainSha256")),
+                    asString(manifest.get("validationSha256")),
+                    status
+            );
+        } catch (IOException exception) {
+            return InsightProvenance.legacy();
+        }
+    }
+
     private static int normalizeLimit(Integer limit, int defaultValue, int maxValue) {
         if (limit == null || limit <= 0) {
             return defaultValue;
@@ -766,7 +1259,368 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         return values.isEmpty() ? List.of(20) : values;
     }
 
-    private void runTrainingProcess(MiniGptTrainingRequest request, String runName, String preset, int maxSteps, long startedAt) {
+    private static double normalizeTemperature(Double temperature) {
+        if (temperature == null) {
+            return DEFAULT_GENERATION_TEMPERATURE;
+        }
+        return Math.max(0.1, Math.min(2.0, temperature));
+    }
+
+    private static int normalizeTopK(Integer topK) {
+        if (topK == null) {
+            return DEFAULT_GENERATION_TOP_K;
+        }
+        return Math.max(1, Math.min(200, topK));
+    }
+
+    private static long normalizeSeed(Long seed) {
+        return seed == null ? DEFAULT_GENERATION_SEED : Math.max(0L, seed);
+    }
+
+    private static List<String> normalizeStrategies(List<String> strategies) {
+        if (strategies == null || strategies.isEmpty()) {
+            return List.of("balanced", "zone-balance", "structure-observed");
+        }
+        List<String> normalized = strategies.stream()
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .map(String::toLowerCase)
+                .filter(value -> value.matches("[a-z0-9-]{1,40}"))
+                .distinct()
+                .limit(8)
+                .toList();
+        return normalized.isEmpty() ? List.of("balanced", "zone-balance", "structure-observed") : normalized;
+    }
+
+    private static String promptForStrategy(String prompt, String strategy) {
+        String base = hasTextOrDefault(prompt, "target=next").trim();
+        Matcher matcher = STRATEGY_FIELD_PATTERN.matcher(base);
+        return matcher.find()
+                ? matcher.replaceAll("strategy=" + strategy)
+                : base + " strategy=" + strategy;
+    }
+
+    private static String strategyLabel(String text) {
+        if (!StringUtils.hasText(text)) {
+            return null;
+        }
+        Matcher matcher = STRATEGY_FIELD_PATTERN.matcher(text);
+        return matcher.find() ? matcher.group(1).toLowerCase() : null;
+    }
+
+    private static GenerationOutput parseGenerationOutput(String output,
+                                                          long fallbackSeed,
+                                                          Map<String, Object> fallbackConfig) {
+        if (StringUtils.hasText(output)) {
+            String lastLine = output.lines()
+                    .map(String::trim)
+                    .filter(StringUtils::hasText)
+                    .reduce((first, second) -> second)
+                    .orElse(output.trim());
+            GenerationOutput parsed = parseGenerationJson(lastLine, fallbackSeed, fallbackConfig);
+            if (parsed != null) {
+                return parsed;
+            }
+            parsed = parseGenerationJson(output.trim(), fallbackSeed, fallbackConfig);
+            if (parsed != null) {
+                return parsed;
+            }
+        }
+        return new GenerationOutput(output, fallbackSeed, copyConfig(fallbackConfig));
+    }
+
+    private static GenerationOutput parseGenerationJson(String candidate,
+                                                         long fallbackSeed,
+                                                         Map<String, Object> fallbackConfig) {
+        if (!StringUtils.hasText(candidate) || !candidate.startsWith("{")) {
+            return null;
+        }
+        try {
+            Map<String, Object> payload = OBJECT_MAPPER.readValue(candidate, new TypeReference<>() {
+            });
+            String generatedText = asString(payload.get("generated_text"));
+            Long seed = asLong(payload.get("seed"));
+            Map<String, Object> modelConfig = asMap(payload.get("model_config"));
+            if (StringUtils.hasText(generatedText)) {
+                return new GenerationOutput(
+                        generatedText,
+                        seed == null ? fallbackSeed : seed,
+                        modelConfig.isEmpty() ? copyConfig(fallbackConfig) : modelConfig
+                );
+            }
+        } catch (IOException ignored) {
+            // Older Python runners returned plain generated text; keep that response compatible.
+        }
+        return null;
+    }
+
+    private void persistGeneration(MiniGptGenerationResult result) {
+        generationRepository.save(MiniGptGenerationRecord.builder()
+                .id(result.getGenerationId())
+                .generationId(result.getGenerationId())
+                .batchId(result.getBatchId())
+                .runId(result.getRunId())
+                .runName(result.getRunName())
+                .corpusVersion(result.getCorpusVersion())
+                .trainSha256(result.getTrainSha256())
+                .validationSha256(result.getValidationSha256())
+                .checkpoint(result.getCheckpoint())
+                .checkpointSha256(result.getCheckpointSha256())
+                .modelConfig(copyConfig(result.getModelConfig()))
+                .prompt(result.getPrompt())
+                .generatedText(result.getGeneratedText())
+                .maxNewTokens(result.getMaxNewTokens())
+                .temperature(result.getTemperature())
+                .topK(result.getTopK())
+                .seed(result.getSeed())
+                .strategyLabel(result.getStrategyLabel())
+                .poolSelected(result.getPoolSelected())
+                .poolDecision(result.getPoolDecision())
+                .batchBaseSeed(result.getBatchBaseSeed())
+                .batchMaxRedOverlap(result.getBatchMaxRedOverlap())
+                .batchMinimumBlueCoverage(result.getBatchMinimumBlueCoverage())
+                .batchMinimumBlueCoverageMet(result.getBatchMinimumBlueCoverageMet())
+                .batchStrategies(result.getBatchStrategies())
+                .exitCode(result.getExitCode())
+                .elapsedMillis(result.getElapsedMillis())
+                .lotteryCandidate(result.getLotteryCandidate())
+                .generatedAt(result.getGeneratedAt())
+                .build());
+    }
+
+    private void selectCandidatePool(List<MiniGptGenerationResult> results,
+                                     int maxRedOverlap,
+                                     int minimumBlueCoverage) {
+        List<MiniGptGenerationResult> remaining = new ArrayList<>();
+        for (MiniGptGenerationResult result : results) {
+            if (isCandidateUsable(result.getLotteryCandidate())) {
+                remaining.add(result);
+            } else {
+                result.setPoolSelected(false);
+                result.setPoolDecision("REJECTED_NOT_LEGAL");
+            }
+        }
+
+        List<MiniGptGenerationResult> selected = new ArrayList<>();
+        Set<String> selectedBlueNumbers = new LinkedHashSet<>();
+        while (!remaining.isEmpty()) {
+            MiniGptGenerationResult best = null;
+            int bestOverlap = Integer.MAX_VALUE;
+            boolean bestAddsBlue = false;
+            for (MiniGptGenerationResult candidate : remaining) {
+                int overlap = maximumOverlap(candidate, selected);
+                if (overlap > maxRedOverlap) {
+                    continue;
+                }
+                String blue = candidateBlue(candidate.getLotteryCandidate());
+                boolean addsBlue = StringUtils.hasText(blue) && !selectedBlueNumbers.contains(blue);
+                boolean coveragePriority = minimumBlueCoverage <= 0 || selectedBlueNumbers.size() < minimumBlueCoverage;
+                if (best == null
+                        || (coveragePriority && addsBlue && !bestAddsBlue)
+                        || (addsBlue == bestAddsBlue && overlap < bestOverlap)) {
+                    best = candidate;
+                    bestOverlap = overlap;
+                    bestAddsBlue = addsBlue;
+                }
+            }
+            if (best == null) {
+                break;
+            }
+            best.setPoolSelected(true);
+            best.setPoolDecision(bestAddsBlue ? "SELECTED_BLUE_COVERAGE" : "SELECTED_OVERLAP_OK");
+            selected.add(best);
+            String blue = candidateBlue(best.getLotteryCandidate());
+            if (StringUtils.hasText(blue)) {
+                selectedBlueNumbers.add(blue);
+            }
+            remaining.remove(best);
+        }
+        for (MiniGptGenerationResult rejected : remaining) {
+            rejected.setPoolSelected(false);
+            rejected.setPoolDecision("REJECTED_RED_OVERLAP");
+        }
+    }
+
+    private MiniGptGenerationBatchResult generationBatchResult(String batchId,
+                                                               int requestedCount,
+                                                               long baseSeed,
+                                                               int maxRedOverlap,
+                                                               int minimumBlueCoverage,
+                                                               boolean minimumBlueCoverageMet,
+                                                               List<String> requestedStrategies,
+                                                               List<MiniGptGenerationResult> results) {
+        int generatedCount = results.size();
+        int parseableCount = 0;
+        int legalCount = 0;
+        int repairedCount = 0;
+        int postRepairLegalCount = 0;
+        Map<String, Integer> repairReasonCounts = new LinkedHashMap<>();
+        for (MiniGptGenerationResult result : results) {
+            MiniGptLotteryCandidateValidation validation = result.getLotteryCandidate();
+            if (validation == null) {
+                continue;
+            }
+            if (Boolean.TRUE.equals(validation.getParseable())) {
+                parseableCount++;
+            }
+            if (Boolean.TRUE.equals(validation.getValid())) {
+                legalCount++;
+            }
+            if (Boolean.TRUE.equals(validation.getRepairApplied())) {
+                repairedCount++;
+            }
+            if (isCandidateUsable(validation)) {
+                postRepairLegalCount++;
+            }
+            if (validation.getIssueCodes() != null) {
+                validation.getIssueCodes().forEach(code -> repairReasonCounts.merge(code, 1, Integer::sum));
+            }
+        }
+
+        List<MiniGptGenerationResult> selected = results.stream()
+                .filter(result -> Boolean.TRUE.equals(result.getPoolSelected()))
+                .toList();
+        OverlapStats overlapStats = overlapStats(selected);
+        Set<String> blueNumbers = new LinkedHashSet<>();
+        Map<String, Integer> strategyComposition = new LinkedHashMap<>();
+        for (MiniGptGenerationResult result : results) {
+            String strategy = hasTextOrDefault(result.getStrategyLabel(), "unlabeled");
+            strategyComposition.merge(strategy, 1, Integer::sum);
+        }
+        for (MiniGptGenerationResult result : selected) {
+            String blue = candidateBlue(result.getLotteryCandidate());
+            if (StringUtils.hasText(blue)) {
+                blueNumbers.add(blue);
+            }
+        }
+
+        MiniGptGenerationResult first = results.isEmpty() ? null : results.get(0);
+        return MiniGptGenerationBatchResult.builder()
+                .batchId(batchId)
+                .runId(first == null ? null : first.getRunId())
+                .runName(first == null ? null : first.getRunName())
+                .corpusVersion(first == null ? null : first.getCorpusVersion())
+                .trainSha256(first == null ? null : first.getTrainSha256())
+                .validationSha256(first == null ? null : first.getValidationSha256())
+                .checkpoint(first == null ? null : first.getCheckpoint())
+                .checkpointSha256(first == null ? null : first.getCheckpointSha256())
+                .modelConfig(first == null ? Collections.emptyMap() : copyConfig(first.getModelConfig()))
+                .requestedCount(requestedCount)
+                .baseSeed(baseSeed)
+                .maxRedOverlap(maxRedOverlap)
+                .minimumBlueCoverage(minimumBlueCoverage)
+                .minimumBlueCoverageMet(minimumBlueCoverageMet)
+                .requestedStrategies(requestedStrategies)
+                .generatedCount(generatedCount)
+                .generatedRate(rate(generatedCount, requestedCount))
+                .parseableCount(parseableCount)
+                .parseableRate(rate(parseableCount, generatedCount))
+                .legalCount(legalCount)
+                .legalRate(rate(legalCount, generatedCount))
+                .repairedCount(repairedCount)
+                .repairedRate(rate(repairedCount, generatedCount))
+                .postRepairLegalCount(postRepairLegalCount)
+                .postRepairLegalRate(rate(postRepairLegalCount, generatedCount))
+                .repairReasonCounts(repairReasonCounts)
+                .redOverlapMax(overlapStats.maximum())
+                .redOverlapAverage(overlapStats.average())
+                .distinctBlueCount(blueNumbers.size())
+                .blueCoverage(rate(blueNumbers.size(), selected.size()))
+                .strategyComposition(strategyComposition)
+                .items(results)
+                .generatedAt(System.currentTimeMillis())
+                .build();
+    }
+
+    private static boolean applyBatchPolicy(List<MiniGptGenerationResult> results,
+                                            long baseSeed,
+                                            int maxRedOverlap,
+                                            int minimumBlueCoverage,
+                                            List<String> strategies) {
+        Set<String> selectedBlueNumbers = new LinkedHashSet<>();
+        results.stream()
+                .filter(result -> Boolean.TRUE.equals(result.getPoolSelected()))
+                .map(MiniGptGenerationResult::getLotteryCandidate)
+                .map(MiniGptLearningService::candidateBlue)
+                .filter(StringUtils::hasText)
+                .forEach(selectedBlueNumbers::add);
+        boolean coverageMet = minimumBlueCoverage == 0 || selectedBlueNumbers.size() >= minimumBlueCoverage;
+        for (MiniGptGenerationResult result : results) {
+            result.setBatchBaseSeed(baseSeed);
+            result.setBatchMaxRedOverlap(maxRedOverlap);
+            result.setBatchMinimumBlueCoverage(minimumBlueCoverage);
+            result.setBatchMinimumBlueCoverageMet(coverageMet);
+            result.setBatchStrategies(List.copyOf(strategies));
+        }
+        return coverageMet;
+    }
+
+    private static boolean isCandidateUsable(MiniGptLotteryCandidateValidation validation) {
+        return validation != null
+                && (Boolean.TRUE.equals(validation.getValid()) || Boolean.TRUE.equals(validation.getPostRepairValid()));
+    }
+
+    private static List<String> candidateRedNumbers(MiniGptLotteryCandidateValidation validation) {
+        if (validation == null) {
+            return Collections.emptyList();
+        }
+        List<String> values = Boolean.TRUE.equals(validation.getValid())
+                ? validation.getRedNumbers()
+                : validation.getRepairedRedNumbers();
+        return values == null ? Collections.emptyList() : values;
+    }
+
+    private static String candidateBlue(MiniGptLotteryCandidateValidation validation) {
+        if (validation == null) {
+            return null;
+        }
+        return Boolean.TRUE.equals(validation.getValid())
+                ? validation.getBlueNumber()
+                : validation.getRepairedBlueNumber();
+    }
+
+    private static int maximumOverlap(MiniGptGenerationResult candidate,
+                                      List<MiniGptGenerationResult> selected) {
+        int maximum = 0;
+        Set<String> candidateReds = new LinkedHashSet<>(candidateRedNumbers(candidate.getLotteryCandidate()));
+        for (MiniGptGenerationResult existing : selected) {
+            Set<String> shared = new LinkedHashSet<>(candidateReds);
+            shared.retainAll(candidateRedNumbers(existing.getLotteryCandidate()));
+            maximum = Math.max(maximum, shared.size());
+        }
+        return maximum;
+    }
+
+    private static OverlapStats overlapStats(List<MiniGptGenerationResult> selected) {
+        if (selected.size() < 2) {
+            return new OverlapStats(0, 0.0);
+        }
+        int maximum = 0;
+        int total = 0;
+        int pairs = 0;
+        for (int left = 0; left < selected.size(); left++) {
+            Set<String> leftReds = new LinkedHashSet<>(candidateRedNumbers(selected.get(left).getLotteryCandidate()));
+            for (int right = left + 1; right < selected.size(); right++) {
+                Set<String> shared = new LinkedHashSet<>(leftReds);
+                shared.retainAll(candidateRedNumbers(selected.get(right).getLotteryCandidate()));
+                maximum = Math.max(maximum, shared.size());
+                total += shared.size();
+                pairs++;
+            }
+        }
+        return new OverlapStats(maximum, pairs == 0 ? 0.0 : total * 1.0 / pairs);
+    }
+
+    private static double rate(int numerator, int denominator) {
+        return denominator <= 0 ? 0.0 : numerator * 1.0 / denominator;
+    }
+
+    private void runTrainingProcess(MiniGptTrainingRequest request,
+                                    String runName,
+                                    String preset,
+                                    int maxSteps,
+                                    TrainingContext context,
+                                    long startedAt) {
         try {
             Path playgroundDir = resolvePlaygroundDir();
             Path scriptPath = playgroundDir.resolve("mini_gpt.py");
@@ -774,8 +1628,9 @@ public class MiniGptLearningService implements IMiniGptLearningService {
                 throw new IllegalStateException("未找到 MiniGPT 训练脚本: " + scriptPath);
             }
 
-            initializeTrainingRun(runName, preset, maxSteps, request, startedAt);
-            List<String> command = buildTrainingCommand(playgroundDir, request, runName, preset, maxSteps);
+            MiniGptRunRecord run = runRepository.findByRunName(runName)
+                    .orElseThrow(() -> new IllegalStateException("未找到已初始化的 MiniGPT 实验: " + runName));
+            List<String> command = buildTrainingCommand(playgroundDir, request, run, preset, maxSteps, context);
             ProcessBuilder builder = new ProcessBuilder(command);
             builder.directory(playgroundDir.toFile());
             Map<String, String> env = builder.environment();
@@ -789,7 +1644,7 @@ public class MiniGptLearningService implements IMiniGptLearningService {
             MiniGptTrainingStatus current = trainingStatus.get();
             boolean cancelled = current.isCancelled();
             boolean failed = exitCode != 0 && !cancelled;
-            updateTrainingRunCompletion(playgroundDir, runName, failed, cancelled, request);
+            updateTrainingRunCompletion(playgroundDir, runName, failed, cancelled, request, context);
             updateStatus(MiniGptTrainingStatus.builder()
                     .running(false)
                     .failed(failed)
@@ -819,16 +1674,19 @@ public class MiniGptLearningService implements IMiniGptLearningService {
 
     private List<String> buildTrainingCommand(Path playgroundDir,
                                               MiniGptTrainingRequest request,
-                                              String runName,
+                                              MiniGptRunRecord run,
                                               String preset,
-                                              int maxSteps) {
+                                              int maxSteps,
+                                              TrainingContext context) {
         List<String> command = new java.util.ArrayList<>();
         command.add(resolvePython(playgroundDir));
         command.add("mini_gpt.py");
         command.add("--mode");
         command.add("train");
         addArgument(command, "--preset", preset);
-        addArgument(command, "--run-name", runName);
+        addArgument(command, "--run-name", run.getRunName());
+        addArgument(command, "--run-id", run.getId());
+        addArgument(command, "--seed", normalizeSeed(request.getSeed()));
         addArgument(command, "--data", hasTextOrDefault(request.getData(), DEFAULT_DATA));
         addOptionalArgument(command, "--eval-data", request.getEvalData());
         addArgument(command, "--max-steps", maxSteps);
@@ -851,6 +1709,16 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         addOptionalArgument(command, "--top-k", request.getTopK());
         addOptionalArgument(command, "--quality-gate-max-eval-loss", request.getQualityGateMaxEvalLoss());
         addOptionalArgument(command, "--quality-gate-max-loss-gap", request.getQualityGateMaxLossGap());
+        if (context.verified()) {
+            addArgument(command, "--manifest-data", context.manifestDataPath());
+            addArgument(command, "--corpus-version", context.corpusVersion());
+            addArgument(command, "--corpus-format", context.corpusFormat());
+            addArgument(command, "--schema-version", context.schemaVersion());
+            addArgument(command, "--template-version", context.templateVersion());
+            addArgument(command, "--train-sha256", context.trainSha256());
+            addArgument(command, "--validation-sha256", context.validationSha256());
+            addArgument(command, "--required-block-size", context.requiredBlockSize());
+        }
         return command;
     }
 
@@ -858,7 +1726,9 @@ public class MiniGptLearningService implements IMiniGptLearningService {
                                                 Path checkpointPath,
                                                 String prompt,
                                                 int maxNewTokens,
-                                                MiniGptGenerationRequest request) {
+                                                double temperature,
+                                                int topK,
+                                                long seed) {
         List<String> command = new java.util.ArrayList<>();
         command.add(resolvePython(playgroundDir));
         command.add("mini_gpt.py");
@@ -867,8 +1737,9 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         addArgument(command, "--checkpoint", checkpointPath.toString());
         addArgument(command, "--prompt", prompt);
         addArgument(command, "--max-new-tokens", maxNewTokens);
-        addOptionalArgument(command, "--temperature", request.getTemperature());
-        addOptionalArgument(command, "--top-k", request.getTopK());
+        addArgument(command, "--temperature", temperature);
+        addArgument(command, "--top-k", topK);
+        addArgument(command, "--seed", seed);
         return command;
     }
 
@@ -902,20 +1773,35 @@ public class MiniGptLearningService implements IMiniGptLearningService {
     }
 
     private void failTraining(String runName, String preset, int maxSteps, long startedAt, String message) {
+        long now = System.currentTimeMillis();
+        MiniGptTrainingStatus current = trainingStatus.get();
+        boolean cancelled = current.isCancelled();
+        MiniGptRunRecord run = runRepository.findByRunName(runName).orElse(current.getRun());
+        if (run != null) {
+            run.setStatus(cancelled ? "CANCELLED" : "FAILED");
+            run.setFinishedAt(formatDisplayTime(now));
+            run.setUpdatedAt(now);
+            MiniGptRunRecord saved = runRepository.save(run);
+            if (saved != null) {
+                run = saved;
+            }
+        }
         updateStatus(MiniGptTrainingStatus.builder()
                 .running(false)
-                .failed(true)
-                .cancelled(false)
+                .failed(!cancelled)
+                .cancelled(cancelled)
                 .exitCode(-1)
                 .percent(100)
                 .runName(runName)
                 .preset(preset)
-                .stage("训练失败")
+                .stage(cancelled ? "训练已取消" : "训练失败")
                 .message(message)
-                .processedStep(0)
+                .processedStep(current.getProcessedStep())
                 .totalSteps(maxSteps)
+                .run(run)
+                .latestLog(current.getLatestLog())
                 .startedAt(startedAt)
-                .updatedAt(System.currentTimeMillis())
+                .updatedAt(now)
                 .build());
     }
 
@@ -972,13 +1858,15 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         });
     }
 
-    private void initializeTrainingRun(String runName,
-                                       String preset,
-                                       int maxSteps,
-                                       MiniGptTrainingRequest request,
-                                       long startedAt) {
+    private MiniGptRunRecord initializeTrainingRun(String runName,
+                                                   String preset,
+                                                   int maxSteps,
+                                                   MiniGptTrainingRequest request,
+                                                   TrainingContext context,
+                                                   long startedAt) {
         long now = System.currentTimeMillis();
-        MiniGptRunRecord run = runRepository.findByRunName(runName).orElseGet(MiniGptRunRecord::new);
+        MiniGptRunRecord run = new MiniGptRunRecord();
+        run.setId(UUID.randomUUID().toString());
         run.setRunName(runName);
         run.setPreset(preset);
         run.setStatus("RUNNING");
@@ -986,7 +1874,24 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         run.setFinishedAt(null);
         run.setData(hasTextOrDefault(request.getData(), DEFAULT_DATA));
         run.setEvalData(trimToNull(request.getEvalData()));
+        run.setManifestDataPath(context.manifestDataPath());
+        run.setCorpusVersion(context.corpusVersion());
+        run.setCorpusFormat(context.corpusFormat());
+        run.setSchemaVersion(context.schemaVersion());
+        run.setTemplateVersion(context.templateVersion());
+        run.setTrainSha256(context.trainSha256());
+        run.setValidationSha256(context.validationSha256());
+        run.setProvenanceStatus(context.provenanceStatus());
+        run.setMinimumSampleTokens(context.minimumSampleTokens());
+        run.setMaximumSampleTokens(context.maximumSampleTokens());
+        run.setRequiredBlockSize(context.requiredBlockSize());
+        run.setRecommendedBlockSize(context.recommendedBlockSize());
+        run.setEffectiveBlockSize(context.effectiveBlockSize());
+        run.setValidationSource(context.validationSource());
+        run.setSeed(normalizeSeed(request.getSeed()));
+        run.setProvenance(context.provenanceMap());
         run.setCheckpoint(null);
+        run.setCheckpointSha256(null);
         ResumeSource resumeSource = resolveResumeSource(resolvePlaygroundDir(), request);
         run.setParentRunName(resumeSource == null ? null : resumeSource.runName());
         run.setParentCheckpoint(resumeSource == null ? null : resumeSource.checkpointPath().toString());
@@ -1012,22 +1917,28 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         if (run.getCreatedAt() == null) {
             run.setCreatedAt(now);
         }
-        run.setConfig(trainingConfig(request));
-        runRepository.save(run);
+        run.setConfig(trainingConfig(request, context));
+        MiniGptRunRecord saved = runRepository.save(run);
+        return saved == null ? run : saved;
     }
 
     private void updateTrainingRunCompletion(Path playgroundDir,
                                              String runName,
                                              boolean failed,
                                              boolean cancelled,
-                                             MiniGptTrainingRequest request) {
+                                             MiniGptTrainingRequest request,
+                                             TrainingContext context) {
         MiniGptRunRecord run = runRepository.findByRunName(runName).orElseGet(MiniGptRunRecord::new);
         MiniGptTrainingLogRecord latestLog = logRepository.findFirstByRunNameOrderByStepDesc(runName).orElse(null);
         run.setRunName(runName);
         run.setStatus(cancelled ? "CANCELLED" : failed ? "FAILED" : "SUCCESS");
         run.setFinishedAt(formatDisplayTime(System.currentTimeMillis()));
         if (!failed && !cancelled) {
-            run.setCheckpoint(playgroundDir.resolve("runs").resolve(runName).resolve("checkpoints").resolve("mini_gpt.pt").toString());
+            Path checkpointPath = playgroundDir.resolve("runs").resolve(runName).resolve("checkpoints").resolve("mini_gpt.pt");
+            run.setCheckpoint(checkpointPath.toString());
+            if (Files.exists(checkpointPath)) {
+                run.setCheckpointSha256(sha256File(checkpointPath));
+            }
         }
         ResumeSource resumeSource = resolveResumeSource(playgroundDir, request);
         run.setParentRunName(resumeSource == null ? run.getParentRunName() : resumeSource.runName());
@@ -1035,12 +1946,61 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         Map<String, Object> latestMetadata = readRunMetadata(playgroundDir, runName);
         run.setResumeStep(asInteger(latestMetadata.get("resume_step")));
         run.setTrainStep(asInteger(latestMetadata.get("train_step")));
-        run.setEvalData(asString(latestMetadata.get("eval_data")));
+        String metadataEvalData = asString(latestMetadata.get("eval_data"));
+        if (StringUtils.hasText(metadataEvalData)) {
+            run.setEvalData(metadataEvalData);
+        }
         run.setFixedEvalLoss(asDouble(latestMetadata.get("fixed_eval_loss")));
         run.setQualityGateMaxEvalLoss(asDouble(latestMetadata.get("quality_gate_max_eval_loss")));
         run.setQualityGateMaxLossGap(asDouble(latestMetadata.get("quality_gate_max_loss_gap")));
         run.setQualityGateStatus(asString(latestMetadata.get("quality_gate_status")));
         run.setQualityGateReasons(asString(latestMetadata.get("quality_gate_reasons")));
+        run.setValidationEnabled(asBoolean(latestMetadata.get("validation_enabled")));
+        run.setTrainTokens(asInteger(latestMetadata.get("train_tokens")));
+        run.setEvalTokens(asInteger(latestMetadata.get("eval_tokens")));
+        run.setDevice(asString(latestMetadata.get("device")));
+        Integer metadataBatchSize = asInteger(latestMetadata.get("batch_size"));
+        if (metadataBatchSize != null) {
+            run.setBatchSize(metadataBatchSize);
+        }
+        Double metadataLearningRate = asDouble(latestMetadata.get("learning_rate"));
+        if (metadataLearningRate != null) {
+            run.setLearningRate(metadataLearningRate);
+        }
+        Double metadataValRatio = asDouble(latestMetadata.get("val_ratio"));
+        if (metadataValRatio != null) {
+            run.setValRatio(metadataValRatio);
+        }
+        Integer metadataSampleTokens = asInteger(latestMetadata.get("sample_tokens"));
+        if (metadataSampleTokens != null) {
+            run.setSampleTokens(metadataSampleTokens);
+        }
+        String metadataSamplePrompt = asString(latestMetadata.get("sample_prompt"));
+        if (StringUtils.hasText(metadataSamplePrompt)) {
+            run.setSamplePrompt(metadataSamplePrompt);
+        }
+        run.setValidationSource(hasTextOrDefault(asString(latestMetadata.get("validation_source")), context.validationSource()));
+        Long metadataSeed = asLong(latestMetadata.get("seed"));
+        if (metadataSeed != null) {
+            run.setSeed(metadataSeed);
+        }
+        String metadataCheckpointSha256 = asString(latestMetadata.get("checkpoint_sha256"));
+        if (StringUtils.hasText(metadataCheckpointSha256)) {
+            if (!StringUtils.hasText(run.getCheckpointSha256())) {
+                run.setCheckpointSha256(metadataCheckpointSha256);
+            } else if (!run.getCheckpointSha256().equalsIgnoreCase(metadataCheckpointSha256)) {
+                log.warn("MiniGPT checkpoint SHA-256 metadata mismatch: runName={}", runName);
+            }
+        }
+        Map<String, Object> effectiveConfig = asMap(latestMetadata.get("config"));
+        if (!effectiveConfig.isEmpty()) {
+            run.setConfig(effectiveConfig);
+            run.setEffectiveBlockSize(asInteger(effectiveConfig.get("block_size")));
+        }
+        Map<String, Object> metadataProvenance = asMap(latestMetadata.get("provenance"));
+        if (!metadataProvenance.isEmpty()) {
+            run.setProvenance(metadataProvenance);
+        }
         if (latestLog != null) {
             run.setFinalTrainLoss(latestLog.getTrainLoss());
             run.setFinalEvalLoss(latestLog.getEvalLoss());
@@ -1050,7 +2010,7 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         }
         run.setUpdatedAt(System.currentTimeMillis());
         if (run.getConfig() == null || run.getConfig().isEmpty()) {
-            run.setConfig(trainingConfig(request));
+            run.setConfig(trainingConfig(request, context));
         }
         runRepository.save(run);
     }
@@ -1429,6 +2389,17 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         }
     }
 
+    private static String sha256File(Path path) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of().formatHex(digest.digest(Files.readAllBytes(path)));
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("当前 JVM 不支持 SHA-256", exception);
+        } catch (IOException exception) {
+            throw new MiniGptTrainingValidationException("读取 SHA-256 文件失败: " + path, exception);
+        }
+    }
+
     private static String corpusVersion(String format,
                                         String templateVersion,
                                         String contentSha256,
@@ -1619,15 +2590,76 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         return draws.isEmpty() ? null : safeIssue(draws.get(draws.size() - 1));
     }
 
+    private record TrainingContext(String provenanceStatus,
+                                   String manifestDataPath,
+                                   String corpusVersion,
+                                   String corpusFormat,
+                                   Integer schemaVersion,
+                                   String templateVersion,
+                                   String trainSha256,
+                                   String validationSha256,
+                                   Integer minimumSampleTokens,
+                                   Integer maximumSampleTokens,
+                                   Integer requiredBlockSize,
+                                   Integer recommendedBlockSize,
+                                   Integer effectiveBlockSize,
+                                   String validationSource) {
+
+        private boolean verified() {
+            return PROVENANCE_VERIFIED.equals(provenanceStatus);
+        }
+
+        private Map<String, Object> provenanceMap() {
+            Map<String, Object> values = new LinkedHashMap<>();
+            values.put("manifest_data", manifestDataPath);
+            values.put("corpus_version", corpusVersion);
+            values.put("corpus_format", corpusFormat);
+            values.put("schema_version", schemaVersion);
+            values.put("template_version", templateVersion);
+            values.put("train_sha256", trainSha256);
+            values.put("validation_sha256", validationSha256);
+            values.put("required_block_size", requiredBlockSize);
+            return values;
+        }
+    }
+
+    private record SampleStats(int sampleCount,
+                               int minimumTokens,
+                               int maximumTokens,
+                               int requiredBlockSize,
+                               int recommendedBlockSize) {
+    }
+
+    private record InsightProvenance(String corpusVersion,
+                                     String corpusFormat,
+                                     Integer schemaVersion,
+                                     String templateVersion,
+                                     String trainSha256,
+                                     String validationSha256,
+                                     String status) {
+
+        private static InsightProvenance legacy() {
+            return new InsightProvenance(null, null, null, null, null, null, PROVENANCE_LEGACY);
+        }
+    }
+
+    private record GenerationOutput(String generatedText,
+                                    long seed,
+                                    Map<String, Object> modelConfig) {
+    }
+
+    private record OverlapStats(int maximum, double average) {
+    }
+
     private record ParsedLotteryCandidate(List<Integer> redValues, Integer blueValue) {
     }
 
     private record ResumeSource(String runName, Path checkpointPath) {
     }
 
-    private Map<String, Object> trainingConfig(MiniGptTrainingRequest request) {
+    private Map<String, Object> trainingConfig(MiniGptTrainingRequest request, TrainingContext context) {
         Map<String, Object> config = new LinkedHashMap<>();
-        config.put("blockSize", request.getBlockSize());
+        config.put("blockSize", context.effectiveBlockSize());
         config.put("nEmbd", request.getNEmbd());
         config.put("nHead", request.getNHead());
         config.put("nLayer", request.getNLayer());
@@ -1638,6 +2670,11 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         config.put("evalData", request.getEvalData());
         config.put("qualityGateMaxEvalLoss", request.getQualityGateMaxEvalLoss());
         config.put("qualityGateMaxLossGap", request.getQualityGateMaxLossGap());
+        config.put("seed", normalizeSeed(request.getSeed()));
+        config.put("corpusVersion", context.corpusVersion());
+        config.put("trainSha256", context.trainSha256());
+        config.put("validationSha256", context.validationSha256());
+        config.put("requiredBlockSize", context.requiredBlockSize());
         return config;
     }
 
@@ -1647,6 +2684,7 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         }
         String checkpoint = trimToNull(request.getResumeCheckpoint());
         String parentRunName = trimToNull(request.getResumeFromRun());
+        String expectedCheckpointSha256 = null;
         if (!StringUtils.hasText(checkpoint) && StringUtils.hasText(parentRunName)) {
             MiniGptRunRecord parentRun = runRepository.findByRunName(parentRunName)
                     .orElseThrow(() -> new IllegalArgumentException("未找到续训来源实验: " + parentRunName));
@@ -1656,6 +2694,7 @@ public class MiniGptLearningService implements IMiniGptLearningService {
                 throw new IllegalArgumentException("续训来源语料不一致: 当前语料=" + requestData + ", 来源语料=" + parentData);
             }
             checkpoint = parentRun.getCheckpoint();
+            expectedCheckpointSha256 = parentRun.getCheckpointSha256();
             if (!StringUtils.hasText(checkpoint)) {
                 throw new IllegalArgumentException("续训来源实验没有可用 checkpoint: " + parentRunName);
             }
@@ -1664,11 +2703,15 @@ public class MiniGptLearningService implements IMiniGptLearningService {
             return null;
         }
         Path checkpointPath = resolveCheckpointPath(playgroundDir, checkpoint);
-        if (!checkpointPath.startsWith(playgroundDir) && !checkpointPath.isAbsolute()) {
+        if (!checkpointPath.startsWith(playgroundDir)) {
             throw new IllegalArgumentException("MiniGPT 续训 checkpoint 路径非法: " + checkpoint);
         }
         if (!Files.exists(checkpointPath)) {
             throw new IllegalArgumentException("MiniGPT 续训 checkpoint 不存在: " + checkpointPath);
+        }
+        if (StringUtils.hasText(expectedCheckpointSha256)
+                && !expectedCheckpointSha256.equalsIgnoreCase(sha256File(checkpointPath))) {
+            throw new IllegalArgumentException("MiniGPT 续训 checkpoint SHA-256 与来源实验不一致: " + parentRunName);
         }
         return new ResumeSource(parentRunName, checkpointPath);
     }
@@ -1715,6 +2758,23 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         return null;
     }
 
+    private static Map<String, Object> asMap(Object value) {
+        if (!(value instanceof Map<?, ?> source)) {
+            return Collections.emptyMap();
+        }
+        Map<String, Object> result = new LinkedHashMap<>();
+        source.forEach((key, entryValue) -> {
+            if (key != null) {
+                result.put(String.valueOf(key), entryValue);
+            }
+        });
+        return result;
+    }
+
+    private static Map<String, Object> copyConfig(Map<String, Object> config) {
+        return config == null ? new LinkedHashMap<>() : new LinkedHashMap<>(config);
+    }
+
     private static Double asDouble(Object value) {
         if (value instanceof Number number) {
             return number.doubleValue();
@@ -1725,6 +2785,16 @@ public class MiniGptLearningService implements IMiniGptLearningService {
             } catch (NumberFormatException ignored) {
                 return null;
             }
+        }
+        return null;
+    }
+
+    private static Boolean asBoolean(Object value) {
+        if (value instanceof Boolean booleanValue) {
+            return booleanValue;
+        }
+        if (value instanceof String text && StringUtils.hasText(text)) {
+            return Boolean.parseBoolean(text);
         }
         return null;
     }
@@ -1816,6 +2886,14 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         defaults.put("small", 300);
         defaults.put("medium", 600);
         return defaults.getOrDefault(preset, 120);
+    }
+
+    private static int presetDefaultBlockSize(String preset) {
+        Map<String, Integer> defaults = new LinkedHashMap<>();
+        defaults.put("tiny", 32);
+        defaults.put("small", 48);
+        defaults.put("medium", 64);
+        return defaults.getOrDefault(preset, 64);
     }
 
     private static int percent(Integer processedStep, Integer totalSteps) {

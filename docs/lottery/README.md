@@ -30,7 +30,7 @@ mvn -version
 - [Long-term plan](iterations/long-term-plan.md): 0-12 month direction, candidate future iterations, risks, and review cadence.
 - [Checklist](iterations/checklist.md): durable task board.
 - [Iteration 46 plan](iterations/iteration-46-plan.md): sync operations and release baseline closure.
-- [Iteration 47 plan](iterations/iteration-47-plan.md): MiniGPT lottery research loop; Wave 47A reproducible corpus and time-split baseline is complete, with Wave 47B next.
+- [Iteration 47 plan](iterations/iteration-47-plan.md): MiniGPT lottery research loop; Waves 47A-47B reproducible corpus, time-split, and training/generation provenance are complete, with Wave 47C next.
 - [Quality gates](iterations/quality-gates.md): verification rules for backend, frontend, and data behavior.
 - [Frontend one-month plan](iterations/frontend-one-month-version-plan.md): next month frontend-led experience and power-tool plan.
 
@@ -55,13 +55,13 @@ Live capabilities already present in the codebase:
 - Operations pages for sync summary, provider probe history, settings, and data quality repair.
 - Astronaut naming, voyage records, and voyage counts through `lottery/astronauts/*`.
 - Statistics and analysis routes including frequency, group, distribution, pixel views, Taiji, space, and hexagram pages.
-- The current route smoke and release evidence pass 808 checks across 18 routes with zero failures.
+- The current route smoke and release evidence pass 906 checks across 18 routes with zero failures.
 
 ## Next Iteration
 
 Iteration 46 is complete; its final implementation and evidence are recorded in `docs/lottery/iterations/iteration-46-plan.md` and the checked Iteration 46 section in `docs/lottery/iterations/checklist.md`.
 
-The next promoted slice is [Iteration 47: MiniGPT Lottery Research Loop V1](iterations/iteration-47-plan.md). Wave 47A is complete: strategy samples, versioned manifests, deterministic time-based train/validation splits, compatibility paths, atomic artifact publication, and visible provenance now form the stable input boundary. Wave 47B is next and will add training/generation provenance without reopening that boundary:
+The active promoted slice is [Iteration 47: MiniGPT Lottery Research Loop V1](iterations/iteration-47-plan.md). Waves 47A and 47B are complete: strategy samples, versioned manifests, deterministic time-based train/validation splits, full-sample context validation, fixed evaluation, persisted run/checkpoint/generation provenance, explicit candidate-quality metrics, and traceable candidate batches now form the stable research boundary. Wave 47C is next and will carry that evidence through random-baseline and outcome review:
 
 ```text
 versioned corpus -> time-based train/validation split -> candidate generation and repair -> random-baseline backtest -> decision/ticket/result review
@@ -81,7 +81,7 @@ Iteration 10 is the longer platform roadmap after the workbench foundation. It s
 daily state backbone -> strategy experiments -> backtest evidence -> alerts/calendar -> budget governance -> export/audit/maintenance
 ```
 
-Iteration 10 completed the platform foundation, and later frontend/usability waves are tracked in `docs/lottery/iterations/checklist.md`. Iterations 1-46 are complete; Iteration 47 is the next promoted MiniGPT lottery research-loop slice.
+Iteration 10 completed the platform foundation, and later frontend/usability waves are tracked in `docs/lottery/iterations/checklist.md`. Iterations 1-46 are complete; Iteration 47 is active with Waves 47A-47B complete and Wave 47C next.
 
 ## Non-Negotiable Rules
 
