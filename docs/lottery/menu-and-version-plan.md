@@ -1,16 +1,14 @@
 # Lottery Menu And Version Plan
 
-Last updated: 2026-07-07
+Last updated: 2026-07-11
 
 ## Target Menu Tree
 
-The current lottery navigation already has a strong exploratory surface. The target plan keeps those pages but organizes future operational work around stable daily workflows.
+The current lottery navigation keeps a strong exploratory surface while giving each route one clear role. `/lottery` is the stable default overview. `/lottery/workbench` is the operation center, but it is reached from overview and workflow handoffs rather than occupying a footer-level top item.
 
 ```text
 彩票
-- 概览
-- 工作台
-- 移动
+- 概览（默认入口；可进入工作台、移动与设置）
 - 预测
   - 当前
   - 决策
@@ -50,10 +48,19 @@ The current lottery navigation already has a strong exploratory surface. The tar
   - 可视化
   - 象数
   - 节气/专题
-- 设置
 ```
 
-Navigation rollback rule: restore the footer to the shape before `1eb0adc8 feat(lottery): improve workflow navigation usability`. The lottery footer is a single horizontal row with all top-level groups visible or horizontally scrollable. Do not add a second-row child menu, do not add a 更多 entry, and do not hide top-level groups behind a home shortcut.
+Navigation convergence rule: the lottery footer is a single horizontal row for `概览 / 预测 / 执行 / 复盘 / 数据 / 图谱`, with those groups visible or horizontally scrollable. Do not add a second-row child menu or a `更多` entry. Workbench, mobile, and settings remain preserved routes, but users reach them from overview actions or the relevant workflow rather than as footer-level top items.
+
+Route semantics:
+
+- `/lottery`: default lottery entry and unified data overview.
+- `/lottery/workbench`: operation center for current-issue closure, daily actions, and cross-workflow handoff.
+- `/lottery/mobile`: compact daily review route reached from overview or workbench.
+- `/lottery/settings`: configuration route reached from overview or the related operations context.
+- `/lottery/overview`: compatibility alias for the unified overview.
+
+Iteration 46 delivery status: this convergence is implemented. The module directory and top-level lottery entry resolve to `/lottery`; overview exposes workbench, mobile, and settings actions; those three preserved routes resolve their footer active state to the overview group. Route smoke guards the same contract.
 
 Astronaut direction: the astronaut feature should prioritize voyage-record analysis over navigation changes. Red fleet analysis may use hexagram, red-sum, odd-even, rhythm, and recent movement trends. Blue fleet analysis should not use hexagram semantics; it should focus on planet distribution, planet rhythm, interval, concentration, and recent movement trends.
 
@@ -63,6 +70,7 @@ Astronaut direction: the astronaut feature should prioritize voyage-record analy
 /lottery
 /lottery/workbench
 /lottery/overview
+/lottery/mobile
 /lottery/prediction
 /lottery/predictions/history
 /lottery/predictions/:id
@@ -156,8 +164,8 @@ Goal: make the module maintainable.
 
 Goal: make the lottery module usable as a daily cockpit rather than a set of separate pages.
 
-- Add `/lottery/workbench` as the primary daily entry point.
-- Point the top-level lottery navigation entry to `/lottery/workbench` while preserving `/lottery` and `/lottery/overview`.
+- Add `/lottery/workbench` as the focused daily operation center.
+- Preserve `/lottery/workbench` as a direct route while the stable module and top-level lottery entry resolves to `/lottery`; `/lottery/overview` remains a compatibility alias.
 - Summarize latest draw, sync health, data quality, latest prediction, pending tickets, latest prize checking, and ledger outcome.
 - Add a safe daily-run action that orchestrates bounded maintenance steps and reports step status.
 - Add pagination and query-backed filters to growing prediction, ticket, sync-log, and provider-probe-log lists.

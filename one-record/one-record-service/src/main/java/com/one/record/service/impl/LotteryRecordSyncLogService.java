@@ -1,5 +1,7 @@
 package com.one.record.service.impl;
 
+import com.one.common.exception.NotFoundException;
+import com.one.record.exception.LotteryRecordSyncLogConflictException;
 import com.one.record.lottery.LotteryRecordSyncSummary;
 import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.client.RecordClientException;
@@ -7,6 +9,7 @@ import com.one.record.model.LotteryRecordSyncLog;
 import com.one.record.repository.LotteryRecordSyncLogRepository;
 import com.one.record.service.ILotteryRecordSyncLogService;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -104,13 +107,29 @@ public class LotteryRecordSyncLogService implements ILotteryRecordSyncLogService
         int safePage = normalizePage(page);
         int safePageSize = normalizePageSize(pageSize);
         String safeStatus = StringUtils.hasText(status) ? status.trim().toUpperCase(Locale.ROOT) : null;
-        List<LotteryRecordSyncLog> filtered = repository.findAll(Sort.by(Sort.Direction.DESC, "startedAt"))
-                .stream()
-                .filter(log -> safeStatus == null || safeStatus.equals(log.getStatus()))
-                .filter(log -> startedStartAt == null || log.getStartedAt() != null && log.getStartedAt() >= startedStartAt)
-                .filter(log -> startedEndAt == null || log.getStartedAt() != null && log.getStartedAt() <= startedEndAt)
-                .toList();
-        return pageOf(filtered, safePage, safePageSize);
+        Page<LotteryRecordSyncLog> result = repository.findPage(
+                safeStatus,
+                startedStartAt,
+                startedEndAt,
+                PageRequest.of(safePage, safePageSize, Sort.by(Sort.Direction.DESC, "startedAt", "_id"))
+        );
+        return LotteryPageResponse.<LotteryRecordSyncLog>builder()
+                .items(result.getContent())
+                .page(safePage)
+                .pageSize(safePageSize)
+                .total(result.getTotalElements())
+                .hasNext(result.hasNext())
+                .build();
+    }
+
+    @Override
+    public void delete(String id) {
+        LotteryRecordSyncLog existing = repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("彩票同步记录不存在: {}", id));
+        if (existing.getStatus() != null && "RUNNING".equalsIgnoreCase(existing.getStatus().trim())) {
+            throw new LotteryRecordSyncLogConflictException(id);
+        }
+        repository.deleteById(existing.getId());
     }
 
     @Override
@@ -169,19 +188,6 @@ public class LotteryRecordSyncLogService implements ILotteryRecordSyncLogService
             return DEFAULT_LIMIT;
         }
         return Math.min(pageSize, MAX_LIMIT);
-    }
-
-    private static LotteryPageResponse<LotteryRecordSyncLog> pageOf(List<LotteryRecordSyncLog> items, int page, int pageSize) {
-        int total = items == null ? 0 : items.size();
-        int from = Math.min(page * pageSize, total);
-        int to = Math.min(from + pageSize, total);
-        return LotteryPageResponse.<LotteryRecordSyncLog>builder()
-                .items(items == null ? List.of() : items.subList(from, to))
-                .page(page)
-                .pageSize(pageSize)
-                .total((long) total)
-                .hasNext(to < total)
-                .build();
     }
 
     private static int countStatus(List<LotteryRecordSyncLog> logs, String status) {

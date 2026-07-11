@@ -1188,3 +1188,35 @@ Goal: turn archive-review pressure into a focused handoff that reuses month-end 
 - [x] Run backend tests for changed services/controllers. Ran focused Maven tests for changed backend services/controllers after each backend milestone.
 - [x] Run frontend lint/build after changed pages or API types. Ran `npm run build` after frontend route/API/page changes.
 - [x] Review `git status --short` and diff before committing. Reviewed status/diff before each pushed milestone.
+
+## Iteration 46: Sync Operations And Release Baseline Closure
+
+Goal: close the current sync-operations, backend-safety, database-pagination, navigation-semantics, documentation, and release-evidence work before promoting another lottery feature surface.
+
+### Wave 46A: Sync Operations UI Closure
+
+- [x] Finish the `/lottery/sync` record-card layout, status filter, loading/empty/error states, delete confirmation, pagination, and responsive presentation.
+- [x] Keep UI page numbers one-based and backend page requests zero-based, including valid-page recovery after deleting the last row on a page.
+- [x] Decide and document whether retry and scheduled-trigger actions remain backend-only or return as visible operations; keep manual sync explicit. Decision: keep retry and scheduled triggers backend-compatible but expose only manual sync in this UI.
+- [x] Preserve provider reliability and data-quality handoffs from the sync operations context.
+
+### Wave 46B: Backend Safety And Database Pagination
+
+- [x] Reject deletion of `RUNNING` sync logs in the backend service, preserve not-found handling, and prove completed-log deletion does not affect draw records. API results are `409`, `404`, and successful log-only deletion respectively.
+- [x] Move sync-log status/time filtering, deterministic newest-first ordering, paging, and total counting from in-memory `findAll()` processing to MongoDB repository queries.
+- [x] Move provider-probe-log provider/status/time filtering, deterministic newest-first ordering, paging, and total counting from in-memory `findAll()` processing to MongoDB repository queries.
+- [x] Add focused repository/service/controller tests for deletion rules, filters, page bounds, zero-based request semantics, ordering, and total counts. Final focused result: 38 tests passed.
+
+### Wave 46C: Navigation Semantics Closure
+
+- [x] Make `/lottery` the default lottery entry and keep it as the unified overview.
+- [x] Keep `/lottery/workbench` as the operation center while reaching workbench, mobile, and settings from overview or related operational entry points instead of footer-level top items.
+- [x] Preserve direct routes and align module entry paths, canonical-path helpers, active-group resolution, visible labels, and smoke fixtures with the same navigation contract. Workbench, mobile, and settings resolve to the overview footer group.
+
+### Wave 46D: Documentation And Release Baseline
+
+- [x] Align `iteration-46-plan.md`, the lottery README, long-term plan, menu/version plan, technical design, and this checklist with the implemented contracts.
+- [x] Run focused backend tests for changed sync-log/provider repositories, services, and controllers. Repository 3, service 16, and controller 19 tests passed.
+- [x] Run `npm run i18n:audit`, `npm run lottery:smoke`, file-scoped ESLint, `npm run build`, and `npm run lottery:release-check` from `one-web`. Final smoke result: 808 checks across 18 routes; production build passed.
+- [x] Browser-check `/lottery` and `/lottery/sync` in Chinese and English, desktop and 390px narrow layouts, and light and dark themes. Verified real local data, status filtering, delete confirmation followed by cancellation, and preserved-route footer ownership without deleting data.
+- [x] Review `git status --short`, generated evidence, staged scope, and `git diff --check`; keep unrelated local changes outside the Iteration 46 delivery scope unless explicitly included.

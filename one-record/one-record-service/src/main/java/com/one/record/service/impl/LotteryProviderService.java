@@ -12,6 +12,7 @@ import com.one.record.service.ILotteryProviderService;
 import com.one.record.service.LotteryDrawProvider;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -137,14 +138,20 @@ public class LotteryProviderService implements ILotteryProviderService {
         int safePage = normalizePage(page);
         int safePageSize = normalizePageSize(pageSize);
         String safeProvider = StringUtils.hasText(provider) ? normalizeProviderName(provider) : null;
-        List<LotteryProviderProbeLog> filtered = probeLogRepository.findAll(Sort.by(Sort.Direction.DESC, "checkedAt"))
-                .stream()
-                .filter(log -> safeProvider == null || safeProvider.equals(normalizeProviderName(log.getProvider())))
-                .filter(log -> success == null || success.equals(log.getSuccess()))
-                .filter(log -> checkedStartAt == null || log.getCheckedAt() != null && log.getCheckedAt() >= checkedStartAt)
-                .filter(log -> checkedEndAt == null || log.getCheckedAt() != null && log.getCheckedAt() <= checkedEndAt)
-                .toList();
-        return pageOf(filtered, safePage, safePageSize);
+        Page<LotteryProviderProbeLog> result = probeLogRepository.findPage(
+                safeProvider,
+                success,
+                checkedStartAt,
+                checkedEndAt,
+                PageRequest.of(safePage, safePageSize, Sort.by(Sort.Direction.DESC, "checkedAt", "_id"))
+        );
+        return LotteryPageResponse.<LotteryProviderProbeLog>builder()
+                .items(result.getContent())
+                .page(safePage)
+                .pageSize(safePageSize)
+                .total(result.getTotalElements())
+                .hasNext(result.hasNext())
+                .build();
     }
 
     private List<String> registeredDrawProviders() {
@@ -209,18 +216,4 @@ public class LotteryProviderService implements ILotteryProviderService {
         return Math.min(pageSize, MAX_PROBE_LOG_LIMIT);
     }
 
-    private static LotteryPageResponse<LotteryProviderProbeLog> pageOf(List<LotteryProviderProbeLog> items,
-                                                                       int page,
-                                                                       int pageSize) {
-        int total = items == null ? 0 : items.size();
-        int from = Math.min(page * pageSize, total);
-        int to = Math.min(from + pageSize, total);
-        return LotteryPageResponse.<LotteryProviderProbeLog>builder()
-                .items(items == null ? List.of() : items.subList(from, to))
-                .page(page)
-                .pageSize(pageSize)
-                .total((long) total)
-                .hasNext(to < total)
-                .build();
-    }
 }

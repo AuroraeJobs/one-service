@@ -24,5 +24,7 @@ public interface ILotteryRecordSyncLogService {
 
     LotteryPageResponse<LotteryRecordSyncLog> findPage(String status, Long startedStartAt, Long startedEndAt, Integer page, Integer pageSize);
 
+    void delete(String id);
+
     LotteryRecordSyncSummary summary(int limit);
 }

@@ -520,12 +520,6 @@ export const lotteryRecordApi = {
   sync: (): Promise<LotteryRecordSyncLog> => {
     return apiClient.post('/lottery/records/sync');
   },
-  retrySync: (): Promise<LotteryRecordSyncLog> => {
-    return apiClient.post('/lottery/records/sync/retry');
-  },
-  scheduledSync: (): Promise<LotteryRecordSyncLog> => {
-    return apiClient.post('/lottery/records/sync/scheduled');
-  },
   syncLogs: (params?: { status?: string; limit?: number }): Promise<LotteryRecordSyncLog[]> => {
     return apiClient.get('/lottery/records/sync-logs', { params });
   },
@@ -537,6 +531,9 @@ export const lotteryRecordApi = {
     pageSize?: number;
   }): Promise<LotteryPageResponse<LotteryRecordSyncLog>> => {
     return apiClient.get('/lottery/records/sync-logs', { params });
+  },
+  deleteSyncLog: (id: string): Promise<void> => {
+    return apiClient.delete(`/lottery/records/sync-logs/${id}`);
   },
   syncSummary: (params?: { limit?: number }): Promise<LotteryRecordSyncSummary> => {
     return apiClient.get('/lottery/records/sync-summary', { params });

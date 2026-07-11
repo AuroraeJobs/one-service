@@ -25,7 +25,6 @@ import {
   HistoryOutlined,
   LineChartOutlined,
   MessageOutlined,
-  MobileOutlined,
   OpenAIOutlined,
   PieChartOutlined,
   SafetyCertificateOutlined,
@@ -133,7 +132,7 @@ export const lifeDataModules: LifeDataModule[] = [
     title: '彩票研究',
     shortTitle: '彩票',
     description: '管理双色球历史开奖、下注记录、中奖记录和统计模型。',
-    path: '/lottery/workbench',
+    path: '/lottery',
     status: 'live',
     accent: '#ff3b30',
     icon: <AppleOutlined />,
@@ -355,8 +354,6 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
   ],
   lottery: [
     { id: 'lottery-overview', moduleKey: 'lottery', path: '/lottery', label: '概览', icon: <TrophyOutlined />, accent: '#ff3b30' },
-    { id: 'lottery-workbench', moduleKey: 'lottery', path: '/lottery/workbench', label: '工作台', icon: <DashboardOutlined />, accent: '#0071e3' },
-    { id: 'lottery-mobile', moduleKey: 'lottery', path: '/lottery/mobile', label: '移动', icon: <MobileOutlined />, accent: '#ff9500' },
     {
       id: 'lottery-predictions',
       moduleKey: 'lottery',
@@ -449,14 +446,6 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
         { id: 'lottery-winter-beginning', moduleKey: 'lottery', path: '/lottery/winter-beginning', label: '立冬', icon: <ClockCircleOutlined />, accent: '#0071e3' }
       ]
     },
-    {
-      id: 'lottery-settings',
-      moduleKey: 'lottery',
-      path: '/lottery/settings',
-      label: '设置',
-      icon: <SettingOutlined />,
-      accent: '#5856d6'
-    }
   ],
   ai: [
     { id: 'ai-chat', moduleKey: 'ai', path: '/ai/chat', label: 'ChatGPT', icon: <MessageOutlined />, accent: '#00c7be' },
@@ -594,6 +583,12 @@ const splitLifePath = (pathname: string) => {
     : { basePath: pathname, search: '' };
 };
 
+const lotteryOverviewOwnedPaths = new Set([
+  '/lottery/workbench',
+  '/lottery/mobile',
+  '/lottery/settings'
+]);
+
 export const getCanonicalLifePath = (pathname: string) => {
   const { basePath, search } = splitLifePath(pathname);
   return `${legacyPathMap[basePath] || basePath}${search}`;
@@ -622,7 +617,9 @@ export const getLifeSubNavItems = (pathname: string) => {
 
 export const getLifeActiveSubNavPath = (pathname: string) => {
   const canonicalPath = getCanonicalLifePath(pathname);
+  const { basePath } = splitLifePath(canonicalPath);
   if (canonicalPath === '/') return '/lottery';
+  if (lotteryOverviewOwnedPaths.has(basePath)) return '/lottery';
   if (canonicalPath === '/lottery/statistics') return '/lottery/statistics?tab=frequency';
   if (canonicalPath === '/lottery/analysis') return '/lottery/analysis?tab=illusion';
   return canonicalPath;

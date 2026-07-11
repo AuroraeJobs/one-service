@@ -20,7 +20,16 @@
       "includes": [
         "{ path: '/lottery', key: 'lottery', label: '彩票'",
         "{ id: 'lottery-overview', moduleKey: 'lottery', path: '/lottery', label: '概览'",
-        "if (canonicalPath === '/') return '/lottery'"
+        "shortTitle: '彩票',\n    description: '管理双色球历史开奖、下注记录、中奖记录和统计模型。',\n    path: '/lottery'",
+        "if (canonicalPath === '/') return '/lottery'",
+        "const lotteryOverviewOwnedPaths = new Set([",
+        "'/lottery/workbench'",
+        "'/lottery/mobile'",
+        "'/lottery/settings'",
+        "if (lotteryOverviewOwnedPaths.has(basePath)) return '/lottery'"
+      ],
+      "excludes": [
+        "description: '管理双色球历史开奖、下注记录、中奖记录和统计模型。',\n    path: '/lottery/workbench'"
       ]
     },
     {
@@ -405,7 +414,6 @@
         "interface ProviderReliabilityTrend",
         "providerReliabilityTrends",
         "Provider 可靠性趋势",
-        "focus=provider-reliability",
         "providerReliabilityFocus",
         "Provider可靠性焦点",
         "同步稳定性",
@@ -414,12 +422,195 @@
         "主要故障分类",
         "网络阻断信号"
       ]
+    },
+    {
+      "scope": "sync operations pagination contract",
+      "file": "src/components/LotterySyncOperationsPage.tsx",
+      "includes": [
+        "page: syncPage - 1",
+        "page: probePage - 1",
+        "const syncLastPage = lastPageFor(rows.total, pageSize)",
+        "const probeLastPage = lastPageFor(nextProbeLogs.total, pageSize)",
+        "updateQuery(pageCorrection, false)"
+      ]
+    },
+    {
+      "scope": "sync operations card presentation",
+      "file": "src/components/LotterySyncOperationsPage.tsx",
+      "includes": [
+        "className=\"lottery-sync-record-grid\"",
+        "className=\"lottery-sync-record-issues\"",
+        "className=\"lottery-sync-record-details\"",
+        "className=\"lottery-sync-record-actions\"",
+        "logs.map(record => (",
+        "<Pagination",
+        "<span>{t('开始期号')}</span>",
+        "<span>{t('结束期号')}</span>",
+        "className=\"lottery-sync-record-detail-label\"",
+        "{t('时间')}",
+        "<span>{t('同步数量')}</span>"
+      ],
+      "excludes": [
+        "columns={columns}",
+        "title=\"同步摘要\"",
+        "latestIssueRange",
+        "<span>同步任务</span>",
+        "<strong>{record.jobName || '-'}</strong>",
+        "className=\"lottery-sync-record-diagnostic\"",
+        "className=\"lottery-sync-record-message\"",
+        "className=\"lottery-sync-record-facts\"",
+        "className=\"lottery-sync-record-overview\"",
+        "className=\"lottery-sync-record-head\"",
+        "className=\"lottery-sync-record-meta\"",
+        "className=\"lottery-sync-record-footer\"",
+        "<span>结束时间</span>"
+      ]
+    },
+    {
+      "scope": "provider reliability compact status",
+      "file": "src/components/LotterySyncOperationsPage.tsx",
+      "includes": [
+        "data-status={item.status}",
+        "className=\"lottery-provider-reliability-status\"",
+        "className=\"lottery-provider-reliability-value\""
+      ]
+    },
+    {
+      "scope": "manual sync retry refresh merged",
+      "file": "src/components/LotterySyncOperationsPage.tsx",
+      "includes": [
+        "const runOperation = async () =>",
+        "await lotteryRecordApi.sync()",
+        "onClick={runOperation}",
+        "await loadLogs();"
+      ],
+      "excludes": [
+        "lotteryRecordApi.retrySync",
+        "lotteryRecordApi.scheduledSync",
+        "runOperation('retry')",
+        "runOperation('scheduled')",
+        "ReloadOutlined",
+        "onClick={loadLogs}",
+        "定时触发",
+        "navigate('/lottery/sync?focus=provider-reliability')"
+      ]
+    },
+    {
+      "scope": "sync operations deletion lifecycle",
+      "file": "src/components/LotterySyncOperationsPage.tsx",
+      "includes": [
+        "record.status === 'RUNNING'",
+        "<Popconfirm",
+        "onConfirm={() => deleteSyncLog(record)}",
+        "await lotteryRecordApi.deleteSyncLog(record.id)",
+        "disabled={Boolean(deletingLogId)}",
+        "await loadLogs();"
+      ]
+    },
+    {
+      "scope": "sync operations async states",
+      "file": "src/components/LotterySyncOperationsPage.tsx",
+      "includes": [
+        "Promise.allSettled([",
+        "loadRequestIdRef.current",
+        "正在加载同步记录",
+        "暂无同步记录",
+        "读取彩票同步日志失败",
+        "部分运维数据读取失败，请稍后重试",
+        "onClick={retryLoad}"
+      ]
+    },
+    {
+      "scope": "sync operations explicit localization",
+      "file": "src/components/LotterySyncOperationsPage.tsx",
+      "includes": [
+        "const { language, defaultLanguage, t, translateText } = useI18n()",
+        "t('成功 {{success}}，失败 {{failed}}，跳过 {{skipped}}'",
+        "t('{{count}} 条诊断记录，当前页跳过 {{skipped}} 条'",
+        "t('最近失败 {{failureTime}}，最近成功 {{successTime}}'",
+        "t('Provider: {{provider}}，模式: {{mode}}，HTTP: {{http}}，分类: {{category}}'",
+        "showTotal={total => t('共 {{total}} 条', { total })}",
+        "showTotal: total => t('共 {{total}} 条', { total })",
+        "message.error(t('删除彩票同步记录失败'))",
+        "message.error(t('执行彩票同步失败'))",
+        "message.error(t('探测彩票 Provider 失败'))",
+        "translateText(lotteryStatusLabel(record.status))"
+      ],
+      "excludes": [
+        "detail: `成功 ${",
+        "条诊断记录，当前页跳过 ${",
+        "showTotal={total => `共 ${total} 条`}",
+        "showTotal: total => `共 ${total} 条`"
+      ]
+    },
+    {
+      "scope": "sync operations English dynamic messages",
+      "file": "src/i18n/locales/en-US/lotteryOverview.ts",
+      "includes": [
+        "'成功 {{success}}，失败 {{failed}}，跳过 {{skipped}}': 'Success {{success}}, failed {{failed}}, skipped {{skipped}}'",
+        "'{{count}} 条诊断记录，当前页跳过 {{skipped}} 条': '{{count}} diagnostic records, {{skipped}} skipped on this page'",
+        "'最近失败 {{failureTime}}，最近成功 {{successTime}}': 'Latest failure {{failureTime}}, latest success {{successTime}}'",
+        "'共 {{total}} 条': '{{total}} total'"
+      ]
+    },
+    {
+      "scope": "sync operations frontend API boundary",
+      "file": "src/services/api.ts",
+      "includes": [
+        "apiClient.post('/lottery/records/sync')",
+        "apiClient.delete(`/lottery/records/sync-logs/${id}`)"
+      ],
+      "excludes": [
+        "apiClient.post('/lottery/records/sync/retry')",
+        "apiClient.post('/lottery/records/sync/scheduled')"
+      ]
+    },
+    {
+      "scope": "sync record status filter placement",
+      "file": "src/components/LotterySyncOperationsPage.tsx",
+      "includes": [
+        "className=\"life-panel-card lottery-sync-record-panel\"",
+        "className=\"lottery-sync-record-toolbar\"",
+        "className=\"lottery-sync-record-status-filter\"",
+        "aria-label={t('同步记录状态筛选')}",
+        "{ label: t('成功'), value: 'SUCCESS' }",
+        "{ label: t('失败'), value: 'FAILED' }"
+      ],
+      "excludes": [
+        "{ label: '运行中', value: 'RUNNING' }",
+        "{ label: '跳过', value: 'SKIPPED' }",
+        "<span>共 {logPageResponse?.total ?? 0} 条</span>"
+      ]
+    },
+    {
+      "scope": "sync record status filter right placement",
+      "file": "src/components/LotterySyncOperationsPage.css",
+      "includes": [
+        "grid-template-columns: minmax(0, 1fr) 150px;",
+        "justify-self: end;"
+      ],
+      "excludes": [
+        "grid-template-columns: minmax(0, 1fr) 150px minmax(0, 1fr);",
+        "grid-column: 1 / -1;"
+      ]
+    },
+    {
+      "scope": "sync operations mobile layout",
+      "file": "src/components/LotterySyncOperationsPage.css",
+      "includes": [
+        "@media (max-width: 560px)",
+        "grid-template-columns: minmax(0, 1fr);",
+        "width: 100%;",
+        "flex-wrap: wrap;",
+        "margin-inline-start: 0;"
+      ]
     }
   ],
   "routes": [
     {
       "route": "/lottery/workbench",
       "label": "工作台",
+      "navExposed": false,
       "component": "LotteryWorkbenchPage",
       "componentFile": "src/components/LotteryWorkbenchPage.tsx",
       "mockApis": [
@@ -470,13 +661,14 @@
       "componentFile": "src/components/LotterySyncOperationsPage.tsx",
       "mockApis": [
         "lotteryRecordApi.syncLogsPage",
+        "lotteryRecordApi.deleteSyncLog",
         "lotteryRecordApi.syncSummary",
         "lotteryProviderApi.probeLogsPage",
         "lotteryProviderApi.probe",
         "lotteryDataQualityApi.report"
       ],
-      "emptyStates": ["Provider 可靠性趋势", "Provider可靠性焦点", "focus=provider-reliability", "同步稳定性", "最近恢复间隔", "Provider 探测成功率", "主要故障分类", "网络阻断信号"],
-      "errorStates": ["读取彩票同步日志失败", "执行彩票同步失败", "探测彩票 Provider 失败"],
+      "emptyStates": ["同步记录", "暂无同步记录", "Provider 可靠性趋势", "Provider可靠性焦点", "同步稳定性", "最近恢复间隔", "Provider 探测成功率", "主要故障分类", "网络阻断信号"],
+      "errorStates": ["读取彩票同步日志失败", "执行彩票同步失败", "删除彩票同步记录失败", "探测彩票 Provider 失败"],
       "fixtureData": {
         "providerReliability": {
           "signals": ["sync success rate", "last failure recovery", "probe success rate", "failure category", "network block"],
@@ -535,6 +727,7 @@
     {
       "route": "/lottery/mobile",
       "label": "移动",
+      "navExposed": false,
       "component": "LotteryMobileCommandPage",
       "componentFile": "src/components/LotteryMobileCommandPage.tsx",
       "mockApis": [

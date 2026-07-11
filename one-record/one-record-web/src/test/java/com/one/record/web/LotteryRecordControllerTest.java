@@ -3,6 +3,7 @@ package com.one.record.web;
 import com.one.record.lottery.LotteryDraw;
 import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.lottery.LotteryRecordSyncSummary;
+import com.one.record.exception.LotteryRecordSyncLogConflictException;
 import com.one.record.request.RecordRequest;
 import com.one.record.model.LotteryRecordSyncLog;
 import com.one.record.response.Record;
@@ -20,9 +21,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -43,7 +46,9 @@ class LotteryRecordControllerTest {
         recordService = mock(IRecordService.class);
         syncLogService = mock(ILotteryRecordSyncLogService.class);
         syncService = mock(ILotteryRecordSyncService.class);
-        mockMvc = MockMvcBuilders.standaloneSetup(new LotteryRecordController(recordService, syncLogService, syncService)).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(new LotteryRecordController(recordService, syncLogService, syncService))
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
     }
 
     @Test
@@ -240,6 +245,27 @@ class LotteryRecordControllerTest {
                 .andExpect(jsonPath("$.hasNext").value(true));
 
         verify(syncLogService).findPage("SUCCESS", 100L, 200L, 1, 10);
+    }
+
+    @Test
+    void deleteSyncLogDelegatesToSyncLogService() throws Exception {
+        mockMvc.perform(delete("/lottery/records/sync-logs/sync-1"))
+                .andExpect(status().isOk());
+
+        verify(syncLogService).delete("sync-1");
+    }
+
+    @Test
+    void deleteRunningSyncLogReturnsConflict() throws Exception {
+        doThrow(new LotteryRecordSyncLogConflictException("sync-running"))
+                .when(syncLogService).delete("sync-running");
+
+        mockMvc.perform(delete("/lottery/records/sync-logs/sync-running"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value(409))
+                .andExpect(jsonPath("$.message").value("运行中的彩票同步记录不能删除: sync-running"));
+
+        verify(syncLogService).delete("sync-running");
     }
 
     @Test

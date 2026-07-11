@@ -1,6 +1,6 @@
 # Lottery Long-Term Plan
 
-Last updated: 2026-07-08
+Last updated: 2026-07-11
 
 ## North Star
 
@@ -11,7 +11,7 @@ Build the lottery module into a personal research and operations system: trustwo
 - Keep all lottery data access behind project-owned backend APIs.
 - Treat prediction as research evidence, not a promise.
 - Prefer closed-loop learning: every recommendation should eventually connect to an actual draw, ticket outcome, ledger result, or explicit retirement decision.
-- Make daily operation fast on desktop and mobile, with the workbench as the default command center.
+- Make `/lottery` the stable default overview and keep `/lottery/workbench` as the focused operation center on desktop and mobile.
 - Keep QA evidence reproducible: automated release checks first, browser screenshots when login and backend are available.
 - Add backend contracts only when the frontend cannot safely compose from existing bounded APIs.
 
@@ -28,7 +28,7 @@ Product outcomes:
 
 Implementation themes:
 
-- Finish release evidence hardening after Iteration 25.
+- Close the in-flight sync operations and refresh release evidence in Iteration 46 before adding another product surface.
 - Add stale-evidence checks for recommendation, governance, simulator, ticket-pack, and mobile surfaces.
 - Improve workbench issue focus around next draw, current draw, pending tickets, and unresolved release checks.
 - Add richer mobile review actions for stale recommendations, pending approvals, and settlement gaps.
@@ -90,37 +90,23 @@ Success signals:
 
 ## Candidate Iterations
 
-Completed in the previous planning block: Iterations 26-30 covered release history, workbench issue focus, attribution rollups, recommendation lifecycle analytics, and research archive/month-end intelligence.
+Completed through Iteration 46: the platform foundation, daily and month-end workflows, outcome attribution, recommendation lifecycle, mobile operations, archive/search evidence, provider reliability, release visibility, focused retirement/archive-review handoffs, and the sync-operations/release-baseline closure are represented in the product and historical iteration plans.
 
-### Iteration 31: Anomaly Watch And Evidence Drift
+Only the next candidate is promoted. Later ideas remain in the long-horizon themes above until the next planning review.
 
-- Add a governance anomaly watch that joins operations health, simulator risk, ticket-pack exposure, attribution drift, stale recommendations, and release blockers.
-- Add compact trend context for repeated anomaly categories.
-- Connect recurring anomalies to workbench and month-end review handoffs.
+### Completed Iteration 46: Sync Operations And Release Baseline Closure
 
-### Iteration 32: Provider Reliability Trends
+- Completed the sync-record card UI, paging, delete confirmation, responsive states, explicit i18n, and operational entry points.
+- Enforced `RUNNING` log deletion protection and moved sync/probe filters, counts, and deterministic pagination from full-collection memory slicing to MongoDB queries.
+- Settled `/lottery` as the default overview and `/lottery/workbench` as the operation center while keeping workbench, mobile, and settings discoverable without footer-level top items.
+- Refreshed backend, i18n, smoke, lint, build, browser, and release evidence; final smoke passed 808 checks across 18 routes.
 
-- Summarize provider freshness, probe outcomes, sync skips, failures, and recovery intervals over time.
-- Add failure-category trend rows to sync and governance surfaces.
-- Keep provider diagnosis descriptive and bounded to stored operational evidence.
+### Iteration 47: MiniGPT Lottery Research Loop V1
 
-### Iteration 33: Review Automation Runbook
-
-- Turn daily, draw-cycle, month-end, and release-review steps into explicit runbook cards.
-- Track manual acknowledgement and generated evidence without starting hidden prediction work.
-- Add smoke coverage for runbook labels and disabled/blocked states.
-
-### Iteration 34: Research Archive Search 2.0
-
-- Add stronger filters by issue, month, rule, portfolio, source, lifecycle state, and evidence quality.
-- Connect archive results to recommendation, outcome, ticket-pack, and export views.
-- Keep large historical views paged and archive-first rather than recomputing heavy analysis in the browser.
-
-### Iteration 35: Long-Horizon Quality Retrospective
-
-- Generate six-month and yearly quality retrospectives from durable ledger, attribution, recommendation, release, and provider evidence.
-- Highlight what changed since the previous review.
-- Add export presets only after the on-screen retrospective has stable evidence groups.
+- Add a strategy-sample corpus alongside raw draw and structural-feature corpora, with versioned export metadata and a reproducible time-based train/validation split.
+- Use a training context long enough to contain a full structured lottery sample and record run, checkpoint, prompt, temperature, top-k, parsing, and repair provenance.
+- Close the manual research chain from corpus export and training through candidate generation, compliance repair, differentiated candidate pools, random-baseline backtests, decision sets, tickets, actual results, and month-end review.
+- Gate progress on reproducible parse rate, legal-number rate, candidate diversity, time-window backtests, and comparison with a random baseline rather than training loss alone.
 
 ## Risk Register
 
@@ -135,7 +121,7 @@ Completed in the previous planning block: Iterations 26-30 covered release histo
 
 ## Review Cadence
 
-- 2026-07-08 planning review: Iterations 35-39 completed archive review queue, notebook visibility, note quality, release evidence, workbench follow-up, and closure summaries. Iteration 40 promotes the next checkpoint into month-end review first, with future waves focused on candidate surfacing and release evidence handoff.
+- 2026-07-11 planning review: work is complete through Iteration 45. Iterations 41-45 closed evidence-quality focus, provider-reliability focus, release-archive focus, recommendation-retirement review, and archive-review pressure handoff. Promote only Iteration 46 for sync/release closure and Iteration 47 for the MiniGPT lottery research loop.
 - Review this long-term plan after every five completed iterations.
 - Promote only the next one or two candidate iterations into `docs/lottery/iterations/checklist.md`.
 - Keep completed tactical plans as historical evidence, but let this file carry the long-horizon direction.

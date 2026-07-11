@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.one.common.exception.DuplicateException;
 import com.one.common.exception.NotFoundException;
 import com.one.record.dto.Response;
+import com.one.record.exception.LotteryRecordSyncLogConflictException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -30,6 +31,13 @@ public class GlobalExceptionHandler {
     public Response<Object> handleNotFoundException(NotFoundException e) {
         log.error("Not found error: {}", e.getMessage());
         return Response.error(404, e.getMessage());
+    }
+
+    @ExceptionHandler(LotteryRecordSyncLogConflictException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public Response<Object> handleLotteryRecordSyncLogConflictException(LotteryRecordSyncLogConflictException e) {
+        log.warn("Lottery record sync log conflict: {}", e.getMessage());
+        return Response.error(409, e.getMessage());
     }
 
     @ExceptionHandler(Exception.class)

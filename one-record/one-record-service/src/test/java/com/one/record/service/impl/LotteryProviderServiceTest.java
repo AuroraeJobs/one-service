@@ -9,6 +9,8 @@ import com.one.record.repository.LotteryProviderProbeLogRepository;
 import com.one.record.response.Record;
 import com.one.record.service.LotteryDrawProvider;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
@@ -20,6 +22,7 @@ import org.mockito.ArgumentCaptor;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -129,22 +132,36 @@ class LotteryProviderServiceTest {
     }
 
     @Test
-    void probeLogPageFiltersProviderSuccessAndTimeRange() {
+    void probeLogPageDelegatesFiltersAndZeroBasedPageToMongoRepository() {
         LotteryProviderProbeLogRepository repository = mock(LotteryProviderProbeLogRepository.class);
-        when(repository.findAll(any(Sort.class))).thenReturn(List.of(
-                LotteryProviderProbeLog.builder().provider("cwl").success(true).checkedAt(100L).build(),
-                LotteryProviderProbeLog.builder().provider("cwl").success(false).checkedAt(200L).build(),
-                LotteryProviderProbeLog.builder().provider("backup").success(true).checkedAt(300L).build()
-        ));
+        when(repository.findPage(eq("cwl"), eq(false), eq(150L), eq(250L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(
+                        List.of(LotteryProviderProbeLog.builder().provider("cwl").success(false).checkedAt(200L).build()),
+                        PageRequest.of(1, 1),
+                        3
+                ));
         LotteryProviderService service = service(List.of(provider("cwl")), new RecordProperties(), repository);
 
-        var page = service.probeLogPage(" CWL ", false, 150L, 250L, 0, 1);
+        var page = service.probeLogPage(" CWL ", false, 150L, 250L, 1, 1);
 
         assertThat(page.getItems()).hasSize(1);
         assertThat(page.getItems().get(0).getProvider()).isEqualTo("cwl");
         assertThat(page.getItems().get(0).getSuccess()).isFalse();
-        assertThat(page.getTotal()).isEqualTo(1);
-        assertThat(page.getHasNext()).isFalse();
+        assertThat(page.getPage()).isEqualTo(1);
+        assertThat(page.getTotal()).isEqualTo(3);
+        assertThat(page.getHasNext()).isTrue();
+
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.captor();
+        verify(repository).findPage(eq("cwl"), eq(false), eq(150L), eq(250L), pageableCaptor.capture());
+        assertThat(pageableCaptor.getValue().getPageNumber()).isEqualTo(1);
+        assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(1);
+        assertThat(pageableCaptor.getValue().getSort().getOrderFor("checkedAt"))
+                .extracting(Sort.Order::getDirection)
+                .isEqualTo(Sort.Direction.DESC);
+        assertThat(pageableCaptor.getValue().getSort().getOrderFor("_id"))
+                .extracting(Sort.Order::getDirection)
+                .isEqualTo(Sort.Direction.DESC);
+        verify(repository, never()).findAll(any(Sort.class));
     }
 
     private LotteryProviderService service(List<LotteryDrawProvider> providers) {

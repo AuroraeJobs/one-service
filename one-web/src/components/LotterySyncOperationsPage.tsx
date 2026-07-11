@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Input, Select, Space, Table, Tag, message } from 'antd';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, Button, Card, Empty, Input, Pagination, Popconfirm, Select, Space, Spin, Table, Tag, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { ApiOutlined, CheckCircleOutlined, ClockCircleOutlined, ExperimentOutlined, ReloadOutlined, SyncOutlined, WarningOutlined } from '@ant-design/icons';
+import { ApiOutlined, ClockCircleOutlined, DeleteOutlined, ExperimentOutlined, SyncOutlined, WarningOutlined } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
+import { useI18n } from '../contexts/I18nContext';
+import type { TranslationParams } from '../i18n/types';
 import {
   lotteryDataQualityApi,
   lotteryProviderApi,
@@ -17,6 +19,7 @@ import {
 import { lotteryViewStateKeys, useLotterySavedViewState } from '../utils/lotteryViewState';
 import { lotteryStatusLabel } from '../utils/lotteryStatusLabel';
 import './LotteryOverviewPage.css';
+import './LotterySyncOperationsPage.css';
 
 const syncOperationViewKeys = ['status', 'provider', 'focus', 'syncPage', 'syncPageSize', 'probePage', 'probePageSize'];
 
@@ -28,16 +31,23 @@ interface ProviderReliabilityTrend {
   status: string;
 }
 
-const formatTime = (value?: number) => {
+type Translate = (source: string, params?: TranslationParams) => string;
+
+const containsChineseText = (value: string) => /[\u3400-\u9fff]/u.test(value);
+
+const formatTime = (value: number | undefined, locale: string) => {
   if (!value) {
     return '-';
   }
-  return new Intl.DateTimeFormat('zh-CN', {
+  return new Intl.DateTimeFormat(locale, {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
-    minute: '2-digit'
-  }).format(new Date(value));
+    minute: '2-digit',
+    hour12: false
+  })
+    .format(new Date(value))
+    .replace(/\//g, '-');
 };
 
 const statusColor = (status?: string) => {
@@ -85,19 +95,31 @@ const diagnosticColor = (record: { networkBlockSuspected?: boolean; failureCateg
   record.networkBlockSuspected || record.failureCategory === 'PROXY_OR_NETWORK_BLOCK' ? 'red' : 'gold'
 );
 
-const formatDurationHours = (start?: number, end?: number) => {
+const formatDurationHours = (start: number | undefined, end: number | undefined, t: Translate) => {
   if (!start || !end || end < start) {
     return '-';
   }
   const hours = Math.max(0, Math.round((end - start) / (60 * 60 * 1000)));
-  return hours >= 24 ? `${Math.round(hours / 24)} 天` : `${hours} 小时`;
+  return hours >= 24
+    ? t('{{count}} 天', { count: Math.round(hours / 24) })
+    : t('{{count}} 小时', { count: hours });
 };
 
 const percentText = (count: number, total: number) => total ? `${Math.round((count / total) * 100)}%` : '-';
 
+const pageParam = (value: string | null, fallback: number, max = Number.MAX_SAFE_INTEGER) => {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? Math.min(parsed, max) : fallback;
+};
+
+const lastPageFor = (total: number | undefined, pageSize: number) => (
+  Math.max(1, Math.ceil(Math.max(0, total ?? 0) / pageSize))
+);
+
 const LotterySyncOperationsPage = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { language, defaultLanguage, t, translateText } = useI18n();
   const [logs, setLogs] = useState<LotteryRecordSyncLog[]>([]);
   const [logPageResponse, setLogPageResponse] = useState<LotteryPageResponse<LotteryRecordSyncLog>>();
   const [summary, setSummary] = useState<LotteryRecordSyncSummary>();
@@ -107,7 +129,11 @@ const LotterySyncOperationsPage = () => {
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [probing, setProbing] = useState(false);
-  const [error, setError] = useState<string>();
+  const [deletingLogId, setDeletingLogId] = useState<string>();
+  const [loadError, setLoadError] = useState<string>();
+  const [auxiliaryError, setAuxiliaryError] = useState<string>();
+  const [actionError, setActionError] = useState<string>();
+  const loadRequestIdRef = useRef(0);
 
   useLotterySavedViewState(lotteryViewStateKeys.syncOperations, searchParams, setSearchParams, syncOperationViewKeys);
 
@@ -115,10 +141,10 @@ const LotterySyncOperationsPage = () => {
   const focusMode = searchParams.get('focus') || '';
   const providerReliabilityFocus = focusMode === 'provider-reliability';
   const probeProvider = searchParams.get('provider') || 'cwl';
-  const syncPage = Math.max(1, Number(searchParams.get('syncPage') || '1') || 1);
-  const syncPageSize = Math.max(1, Number(searchParams.get('syncPageSize') || '10') || 10);
-  const probePage = Math.max(1, Number(searchParams.get('probePage') || '1') || 1);
-  const probePageSize = Math.max(1, Number(searchParams.get('probePageSize') || '5') || 5);
+  const syncPage = pageParam(searchParams.get('syncPage'), 1);
+  const syncPageSize = pageParam(searchParams.get('syncPageSize'), 10, 100);
+  const probePage = pageParam(searchParams.get('probePage'), 1);
+  const probePageSize = pageParam(searchParams.get('probePageSize'), 5, 100);
 
   const updateQuery = useCallback((patch: Record<string, string | number | undefined>, resetPage = true) => {
     const next = new URLSearchParams(searchParams);
@@ -142,57 +168,151 @@ const LotterySyncOperationsPage = () => {
 
   const queryParams = useMemo(() => ({
     status: statusFilter,
-    page: syncPage,
+    page: syncPage - 1,
     pageSize: syncPageSize
   }), [statusFilter, syncPage, syncPageSize]);
 
   const loadLogs = useCallback(async () => {
+    const requestId = ++loadRequestIdRef.current;
+    let isCorrectingPage = false;
     setLoading(true);
-    setError(undefined);
+    setLoadError(undefined);
+    setAuxiliaryError(undefined);
     try {
-      const [rows, nextSummary, nextProbeLogs, nextQualityReport] = await Promise.all([
+      const [rowsResult, summaryResult, probeLogsResult, qualityReportResult] = await Promise.allSettled([
         lotteryRecordApi.syncLogsPage(queryParams),
         lotteryRecordApi.syncSummary({ limit: 50 }),
         lotteryProviderApi.probeLogsPage({
           provider: probeProvider.trim() || undefined,
-          page: probePage,
+          page: probePage - 1,
           pageSize: probePageSize
         }),
         lotteryDataQualityApi.report()
       ]);
-      setLogPageResponse(rows);
-      setLogs(rows.items || []);
-      setSummary(nextSummary || undefined);
-      setProbePageResponse(nextProbeLogs);
-      setProbeLogs(nextProbeLogs.items || []);
-      setQualityReport(nextQualityReport || undefined);
+      if (requestId !== loadRequestIdRef.current) {
+        return;
+      }
+
+      const pageCorrection: Record<string, number> = {};
+      if (rowsResult.status === 'fulfilled') {
+        const rows = rowsResult.value;
+        const pageSize = Math.max(1, rows.pageSize || syncPageSize);
+        const syncLastPage = lastPageFor(rows.total, pageSize);
+        if (syncPage > syncLastPage) {
+          pageCorrection.syncPage = syncLastPage;
+          setLogs([]);
+        } else {
+          setLogs(rows.items || []);
+        }
+        setLogPageResponse(rows);
+      } else {
+        console.error('读取彩票同步日志失败:', rowsResult.reason);
+        setLogs([]);
+        setLogPageResponse(undefined);
+        setLoadError('读取彩票同步日志失败');
+      }
+
+      let hasAuxiliaryFailure = false;
+      if (summaryResult.status === 'fulfilled') {
+        setSummary(summaryResult.value || undefined);
+      } else {
+        hasAuxiliaryFailure = true;
+        setSummary(undefined);
+        console.error('读取彩票同步摘要失败:', summaryResult.reason);
+      }
+
+      if (probeLogsResult.status === 'fulfilled') {
+        const nextProbeLogs = probeLogsResult.value;
+        const pageSize = Math.max(1, nextProbeLogs.pageSize || probePageSize);
+        const probeLastPage = lastPageFor(nextProbeLogs.total, pageSize);
+        if (probePage > probeLastPage) {
+          pageCorrection.probePage = probeLastPage;
+          setProbeLogs([]);
+        } else {
+          setProbeLogs(nextProbeLogs.items || []);
+        }
+        setProbePageResponse(nextProbeLogs);
+      } else {
+        hasAuxiliaryFailure = true;
+        setProbeLogs([]);
+        setProbePageResponse(undefined);
+        console.error('读取 Provider 探测日志失败:', probeLogsResult.reason);
+      }
+
+      if (qualityReportResult.status === 'fulfilled') {
+        setQualityReport(qualityReportResult.value || undefined);
+      } else {
+        hasAuxiliaryFailure = true;
+        setQualityReport(undefined);
+        console.error('读取彩票数据质量报告失败:', qualityReportResult.reason);
+      }
+
+      setAuxiliaryError(hasAuxiliaryFailure ? '部分运维数据读取失败，请稍后重试' : undefined);
+      if (Object.keys(pageCorrection).length > 0) {
+        isCorrectingPage = true;
+        updateQuery(pageCorrection, false);
+      }
     } catch (requestError) {
+      if (requestId !== loadRequestIdRef.current) {
+        return;
+      }
       console.error('读取彩票同步日志失败:', requestError);
-      setError(requestError instanceof Error ? requestError.message : '读取彩票同步日志失败');
+      setLogs([]);
+      setLogPageResponse(undefined);
+      setLoadError('读取彩票同步日志失败');
     } finally {
-      setLoading(false);
+      if (requestId === loadRequestIdRef.current && !isCorrectingPage) {
+        setLoading(false);
+      }
     }
-  }, [probePage, probePageSize, probeProvider, queryParams]);
+  }, [probePage, probePageSize, probeProvider, queryParams, syncPage, syncPageSize, updateQuery]);
+
+  const retryLoad = () => {
+    void loadLogs();
+  };
+
+  const localizeRuntimeMessage = (value: string | undefined, fallback: string) => {
+    const localized = translateText(value || fallback);
+    return language !== defaultLanguage && containsChineseText(localized) ? t(fallback) : localized;
+  };
 
   useEffect(() => {
-    loadLogs();
+    void loadLogs();
+    return () => {
+      loadRequestIdRef.current += 1;
+    };
   }, [loadLogs]);
 
-  const runOperation = async (operation: 'sync' | 'retry' | 'scheduled') => {
-    setSyncing(true);
-    setError(undefined);
+  const deleteSyncLog = async (record: LotteryRecordSyncLog) => {
+    if (!record.id || record.status === 'RUNNING') {
+      return;
+    }
+    setDeletingLogId(record.id);
+    setActionError(undefined);
     try {
-      const result = operation === 'scheduled'
-        ? await lotteryRecordApi.scheduledSync()
-        : operation === 'retry'
-          ? await lotteryRecordApi.retrySync()
-          : await lotteryRecordApi.sync();
-      message.success(result.message || '同步任务已执行');
+      await lotteryRecordApi.deleteSyncLog(record.id);
+      message.success(t('同步记录已删除'));
+      await loadLogs();
+    } catch (requestError) {
+      console.error('删除彩票同步记录失败:', requestError);
+      setActionError('删除彩票同步记录失败');
+      message.error(t('删除彩票同步记录失败'));
+    } finally {
+      setDeletingLogId(undefined);
+    }
+  };
+
+  const runOperation = async () => {
+    setSyncing(true);
+    setActionError(undefined);
+    try {
+      const result = await lotteryRecordApi.sync();
+      message.success(localizeRuntimeMessage(result.message, '同步任务已执行'));
       await loadLogs();
     } catch (requestError) {
       console.error('执行彩票同步失败:', requestError);
-      setError(requestError instanceof Error ? requestError.message : '执行彩票同步失败');
-      message.error('执行彩票同步失败');
+      setActionError('执行彩票同步失败');
+      message.error(t('执行彩票同步失败'));
     } finally {
       setSyncing(false);
     }
@@ -200,87 +320,20 @@ const LotterySyncOperationsPage = () => {
 
   const runProbe = async () => {
     setProbing(true);
-    setError(undefined);
+    setActionError(undefined);
     try {
       const provider = probeProvider.trim() || undefined;
       const result = await lotteryProviderApi.probe({ provider });
-      message.success(result.message || 'Provider 探测完成');
+      message.success(localizeRuntimeMessage(result.message, 'Provider 探测完成'));
       await loadLogs();
     } catch (requestError) {
       console.error('探测彩票 Provider 失败:', requestError);
-      setError(requestError instanceof Error ? requestError.message : '探测彩票 Provider 失败');
-      message.error('探测彩票 Provider 失败');
+      setActionError('探测彩票 Provider 失败');
+      message.error(t('探测彩票 Provider 失败'));
     } finally {
       setProbing(false);
     }
   };
-
-  const columns: ColumnsType<LotteryRecordSyncLog> = [
-    {
-      title: '任务',
-      dataIndex: 'jobName',
-      key: 'jobName',
-      render: value => value || '-'
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      render: value => <Tag color={statusColor(value)}>{lotteryStatusLabel(value)}</Tag>
-    },
-    {
-      title: '期号',
-      key: 'issue',
-      render: (_, record) => (
-        <Space direction="vertical" size={0}>
-          <span>{record.startIssue || '-'}</span>
-          <span className="stock-quote-code">到 {record.endIssue || '-'}</span>
-        </Space>
-      )
-    },
-    {
-      title: '新增',
-      dataIndex: 'savedCount',
-      key: 'savedCount',
-      align: 'right',
-      render: value => value ?? 0
-    },
-    {
-      title: '诊断',
-      key: 'diagnostics',
-      render: (_, record) => (
-        record.failureCategory || record.httpStatus || record.requestMode ? (
-          <Space direction="vertical" size={0}>
-            {record.failureCategory ? (
-              <Tag color={diagnosticColor(record)}>{failureCategoryLabel(record.failureCategory)}</Tag>
-            ) : null}
-            <span className="stock-quote-code">
-              {record.requestMode || '-'}{record.httpStatus ? ` / HTTP ${record.httpStatus}` : ''}
-            </span>
-          </Space>
-        ) : '-'
-      )
-    },
-    {
-      title: '消息',
-      dataIndex: 'message',
-      key: 'message',
-      ellipsis: true,
-      render: value => value || '-'
-    },
-    {
-      title: '开始',
-      dataIndex: 'startedAt',
-      key: 'startedAt',
-      render: value => formatTime(value)
-    },
-    {
-      title: '结束',
-      dataIndex: 'finishedAt',
-      key: 'finishedAt',
-      render: value => formatTime(value)
-    }
-  ];
 
   const probeColumns: ColumnsType<LotteryProviderProbeLog> = [
     {
@@ -295,35 +348,35 @@ const LotterySyncOperationsPage = () => {
       )
     },
     {
-      title: '状态',
+      title: t('状态'),
       key: 'status',
       render: (_, record) => (
         <Tag color={record.success && record.status === 'AVAILABLE' ? 'green' : 'orange'}>
-          {lotteryStatusLabel(record.status)}
+          {translateText(lotteryStatusLabel(record.status))}
         </Tag>
       )
     },
     {
-      title: '记录数',
+      title: t('记录数'),
       dataIndex: 'recordCount',
       key: 'recordCount',
       align: 'right',
       render: value => value ?? 0
     },
     {
-      title: '耗时',
+      title: t('耗时'),
       dataIndex: 'durationMs',
       key: 'durationMs',
       render: value => `${value ?? 0} ms`
     },
     {
-      title: '诊断',
+      title: t('诊断'),
       key: 'diagnostics',
       render: (_, record) => (
         record.failureCategory || record.httpStatus || record.requestMode ? (
           <Space direction="vertical" size={0}>
             {record.failureCategory ? (
-              <Tag color={diagnosticColor(record)}>{failureCategoryLabel(record.failureCategory)}</Tag>
+              <Tag color={diagnosticColor(record)}>{translateText(failureCategoryLabel(record.failureCategory))}</Tag>
             ) : null}
             <span className="stock-quote-code">
               {record.requestMode || '-'}{record.httpStatus ? ` / HTTP ${record.httpStatus}` : ''}
@@ -333,24 +386,20 @@ const LotterySyncOperationsPage = () => {
       )
     },
     {
-      title: '消息',
+      title: t('消息'),
       dataIndex: 'message',
       key: 'message',
       ellipsis: true,
-      render: value => value || '-'
+      render: value => value ? localizeRuntimeMessage(value, 'Provider 返回了未翻译的诊断信息') : '-'
     },
     {
-      title: '检查时间',
+      title: t('检查时间'),
       dataIndex: 'checkedAt',
       key: 'checkedAt',
-      render: value => formatTime(value)
+      render: value => formatTime(value, language)
     }
   ];
 
-  const latestStatus = summary?.latestStatus || '-';
-  const latestIssueRange = summary?.latestStartIssue || summary?.latestEndIssue
-    ? `${summary?.latestStartIssue || '-'} 到 ${summary?.latestEndIssue || '-'}`
-    : '-';
   const providerReliabilityTrends = useMemo<ProviderReliabilityTrend[]>(() => {
     const failedLogs = logs.filter(item => item.status === 'FAILED');
     const skippedLogs = logs.filter(item => item.status === 'SKIPPED');
@@ -368,41 +417,57 @@ const LotterySyncOperationsPage = () => {
     return [
       {
         key: 'sync-stability',
-        label: '同步稳定性',
+        label: t('同步稳定性'),
         value: `${summary?.successRate ?? 0}%`,
-        detail: `成功 ${summary?.successCount ?? 0}，失败 ${summary?.failedCount ?? 0}，跳过 ${summary?.skippedCount ?? 0}`,
+        detail: t('成功 {{success}}，失败 {{failed}}，跳过 {{skipped}}', {
+          success: summary?.successCount ?? 0,
+          failed: summary?.failedCount ?? 0,
+          skipped: summary?.skippedCount ?? 0
+        }),
         status: (summary?.failedCount || failedLogs.length) ? 'WARNING' : 'PASS'
       },
       {
         key: 'recovery-window',
-        label: '最近恢复间隔',
-        value: formatDurationHours(summary?.lastFailureAt, summary?.lastSuccessAt),
-        detail: `最近失败 ${formatTime(summary?.lastFailureAt)}，最近成功 ${formatTime(summary?.lastSuccessAt)}`,
+        label: t('最近恢复间隔'),
+        value: formatDurationHours(summary?.lastFailureAt, summary?.lastSuccessAt, t),
+        detail: t('最近失败 {{failureTime}}，最近成功 {{successTime}}', {
+          failureTime: formatTime(summary?.lastFailureAt, language),
+          successTime: formatTime(summary?.lastSuccessAt, language)
+        }),
         status: summary?.lastFailureAt && (!summary?.lastSuccessAt || summary.lastSuccessAt < summary.lastFailureAt) ? 'FAILED' : summary?.lastFailureAt ? 'WARNING' : 'PASS'
       },
       {
         key: 'probe-success',
-        label: 'Provider 探测成功率',
+        label: t('Provider 探测成功率'),
         value: percentText(successfulProbeCount, probeTotal),
-        detail: `${probeProvider || '-'} · 成功 ${successfulProbeCount}/${probeTotal}`,
+        detail: t('{{provider}} · 成功 {{success}}/{{total}}', {
+          provider: probeProvider || '-',
+          success: successfulProbeCount,
+          total: probeTotal
+        }),
         status: probeTotal && successfulProbeCount < probeTotal ? 'WARNING' : probeTotal ? 'PASS' : 'MANUAL'
       },
       {
         key: 'failure-category',
-        label: '主要故障分类',
-        value: topFailureCategory ? failureCategoryLabel(topFailureCategory[0]) : '暂无',
-        detail: topFailureCategory ? `${topFailureCategory[1]} 条诊断记录，当前页跳过 ${skippedLogs.length} 条` : '当前页暂无故障分类',
+        label: t('主要故障分类'),
+        value: topFailureCategory ? translateText(failureCategoryLabel(topFailureCategory[0])) : t('暂无'),
+        detail: topFailureCategory ? t('{{count}} 条诊断记录，当前页跳过 {{skipped}} 条', {
+          count: topFailureCategory[1],
+          skipped: skippedLogs.length
+        }) : t('当前页暂无故障分类'),
         status: topFailureCategory ? 'WARNING' : 'PASS'
       },
       {
         key: 'network-block',
-        label: '网络阻断信号',
-        value: `${networkBlockedLogs.length} 条`,
-        detail: `最近请求 ${summary?.latestRequestMode || '-'}${summary?.latestHttpStatus ? ` / HTTP ${summary.latestHttpStatus}` : ''}`,
+        label: t('网络阻断信号'),
+        value: t('{{count}} 条', { count: networkBlockedLogs.length }),
+        detail: t('最近请求 {{request}}', {
+          request: `${summary?.latestRequestMode || '-'}${summary?.latestHttpStatus ? ` / HTTP ${summary.latestHttpStatus}` : ''}`
+        }),
         status: networkBlockedLogs.length || summary?.latestNetworkBlockSuspected ? 'FAILED' : 'PASS'
       }
     ];
-  }, [logs, probeLogs, probeProvider, summary]);
+  }, [language, logs, probeLogs, probeProvider, summary, t, translateText]);
   const qualityIssueCount = (qualityReport?.missingIssueCount || 0)
     + (qualityReport?.duplicateIssueCount || 0)
     + (qualityReport?.malformedRecordCount || 0)
@@ -411,49 +476,38 @@ const LotterySyncOperationsPage = () => {
   return (
     <LifePageShell
       className="lottery-prediction-page"
-      eyebrow="彩票数据"
-      title="同步运维"
+      eyebrow={t('彩票数据')}
+      title={t('同步运维')}
       actions={
         <Space wrap>
-          <Button icon={<ApiOutlined />} onClick={() => navigate('/lottery/sync?focus=provider-reliability')}>
-            Provider可靠性
-          </Button>
-          <Button type="primary" icon={<SyncOutlined />} loading={syncing} onClick={() => runOperation('sync')}>
-            同步
-          </Button>
-          <Button icon={<ReloadOutlined />} loading={syncing} onClick={() => runOperation('retry')}>
-            重试
-          </Button>
-          <Button icon={<SyncOutlined />} loading={syncing} onClick={() => runOperation('scheduled')}>
-            定时触发
-          </Button>
-          <Select
-            allowClear
-            placeholder="状态"
-            value={statusFilter}
-            onChange={value => updateQuery({ status: value })}
-            style={{ width: 130 }}
-            options={[
-              { label: '运行中', value: 'RUNNING' },
-              { label: '成功', value: 'SUCCESS' },
-              { label: '失败', value: 'FAILED' },
-              { label: '跳过', value: 'SKIPPED' }
-            ]}
-          />
-          <Button icon={<ReloadOutlined />} loading={loading} onClick={loadLogs}>
-            刷新
+          <Button type="primary" icon={<SyncOutlined />} loading={syncing} onClick={runOperation}>
+            {t('同步')}
           </Button>
         </Space>
       }
     >
-      {error ? <Alert className="lottery-overview-status-alert" type="error" showIcon message={error} /> : null}
+      {actionError ? <Alert className="lottery-overview-status-alert" type="error" showIcon message={t(actionError)} /> : null}
+      {auxiliaryError ? (
+        <Alert
+          className="lottery-overview-status-alert"
+          type="warning"
+          showIcon
+          message={t(auxiliaryError)}
+          action={<Button size="small" onClick={retryLoad}>{t('重新加载')}</Button>}
+        />
+      ) : null}
       {summary?.latestNetworkBlockSuspected ? (
         <Alert
           className="lottery-overview-status-alert"
           type="warning"
           showIcon
-          message="最近一次同步疑似被代理或网络策略阻断"
-          description={`Provider: ${summary.latestProvider || '-'}，模式: ${summary.latestRequestMode || '-'}，HTTP: ${summary.latestHttpStatus || '-'}，分类: ${failureCategoryLabel(summary.latestFailureCategory)}`}
+          message={t('最近一次同步疑似被代理或网络策略阻断')}
+          description={t('Provider: {{provider}}，模式: {{mode}}，HTTP: {{http}}，分类: {{category}}', {
+            provider: summary.latestProvider || '-',
+            mode: summary.latestRequestMode || '-',
+            http: summary.latestHttpStatus || '-',
+            category: translateText(failureCategoryLabel(summary.latestFailureCategory))
+          })}
         />
       ) : null}
       {qualityIssueCount > 0 ? (
@@ -461,78 +515,138 @@ const LotterySyncOperationsPage = () => {
           className="lottery-overview-status-alert"
           type="warning"
           showIcon
-          message={`发现 ${qualityIssueCount} 项数据质量问题`}
+          message={t('发现 {{count}} 项数据质量问题', { count: qualityIssueCount })}
           action={
             <Button size="small" icon={<WarningOutlined />} onClick={() => navigate('/lottery/data-quality')}>
-              查看
+              {t('查看')}
             </Button>
           }
         />
       ) : null}
 
-      <section className="lottery-history-summary-grid lottery-sync-summary-grid">
-        <Card className="life-panel-card lottery-clean-panel" loading={loading}>
-          <div className="lottery-history-summary-item">
-            <CheckCircleOutlined />
-            <div>
-              <strong>{summary?.successCount ?? 0}</strong>
-              <span>成功同步</span>
-            </div>
-          </div>
-        </Card>
-        <Card className="life-panel-card lottery-clean-panel" loading={loading}>
-          <div className="lottery-history-summary-item">
-            <WarningOutlined />
-            <div>
-              <strong>{summary?.failedCount ?? 0}</strong>
-              <span>失败同步</span>
-            </div>
-          </div>
-        </Card>
-        <Card className="life-panel-card lottery-clean-panel" loading={loading}>
-          <div className="lottery-history-summary-item">
-            <SyncOutlined />
-            <div>
-              <strong>{summary?.savedCount ?? 0}</strong>
-              <span>新增记录</span>
-            </div>
-          </div>
-        </Card>
-        <Card className="life-panel-card lottery-clean-panel" loading={loading}>
-          <div className="lottery-history-summary-item">
-            <ClockCircleOutlined />
-            <div>
-              <strong>{summary?.averageDurationMs ?? 0}</strong>
-              <span>平均耗时 ms</span>
-            </div>
-          </div>
-        </Card>
-      </section>
-
       <Card
-        className="life-panel-card"
-        title="同步摘要"
-        extra={<Tag color={statusColor(latestStatus)}>{latestStatus}</Tag>}
+        className="life-panel-card lottery-sync-record-panel"
+        title={(
+          <div className="lottery-sync-record-toolbar">
+            <strong>{t('同步记录')}</strong>
+            <Select
+              className="lottery-sync-record-status-filter"
+              aria-label={t('同步记录状态筛选')}
+              allowClear
+              placeholder={t('状态筛选')}
+              value={statusFilter}
+              onChange={value => updateQuery({ status: value })}
+              options={[
+                { label: t('成功'), value: 'SUCCESS' },
+                { label: t('失败'), value: 'FAILED' }
+              ]}
+            />
+          </div>
+        )}
       >
-        <Space wrap size={[16, 8]}>
-          <span>最近期号：{latestIssueRange}</span>
-          <span>成功率：{summary?.successRate ?? 0}%</span>
-          <span>失败率：{summary?.failedRate ?? 0}%</span>
-          <span>最近完成：{formatTime(summary?.latestFinishedAt)}</span>
-          <span>诊断：{failureCategoryLabel(summary?.latestFailureCategory)}</span>
-          <span>请求：{summary?.latestRequestMode || '-'}{summary?.latestHttpStatus ? ` / HTTP ${summary.latestHttpStatus}` : ''}</span>
-          <span>最近消息：{summary?.latestMessage || '-'}</span>
-        </Space>
+        <Spin spinning={loading} tip={t('正在加载同步记录')}>
+          {logs.length > 0 ? (
+            <section className="lottery-sync-record-grid" aria-label={t('同步记录')}>
+              {logs.map(record => (
+                <article
+                  className="lottery-sync-record-card"
+                  data-status={record.status || 'UNKNOWN'}
+                  key={record.id || `${record.jobName}-${record.startedAt}`}
+                >
+                  <header className="lottery-sync-record-issues">
+                    <div className="lottery-sync-record-issue lottery-sync-record-issue-start">
+                      <span>{t('开始期号')}</span>
+                      <strong>{record.startIssue || '-'}</strong>
+                    </div>
+                    <div className="lottery-sync-record-issue lottery-sync-record-issue-end">
+                      <span>{t('结束期号')}</span>
+                      <strong>{record.endIssue || '-'}</strong>
+                    </div>
+                  </header>
+
+                  <div className="lottery-sync-record-details">
+                    <div className="lottery-sync-record-time">
+                      <span className="lottery-sync-record-detail-label">
+                        <ClockCircleOutlined />
+                        {t('时间')}
+                      </span>
+                      <time dateTime={record.finishedAt ? new Date(record.finishedAt).toISOString() : undefined}>
+                        {formatTime(record.finishedAt, language)}
+                      </time>
+                    </div>
+                    <div className="lottery-sync-record-saved">
+                      <span>{t('同步数量')}</span>
+                      <strong>{record.savedCount ?? 0}</strong>
+                    </div>
+                  </div>
+
+                  <footer className="lottery-sync-record-actions">
+                    <Tag color={statusColor(record.status)}>{translateText(lotteryStatusLabel(record.status))}</Tag>
+                    {record.id ? (
+                      record.status === 'RUNNING' ? (
+                        <Button
+                          size="small"
+                          danger
+                          disabled
+                          icon={<DeleteOutlined />}
+                          title={t('运行中的同步记录暂不可删除')}
+                          aria-label={t('运行中的同步记录暂不可删除')}
+                        />
+                      ) : (
+                        <Popconfirm
+                          title={t('删除这条同步记录？')}
+                          description={t('仅删除运维日志，不影响已同步的开奖记录。')}
+                          okText={t('删除')}
+                          cancelText={t('取消')}
+                          onConfirm={() => deleteSyncLog(record)}
+                        >
+                          <Button
+                            size="small"
+                            danger
+                            disabled={Boolean(deletingLogId)}
+                            icon={<DeleteOutlined />}
+                            loading={deletingLogId === record.id}
+                            aria-label={t('删除同步记录')}
+                          />
+                        </Popconfirm>
+                      )
+                    ) : null}
+                  </footer>
+                </article>
+              ))}
+            </section>
+          ) : loading ? (
+            <div className="lottery-sync-record-load-state" role="status" aria-live="polite">
+              {t('正在加载同步记录')}
+            </div>
+          ) : loadError ? (
+            <Empty description={t(loadError)}>
+              <Button onClick={retryLoad}>{t('重新加载')}</Button>
+            </Empty>
+          ) : (
+            <Empty description={t('暂无同步记录')} />
+          )}
+        </Spin>
+        <Pagination
+          className="lottery-list-pagination"
+          current={syncPage}
+          pageSize={syncPageSize}
+          total={logPageResponse?.total || 0}
+          showSizeChanger
+          disabled={loading || Boolean(deletingLogId)}
+          showTotal={total => t('共 {{total}} 条', { total })}
+          onChange={(nextPage, nextPageSize) => updateQuery({ syncPage: nextPage, syncPageSize: nextPageSize }, false)}
+        />
       </Card>
 
       <Card
         className="life-panel-card lottery-clean-panel"
-        title="Provider 可靠性趋势"
+        title={t('Provider 可靠性趋势')}
         extra={<Tag color={summary?.latestNetworkBlockSuspected ? 'red' : 'blue'}>{summary?.latestProvider || probeProvider || '-'}</Tag>}
       >
         {providerReliabilityFocus ? (
           <div className="lottery-attribution-focus-summary">
-            <strong>Provider可靠性焦点</strong>
+            <strong>{t('Provider可靠性焦点')}</strong>
             <section className="lottery-attribution-rollup-summary">
               {providerReliabilityTrends.map(item => (
                 <article key={item.key}>
@@ -545,10 +659,19 @@ const LotterySyncOperationsPage = () => {
         ) : null}
         <div className="lottery-provider-reliability-grid">
           {providerReliabilityTrends.map(item => (
-            <button key={item.key} type="button" onClick={() => item.key === 'network-block' ? updateQuery({ status: 'FAILED' }) : undefined}>
-              <Tag color={statusColor(item.status)}>{lotteryStatusLabel(item.status)}</Tag>
-              <strong>{item.label}</strong>
-              <span>{item.value}</span>
+            <button
+              key={item.key}
+              type="button"
+              data-status={item.status}
+              onClick={() => item.key === 'network-block' ? updateQuery({ status: 'FAILED' }) : undefined}
+            >
+              <div className="lottery-provider-reliability-head">
+                <strong>{item.label}</strong>
+                <Tag className="lottery-provider-reliability-status" color={statusColor(item.status)}>
+                  {translateText(lotteryStatusLabel(item.status))}
+                </Tag>
+              </div>
+              <span className="lottery-provider-reliability-value">{item.value}</span>
               <small>{item.detail}</small>
             </button>
           ))}
@@ -557,7 +680,7 @@ const LotterySyncOperationsPage = () => {
 
       <Card
         className="life-panel-card"
-        title="Provider 探测"
+        title={t('Provider 探测')}
         extra={
           <Space wrap>
             <Input
@@ -568,7 +691,7 @@ const LotterySyncOperationsPage = () => {
               onChange={event => updateQuery({ provider: event.target.value })}
             />
             <Button icon={<ExperimentOutlined />} loading={probing} onClick={runProbe}>
-              探测
+              {t('探测')}
             </Button>
           </Space>
         }
@@ -583,30 +706,13 @@ const LotterySyncOperationsPage = () => {
             pageSize: probePageSize,
             total: probePageResponse?.total || 0,
             showSizeChanger: true,
-            showTotal: total => `共 ${total} 条`,
+            showTotal: total => t('共 {{total}} 条', { total }),
             onChange: (nextPage, nextPageSize) => updateQuery({ probePage: nextPage, probePageSize: nextPageSize }, false)
           }}
           scroll={{ x: 980 }}
         />
       </Card>
 
-      <Card className="life-panel-card">
-        <Table
-          rowKey={record => record.id || `${record.jobName}-${record.startedAt}`}
-          columns={columns}
-          dataSource={logs}
-          loading={loading}
-          pagination={{
-            current: syncPage,
-            pageSize: syncPageSize,
-            total: logPageResponse?.total || 0,
-            showSizeChanger: true,
-            showTotal: total => `共 ${total} 条`,
-            onChange: (nextPage, nextPageSize) => updateQuery({ syncPage: nextPage, syncPageSize: nextPageSize }, false)
-          }}
-          scroll={{ x: 1120 }}
-        />
-      </Card>
     </LifePageShell>
   );
 };

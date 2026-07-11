@@ -8,7 +8,8 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface LotteryProviderProbeLogRepository extends MongoRepository<LotteryProviderProbeLog, String> {
+public interface LotteryProviderProbeLogRepository extends MongoRepository<LotteryProviderProbeLog, String>,
+        LotteryProviderProbeLogPageRepository {
 
     List<LotteryProviderProbeLog> findByOrderByCheckedAtDesc(Pageable pageable);
 

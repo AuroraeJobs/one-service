@@ -1,6 +1,6 @@
 # Lottery Documentation Index
 
-Last updated: 2026-07-04
+Last updated: 2026-07-11
 
 This folder is the durable planning home for the lottery module. It follows the same working style as `docs/stock`: keep roadmap, iteration checklist, module design, and menu/version planning together so future work can continue from a clear task board.
 
@@ -29,6 +29,7 @@ mvn -version
 - [Roadmap](iterations/roadmap.md): module direction and phased plan.
 - [Long-term plan](iterations/long-term-plan.md): 0-12 month direction, candidate future iterations, risks, and review cadence.
 - [Checklist](iterations/checklist.md): durable task board.
+- [Iteration 46 plan](iterations/iteration-46-plan.md): sync operations and release baseline closure.
 - [Quality gates](iterations/quality-gates.md): verification rules for backend, frontend, and data behavior.
 - [Frontend one-month plan](iterations/frontend-one-month-version-plan.md): next month frontend-led experience and power-tool plan.
 
@@ -41,9 +42,11 @@ mvn -version
 
 Live capabilities already present in the codebase:
 
+- Iterations 1-46 are complete; the latest completed slice closes sync-operations UX, backend deletion safety, MongoDB-backed log pagination, default-overview navigation semantics, and current release evidence.
 - Historical record access and update through `record/*` APIs.
 - Lottery records namespace through `lottery/records/*`, currently reusing the existing record service for compatibility.
-- Lottery overview with recent draws, yearly counts, frequency cards, and AI panel.
+- `/lottery` is the unified default overview with recent draws, yearly counts, frequency cards, AI context, and entry points into specialist workflows.
+- `/lottery/workbench` remains the operation center for current-issue closure and daily actions; `/lottery/mobile` and `/lottery/settings` remain preserved specialist routes.
 - Prediction page backed by `lottery/training/*` APIs.
 - Rule training, latest prediction, and latest actual record stored through Redis-backed service state.
 - Durable prediction history, prediction detail, personal tickets, latest prize checking, and ticket linkbacks.
@@ -51,14 +54,19 @@ Live capabilities already present in the codebase:
 - Operations pages for sync summary, provider probe history, settings, and data quality repair.
 - Astronaut naming, voyage records, and voyage counts through `lottery/astronauts/*`.
 - Statistics and analysis routes including frequency, group, distribution, pixel views, Taiji, space, and hexagram pages.
+- The current route smoke and release evidence pass 808 checks across 18 routes with zero failures.
 
 ## Next Iteration
 
-Iteration 27 should start from `docs/lottery/iterations/iteration-27-plan.md` and `docs/lottery/iterations/checklist.md`. The planned workbench focus flow is:
+Iteration 46 is complete; its final implementation and evidence are recorded in `docs/lottery/iterations/iteration-46-plan.md` and the checked Iteration 46 section in `docs/lottery/iterations/checklist.md`.
+
+The next promoted slice is Iteration 47: MiniGPT Lottery Research Loop V1. Start by turning the candidate in `docs/lottery/iterations/long-term-plan.md` into an iteration plan, then keep the first delivery bounded to a reproducible research chain:
 
 ```text
-open workbench -> scan next-step focus -> hand off to mobile, governance, tickets, recommendations, or exports
+versioned corpus -> time-based train/validation split -> candidate generation and repair -> random-baseline backtest -> decision/ticket/result review
 ```
+
+Gate progress on legal-number parse rate, candidate diversity, reproducible provenance, time-window backtests, and comparison with a random baseline rather than training loss alone.
 
 For protected browser QA, use [Quality gates](iterations/quality-gates.md). Start the frontend with `npm run dev:qa` for frontend-only visual checks without a login session; this explicit Vite QA mode bypasses only the loopback-hosted local route guard and is disabled in production builds. A running backend is still required for data-backed interactions. `ECONNREFUSED` on `/lottery/records/draws?page=0&size=500` is a backend/proxy blocker, not a page-layout failure.
 
@@ -72,7 +80,7 @@ Iteration 10 is the longer platform roadmap after the workbench foundation. It s
 daily state backbone -> strategy experiments -> backtest evidence -> alerts/calendar -> budget governance -> export/audit/maintenance
 ```
 
-Iteration 10 completed the platform foundation, and later frontend/usability waves are tracked in `docs/lottery/iterations/checklist.md`. Iteration 27 focuses on workbench issue focus and daily handoff clarity.
+Iteration 10 completed the platform foundation, and later frontend/usability waves are tracked in `docs/lottery/iterations/checklist.md`. Iterations 1-46 are complete; Iteration 47 is the next promoted MiniGPT lottery research-loop slice.
 
 ## Non-Negotiable Rules
 

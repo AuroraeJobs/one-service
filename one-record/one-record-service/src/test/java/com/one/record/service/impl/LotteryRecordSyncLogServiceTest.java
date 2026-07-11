@@ -1,19 +1,29 @@
 package com.one.record.service.impl;
 
+import com.one.common.exception.NotFoundException;
+import com.one.record.exception.LotteryRecordSyncLogConflictException;
 import com.one.record.lottery.LotteryRecordSyncSummary;
 import com.one.record.client.RecordClientException;
 import com.one.record.model.LotteryRecordSyncLog;
 import com.one.record.repository.LotteryRecordSyncLogRepository;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -119,22 +129,74 @@ class LotteryRecordSyncLogServiceTest {
     }
 
     @Test
-    void findPageFiltersByStatusAndStartedRange() {
+    void findPageDelegatesFiltersAndZeroBasedPageToMongoRepository() {
         LotteryRecordSyncLogRepository repository = mock(LotteryRecordSyncLogRepository.class);
-        when(repository.findAll(any(Sort.class))).thenReturn(List.of(
-                log("manual-record-sync", "SUCCESS", 3, 100L, 120L),
-                log("scheduled-record-sync", "FAILED", 0, 200L, 220L),
-                log("scheduled-record-sync", "SUCCESS", 1, 300L, 320L)
+        when(repository.findPage(eq("SUCCESS"), eq(150L), eq(350L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(
+                        List.of(log("scheduled-record-sync", "SUCCESS", 1, 300L, 320L)),
+                        PageRequest.of(1, 1),
+                        3
+                ));
+        LotteryRecordSyncLogService service = new LotteryRecordSyncLogService(repository);
+
+        var page = service.findPage(" success ", 150L, 350L, 1, 1);
+
+        assertThat(page.getItems()).extracting(LotteryRecordSyncLog::getStartedAt).containsExactly(300L);
+        assertThat(page.getPage()).isEqualTo(1);
+        assertThat(page.getPageSize()).isEqualTo(1);
+        assertThat(page.getTotal()).isEqualTo(3);
+        assertThat(page.getHasNext()).isTrue();
+
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.captor();
+        verify(repository).findPage(eq("SUCCESS"), eq(150L), eq(350L), pageableCaptor.capture());
+        assertThat(pageableCaptor.getValue().getPageNumber()).isEqualTo(1);
+        assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(1);
+        assertThat(pageableCaptor.getValue().getSort().getOrderFor("startedAt"))
+                .extracting(Sort.Order::getDirection)
+                .isEqualTo(Sort.Direction.DESC);
+        assertThat(pageableCaptor.getValue().getSort().getOrderFor("_id"))
+                .extracting(Sort.Order::getDirection)
+                .isEqualTo(Sort.Direction.DESC);
+        verify(repository, never()).findAll(any(Sort.class));
+    }
+
+    @Test
+    void deleteRemovesExistingSyncLog() {
+        LotteryRecordSyncLogRepository repository = mock(LotteryRecordSyncLogRepository.class);
+        when(repository.findById("sync-1")).thenReturn(Optional.of(
+                LotteryRecordSyncLog.builder().id("sync-1").status("SUCCESS").build()
         ));
         LotteryRecordSyncLogService service = new LotteryRecordSyncLogService(repository);
 
-        var page = service.findPage("success", 150L, 350L, 0, 1);
+        service.delete("sync-1");
 
-        assertThat(page.getItems()).extracting(LotteryRecordSyncLog::getStartedAt).containsExactly(300L);
-        assertThat(page.getPage()).isZero();
-        assertThat(page.getPageSize()).isEqualTo(1);
-        assertThat(page.getTotal()).isEqualTo(1);
-        assertThat(page.getHasNext()).isFalse();
+        verify(repository).deleteById("sync-1");
+    }
+
+    @Test
+    void deleteRequiresExistingSyncLog() {
+        LotteryRecordSyncLogRepository repository = mock(LotteryRecordSyncLogRepository.class);
+        when(repository.findById("missing")).thenReturn(Optional.empty());
+        LotteryRecordSyncLogService service = new LotteryRecordSyncLogService(repository);
+
+        assertThatThrownBy(() -> service.delete("missing"))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessageContaining("彩票同步记录不存在");
+    }
+
+    @Test
+    void deleteRejectsRunningSyncLog() {
+        LotteryRecordSyncLogRepository repository = mock(LotteryRecordSyncLogRepository.class);
+        when(repository.findById("sync-running")).thenReturn(Optional.of(
+                LotteryRecordSyncLog.builder().id("sync-running").status(" running ").build()
+        ));
+        LotteryRecordSyncLogService service = new LotteryRecordSyncLogService(repository);
+
+        assertThatThrownBy(() -> service.delete("sync-running"))
+                .isInstanceOf(LotteryRecordSyncLogConflictException.class)
+                .hasMessageContaining("运行中")
+                .hasMessageContaining("sync-running");
+        verify(repository, never()).deleteById(anyString());
     }
 
     private static LotteryRecordSyncLog log(String jobName, String status, Integer savedCount, Long startedAt, Long finishedAt) {

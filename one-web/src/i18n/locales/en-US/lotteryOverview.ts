@@ -2,7 +2,7 @@ import type { MessageTemplate } from '../../types';
 
 export const lotteryOverviewMessages: Record<string, MessageTemplate> = {
   '彩票数据': 'Lottery Data',
-  '双色球数据概览': 'Double Color Ball Overview',
+  '数据概览': 'Data Overview',
   '更新数据': 'Refresh Data',
   '一键更新': 'Update All',
   '一键更新完成': 'Update completed',
@@ -54,4 +54,15 @@ export const lotteryOverviewMessages: Record<string, MessageTemplate> = {
   '同步数据后显示冷门红球': 'Sync data to show the coldest red ball',
   '同步数据后显示热门蓝球': 'Sync data to show the hottest blue ball',
   '同步数据后显示冷门蓝球': 'Sync data to show the coldest blue ball',
+  '{{count}} 天': { one: '{{count}} day', other: '{{count}} days' },
+  '{{count}} 小时': { one: '{{count}} hour', other: '{{count}} hours' },
+  '成功 {{success}}，失败 {{failed}}，跳过 {{skipped}}': 'Success {{success}}, failed {{failed}}, skipped {{skipped}}',
+  '最近失败 {{failureTime}}，最近成功 {{successTime}}': 'Latest failure {{failureTime}}, latest success {{successTime}}',
+  '{{provider}} · 成功 {{success}}/{{total}}': '{{provider}} · Success {{success}}/{{total}}',
+  '{{count}} 条诊断记录，当前页跳过 {{skipped}} 条': '{{count}} diagnostic records, {{skipped}} skipped on this page',
+  '{{count}} 条': { one: '{{count}} record', other: '{{count}} records' },
+  '最近请求 {{request}}': 'Latest request: {{request}}',
+  'Provider: {{provider}}，模式: {{mode}}，HTTP: {{http}}，分类: {{category}}': 'Provider: {{provider}}, mode: {{mode}}, HTTP: {{http}}, category: {{category}}',
+  '共 {{total}} 条': '{{total}} total',
+  'Provider 返回了未翻译的诊断信息': 'The provider returned an untranslated diagnostic message',
 };

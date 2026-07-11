@@ -1,0 +1,352 @@
+.lottery-provider-reliability-grid button {
+  --provider-reliability-tone: #8e8e93;
+  position: relative;
+  align-content: start;
+  gap: 10px;
+  min-height: 148px;
+  padding: 16px;
+  overflow: hidden;
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+.lottery-provider-reliability-grid button::before {
+  position: absolute;
+  inset: 0 14px auto;
+  height: 3px;
+  border-radius: 0 0 999px 999px;
+  background: var(--provider-reliability-tone);
+  content: '';
+}
+
+.lottery-provider-reliability-grid button[data-status='PASS'] {
+  --provider-reliability-tone: #34c759;
+}
+
+.lottery-provider-reliability-grid button[data-status='WARNING'] {
+  --provider-reliability-tone: #ff9f0a;
+}
+
+.lottery-provider-reliability-grid button[data-status='FAILED'] {
+  --provider-reliability-tone: #ff453a;
+}
+
+.lottery-provider-reliability-grid button[data-status='MANUAL'] {
+  --provider-reliability-tone: #0a84ff;
+}
+
+.lottery-provider-reliability-grid button:hover {
+  border-color: color-mix(in srgb, var(--provider-reliability-tone) 48%, var(--app-border));
+  transform: translateY(-1px);
+}
+
+.lottery-provider-reliability-head {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.lottery-provider-reliability-grid .lottery-provider-reliability-head strong {
+  min-width: 0;
+  color: var(--app-text);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.lottery-provider-reliability-grid .lottery-provider-reliability-status.ant-tag {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  width: auto;
+  margin: 0;
+  padding: 1px 8px 1px 7px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 20px;
+  letter-spacing: 0.02em;
+}
+
+.lottery-provider-reliability-grid .lottery-provider-reliability-status.ant-tag::before {
+  width: 6px;
+  height: 6px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  content: '';
+}
+
+.lottery-provider-reliability-grid .lottery-provider-reliability-value {
+  color: var(--app-text);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.lottery-provider-reliability-grid button small {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lottery-provider-reliability-grid button {
+    transition: none;
+  }
+
+  .lottery-provider-reliability-grid button:hover {
+    transform: none;
+  }
+}
+
+.lottery-sync-record-panel .ant-card-head-title {
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+}
+
+.lottery-sync-record-toolbar {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 150px;
+  align-items: center;
+  gap: 16px;
+}
+
+.lottery-sync-record-toolbar > strong {
+  justify-self: start;
+  color: var(--app-text);
+  font-size: 16px;
+}
+
+.lottery-sync-record-status-filter {
+  width: 150px;
+  justify-self: end;
+  font-weight: 400;
+}
+
+.lottery-sync-record-panel .lottery-list-pagination {
+  justify-content: center;
+}
+
+.lottery-sync-record-load-state {
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  color: var(--app-text-muted);
+  font-size: 13px;
+}
+
+.lottery-sync-record-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 360px));
+  justify-content: start;
+  gap: 14px;
+}
+
+.lottery-sync-record-card {
+  --sync-record-tone: var(--module-accent, #ff3b30);
+  position: relative;
+  min-width: 0;
+  display: grid;
+  gap: 0;
+  overflow: hidden;
+  padding: 18px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-sync-record-card::before {
+  position: absolute;
+  inset: auto auto 0 50%;
+  width: 72px;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--sync-record-tone);
+  transform: translateX(-50%);
+  content: '';
+}
+
+.lottery-sync-record-card[data-status='SUCCESS'] {
+  --sync-record-tone: #34c759;
+}
+
+.lottery-sync-record-card[data-status='FAILED'] {
+  --sync-record-tone: #ff453a;
+}
+
+.lottery-sync-record-card[data-status='RUNNING'] {
+  --sync-record-tone: #0a84ff;
+}
+
+.lottery-sync-record-card[data-status='SKIPPED'] {
+  --sync-record-tone: #ff9f0a;
+}
+
+.lottery-sync-record-issues {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--app-border);
+}
+
+.lottery-sync-record-issue {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+}
+
+.lottery-sync-record-issue-end {
+  justify-items: end;
+  text-align: right;
+}
+
+.lottery-sync-record-issue > span,
+.lottery-sync-record-saved > span,
+.lottery-sync-record-time > span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.lottery-sync-record-issue strong {
+  overflow: hidden;
+  color: var(--app-text);
+  font-size: 18px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-sync-record-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: 16px;
+  padding: 14px 0;
+}
+
+.lottery-sync-record-saved {
+  min-width: 0;
+  display: grid;
+  justify-items: end;
+  gap: 7px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.lottery-sync-record-saved strong {
+  color: var(--sync-record-tone);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.lottery-sync-record-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--sync-record-tone) 6%, var(--app-surface));
+}
+
+.lottery-sync-record-time {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+  color: var(--app-text-muted);
+  white-space: nowrap;
+}
+
+.lottery-sync-record-detail-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lottery-sync-record-actions .ant-tag {
+  margin-inline-end: 0;
+}
+
+.lottery-sync-record-actions .ant-btn {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  padding: 0;
+}
+
+.lottery-sync-record-time .anticon {
+  color: var(--sync-record-tone);
+}
+
+.lottery-sync-record-time time {
+  color: var(--app-text);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .lottery-sync-record-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 360px));
+  }
+}
+
+@media (max-width: 560px) {
+  .lottery-sync-record-panel .ant-card-head {
+    min-height: 0;
+    padding-inline: 16px;
+  }
+
+  .lottery-sync-record-panel .ant-card-head-title {
+    padding-block: 14px;
+  }
+
+  .lottery-sync-record-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .lottery-sync-record-status-filter {
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .lottery-sync-record-card {
+    padding: 15px;
+  }
+
+  .lottery-sync-record-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lottery-sync-record-issues {
+    gap: 9px;
+    padding-bottom: 14px;
+  }
+
+  .lottery-sync-record-issue strong {
+    font-size: 16px;
+  }
+
+  .lottery-sync-record-saved {
+    padding: 6px 8px;
+  }
+
+  .lottery-sync-record-panel .lottery-list-pagination.ant-pagination {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .lottery-sync-record-panel .lottery-list-pagination .ant-pagination-options {
+    margin-inline-start: 0;
+  }
+
+}

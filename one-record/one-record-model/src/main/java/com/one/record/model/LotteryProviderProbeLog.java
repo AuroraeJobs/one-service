@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
@@ -12,6 +14,12 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(collection = "lottery_provider_probe_logs")
+@CompoundIndexes({
+        @CompoundIndex(name = "idx_lottery_probe_checked_at", def = "{'checkedAt': -1}"),
+        @CompoundIndex(name = "idx_lottery_probe_provider_checked_at", def = "{'provider': 1, 'checkedAt': -1}"),
+        @CompoundIndex(name = "idx_lottery_probe_success_checked_at", def = "{'success': 1, 'checkedAt': -1}"),
+        @CompoundIndex(name = "idx_lottery_probe_provider_success_checked_at", def = "{'provider': 1, 'success': 1, 'checkedAt': -1}")
+})
 public class LotteryProviderProbeLog {
 
     @Id

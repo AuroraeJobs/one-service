@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Empty, message, Space, Spin, Tag } from 'antd';
-import { DatabaseOutlined, SyncOutlined } from '@ant-design/icons';
+import { DashboardOutlined, MobileOutlined, SettingOutlined, SyncOutlined } from '@ant-design/icons';
 import type { EChartsOption } from 'echarts';
 import ReactECharts from './LotteryLocalizedECharts';
 import { useNavigate } from 'react-router-dom';
@@ -247,9 +247,18 @@ const LotteryOverviewPage = () => {
     <LifePageShell
       className="lottery-overview-page"
       eyebrow={t('彩票数据')}
-      title={t('双色球数据概览')}
+      title={t('数据概览')}
       actions={
         <Space wrap>
+          <Button icon={<DashboardOutlined />} onClick={() => navigate('/lottery/workbench')}>
+            {t('工作台')}
+          </Button>
+          <Button icon={<MobileOutlined />} onClick={() => navigate('/lottery/mobile')}>
+            {t('移动')}
+          </Button>
+          <Button icon={<SettingOutlined />} onClick={() => navigate('/lottery/settings')}>
+            {t('设置')}
+          </Button>
           <Button
             type="primary"
             icon={<SyncOutlined />}
@@ -258,9 +267,6 @@ const LotteryOverviewPage = () => {
             onClick={handleUpdateAll}
           >
             {t('一键更新')}
-          </Button>
-          <Button icon={<DatabaseOutlined />} onClick={() => navigate('/lottery/records')}>
-            {t('开奖记录')}
           </Button>
         </Space>
       }

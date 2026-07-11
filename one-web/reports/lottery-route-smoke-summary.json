@@ -1,12 +1,12 @@
 {
   "target": "Lottery unified overview default smoke",
-  "generatedAt": "2026-07-11T02:28:12.455Z",
+  "generatedAt": "2026-07-11T11:19:12.951Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 18,
-  "checkCount": 688,
+  "checkCount": 808,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
@@ -22,9 +22,9 @@
       "route": "/lottery/sync",
       "label": "同步",
       "component": "LotterySyncOperationsPage",
-      "mockApiCount": 5,
-      "emptyStateCount": 8,
-      "errorStateCount": 3
+      "mockApiCount": 6,
+      "emptyStateCount": 9,
+      "errorStateCount": 4
     },
     {
       "route": "/lottery/prediction",

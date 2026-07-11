@@ -40,6 +40,7 @@ const run = async () => {
   const fixture = await readJson(fixturePath);
   const routeSource = await readText('src/routes/lifeRoutes.tsx');
   const navSource = await readText('src/constants/lifeDataModules.tsx');
+  const overviewSource = await readText('src/components/LotteryOverviewPage.tsx');
   const footerNavSource = await readText('src/components/SeasonFooterNav.tsx');
   const appCssSource = await readText('src/App.css');
   const apiSource = await readText('src/services/api.ts');
@@ -47,7 +48,9 @@ const run = async () => {
   record(fixture.mode === 'mocked-fixture', 'fixture', 'uses mocked fixture mode');
   record(fixture.providerNetwork === 'not-required', 'fixture', 'does not require live lottery provider network');
   record(Array.isArray(fixture.consoleErrors) && fixture.consoleErrors.length === 0, 'fixture', 'declares zero expected console errors');
-  record(containsEvery(navSource, ["label: '概览'", "label: '工作台'", "label: '移动'", "label: '预测'", "label: '执行'", "label: '复盘'", "label: '数据'", "label: '图谱'", "label: '设置'"]), 'navigation', 'lottery top-level groups are all present in the footer source');
+  record(containsEvery(navSource, ["label: '概览'", "label: '预测'", "label: '执行'", "label: '复盘'", "label: '数据'", "label: '图谱'"]), 'navigation', 'lottery top-level groups are all present in the footer source');
+  record(!navSource.includes("id: 'lottery-workbench'") && !navSource.includes("id: 'lottery-mobile'") && !navSource.includes("id: 'lottery-settings'"), 'navigation', 'workbench, mobile, and settings are omitted from the footer source');
+  record(overviewSource.includes("navigate('/lottery/workbench')") && overviewSource.includes("navigate('/lottery/mobile')") && overviewSource.includes("navigate('/lottery/settings')"), 'navigation', 'overview actions expose workbench, mobile, and settings routes');
   record(!navSource.includes('secondary?: boolean') && !navSource.includes('secondary: true'), 'navigation', 'lottery footer does not hide top-level groups with secondary flags');
   record(!footerNavSource.includes('MoreOutlined') && !footerNavSource.includes('更多'), 'navigation', 'footer navigation does not render a more menu');
   record(footerNavSource.includes('items.map(item => renderNavItem(item))'), 'navigation', 'footer renders every top-level group directly');
