@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { Alert, Button, Card, Input, Space, Tag } from 'antd';
 import {
   ApiOutlined,
@@ -276,8 +276,13 @@ const LifeDataConnectionsPage = () => {
           </div>
           <div className="life-connection-list">
             {lifeDataModules.map(module => (
-              <button key={module.id} type="button" onClick={() => navigate(module.path)}>
-                <span className="life-module-icon" style={{ color: module.accent }}>
+              <button
+                key={module.id}
+                type="button"
+                onClick={() => navigate(module.path)}
+                style={{ '--life-module-accent': module.accent } as CSSProperties}
+              >
+                <span className="life-module-icon">
                   {module.icon}
                 </span>
                 <div>

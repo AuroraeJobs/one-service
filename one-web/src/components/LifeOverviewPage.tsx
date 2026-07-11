@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { Card, Progress, Tag } from 'antd';
 import {
   ApiOutlined,
@@ -107,9 +107,10 @@ const LifeOverviewPage = () => {
               className="life-module-card"
               hoverable
               onClick={() => navigate(module.path)}
+              style={{ '--life-module-accent': module.accent } as CSSProperties}
             >
               <div className="life-module-card-head">
-                <span className="life-module-icon" style={{ color: module.accent }}>
+                <span className="life-module-icon">
                   {module.icon}
                 </span>
                 <Tag color={statusColor[module.status]}>{getLifeStatusText(module.status, language)}</Tag>
@@ -121,7 +122,7 @@ const LifeOverviewPage = () => {
               <Progress
                 percent={score}
                 showInfo={false}
-                strokeColor={module.accent}
+                strokeColor="var(--life-module-accent-contrast, #0071e3)"
                 trailColor="rgba(127, 127, 127, 0.14)"
               />
 
