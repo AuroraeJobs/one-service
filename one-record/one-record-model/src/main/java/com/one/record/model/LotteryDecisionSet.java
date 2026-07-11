@@ -1,6 +1,7 @@
 package com.one.record.model;
 
 import com.one.record.lottery.LotteryAuditMetadata;
+import com.one.record.lottery.LotteryResearchProvenance;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -40,6 +41,16 @@ public class LotteryDecisionSet {
     private String conversionState;
 
     private String note;
+
+    private LotteryResearchProvenance provenance;
+
+    private String reviewAction;
+
+    private String reviewNote;
+
+    private String reviewBacktestId;
+
+    private Long reviewedAt;
 
     @Builder.Default
     private List<LotteryDecisionCandidateSelection> selectedCandidates = new ArrayList<>();

@@ -5,6 +5,7 @@ import com.one.record.lottery.LotteryLedgerSummary;
 import com.one.record.lottery.LotteryMonthlyLedger;
 import com.one.record.lottery.LotteryPerformanceLedger;
 import com.one.record.lottery.LotteryPrizeResult;
+import com.one.record.lottery.LotteryResearchProvenance;
 import com.one.record.model.LotteryBacktestReport;
 import com.one.record.model.LotteryPredictionSnapshot;
 import com.one.record.model.LotteryTicket;
@@ -278,6 +279,59 @@ class LotteryLedgerServiceTest {
         assertThat(performance.get(0).getBacktestSummary().getBacktestId()).isEqualTo("bt-rule");
         assertThat(performance.get(0).getBacktestSummary().getRoiPercent()).isEqualByComparingTo("-33.33");
         assertThat(performance.get(1).getKey()).isEqualTo("MANUAL");
+    }
+
+    @Test
+    void performanceGroupsResearchTicketsByDecisionRunAndBatchWithProvenance() {
+        LotteryResearchProvenance firstProvenance = LotteryResearchProvenance.builder()
+                .runId("run-1")
+                .runName("formal-run")
+                .batchId("batch-1")
+                .generationId("generation-1")
+                .build();
+        LotteryResearchProvenance secondProvenance = LotteryResearchProvenance.builder()
+                .runId("run-1")
+                .runName("formal-run")
+                .batchId("batch-1")
+                .generationId("generation-2")
+                .build();
+        when(ticketRepository.findByUserIdOrderByPeriodDescCreatedAtDesc("default")).thenReturn(List.of(
+                LotteryTicket.builder()
+                        .decisionSetId("decision-1")
+                        .source("MINIGPT")
+                        .cost(new BigDecimal("2"))
+                        .provenance(firstProvenance)
+                        .build(),
+                LotteryTicket.builder()
+                        .decisionSetId("decision-1")
+                        .source("MINIGPT")
+                        .cost(new BigDecimal("2"))
+                        .provenance(secondProvenance)
+                        .build()
+        ));
+        when(backtestReportRepository.findAll(any(Sort.class))).thenReturn(List.of());
+
+        List<LotteryPerformanceLedger> byDecision = service.performance("decision_set");
+        List<LotteryPerformanceLedger> byRun = service.performance("minigpt_run");
+        List<LotteryPerformanceLedger> byBatch = service.performance("minigpt_batch");
+
+        assertThat(byDecision).singleElement().satisfies(row -> {
+            assertThat(row.getDimension()).isEqualTo("DECISION_SET");
+            assertThat(row.getKey()).isEqualTo("decision-1");
+            assertThat(row.getTicketCount()).isEqualTo(2);
+            assertThat(row.getProvenance()).containsExactly(firstProvenance, secondProvenance);
+        });
+        assertThat(byRun).singleElement().satisfies(row -> {
+            assertThat(row.getDimension()).isEqualTo("MINIGPT_RUN");
+            assertThat(row.getKey()).isEqualTo("run-1");
+            assertThat(row.getName()).isEqualTo("formal-run");
+            assertThat(row.getProvenance()).containsExactly(firstProvenance, secondProvenance);
+        });
+        assertThat(byBatch).singleElement().satisfies(row -> {
+            assertThat(row.getDimension()).isEqualTo("MINIGPT_BATCH");
+            assertThat(row.getKey()).isEqualTo("batch-1");
+            assertThat(row.getProvenance()).containsExactly(firstProvenance, secondProvenance);
+        });
     }
 
     @Test

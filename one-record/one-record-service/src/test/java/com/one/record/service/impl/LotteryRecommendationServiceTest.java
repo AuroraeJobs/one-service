@@ -2,6 +2,7 @@ package com.one.record.service.impl;
 
 import com.one.record.lottery.LotteryOutcomeAttribution;
 import com.one.record.lottery.LotteryRecommendationStatusRequest;
+import com.one.record.lottery.LotteryResearchProvenance;
 import com.one.record.model.LotteryAuditEvent;
 import com.one.record.model.LotteryRecommendation;
 import com.one.record.repository.LotteryAuditEventRepository;
@@ -9,16 +10,19 @@ import com.one.record.repository.LotteryRecommendationRepository;
 import com.one.record.service.ILotteryOutcomeAttributionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.data.domain.PageRequest;
 
 import java.math.BigDecimal;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class LotteryRecommendationServiceTest {
@@ -86,6 +90,50 @@ class LotteryRecommendationServiceTest {
         var page = service.refresh(3);
 
         assertThat(page.getTotal()).isEqualTo(4);
+    }
+
+    @Test
+    void decisionRecommendationsRespectManualReviewAndBaselineOverfitGates() {
+        LotteryResearchProvenance provenance = LotteryResearchProvenance.builder()
+                .runId("run-1")
+                .batchId("batch-1")
+                .build();
+        when(outcomeService.recent(3)).thenReturn(List.of(LotteryOutcomeAttribution.builder()
+                .issue("2026068")
+                .decisionContributions(List.of(
+                        decision("manual-retire", provenance, "RETIRE", new BigDecimal("80"), List.of(), 1, new BigDecimal("10")),
+                        decision("safe-promote", provenance, null, new BigDecimal("25"), List.of(), 1, new BigDecimal("8")),
+                        decision("overfit-pause", provenance, null, new BigDecimal("25"), List.of("TRAIN_WINDOW_OVERLAP"), 1, new BigDecimal("8")),
+                        decision("inconclusive-watch", provenance, null, null, List.of(), 1, new BigDecimal("8"))
+                ))
+                .build()));
+        when(repository.findByUserIdAndTargetTypeAndTargetId("default", "DECISION_SET", "safe-promote"))
+                .thenReturn(Optional.of(LotteryRecommendation.builder()
+                        .id("existing-safe-promote")
+                        .userId("default")
+                        .targetType("DECISION_SET")
+                        .targetId("safe-promote")
+                        .lifecycleStatus("SNOOZED")
+                        .archived(false)
+                        .createdAt(1L)
+                        .build()));
+        when(repository.findByUserIdAndArchivedFalseOrderByUpdatedAtDesc("default", PageRequest.of(0, 20))).thenReturn(List.of());
+        when(repository.countByUserIdAndArchivedFalse("default")).thenReturn(0L);
+
+        service.refresh(3);
+
+        ArgumentCaptor<LotteryRecommendation> captor = ArgumentCaptor.forClass(LotteryRecommendation.class);
+        verify(repository, atLeastOnce()).save(captor.capture());
+        Map<String, LotteryRecommendation> decisions = captor.getAllValues().stream()
+                .filter(item -> "DECISION_SET".equals(item.getTargetType()))
+                .collect(java.util.stream.Collectors.toMap(LotteryRecommendation::getTargetId, item -> item));
+        assertThat(decisions.get("manual-retire").getRecommendationState()).isEqualTo("RETIRE");
+        assertThat(decisions.get("safe-promote").getRecommendationState()).isEqualTo("PROMOTE");
+        assertThat(decisions.get("safe-promote").getLifecycleStatus()).isEqualTo("SNOOZED");
+        assertThat(decisions.get("overfit-pause").getRecommendationState()).isEqualTo("PAUSE");
+        assertThat(decisions.get("inconclusive-watch").getRecommendationState()).isEqualTo("WATCH");
+        assertThat(decisions.get("safe-promote").getEvidence()).singleElement()
+                .satisfies(evidence -> assertThat(evidence.getProvenance()).containsExactly(provenance));
     }
 
     @Test
@@ -158,5 +206,27 @@ class LotteryRecommendationServiceTest {
         assertThat(rollup.getRecommendationStateDistribution()).containsEntry("PROMOTE", 1).containsEntry("WATCH", 1).containsEntry("PAUSE", 1);
         assertThat(rollup.getTransitions()).hasSize(1);
         assertThat(rollup.getTransitions().get(0).getLifecycleStatus()).isEqualTo("APPLIED");
+    }
+
+    private LotteryOutcomeAttribution.DecisionContribution decision(String id,
+                                                                     LotteryResearchProvenance provenance,
+                                                                     String reviewAction,
+                                                                     BigDecimal backtestRoiPercentDelta,
+                                                                     List<String> backtestWarnings,
+                                                                     int winningCandidateCount,
+                                                                     BigDecimal netResult) {
+        return LotteryOutcomeAttribution.DecisionContribution.builder()
+                .decisionSetId(id)
+                .title(id)
+                .ruleName("MiniGPT")
+                .provenance(provenance)
+                .reviewAction(reviewAction)
+                .backtestRoiPercentDelta(backtestRoiPercentDelta)
+                .backtestWarnings(backtestWarnings)
+                .winningCandidateCount(winningCandidateCount)
+                .netResult(netResult)
+                .roiPercent(new BigDecimal("50"))
+                .contributionState("POSITIVE")
+                .build();
     }
 }

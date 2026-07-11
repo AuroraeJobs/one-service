@@ -1381,6 +1381,10 @@ export interface MiniGptGenerationResult {
   trainSha256?: string;
   validationSha256?: string;
   checkpointSha256?: string;
+  trainFirstIssue?: string;
+  trainLatestIssue?: string;
+  validationFirstIssue?: string;
+  validationLatestIssue?: string;
   modelConfig?: Record<string, unknown>;
   strategyLabel?: string;
   poolSelected?: boolean;
@@ -1446,6 +1450,35 @@ export interface MiniGptGenerationBatchResult {
   strategyComposition?: Record<string, number>;
   items: MiniGptGenerationResult[];
   generatedAt?: number;
+}
+
+export interface LotteryResearchProvenance {
+  sourceType?: string;
+  generationId?: string;
+  batchId?: string;
+  runId?: string;
+  runName?: string;
+  corpusVersion?: string;
+  trainSha256?: string;
+  validationSha256?: string;
+  checkpointSha256?: string;
+  prompt?: string;
+  maxNewTokens?: number;
+  temperature?: number;
+  topK?: number;
+  seed?: number;
+  strategyLabel?: string;
+  trainFirstIssue?: string;
+  trainLatestIssue?: string;
+  validationFirstIssue?: string;
+  validationLatestIssue?: string;
+  batchBaseSeed?: number;
+  batchMaxRedOverlap?: number;
+  batchMinimumBlueCoverage?: number;
+  batchMinimumBlueCoverageMet?: boolean;
+  batchStrategies: string[];
+  modelConfig?: Record<string, unknown>;
+  capturedAt?: number;
 }
 
 export const miniGptApi = {
@@ -2596,6 +2629,10 @@ export interface LotteryStrategyExperiment {
 
 export interface LotteryBacktestReplayRow {
   issue?: string;
+  candidateKey?: string;
+  generationId?: string;
+  candidateSlot?: number;
+  seed?: number;
   drawDate?: string;
   predictedRedNumbers: string[];
   predictedBlueNumber?: string;
@@ -2617,11 +2654,22 @@ export interface LotteryBacktestBankrollPoint {
 
 export interface LotteryBacktestSummary {
   backtestId?: string;
+  decisionSetId?: string;
+  provenance?: LotteryResearchProvenance;
   strategyName?: string;
   presetWindow?: string;
   issueStart?: string;
   issueEnd?: string;
   replayCount?: number;
+  baselineSeed?: number;
+  baselineAlgorithm?: string;
+  windowIssueCount?: number;
+  candidateCount?: number;
+  uniqueCandidateCount?: number;
+  ticketCount?: number;
+  baselineTicketCount?: number;
+  sameWindow?: boolean;
+  sameBudget?: boolean;
   averageRedHits?: number;
   blueHitRate?: number;
   baselineAverageRedHits?: number;
@@ -2632,20 +2680,47 @@ export interface LotteryBacktestSummary {
   totalPrize?: number;
   netResult?: number;
   roiPercent?: number;
+  baselineTotalCost?: number;
+  baselineTotalPrize?: number;
+  baselineNetResult?: number;
+  baselineRoiPercent?: number;
+  averageRedHitsDelta?: number;
+  blueHitRateDelta?: number;
+  totalPrizeDelta?: number;
+  netResultDelta?: number;
+  roiPercentDelta?: number;
+  candidateDiversity?: number;
   prizeDistribution: Record<string, number>;
   baselinePrizeDistribution?: Record<string, number>;
+  hitDistribution?: Record<string, number>;
+  baselineHitDistribution?: Record<string, number>;
+  maxRedOverlap?: number;
+  distinctBlueCount?: number;
+  evaluationMode?: string;
+  overfitWarnings: string[];
   createdAt?: number;
 }
 
 export interface LotteryBacktestReport {
   id?: string;
   experimentId?: string;
+  decisionSetId?: string;
+  provenance?: LotteryResearchProvenance;
   strategyName?: string;
   presetWindow?: string;
   requestedWindow?: number;
   issueStart?: string;
   issueEnd?: string;
   replayCount?: number;
+  baselineSeed?: number;
+  baselineAlgorithm?: string;
+  windowIssueCount?: number;
+  candidateCount?: number;
+  uniqueCandidateCount?: number;
+  ticketCount?: number;
+  baselineTicketCount?: number;
+  sameWindow?: boolean;
+  sameBudget?: boolean;
   averageRedHits?: number;
   blueHitRate?: number;
   baselineAverageRedHits?: number;
@@ -2655,9 +2730,27 @@ export interface LotteryBacktestReport {
   totalCost?: number;
   totalPrize?: number;
   netResult?: number;
+  roiPercent?: number;
+  baselineTotalCost?: number;
+  baselineTotalPrize?: number;
+  baselineNetResult?: number;
+  baselineRoiPercent?: number;
+  averageRedHitsDelta?: number;
+  blueHitRateDelta?: number;
+  totalPrizeDelta?: number;
+  netResultDelta?: number;
+  roiPercentDelta?: number;
+  candidateDiversity?: number;
   prizeDistribution: Record<string, number>;
   baselinePrizeDistribution?: Record<string, number>;
+  hitDistribution?: Record<string, number>;
+  baselineHitDistribution?: Record<string, number>;
+  maxRedOverlap?: number;
+  distinctBlueCount?: number;
+  evaluationMode?: string;
+  overfitWarnings: string[];
   rows: LotteryBacktestReplayRow[];
+  baselineRows: LotteryBacktestReplayRow[];
   bankrollSimulation: LotteryBacktestBankrollPoint[];
   createdAt?: number;
 }
@@ -2764,6 +2857,7 @@ export interface LotteryBacktestRunRequest {
   window?: number;
   issueStart?: string;
   issueEnd?: string;
+  baselineSeed?: number;
 }
 
 export interface LotteryExperimentRunRequest {
@@ -2886,6 +2980,11 @@ export interface LotteryTicket {
   prizeGrade?: string;
   prizeResult?: LotteryPrizeResult;
   predictionSnapshotId?: string;
+  ticketPackId?: string;
+  decisionSetId?: string;
+  candidateKey?: string;
+  generationId?: string;
+  provenance?: LotteryResearchProvenance;
   note?: string;
   createdAt?: number;
   updatedAt?: number;
@@ -2893,6 +2992,11 @@ export interface LotteryTicket {
 
 export interface LotteryTicketPackItem {
   key?: string;
+  ticketPackId?: string;
+  decisionSetId?: string;
+  candidateKey?: string;
+  generationId?: string;
+  provenance?: LotteryResearchProvenance;
   title?: string;
   redNumbers: string[];
   blueNumber: string;
@@ -2900,7 +3004,6 @@ export interface LotteryTicketPackItem {
   cost?: number;
   source?: string;
   predictionSnapshotId?: string;
-  decisionSetId?: string;
   portfolioId?: string;
   note?: string;
   warnings?: string[];
@@ -2913,6 +3016,9 @@ export interface LotteryTicketPack {
   targetIssue?: string;
   sourceType?: 'MANUAL' | 'DECISION_SET' | 'SIMULATION' | 'PORTFOLIO' | string;
   sourceId?: string;
+  decisionSetId?: string;
+  generationId?: string;
+  provenance?: LotteryResearchProvenance;
   status?: 'DRAFT' | 'APPROVED' | 'SAVED' | 'ARCHIVED' | string;
   approvalState?: 'PENDING' | 'APPROVED' | string;
   archived?: boolean;
@@ -2941,6 +3047,11 @@ export interface LotteryOutcomeDecisionContribution {
   decisionSetId?: string;
   title?: string;
   ruleName?: string;
+  provenance?: LotteryResearchProvenance;
+  reviewAction?: string;
+  reviewBacktestId?: string;
+  backtestRoiPercentDelta?: number;
+  backtestWarnings?: string[];
   winningCandidateCount?: number;
   netResult?: number;
   roiPercent?: number;
@@ -2956,6 +3067,7 @@ export interface LotteryOutcomeTicketPackExecution {
   savedTicketCount?: number;
   proposedCost?: number;
   executionState?: string;
+  provenance?: LotteryResearchProvenance;
   sourcePack?: LotteryTicketPack;
 }
 
@@ -3185,6 +3297,8 @@ export interface LotteryTicketBulkOperationResult {
 
 export interface LotteryDecisionCandidateSelection {
   key?: string;
+  generationId?: string;
+  provenance?: LotteryResearchProvenance;
   snapshotId?: string;
   snapshotTitle?: string;
   candidateTitle?: string;
@@ -3220,6 +3334,11 @@ export interface LotteryDecisionSet {
   status?: string;
   conversionState?: string;
   note?: string;
+  provenance?: LotteryResearchProvenance;
+  reviewAction?: 'PROMOTE' | 'WATCH' | 'PAUSE' | 'RETIRE' | string;
+  reviewNote?: string;
+  reviewBacktestId?: string;
+  reviewedAt?: number;
   selectedCandidates: LotteryDecisionCandidateSelection[];
   archived?: boolean;
   archivedAt?: number;
@@ -3252,6 +3371,8 @@ export interface LotteryDecisionCandidateOutcome {
   decisionSetTitle?: string;
   candidateKey?: string;
   candidateTitle?: string;
+  generationId?: string;
+  provenance?: LotteryResearchProvenance;
   source?: string;
   snapshotId?: string;
   ruleName?: string;
@@ -3278,6 +3399,11 @@ export interface LotteryDecisionOutcomeItem {
   title?: string;
   targetIssue?: string;
   ruleName?: string;
+  provenance?: LotteryResearchProvenance;
+  reviewAction?: string;
+  reviewNote?: string;
+  reviewBacktestId?: string;
+  reviewedAt?: number;
   conversionState?: string;
   status?: string;
   candidateCount?: number;
@@ -3302,6 +3428,9 @@ export interface LotteryDecisionOutcomeItem {
   evidenceAlerts: string[];
   ruleDelta?: LotteryDecisionPerformanceDelta;
   sourceDelta?: LotteryDecisionPerformanceDelta;
+  backtestNetResultDelta?: number;
+  backtestRoiPercentDelta?: number;
+  backtestWarnings?: string[];
   candidates: LotteryDecisionCandidateOutcome[];
   createdAt?: number;
   updatedAt?: number;
@@ -3337,6 +3466,7 @@ export interface LotteryStrategyNoteEvidence {
   title?: string;
   sourceId?: string;
   path?: string;
+  provenance?: LotteryResearchProvenance[];
   attachedAt?: number;
 }
 
@@ -3445,6 +3575,21 @@ export interface LotteryPerformanceLedger {
   roiPercent?: number;
   hitRatePercent?: number;
   backtestSummary?: LotteryBacktestSummary;
+  provenance?: LotteryResearchProvenance[];
+}
+
+export interface LotteryMiniGptDecisionSetCreateRequest {
+  batchId: string;
+  generationIds: string[];
+  targetIssue: string;
+  title?: string;
+  note?: string;
+}
+
+export interface LotteryDecisionReviewRequest {
+  reviewAction: 'PROMOTE' | 'WATCH' | 'PAUSE' | 'RETIRE';
+  backtestId: string;
+  note?: string;
 }
 
 export interface LotteryWorkbenchStepResult {
@@ -3912,11 +4057,17 @@ export const lotteryDecisionSetApi = {
   createDecisionSet: (decisionSet: Partial<LotteryDecisionSet>): Promise<LotteryDecisionSet> => {
     return apiClient.post('/lottery/decision-sets', decisionSet);
   },
+  createMiniGptDecisionSet: (request: LotteryMiniGptDecisionSetCreateRequest): Promise<LotteryDecisionSet> => {
+    return apiClient.post('/lottery/decision-sets/minigpt', request);
+  },
   updateDecisionSet: (id: string, decisionSet: Partial<LotteryDecisionSet>): Promise<LotteryDecisionSet> => {
     return apiClient.put(`/lottery/decision-sets/${id}`, decisionSet);
   },
   archiveDecisionSet: (id: string): Promise<LotteryDecisionSet> => {
     return apiClient.patch(`/lottery/decision-sets/${id}/archive`);
+  },
+  reviewDecisionSet: (id: string, request: LotteryDecisionReviewRequest): Promise<LotteryDecisionSet> => {
+    return apiClient.patch(`/lottery/decision-sets/${id}/review`, request);
   }
 };
 
@@ -3948,7 +4099,7 @@ export const lotteryLedgerApi = {
   months: (): Promise<LotteryMonthlyLedger[]> => {
     return apiClient.get('/lottery/ledger/months');
   },
-  performance: (params?: { dimension?: 'source' | 'rule' }): Promise<LotteryPerformanceLedger[]> => {
+  performance: (params?: { dimension?: 'source' | 'rule' | 'decision_set' | 'minigpt_run' | 'minigpt_batch' }): Promise<LotteryPerformanceLedger[]> => {
     return apiClient.get('/lottery/ledger/performance', { params });
   }
 };

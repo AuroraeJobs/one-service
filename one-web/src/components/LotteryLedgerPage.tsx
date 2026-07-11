@@ -14,7 +14,7 @@ import {
 } from '@ant-design/icons';
 import type { EChartsOption } from 'echarts';
 import ReactECharts from './LotteryLocalizedECharts';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import {
   lotteryLedgerApi,
@@ -44,6 +44,23 @@ const hasBacktestSummary = (rows: LotteryPerformanceLedger[]) => rows.some(row =
 
 const performanceCompareKey = (row: LotteryPerformanceLedger) =>
   row.key ? `performance:${row.dimension || 'source'}:${row.key}` : undefined;
+
+type LedgerPerformanceDimension = 'source' | 'rule' | 'decision_set' | 'minigpt_run' | 'minigpt_batch';
+
+const normalizePerformanceDimension = (value?: string): LedgerPerformanceDimension => {
+  const normalized = String(value || '').trim().toLowerCase();
+  return ['source', 'rule', 'decision_set', 'minigpt_run', 'minigpt_batch'].includes(normalized)
+    ? normalized as LedgerPerformanceDimension
+    : 'source';
+};
+
+const performanceDimensionLabel = (dimension: LedgerPerformanceDimension) => ({
+  source: '来源',
+  rule: '规则',
+  decision_set: '决策集',
+  minigpt_run: 'MiniGPT Run',
+  minigpt_batch: 'MiniGPT Batch'
+}[dimension]);
 
 const createMonthlyTrendOption = (months: LotteryMonthlyLedger[]): EChartsOption => {
   const sortedMonths = [...months]
@@ -144,12 +161,17 @@ const createPerformanceOption = (rows: LotteryPerformanceLedger[], title: string
 
 const LotteryLedgerPage = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedDimension = normalizePerformanceDimension(searchParams.get('dimension') || undefined);
+  const requestedValue = searchParams.get('value') || '';
+  const requestedIssue = searchParams.get('issue') || '';
   const [summary, setSummary] = useState<LotteryLedgerSummary>(emptySummary);
   const [issues, setIssues] = useState<LotteryIssueLedger[]>([]);
   const [months, setMonths] = useState<LotteryMonthlyLedger[]>([]);
   const [sourcePerformance, setSourcePerformance] = useState<LotteryPerformanceLedger[]>([]);
   const [rulePerformance, setRulePerformance] = useState<LotteryPerformanceLedger[]>([]);
-  const [performanceDimension, setPerformanceDimension] = useState<'source' | 'rule'>('source');
+  const [lineagePerformance, setLineagePerformance] = useState<LotteryPerformanceLedger[]>([]);
+  const [performanceDimension, setPerformanceDimension] = useState<LedgerPerformanceDimension>(requestedDimension);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -162,10 +184,19 @@ const LotteryLedgerPage = () => {
   }, [summary.checkedTicketCount, summary.winningTicketCount]);
 
   const monthlyTrendOption = useMemo(() => createMonthlyTrendOption(months), [months]);
-  const activePerformanceRows = performanceDimension === 'source' ? sourcePerformance : rulePerformance;
+  const activePerformanceRows = useMemo(() => {
+    const rows = performanceDimension === 'source'
+      ? sourcePerformance
+      : performanceDimension === 'rule' ? rulePerformance : lineagePerformance;
+    return requestedValue ? rows.filter(row => row.key === requestedValue) : rows;
+  }, [lineagePerformance, performanceDimension, requestedValue, rulePerformance, sourcePerformance]);
+  const visibleIssues = useMemo(
+    () => requestedIssue ? issues.filter(item => item.issue === requestedIssue || String(item.period || '') === requestedIssue) : issues,
+    [issues, requestedIssue]
+  );
   const activePerformanceHasBacktest = useMemo(() => hasBacktestSummary(activePerformanceRows), [activePerformanceRows]);
   const performanceOption = useMemo(
-    () => createPerformanceOption(activePerformanceRows, performanceDimension === 'source' ? '来源表现' : '规则表现'),
+    () => createPerformanceOption(activePerformanceRows, `${performanceDimensionLabel(performanceDimension)}表现`),
     [activePerformanceRows, performanceDimension]
   );
   const activePerformanceCompareKeys = useMemo(() => activePerformanceRows
@@ -178,29 +209,48 @@ const LotteryLedgerPage = () => {
     setLoading(true);
     setError(undefined);
     try {
-      const [ledgerSummary, issueRows, monthRows, sourceRows, ruleRows] = await Promise.all([
+      const lineageRequest = requestedDimension === 'source' || requestedDimension === 'rule'
+        ? Promise.resolve([] as LotteryPerformanceLedger[])
+        : lotteryLedgerApi.performance({ dimension: requestedDimension });
+      const [ledgerSummary, issueRows, monthRows, sourceRows, ruleRows, lineageRows] = await Promise.all([
         lotteryLedgerApi.summary(),
         lotteryLedgerApi.issues(),
         lotteryLedgerApi.months(),
         lotteryLedgerApi.performance({ dimension: 'source' }),
-        lotteryLedgerApi.performance({ dimension: 'rule' })
+        lotteryLedgerApi.performance({ dimension: 'rule' }),
+        lineageRequest
       ]);
       setSummary(ledgerSummary || emptySummary);
       setIssues(issueRows || []);
       setMonths(monthRows || []);
       setSourcePerformance(sourceRows || []);
       setRulePerformance(ruleRows || []);
+      setLineagePerformance(lineageRows || []);
     } catch (requestError) {
       console.error('获取彩票账本失败:', requestError);
       setError(requestError instanceof Error ? requestError.message : '获取彩票账本失败');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [requestedDimension]);
 
   useEffect(() => {
     loadSummary();
   }, [loadSummary]);
+
+  useEffect(() => {
+    setPerformanceDimension(requestedDimension);
+  }, [requestedDimension]);
+
+  const selectPerformanceDimension = (dimension: LedgerPerformanceDimension) => {
+    setPerformanceDimension(dimension);
+    setSearchParams(current => {
+      const next = new URLSearchParams(current);
+      next.set('dimension', dimension);
+      if (dimension !== requestedDimension) next.delete('value');
+      return next;
+    });
+  };
 
   const issueColumns: ColumnsType<LotteryIssueLedger> = [
     {
@@ -281,6 +331,14 @@ const LotteryLedgerPage = () => {
       }
     >
       {error ? <Alert className="lottery-overview-status-alert" type="error" showIcon message={error} /> : null}
+      {requestedValue || requestedIssue ? (
+        <Alert
+          className="lottery-overview-status-alert"
+          type="info"
+          showIcon
+          message={`47C 账本定位：dimension=${requestedDimension} · value=${requestedValue || '-'} · issue=${requestedIssue || '-'}`}
+        />
+      ) : null}
 
       <section className="lottery-history-summary-grid">
         <Card className="life-panel-card lottery-clean-panel" loading={loading}>
@@ -348,16 +406,21 @@ const LotteryLedgerPage = () => {
 
       <Card
         className="life-panel-card"
-        title={<Space><BarChartOutlined />来源/规则表现</Space>}
+        title={<Space><BarChartOutlined />来源/规则/溯源表现</Space>}
         extra={
           <Space wrap>
             <Space.Compact>
-              <Button type={performanceDimension === 'source' ? 'primary' : 'default'} onClick={() => setPerformanceDimension('source')}>
+              <Button type={performanceDimension === 'source' ? 'primary' : 'default'} onClick={() => selectPerformanceDimension('source')}>
                 来源
               </Button>
-              <Button type={performanceDimension === 'rule' ? 'primary' : 'default'} onClick={() => setPerformanceDimension('rule')}>
+              <Button type={performanceDimension === 'rule' ? 'primary' : 'default'} onClick={() => selectPerformanceDimension('rule')}>
                 规则
               </Button>
+              {performanceDimension !== 'source' && performanceDimension !== 'rule' ? (
+                <Button type="primary" onClick={() => selectPerformanceDimension(performanceDimension)}>
+                  {performanceDimensionLabel(performanceDimension)}
+                </Button>
+              ) : null}
             </Space.Compact>
             <Button
               size="small"
@@ -388,7 +451,7 @@ const LotteryLedgerPage = () => {
         <Table
           rowKey={record => record.issue || String(record.period)}
           columns={issueColumns}
-          dataSource={issues}
+          dataSource={visibleIssues}
           loading={loading}
           pagination={{ pageSize: 10 }}
           scroll={{ x: 860 }}

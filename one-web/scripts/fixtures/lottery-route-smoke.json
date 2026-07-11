@@ -240,6 +240,182 @@
       ]
     },
     {
+      "scope": "iteration 47C MiniGPT outcome chain workflow",
+      "file": "src/components/MiniGptLearningPage.tsx",
+      "includes": [
+        "lotteryWorkbenchApi.dailyState()",
+        "candidateTargetIssue",
+        "createMiniGptDecisionSet",
+        "batchId: generationBatch.batchId",
+        "generationIds",
+        "baselineSeed",
+        "lotteryTicketPackApi.preview(payload)",
+        "lotteryTicketPackApi.create",
+        "candidateBacktest.sameWindow !== true",
+        "candidateBacktest.sameBudget !== true",
+        "status: 'DRAFT'",
+        "approvalState: 'PENDING'",
+        "items: []",
+        "handleReviewDecision",
+        "'PROMOTE', 'WATCH', 'PAUSE', 'RETIRE'",
+        "sameWindow",
+        "sameBudget",
+        "baselineRoiPercent",
+        "roiPercentDelta",
+        "baselineTotalCost",
+        "baselineTotalPrize",
+        "candidateDiversity ?? '-'}%",
+        "overfitWarnings",
+        "decisionSetId=",
+        "ticketPackId=",
+        "dimension=decision_set&value=",
+        "仅为历史窗口证据"
+      ],
+      "excludes": [
+        "lotteryTicketPackApi.approve",
+        "lotteryTicketPackApi.saveAsTickets"
+      ]
+    },
+    {
+      "scope": "iteration 47C lineage and baseline API contract",
+      "file": "src/services/api.ts",
+      "includes": [
+        "export interface LotteryResearchProvenance",
+        "baselineSeed?: number",
+        "sameWindow?: boolean",
+        "sameBudget?: boolean",
+        "baselineRoiPercent?: number",
+        "roiPercentDelta?: number",
+        "candidateDiversity?: number",
+        "overfitWarnings: string[]",
+        "baselineRows: LotteryBacktestReplayRow[]",
+        "ticketPackId?: string",
+        "decisionSetId?: string",
+        "provenance?: LotteryResearchProvenance",
+        "export interface LotteryMiniGptDecisionSetCreateRequest",
+        "export interface LotteryDecisionReviewRequest",
+        "apiClient.post('/lottery/decision-sets/minigpt', request)",
+        "apiClient.patch(`/lottery/decision-sets/${id}/review`, request)"
+      ]
+    },
+    {
+      "scope": "iteration 47C overfit warning localization",
+      "file": "src/utils/lotteryBacktestEvidence.ts",
+      "includes": [
+        "STATIC_POOL_HISTORICAL_REPLAY",
+        "TRAIN_WINDOW_OVERLAP",
+        "VALIDATION_WINDOW_OVERLAP",
+        "UNKNOWN_",
+        "SMALL_SAMPLE",
+        "LOW_CANDIDATE_DIVERSITY",
+        "NO_RANDOM_ADVANTAGE",
+        "BASELINE_",
+        "_MISMATCH",
+        "lotteryOverfitWarningsText"
+      ]
+    },
+    {
+      "scope": "iteration 47C decision deep-link and review workflow",
+      "file": "src/components/LotteryPredictionDecisionPage.tsx",
+      "includes": [
+        "searchParams.get('decisionSetId')",
+        "savedDecisionRows(activeDecisionSet)",
+        "generationId=",
+        "reviewDecisionSet",
+        "'PROMOTE', 'WATCH', 'PAUSE', 'RETIRE'",
+        "MiniGPT 候选必须先在实验页预览并显式创建票包草稿",
+        "同窗口随机基线 ROI 差额",
+        "LotteryPredictionDecisionPage.css"
+      ]
+    },
+    {
+      "scope": "iteration 47C historical baseline evidence surfaces",
+      "file": "src/components/LotteryBacktestDetailPage.tsx",
+      "includes": [
+        "same-window, same-budget random baseline",
+        "report.baselineRoiPercent",
+        "report.roiPercentDelta",
+        "report.sameWindow",
+        "report.sameBudget",
+        "report.overfitWarnings",
+        "report.baselineRows"
+      ]
+    },
+    {
+      "scope": "iteration 47C research baseline evidence",
+      "file": "src/components/LotteryResearchPage.tsx",
+      "includes": [
+        "item.baselineRoiPercent",
+        "item.roiPercentDelta",
+        "item.backtestSummary.sameWindow",
+        "item.backtestSummary.sameBudget",
+        "item.backtestSummary?.overfitWarnings",
+        "仅用于历史窗口复盘"
+      ]
+    },
+    {
+      "scope": "iteration 47C ticket-pack deep-link restore",
+      "file": "src/components/LotteryTicketPackPage.tsx",
+      "includes": [
+        "searchParams.get('packId')",
+        "searchParams.get('decisionSetId')",
+        "searchParams.get('targetIssue')",
+        "visiblePacks",
+        "pack.id === requestedPackId",
+        "pack.decisionSetId === requestedDecisionSetId",
+        "未找到深链对应票包",
+        "ticketPackId=${encodeURIComponent(pack.id || '')}"
+      ]
+    },
+    {
+      "scope": "iteration 47C ticket lineage deep-link restore",
+      "file": "src/components/LotteryTicketPage.tsx",
+      "includes": [
+        "searchParams.get('ticketPackId')",
+        "searchParams.get('decisionSetId')",
+        "ticket.ticketPackId === ticketPackId",
+        "ticket.decisionSetId === decisionSetId",
+        "lineageFilterActive",
+        "正在按溯源筛选票据"
+      ]
+    },
+    {
+      "scope": "iteration 47C outcome deep-link preservation",
+      "file": "src/components/LotteryOutcomeAttributionPage.tsx",
+      "includes": [
+        "searchParams.get('decisionSetId')",
+        "preserveSelectedIssue",
+        "new URLSearchParams(current)",
+        "focusedDecisionContributions",
+        "item.decisionSetId === requestedDecisionSetId",
+        "决策溯源筛选"
+      ]
+    },
+    {
+      "scope": "iteration 47C ledger dimension-value deep-link restore",
+      "file": "src/components/LotteryLedgerPage.tsx",
+      "includes": [
+        "searchParams.get('dimension')",
+        "searchParams.get('value')",
+        "searchParams.get('issue')",
+        "decision_set",
+        "lotteryLedgerApi.performance({ dimension: requestedDimension })",
+        "rows.filter(row => row.key === requestedValue)",
+        "47C 账本定位"
+      ]
+    },
+    {
+      "scope": "iteration 47C recommendation target deep-link restore",
+      "file": "src/components/LotteryRecommendationPage.tsx",
+      "includes": [
+        "searchParams.get('targetType')",
+        "searchParams.get('targetId')",
+        "searchParams.get('targetIssue')",
+        "item.targetId !== requestedTargetId",
+        "推荐溯源筛选"
+      ]
+    },
+    {
       "scope": "workbench closure path",
       "file": "src/components/LotteryWorkbenchPage.tsx",
       "includes": [
@@ -961,6 +1137,7 @@
         "lotteryDecisionSetApi.createDecisionSet",
         "lotteryDecisionSetApi.updateDecisionSet",
         "lotteryDecisionSetApi.archiveDecisionSet",
+        "lotteryDecisionSetApi.reviewDecisionSet",
         "lotteryDecisionSetApi.outcomes",
         "lotteryPredictionApi.historyPage",
         "lotteryPredictionApi.compareRules",

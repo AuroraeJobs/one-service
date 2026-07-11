@@ -9,9 +9,10 @@ import {
   SafetyCertificateOutlined,
   SaveOutlined
 } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import LotteryBalls from './lottery/LotteryBalls';
+import { useI18n } from '../contexts/I18nContext';
 import {
   lotteryWorkbenchApi,
   lotteryTicketPackApi,
@@ -70,13 +71,18 @@ const actionCopy = {
 
 const LotteryTicketPackPage = () => {
   const navigate = useNavigate();
+  const { t } = useI18n();
+  const [searchParams] = useSearchParams();
+  const requestedPackId = searchParams.get('packId') || '';
+  const requestedDecisionSetId = searchParams.get('decisionSetId') || '';
+  const requestedTargetIssue = searchParams.get('targetIssue') || '';
   const [packs, setPacks] = useState<LotteryTicketPack[]>([]);
   const [preview, setPreview] = useState<LotteryTicketPack>();
   const [title, setTitle] = useState('执行票包');
   const [titleTouched, setTitleTouched] = useState(false);
-  const [targetIssue, setTargetIssue] = useState('');
-  const [sourceType, setSourceType] = useState('MANUAL');
-  const [sourceId, setSourceId] = useState('');
+  const [targetIssue, setTargetIssue] = useState(requestedTargetIssue);
+  const [sourceType, setSourceType] = useState(requestedDecisionSetId ? 'DECISION_SET' : 'MANUAL');
+  const [sourceId, setSourceId] = useState(requestedDecisionSetId);
   const [ticketText, setTicketText] = useState(defaultTicketText);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string>();
@@ -87,6 +93,14 @@ const LotteryTicketPackPage = () => {
   const draftItems = useMemo(() => sourceType === 'DECISION_SET' ? [] : parseItems(ticketText), [sourceType, ticketText]);
   const normalizedTargetIssue = targetIssue.trim();
   const suggestedTitle = normalizedTargetIssue ? `${normalizedTargetIssue} 执行票包` : '执行票包';
+  const visiblePacks = useMemo(() => {
+    if (requestedPackId) return packs.filter(pack => pack.id === requestedPackId);
+    if (requestedDecisionSetId) {
+      return packs.filter(pack => pack.decisionSetId === requestedDecisionSetId || pack.sourceId === requestedDecisionSetId);
+    }
+    if (requestedTargetIssue) return packs.filter(pack => pack.targetIssue === requestedTargetIssue);
+    return packs;
+  }, [packs, requestedDecisionSetId, requestedPackId, requestedTargetIssue]);
 
   const loadPacks = useCallback(async () => {
     setLoading(true);
@@ -105,6 +119,14 @@ const LotteryTicketPackPage = () => {
   useEffect(() => {
     loadPacks();
   }, [loadPacks]);
+
+  useEffect(() => {
+    if (requestedTargetIssue) setTargetIssue(requestedTargetIssue);
+    if (requestedDecisionSetId) {
+      setSourceType('DECISION_SET');
+      setSourceId(requestedDecisionSetId);
+    }
+  }, [requestedDecisionSetId, requestedTargetIssue]);
 
   useEffect(() => {
     let cancelled = false;
@@ -241,12 +263,14 @@ const LotteryTicketPackPage = () => {
             </label>
             <label>
               <span>目标期号</span>
-              <Input
-                value={targetIssue}
-                onChange={event => setTargetIssue(event.target.value)}
-                placeholder="例如 2026068"
-                addonAfter={autoIssue ? <Button type="link" size="small" onClick={() => setTargetIssue(autoIssue)}>下一期</Button> : null}
-              />
+              <Space.Compact block>
+                <Input
+                  value={targetIssue}
+                  onChange={event => setTargetIssue(event.target.value)}
+                  placeholder="例如 2026068"
+                />
+                {autoIssue ? <Button onClick={() => setTargetIssue(autoIssue)}>下一期</Button> : null}
+              </Space.Compact>
             </label>
             <label>
               <span>来源</span>
@@ -312,7 +336,7 @@ const LotteryTicketPackPage = () => {
       >
         <Spin spinning={loading}>
           <div className="lottery-ticket-pack-list">
-            {packs.length ? packs.map(pack => (
+            {visiblePacks.length ? visiblePacks.map(pack => (
               <article key={pack.id}>
                 <div className="lottery-ticket-pack-head">
                   <div>
@@ -350,7 +374,7 @@ const LotteryTicketPackPage = () => {
                   >
                     <Button size="small" type="primary" icon={<SaveOutlined />} loading={actionLoading === `save-${pack.id}`} disabled={pack.approvalState !== 'APPROVED' || pack.status === 'SAVED'}>保存票据</Button>
                   </Popconfirm>
-                  <Button size="small" onClick={() => navigate(`/lottery/tickets?issue=${pack.targetIssue || ''}&source=TICKET_PACK`)}>票据</Button>
+                  <Button size="small" onClick={() => navigate(`/lottery/tickets?issue=${encodeURIComponent(pack.targetIssue || '')}&source=TICKET_PACK&ticketPackId=${encodeURIComponent(pack.id || '')}&decisionSetId=${encodeURIComponent(pack.decisionSetId || '')}`)}>{t('票据')}</Button>
                   <Popconfirm
                     title={actionCopy.archive.title}
                     description="归档后默认不再显示在执行队列。"
@@ -358,11 +382,11 @@ const LotteryTicketPackPage = () => {
                     cancelText="取消"
                     onConfirm={() => runPackAction(pack, 'archive')}
                   >
-                    <Button size="small" danger loading={actionLoading === `archive-${pack.id}`} disabled={pack.status === 'ARCHIVED'}>归档</Button>
+                    <Button size="small" danger loading={actionLoading === `archive-${pack.id}`} disabled={pack.status === 'ARCHIVED'}>{t('归档')}</Button>
                   </Popconfirm>
                 </Space>
               </article>
-            )) : <Empty description="暂无票包草稿" />}
+            )) : <Empty description={requestedPackId || requestedDecisionSetId || requestedTargetIssue ? '未找到深链对应票包' : '暂无票包草稿'} />}
           </div>
         </Spin>
       </Card>

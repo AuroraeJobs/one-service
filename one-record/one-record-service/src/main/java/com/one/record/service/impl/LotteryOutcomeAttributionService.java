@@ -219,6 +219,11 @@ public class LotteryOutcomeAttributionService implements ILotteryOutcomeAttribut
                 .decisionSetId(decision.getDecisionSetId())
                 .title(decision.getTitle())
                 .ruleName(decision.getRuleName())
+                .provenance(decision.getProvenance())
+                .reviewAction(decision.getReviewAction())
+                .reviewBacktestId(decision.getReviewBacktestId())
+                .backtestRoiPercentDelta(decision.getBacktestRoiPercentDelta())
+                .backtestWarnings(decision.getBacktestWarnings() == null ? List.of() : new ArrayList<>(decision.getBacktestWarnings()))
                 .winningCandidateCount(decision.getWinningCandidateCount())
                 .netResult(decision.getNetResult())
                 .roiPercent(decision.getRoiPercent())
@@ -237,6 +242,7 @@ public class LotteryOutcomeAttributionService implements ILotteryOutcomeAttribut
                 .savedTicketCount(pack.getSavedTicketIds() == null ? 0 : pack.getSavedTicketIds().size())
                 .proposedCost(proposedCost)
                 .executionState("SAVED".equals(pack.getStatus()) ? "EXECUTED" : "PENDING")
+                .provenance(pack.getProvenance())
                 .sourcePack(pack)
                 .build();
     }

@@ -522,6 +522,9 @@ const LotteryTicketPage = () => {
   const page = Math.max(1, Number(searchParams.get('page') || '1') || 1);
   const pageSize = Math.max(1, Number(searchParams.get('pageSize') || '10') || 10);
   const issue = searchParams.get('issue') || '';
+  const ticketPackId = searchParams.get('ticketPackId') || '';
+  const decisionSetId = searchParams.get('decisionSetId') || '';
+  const lineageFilterActive = Boolean(ticketPackId || decisionSetId);
   const predictionSnapshotId = searchParams.get('predictionSnapshotId') || '';
   const statusFilter = searchParams.get('status') || undefined;
   const sourceFilter = searchParams.get('source') || undefined;
@@ -629,9 +632,27 @@ const LotteryTicketPage = () => {
         lotteryTicketApi.tickets(),
         lotteryDecisionSetApi.outcomes({ limit: 30 })
       ]);
-      setPageResponse(ticketItems);
-      setTickets(ticketItems.items || []);
-      setAllTickets(allTicketRows || ticketItems.items || []);
+      const allRows = allTicketRows || ticketItems.items || [];
+      const lineageRows = lineageFilterActive
+        ? allRows.filter(ticket => (
+          (!ticketPackId || ticket.ticketPackId === ticketPackId)
+          && (!decisionSetId || ticket.decisionSetId === decisionSetId)
+          && (!issue.trim() || ticket.issue === issue.trim())
+          && (!queryParams.status || ticket.status === queryParams.status)
+          && (!queryParams.source || ticket.source === queryParams.source)
+          && (!queryParams.prizeGrade || ticket.prizeGrade === queryParams.prizeGrade)
+          && (!queryParams.predictionSnapshotId || ticket.predictionSnapshotId === queryParams.predictionSnapshotId)
+        ))
+        : ticketItems.items || [];
+      setPageResponse(lineageFilterActive ? {
+        items: lineageRows,
+        page: 1,
+        pageSize: Math.max(lineageRows.length, 1),
+        total: lineageRows.length,
+        hasNext: false
+      } : ticketItems);
+      setTickets(lineageRows);
+      setAllTickets(lineageFilterActive ? lineageRows : allRows);
       setSummary(ticketSummary || emptySummary);
       setBudgetStatus(budgetData);
       setIssueLedgers(issueRows || []);
@@ -642,7 +663,7 @@ const LotteryTicketPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [queryParams]);
+  }, [decisionSetId, issue, lineageFilterActive, queryParams, ticketPackId]);
 
   useEffect(() => {
     loadTickets();
@@ -1128,6 +1149,15 @@ const LotteryTicketPage = () => {
       }
     >
       {error ? <Alert className="lottery-overview-status-alert" type="error" showIcon message={error} /> : null}
+      {lineageFilterActive ? (
+        <Alert
+          className="lottery-overview-status-alert"
+          type="info"
+          showIcon
+          message={`正在按溯源筛选票据：ticketPackId=${ticketPackId || '-'} · decisionSetId=${decisionSetId || '-'} · issue=${issue || '-'}`}
+          action={<Button size="small" onClick={() => updateQuery({ ticketPackId: undefined, decisionSetId: undefined })}>清除溯源筛选</Button>}
+        />
+      ) : null}
       {latestCheckSummary ? (
         <Alert
           className="lottery-overview-status-alert"

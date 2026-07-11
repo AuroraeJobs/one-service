@@ -2,11 +2,14 @@ package com.one.record.service.impl;
 
 import com.one.record.lottery.LotteryAuditMetadata;
 import com.one.record.lottery.LotteryPageResponse;
+import com.one.record.lottery.LotteryResearchProvenance;
 import com.one.record.lottery.LotteryStrategyNoteAttachRequest;
 import com.one.record.model.LotteryAuditEvent;
+import com.one.record.model.LotteryBacktestReport;
 import com.one.record.model.LotteryStrategyNote;
 import com.one.record.model.LotteryStrategyNoteEvidence;
 import com.one.record.repository.LotteryAuditEventRepository;
+import com.one.record.repository.LotteryBacktestReportRepository;
 import com.one.record.repository.LotteryStrategyNoteRepository;
 import com.one.record.service.ILotteryStrategyNoteService;
 import lombok.AllArgsConstructor;
@@ -19,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,6 +34,8 @@ public class LotteryStrategyNoteService implements ILotteryStrategyNoteService {
     private final LotteryStrategyNoteRepository repository;
 
     private final LotteryAuditEventRepository auditEventRepository;
+
+    private final LotteryBacktestReportRepository backtestReportRepository;
 
     @Override
     public LotteryPageResponse<LotteryStrategyNote> notes(Boolean includeArchived, String status, Integer page, Integer pageSize) {
@@ -106,7 +112,9 @@ public class LotteryStrategyNoteService implements ILotteryStrategyNoteService {
     @Override
     public LotteryStrategyNote attachEvidence(String id, LotteryStrategyNoteAttachRequest request) {
         LotteryStrategyNote existing = find(id);
-        LotteryStrategyNoteEvidence evidence = normalizeEvidence(request == null ? null : request.getEvidence(), System.currentTimeMillis());
+        LotteryStrategyNoteEvidence evidence = backfillBacktestProvenance(
+                normalizeEvidence(request == null ? null : request.getEvidence(), System.currentTimeMillis())
+        );
         if (!StringUtils.hasText(evidence.getEvidenceKey())) {
             throw new IllegalArgumentException("evidenceKey is required");
         }
@@ -147,8 +155,23 @@ public class LotteryStrategyNoteService implements ILotteryStrategyNoteService {
                 .title(trim(input.getTitle()))
                 .sourceId(trim(input.getSourceId()))
                 .path(trim(input.getPath()))
+                .provenance((input.getProvenance() == null ? List.<LotteryResearchProvenance>of() : input.getProvenance())
+                        .stream()
+                        .filter(Objects::nonNull)
+                        .distinct()
+                        .collect(Collectors.toCollection(ArrayList::new)))
                 .attachedAt(input.getAttachedAt() == null ? now : input.getAttachedAt())
                 .build();
+    }
+
+    private LotteryStrategyNoteEvidence backfillBacktestProvenance(LotteryStrategyNoteEvidence evidence) {
+        if (!"BACKTEST".equals(evidence.getEvidenceType()) || !StringUtils.hasText(evidence.getSourceId())) {
+            return evidence;
+        }
+        backtestReportRepository.findById(evidence.getSourceId()).ifPresent(report -> evidence.setProvenance(
+                report.getProvenance() == null ? List.of() : List.of(report.getProvenance())
+        ));
+        return evidence;
     }
 
     private LotteryStrategyNote find(String id) {

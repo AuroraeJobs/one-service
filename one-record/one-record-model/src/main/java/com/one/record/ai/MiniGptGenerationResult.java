@@ -34,6 +34,14 @@ public class MiniGptGenerationResult implements Serializable {
 
     private String validationSha256;
 
+    private String trainFirstIssue;
+
+    private String trainLatestIssue;
+
+    private String validationFirstIssue;
+
+    private String validationLatestIssue;
+
     @Builder.Default
     private Map<String, Object> modelConfig = new LinkedHashMap<>();
 

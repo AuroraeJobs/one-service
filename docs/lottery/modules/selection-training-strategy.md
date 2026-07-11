@@ -182,6 +182,29 @@ effectiveBlockSize = 续训 checkpoint 中的 block_size，否则为请求或 pr
 
 批量生成采用显式 seed、策略标签、最大红球重叠和最小蓝球覆盖目标。候选选择只能报告实际达到的 overlap、blue coverage 与 strategy composition；当原始模型输出不足时应保留拒绝原因，不能伪造满足约束的候选。不同 seed 带来的是可复现采样差异，不是中奖概率提升证据。
 
+## Iteration 47C 随机基线与结果链
+
+`LotteryResearchProvenance` 是 47C 的类型化证据快照，覆盖 generation/batch/run、corpus 与 train/validation hash、checkpoint hash、prompt、temperature、top-k、seed、策略、模型配置、训练/验证期号范围和批次约束。MiniGPT 决策集通过持久化 generation id 创建，服务端重新读取生成记录并校验批次、入池状态和合法号码；前端 note 文本不再充当 provenance 的事实来源。
+
+批次级 provenance 保存到决策集和回测，generation 级 provenance 保存到每个候选，并沿票包、票据、研究笔记、实际结果归因、账本和推荐证据传播。普通决策更新不得覆盖服务端保存的 generation/provenance；BACKTEST 笔记附件按回测 id 从服务端回填 provenance。
+
+正式候选池回测使用确定性随机基线：
+
+```text
+baselineSeed = 请求值，默认 42
+baselineAlgorithm = FNV1A64_JAVA_RANDOM_V1
+sameWindow = 模型行与随机行覆盖相同期号
+sameBudget = 模型总成本与随机总成本相等
+```
+
+每条模型回放行都有对应随机行，报告同时保存模型/随机票数、完整 baseline rows、成本、奖金、净结果、ROI、红/蓝命中、奖级/命中分布及差额。`sameWindow` 或 `sameBudget` 不通过时，证据不能进入票包预览。
+
+决策集候选回测的 `evaluationMode` 是 `STATIC_POOL_HISTORICAL_REPLAY`：它把一个已经保存的静态候选池放到历史窗口评分，不会在每个历史时间点重新训练和生成，因此不是 walk-forward 回测。报告必须保留 `STATIC_POOL_HISTORICAL_REPLAY`，并按实际窗口输出训练/验证重叠、样本量、候选多样性、随机优势和基线可比性 warning。即使历史差额为正，也不能解释成未来收益保证。
+
+人工复核只接受 `PROMOTE`、`WATCH`、`PAUSE`、`RETIRE`，并且必须绑定属于该决策集的回测。推荐层优先采用人工结论；没有人工结论时，只有“有命中且净结果为正、随机基线 ROI 差额为正、无过拟合 warning”才能自动进入 `PROMOTE`，负差额或过拟合进入 `PAUSE`，其余保持 `WATCH`。
+
+票包保持严格人工边界：先调用 preview 做预算/冲突检查，再由独立显式动作创建 `DRAFT`。创建草稿不能自动审批，也不能自动生成票据；审批与 save-as-tickets 继续留在票包执行流程。
+
 ## 选号策略方向
 
 后续候选策略可以分为四类，每类都要能独立回测。
@@ -242,7 +265,7 @@ effectiveBlockSize = 续训 checkpoint 中的 block_size，否则为请求或 pr
 
 ## 回测指标
 
-所有策略必须和随机选号基线对比。建议记录：
+所有策略必须和同窗口、同预算的随机选号基线对比。正式报告记录：
 
 - `redHitAvg`：平均红球命中数。
 - `blueHitRate`：蓝球命中率。
@@ -255,6 +278,8 @@ effectiveBlockSize = 续训 checkpoint 中的 block_size，否则为请求或 pr
 - `roi`：收益率。
 - `randomBaselineDelta`：相对随机基线的差异。
 - `overfitWarning`：训练窗口好、验证窗口差时必须标记。
+- `sameWindow` / `sameBudget`：随机基线可比性的硬门禁。
+- `evaluationMode`：区分静态池历史回放与未来可能实现的 walk-forward 评估。
 
 回测结论必须写成“历史窗口表现”，不能写成“未来保证”。
 

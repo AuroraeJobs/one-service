@@ -6,6 +6,7 @@ import com.one.record.lottery.LotteryOutcomeAttribution;
 import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.lottery.LotteryRecommendationRollup;
 import com.one.record.lottery.LotteryRecommendationStatusRequest;
+import com.one.record.lottery.LotteryResearchProvenance;
 import com.one.record.model.LotteryAuditEvent;
 import com.one.record.model.LotteryRecommendation;
 import com.one.record.model.LotteryStrategyNoteEvidence;
@@ -18,10 +19,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -109,7 +110,7 @@ public class LotteryRecommendationService implements ILotteryRecommendationServi
         List<LotteryRecommendation> refreshed = new ArrayList<>();
         for (LotteryOutcomeAttribution outcome : outcomes) {
             refreshed.add(upsert(issueRecommendation(outcome)));
-            outcome.getDecisionContributions().forEach(decision -> refreshed.add(upsert(ruleRecommendation(outcome, decision))));
+            outcome.getDecisionContributions().forEach(decision -> refreshed.add(upsert(decisionRecommendation(outcome, decision))));
             outcome.getPortfolioContributions().forEach(portfolio -> refreshed.add(upsert(portfolioRecommendation(outcome, portfolio))));
             outcome.getSimulationDrifts().forEach(drift -> refreshed.add(upsert(simulationRecommendation(outcome, drift))));
         }
@@ -186,16 +187,74 @@ public class LotteryRecommendationService implements ILotteryRecommendationServi
                 .build();
     }
 
-    private LotteryRecommendation ruleRecommendation(LotteryOutcomeAttribution outcome, LotteryOutcomeAttribution.DecisionContribution decision) {
-        String state = decision.getWinningCandidateCount() != null && decision.getWinningCandidateCount() > 0 ? "PROMOTE" : "WATCH";
+    private LotteryRecommendation decisionRecommendation(LotteryOutcomeAttribution outcome, LotteryOutcomeAttribution.DecisionContribution decision) {
+        String state = decisionRecommendationState(decision);
         String ruleName = StringUtils.hasText(decision.getRuleName()) ? decision.getRuleName() : "unknown-rule";
-        return base("RULE", ruleName, ruleName, state, "/lottery/predictions/decision")
+        String decisionSetId = value(decision.getDecisionSetId());
+        return base("DECISION_SET", decisionSetId, firstText(decision.getTitle(), ruleName), state,
+                "/lottery/predictions/decision?decisionSetId=" + decisionSetId)
                 .confidenceScore(confidence(decision.getRoiPercent() == null ? 0 : decision.getRoiPercent().intValue(), decision.getWinningCandidateCount()))
-                .expectedAction("PROMOTE".equals(state) ? "提升规则权重" : "保持观察")
-                .evidenceSummary(value(outcome.getIssue()) + " 期决策净收益 " + decision.getNetResult())
-                .reasons(List.of("决策贡献：" + value(decision.getContributionState())))
-                .evidence(List.of(evidence("DECISION", "decision:" + value(decision.getDecisionSetId()), value(decision.getTitle()), decision.getDecisionSetId(), "/lottery/predictions/decision")))
+                .expectedAction(decisionExpectedAction(state))
+                .evidenceSummary(value(outcome.getIssue()) + " 期决策净收益 " + decision.getNetResult()
+                        + "，随机基线 ROI 差额 " + decision.getBacktestRoiPercentDelta())
+                .reasons(decisionReasons(decision, state))
+                .evidence(List.of(evidence("DECISION", "decision:" + decisionSetId, value(decision.getTitle()), decision.getDecisionSetId(),
+                        "/lottery/predictions/decision?decisionSetId=" + decisionSetId, decision.getProvenance())))
                 .build();
+    }
+
+    private String decisionRecommendationState(LotteryOutcomeAttribution.DecisionContribution decision) {
+        String manualAction = normalizeReviewAction(decision.getReviewAction());
+        if (manualAction != null) {
+            return manualAction;
+        }
+        boolean positiveResult = safeInt(decision.getWinningCandidateCount()) > 0
+                && decision.getNetResult() != null
+                && decision.getNetResult().compareTo(java.math.BigDecimal.ZERO) > 0;
+        boolean positiveBaselineDelta = decision.getBacktestRoiPercentDelta() != null
+                && decision.getBacktestRoiPercentDelta().compareTo(java.math.BigDecimal.ZERO) > 0;
+        boolean hasOverfitWarnings = decision.getBacktestWarnings() != null && !decision.getBacktestWarnings().isEmpty();
+        if (positiveResult && positiveBaselineDelta && !hasOverfitWarnings) {
+            return "PROMOTE";
+        }
+        if (hasOverfitWarnings || decision.getBacktestRoiPercentDelta() != null
+                && decision.getBacktestRoiPercentDelta().compareTo(java.math.BigDecimal.ZERO) < 0) {
+            return "PAUSE";
+        }
+        return "WATCH";
+    }
+
+    private String normalizeReviewAction(String action) {
+        if (!StringUtils.hasText(action)) {
+            return null;
+        }
+        String normalized = action.trim().toUpperCase();
+        return switch (normalized) {
+            case "PROMOTE", "WATCH", "PAUSE", "RETIRE" -> normalized;
+            default -> null;
+        };
+    }
+
+    private String decisionExpectedAction(String state) {
+        return switch (state) {
+            case "PROMOTE" -> "提升规则权重";
+            case "PAUSE" -> "暂停并复核过拟合证据";
+            case "RETIRE" -> "退役并归档研究证据";
+            default -> "保持观察";
+        };
+    }
+
+    private List<String> decisionReasons(LotteryOutcomeAttribution.DecisionContribution decision, String state) {
+        List<String> reasons = new ArrayList<>();
+        reasons.add("决策贡献：" + value(decision.getContributionState()));
+        reasons.add("随机基线 ROI 差额：" + decision.getBacktestRoiPercentDelta());
+        if (StringUtils.hasText(decision.getReviewAction())) {
+            reasons.add("人工复核：" + state);
+        }
+        if (decision.getBacktestWarnings() != null) {
+            reasons.addAll(decision.getBacktestWarnings());
+        }
+        return reasons;
     }
 
     private LotteryRecommendation portfolioRecommendation(LotteryOutcomeAttribution outcome, LotteryOutcomeAttribution.PortfolioContribution portfolio) {
@@ -247,12 +306,22 @@ public class LotteryRecommendationService implements ILotteryRecommendationServi
     }
 
     private LotteryStrategyNoteEvidence evidence(String type, String key, String title, String sourceId, String path) {
+        return evidence(type, key, title, sourceId, path, null);
+    }
+
+    private LotteryStrategyNoteEvidence evidence(String type,
+                                                 String key,
+                                                 String title,
+                                                 String sourceId,
+                                                 String path,
+                                                 LotteryResearchProvenance provenance) {
         return LotteryStrategyNoteEvidence.builder()
                 .evidenceType(type)
                 .evidenceKey(key)
                 .title(title)
                 .sourceId(sourceId)
                 .path(path)
+                .provenance(provenance == null ? List.of() : List.of(provenance))
                 .attachedAt(System.currentTimeMillis())
                 .build();
     }
@@ -385,6 +454,15 @@ public class LotteryRecommendationService implements ILotteryRecommendationServi
 
     private String value(String value) {
         return StringUtils.hasText(value) ? value : "-";
+    }
+
+    private String firstText(String... values) {
+        for (String value : values) {
+            if (StringUtils.hasText(value)) {
+                return value.trim();
+            }
+        }
+        return "-";
     }
 
     private static class TransitionAccumulator {

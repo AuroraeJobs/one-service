@@ -26,4 +26,6 @@ public class LotteryBacktestRunRequest implements Serializable {
     private String issueStart;
 
     private String issueEnd;
+
+    private Long baselineSeed;
 }

@@ -70,6 +70,7 @@ const lotteryCodeText: Record<string, string> = {
   CANDIDATE: '候选',
   DECISION: '决策',
   DECISION_OUTCOMES: '决策结果',
+  DECISION_SET: '决策集',
   DECISION_SETS: '决策集',
   DEEP: '深度',
   EXPORT: '导出',

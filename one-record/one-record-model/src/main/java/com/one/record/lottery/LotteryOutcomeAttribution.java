@@ -94,6 +94,17 @@ public class LotteryOutcomeAttribution implements Serializable {
 
         private String ruleName;
 
+        private LotteryResearchProvenance provenance;
+
+        private String reviewAction;
+
+        private String reviewBacktestId;
+
+        private BigDecimal backtestRoiPercentDelta;
+
+        @Builder.Default
+        private List<String> backtestWarnings = new ArrayList<>();
+
         private Integer winningCandidateCount;
 
         private BigDecimal netResult;
@@ -124,6 +135,8 @@ public class LotteryOutcomeAttribution implements Serializable {
         private BigDecimal proposedCost;
 
         private String executionState;
+
+        private LotteryResearchProvenance provenance;
 
         private LotteryTicketPack sourcePack;
     }

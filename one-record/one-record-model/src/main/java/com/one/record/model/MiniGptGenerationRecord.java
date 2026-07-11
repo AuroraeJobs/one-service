@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -19,7 +20,10 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(collection = "mini_gpt_generations")
-@CompoundIndex(name = "run_generated_at", def = "{'runId': 1, 'generatedAt': -1}")
+@CompoundIndexes({
+        @CompoundIndex(name = "run_generated_at", def = "{'runId': 1, 'generatedAt': -1}"),
+        @CompoundIndex(name = "batch_generated_at", def = "{'batchId': 1, 'generatedAt': 1}")
+})
 public class MiniGptGenerationRecord {
 
     @Id
@@ -39,6 +43,14 @@ public class MiniGptGenerationRecord {
     private String trainSha256;
 
     private String validationSha256;
+
+    private String trainFirstIssue;
+
+    private String trainLatestIssue;
+
+    private String validationFirstIssue;
+
+    private String validationLatestIssue;
 
     private String checkpoint;
 

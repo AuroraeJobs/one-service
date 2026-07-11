@@ -4,6 +4,7 @@ import com.one.record.lottery.LotteryDecisionOutcomeItem;
 import com.one.record.lottery.LotteryDecisionOutcomeSummary;
 import com.one.record.lottery.LotteryOutcomeAttribution;
 import com.one.record.lottery.LotteryPrizeResult;
+import com.one.record.lottery.LotteryResearchProvenance;
 import com.one.record.lottery.LotteryStrategyPortfolioSummary;
 import com.one.record.lottery.LotteryTicketBudgetPrecheckResult;
 import com.one.record.model.LotteryAuditEvent;
@@ -55,6 +56,10 @@ class LotteryOutcomeAttributionServiceTest {
 
     @Test
     void issueBuildsOutcomeAttributionAcrossTicketsPacksDecisionsAndSimulations() {
+        LotteryResearchProvenance provenance = LotteryResearchProvenance.builder()
+                .runId("run-1")
+                .batchId("batch-1")
+                .build();
         when(ticketRepository.findByUserIdAndIssueOrderByCreatedAtDesc("default", "2026068")).thenReturn(List.of(LotteryTicket.builder()
                 .id("ticket-1")
                 .issue("2026068")
@@ -74,6 +79,7 @@ class LotteryOutcomeAttributionServiceTest {
                 .targetIssue("2026068")
                 .status("SAVED")
                 .approvalState("APPROVED")
+                .provenance(provenance)
                 .savedTicketIds(List.of("ticket-1"))
                 .budgetPrecheck(LotteryTicketBudgetPrecheckResult.builder().proposedCost(new BigDecimal("2.00")).build())
                 .updatedAt(300L)
@@ -83,6 +89,11 @@ class LotteryOutcomeAttributionServiceTest {
                         .decisionSetId("decision-1")
                         .title("决策")
                         .targetIssue("2026068")
+                        .provenance(provenance)
+                        .reviewAction("PROMOTE")
+                        .reviewBacktestId("backtest-1")
+                        .backtestRoiPercentDelta(new BigDecimal("25.00"))
+                        .backtestWarnings(List.of("VALIDATION_WINDOW_SMALL"))
                         .winningCandidateCount(1)
                         .netResult(new BigDecimal("198.00"))
                         .roiPercent(new BigDecimal("9900.00"))
@@ -119,7 +130,17 @@ class LotteryOutcomeAttributionServiceTest {
         assertThat(result.getWinningTicketCount()).isEqualTo(1);
         assertThat(result.getCalibrationState()).isEqualTo("PROMOTE_SIGNAL");
         assertThat(result.getPortfolioContributions()).extracting(LotteryOutcomeAttribution.PortfolioContribution::getContributionState).contains("LINKED");
-        assertThat(result.getTicketPackExecutions()).extracting(LotteryOutcomeAttribution.TicketPackExecution::getExecutionState).contains("EXECUTED");
+        assertThat(result.getDecisionContributions()).singleElement().satisfies(decision -> {
+            assertThat(decision.getProvenance()).isEqualTo(provenance);
+            assertThat(decision.getReviewAction()).isEqualTo("PROMOTE");
+            assertThat(decision.getReviewBacktestId()).isEqualTo("backtest-1");
+            assertThat(decision.getBacktestRoiPercentDelta()).isEqualByComparingTo("25.00");
+            assertThat(decision.getBacktestWarnings()).containsExactly("VALIDATION_WINDOW_SMALL");
+        });
+        assertThat(result.getTicketPackExecutions()).singleElement().satisfies(execution -> {
+            assertThat(execution.getExecutionState()).isEqualTo("EXECUTED");
+            assertThat(execution.getProvenance()).isEqualTo(provenance);
+        });
         assertThat(result.getSimulationDrifts()).extracting(LotteryOutcomeAttribution.SimulationDrift::getDriftState).contains("CONFIRMED_SIGNAL");
     }
 

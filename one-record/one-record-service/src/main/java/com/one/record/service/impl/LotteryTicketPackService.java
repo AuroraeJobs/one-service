@@ -4,6 +4,7 @@ import com.one.common.exception.NotFoundException;
 import com.one.common.exception.ServiceException;
 import com.one.record.lottery.LotteryAuditMetadata;
 import com.one.record.lottery.LotteryPageResponse;
+import com.one.record.lottery.LotteryResearchProvenance;
 import com.one.record.lottery.LotteryTicketBatchSaveRequest;
 import com.one.record.lottery.LotteryTicketBatchSaveResult;
 import com.one.record.lottery.LotteryTicketBudgetPrecheckRequest;
@@ -31,6 +32,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -84,6 +86,8 @@ public class LotteryTicketPackService implements ILotteryTicketPackService {
     public LotteryTicketPack create(LotteryTicketPack ticketPack) {
         long now = System.currentTimeMillis();
         LotteryTicketPack normalized = normalize(ticketPack, false);
+        normalized.setId(UUID.randomUUID().toString());
+        normalized.getItems().forEach(item -> item.setTicketPackId(normalized.getId()));
         normalized.setUserId(DEFAULT_USER_ID);
         normalized.setStatus("DRAFT");
         normalized.setApprovalState("PENDING");
@@ -99,6 +103,7 @@ public class LotteryTicketPackService implements ILotteryTicketPackService {
     @Override
     public LotteryTicketPack approve(String id) {
         LotteryTicketPack target = loadOwned(id);
+        requireTargetIssue(target);
         long now = System.currentTimeMillis();
         target.setApprovalState("APPROVED");
         target.setStatus("APPROVED");
@@ -118,7 +123,14 @@ public class LotteryTicketPackService implements ILotteryTicketPackService {
         if (!"APPROVED".equals(target.getApprovalState())) {
             throw new ServiceException("票包需要先审批通过");
         }
-        List<LotteryTicket> tickets = tickets(target.getItems(), target.getTargetIssue());
+        requireTargetIssue(target);
+        List<LotteryTicket> tickets = tickets(
+                target.getItems(),
+                target.getTargetIssue(),
+                target.getId(),
+                target.getDecisionSetId(),
+                target.getProvenance()
+        );
         LotteryTicketBatchSaveResult saveResult = ticketService.saveTickets(LotteryTicketBatchSaveRequest.builder()
                 .tickets(tickets)
                 .build());
@@ -156,6 +168,7 @@ public class LotteryTicketPackService implements ILotteryTicketPackService {
         if (source == null) {
             throw new ServiceException("彩票票包不能为空");
         }
+        LotteryDecisionSet sourceDecisionSet = sourceDecisionSet(source);
         List<LotteryTicketPackItem> items = normalizeItems(resolveItems(source), source.getTargetIssue());
         String targetIssue = firstText(source.getTargetIssue(), sourceTargetIssue(source));
         LotteryTicketBudgetPrecheckResult budgetPrecheck = precheck(items, targetIssue);
@@ -166,6 +179,11 @@ public class LotteryTicketPackService implements ILotteryTicketPackService {
                 .targetIssue(targetIssue)
                 .sourceType(firstText(source.getSourceType(), "MANUAL"))
                 .sourceId(trim(source.getSourceId()))
+                .decisionSetId(firstText(source.getDecisionSetId(), sourceDecisionSet == null ? null : sourceDecisionSet.getId()))
+                .generationId(firstText(source.getGenerationId(), singleGenerationId(items)))
+                .provenance(copyProvenance(source.getProvenance() == null && sourceDecisionSet != null
+                        ? sourceDecisionSet.getProvenance()
+                        : source.getProvenance()))
                 .status(firstText(source.getStatus(), "DRAFT"))
                 .approvalState(firstText(source.getApprovalState(), "PENDING"))
                 .archived(Boolean.TRUE.equals(source.getArchived()))
@@ -187,8 +205,7 @@ public class LotteryTicketPackService implements ILotteryTicketPackService {
             return source.getItems();
         }
         if ("DECISION_SET".equals(source.getSourceType()) && StringUtils.hasText(source.getSourceId())) {
-            LotteryDecisionSet decisionSet = decisionSetRepository.findByIdAndUserId(source.getSourceId().trim(), DEFAULT_USER_ID)
-                    .orElseThrow(() -> new NotFoundException("彩票决策集不存在: {}", source.getSourceId()));
+            LotteryDecisionSet decisionSet = sourceDecisionSet(source);
             return (decisionSet.getSelectedCandidates() == null ? List.<LotteryDecisionCandidateSelection>of() : decisionSet.getSelectedCandidates())
                     .stream()
                     .map(candidate -> itemFromDecision(decisionSet, candidate))
@@ -200,12 +217,17 @@ public class LotteryTicketPackService implements ILotteryTicketPackService {
     private LotteryTicketPackItem itemFromDecision(LotteryDecisionSet decisionSet, LotteryDecisionCandidateSelection candidate) {
         return LotteryTicketPackItem.builder()
                 .key(candidate.getKey())
+                .candidateKey(candidate.getKey())
+                .generationId(candidate.getGenerationId())
+                .provenance(copyProvenance(candidate.getProvenance() == null ? decisionSet.getProvenance() : candidate.getProvenance()))
                 .title(firstText(candidate.getCandidateTitle(), candidate.getSnapshotTitle(), decisionSet.getTitle()))
                 .redNumbers(candidate.getRedNumbers() == null ? List.of() : new ArrayList<>(candidate.getRedNumbers()))
                 .blueNumber(candidate.getBlueNumber())
                 .quantity(candidate.getTicketCount() == null || candidate.getTicketCount() <= 0 ? 1 : candidate.getTicketCount())
                 .cost(DEFAULT_TICKET_COST)
-                .source("DECISION_SET")
+                .source(decisionSet.getProvenance() != null && StringUtils.hasText(decisionSet.getProvenance().getSourceType())
+                        ? decisionSet.getProvenance().getSourceType()
+                        : "DECISION_SET")
                 .predictionSnapshotId(candidate.getSnapshotId())
                 .decisionSetId(decisionSet.getId())
                 .note(firstText(candidate.getReplayText(), decisionSet.getNote()))
@@ -227,6 +249,11 @@ public class LotteryTicketPackService implements ILotteryTicketPackService {
             }
             normalized.add(LotteryTicketPackItem.builder()
                     .key(key)
+                    .ticketPackId(trim(item.getTicketPackId()))
+                    .decisionSetId(trim(item.getDecisionSetId()))
+                    .candidateKey(firstText(item.getCandidateKey(), item.getKey()))
+                    .generationId(trim(item.getGenerationId()))
+                    .provenance(copyProvenance(item.getProvenance()))
                     .title(firstText(item.getTitle(), "票包候选"))
                     .redNumbers(item.getRedNumbers().stream().filter(StringUtils::hasText).map(String::trim).toList())
                     .blueNumber(item.getBlueNumber().trim())
@@ -234,7 +261,6 @@ public class LotteryTicketPackService implements ILotteryTicketPackService {
                     .cost(item.getCost() == null || item.getCost().compareTo(BigDecimal.ZERO) <= 0 ? DEFAULT_TICKET_COST : item.getCost())
                     .source(firstText(item.getSource(), "TICKET_PACK"))
                     .predictionSnapshotId(trim(item.getPredictionSnapshotId()))
-                    .decisionSetId(trim(item.getDecisionSetId()))
                     .portfolioId(trim(item.getPortfolioId()))
                     .note(firstText(item.getNote(), "票包草稿 " + value(targetIssue)))
                     .warnings(warnings)
@@ -245,11 +271,15 @@ public class LotteryTicketPackService implements ILotteryTicketPackService {
 
     private LotteryTicketBudgetPrecheckResult precheck(List<LotteryTicketPackItem> items, String targetIssue) {
         return ticketService.budgetPrecheck(LotteryTicketBudgetPrecheckRequest.builder()
-                .tickets(tickets(items, targetIssue))
+                .tickets(tickets(items, targetIssue, null, null, null))
                 .build());
     }
 
-    private List<LotteryTicket> tickets(List<LotteryTicketPackItem> items, String targetIssue) {
+    private List<LotteryTicket> tickets(List<LotteryTicketPackItem> items,
+                                        String targetIssue,
+                                        String ticketPackId,
+                                        String decisionSetId,
+                                        LotteryResearchProvenance packProvenance) {
         return (items == null ? List.<LotteryTicketPackItem>of() : items).stream()
                 .filter(Objects::nonNull)
                 .map(item -> LotteryTicket.builder()
@@ -261,6 +291,11 @@ public class LotteryTicketPackService implements ILotteryTicketPackService {
                         .source(firstText(item.getSource(), "TICKET_PACK"))
                         .status("DRAFT")
                         .predictionSnapshotId(item.getPredictionSnapshotId())
+                        .ticketPackId(firstText(item.getTicketPackId(), ticketPackId))
+                        .decisionSetId(firstText(item.getDecisionSetId(), decisionSetId))
+                        .candidateKey(firstText(item.getCandidateKey(), item.getKey()))
+                        .generationId(item.getGenerationId())
+                        .provenance(copyProvenance(item.getProvenance() == null ? packProvenance : item.getProvenance()))
                         .note(item.getNote())
                         .build())
                 .toList();
@@ -284,12 +319,37 @@ public class LotteryTicketPackService implements ILotteryTicketPackService {
                 .orElseThrow(() -> new NotFoundException("彩票票包不存在: {}", id));
     }
 
+    private LotteryDecisionSet sourceDecisionSet(LotteryTicketPack source) {
+        if (source == null || !"DECISION_SET".equals(source.getSourceType()) || !StringUtils.hasText(source.getSourceId())) {
+            return null;
+        }
+        return decisionSetRepository.findByIdAndUserId(source.getSourceId().trim(), DEFAULT_USER_ID)
+                .orElseThrow(() -> new NotFoundException("彩票决策集不存在: {}", source.getSourceId()));
+    }
+
+    private String singleGenerationId(List<LotteryTicketPackItem> items) {
+        List<String> generationIds = (items == null ? List.<LotteryTicketPackItem>of() : items).stream()
+                .map(LotteryTicketPackItem::getGenerationId)
+                .filter(StringUtils::hasText)
+                .distinct()
+                .toList();
+        return generationIds.size() == 1 ? generationIds.get(0) : null;
+    }
+
+    private void requireTargetIssue(LotteryTicketPack ticketPack) {
+        if (ticketPack == null || !StringUtils.hasText(ticketPack.getTargetIssue())) {
+            throw new ServiceException("票包目标期号不能为空");
+        }
+    }
+
     private void saveAuditEvent(String eventType, LotteryTicketPack ticketPack, String message) {
         Map<String, String> filters = new LinkedHashMap<>();
         filters.put("targetIssue", value(ticketPack.getTargetIssue()));
         filters.put("status", value(ticketPack.getStatus()));
         filters.put("approvalState", value(ticketPack.getApprovalState()));
         filters.put("sourceType", value(ticketPack.getSourceType()));
+        filters.put("decisionSetId", value(ticketPack.getDecisionSetId()));
+        filters.put("batchId", ticketPack.getProvenance() == null ? "" : value(ticketPack.getProvenance().getBatchId()));
         auditEventRepository.save(LotteryAuditEvent.builder()
                 .eventType(eventType)
                 .targetType("lottery-ticket-pack")
@@ -362,5 +422,39 @@ public class LotteryTicketPackService implements ILotteryTicketPackService {
 
     private String value(String value) {
         return StringUtils.hasText(value) ? value : "";
+    }
+
+    private LotteryResearchProvenance copyProvenance(LotteryResearchProvenance source) {
+        if (source == null) {
+            return null;
+        }
+        return LotteryResearchProvenance.builder()
+                .sourceType(source.getSourceType())
+                .generationId(source.getGenerationId())
+                .batchId(source.getBatchId())
+                .runId(source.getRunId())
+                .runName(source.getRunName())
+                .corpusVersion(source.getCorpusVersion())
+                .trainSha256(source.getTrainSha256())
+                .validationSha256(source.getValidationSha256())
+                .checkpointSha256(source.getCheckpointSha256())
+                .prompt(source.getPrompt())
+                .maxNewTokens(source.getMaxNewTokens())
+                .temperature(source.getTemperature())
+                .topK(source.getTopK())
+                .seed(source.getSeed())
+                .strategyLabel(source.getStrategyLabel())
+                .trainFirstIssue(source.getTrainFirstIssue())
+                .trainLatestIssue(source.getTrainLatestIssue())
+                .validationFirstIssue(source.getValidationFirstIssue())
+                .validationLatestIssue(source.getValidationLatestIssue())
+                .batchBaseSeed(source.getBatchBaseSeed())
+                .batchMaxRedOverlap(source.getBatchMaxRedOverlap())
+                .batchMinimumBlueCoverage(source.getBatchMinimumBlueCoverage())
+                .batchMinimumBlueCoverageMet(source.getBatchMinimumBlueCoverageMet())
+                .batchStrategies(source.getBatchStrategies() == null ? new ArrayList<>() : new ArrayList<>(source.getBatchStrategies()))
+                .modelConfig(source.getModelConfig() == null ? new LinkedHashMap<>() : new LinkedHashMap<>(source.getModelConfig()))
+                .capturedAt(source.getCapturedAt())
+                .build();
     }
 }

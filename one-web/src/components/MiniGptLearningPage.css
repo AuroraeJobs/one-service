@@ -1333,6 +1333,84 @@
   font-size: 15px;
 }
 
+.mini-gpt-candidate-chain {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, #34c759 34%, var(--mini-gpt-border));
+  border-radius: 10px;
+  background: color-mix(in srgb, #34c759 8%, var(--mini-gpt-panel-bg-soft));
+}
+
+.mini-gpt-candidate-chain-head,
+.mini-gpt-candidate-chain-actions,
+.mini-gpt-lineage-status,
+.mini-gpt-deep-links,
+.mini-gpt-review-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.mini-gpt-candidate-chain-head > div:first-child,
+.mini-gpt-deep-links,
+.mini-gpt-review-actions {
+  min-width: 0;
+}
+
+.mini-gpt-candidate-chain-head > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.mini-gpt-candidate-chain-head strong {
+  color: var(--mini-gpt-text);
+  font-size: 15px;
+}
+
+.mini-gpt-candidate-chain-controls {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr);
+  gap: 10px;
+}
+
+.mini-gpt-candidate-chain-controls label {
+  display: grid;
+  gap: 6px;
+  color: var(--mini-gpt-muted);
+  font-size: 12px;
+}
+
+.mini-gpt-candidate-chain-controls .ant-input-number {
+  width: 100%;
+}
+
+.mini-gpt-lineage-status {
+  justify-content: flex-start;
+}
+
+.mini-gpt-review-actions {
+  align-items: stretch;
+}
+
+.mini-gpt-review-actions > .ant-input {
+  flex: 1 1 280px;
+}
+
+.mini-gpt-deep-links {
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding-top: 10px;
+  border-top: 1px solid var(--mini-gpt-border);
+}
+
+.mini-gpt-deep-links > .ant-typography {
+  flex: 0 0 100%;
+}
+
 .mini-gpt-candidate-backtest {
   display: grid;
   gap: 10px;
@@ -1376,6 +1454,17 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.mini-gpt-candidate-backtest .mini-gpt-lottery-candidate-head > div:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.mini-gpt-candidate-backtest .mini-gpt-lottery-candidate-head p {
+  margin: 0;
+  color: var(--mini-gpt-muted);
+  font-size: 12px;
 }
 
 .mini-gpt-generation-buttons {
@@ -2446,6 +2535,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .mini-gpt-candidate-chain-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .mini-gpt-prompt-presets,
   .mini-gpt-generation-rank-list,
   .mini-gpt-generation-cockpit,
@@ -2545,6 +2638,7 @@
   .mini-gpt-lottery-candidate-metrics,
   .mini-gpt-generation-comparison-grid,
   .mini-gpt-candidate-backtest-grid,
+  .mini-gpt-candidate-chain-controls,
   .mini-gpt-prompt-presets,
   .mini-gpt-generation-rank-list,
   .mini-gpt-generation-cockpit,

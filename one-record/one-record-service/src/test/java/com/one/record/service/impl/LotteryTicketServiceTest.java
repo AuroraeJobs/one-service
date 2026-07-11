@@ -8,6 +8,7 @@ import com.one.record.lottery.LotteryTicketBulkPatchRequest;
 import com.one.record.lottery.LotteryTicketImportPreviewRequest;
 import com.one.record.lottery.LotteryTicketImportPreviewResult;
 import com.one.record.lottery.LotteryPrizeResult;
+import com.one.record.lottery.LotteryResearchProvenance;
 import com.one.record.lottery.LotteryTicketBatchSaveRequest;
 import com.one.record.lottery.LotteryTicketBatchSaveResult;
 import com.one.record.lottery.LotteryTicketPrizeCheckSummary;
@@ -152,6 +153,37 @@ class LotteryTicketServiceTest {
     }
 
     @Test
+    void saveTicketPreservesCompleteResearchLineage() {
+        LotteryResearchProvenance provenance = LotteryResearchProvenance.builder()
+                .sourceType("MINIGPT")
+                .generationId("generation-1")
+                .batchId("batch-1")
+                .runId("run-1")
+                .build();
+        when(repository.save(org.mockito.ArgumentMatchers.any(LotteryTicket.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        LotteryTicket saved = service.saveTicket(LotteryTicket.builder()
+                .issue("2026079")
+                .redNumbers(List.of("01", "02", "03", "04", "05", "06"))
+                .blueNumber("07")
+                .source("MINIGPT")
+                .ticketPackId("pack-1")
+                .decisionSetId("decision-1")
+                .candidateKey("candidate-1")
+                .generationId("generation-1")
+                .provenance(provenance)
+                .build());
+
+        assertThat(saved.getTicketPackId()).isEqualTo("pack-1");
+        assertThat(saved.getDecisionSetId()).isEqualTo("decision-1");
+        assertThat(saved.getCandidateKey()).isEqualTo("candidate-1");
+        assertThat(saved.getGenerationId()).isEqualTo("generation-1");
+        assertThat(saved.getProvenance()).isNotSameAs(provenance);
+        assertThat(saved.getProvenance().getBatchId()).isEqualTo("batch-1");
+    }
+
+    @Test
     void saveTicketReturnsExistingDuplicateWhenSameIssueAndNumbersExist() {
         LotteryTicket existing = LotteryTicket.builder().id("existing").issue("2026001").build();
         when(repository.findFirstByUserIdAndIssueAndRedNumbersAndBlueNumber(
@@ -162,6 +194,26 @@ class LotteryTicketServiceTest {
                 .issue("2026001")
                 .redNumbers(List.of("06", "05", "04", "03", "02", "01"))
                 .blueNumber("7")
+                .build());
+
+        assertThat(saved.getId()).isEqualTo("existing");
+        verify(repository, org.mockito.Mockito.never()).save(org.mockito.ArgumentMatchers.any(LotteryTicket.class));
+    }
+
+    @Test
+    void saveTicketKeepsManualTicketPackNumberDeduplicationSemantics() {
+        LotteryTicket existing = LotteryTicket.builder().id("existing").issue("2026001").build();
+        when(repository.findFirstByUserIdAndIssueAndRedNumbersAndBlueNumber(
+                "default", "2026001", List.of("01", "02", "03", "04", "05", "06"), "07"))
+                .thenReturn(Optional.of(existing));
+
+        LotteryTicket saved = service.saveTicket(LotteryTicket.builder()
+                .issue("2026001")
+                .redNumbers(List.of("01", "02", "03", "04", "05", "06"))
+                .blueNumber("07")
+                .source("TICKET_PACK")
+                .ticketPackId("manual-pack-1")
+                .candidateKey("01-02-03-04-05-06+07")
                 .build());
 
         assertThat(saved.getId()).isEqualTo("existing");
@@ -194,6 +246,82 @@ class LotteryTicketServiceTest {
         assertThat(result.getDuplicateTickets()).hasSize(2);
         assertThat(result.getBudgetPrecheck()).isNotNull();
         verify(auditEventRepository).save(org.mockito.ArgumentMatchers.any(LotteryAuditEvent.class));
+    }
+
+    @Test
+    void saveTicketsDoesNotLetManualSameNumberTicketSwallowResearchLineage() {
+        List<String> redNumbers = List.of("01", "02", "03", "04", "05", "06");
+        LotteryTicket manualTicket = LotteryTicket.builder()
+                .id("manual-existing")
+                .issue("2026079")
+                .redNumbers(redNumbers)
+                .blueNumber("07")
+                .source("MANUAL")
+                .build();
+        when(repository.findByUserIdAndIssueAndRedNumbersAndBlueNumber(
+                "default", "2026079", redNumbers, "07"))
+                .thenReturn(List.of(manualTicket));
+        when(repository.save(org.mockito.ArgumentMatchers.any(LotteryTicket.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        LotteryTicketBatchSaveResult result = service.saveTickets(LotteryTicketBatchSaveRequest.builder()
+                .tickets(List.of(researchTicket("candidate-1", "generation-1")))
+                .build());
+
+        assertThat(result.getSavedCount()).isEqualTo(1);
+        assertThat(result.getDuplicateCount()).isZero();
+        assertThat(result.getSavedTickets()).singleElement().satisfies(saved -> {
+            assertThat(saved.getTicketPackId()).isEqualTo("pack-1");
+            assertThat(saved.getDecisionSetId()).isEqualTo("decision-1");
+            assertThat(saved.getCandidateKey()).isEqualTo("candidate-1");
+            assertThat(saved.getGenerationId()).isEqualTo("generation-1");
+        });
+    }
+
+    @Test
+    void saveTicketsKeepsSameNumberResearchTicketsForDifferentCandidatesAndGenerations() {
+        List<String> redNumbers = List.of("01", "02", "03", "04", "05", "06");
+        when(repository.findByUserIdAndIssueAndRedNumbersAndBlueNumber(
+                "default", "2026079", redNumbers, "07"))
+                .thenReturn(List.of());
+        when(repository.save(org.mockito.ArgumentMatchers.any(LotteryTicket.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        LotteryTicketBatchSaveResult result = service.saveTickets(LotteryTicketBatchSaveRequest.builder()
+                .tickets(List.of(
+                        researchTicket("candidate-1", "generation-1"),
+                        researchTicket("candidate-2", "generation-2")
+                ))
+                .build());
+
+        assertThat(result.getSavedCount()).isEqualTo(2);
+        assertThat(result.getDuplicateCount()).isZero();
+        assertThat(result.getSavedTickets())
+                .extracting(LotteryTicket::getCandidateKey)
+                .containsExactly("candidate-1", "candidate-2");
+        assertThat(result.getSavedTickets())
+                .extracting(LotteryTicket::getGenerationId)
+                .containsExactly("generation-1", "generation-2");
+    }
+
+    @Test
+    void saveTicketsStillDeduplicatesRepeatedResearchLineage() {
+        List<String> redNumbers = List.of("01", "02", "03", "04", "05", "06");
+        when(repository.findByUserIdAndIssueAndRedNumbersAndBlueNumber(
+                "default", "2026079", redNumbers, "07"))
+                .thenReturn(List.of());
+        when(repository.save(org.mockito.ArgumentMatchers.any(LotteryTicket.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        LotteryTicketBatchSaveResult result = service.saveTickets(LotteryTicketBatchSaveRequest.builder()
+                .tickets(List.of(
+                        researchTicket("candidate-1", "generation-1"),
+                        researchTicket("candidate-1", "generation-1")
+                ))
+                .build());
+
+        assertThat(result.getSavedCount()).isEqualTo(1);
+        assertThat(result.getDuplicateCount()).isEqualTo(1);
     }
 
     @Test
@@ -320,6 +448,11 @@ class LotteryTicketServiceTest {
         when(repository.findByIdAndUserId("ticket-1", "default")).thenReturn(Optional.of(LotteryTicket.builder()
                 .id("ticket-1")
                 .userId("default")
+                .ticketPackId("pack-1")
+                .decisionSetId("decision-1")
+                .candidateKey("candidate-1")
+                .generationId("generation-1")
+                .provenance(LotteryResearchProvenance.builder().sourceType("MINIGPT").batchId("batch-1").build())
                 .createdAt(100L)
                 .auditMetadata(LotteryAuditMetadata.builder()
                         .action("ticket-save")
@@ -349,6 +482,11 @@ class LotteryTicketServiceTest {
         assertThat(updated.getAuditMetadata().getAction()).isEqualTo("ticket-update");
         assertThat(updated.getAuditMetadata().getCreatedAt()).isEqualTo(90L);
         assertThat(updated.getAuditMetadata().getUpdatedAt()).isGreaterThan(100L);
+        assertThat(updated.getTicketPackId()).isEqualTo("pack-1");
+        assertThat(updated.getDecisionSetId()).isEqualTo("decision-1");
+        assertThat(updated.getCandidateKey()).isEqualTo("candidate-1");
+        assertThat(updated.getGenerationId()).isEqualTo("generation-1");
+        assertThat(updated.getProvenance().getBatchId()).isEqualTo("batch-1");
     }
 
     @Test
@@ -458,6 +596,25 @@ class LotteryTicketServiceTest {
                 .redNumbers(redNumbers)
                 .blueNumber(blueNumber)
                 .source("PREDICTION")
+                .build();
+    }
+
+    private static LotteryTicket researchTicket(String candidateKey, String generationId) {
+        return LotteryTicket.builder()
+                .issue("2026079")
+                .redNumbers(List.of("01", "02", "03", "04", "05", "06"))
+                .blueNumber("07")
+                .source("MINIGPT")
+                .ticketPackId("pack-1")
+                .decisionSetId("decision-1")
+                .candidateKey(candidateKey)
+                .generationId(generationId)
+                .provenance(LotteryResearchProvenance.builder()
+                        .sourceType("MINIGPT")
+                        .generationId(generationId)
+                        .batchId("batch-1")
+                        .runId("run-1")
+                        .build())
                 .build();
     }
 }

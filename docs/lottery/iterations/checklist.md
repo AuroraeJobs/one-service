@@ -1246,9 +1246,11 @@ Formal plan: [Iteration 47 plan](iteration-47-plan.md).
 
 ### Wave 47C: Random-Baseline And Outcome Chain
 
-- [ ] Compare provenance-backed candidate pools with same-window, same-budget random baselines.
-- [ ] Preserve provenance through decision sets, ticket-pack drafts, research notes, actual results, prize/ledger outcomes, and lifecycle review.
-- [ ] Report diversity, hit/prize distributions, cost, ROI, random-baseline delta, and overfit warnings as historical-window evidence.
+- [x] Compare provenance-backed candidate pools with deterministic same-window, same-budget random baselines, including persisted seed/algorithm, paired replay rows, costs, ROI, deltas, and explicit comparability flags.
+- [x] Preserve typed corpus/run/generation provenance through decision sets, backtests, ticket-pack drafts, tickets, research notes, actual-result attribution, prize/ledger outcomes, and lifecycle review.
+- [x] Report diversity, overlap/blue coverage, hit/prize distributions, cost, ROI, random-baseline delta, and overfit warnings as historical-window evidence; label the saved-pool replay as static historical evaluation rather than walk-forward validation.
+
+Verification: backend service tests passed 87/87, backend web tests passed 40/40, frontend i18n audit checked 1037 calls, lottery smoke/release evidence passed 1027/1027 checks across 18 routes, and the production build passed.
 
 ### Wave 47D: Month-End Review And Release Evidence
 

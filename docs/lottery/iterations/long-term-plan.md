@@ -103,12 +103,12 @@ Only the next candidate is promoted. Later ideas remain in the long-horizon them
 
 ### Iteration 47: MiniGPT Lottery Research Loop V1
 
-Formal delivery plan: [Iteration 47 plan](iteration-47-plan.md). Waves 47A and 47B are complete; Wave 47C random-baseline and outcome-chain work is next, while Wave 47D remains follow-up work.
+Formal delivery plan: [Iteration 47 plan](iteration-47-plan.md). Waves 47A-47C are complete; Wave 47D month-end review and release evidence is next.
 
-- Add a strategy-sample corpus alongside raw draw and structural-feature corpora, with versioned export metadata and a reproducible time-based train/validation split.
-- Use a training context long enough to contain a full structured lottery sample and record run, checkpoint, prompt, temperature, top-k, parsing, and repair provenance.
-- Close the manual research chain from corpus export and training through candidate generation, compliance repair, differentiated candidate pools, random-baseline backtests, decision sets, tickets, actual results, and month-end review.
-- Gate progress on reproducible parse rate, legal-number rate, candidate diversity, time-window backtests, and comparison with a random baseline rather than training loss alone.
+- Completed the strategy-sample corpus, versioned export metadata, and reproducible time-based train/validation split beside raw and structural-feature corpora.
+- Completed full-sample context validation and durable run, checkpoint, prompt, sampling, parsing, repair, and candidate-batch provenance.
+- Closed the manual chain through typed-provenance decision sets, deterministic same-window/same-budget random-baseline backtests, explicit draft ticket packs, tickets, actual results, ledgers, notes, and lifecycle review. Historical static-pool replay remains explicitly distinct from walk-forward evaluation.
+- Next, carry the verified chain into month-end review and final release/export evidence while retaining restrained research language.
 
 ## Risk Register
 
@@ -123,7 +123,7 @@ Formal delivery plan: [Iteration 47 plan](iteration-47-plan.md). Waves 47A and 4
 
 ## Review Cadence
 
-- 2026-07-11 delivery review: work is complete through Iteration 46, and Iteration 47 Waves 47A-47B have closed the reproducible corpus/time-split plus training/generation provenance baseline. Continue with Wave 47C random-baseline and outcome-chain work before promoting month-end handoff.
+- 2026-07-11 delivery review: work is complete through Iteration 46 and Iteration 47 Waves 47A-47C. The latest evidence passed backend service 87/87, backend web 40/40, i18n 1037, lottery smoke 1027/1027 across 18 routes, and the production build. Continue with Wave 47D month-end and release-evidence handoff.
 - Review this long-term plan after every five completed iterations.
 - Promote only the next one or two candidate iterations into `docs/lottery/iterations/checklist.md`.
 - Keep completed tactical plans as historical evidence, but let this file carry the long-horizon direction.

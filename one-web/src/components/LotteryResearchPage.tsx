@@ -32,6 +32,8 @@ import {
   type LotteryStrategyExperiment
 } from '../services/api';
 import { lotteryDriftLabel, lotteryEvidenceColor, lotteryEvidenceLabel, lotteryReplayText } from '../utils/lotteryEvidence';
+import { useAppPreferences } from '../contexts/AppPreferencesContext';
+import { lotteryOverfitWarningsText } from '../utils/lotteryBacktestEvidence';
 import './LotteryOverviewPage.css';
 
 type EvidenceKind = 'prediction' | 'experiment' | 'backtest' | 'rule' | 'performance' | 'decision';
@@ -44,6 +46,8 @@ interface EvidenceMetrics {
   blueHitRate?: number;
   netResult?: number;
   roiPercent?: number;
+  baselineRoiPercent?: number;
+  roiPercentDelta?: number;
   hitRatePercent?: number;
   ticketCount?: number;
   replayCount?: number;
@@ -191,17 +195,26 @@ const backtestToEvidence = (item: LotteryBacktestReport): EvidenceItem | undefin
     title: item.strategyName || '回测报告',
     subtitle: `${item.presetWindow || item.requestedWindow || '-'} · ${item.issueStart || '-'} 到 ${item.issueEnd || '-'}`,
     path: `/lottery/backtests/${item.id}`,
-    tags: ['回测', item.presetWindow || 'custom'].filter(Boolean),
+    tags: [
+      '回测',
+      item.presetWindow || 'custom',
+      item.sameWindow ? '同窗口' : '窗口不一致',
+      item.sameBudget ? '同预算' : '预算不一致',
+      item.baselineAlgorithm || '随机基线'
+    ].filter(Boolean),
     metrics: {
       bestScore: item.bestScore,
       stabilityScore: item.stabilityScore,
       averageRedHits: item.averageRedHits,
       blueHitRate: item.blueHitRate,
       netResult: item.netResult,
-      roiPercent: calcRoi(item.netResult, item.totalCost),
+      roiPercent: calcRoi(item.netResult, item.totalCost, item.roiPercent),
+      baselineRoiPercent: item.baselineRoiPercent,
+      roiPercentDelta: item.roiPercentDelta,
       replayCount: item.replayCount
     },
-    prizeDistribution: item.prizeDistribution || {}
+    prizeDistribution: item.prizeDistribution || {},
+    backtestSummary: item
   };
 };
 
@@ -277,12 +290,15 @@ const decisionOutcomeToEvidence = (item: LotteryDecisionOutcomeItem): EvidenceIt
     kind: 'decision',
     title: item.title || `第 ${item.targetIssue || '-'} 期决策`,
     subtitle: `候选 ${item.candidateCount || 0} · 转票 ${item.convertedTicketCount || 0} · 净 ${formatMoney(item.netResult)}`,
-    path: item.targetIssue ? `/lottery/predictions/decision?targetIssue=${item.targetIssue}` : '/lottery/predictions/decision',
+    path: item.decisionSetId
+      ? `/lottery/predictions/decision?decisionSetId=${encodeURIComponent(item.decisionSetId)}&targetIssue=${encodeURIComponent(item.targetIssue || '')}`
+      : item.targetIssue ? `/lottery/predictions/decision?targetIssue=${item.targetIssue}` : '/lottery/predictions/decision',
     tags: ['决策', item.conversionState || 'DRAFT', warningCount ? '需复核' : '已复盘'].filter(Boolean),
     metrics: {
       averageRedHits: item.bestRedHits,
       netResult: item.netResult,
       roiPercent: item.roiPercent,
+      roiPercentDelta: item.backtestRoiPercentDelta,
       hitRatePercent: item.hitRatePercent,
       ticketCount: item.convertedTicketCount,
       warningCount
@@ -409,6 +425,7 @@ const createPrizeDistributionOption = (items: EvidenceItem[]): EChartsOption => 
 
 const LotteryResearchPage = () => {
   const navigate = useNavigate();
+  const { isEnglish } = useAppPreferences();
   const [searchParams, setSearchParams] = useSearchParams();
   const [experiments, setExperiments] = useState<LotteryStrategyExperiment[]>([]);
   const [backtests, setBacktests] = useState<LotteryBacktestReport[]>([]);
@@ -555,7 +572,7 @@ const LotteryResearchPage = () => {
         className="lottery-overview-status-alert"
         type="info"
         showIcon
-        message="这里比较的是历史实验、回测和个人账本证据，仅用于复盘规则稳定性与记录表现。"
+        message="这里比较的是历史实验、回测和个人账本证据；MiniGPT 回测必须与同窗口、同预算随机基线并列，仅用于历史窗口复盘，不外推未来表现。"
       />
 
       <Card className="life-panel-card lottery-clean-panel">
@@ -626,6 +643,9 @@ const LotteryResearchPage = () => {
               <small>
                 评分 {compactNumber(item.metrics.bestScore || item.metrics.rankScore)} · 红球 {compactNumber(item.metrics.averageRedHits)} · ROI {formatPercent(item.metrics.roiPercent)}
               </small>
+              {item.metrics.baselineRoiPercent !== undefined ? (
+                <small>随机 ROI {formatPercent(item.metrics.baselineRoiPercent)} · Δ {formatPercent(item.metrics.roiPercentDelta)}</small>
+              ) : null}
             </article>
           ))}
           {selectedItems.length === 0 ? <Empty description="选择证据后生成报告摘要" /> : null}
@@ -683,9 +703,25 @@ const LotteryResearchPage = () => {
                     <div className="lottery-research-backtest-strip">
                       <TrophyOutlined />
                       <span>
-                        匹配回测：稳定 {item.backtestSummary.stabilityScore ?? 0} · 红球均值 {item.backtestSummary.averageRedHits ?? 0} · 净值 {formatMoney(item.backtestSummary.netResult)}
+                        历史窗口 {item.backtestSummary.issueStart || '-'} 至 {item.backtestSummary.issueEnd || '-'} ·
+                        模型 ROI {formatPercent(item.backtestSummary.roiPercent)} ·
+                        随机 ROI {formatPercent(item.backtestSummary.baselineRoiPercent)} ·
+                        Δ {formatPercent(item.backtestSummary.roiPercentDelta)} ·
+                        成本 {formatMoney(item.backtestSummary.totalCost)} / 随机 {formatMoney(item.backtestSummary.baselineTotalCost)} ·
+                        奖金 {formatMoney(item.backtestSummary.totalPrize)} / 随机 {formatMoney(item.backtestSummary.baselineTotalPrize)} ·
+                        多样性 {compactNumber(item.backtestSummary.candidateDiversity)}%
                       </span>
+                      <Tag color={item.backtestSummary.sameWindow ? 'green' : 'red'}>同窗口 {item.backtestSummary.sameWindow ? 'PASS' : 'FAIL'}</Tag>
+                      <Tag color={item.backtestSummary.sameBudget ? 'green' : 'red'}>同预算 {item.backtestSummary.sameBudget ? 'PASS' : 'FAIL'}</Tag>
                     </div>
+                  ) : null}
+                  {(item.backtestSummary?.overfitWarnings || []).length ? (
+                    <Alert
+                      type="warning"
+                      showIcon
+                      message={`过拟合提醒 ${(item.backtestSummary?.overfitWarnings || []).length} 项`}
+                      description={lotteryOverfitWarningsText(item.backtestSummary?.overfitWarnings || [], isEnglish)}
+                    />
                   ) : null}
                   <Space wrap>
                     {item.tags.slice(0, 4).map(tag => <Tag key={tag}>{tag}</Tag>)}

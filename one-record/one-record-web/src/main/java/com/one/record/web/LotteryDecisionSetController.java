@@ -1,6 +1,8 @@
 package com.one.record.web;
 
 import com.one.record.lottery.LotteryDecisionOutcomeSummary;
+import com.one.record.lottery.LotteryDecisionReviewRequest;
+import com.one.record.lottery.LotteryMiniGptDecisionSetCreateRequest;
 import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.model.LotteryDecisionSet;
 import com.one.record.service.ILotteryDecisionSetService;
@@ -46,6 +48,12 @@ public class LotteryDecisionSetController {
         return service.createDecisionSet(decisionSet);
     }
 
+    @PostMapping("minigpt")
+    @Operation(summary = "从 MiniGPT 生成记录保存彩票决策集", description = "校验同批次、已入选且合规的生成记录后保存结构化研究溯源")
+    public LotteryDecisionSet createMiniGptDecisionSet(@RequestBody LotteryMiniGptDecisionSetCreateRequest request) {
+        return service.createMiniGptDecisionSet(request);
+    }
+
     @PutMapping("{id}")
     @Operation(summary = "更新彩票决策集", description = "更新已保存的彩票决策集内容和转票状态")
     public LotteryDecisionSet updateDecisionSet(@PathVariable("id") String id,
@@ -57,5 +65,12 @@ public class LotteryDecisionSetController {
     @Operation(summary = "归档彩票决策集", description = "将决策集标记为归档，列表默认不再展示")
     public LotteryDecisionSet archiveDecisionSet(@PathVariable("id") String id) {
         return service.archiveDecisionSet(id);
+    }
+
+    @PatchMapping("{id}/review")
+    @Operation(summary = "复核彩票决策集", description = "以 PROMOTE、WATCH、PAUSE 或 RETIRE 记录决策集的显式研究复核结论")
+    public LotteryDecisionSet reviewDecisionSet(@PathVariable("id") String id,
+                                                @RequestBody LotteryDecisionReviewRequest request) {
+        return service.reviewDecisionSet(id, request);
     }
 }

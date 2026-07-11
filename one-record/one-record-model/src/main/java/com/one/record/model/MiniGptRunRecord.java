@@ -50,6 +50,14 @@ public class MiniGptRunRecord {
 
     private String validationSha256;
 
+    private String trainFirstIssue;
+
+    private String trainLatestIssue;
+
+    private String validationFirstIssue;
+
+    private String validationLatestIssue;
+
     private String provenanceStatus;
 
     private Integer minimumSampleTokens;

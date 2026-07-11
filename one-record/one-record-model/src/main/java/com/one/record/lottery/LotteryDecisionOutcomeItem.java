@@ -26,6 +26,16 @@ public class LotteryDecisionOutcomeItem implements Serializable {
 
     private String ruleName;
 
+    private LotteryResearchProvenance provenance;
+
+    private String reviewAction;
+
+    private String reviewNote;
+
+    private String reviewBacktestId;
+
+    private Long reviewedAt;
+
     private String conversionState;
 
     private String status;
@@ -76,6 +86,13 @@ public class LotteryDecisionOutcomeItem implements Serializable {
     private LotteryDecisionPerformanceDelta ruleDelta;
 
     private LotteryDecisionPerformanceDelta sourceDelta;
+
+    private BigDecimal backtestNetResultDelta;
+
+    private BigDecimal backtestRoiPercentDelta;
+
+    @Builder.Default
+    private List<String> backtestWarnings = new ArrayList<>();
 
     @Builder.Default
     private List<LotteryDecisionCandidateOutcome> candidates = new ArrayList<>();

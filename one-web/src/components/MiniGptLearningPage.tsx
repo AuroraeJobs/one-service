@@ -1,17 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, AutoComplete, Button, Card, Empty, Form, Input, InputNumber, Progress, Segmented, Select, Space, Spin, Table, Tag, Typography, message } from 'antd';
-import { BarChartOutlined, BookOutlined, BulbOutlined, CloseCircleOutlined, CopyOutlined, DatabaseOutlined, DownloadOutlined, PlayCircleOutlined, ReloadOutlined, SaveOutlined, TrophyOutlined } from '@ant-design/icons';
+import { BarChartOutlined, BookOutlined, BulbOutlined, CloseCircleOutlined, CopyOutlined, DatabaseOutlined, DownloadOutlined, LinkOutlined, PlayCircleOutlined, ReloadOutlined, SaveOutlined, TrophyOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
 import LifePageShell from './LifePageShell';
 import { useAppPreferences } from '../contexts/AppPreferencesContext';
+import { lotteryOverfitWarningsText } from '../utils/lotteryBacktestEvidence';
 import {
   lotteryBacktestApi,
   lotteryDecisionSetApi,
+  lotteryTicketPackApi,
+  lotteryWorkbenchApi,
   miniGptApi,
   type LotteryDecisionCandidateSelection,
   type LotteryBacktestReport,
   type LotteryDecisionSet,
+  type LotteryResearchProvenance,
+  type LotteryTicketPack,
   type MiniGptCorpusInsight,
   type MiniGptDashboard,
   type MiniGptEnvironmentCheck,
@@ -48,6 +53,17 @@ const MINI_GPT_PRESET_BLOCK_SIZES: Record<string, number> = {
 const MINI_GPT_FALLBACK_LOTTERY_BLOCK_SIZE = 160;
 
 const MINI_GPT_BATCH_STRATEGIES = ['balanced', 'blue-focus', 'zone-balance', 'low-overlap'];
+
+const reviewActionLabel = (action: 'PROMOTE' | 'WATCH' | 'PAUSE' | 'RETIRE' | string, isEnglish = false) => {
+  const labels: Record<string, [string, string]> = {
+    PROMOTE: ['推广', 'Promote'],
+    WATCH: ['观察', 'Watch'],
+    PAUSE: ['暂停', 'Pause'],
+    RETIRE: ['退役', 'Retire']
+  };
+  const [zh, en] = labels[action] || [action, action];
+  return isEnglish ? en : zh;
+};
 
 type MiniGptGenerationFormValues = MiniGptGenerationRequest & Pick<
   MiniGptGenerationBatchRequest,
@@ -799,8 +815,38 @@ const generationToDecisionCandidate = (
     ? undefined
     : (candidate.repairActions || candidate.issues || []).join('；') || '由 MiniGPT 输出修复得到';
   const strategyLabel = result.strategyLabel || 'default';
+  const provenance: LotteryResearchProvenance = {
+    sourceType: 'MINIGPT_GENERATION',
+    generationId: result.generationId,
+    batchId: result.batchId,
+    runId: result.runId,
+    runName: result.runName,
+    corpusVersion: result.corpusVersion,
+    trainSha256: result.trainSha256,
+    validationSha256: result.validationSha256,
+    checkpointSha256: result.checkpointSha256,
+    prompt: result.prompt,
+    maxNewTokens: result.maxNewTokens,
+    temperature: result.temperature,
+    topK: result.topK,
+    seed: result.seed,
+    strategyLabel: result.strategyLabel,
+    trainFirstIssue: result.trainFirstIssue,
+    trainLatestIssue: result.trainLatestIssue,
+    validationFirstIssue: result.validationFirstIssue,
+    validationLatestIssue: result.validationLatestIssue,
+    batchBaseSeed: result.batchBaseSeed,
+    batchMaxRedOverlap: result.batchMaxRedOverlap,
+    batchMinimumBlueCoverage: result.batchMinimumBlueCoverage,
+    batchMinimumBlueCoverageMet: result.batchMinimumBlueCoverageMet,
+    batchStrategies: result.batchStrategies || [],
+    modelConfig: result.modelConfig || {},
+    capturedAt: result.generatedAt
+  };
   return {
     key: result.generationId || `minigpt-${candidateKeyFromBalls(redNumbers, rawBlueNumber)}`,
+    generationId: result.generationId,
+    provenance,
     candidateTitle: `MiniGPT ${strategyLabel} ${index + 1}`,
     source: 'MINIGPT',
     ruleName: `MiniGPT ${strategyLabel} temp=${result.temperature ?? '-'} topK=${result.topK ?? '-'}`,
@@ -1916,6 +1962,12 @@ const MiniGptLearningPage = () => {
   const [activeLabSection, setActiveLabSection] = useState<LabSectionKey>('training');
   const [savedCandidateSet, setSavedCandidateSet] = useState<LotteryDecisionSet>();
   const [candidateBacktest, setCandidateBacktest] = useState<LotteryBacktestReport>();
+  const [workbenchNextIssue, setWorkbenchNextIssue] = useState('');
+  const [candidateTargetIssue, setCandidateTargetIssue] = useState('');
+  const [baselineSeed, setBaselineSeed] = useState(42);
+  const [ticketPackPreview, setTicketPackPreview] = useState<LotteryTicketPack>();
+  const [ticketPackDraft, setTicketPackDraft] = useState<LotteryTicketPack>();
+  const [reviewNote, setReviewNote] = useState('');
   const [selectedRun, setSelectedRun] = useState<string>();
   const [comparisonRunNames, setComparisonRunNames] = useState<string[]>([]);
   const [comparisonLogs, setComparisonLogs] = useState<Record<string, MiniGptTrainingLogRecord[]>>({});
@@ -1933,10 +1985,20 @@ const MiniGptLearningPage = () => {
   const [generatingBatch, setGeneratingBatch] = useState(false);
   const [savingCandidateSet, setSavingCandidateSet] = useState(false);
   const [runningCandidateBacktest, setRunningCandidateBacktest] = useState(false);
+  const [previewingTicketPack, setPreviewingTicketPack] = useState(false);
+  const [creatingTicketPack, setCreatingTicketPack] = useState(false);
+  const [reviewingDecision, setReviewingDecision] = useState<string>();
   const watchedTrainingValues = Form.useWatch([], form) as MiniGptTrainingRequest | undefined;
   const watchedRunName = Form.useWatch('runName', form) as string | undefined;
   const watchedNoteValues = Form.useWatch([], noteForm) as MiniGptRunNoteRequest | undefined;
-  const generationBusy = generating || comparingGeneration || generatingBatch || savingCandidateSet;
+  const generationBusy = generating
+    || comparingGeneration
+    || generatingBatch
+    || savingCandidateSet
+    || runningCandidateBacktest
+    || previewingTicketPack
+    || creatingTicketPack
+    || Boolean(reviewingDecision);
   const text = useMemo(() => ({
     title: isEnglish ? 'MiniGPT Learning Lab' : 'MiniGPT 学习实验',
     selectRun: isEnglish ? 'Select run' : '选择实验',
@@ -2088,6 +2150,19 @@ const MiniGptLearningPage = () => {
     savableCandidates: isEnglish ? 'legal unique candidates can be saved' : '个合规去重候选可保存',
     saveCandidateSet: isEnglish ? 'Save Decision Set' : '保存到决策集',
     runBacktest: isEnglish ? 'Run Backtest' : '立即回测',
+    targetIssue: isEnglish ? 'Target Issue' : '目标期号',
+    workbenchIssue: isEnglish ? 'Workbench Next Issue' : '工作台下一期',
+    baselineSeed: isEnglish ? 'Random Baseline Seed' : '随机基线 Seed',
+    previewTicketPack: isEnglish ? 'Preview Ticket Pack' : '预览票包',
+    createTicketPackDraft: isEnglish ? 'Create Draft Explicitly' : '显式创建草稿',
+    ticketPackSafety: isEnglish
+      ? 'Preview first. Creating only saves a DRAFT; approval and ticket creation stay manual.'
+      : '先预览；创建动作只保存 DRAFT，审批和落票仍需人工操作。',
+    historicalEvidence: isEnglish ? 'Historical-window evidence only' : '仅为历史窗口证据',
+    modelVsRandom: isEnglish ? 'Model vs Same-Window Random Baseline' : '模型 vs 同窗口随机基线',
+    reviewAction: isEnglish ? 'Lifecycle Review' : '生命周期复核',
+    reviewNote: isEnglish ? 'Review note (optional)' : '复核备注（可选）',
+    deepLinks: isEnglish ? 'Lineage Links' : '溯源深链',
     currentCheckpointOutput: isEnglish ? 'Current checkpoint output' : '当前 checkpoint 生成结果',
     noGeneratedSample: isEnglish ? 'No generated sample' : '暂无生成样例',
     currentBestOutput: isEnglish ? 'Current Best Output' : '当前最佳输出',
@@ -2251,6 +2326,17 @@ const MiniGptLearningPage = () => {
       }
     } finally {
       setEnvironmentLoading(false);
+    }
+  }, []);
+
+  const loadWorkbenchNextIssue = useCallback(async () => {
+    try {
+      const dailyState = await lotteryWorkbenchApi.dailyState();
+      const nextIssue = String(dailyState.nextIssue || '').trim();
+      setWorkbenchNextIssue(nextIssue);
+      setCandidateTargetIssue(current => current || nextIssue);
+    } catch (error) {
+      console.warn('读取彩票工作台下一期失败:', error);
     }
   }, []);
 
@@ -2510,6 +2596,8 @@ const MiniGptLearningPage = () => {
       setSelectedTraceTokenKey(undefined);
       setSavedCandidateSet(undefined);
       setCandidateBacktest(undefined);
+      setTicketPackPreview(undefined);
+      setTicketPackDraft(undefined);
     } catch (error) {
       console.error('MiniGPT 生成失败:', error);
       if (generationResponseIsCurrent(requestSequence, requestRunName)) {
@@ -2549,6 +2637,8 @@ const MiniGptLearningPage = () => {
       setSelectedTraceTokenKey(undefined);
       setSavedCandidateSet(undefined);
       setCandidateBacktest(undefined);
+      setTicketPackPreview(undefined);
+      setTicketPackDraft(undefined);
       message.success(`已完成 ${results.length} 组采样参数对比`);
     } catch (error) {
       console.error('MiniGPT 采样参数对比失败:', error);
@@ -2591,6 +2681,8 @@ const MiniGptLearningPage = () => {
       setSelectedTraceTokenKey(undefined);
       setSavedCandidateSet(undefined);
       setCandidateBacktest(undefined);
+      setTicketPackPreview(undefined);
+      setTicketPackDraft(undefined);
       message.success(text.batchGenerationSuccess(batch.generatedCount || 0));
     } catch (error) {
       console.error('MiniGPT 候选批次生成失败:', error);
@@ -2605,6 +2697,21 @@ const MiniGptLearningPage = () => {
   const handleSaveCandidateSet = async () => {
     if (!decisionCandidateSelections.length) {
       message.warning('当前没有可保存的合规或可修复候选');
+      return;
+    }
+    if (!generationBatch?.batchId) {
+      message.warning(isEnglish ? 'Generate a provenance-backed candidate batch first' : '请先生成带溯源的候选批次');
+      return;
+    }
+    const generationIds = decisionCandidateSelections
+      .map(item => item.generationId)
+      .filter((id): id is string => Boolean(id));
+    if (generationIds.length !== decisionCandidateSelections.length) {
+      message.warning(isEnglish ? 'Some candidates are missing generation IDs' : '部分候选缺少 generation ID，无法由服务端校验');
+      return;
+    }
+    if (!candidateTargetIssue.trim()) {
+      message.warning(isEnglish ? 'Enter the target issue first' : '请先填写目标期号');
       return;
     }
     if (generationBusy) return;
@@ -2626,18 +2733,18 @@ const MiniGptLearningPage = () => {
             `strategies=${(generationBatch.requestedStrategies || []).join('|') || '-'}`
           ].join(', ')
         : '';
-      const saved = await lotteryDecisionSetApi.createDecisionSet({
-        title: `MiniGPT 候选池 ${timestamp}`,
-        ruleName: run?.runName ? `MiniGPT:${run.runName}` : 'MiniGPT',
-        evidenceState: 'MINIGPT',
-        resultState: 'PENDING',
-        conversionState: 'DRAFT',
-        note: `由 MiniGPT 生成试验台保存，prompt=${generationForm.getFieldValue('prompt') || run?.samplePrompt || '-'}${provenance ? `，${provenance}` : ''}${batchPolicy ? `，${batchPolicy}` : ''}`,
-        selectedCandidates: decisionCandidateSelections
+      const saved = await lotteryDecisionSetApi.createMiniGptDecisionSet({
+        batchId: generationBatch.batchId,
+        generationIds,
+        targetIssue: candidateTargetIssue.trim(),
+        title: `MiniGPT 候选池 ${candidateTargetIssue.trim()} · ${timestamp}`,
+        note: `由服务端复核 MiniGPT 入池状态与号码合规性，prompt=${generationForm.getFieldValue('prompt') || run?.samplePrompt || '-'}${provenance ? `，${provenance}` : ''}${batchPolicy ? `，${batchPolicy}` : ''}`
       });
       if (!generationResponseIsCurrent(requestSequence, requestRunName)) return;
       setSavedCandidateSet(saved);
       setCandidateBacktest(undefined);
+      setTicketPackPreview(undefined);
+      setTicketPackDraft(undefined);
       message.success(`已保存候选池：${saved.title || saved.id || 'MiniGPT 决策集'}`);
     } catch (error) {
       console.error('保存 MiniGPT 候选池失败:', error);
@@ -2660,7 +2767,8 @@ const MiniGptLearningPage = () => {
         decisionSetId: savedCandidateSet.id,
         strategyName: savedCandidateSet.ruleName || savedCandidateSet.title || 'MiniGPT 候选池',
         presetWindow: 'latest-30',
-        window: 30
+        window: 30,
+        baselineSeed
       });
       setCandidateBacktest(report);
       message.success('MiniGPT 候选池回测完成');
@@ -2669,6 +2777,97 @@ const MiniGptLearningPage = () => {
       message.error('MiniGPT 候选池回测失败');
     } finally {
       setRunningCandidateBacktest(false);
+    }
+  };
+
+  const buildTicketPackPayload = (): Partial<LotteryTicketPack> | undefined => {
+    if (!savedCandidateSet?.id || !candidateTargetIssue.trim()) return undefined;
+    return {
+      title: `${savedCandidateSet.title || 'MiniGPT 候选池'} · DRAFT`,
+      targetIssue: candidateTargetIssue.trim(),
+      sourceType: 'DECISION_SET',
+      sourceId: savedCandidateSet.id,
+      status: 'DRAFT',
+      approvalState: 'PENDING',
+      items: []
+    };
+  };
+
+  const handlePreviewTicketPack = async () => {
+    if (!candidateBacktest?.id) {
+      message.warning(isEnglish ? 'Run the same-window random-baseline backtest before previewing a ticket pack' : '请先完成同窗口随机基线回测，再预览票包');
+      return;
+    }
+    if (candidateBacktest.sameWindow !== true || candidateBacktest.sameBudget !== true) {
+      message.warning(isEnglish ? 'The random baseline must pass both same-window and same-budget checks' : '随机基线必须同时通过同窗口、同预算检查');
+      return;
+    }
+    const payload = buildTicketPackPayload();
+    if (!payload || !(savedCandidateSet?.selectedCandidates || []).length) {
+      message.warning(isEnglish ? 'Save a validated decision set first' : '请先保存服务端校验通过的决策集');
+      return;
+    }
+    setPreviewingTicketPack(true);
+    try {
+      const preview = await lotteryTicketPackApi.preview(payload);
+      setTicketPackPreview(preview);
+      setTicketPackDraft(undefined);
+      message.success(isEnglish ? 'Ticket-pack preview is ready' : '票包预览已生成');
+    } catch (error) {
+      console.error('预览 MiniGPT 票包失败:', error);
+      message.error(isEnglish ? 'Ticket-pack preview failed' : '票包预览失败');
+    } finally {
+      setPreviewingTicketPack(false);
+    }
+  };
+
+  const handleCreateTicketPackDraft = async () => {
+    if (!ticketPackPreview) {
+      message.warning(isEnglish ? 'Preview the ticket pack first' : '请先预览票包');
+      return;
+    }
+    const payload = buildTicketPackPayload();
+    if (!payload) return;
+    setCreatingTicketPack(true);
+    try {
+      const draft = await lotteryTicketPackApi.create({
+        ...payload,
+        status: 'DRAFT',
+        approvalState: 'PENDING'
+      });
+      setTicketPackDraft(draft);
+      message.success(isEnglish ? 'Draft saved; no approval or tickets were created' : '票包草稿已保存，未审批、未落票');
+    } catch (error) {
+      console.error('创建 MiniGPT 票包草稿失败:', error);
+      message.error(isEnglish ? 'Failed to create ticket-pack draft' : '创建票包草稿失败');
+    } finally {
+      setCreatingTicketPack(false);
+    }
+  };
+
+  const handleReviewDecision = async (reviewAction: 'PROMOTE' | 'WATCH' | 'PAUSE' | 'RETIRE') => {
+    if (!savedCandidateSet?.id) {
+      message.warning(isEnglish ? 'Save the decision set first' : '请先保存决策集');
+      return;
+    }
+    if (!candidateBacktest?.id) {
+      message.warning(isEnglish ? 'Run a persisted backtest before review' : '请先完成并保存回测，再记录复核动作');
+      return;
+    }
+    setReviewingDecision(reviewAction);
+    try {
+      const reviewed = await lotteryDecisionSetApi.reviewDecisionSet(savedCandidateSet.id, {
+        reviewAction,
+        backtestId: candidateBacktest.id,
+        note: reviewNote.trim() || undefined
+      });
+      setSavedCandidateSet(reviewed);
+      message.success(isEnglish ? `Review saved: ${reviewActionLabel(reviewAction, true)}` : `已记录复核动作：${reviewActionLabel(reviewAction)}`);
+    } catch (error) {
+      console.error('复核 MiniGPT 决策集失败:', error);
+      message.error(isEnglish ? 'Decision review failed' : '决策集复核失败');
+    } finally {
+      setReviewingDecision(undefined);
     }
   };
 
@@ -2726,11 +2925,12 @@ const MiniGptLearningPage = () => {
       samplePrompt: '语言模型'
     });
     loadEnvironmentCheck(true);
+    loadWorkbenchNextIssue();
     const timer = window.setInterval(() => {
       loadTrainingStatus(true);
     }, 2000);
     return () => window.clearInterval(timer);
-  }, [loadCorpusInsight, loadDashboard, loadEnvironmentCheck, loadTrainingStatus]);
+  }, [loadCorpusInsight, loadDashboard, loadEnvironmentCheck, loadTrainingStatus, loadWorkbenchNextIssue]);
 
   useEffect(() => {
     savePlannedExperiments(plannedExperiments);
@@ -3041,6 +3241,8 @@ const MiniGptLearningPage = () => {
     setSelectedTraceTokenKey(undefined);
     setSavedCandidateSet(undefined);
     setCandidateBacktest(undefined);
+    setTicketPackPreview(undefined);
+    setTicketPackDraft(undefined);
   }, [generationForm, noteForm, run, text.defaultPrompt]);
 
   const columns = [
@@ -4275,70 +4477,194 @@ const MiniGptLearningPage = () => {
                     )}
                   </section>
                   {decisionCandidateSelections.length > 0 && (
-                    <section className="mini-gpt-candidate-set-save">
-                      <div>
-                        <Text type="secondary">{isEnglish ? 'Candidate Pool Draft' : '候选池草稿'}</Text>
-                        <strong>{decisionCandidateSelections.length} {text.savableCandidates}</strong>
+                    <section className="mini-gpt-candidate-chain">
+                      <div className="mini-gpt-candidate-chain-head">
+                        <div>
+                          <Text type="secondary">{isEnglish ? 'Validated Candidate Chain' : '候选闭环'}</Text>
+                          <strong>{decisionCandidateSelections.length} {text.savableCandidates}</strong>
+                        </div>
+                        <Space wrap>
+                          <Tag color={generationBatch?.batchId ? 'green' : 'orange'}>batchId={generationBatch?.batchId || '-'}</Tag>
+                          <Tag>{text.workbenchIssue}: {workbenchNextIssue || '-'}</Tag>
+                        </Space>
                       </div>
-                      <Button
-                        icon={<SaveOutlined />}
-                        loading={savingCandidateSet}
-                        disabled={generationBusy}
-                        onClick={handleSaveCandidateSet}
-                      >
-                        {text.saveCandidateSet}
-                      </Button>
-                      <Button
-                        loading={runningCandidateBacktest}
-                        disabled={!savedCandidateSet?.id}
-                        onClick={handleRunCandidateBacktest}
-                      >
-                        {text.runBacktest}
-                      </Button>
+                      <div className="mini-gpt-candidate-chain-controls">
+                        <label>
+                          <span>{text.targetIssue}</span>
+                          <Input
+                            value={candidateTargetIssue}
+                            placeholder={workbenchNextIssue || text.targetIssue}
+                            onChange={event => {
+                              setCandidateTargetIssue(event.target.value);
+                              setSavedCandidateSet(undefined);
+                              setCandidateBacktest(undefined);
+                              setTicketPackPreview(undefined);
+                              setTicketPackDraft(undefined);
+                            }}
+                          />
+                        </label>
+                        <label>
+                          <span>{text.baselineSeed}</span>
+                          <InputNumber min={0} max={2_147_483_647} value={baselineSeed} onChange={value => setBaselineSeed(value ?? 42)} />
+                        </label>
+                      </div>
+                      <div className="mini-gpt-candidate-chain-actions">
+                        <Button
+                          type="primary"
+                          icon={<SaveOutlined />}
+                          loading={savingCandidateSet}
+                          disabled={generationBusy || !generationBatch?.batchId || !candidateTargetIssue.trim()}
+                          onClick={handleSaveCandidateSet}
+                        >
+                          {text.saveCandidateSet}
+                        </Button>
+                        <Button
+                          loading={runningCandidateBacktest}
+                          disabled={!savedCandidateSet?.id}
+                          onClick={handleRunCandidateBacktest}
+                        >
+                          {text.runBacktest}
+                        </Button>
+                        <Button loading={previewingTicketPack} disabled={!savedCandidateSet?.id || !candidateBacktest?.id || candidateBacktest.sameWindow !== true || candidateBacktest.sameBudget !== true} onClick={handlePreviewTicketPack}>
+                          {text.previewTicketPack}
+                        </Button>
+                        <Button loading={creatingTicketPack} disabled={!ticketPackPreview || Boolean(ticketPackDraft?.id)} onClick={handleCreateTicketPackDraft}>
+                          {text.createTicketPackDraft}
+                        </Button>
+                      </div>
+                      <Alert type="info" showIcon message={text.ticketPackSafety} />
+                      {(savedCandidateSet || ticketPackPreview || ticketPackDraft) && (
+                        <div className="mini-gpt-lineage-status">
+                          <Tag color={savedCandidateSet?.id ? 'green' : 'default'}>decisionSetId={savedCandidateSet?.id || '-'}</Tag>
+                          <Tag color={ticketPackPreview ? 'blue' : 'default'}>{isEnglish ? 'Preview' : '预览'}: {ticketPackPreview ? `${ticketPackPreview.items?.length || 0} items` : '-'}</Tag>
+                          <Tag color={ticketPackDraft?.id ? 'green' : 'default'}>ticketPackId={ticketPackDraft?.id || '-'}</Tag>
+                          {ticketPackDraft ? <Tag>{ticketPackDraft.status || 'DRAFT'} / {ticketPackDraft.approvalState || 'PENDING'}</Tag> : null}
+                        </div>
+                      )}
                     </section>
                   )}
                   {candidateBacktest && (
                     <section className="mini-gpt-candidate-backtest">
                       <div className="mini-gpt-lottery-candidate-head">
-                        <Text type="secondary">候选池历史回测</Text>
-                        <Tag>{candidateBacktest.replayCount || 0} rows</Tag>
+                        <div>
+                          <Text type="secondary">{text.modelVsRandom}</Text>
+                          <p>{text.historicalEvidence} · backtestId={candidateBacktest.id || '-'}</p>
+                        </div>
+                        <Space wrap>
+                          <Tag>{candidateBacktest.replayCount || 0} rows</Tag>
+                          <Tag color={candidateBacktest.sameWindow ? 'green' : 'red'}>{isEnglish ? 'Same window' : '同窗口'}: {candidateBacktest.sameWindow ? 'PASS' : 'FAIL'}</Tag>
+                          <Tag color={candidateBacktest.sameBudget ? 'green' : 'red'}>{isEnglish ? 'Same budget' : '同预算'}: {candidateBacktest.sameBudget ? 'PASS' : 'FAIL'}</Tag>
+                        </Space>
                       </div>
                       <div className="mini-gpt-candidate-backtest-grid">
                         <div>
-                          <span>平均红球</span>
+                          <span>{isEnglish ? 'Average red hits' : '平均红球'}</span>
                           <strong>{candidateBacktest.averageRedHits ?? '-'}</strong>
-                          <em>随机 {candidateBacktest.baselineAverageRedHits ?? '-'}</em>
+                          <em>{isEnglish ? 'Random' : '随机'} {candidateBacktest.baselineAverageRedHits ?? '-'} · Δ {candidateBacktest.averageRedHitsDelta ?? '-'}</em>
                         </div>
                         <div>
-                          <span>蓝球命中率</span>
+                          <span>{isEnglish ? 'Blue hit rate' : '蓝球命中率'}</span>
                           <strong>{candidateBacktest.blueHitRate ?? '-'}%</strong>
-                          <em>随机 {candidateBacktest.baselineBlueHitRate ?? '-'}%</em>
+                          <em>{isEnglish ? 'Random' : '随机'} {candidateBacktest.baselineBlueHitRate ?? '-'}% · Δ {candidateBacktest.blueHitRateDelta ?? '-'}%</em>
                         </div>
                         <div>
-                          <span>净结果</span>
-                          <strong>{candidateBacktest.netResult ?? '-'}</strong>
-                          <em>成本 {candidateBacktest.totalCost ?? '-'}</em>
+                          <span>{isEnglish ? 'Net / random net' : '净结果 / 随机净结果'}</span>
+                          <strong>{candidateBacktest.netResult ?? '-'} / {candidateBacktest.baselineNetResult ?? '-'}</strong>
+                          <em>Δ {candidateBacktest.netResultDelta ?? '-'}</em>
                         </div>
                         <div>
-                          <span>奖级分布</span>
-                          <strong>{Object.entries(candidateBacktest.prizeDistribution || {}).slice(0, 2).map(([key, value]) => `${key}:${value}`).join(' / ') || '-'}</strong>
-                          <em>历史窗口表现</em>
+                          <span>ROI / {isEnglish ? 'random ROI' : '随机 ROI'}</span>
+                          <strong>{candidateBacktest.roiPercent ?? '-'}% / {candidateBacktest.baselineRoiPercent ?? '-'}%</strong>
+                          <em>Δ {candidateBacktest.roiPercentDelta ?? '-'}%</em>
+                        </div>
+                        <div>
+                          <span>{isEnglish ? 'Candidate diversity' : '候选多样性'}</span>
+                          <strong>{candidateBacktest.candidateDiversity ?? '-'}%</strong>
+                          <em>{isEnglish ? 'unique' : '去重'} {candidateBacktest.uniqueCandidateCount ?? '-'} / {candidateBacktest.candidateCount ?? '-'}</em>
+                        </div>
+                        <div>
+                          <span>{isEnglish ? 'Cost / random cost' : '成本 / 随机成本'}</span>
+                          <strong>{candidateBacktest.totalCost ?? '-'} / {candidateBacktest.baselineTotalCost ?? '-'}</strong>
+                          <em>{isEnglish ? 'same-budget evidence' : '同预算证据'}</em>
+                        </div>
+                        <div>
+                          <span>{isEnglish ? 'Prize / random prize' : '奖金 / 随机奖金'}</span>
+                          <strong>{candidateBacktest.totalPrize ?? '-'} / {candidateBacktest.baselineTotalPrize ?? '-'}</strong>
+                          <em>Δ {candidateBacktest.totalPrizeDelta ?? '-'}</em>
+                        </div>
+                        <div>
+                          <span>{isEnglish ? 'Overlap / blue coverage' : '重叠 / 蓝球覆盖'}</span>
+                          <strong>{candidateBacktest.maxRedOverlap ?? '-'} / {candidateBacktest.distinctBlueCount ?? '-'}</strong>
+                          <em>{candidateBacktest.evaluationMode || '-'} · seed={candidateBacktest.baselineSeed ?? '-'}</em>
+                        </div>
+                        <div>
+                          <span>{isEnglish ? 'Hit distribution' : '命中分布'}</span>
+                          <strong>{Object.entries(candidateBacktest.hitDistribution || {}).map(([key, value]) => `${key}:${value}`).join(' / ') || '-'}</strong>
+                          <em>{isEnglish ? 'Random' : '随机'} {Object.entries(candidateBacktest.baselineHitDistribution || {}).map(([key, value]) => `${key}:${value}`).join(' / ') || '-'}</em>
+                        </div>
+                        <div>
+                          <span>{isEnglish ? 'Prize distribution' : '奖级分布'}</span>
+                          <strong>{Object.entries(candidateBacktest.prizeDistribution || {}).map(([key, value]) => `${key}:${value}`).join(' / ') || '-'}</strong>
+                          <em>{isEnglish ? 'Random' : '随机'} {Object.entries(candidateBacktest.baselinePrizeDistribution || {}).map(([key, value]) => `${key}:${value}`).join(' / ') || '-'}</em>
                         </div>
                       </div>
+                      {(candidateBacktest.overfitWarnings || []).length ? (
+                        <Alert
+                          type="warning"
+                          showIcon
+                          message={isEnglish ? 'Overfit warnings' : '过拟合提醒'}
+                          description={lotteryOverfitWarningsText(candidateBacktest.overfitWarnings || [], isEnglish)}
+                        />
+                      ) : (
+                        <Alert type="success" showIcon message={isEnglish ? 'No overfit warning in this historical window' : '当前历史窗口未触发过拟合提醒'} />
+                      )}
                       <div className="mini-gpt-candidate-backtest-actions">
                         <Button size="small" icon={<BarChartOutlined />} onClick={openCandidateBacktestDetail}>
-                          回测详情
+                          {isEnglish ? 'Backtest detail' : '回测详情'}
                         </Button>
                         <Button size="small" icon={<BarChartOutlined />} onClick={openCandidateBacktestResearch}>
-                          研究对比
+                          {isEnglish ? 'Research compare' : '研究对比'}
                         </Button>
                         <Button size="small" icon={<BookOutlined />} onClick={openCandidateBacktestNotebook}>
-                          挂到笔记
+                          {isEnglish ? 'Attach to notebook' : '挂到笔记'}
                         </Button>
                         <Button size="small" icon={<DownloadOutlined />} onClick={openCandidateBacktestExport}>
-                          导出证据
+                          {isEnglish ? 'Export evidence' : '导出证据'}
                         </Button>
                       </div>
+                      <div className="mini-gpt-review-actions">
+                        <Input placeholder={text.reviewNote} value={reviewNote} onChange={event => setReviewNote(event.target.value)} />
+                        <Space wrap>
+                          {(['PROMOTE', 'WATCH', 'PAUSE', 'RETIRE'] as const).map(action => (
+                            <Button
+                              key={action}
+                              size="small"
+                              danger={action === 'RETIRE'}
+                              type={action === 'PROMOTE' ? 'primary' : 'default'}
+                              loading={reviewingDecision === action}
+                              disabled={!candidateBacktest.id}
+                              onClick={() => handleReviewDecision(action)}
+                            >
+                              {reviewActionLabel(action, isEnglish)}
+                            </Button>
+                          ))}
+                          {savedCandidateSet?.reviewAction ? <Tag color="blue">{text.reviewAction}: {reviewActionLabel(savedCandidateSet.reviewAction, isEnglish)}</Tag> : null}
+                        </Space>
+                      </div>
+                      {savedCandidateSet?.id && (
+                        <div className="mini-gpt-deep-links">
+                          <Text type="secondary">{text.deepLinks}</Text>
+                          <Space wrap>
+                            <Button size="small" icon={<LinkOutlined />} onClick={() => navigate(`/lottery/predictions/decision?decisionSetId=${encodeURIComponent(savedCandidateSet.id || '')}&targetIssue=${encodeURIComponent(candidateTargetIssue)}&backtestId=${encodeURIComponent(candidateBacktest.id || '')}`)}>{isEnglish ? 'Decision' : '决策'}</Button>
+                            <Button size="small" icon={<LinkOutlined />} disabled={!ticketPackDraft?.id} onClick={() => navigate(`/lottery/ticket-packs?packId=${encodeURIComponent(ticketPackDraft?.id || '')}&decisionSetId=${encodeURIComponent(savedCandidateSet.id || '')}&targetIssue=${encodeURIComponent(candidateTargetIssue)}`)}>{isEnglish ? 'Ticket pack' : '票包'}</Button>
+                            <Button size="small" icon={<LinkOutlined />} disabled={!ticketPackDraft?.id} onClick={() => navigate(`/lottery/tickets?issue=${encodeURIComponent(candidateTargetIssue)}&ticketPackId=${encodeURIComponent(ticketPackDraft?.id || '')}&decisionSetId=${encodeURIComponent(savedCandidateSet.id || '')}`)}>{isEnglish ? 'Tickets' : '票据'}</Button>
+                            <Button size="small" icon={<LinkOutlined />} onClick={() => navigate(`/lottery/outcomes?issue=${encodeURIComponent(candidateTargetIssue)}&decisionSetId=${encodeURIComponent(savedCandidateSet.id || '')}`)}>{isEnglish ? 'Outcomes' : '结果'}</Button>
+                            <Button size="small" icon={<LinkOutlined />} onClick={() => navigate(`/lottery/ledger?dimension=decision_set&value=${encodeURIComponent(savedCandidateSet.id || '')}&issue=${encodeURIComponent(candidateTargetIssue)}`)}>{isEnglish ? 'Ledger' : '账本'}</Button>
+                            <Button size="small" icon={<BookOutlined />} onClick={() => navigate(`/lottery/research/notebook?evidenceKey=${encodeURIComponent(`decision:${savedCandidateSet.id}`)}&evidenceType=DECISION&sourceId=${encodeURIComponent(savedCandidateSet.id || '')}&targetIssue=${encodeURIComponent(candidateTargetIssue)}&path=${encodeURIComponent(`/lottery/predictions/decision?decisionSetId=${savedCandidateSet.id}`)}`)}>{isEnglish ? 'Notebook' : '研究笔记'}</Button>
+                            <Button size="small" icon={<LinkOutlined />} onClick={() => navigate(`/lottery/recommendations?targetType=DECISION_SET&targetId=${encodeURIComponent(savedCandidateSet.id || '')}&targetIssue=${encodeURIComponent(candidateTargetIssue)}`)}>{isEnglish ? 'Recommendations' : '推荐'}</Button>
+                          </Space>
+                        </div>
+                      )}
                     </section>
                   )}
                   {activeGenerationResults.length > 1 && (

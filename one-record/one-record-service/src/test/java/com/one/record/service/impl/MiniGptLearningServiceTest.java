@@ -252,7 +252,17 @@ class MiniGptLearningServiceTest {
     @Test
     void formalTrainingPersistsVerifiedRunAndPassesProvenanceArguments() throws Exception {
         CorpusFixture fixture = writeVersionedCorpus();
-        Path commandArguments = installFakePython("printf '%s\\n' \"$@\" > command-args.txt\nexit 0\n");
+        Path commandArguments = installFakePython(
+                "printf '%s\\n' \"$@\" > command-args.txt\n"
+                        + "run_name=''\n"
+                        + "while [ \"$#\" -gt 0 ]; do\n"
+                        + "  if [ \"$1\" = \"--run-name\" ]; then shift; run_name=$1; fi\n"
+                        + "  shift\n"
+                        + "done\n"
+                        + "mkdir -p \"runs/$run_name\"\n"
+                        + "printf '%s\\n' '{\"provenance\":{\"python_only\":\"kept\",\"train_first_issue\":\"stale\"}}' > \"runs/$run_name/latest.json\"\n"
+                        + "exit 0\n"
+        );
         MiniGptTrainingRequest request = trainingRequest(fixture);
         request.setRunName("verified-run");
         request.setBlockSize(fixture.recommendedBlockSize());
@@ -271,6 +281,16 @@ class MiniGptLearningServiceTest {
         assertThat(run.getTemplateVersion()).isEqualTo("lottery-strategy-v1");
         assertThat(run.getTrainSha256()).isEqualTo(fixture.trainSha256());
         assertThat(run.getValidationSha256()).isEqualTo(fixture.validationSha256());
+        assertThat(run.getTrainFirstIssue()).isEqualTo("2026001");
+        assertThat(run.getTrainLatestIssue()).isEqualTo("2026003");
+        assertThat(run.getValidationFirstIssue()).isEqualTo("2026004");
+        assertThat(run.getValidationLatestIssue()).isEqualTo("2026006");
+        assertThat(run.getProvenance())
+                .containsEntry("python_only", "kept")
+                .containsEntry("train_first_issue", "2026001")
+                .containsEntry("train_latest_issue", "2026003")
+                .containsEntry("validation_first_issue", "2026004")
+                .containsEntry("validation_latest_issue", "2026006");
         assertThat(run.getRequiredBlockSize()).isEqualTo(fixture.maximumSampleTokens());
         assertThat(run.getRecommendedBlockSize()).isEqualTo(fixture.recommendedBlockSize());
         assertThat(run.getEffectiveBlockSize()).isEqualTo(fixture.recommendedBlockSize());
@@ -306,6 +326,10 @@ class MiniGptLearningServiceTest {
         waitForTrainingToFinish();
 
         assertThat(status.getRun().getProvenanceStatus()).isEqualTo("LEGACY_UNVERIFIED");
+        assertThat(status.getRun().getTrainFirstIssue()).isNull();
+        assertThat(status.getRun().getTrainLatestIssue()).isNull();
+        assertThat(status.getRun().getValidationFirstIssue()).isNull();
+        assertThat(status.getRun().getValidationLatestIssue()).isNull();
         assertThat(status.getRun().getValidationSource()).isEqualTo("TRAIN_TAIL_SPLIT");
         assertThat(status.getRun().getEffectiveBlockSize()).isEqualTo(32);
         assertThat(Files.readString(commandArguments, StandardCharsets.UTF_8))
@@ -406,11 +430,19 @@ class MiniGptLearningServiceTest {
         assertThat(result.getTopK()).isEqualTo(20);
         assertThat(result.getSeed()).isEqualTo(42L);
         assertThat(result.getCorpusVersion()).isEqualTo("corpus-v1");
+        assertThat(result.getTrainFirstIssue()).isEqualTo("2026001");
+        assertThat(result.getTrainLatestIssue()).isEqualTo("2026003");
+        assertThat(result.getValidationFirstIssue()).isEqualTo("2026004");
+        assertThat(result.getValidationLatestIssue()).isEqualTo("2026006");
         assertThat(result.getCheckpointSha256()).hasSize(64);
         assertThat(result.getModelConfig()).containsEntry("block_size", 160).containsEntry("n_embd", 32);
         assertThat(result.getLotteryCandidate().getValid()).isTrue();
         assertThat(generations).containsKey(result.getGenerationId());
         assertThat(generations.get(result.getGenerationId()).getTemperature()).isEqualTo(0.9);
+        assertThat(generations.get(result.getGenerationId()).getTrainFirstIssue()).isEqualTo("2026001");
+        assertThat(generations.get(result.getGenerationId()).getTrainLatestIssue()).isEqualTo("2026003");
+        assertThat(generations.get(result.getGenerationId()).getValidationFirstIssue()).isEqualTo("2026004");
+        assertThat(generations.get(result.getGenerationId()).getValidationLatestIssue()).isEqualTo("2026006");
         verify(generationRepository).save(any(MiniGptGenerationRecord.class));
     }
 
@@ -786,6 +818,10 @@ class MiniGptLearningServiceTest {
         manifest.put("validationFilePath", validationFile.toString());
         manifest.put("trainSha256", trainSha256);
         manifest.put("validationSha256", validationSha256);
+        manifest.put("trainFirstIssue", "2026001");
+        manifest.put("trainLatestIssue", "2026003");
+        manifest.put("validationFirstIssue", "2026004");
+        manifest.put("validationLatestIssue", "2026006");
         OBJECT_MAPPER.writeValue(manifestFile.toFile(), manifest);
         List<Integer> sampleTokens = List.of(first, second, third).stream()
                 .map(line -> line.codePointCount(0, line.length()) + 1)
@@ -848,6 +884,10 @@ class MiniGptLearningServiceTest {
                 .corpusVersion("corpus-v1")
                 .trainSha256("train-sha")
                 .validationSha256("validation-sha")
+                .trainFirstIssue("2026001")
+                .trainLatestIssue("2026003")
+                .validationFirstIssue("2026004")
+                .validationLatestIssue("2026006")
                 .config(Map.of("block_size", 160, "n_embd", 32))
                 .build();
     }

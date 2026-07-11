@@ -7,12 +7,12 @@ Generated from `npm run lottery:smoke`.
 | Field | Value |
 | --- | --- |
 | Target | Lottery unified overview default smoke |
-| Generated at | 2026-07-11T13:14:33.848Z |
+| Generated at | 2026-07-11T14:08:44.352Z |
 | Status | PASSED |
 | Mode | mocked-fixture |
 | Provider network | not-required |
 | Routes | 18 |
-| Checks | 906 |
+| Checks | 1027 |
 | Failures | 0 |
 
 ## Protected Browser QA
@@ -41,6 +41,17 @@ Generated from `npm run lottery:smoke`.
 | iteration 47A MiniGPT corpus API contract | `src/services/api.ts` | 7 | 0 |
 | iteration 47B MiniGPT context and generation provenance workflow | `src/components/MiniGptLearningPage.tsx` | 41 | 0 |
 | iteration 47B MiniGPT provenance and batch API contract | `src/services/api.ts` | 32 | 0 |
+| iteration 47C MiniGPT outcome chain workflow | `src/components/MiniGptLearningPage.tsx` | 27 | 2 |
+| iteration 47C lineage and baseline API contract | `src/services/api.ts` | 16 | 0 |
+| iteration 47C overfit warning localization | `src/utils/lotteryBacktestEvidence.ts` | 10 | 0 |
+| iteration 47C decision deep-link and review workflow | `src/components/LotteryPredictionDecisionPage.tsx` | 8 | 0 |
+| iteration 47C historical baseline evidence surfaces | `src/components/LotteryBacktestDetailPage.tsx` | 7 | 0 |
+| iteration 47C research baseline evidence | `src/components/LotteryResearchPage.tsx` | 6 | 0 |
+| iteration 47C ticket-pack deep-link restore | `src/components/LotteryTicketPackPage.tsx` | 8 | 0 |
+| iteration 47C ticket lineage deep-link restore | `src/components/LotteryTicketPage.tsx` | 6 | 0 |
+| iteration 47C outcome deep-link preservation | `src/components/LotteryOutcomeAttributionPage.tsx` | 6 | 0 |
+| iteration 47C ledger dimension-value deep-link restore | `src/components/LotteryLedgerPage.tsx` | 7 | 0 |
+| iteration 47C recommendation target deep-link restore | `src/components/LotteryRecommendationPage.tsx` | 5 | 0 |
 | workbench closure path | `src/components/LotteryWorkbenchPage.tsx` | 49 | 0 |
 | mobile dark-mode CSS safeguards | `src/components/LotteryOverviewPage.css` | 7 | 0 |
 | visible lottery label helpers | `src/utils/lotteryStatusLabel.ts` | 4 | 0 |
@@ -78,7 +89,7 @@ Generated from `npm run lottery:smoke`.
 | 策略组合 | `/lottery/strategy-portfolios` | LotteryStrategyPortfolioPage | 3 | 1 | 3 |
 | 沙盘 | `/lottery/simulator` | LotterySimulatorPage | 2 | 2 | 1 |
 | 月末复盘 | `/lottery/month-end` | LotteryMonthEndReviewPage | 11 | 24 | 1 |
-| 预测决策板 | `/lottery/predictions/decision` | LotteryPredictionDecisionPage | 11 | 3 | 3 |
+| 预测决策板 | `/lottery/predictions/decision` | LotteryPredictionDecisionPage | 12 | 3 | 3 |
 | 票据 | `/lottery/tickets` | LotteryTicketPage | 9 | 4 | 5 |
 | 票包 | `/lottery/ticket-packs` | LotteryTicketPackPage | 7 | 3 | 4 |
 | 归因 | `/lottery/outcomes` | LotteryOutcomeAttributionPage | 3 | 8 | 1 |

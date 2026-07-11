@@ -37,18 +37,23 @@ import {
   type LotteryReplayMetrics,
   type LotteryRuleComparison,
   type LotteryRuleEvidence,
+  type LotteryResearchProvenance,
   type LotteryTicketBudgetPrecheckResult,
   type LotteryTicket
 } from '../services/api';
 import { lotteryDriftLabel, lotteryEvidenceColor, lotteryEvidenceLabel, lotteryReplayText } from '../utils/lotteryEvidence';
+import { lotteryOverfitWarningsText } from '../utils/lotteryBacktestEvidence';
 import './LotteryOverviewPage.css';
+import './LotteryPredictionDecisionPage.css';
 
 interface DecisionCandidateRow {
   key: string;
+  generationId?: string;
+  provenance?: LotteryResearchProvenance;
   snapshotId?: string;
   snapshotTitle: string;
   candidateTitle: string;
-  source: 'PRIMARY' | 'CANDIDATE';
+  source: 'PRIMARY' | 'CANDIDATE' | 'MINIGPT';
   targetPeriod?: number;
   ruleId?: string;
   ruleName?: string;
@@ -112,9 +117,19 @@ const localizeOptions = (options: Array<{ label: string; value: string }>, t: Tr
   options.map(option => ({ ...option, label: t(option.label) }));
 
 const sourceLabel = (source: DecisionCandidateRow['source'], t: Translate) =>
-  t(source === 'PRIMARY' ? '主预测' : '候选');
+  t(source === 'PRIMARY' ? '主预测' : source === 'MINIGPT' ? 'MiniGPT 候选' : '候选');
 
 const decisionSetStatusColor = (dirty: boolean) => dirty ? 'orange' : 'green';
+
+const reviewActionLabel = (action: string, t: Translate) => {
+  const labels: Record<string, string> = {
+    PROMOTE: '推广',
+    WATCH: '观察',
+    PAUSE: '暂停',
+    RETIRE: '退役'
+  };
+  return t(labels[action] || action);
+};
 
 const localizeBudgetWarning = (value: string, translateText: Translate, t: Translate) => {
   const translated = translateText(value);
@@ -211,11 +226,16 @@ const notebookPathForDecisionOutcome = (item?: LotteryDecisionOutcomeItem) => {
     evidenceKey: item?.decisionSetId ? `decision:${item.decisionSetId}` : `decision:${item?.targetIssue || 'latest'}`,
     evidenceType: 'DECISION',
     evidenceTitle: item?.title || item?.targetIssue || '保存决策复盘',
-    path: item?.targetIssue ? `/lottery/predictions/decision?targetIssue=${item.targetIssue}` : '/lottery/predictions/decision',
+    path: item?.decisionSetId
+      ? `/lottery/predictions/decision?decisionSetId=${encodeURIComponent(item.decisionSetId)}&targetIssue=${encodeURIComponent(item.targetIssue || '')}`
+      : item?.targetIssue ? `/lottery/predictions/decision?targetIssue=${item.targetIssue}` : '/lottery/predictions/decision',
     title: `${item?.title || item?.targetIssue || '保存决策'} 假设`
   });
   if (item?.targetIssue) {
     search.set('targetIssue', item.targetIssue);
+  }
+  if (item?.decisionSetId) {
+    search.set('sourceId', item.decisionSetId);
   }
   return `/lottery/research/notebook?${search.toString()}`;
 };
@@ -380,6 +400,8 @@ const buildDecisionRows = (
 
 const decisionRowToSelection = (row: DecisionCandidateRow): LotteryDecisionCandidateSelection => ({
   key: row.key,
+  generationId: row.generationId,
+  provenance: row.provenance,
   snapshotId: row.snapshotId,
   snapshotTitle: row.snapshotTitle,
   candidateTitle: row.candidateTitle,
@@ -402,11 +424,41 @@ const decisionRowToSelection = (row: DecisionCandidateRow): LotteryDecisionCandi
   warning: row.warning
 });
 
+const savedDecisionRows = (decisionSet?: LotteryDecisionSet): DecisionCandidateRow[] => (
+  (decisionSet?.selectedCandidates || []).map((candidate, index) => ({
+    key: candidate.key || candidate.generationId || `saved:${decisionSet?.id || 'decision'}:${index}`,
+    generationId: candidate.generationId,
+    provenance: candidate.provenance || decisionSet?.provenance,
+    snapshotId: candidate.snapshotId,
+    snapshotTitle: candidate.snapshotTitle || decisionSet?.title || 'MiniGPT 决策集',
+    candidateTitle: candidate.candidateTitle || `MiniGPT 候选 ${index + 1}`,
+    source: candidate.source === 'MINIGPT' || candidate.generationId ? 'MINIGPT' : candidate.source === 'PRIMARY' ? 'PRIMARY' : 'CANDIDATE',
+    targetPeriod: candidate.targetPeriod || (decisionSet?.targetIssue ? Number(decisionSet.targetIssue) : undefined),
+    ruleId: candidate.ruleId,
+    ruleName: candidate.ruleName || decisionSet?.ruleName,
+    redNumbers: candidate.redNumbers || [],
+    blueNumber: candidate.blueNumber,
+    score: candidate.score,
+    evidence: candidate.evidence,
+    replayText: candidate.replayText || 'MiniGPT 服务端校验候选',
+    driftLabel: candidate.driftLabel,
+    resultLabel: candidate.resultLabel || '待开奖',
+    resultState: candidate.resultState === 'WON' || candidate.resultState === 'MISSED' ? candidate.resultState : 'PENDING',
+    redOverlap: candidate.redOverlap || 0,
+    blueOverlap: Boolean(candidate.blueOverlap),
+    ticketCount: candidate.ticketCount || candidate.convertedTicketIds?.length || 0,
+    ticketState: candidate.ticketState || (candidate.convertedTicketIds?.length ? `已转 ${candidate.convertedTicketIds.length} 注` : '未转票'),
+    warning: candidate.warning
+  }))
+);
+
 const LotteryPredictionDecisionPage = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { language, t, translateText } = useI18n();
+  const isEnglish = language.toLowerCase().startsWith('en');
   const translateTextRef = useRef(translateText);
+  const appliedDecisionSetQueryRef = useRef('');
   translateTextRef.current = translateText;
   const [predictions, setPredictions] = useState<LotteryPredictionSnapshot[]>([]);
   const [pageResponse, setPageResponse] = useState<LotteryPageResponse<LotteryPredictionSnapshot>>();
@@ -425,10 +477,13 @@ const LotteryPredictionDecisionPage = () => {
   const [savingDecisionSet, setSavingDecisionSet] = useState(false);
   const [archivingDecisionSet, setArchivingDecisionSet] = useState(false);
   const [savingTickets, setSavingTickets] = useState(false);
+  const [reviewingDecisionSet, setReviewingDecisionSet] = useState<string>();
   const [decisionDirty, setDecisionDirty] = useState(false);
   const [error, setError] = useState<string>();
 
   const targetIssue = searchParams.get('targetIssue') || '';
+  const requestedDecisionSetId = searchParams.get('decisionSetId') || '';
+  const requestedBacktestId = searchParams.get('backtestId') || '';
   const ruleName = searchParams.get('ruleName') || '';
   const evidenceState = searchParams.get('evidence') || 'ALL';
   const resultState = searchParams.get('resultState') || 'ALL';
@@ -524,10 +579,20 @@ const LotteryPredictionDecisionPage = () => {
     loadDecisionSets();
   }, [loadDecisionSets]);
 
-  const decisionRows = useMemo(
-    () => buildDecisionRows(predictions, predictionTickets),
-    [predictionTickets, predictions]
+  const activeDecisionSet = useMemo(
+    () => decisionSets.find(item => item.id === activeDecisionSetId),
+    [activeDecisionSetId, decisionSets]
   );
+  const isMiniGptDecisionSet = Boolean(activeDecisionSet?.provenance?.batchId || activeDecisionSet?.provenance?.generationId);
+
+  const decisionRows = useMemo(() => {
+    const predictionRows = buildDecisionRows(predictions, predictionTickets);
+    const existingKeys = new Set(predictionRows.map(row => row.key));
+    return [
+      ...savedDecisionRows(activeDecisionSet).filter(row => !existingKeys.has(row.key)),
+      ...predictionRows
+    ];
+  }, [activeDecisionSet, predictionTickets, predictions]);
 
   const filteredRows = useMemo(() => decisionRows.filter(row => {
     if (evidenceState === 'MISSING' && row.evidence?.tag) {
@@ -553,16 +618,12 @@ const LotteryPredictionDecisionPage = () => {
     [filteredRows, selectedRowSet]
   );
 
-  const activeDecisionSet = useMemo(
-    () => decisionSets.find(item => item.id === activeDecisionSetId),
-    [activeDecisionSetId, decisionSets]
-  );
-
   const activeDecisionOutcome = useMemo<LotteryDecisionOutcomeItem | undefined>(() => {
     return filteredDecisionOutcomes.find(item => item.decisionSetId === activeDecisionSetId)
       || (targetIssue ? filteredDecisionOutcomes.find(item => item.targetIssue === targetIssue) : undefined)
       || filteredDecisionOutcomes[0];
   }, [activeDecisionSetId, filteredDecisionOutcomes, targetIssue]);
+  const decisionReviewBacktestId = requestedBacktestId || activeDecisionSet?.reviewBacktestId || activeDecisionOutcome?.reviewBacktestId || '';
 
   const defaultDecisionSetTitle = useMemo(() => {
     const selectedIssue = selectedRows[0]?.targetPeriod;
@@ -585,6 +646,23 @@ const LotteryPredictionDecisionPage = () => {
     ),
     value: item.id || ''
   })).filter(item => item.value), [decisionSets, t, translateText]);
+
+  useEffect(() => {
+    if (!requestedDecisionSetId || appliedDecisionSetQueryRef.current === requestedDecisionSetId) return;
+    const decisionSet = decisionSets.find(item => item.id === requestedDecisionSetId);
+    if (!decisionSet) return;
+    appliedDecisionSetQueryRef.current = requestedDecisionSetId;
+    setActiveDecisionSetId(decisionSet.id);
+    setDecisionSetTitle(decisionSet.title || '');
+    setDecisionSetNote(decisionSet.note || '');
+    setSelectedRowKeys((decisionSet.selectedCandidates || [])
+      .map(item => item.key || item.generationId)
+      .filter((key): key is string => Boolean(key)));
+    setDecisionDirty(false);
+    if (!targetIssue && decisionSet.targetIssue) {
+      updateQuery({ targetIssue: decisionSet.targetIssue });
+    }
+  }, [decisionSets, requestedDecisionSetId, targetIssue, updateQuery]);
 
   const summary = useMemo(() => {
     const stable = filteredRows.filter(row => row.evidence?.tag === 'STABLE').length;
@@ -617,6 +695,10 @@ const LotteryPredictionDecisionPage = () => {
   );
 
   const saveSelectedTickets = async () => {
+    if (isMiniGptDecisionSet) {
+      message.warning(t('MiniGPT 候选必须先在实验页预览并显式创建票包草稿，不能从决策页直接落票。'));
+      return;
+    }
     if (!selectedRows.length) {
       message.warning(t('请先选择候选号码'));
       return;
@@ -699,6 +781,8 @@ const LotteryPredictionDecisionPage = () => {
         ? await lotteryDecisionSetApi.updateDecisionSet(activeDecisionSetId, payload)
         : await lotteryDecisionSetApi.createDecisionSet(payload);
       setActiveDecisionSetId(saved.id);
+      appliedDecisionSetQueryRef.current = saved.id || '';
+      updateQuery({ decisionSetId: saved.id, targetIssue: saved.targetIssue || payload.targetIssue });
       setDecisionSetTitle(saved.title || payload.title || '');
       setDecisionSetNote(saved.note || '');
       setDecisionDirty(false);
@@ -719,10 +803,12 @@ const LotteryPredictionDecisionPage = () => {
 
   const applyDecisionSet = (id?: string) => {
     if (!id) {
+      appliedDecisionSetQueryRef.current = '';
       setActiveDecisionSetId(undefined);
       setDecisionSetTitle('');
       setDecisionSetNote('');
       setDecisionDirty(false);
+      updateQuery({ decisionSetId: undefined });
       return;
     }
     const decisionSet = decisionSets.find(item => item.id === id);
@@ -733,13 +819,17 @@ const LotteryPredictionDecisionPage = () => {
     setDecisionSetTitle(decisionSet.title || '');
     setDecisionSetNote(decisionSet.note || '');
     setSelectedRowKeys((decisionSet.selectedCandidates || [])
-      .map(item => item.key)
+      .map(item => item.key || item.generationId)
       .filter((key): key is string => Boolean(key)));
     setDecisionDirty(false);
+    appliedDecisionSetQueryRef.current = decisionSet.id || '';
     updateQuery({
+      decisionSetId: decisionSet.id,
       targetIssue: decisionSet.targetIssue,
       ruleName: decisionSet.ruleName,
-      evidence: decisionSet.evidenceState,
+      evidence: ['STABLE', 'VOLATILE', 'STALE', 'UNDER_TESTED', 'MISSING'].includes(decisionSet.evidenceState || '')
+        ? decisionSet.evidenceState
+        : undefined,
       resultState: decisionSet.resultState
     });
   };
@@ -770,6 +860,36 @@ const LotteryPredictionDecisionPage = () => {
     }
   };
 
+  const reviewDecisionSet = async (reviewAction: 'PROMOTE' | 'WATCH' | 'PAUSE' | 'RETIRE') => {
+    if (!activeDecisionSetId) {
+      message.warning(t('请先选择已保存决策集'));
+      return;
+    }
+    if (!decisionReviewBacktestId) {
+      message.warning(t('请先从 MiniGPT 回测结果进入决策页，或选择已绑定回测的决策集。'));
+      return;
+    }
+    setReviewingDecisionSet(reviewAction);
+    setError(undefined);
+    try {
+      const reviewed = await lotteryDecisionSetApi.reviewDecisionSet(activeDecisionSetId, {
+        reviewAction,
+        backtestId: decisionReviewBacktestId,
+        note: decisionSetNote.trim() || undefined
+      });
+      setDecisionSets(current => current.map(item => item.id === reviewed.id ? reviewed : item));
+      setDecisionSetNote(reviewed.reviewNote || reviewed.note || '');
+      await loadDecisionSets();
+      message.success(t('复核动作已保存：{{action}}', { action: reviewActionLabel(reviewAction, t) }));
+    } catch (requestError) {
+      console.error('保存决策集复核动作失败:', requestError);
+      setError(requestError instanceof Error ? requestError.message : t('保存决策集复核动作失败'));
+      message.error(t('保存决策集复核动作失败'));
+    } finally {
+      setReviewingDecisionSet(undefined);
+    }
+  };
+
   const columns: ColumnsType<DecisionCandidateRow> = [
     {
       title: t('候选'),
@@ -780,9 +900,10 @@ const LotteryPredictionDecisionPage = () => {
           <strong>{localizeCandidateTitle(record.candidateTitle, translateText, t)}</strong>
           <span className="stock-quote-code">{localizeSnapshotTitle(record.snapshotTitle, translateText, t)}</span>
           <Space wrap size={4}>
-            <Tag color={record.source === 'PRIMARY' ? 'blue' : 'default'}>{sourceLabel(record.source, t)}</Tag>
+            <Tag color={record.source === 'PRIMARY' ? 'blue' : record.source === 'MINIGPT' ? 'purple' : 'default'}>{sourceLabel(record.source, t)}</Tag>
             <Tag>{record.targetPeriod ? t('第 {{issue}} 期', { issue: record.targetPeriod }) : '-'}</Tag>
           </Space>
+          {record.generationId ? <span className="lottery-decision-lineage-id">generationId={record.generationId}</span> : null}
         </Space>
       )
     },
@@ -852,7 +973,7 @@ const LotteryPredictionDecisionPage = () => {
       title={t('预测决策板')}
       actions={
         <Space wrap>
-          <Button type="primary" icon={<FileAddOutlined />} loading={savingTickets} onClick={saveSelectedTickets}>
+          <Button type="primary" icon={<FileAddOutlined />} loading={savingTickets} disabled={isMiniGptDecisionSet} onClick={saveSelectedTickets}>
             {t('转为票据')}
           </Button>
           <Button icon={<ReloadOutlined />} loading={loading} onClick={loadDecision}>
@@ -939,6 +1060,42 @@ const LotteryPredictionDecisionPage = () => {
           )}
         </Space>
       </section>
+
+      {activeDecisionSet ? (
+        <section className="lottery-decision-lineage-panel">
+          <div className="lottery-decision-lineage-copy">
+            <strong>{t('MiniGPT 决策溯源')}</strong>
+            <span>decisionSetId={activeDecisionSet.id || '-'}</span>
+            <span>batchId={activeDecisionSet.provenance?.batchId || '-'}</span>
+            <span>runId={activeDecisionSet.provenance?.runId || '-'}</span>
+            <span>corpusVersion={activeDecisionSet.provenance?.corpusVersion || '-'}</span>
+            <span>backtestId={decisionReviewBacktestId || '-'}</span>
+          </div>
+          <Space wrap>
+            {(['PROMOTE', 'WATCH', 'PAUSE', 'RETIRE'] as const).map(action => (
+              <Button
+                key={action}
+                size="small"
+                danger={action === 'RETIRE'}
+                type={action === 'PROMOTE' ? 'primary' : 'default'}
+                loading={reviewingDecisionSet === action}
+                disabled={!decisionReviewBacktestId}
+                onClick={() => reviewDecisionSet(action)}
+              >
+                {reviewActionLabel(action, t)}
+              </Button>
+            ))}
+            <Tag color={activeDecisionSet.reviewAction ? 'blue' : 'default'}>
+              {t('当前复核')} {activeDecisionSet.reviewAction ? reviewActionLabel(activeDecisionSet.reviewAction, t) : t('未复核')}
+            </Tag>
+          </Space>
+          <Alert
+            type="info"
+            showIcon
+            message={t('复核只记录研究生命周期动作，不会自动审批票包或生成票据。')}
+          />
+        </section>
+      ) : null}
 
       <section className="lottery-decision-filter-bar">
         <Input
@@ -1089,6 +1246,13 @@ const LotteryPredictionDecisionPage = () => {
                 {t('来源差额')} {deltaText(activeDecisionOutcome.sourceDelta?.netResultDelta, t)}
               </Tag>
             </article>
+            <article>
+              <strong>{deltaText(activeDecisionOutcome.backtestRoiPercentDelta, t)}%</strong>
+              <span>{t('同窗口随机基线 ROI 差额')}</span>
+              <Tag color={(activeDecisionOutcome.backtestWarnings || []).length ? 'orange' : 'green'}>
+                {t('过拟合提醒')} {(activeDecisionOutcome.backtestWarnings || []).length}
+              </Tag>
+            </article>
           </div>
           <div className="lottery-research-report-grid">
             {(activeDecisionOutcome.candidates || []).slice(0, 6).map(candidate => (
@@ -1103,6 +1267,15 @@ const LotteryPredictionDecisionPage = () => {
                 <small>
                   {t('转票')} {candidate.checkedTicketCount || 0}/{candidate.convertedTicketCount || 0} · {t('净')} {formatMoney(candidate.netResult)}
                 </small>
+                {candidate.generationId ? <small className="lottery-decision-lineage-id">generationId={candidate.generationId}</small> : null}
+              </article>
+            ))}
+            {(activeDecisionOutcome.backtestWarnings || []).slice(0, 4).map(warning => (
+              <article key={`backtest-warning-${warning}`}>
+                <Tag color="orange">{t('过拟合提醒')}</Tag>
+                <strong>{lotteryOverfitWarningsText([warning], isEnglish)}</strong>
+                <span>{t('仅作为历史窗口研究证据，不外推未来表现。')}</span>
+                <small>backtestId={activeDecisionOutcome.reviewBacktestId || '-'}</small>
               </article>
             ))}
             {(activeDecisionOutcome.evidenceAlerts || []).slice(0, 4).map(alert => (
@@ -1172,7 +1345,7 @@ const LotteryPredictionDecisionPage = () => {
         <article>
           <strong>{selectedRows.length}</strong>
           <span>{t('已选候选')} · {t('待开奖')} {summary.pending}</span>
-          <Button size="small" icon={<FileAddOutlined />} loading={savingTickets} onClick={saveSelectedTickets}>
+          <Button size="small" icon={<FileAddOutlined />} loading={savingTickets} disabled={isMiniGptDecisionSet} onClick={saveSelectedTickets}>
             {t('保存选中')}
           </Button>
         </article>
@@ -1217,7 +1390,7 @@ const LotteryPredictionDecisionPage = () => {
           <article key={row.key}>
             <div>
               <strong>{localizeCandidateTitle(row.candidateTitle, translateText, t)}</strong>
-              <Tag color={row.source === 'PRIMARY' ? 'blue' : 'default'}>{sourceLabel(row.source, t)}</Tag>
+              <Tag color={row.source === 'PRIMARY' ? 'blue' : row.source === 'MINIGPT' ? 'purple' : 'default'}>{sourceLabel(row.source, t)}</Tag>
             </div>
             <LotteryBalls redNumbers={row.redNumbers} blueNumber={row.blueNumber || ''} />
             <Space wrap>
@@ -1226,6 +1399,7 @@ const LotteryPredictionDecisionPage = () => {
               <Tag color={row.ticketCount ? 'green' : 'default'}>{localizeTicketState(row.ticketState, translateText, t)}</Tag>
             </Space>
             {row.warning ? <span>{translateText(row.warning)}</span> : null}
+            {row.generationId ? <small className="lottery-decision-lineage-id">generationId={row.generationId}</small> : null}
           </article>
         ))}
       </div>

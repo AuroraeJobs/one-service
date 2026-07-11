@@ -67,6 +67,9 @@ const LotteryRecommendationPage = () => {
   const [rollup, setRollup] = useState<LotteryRecommendationRollup>();
   const [filterState, setFilterState] = useState<string | undefined>(searchParams.get('recommendationState') || undefined);
   const focus = searchParams.get('focus') || '';
+  const requestedTargetType = (searchParams.get('targetType') || '').trim().toUpperCase();
+  const requestedTargetId = (searchParams.get('targetId') || '').trim();
+  const requestedTargetIssue = (searchParams.get('targetIssue') || '').trim();
   const [preset, setPreset] = useState<RecommendationPreset>(() => {
     const requestedPreset = searchParams.get('preset') as RecommendationPreset | null;
     return requestedPreset && recommendationPresets.includes(requestedPreset) ? requestedPreset : 'ALL';
@@ -176,11 +179,17 @@ const LotteryRecommendationPage = () => {
   };
 
   const visibleItems = useMemo(() => items.filter(item => {
+    if (requestedTargetType && String(item.targetType || '').toUpperCase() !== requestedTargetType) return false;
+    if (requestedTargetId && item.targetId !== requestedTargetId) return false;
+    if (requestedTargetIssue && !requestedTargetId) {
+      const searchable = `${item.title || ''} ${item.path || ''} ${(item.reasons || []).join(' ')}`;
+      if (!searchable.includes(requestedTargetIssue)) return false;
+    }
     if (preset === 'OPEN') return item.lifecycleStatus !== 'APPLIED' && item.lifecycleStatus !== 'ARCHIVED';
     if (preset === 'HIGH_CONFIDENCE') return (item.confidenceScore || 0) >= 80;
     if (preset === 'STALE_EVIDENCE') return isStaleRecommendation(item);
     return true;
-  }), [items, preset]);
+  }), [items, preset, requestedTargetId, requestedTargetIssue, requestedTargetType]);
 
   const grouped = useMemo(() => lanes.map(lane => ({
     ...lane,
@@ -267,6 +276,14 @@ const LotteryRecommendationPage = () => {
       }
     >
       {error ? <Alert className="lottery-overview-status-alert" type="error" showIcon message={error} /> : null}
+      {requestedTargetType || requestedTargetId || requestedTargetIssue ? (
+        <Alert
+          className="lottery-overview-status-alert"
+          type={visibleItems.length ? 'info' : 'warning'}
+          showIcon
+          message={`推荐溯源筛选：targetType=${requestedTargetType || '-'} · targetId=${requestedTargetId || '-'} · targetIssue=${requestedTargetIssue || '-'}`}
+        />
+      ) : null}
       <section className="lottery-recommendation-summary">
         <article><strong>{totals.total}</strong><span>推荐</span></article>
         <article><strong>{totals.promote}</strong><span>推广</span></article>

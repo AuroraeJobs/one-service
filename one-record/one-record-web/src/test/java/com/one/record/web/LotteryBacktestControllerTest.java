@@ -7,14 +7,17 @@ import com.one.record.model.LotteryBacktestReport;
 import com.one.record.service.ILotteryBacktestService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -42,16 +45,27 @@ class LotteryBacktestControllerTest {
                 .id("bt-1")
                 .strategyName("上一期基线")
                 .replayCount(30)
+                .baselineSeed(77L)
+                .sameWindow(true)
+                .sameBudget(true)
                 .build());
 
         mockMvc.perform(post("/lottery/backtests/run")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(LotteryBacktestRunRequest.builder()
                                 .presetWindow("latest-30")
+                                .baselineSeed(77L)
                                 .build())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value("bt-1"))
-                .andExpect(jsonPath("$.replayCount").value(30));
+                .andExpect(jsonPath("$.replayCount").value(30))
+                .andExpect(jsonPath("$.baselineSeed").value(77))
+                .andExpect(jsonPath("$.sameWindow").value(true))
+                .andExpect(jsonPath("$.sameBudget").value(true));
+
+        ArgumentCaptor<LotteryBacktestRunRequest> requestCaptor = ArgumentCaptor.forClass(LotteryBacktestRunRequest.class);
+        verify(service).run(requestCaptor.capture());
+        assertThat(requestCaptor.getValue().getBaselineSeed()).isEqualTo(77L);
     }
 
     @Test

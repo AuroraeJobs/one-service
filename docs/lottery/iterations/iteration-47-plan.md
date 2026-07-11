@@ -6,7 +6,7 @@ Theme: 可复现彩票语料、模型候选与研究闭环
 
 Build a reproducible MiniGPT lottery research chain on top of the existing corpus export, candidate validation, decision-set, and random-baseline backtest capabilities. The iteration starts by making corpus inputs and the train/validation boundary durable and auditable before extending generation or outcome-review behavior.
 
-Status: Waves 47A and 47B completed on 2026-07-11. Wave 47C is the next delivery target; Wave 47D remains follow-up work.
+Status: Waves 47A, 47B, and 47C completed on 2026-07-11. Wave 47D month-end review and release evidence is the next delivery target.
 
 ## Starting Point
 
@@ -65,7 +65,7 @@ Goal: carry a provenance-backed candidate pool through the existing manual resea
 - Connect saved decisions and tickets to actual draw results, prize/ledger outcomes, and explicit promote/watch/pause/retire review actions.
 - Report candidate diversity, red-hit distribution, blue-hit rate, prize distribution, cost, prize estimate, ROI, random-baseline delta, and overfit warnings.
 
-This wave is the next delivery target now that the corpus, training, generation, and candidate-batch evidence are stable.
+This wave completed on 2026-07-11 with typed provenance from persisted generations through decisions, backtests, draft ticket packs, tickets, notes, outcomes, ledgers, and recommendation evidence; deterministic same-window/same-budget random baselines; explicit static-pool historical-replay warnings; and backtest-bound manual promote/watch/pause/retire review.
 
 ## Wave 47D: Month-End Review And Release Evidence
 
@@ -77,7 +77,7 @@ Goal: make the first research loop reviewable and safe to hand off.
 - Run focused backend tests plus frontend i18n audit, lottery smoke/release check, file-scoped ESLint, production build, and browser QA for changed surfaces.
 - Review generated evidence, staged scope, `git status --short`, and `git diff --check` before delivery.
 
-This wave remains follow-up work until Waves 47A-47C have verifiable evidence.
+This wave is the next delivery target now that Waves 47A-47C have verifiable evidence.
 
 ## Out Of Scope
 
@@ -96,3 +96,5 @@ This wave remains follow-up work until Waves 47A-47C have verifiable evidence.
 - A real one-step formal-corpus run completed with effective Block 160 for a 155-code-point maximum sample, independent 1,600-row training and 400-row validation files, fixed evaluation, seed 42, persisted corpus/train/validation/checkpoint hashes, and the checkpoint's actual model configuration. A real three-item API batch and two-item UI batch both persisted batch ids, deterministic per-item seeds, strategy composition, overlap/blue-ball policy, and candidate-quality evidence.
 - Real local browser QA passed on `/ai/minigpt` in Chinese and English, desktop and 390x844 layouts. The page showed the complete-sample PASS gate (`143` shortest, `155` longest/required, `160` recommended/effective), ran a 2/2 candidate batch without horizontal page overflow, and correctly marked the tiny one-step model's non-parseable outputs as rejected with `minimumBlueCoverageMet: WATCH` rather than presenting them as legal candidates.
 - Generated corpus, checkpoint, and QA artifacts remain outside Git. Temporary servers, browser tabs, viewport override, failed-run record, generated wrong-root corpus files, and Python bytecode were cleaned after verification.
+- Wave 47C backend verification passed 87/87 focused service tests and 40/40 focused web tests. Coverage includes server-resolved MiniGPT decision creation, protected typed provenance snapshots, deterministic baseline seeds/rows, same-window and same-budget checks, candidate diversity and financial deltas, review/backtest ownership, ticket-pack/ticket lineage, note backfill, outcome/ledger propagation, and manual-review-first recommendation behavior.
+- Wave 47C frontend verification passed the i18n audit with 1037 localized calls, lottery smoke and release evidence with 1027/1027 checks across 18 routes, and the production TypeScript/Vite build. Static guards cover the closed-loop ordering, complete comparison metrics, explicit historical-replay limitation, review actions, and the preview-then-explicit-`DRAFT` ticket-pack boundary.

@@ -1,16 +1,24 @@
 package com.one.record.service.impl;
 
+import com.one.record.ai.MiniGptLotteryCandidateValidation;
+import com.one.record.lottery.LotteryDecisionReviewRequest;
 import com.one.record.lottery.LotteryDecisionOutcomeSummary;
+import com.one.record.lottery.LotteryMiniGptDecisionSetCreateRequest;
 import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.lottery.LotteryPerformanceLedger;
 import com.one.record.lottery.LotteryPrizeResult;
+import com.one.record.lottery.LotteryResearchProvenance;
 import com.one.record.model.LotteryAuditEvent;
+import com.one.record.model.LotteryBacktestReport;
 import com.one.record.model.LotteryDecisionCandidateSelection;
 import com.one.record.model.LotteryDecisionSet;
 import com.one.record.model.LotteryPredictionSnapshot;
 import com.one.record.model.LotteryTicket;
+import com.one.record.model.MiniGptGenerationRecord;
 import com.one.record.repository.LotteryAuditEventRepository;
+import com.one.record.repository.LotteryBacktestReportRepository;
 import com.one.record.repository.LotteryDecisionSetRepository;
+import com.one.record.repository.MiniGptGenerationRepository;
 import com.one.record.repository.LotteryPredictionSnapshotRepository;
 import com.one.record.repository.LotteryTicketRepository;
 import com.one.record.service.ILotteryLedgerService;
@@ -22,9 +30,11 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -42,6 +52,10 @@ class LotteryDecisionSetServiceTest {
 
     private ILotteryLedgerService ledgerService;
 
+    private MiniGptGenerationRepository generationRepository;
+
+    private LotteryBacktestReportRepository backtestReportRepository;
+
     private LotteryDecisionSetService service;
 
     @BeforeEach
@@ -51,7 +65,17 @@ class LotteryDecisionSetServiceTest {
         ticketRepository = mock(LotteryTicketRepository.class);
         predictionSnapshotRepository = mock(LotteryPredictionSnapshotRepository.class);
         ledgerService = mock(ILotteryLedgerService.class);
-        service = new LotteryDecisionSetService(repository, auditEventRepository, ticketRepository, predictionSnapshotRepository, ledgerService);
+        generationRepository = mock(MiniGptGenerationRepository.class);
+        backtestReportRepository = mock(LotteryBacktestReportRepository.class);
+        service = new LotteryDecisionSetService(
+                repository,
+                auditEventRepository,
+                ticketRepository,
+                predictionSnapshotRepository,
+                ledgerService,
+                generationRepository,
+                backtestReportRepository
+        );
         when(repository.save(any(LotteryDecisionSet.class))).thenAnswer(invocation -> {
             LotteryDecisionSet decisionSet = invocation.getArgument(0);
             if (decisionSet.getId() == null) {
@@ -63,6 +87,7 @@ class LotteryDecisionSetServiceTest {
         when(ticketRepository.findByUserIdOrderByPeriodDescCreatedAtDesc("default")).thenReturn(List.of());
         when(ledgerService.performance("RULE")).thenReturn(List.of());
         when(ledgerService.performance("SOURCE")).thenReturn(List.of());
+        when(backtestReportRepository.findFirstByDecisionSetIdOrderByCreatedAtDesc(any())).thenReturn(Optional.empty());
     }
 
     @Test
@@ -218,6 +243,210 @@ class LotteryDecisionSetServiceTest {
     }
 
     @Test
+    void createMiniGptDecisionSetValidatesAndPersistsStructuredProvenance() {
+        MiniGptGenerationRecord first = generation("generation-1", "01", List.of("01", "02", "03", "04", "05", "06"));
+        MiniGptGenerationRecord second = generation("generation-2", "02", List.of("07", "08", "09", "10", "11", "12"));
+        when(generationRepository.findByGenerationIdIn(List.of("generation-1", "generation-2")))
+                .thenReturn(List.of(first, second));
+
+        LotteryDecisionSet saved = service.createMiniGptDecisionSet(LotteryMiniGptDecisionSetCreateRequest.builder()
+                .batchId("batch-1")
+                .generationIds(List.of("generation-1", "generation-2"))
+                .targetIssue("2026079")
+                .title("47C MiniGPT 决策")
+                .build());
+
+        assertThat(saved.getTargetIssue()).isEqualTo("2026079");
+        assertThat(saved.getTargetPeriod()).isEqualTo(2026079);
+        assertThat(saved.getProvenance().getBatchId()).isEqualTo("batch-1");
+        assertThat(saved.getProvenance().getGenerationId()).isNull();
+        assertThat(saved.getProvenance().getTrainFirstIssue()).isEqualTo("2013001");
+        assertThat(saved.getSelectedCandidates()).extracting(LotteryDecisionCandidateSelection::getGenerationId)
+                .containsExactly("generation-1", "generation-2");
+        assertThat(saved.getSelectedCandidates()).allSatisfy(candidate -> {
+            assertThat(candidate.getSource()).isEqualTo("MINIGPT");
+            assertThat(candidate.getProvenance().getCheckpointSha256()).isEqualTo("checkpoint-sha");
+        });
+    }
+
+    @Test
+    void createMiniGptDecisionSetRejectsMixedOrUnselectedGenerations() {
+        MiniGptGenerationRecord first = generation("generation-1", "01", List.of("01", "02", "03", "04", "05", "06"));
+        MiniGptGenerationRecord second = generation("generation-2", "02", List.of("07", "08", "09", "10", "11", "12"));
+        second.setBatchId("batch-2");
+        second.setPoolSelected(false);
+        when(generationRepository.findByGenerationIdIn(List.of("generation-1", "generation-2")))
+                .thenReturn(List.of(first, second));
+
+        assertThatThrownBy(() -> service.createMiniGptDecisionSet(LotteryMiniGptDecisionSetCreateRequest.builder()
+                .generationIds(List.of("generation-1", "generation-2"))
+                .targetIssue("2026079")
+                .build()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("同一批次");
+    }
+
+    @Test
+    void createMiniGptDecisionSetRejectsMissingTargetMissingGenerationAndIllegalCandidate() {
+        assertThatThrownBy(() -> service.createMiniGptDecisionSet(LotteryMiniGptDecisionSetCreateRequest.builder()
+                .generationIds(List.of("generation-1"))
+                .build()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("目标期号");
+
+        when(generationRepository.findByGenerationIdIn(List.of("missing-generation"))).thenReturn(List.of());
+        assertThatThrownBy(() -> service.createMiniGptDecisionSet(LotteryMiniGptDecisionSetCreateRequest.builder()
+                .generationIds(List.of("missing-generation"))
+                .targetIssue("2026079")
+                .build()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("不存在");
+
+        MiniGptGenerationRecord illegal = generation(
+                "illegal-generation",
+                "01",
+                List.of("01", "02", "03", "04", "05", "06")
+        );
+        illegal.getLotteryCandidate().setValid(false);
+        illegal.getLotteryCandidate().setPostRepairValid(false);
+        when(generationRepository.findByGenerationIdIn(List.of("illegal-generation"))).thenReturn(List.of(illegal));
+        assertThatThrownBy(() -> service.createMiniGptDecisionSet(LotteryMiniGptDecisionSetCreateRequest.builder()
+                .generationIds(List.of("illegal-generation"))
+                .targetIssue("2026079")
+                .build()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("不合规");
+    }
+
+    @Test
+    void genericUpdateCannotEraseExistingMiniGptProvenance() {
+        LotteryResearchProvenance provenance = LotteryResearchProvenance.builder()
+                .sourceType("MINIGPT")
+                .generationId("generation-1")
+                .batchId("batch-1")
+                .build();
+        when(repository.findByIdAndUserId("decision-1", "default")).thenReturn(Optional.of(LotteryDecisionSet.builder()
+                .id("decision-1")
+                .userId("default")
+                .provenance(LotteryResearchProvenance.builder().sourceType("MINIGPT").batchId("batch-1").build())
+                .selectedCandidates(List.of(LotteryDecisionCandidateSelection.builder()
+                        .key("generation-1")
+                        .generationId("generation-1")
+                        .provenance(provenance)
+                        .redNumbers(List.of("01", "02", "03", "04", "05", "06"))
+                        .blueNumber("01")
+                        .build()))
+                .createdAt(100L)
+                .build()));
+
+        LotteryDecisionSet updated = service.updateDecisionSet("decision-1", LotteryDecisionSet.builder()
+                .title("更新标题")
+                .selectedCandidates(List.of(LotteryDecisionCandidateSelection.builder()
+                        .key("generation-1")
+                        .redNumbers(List.of("01", "02", "03", "04", "05", "06"))
+                        .blueNumber("01")
+                        .build()))
+                .build());
+
+        assertThat(updated.getProvenance().getBatchId()).isEqualTo("batch-1");
+        assertThat(updated.getSelectedCandidates()).singleElement().satisfies(candidate -> {
+            assertThat(candidate.getGenerationId()).isEqualTo("generation-1");
+            assertThat(candidate.getProvenance().getBatchId()).isEqualTo("batch-1");
+        });
+    }
+
+    @Test
+    void reviewDecisionSetRequiresOwnedBacktestAndPersistsExplicitAction() {
+        when(repository.findByIdAndUserId("decision-1", "default")).thenReturn(Optional.of(LotteryDecisionSet.builder()
+                .id("decision-1")
+                .userId("default")
+                .createdAt(100L)
+                .selectedCandidates(List.of())
+                .build()));
+        when(backtestReportRepository.findById("backtest-1")).thenReturn(Optional.of(LotteryBacktestReport.builder()
+                .id("backtest-1")
+                .decisionSetId("decision-1")
+                .build()));
+
+        LotteryDecisionSet reviewed = service.reviewDecisionSet("decision-1", LotteryDecisionReviewRequest.builder()
+                .reviewAction("watch")
+                .backtestId("backtest-1")
+                .note("继续观察随机基线差异")
+                .build());
+
+        assertThat(reviewed.getReviewAction()).isEqualTo("WATCH");
+        assertThat(reviewed.getReviewBacktestId()).isEqualTo("backtest-1");
+        assertThat(reviewed.getReviewNote()).isEqualTo("继续观察随机基线差异");
+        assertThat(reviewed.getReviewedAt()).isNotNull();
+        assertThat(reviewed.getAuditMetadata().getAction()).isEqualTo("decision-set-review");
+    }
+
+    @Test
+    void miniGptOutcomeIgnoresSameNumberTicketsWithoutExactLineage() {
+        LotteryResearchProvenance provenance = LotteryResearchProvenance.builder()
+                .sourceType("MINIGPT")
+                .generationId("generation-1")
+                .batchId("batch-1")
+                .build();
+        LotteryDecisionSet decisionSet = LotteryDecisionSet.builder()
+                .id("decision-1")
+                .userId("default")
+                .targetIssue("2026079")
+                .provenance(LotteryResearchProvenance.builder().sourceType("MINIGPT").batchId("batch-1").build())
+                .selectedCandidates(List.of(LotteryDecisionCandidateSelection.builder()
+                        .key("generation-1")
+                        .generationId("generation-1")
+                        .provenance(provenance)
+                        .source("MINIGPT")
+                        .redNumbers(List.of("01", "02", "03", "04", "05", "06"))
+                        .blueNumber("07")
+                        .build()))
+                .build();
+        LotteryPrizeResult noPrize = LotteryPrizeResult.builder()
+                .redHits(0)
+                .blueHit(false)
+                .prizeName("未中奖")
+                .prizeAmount(0L)
+                .winning(false)
+                .build();
+        LotteryTicket manualSameNumbers = LotteryTicket.builder()
+                .id("manual-ticket")
+                .issue("2026079")
+                .redNumbers(List.of("01", "02", "03", "04", "05", "06"))
+                .blueNumber("07")
+                .source("MANUAL")
+                .cost(new java.math.BigDecimal("2"))
+                .prizeResult(noPrize)
+                .build();
+        LotteryTicket exactTicket = LotteryTicket.builder()
+                .id("exact-ticket")
+                .issue("2026079")
+                .redNumbers(List.of("01", "02", "03", "04", "05", "06"))
+                .blueNumber("07")
+                .source("MINIGPT")
+                .decisionSetId("decision-1")
+                .candidateKey("generation-1")
+                .generationId("generation-1")
+                .provenance(provenance)
+                .cost(new java.math.BigDecimal("2"))
+                .prizeResult(noPrize)
+                .build();
+        when(repository.countByUserIdAndArchivedFalse("default")).thenReturn(1L);
+        when(repository.findByUserIdAndArchivedFalseOrderByUpdatedAtDesc("default", PageRequest.of(0, 10)))
+                .thenReturn(List.of(decisionSet));
+        when(ticketRepository.findByUserIdOrderByPeriodDescCreatedAtDesc("default"))
+                .thenReturn(List.of(manualSameNumbers, exactTicket));
+
+        LotteryDecisionOutcomeSummary summary = service.outcomeSummary(false, 10);
+
+        assertThat(summary.getConvertedTicketCount()).isEqualTo(1);
+        assertThat(summary.getTotalCost()).isEqualByComparingTo("2");
+        assertThat(summary.getItems()).singleElement().satisfies(item ->
+                assertThat(item.getCandidates()).singleElement().satisfies(candidate ->
+                        assertThat(candidate.getConvertedTicketCount()).isEqualTo(1)));
+    }
+
+    @Test
     void archiveDecisionSetMarksArchivedAndWritesAuditEvent() {
         ArgumentCaptor<LotteryAuditEvent> auditCaptor = ArgumentCaptor.forClass(LotteryAuditEvent.class);
         when(repository.findByIdAndUserId("decision-1", "default")).thenReturn(Optional.of(LotteryDecisionSet.builder()
@@ -235,5 +464,45 @@ class LotteryDecisionSetServiceTest {
         assertThat(archived.getArchivedAt()).isNotNull();
         verify(auditEventRepository).save(auditCaptor.capture());
         assertThat(auditCaptor.getValue().getEventType()).isEqualTo("DECISION_SET_ARCHIVE");
+    }
+
+    private MiniGptGenerationRecord generation(String generationId, String blueNumber, List<String> redNumbers) {
+        return MiniGptGenerationRecord.builder()
+                .id(generationId)
+                .generationId(generationId)
+                .batchId("batch-1")
+                .runId("run-1")
+                .runName("run-name")
+                .corpusVersion("corpus-1")
+                .trainSha256("train-sha")
+                .validationSha256("validation-sha")
+                .checkpointSha256("checkpoint-sha")
+                .prompt("target=next")
+                .maxNewTokens(120)
+                .temperature(0.9)
+                .topK(20)
+                .seed(42L)
+                .strategyLabel("balanced")
+                .trainFirstIssue("2013001")
+                .trainLatestIssue("2023001")
+                .validationFirstIssue("2023002")
+                .validationLatestIssue("2026078")
+                .batchBaseSeed(42L)
+                .batchMaxRedOverlap(3)
+                .batchMinimumBlueCoverage(2)
+                .batchMinimumBlueCoverageMet(true)
+                .batchStrategies(List.of("balanced", "blue-focus"))
+                .modelConfig(Map.of("block_size", 160))
+                .poolSelected(true)
+                .lotteryCandidate(MiniGptLotteryCandidateValidation.builder()
+                        .parseable(true)
+                        .valid(true)
+                        .postRepairValid(true)
+                        .redNumbers(redNumbers)
+                        .blueNumber(blueNumber)
+                        .build())
+                .generatedText("red=" + String.join(",", redNumbers) + " blue=" + blueNumber)
+                .generatedAt(1000L)
+                .build();
     }
 }

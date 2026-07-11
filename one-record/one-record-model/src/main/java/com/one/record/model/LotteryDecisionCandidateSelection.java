@@ -1,6 +1,7 @@
 package com.one.record.model;
 
 import com.one.record.training.LotteryRuleEvidence;
+import com.one.record.lottery.LotteryResearchProvenance;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,6 +18,10 @@ import java.util.List;
 public class LotteryDecisionCandidateSelection implements Serializable {
 
     private String key;
+
+    private String generationId;
+
+    private LotteryResearchProvenance provenance;
 
     private String snapshotId;
 

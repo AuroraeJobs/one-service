@@ -1,5 +1,6 @@
 package com.one.record.model;
 
+import com.one.record.lottery.LotteryResearchProvenance;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,6 +19,16 @@ public class LotteryTicketPackItem implements Serializable {
 
     private String key;
 
+    private String ticketPackId;
+
+    private String decisionSetId;
+
+    private String candidateKey;
+
+    private String generationId;
+
+    private LotteryResearchProvenance provenance;
+
     private String title;
 
     @Builder.Default
@@ -32,8 +43,6 @@ public class LotteryTicketPackItem implements Serializable {
     private String source;
 
     private String predictionSnapshotId;
-
-    private String decisionSetId;
 
     private String portfolioId;
 

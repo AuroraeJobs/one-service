@@ -5,16 +5,23 @@ import com.one.record.lottery.LotteryDecisionCandidateOutcome;
 import com.one.record.lottery.LotteryDecisionOutcomeItem;
 import com.one.record.lottery.LotteryDecisionOutcomeSummary;
 import com.one.record.lottery.LotteryDecisionPerformanceDelta;
+import com.one.record.lottery.LotteryDecisionReviewRequest;
+import com.one.record.lottery.LotteryMiniGptDecisionSetCreateRequest;
 import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.lottery.LotteryPerformanceLedger;
 import com.one.record.lottery.LotteryPrizeResult;
+import com.one.record.lottery.LotteryResearchProvenance;
 import com.one.record.model.LotteryAuditEvent;
+import com.one.record.model.LotteryBacktestReport;
 import com.one.record.model.LotteryDecisionCandidateSelection;
 import com.one.record.model.LotteryDecisionSet;
+import com.one.record.model.MiniGptGenerationRecord;
 import com.one.record.model.LotteryPredictionSnapshot;
 import com.one.record.model.LotteryTicket;
 import com.one.record.repository.LotteryAuditEventRepository;
+import com.one.record.repository.LotteryBacktestReportRepository;
 import com.one.record.repository.LotteryDecisionSetRepository;
+import com.one.record.repository.MiniGptGenerationRepository;
 import com.one.record.repository.LotteryPredictionSnapshotRepository;
 import com.one.record.repository.LotteryTicketRepository;
 import com.one.record.service.ILotteryDecisionSetService;
@@ -65,6 +72,10 @@ public class LotteryDecisionSetService implements ILotteryDecisionSetService {
 
     private final ILotteryLedgerService ledgerService;
 
+    private final MiniGptGenerationRepository generationRepository;
+
+    private final LotteryBacktestReportRepository backtestReportRepository;
+
     @Override
     public LotteryPageResponse<LotteryDecisionSet> decisionSets(Boolean includeArchived, Integer page, Integer pageSize) {
         int currentPage = normalizePage(page);
@@ -102,6 +113,64 @@ public class LotteryDecisionSetService implements ILotteryDecisionSetService {
         long now = System.currentTimeMillis();
         LotteryDecisionSet target = new LotteryDecisionSet();
         applyMutableFields(target, decisionSet);
+        target.setProvenance(null);
+        target.getSelectedCandidates().forEach(candidate -> {
+            candidate.setGenerationId(null);
+            candidate.setProvenance(null);
+        });
+        return persistNewDecisionSet(target, now, "DECISION_SET_CREATE", "Created lottery decision set");
+    }
+
+    @Override
+    public LotteryDecisionSet createMiniGptDecisionSet(LotteryMiniGptDecisionSetCreateRequest request) {
+        if (request == null || !StringUtils.hasText(request.getTargetIssue())) {
+            throw new IllegalArgumentException("MiniGPT 决策集目标期号不能为空");
+        }
+        List<String> generationIds = normalizeIds(request.getGenerationIds());
+        if (generationIds.isEmpty()) {
+            throw new IllegalArgumentException("MiniGPT 决策集至少需要一个 generationId");
+        }
+        Map<String, MiniGptGenerationRecord> generationsById = new LinkedHashMap<>();
+        generationRepository.findByGenerationIdIn(generationIds).forEach(record -> {
+            if (record != null && StringUtils.hasText(record.getGenerationId())) {
+                generationsById.put(record.getGenerationId(), record);
+            }
+        });
+        List<MiniGptGenerationRecord> generations = generationIds.stream()
+                .map(generationsById::get)
+                .filter(Objects::nonNull)
+                .toList();
+        if (generations.size() != generationIds.size()) {
+            List<String> missing = generationIds.stream().filter(id -> !generationsById.containsKey(id)).toList();
+            throw new IllegalArgumentException("MiniGPT generation 不存在: " + String.join(",", missing));
+        }
+        validateMiniGptGenerations(generations, normalizeText(request.getBatchId()));
+        long now = System.currentTimeMillis();
+        MiniGptGenerationRecord first = generations.get(0);
+        LotteryResearchProvenance batchProvenance = provenance(first, false, now);
+        List<LotteryDecisionCandidateSelection> candidates = generations.stream()
+                .map(record -> decisionCandidate(record, now))
+                .toList();
+        LotteryDecisionSet source = LotteryDecisionSet.builder()
+                .title(StringUtils.hasText(request.getTitle()) ? request.getTitle().trim() : "MiniGPT 候选池 " + request.getTargetIssue().trim())
+                .targetIssue(request.getTargetIssue().trim())
+                .ruleName("MiniGPT:" + firstText(first.getRunName(), first.getRunId(), "unknown-run"))
+                .evidenceState("MINIGPT")
+                .resultState("PENDING")
+                .conversionState("DRAFT")
+                .note(normalizeText(request.getNote()))
+                .selectedCandidates(candidates)
+                .build();
+        LotteryDecisionSet target = new LotteryDecisionSet();
+        applyMutableFields(target, source);
+        target.setProvenance(batchProvenance);
+        return persistNewDecisionSet(target, now, "DECISION_SET_MINIGPT_CREATE", "Created MiniGPT lottery decision set");
+    }
+
+    private LotteryDecisionSet persistNewDecisionSet(LotteryDecisionSet target,
+                                                     long now,
+                                                     String eventType,
+                                                     String message) {
         target.setUserId(DEFAULT_USER_ID);
         target.setStatus("ACTIVE");
         target.setArchived(false);
@@ -110,7 +179,7 @@ public class LotteryDecisionSetService implements ILotteryDecisionSetService {
         target.setUpdatedAt(now);
         target.setAuditMetadata(audit("decision-set-create", now, now));
         LotteryDecisionSet saved = repository.save(target);
-        saveAuditEvent("DECISION_SET_CREATE", saved, "Created lottery decision set");
+        saveAuditEvent(eventType, saved, message);
         return saved;
     }
 
@@ -137,6 +206,31 @@ public class LotteryDecisionSetService implements ILotteryDecisionSetService {
         target.setAuditMetadata(audit("decision-set-archive", createdAt(target, now), now));
         LotteryDecisionSet saved = repository.save(target);
         saveAuditEvent("DECISION_SET_ARCHIVE", saved, "Archived lottery decision set");
+        return saved;
+    }
+
+    @Override
+    public LotteryDecisionSet reviewDecisionSet(String id, LotteryDecisionReviewRequest request) {
+        LotteryDecisionSet target = loadOwnedDecisionSet(id);
+        String action = normalizeReviewAction(request == null ? null : request.getReviewAction());
+        String backtestId = normalizeText(request == null ? null : request.getBacktestId());
+        if (!StringUtils.hasText(backtestId)) {
+            throw new IllegalArgumentException("决策复核 backtestId 不能为空");
+        }
+        LotteryBacktestReport report = backtestReportRepository.findById(backtestId)
+                .orElseThrow(() -> new IllegalArgumentException("彩票回测报告不存在: " + backtestId));
+        if (!Objects.equals(target.getId(), report.getDecisionSetId())) {
+            throw new IllegalArgumentException("彩票回测报告不属于当前决策集");
+        }
+        long now = System.currentTimeMillis();
+        target.setReviewAction(action);
+        target.setReviewNote(normalizeText(request == null ? null : request.getNote()));
+        target.setReviewBacktestId(backtestId);
+        target.setReviewedAt(now);
+        target.setUpdatedAt(now);
+        target.setAuditMetadata(audit("decision-set-review", createdAt(target, now), now));
+        LotteryDecisionSet saved = repository.save(target);
+        saveAuditEvent("DECISION_SET_REVIEW", saved, "Reviewed lottery decision set as " + action);
         return saved;
     }
 
@@ -171,11 +265,20 @@ public class LotteryDecisionSetService implements ILotteryDecisionSetService {
             }
         }
         String ruleName = firstText(decisionSet.getRuleName(), firstCandidateRule(decisionSet));
+        String sourceName = firstCandidateSource(decisionSet);
+        LotteryBacktestReport latestBacktest = backtestReportRepository
+                .findFirstByDecisionSetIdOrderByCreatedAtDesc(decisionSet.getId())
+                .orElse(null);
         LotteryDecisionOutcomeItem item = LotteryDecisionOutcomeItem.builder()
                 .decisionSetId(decisionSet.getId())
                 .title(decisionSet.getTitle())
                 .targetIssue(decisionSet.getTargetIssue())
                 .ruleName(ruleName)
+                .provenance(copyProvenance(decisionSet.getProvenance()))
+                .reviewAction(decisionSet.getReviewAction())
+                .reviewNote(decisionSet.getReviewNote())
+                .reviewBacktestId(decisionSet.getReviewBacktestId())
+                .reviewedAt(decisionSet.getReviewedAt())
                 .conversionState(decisionSet.getConversionState())
                 .status(decisionSet.getStatus())
                 .candidateCount(candidates.size())
@@ -202,12 +305,17 @@ public class LotteryDecisionSetService implements ILotteryDecisionSetService {
                 .hitDistribution(hitDistribution)
                 .prizeDistribution(prizeDistribution)
                 .evidenceAlerts(new ArrayList<>(evidenceAlerts))
+                .backtestNetResultDelta(latestBacktest == null ? null : latestBacktest.getNetResultDelta())
+                .backtestRoiPercentDelta(latestBacktest == null ? null : latestBacktest.getRoiPercentDelta())
+                .backtestWarnings(latestBacktest == null || latestBacktest.getOverfitWarnings() == null
+                        ? new ArrayList<>()
+                        : new ArrayList<>(latestBacktest.getOverfitWarnings()))
                 .candidates(candidates)
                 .createdAt(decisionSet.getCreatedAt())
                 .updatedAt(decisionSet.getUpdatedAt())
                 .build();
         item.setRuleDelta(performanceDelta("RULE", ruleName, item, ruleBenchmarks.get(performanceKey(ruleName))));
-        item.setSourceDelta(performanceDelta("SOURCE", "PREDICTION", item, sourceBenchmarks.get("PREDICTION")));
+        item.setSourceDelta(performanceDelta("SOURCE", sourceName, item, sourceBenchmarks.get(performanceKey(sourceName))));
         return item;
     }
 
@@ -231,6 +339,8 @@ public class LotteryDecisionSetService implements ILotteryDecisionSetService {
                 .decisionSetId(decisionSet.getId())
                 .decisionSetTitle(decisionSet.getTitle())
                 .candidateKey(candidate.getKey())
+                .generationId(candidate.getGenerationId())
+                .provenance(copyProvenance(candidate.getProvenance()))
                 .candidateTitle(candidate.getCandidateTitle())
                 .source(candidate.getSource())
                 .snapshotId(candidate.getSnapshotId())
@@ -354,10 +464,26 @@ public class LotteryDecisionSetService implements ILotteryDecisionSetService {
         Set<String> convertedIds = new LinkedHashSet<>(candidate.getConvertedTicketIds() == null ? List.of() : candidate.getConvertedTicketIds());
         String issue = firstText(value(candidate.getTargetPeriod()), decisionSet.getTargetIssue());
         String candidateKey = numberKey(candidate.getRedNumbers(), candidate.getBlueNumber());
+        boolean requiresExactLineage = decisionSet.getProvenance() != null || StringUtils.hasText(candidate.getGenerationId());
         return tickets.stream()
                 .filter(ticket -> {
                     if (StringUtils.hasText(ticket.getId()) && convertedIds.contains(ticket.getId())) {
                         return true;
+                    }
+                    boolean hasLineage = StringUtils.hasText(ticket.getDecisionSetId())
+                            || StringUtils.hasText(ticket.getCandidateKey())
+                            || StringUtils.hasText(ticket.getGenerationId());
+                    if (hasLineage) {
+                        if (!Objects.equals(decisionSet.getId(), ticket.getDecisionSetId())) {
+                            return false;
+                        }
+                        if (StringUtils.hasText(candidate.getGenerationId()) || StringUtils.hasText(ticket.getGenerationId())) {
+                            return Objects.equals(candidate.getGenerationId(), ticket.getGenerationId());
+                        }
+                        return Objects.equals(candidate.getKey(), ticket.getCandidateKey());
+                    }
+                    if (requiresExactLineage) {
+                        return false;
                     }
                     if (StringUtils.hasText(issue) && !issue.equals(ticketIssue(ticket))) {
                         return false;
@@ -427,6 +553,23 @@ public class LotteryDecisionSetService implements ILotteryDecisionSetService {
                 .filter(StringUtils::hasText)
                 .findFirst()
                 .orElse(null);
+    }
+
+    private String firstCandidateSource(LotteryDecisionSet decisionSet) {
+        if (decisionSet.getProvenance() != null && StringUtils.hasText(decisionSet.getProvenance().getSourceType())) {
+            return decisionSet.getProvenance().getSourceType().trim().toUpperCase(Locale.ROOT);
+        }
+        if (decisionSet.getSelectedCandidates() == null) {
+            return "PREDICTION";
+        }
+        String source = decisionSet.getSelectedCandidates().stream()
+                .map(LotteryDecisionCandidateSelection::getSource)
+                .filter(StringUtils::hasText)
+                .findFirst()
+                .orElse("PREDICTION")
+                .trim()
+                .toUpperCase(Locale.ROOT);
+        return "PRIMARY".equals(source) || "CANDIDATE".equals(source) ? "PREDICTION" : source;
     }
 
     private String resultState(LotteryPrizeResult prize, String fallback) {
@@ -530,6 +673,10 @@ public class LotteryDecisionSetService implements ILotteryDecisionSetService {
     }
 
     private void applyMutableFields(LotteryDecisionSet target, LotteryDecisionSet source) {
+        LotteryResearchProvenance existingProvenance = target.getProvenance();
+        List<LotteryDecisionCandidateSelection> existingCandidates = target.getSelectedCandidates() == null
+                ? List.of()
+                : new ArrayList<>(target.getSelectedCandidates());
         Integer targetPeriod = source == null ? null : source.getTargetPeriod();
         String targetIssue = normalizeText(source == null ? null : source.getTargetIssue());
         if (targetPeriod == null) {
@@ -543,7 +690,23 @@ public class LotteryDecisionSetService implements ILotteryDecisionSetService {
         target.setResultState(normalizeState(source == null ? null : source.getResultState(), "ALL"));
         target.setConversionState(normalizeState(source == null ? null : source.getConversionState(), "DRAFT"));
         target.setNote(normalizeText(source == null ? null : source.getNote()));
-        target.setSelectedCandidates(normalizeCandidates(source == null ? null : source.getSelectedCandidates()));
+        List<LotteryDecisionCandidateSelection> normalizedCandidates = normalizeCandidates(source == null ? null : source.getSelectedCandidates());
+        if (existingProvenance != null) {
+            Map<String, LotteryDecisionCandidateSelection> existingByIdentity = new LinkedHashMap<>();
+            existingCandidates.forEach(candidate -> existingByIdentity.put(candidateIdentity(candidate), candidate));
+            normalizedCandidates.forEach(candidate -> {
+                LotteryDecisionCandidateSelection existing = existingByIdentity.get(candidateIdentity(candidate));
+                if (existing == null) {
+                    candidate.setGenerationId(null);
+                    candidate.setProvenance(null);
+                    return;
+                }
+                candidate.setGenerationId(existing.getGenerationId());
+                candidate.setProvenance(copyProvenance(existing.getProvenance()));
+            });
+            target.setProvenance(copyProvenance(existingProvenance));
+        }
+        target.setSelectedCandidates(normalizedCandidates);
     }
 
     private List<LotteryDecisionCandidateSelection> normalizeCandidates(List<LotteryDecisionCandidateSelection> candidates) {
@@ -560,6 +723,8 @@ public class LotteryDecisionSetService implements ILotteryDecisionSetService {
     private LotteryDecisionCandidateSelection normalizeCandidate(LotteryDecisionCandidateSelection candidate) {
         return LotteryDecisionCandidateSelection.builder()
                 .key(normalizeText(candidate.getKey()))
+                .generationId(normalizeText(candidate.getGenerationId()))
+                .provenance(copyProvenance(candidate.getProvenance()))
                 .snapshotId(normalizeText(candidate.getSnapshotId()))
                 .snapshotTitle(normalizeText(candidate.getSnapshotTitle()))
                 .candidateTitle(normalizeCandidateTitle(candidate.getCandidateTitle()))
@@ -616,6 +781,15 @@ public class LotteryDecisionSetService implements ILotteryDecisionSetService {
         if (StringUtils.hasText(decisionSet.getRuleName())) {
             filters.put("ruleName", decisionSet.getRuleName());
         }
+        if (decisionSet.getProvenance() != null) {
+            filters.put("batchId", value(decisionSet.getProvenance().getBatchId()));
+            filters.put("runId", value(decisionSet.getProvenance().getRunId()));
+            filters.put("corpusVersion", value(decisionSet.getProvenance().getCorpusVersion()));
+        }
+        if (StringUtils.hasText(decisionSet.getReviewAction())) {
+            filters.put("reviewAction", decisionSet.getReviewAction());
+            filters.put("reviewBacktestId", value(decisionSet.getReviewBacktestId()));
+        }
         filters.put("conversionState", decisionSet.getConversionState());
         auditEventRepository.save(LotteryAuditEvent.builder()
                 .eventType(eventType)
@@ -627,6 +801,157 @@ public class LotteryDecisionSetService implements ILotteryDecisionSetService {
                 .message(message)
                 .generatedAt(System.currentTimeMillis())
                 .build());
+    }
+
+    private void validateMiniGptGenerations(List<MiniGptGenerationRecord> generations, String requestedBatchId) {
+        MiniGptGenerationRecord first = generations.get(0);
+        String expectedBatchId = first.getBatchId();
+        String expectedRunId = first.getRunId();
+        for (MiniGptGenerationRecord generation : generations) {
+            if (!Objects.equals(expectedBatchId, generation.getBatchId())) {
+                throw new IllegalArgumentException("MiniGPT generations 必须属于同一批次");
+            }
+            if (!Objects.equals(expectedRunId, generation.getRunId())) {
+                throw new IllegalArgumentException("MiniGPT generations 必须属于同一训练 run");
+            }
+            if (!Boolean.TRUE.equals(generation.getPoolSelected())) {
+                throw new IllegalArgumentException("MiniGPT generation 未进入候选池: " + generation.getGenerationId());
+            }
+            if (!usableCandidate(generation)) {
+                throw new IllegalArgumentException("MiniGPT generation 候选不合规: " + generation.getGenerationId());
+            }
+            if (!Objects.equals(first.getCorpusVersion(), generation.getCorpusVersion())
+                    || !Objects.equals(first.getTrainSha256(), generation.getTrainSha256())
+                    || !Objects.equals(first.getValidationSha256(), generation.getValidationSha256())
+                    || !Objects.equals(first.getCheckpointSha256(), generation.getCheckpointSha256())) {
+                throw new IllegalArgumentException("MiniGPT generations 的语料或 checkpoint provenance 不一致");
+            }
+        }
+        if (StringUtils.hasText(requestedBatchId) && !Objects.equals(requestedBatchId, expectedBatchId)) {
+            throw new IllegalArgumentException("MiniGPT batchId 与 generation 记录不一致");
+        }
+    }
+
+    private boolean usableCandidate(MiniGptGenerationRecord generation) {
+        return generation.getLotteryCandidate() != null
+                && (Boolean.TRUE.equals(generation.getLotteryCandidate().getValid())
+                || Boolean.TRUE.equals(generation.getLotteryCandidate().getPostRepairValid()));
+    }
+
+    private LotteryDecisionCandidateSelection decisionCandidate(MiniGptGenerationRecord generation, long capturedAt) {
+        boolean repaired = !Boolean.TRUE.equals(generation.getLotteryCandidate().getValid())
+                && Boolean.TRUE.equals(generation.getLotteryCandidate().getPostRepairValid());
+        List<String> redNumbers = repaired
+                ? generation.getLotteryCandidate().getRepairedRedNumbers()
+                : generation.getLotteryCandidate().getRedNumbers();
+        String blueNumber = repaired
+                ? generation.getLotteryCandidate().getRepairedBlueNumber()
+                : generation.getLotteryCandidate().getBlueNumber();
+        String warning = repaired && generation.getLotteryCandidate().getRepairActions() != null
+                ? String.join("；", generation.getLotteryCandidate().getRepairActions())
+                : null;
+        return LotteryDecisionCandidateSelection.builder()
+                .key(generation.getGenerationId())
+                .generationId(generation.getGenerationId())
+                .provenance(provenance(generation, true, capturedAt))
+                .candidateTitle("MiniGPT " + firstText(generation.getStrategyLabel(), "default"))
+                .source("MINIGPT")
+                .ruleName("MiniGPT " + firstText(generation.getStrategyLabel(), "default"))
+                .redNumbers(redNumbers == null ? List.of() : new ArrayList<>(redNumbers))
+                .blueNumber(blueNumber)
+                .score(repaired ? 55 : 80)
+                .replayText(generation.getGeneratedText())
+                .driftLabel(generation.getSeed() == null ? null : "seed=" + generation.getSeed())
+                .resultState("PENDING")
+                .ticketCount(0)
+                .ticketState("NOT_CONVERTED")
+                .warning(warning)
+                .build();
+    }
+
+    private LotteryResearchProvenance provenance(MiniGptGenerationRecord generation,
+                                                  boolean includeGenerationId,
+                                                  long capturedAt) {
+        return LotteryResearchProvenance.builder()
+                .sourceType("MINIGPT")
+                .generationId(includeGenerationId ? generation.getGenerationId() : null)
+                .batchId(generation.getBatchId())
+                .runId(generation.getRunId())
+                .runName(generation.getRunName())
+                .corpusVersion(generation.getCorpusVersion())
+                .trainSha256(generation.getTrainSha256())
+                .validationSha256(generation.getValidationSha256())
+                .checkpointSha256(generation.getCheckpointSha256())
+                .prompt(generation.getPrompt())
+                .maxNewTokens(generation.getMaxNewTokens())
+                .temperature(generation.getTemperature())
+                .topK(generation.getTopK())
+                .seed(includeGenerationId ? generation.getSeed() : null)
+                .strategyLabel(includeGenerationId ? generation.getStrategyLabel() : null)
+                .trainFirstIssue(generation.getTrainFirstIssue())
+                .trainLatestIssue(generation.getTrainLatestIssue())
+                .validationFirstIssue(generation.getValidationFirstIssue())
+                .validationLatestIssue(generation.getValidationLatestIssue())
+                .batchBaseSeed(generation.getBatchBaseSeed())
+                .batchMaxRedOverlap(generation.getBatchMaxRedOverlap())
+                .batchMinimumBlueCoverage(generation.getBatchMinimumBlueCoverage())
+                .batchMinimumBlueCoverageMet(generation.getBatchMinimumBlueCoverageMet())
+                .batchStrategies(generation.getBatchStrategies() == null ? new ArrayList<>() : new ArrayList<>(generation.getBatchStrategies()))
+                .modelConfig(generation.getModelConfig() == null ? new LinkedHashMap<>() : new LinkedHashMap<>(generation.getModelConfig()))
+                .capturedAt(capturedAt)
+                .build();
+    }
+
+    private LotteryResearchProvenance copyProvenance(LotteryResearchProvenance source) {
+        if (source == null) {
+            return null;
+        }
+        return LotteryResearchProvenance.builder()
+                .sourceType(source.getSourceType())
+                .generationId(source.getGenerationId())
+                .batchId(source.getBatchId())
+                .runId(source.getRunId())
+                .runName(source.getRunName())
+                .corpusVersion(source.getCorpusVersion())
+                .trainSha256(source.getTrainSha256())
+                .validationSha256(source.getValidationSha256())
+                .checkpointSha256(source.getCheckpointSha256())
+                .prompt(source.getPrompt())
+                .maxNewTokens(source.getMaxNewTokens())
+                .temperature(source.getTemperature())
+                .topK(source.getTopK())
+                .seed(source.getSeed())
+                .strategyLabel(source.getStrategyLabel())
+                .trainFirstIssue(source.getTrainFirstIssue())
+                .trainLatestIssue(source.getTrainLatestIssue())
+                .validationFirstIssue(source.getValidationFirstIssue())
+                .validationLatestIssue(source.getValidationLatestIssue())
+                .batchBaseSeed(source.getBatchBaseSeed())
+                .batchMaxRedOverlap(source.getBatchMaxRedOverlap())
+                .batchMinimumBlueCoverage(source.getBatchMinimumBlueCoverage())
+                .batchMinimumBlueCoverageMet(source.getBatchMinimumBlueCoverageMet())
+                .batchStrategies(source.getBatchStrategies() == null ? new ArrayList<>() : new ArrayList<>(source.getBatchStrategies()))
+                .modelConfig(source.getModelConfig() == null ? new LinkedHashMap<>() : new LinkedHashMap<>(source.getModelConfig()))
+                .capturedAt(source.getCapturedAt())
+                .build();
+    }
+
+    private String candidateIdentity(LotteryDecisionCandidateSelection candidate) {
+        return firstText(candidate == null ? null : candidate.getGenerationId(),
+                candidate == null ? null : candidate.getKey(),
+                candidate == null ? null : numberKey(candidate.getRedNumbers(), candidate.getBlueNumber()),
+                "unknown");
+    }
+
+    private String normalizeReviewAction(String action) {
+        if (!StringUtils.hasText(action)) {
+            throw new IllegalArgumentException("决策复核 action 不能为空");
+        }
+        String normalized = action.trim().toUpperCase(Locale.ROOT);
+        return switch (normalized) {
+            case "PROMOTE", "WATCH", "PAUSE", "RETIRE" -> normalized;
+            default -> throw new IllegalArgumentException("决策复核 action 仅支持 PROMOTE、WATCH、PAUSE、RETIRE");
+        };
     }
 
     private LotteryAuditMetadata audit(String action, long createdAt, long updatedAt) {

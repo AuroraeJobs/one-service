@@ -6,6 +6,7 @@ import com.one.record.lottery.LotteryMonthlyLedger;
 import com.one.record.lottery.LotteryPerformanceLedger;
 import com.one.record.lottery.LotteryPrizeResult;
 import com.one.record.lottery.LotteryBacktestSummary;
+import com.one.record.lottery.LotteryResearchProvenance;
 import com.one.record.model.LotteryPredictionSnapshot;
 import com.one.record.model.LotteryTicket;
 import com.one.record.repository.LotteryBacktestReportRepository;
@@ -147,6 +148,7 @@ public class LotteryLedgerService implements ILotteryLedgerService {
                 .roiPercent(roiPercent(totals.netResult(), totals.totalCost()))
                 .hitRatePercent(hitRatePercent(totals.winningCount(), totals.checkedCount()))
                 .backtestSummary(LotteryBacktestSummarySupport.find(backtestSummaries, key.name(), key.key()))
+                .provenance(provenance(tickets))
                 .build();
     }
 
@@ -272,6 +274,24 @@ public class LotteryLedgerService implements ILotteryLedgerService {
             String source = firstText(ticket.getSource(), "UNKNOWN");
             return new PerformanceKey(dimension, source, source);
         }
+        if ("DECISION_SET".equals(dimension)) {
+            String decisionSetId = firstText(ticket.getDecisionSetId(), "UNKNOWN_DECISION_SET");
+            return new PerformanceKey(dimension, decisionSetId, decisionSetId);
+        }
+        LotteryResearchProvenance provenance = ticket.getProvenance();
+        if ("MINIGPT_RUN".equals(dimension)) {
+            String runId = firstText(
+                    provenance == null ? null : provenance.getRunId(),
+                    provenance == null ? null : provenance.getRunName(),
+                    "UNKNOWN_MINIGPT_RUN"
+            );
+            String runName = firstText(provenance == null ? null : provenance.getRunName(), runId);
+            return new PerformanceKey(dimension, runId, runName);
+        }
+        if ("MINIGPT_BATCH".equals(dimension)) {
+            String batchId = firstText(provenance == null ? null : provenance.getBatchId(), "UNKNOWN_MINIGPT_BATCH");
+            return new PerformanceKey(dimension, batchId, batchId);
+        }
         String source = firstText(ticket.getSource(), "UNKNOWN").toUpperCase();
         return new PerformanceKey(dimension, source, source);
     }
@@ -281,7 +301,18 @@ public class LotteryLedgerService implements ILotteryLedgerService {
             return "SOURCE";
         }
         String normalized = dimension.trim().toUpperCase();
-        return Objects.equals(normalized, "RULE") ? "RULE" : "SOURCE";
+        return switch (normalized) {
+            case "RULE", "DECISION_SET", "MINIGPT_RUN", "MINIGPT_BATCH" -> normalized;
+            default -> "SOURCE";
+        };
+    }
+
+    private List<LotteryResearchProvenance> provenance(List<LotteryTicket> tickets) {
+        return tickets.stream()
+                .map(LotteryTicket::getProvenance)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
     }
 
     private String firstText(String... values) {

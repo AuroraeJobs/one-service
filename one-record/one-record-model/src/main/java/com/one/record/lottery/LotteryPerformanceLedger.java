@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Builder
@@ -39,4 +41,7 @@ public class LotteryPerformanceLedger implements Serializable {
     private BigDecimal hitRatePercent;
 
     private LotteryBacktestSummary backtestSummary;
+
+    @Builder.Default
+    private List<LotteryResearchProvenance> provenance = new ArrayList<>();
 }

@@ -1,6 +1,7 @@
 package com.one.record.model;
 
 import com.one.record.lottery.LotteryAuditMetadata;
+import com.one.record.lottery.LotteryResearchProvenance;
 import com.one.record.lottery.LotteryTicketBudgetPrecheckResult;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,6 +33,12 @@ public class LotteryTicketPack implements Serializable {
     private String sourceType;
 
     private String sourceId;
+
+    private String decisionSetId;
+
+    private String generationId;
+
+    private LotteryResearchProvenance provenance;
 
     private String status;
 

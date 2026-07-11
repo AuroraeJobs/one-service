@@ -1,6 +1,6 @@
 # Lottery Quality Gates
 
-Last updated: 2026-07-04
+Last updated: 2026-07-11
 
 Use these gates when finishing a lottery milestone.
 
@@ -14,6 +14,10 @@ Use these gates when finishing a lottery milestone.
 - List endpoints that can grow support pagination or have a documented limit.
 - Daily workflow actions return step-level status and do not hide long-running prediction training behind aggregate endpoints.
 - Strategy experiments and backtests persist enough input, parameters, and result evidence to be revisited later.
+- Formal MiniGPT decisions resolve persisted generation ids server-side and preserve typed `LotteryResearchProvenance`; client note text is not a provenance source of truth.
+- Candidate-pool backtests persist seed/algorithm and paired baseline rows, require equal issue coverage and cost for `sameWindow`/`sameBudget`, report model/baseline financial and hit deltas, and label static-pool historical replay as non-walk-forward evidence.
+- Decision review accepts only `PROMOTE`, `WATCH`, `PAUSE`, or `RETIRE`, requires a backtest owned by the same decision set, and takes priority over automatic recommendation classification without resetting recommendation lifecycle status.
+- Ticket-pack preview is read-only. A separate explicit create action may save only `DRAFT`; approval and save-as-tickets remain separate manual operations.
 - Export and maintenance endpoints have dry-run, preview, or bounded-output behavior where appropriate.
 
 ## Frontend
@@ -26,6 +30,9 @@ Use these gates when finishing a lottery milestone.
 - Saved decision outcomes separate candidate hit evidence from converted-ticket financial results.
 - Workbench drill-through links preserve useful filters in query parameters.
 - Experiment, backtest, alert, export, and audit pages keep research language restrained and evidence-oriented.
+- MiniGPT closed-loop controls enforce `saved decision -> comparable backtest -> preview -> explicit DRAFT`; no UI action in this chain automatically approves a pack or creates tickets.
+- Backtest comparisons show `sameWindow`, `sameBudget`, baseline seed/evaluation mode, model and random metrics/deltas, and warnings. Static-pool historical replay must not be labelled walk-forward.
+- Lifecycle UI shows the current manual review action and keeps promote/watch/pause/retire separate from recommendation lifecycle states such as applied, snoozed, and archived.
 - Run `npm run lottery:smoke` in `one-web` after changing `/lottery/workbench`, `/lottery/predictions/decision`, `/lottery/tickets`, `/lottery/research`, or `/lottery/exports`; this fixture smoke does not require live provider access.
 - Run `npm run lottery:release-check` in `one-web` when frontend lottery release evidence needs to be committed or handed off. It refreshes route smoke, writes the human-readable report to `one-web/reports/lottery-release-evidence.md`, and verifies the production build.
 - Use `npm run lottery:release-evidence` only when the report needs to be refreshed without a production build.
@@ -52,6 +59,8 @@ Use this gate when a lottery milestone needs screenshots or manual browser inspe
 - Derived statistics can be recalculated after record sync.
 - Redis cache keys are invalidated or refreshed after source data changes.
 - Audit metadata is preserved for generated predictions, saved tickets, daily-run steps, experiments, backtests, and exports once those flows exist.
+- Generation, decision, backtest, ticket-pack, ticket, note, outcome, ledger, and recommendation evidence keep typed provenance and lineage ids without relying on free-text reconstruction.
+- A random baseline has one paired row per evaluated model row; its ticket count, issue coverage, and total cost must remain directly comparable before downstream preview is allowed.
 
 ## Documentation
 

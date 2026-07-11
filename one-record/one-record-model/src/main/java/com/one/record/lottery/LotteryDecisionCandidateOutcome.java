@@ -24,6 +24,10 @@ public class LotteryDecisionCandidateOutcome implements Serializable {
 
     private String candidateTitle;
 
+    private String generationId;
+
+    private LotteryResearchProvenance provenance;
+
     private String source;
 
     private String snapshotId;

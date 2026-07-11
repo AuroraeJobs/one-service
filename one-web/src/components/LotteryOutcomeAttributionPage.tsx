@@ -194,6 +194,15 @@ const LotteryOutcomeAttributionPage = () => {
   const [error, setError] = useState<string>();
 
   const selectedIssue = searchParams.get('issue') || undefined;
+  const requestedDecisionSetId = searchParams.get('decisionSetId') || '';
+
+  const preserveSelectedIssue = useCallback((issue: string) => {
+    setSearchParams(current => {
+      const next = new URLSearchParams(current);
+      next.set('issue', issue);
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
 
   const loadOutcomes = useCallback(async () => {
     setLoading(true);
@@ -209,7 +218,7 @@ const LotteryOutcomeAttributionPage = () => {
       if (issue) {
         const detail = await lotteryOutcomeApi.issue(issue);
         setSelected(detail);
-        setSearchParams({ issue });
+        preserveSelectedIssue(issue);
       }
     } catch (requestError) {
       console.error('读取彩票归因失败:', requestError);
@@ -217,7 +226,7 @@ const LotteryOutcomeAttributionPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [rollupWindow, selectedIssue, setSearchParams]);
+  }, [preserveSelectedIssue, rollupWindow, selectedIssue]);
 
   useEffect(() => {
     loadOutcomes();
@@ -231,7 +240,7 @@ const LotteryOutcomeAttributionPage = () => {
     setError(undefined);
     try {
       setSelected(await lotteryOutcomeApi.issue(issue));
-      setSearchParams({ issue });
+      preserveSelectedIssue(issue);
     } catch (requestError) {
       console.error('读取彩票归因失败:', requestError);
       setError(requestError instanceof Error ? requestError.message : '读取彩票归因失败');
@@ -246,7 +255,16 @@ const LotteryOutcomeAttributionPage = () => {
     if (outcomeFilter === 'WATCH') return item.calibrationState === 'WATCH_RISK' || item.calibrationState === 'RECALIBRATE';
     return true;
   });
-  const handoffCards = useMemo(() => buildAttributionHandoffs(selected), [selected]);
+  const focusedDecisionContributions = useMemo(() => (
+    requestedDecisionSetId
+      ? (selected?.decisionContributions || []).filter(item => item.decisionSetId === requestedDecisionSetId)
+      : selected?.decisionContributions || []
+  ), [requestedDecisionSetId, selected?.decisionContributions]);
+  const focusedSelected = useMemo(() => selected ? {
+    ...selected,
+    decisionContributions: focusedDecisionContributions
+  } : undefined, [focusedDecisionContributions, selected]);
+  const handoffCards = useMemo(() => buildAttributionHandoffs(focusedSelected), [focusedSelected]);
   const trendRows = useMemo(() => buildTrendRows(selected), [selected]);
   const rollupRows = useMemo(() => (rollup?.rows || []).slice(0, 12), [rollup]);
   const focusMode = searchParams.get('focus') || '';
@@ -277,6 +295,14 @@ const LotteryOutcomeAttributionPage = () => {
       }
     >
       {error ? <Alert className="lottery-overview-status-alert" type="error" showIcon message={error} /> : null}
+      {requestedDecisionSetId ? (
+        <Alert
+          className="lottery-overview-status-alert"
+          type={focusedDecisionContributions.length ? 'info' : 'warning'}
+          showIcon
+          message={`决策溯源筛选：decisionSetId=${requestedDecisionSetId} · issue=${selectedIssue || '-'}`}
+        />
+      ) : null}
       <Spin spinning={loading && !selected}>
         <section className="lottery-outcome-layout">
           <Card className="life-panel-card lottery-clean-panel" title={<Space><BranchesOutlined />期号时间线</Space>}>
@@ -431,13 +457,16 @@ const LotteryOutcomeAttributionPage = () => {
                       )) : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无奖级分布" />}
                     </div>
                     <div className="lottery-outcome-table">
-                      {selected.decisionContributions?.map(item => (
-                        <button key={item.decisionSetId || item.title} type="button" onClick={() => navigate('/lottery/predictions/decision')}>
+                      {focusedDecisionContributions.map(item => (
+                        <button key={item.decisionSetId || item.title} type="button" onClick={() => navigate(`/lottery/predictions/decision?decisionSetId=${encodeURIComponent(item.decisionSetId || '')}&targetIssue=${encodeURIComponent(selected.issue || '')}`)}>
                           <span>{item.title || item.decisionSetId}</span>
                           <small>{item.ruleName || '-'} · {formatMoney(item.netResult)}</small>
                           <Tag color={stateColor(item.contributionState)}>{lotteryStatusLabel(item.contributionState)}</Tag>
                         </button>
                       ))}
+                      {requestedDecisionSetId && !focusedDecisionContributions.length ? (
+                        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="当前期号未找到对应决策归因" />
+                      ) : null}
                     </div>
                   </Card>
                 </section>

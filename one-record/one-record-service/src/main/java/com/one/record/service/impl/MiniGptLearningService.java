@@ -762,6 +762,10 @@ public class MiniGptLearningService implements IMiniGptLearningService {
                     .corpusVersion(run.getCorpusVersion())
                     .trainSha256(run.getTrainSha256())
                     .validationSha256(run.getValidationSha256())
+                    .trainFirstIssue(run.getTrainFirstIssue())
+                    .trainLatestIssue(run.getTrainLatestIssue())
+                    .validationFirstIssue(run.getValidationFirstIssue())
+                    .validationLatestIssue(run.getValidationLatestIssue())
                     .modelConfig(generationOutput.modelConfig())
                     .maxNewTokens(maxNewTokens)
                     .temperature(temperature)
@@ -943,6 +947,10 @@ public class MiniGptLearningService implements IMiniGptLearningService {
                     null,
                     null,
                     null,
+                    null,
+                    null,
+                    null,
+                    null,
                     stats.minimumTokens(),
                     stats.maximumTokens(),
                     stats.requiredBlockSize(),
@@ -968,6 +976,10 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         String templateVersion = requiredManifestText(manifest, "templateVersion");
         String manifestTrainSha = requiredManifestText(manifest, "trainSha256");
         String manifestValidationSha = requiredManifestText(manifest, "validationSha256");
+        String trainFirstIssue = requiredManifestText(manifest, "trainFirstIssue");
+        String trainLatestIssue = requiredManifestText(manifest, "trainLatestIssue");
+        String validationFirstIssue = requiredManifestText(manifest, "validationFirstIssue");
+        String validationLatestIssue = requiredManifestText(manifest, "validationLatestIssue");
         Path manifestTrainPath = manifestArtifactPath(playgroundDir, manifest, "trainDataPath", "trainFilePath");
         Path manifestValidationPath = manifestArtifactPath(playgroundDir, manifest, "validationDataPath", "validationFilePath");
 
@@ -1038,6 +1050,10 @@ public class MiniGptLearningService implements IMiniGptLearningService {
                 templateVersion,
                 actualTrainSha,
                 actualValidationSha,
+                trainFirstIssue,
+                trainLatestIssue,
+                validationFirstIssue,
+                validationLatestIssue,
                 stats.minimumTokens(),
                 stats.maximumTokens(),
                 stats.requiredBlockSize(),
@@ -1364,6 +1380,10 @@ public class MiniGptLearningService implements IMiniGptLearningService {
                 .corpusVersion(result.getCorpusVersion())
                 .trainSha256(result.getTrainSha256())
                 .validationSha256(result.getValidationSha256())
+                .trainFirstIssue(result.getTrainFirstIssue())
+                .trainLatestIssue(result.getTrainLatestIssue())
+                .validationFirstIssue(result.getValidationFirstIssue())
+                .validationLatestIssue(result.getValidationLatestIssue())
                 .checkpoint(result.getCheckpoint())
                 .checkpointSha256(result.getCheckpointSha256())
                 .modelConfig(copyConfig(result.getModelConfig()))
@@ -1881,6 +1901,10 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         run.setTemplateVersion(context.templateVersion());
         run.setTrainSha256(context.trainSha256());
         run.setValidationSha256(context.validationSha256());
+        run.setTrainFirstIssue(context.trainFirstIssue());
+        run.setTrainLatestIssue(context.trainLatestIssue());
+        run.setValidationFirstIssue(context.validationFirstIssue());
+        run.setValidationLatestIssue(context.validationLatestIssue());
         run.setProvenanceStatus(context.provenanceStatus());
         run.setMinimumSampleTokens(context.minimumSampleTokens());
         run.setMaximumSampleTokens(context.maximumSampleTokens());
@@ -1999,7 +2023,15 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         }
         Map<String, Object> metadataProvenance = asMap(latestMetadata.get("provenance"));
         if (!metadataProvenance.isEmpty()) {
-            run.setProvenance(metadataProvenance);
+            Map<String, Object> mergedProvenance = new LinkedHashMap<>();
+            if (run.getProvenance() != null) {
+                mergedProvenance.putAll(run.getProvenance());
+            }
+            mergedProvenance.putAll(metadataProvenance);
+            if (context.verified()) {
+                mergedProvenance.putAll(context.provenanceMap());
+            }
+            run.setProvenance(mergedProvenance);
         }
         if (latestLog != null) {
             run.setFinalTrainLoss(latestLog.getTrainLoss());
@@ -2598,6 +2630,10 @@ public class MiniGptLearningService implements IMiniGptLearningService {
                                    String templateVersion,
                                    String trainSha256,
                                    String validationSha256,
+                                   String trainFirstIssue,
+                                   String trainLatestIssue,
+                                   String validationFirstIssue,
+                                   String validationLatestIssue,
                                    Integer minimumSampleTokens,
                                    Integer maximumSampleTokens,
                                    Integer requiredBlockSize,
@@ -2618,6 +2654,10 @@ public class MiniGptLearningService implements IMiniGptLearningService {
             values.put("template_version", templateVersion);
             values.put("train_sha256", trainSha256);
             values.put("validation_sha256", validationSha256);
+            values.put("train_first_issue", trainFirstIssue);
+            values.put("train_latest_issue", trainLatestIssue);
+            values.put("validation_first_issue", validationFirstIssue);
+            values.put("validation_latest_issue", validationLatestIssue);
             values.put("required_block_size", requiredBlockSize);
             return values;
         }

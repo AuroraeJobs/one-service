@@ -20,4 +20,9 @@ public interface LotteryTicketRepository extends MongoRepository<LotteryTicket, 
                                                                                 String issue,
                                                                                 List<String> redNumbers,
                                                                                 String blueNumber);
+
+    List<LotteryTicket> findByUserIdAndIssueAndRedNumbersAndBlueNumber(String userId,
+                                                                       String issue,
+                                                                       List<String> redNumbers,
+                                                                       String blueNumber);
 }

@@ -2,6 +2,7 @@ package com.one.record.model;
 
 import com.one.record.lottery.LotteryPrizeResult;
 import com.one.record.lottery.LotteryAuditMetadata;
+import com.one.record.lottery.LotteryResearchProvenance;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -47,6 +48,16 @@ public class LotteryTicket {
     private LotteryPrizeResult prizeResult;
 
     private String predictionSnapshotId;
+
+    private String ticketPackId;
+
+    private String decisionSetId;
+
+    private String candidateKey;
+
+    private String generationId;
+
+    private LotteryResearchProvenance provenance;
 
     private String note;
 

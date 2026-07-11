@@ -222,6 +222,44 @@ poolSelected, poolDecision, elapsedMillis, generatedAt
 
 Batch rates always use `generatedCount` as the denominator. `legalCount` means legal before repair; `postRepairLegalCount` uses the shared `valid || postRepairValid` predicate. The response also records repair issue counts, maximum/average pairwise red overlap, distinct blue count/coverage, strategy composition, and every accepted or rejected item's reason. Requested diversity is a target; the response reports only what the generated candidates actually achieve.
 
+## MiniGPT Random-Baseline And Outcome Chain Contract
+
+Iteration 47C introduces `LotteryResearchProvenance` as the typed downstream contract. It snapshots generation/batch/run ids, corpus and train/validation hashes, checkpoint hash, sampling controls, model config, corpus issue ranges, batch policy, and capture time. `POST /lottery/decision-sets/minigpt` accepts generation ids but resolves the durable `mini_gpt_generations` records server-side before creating the decision set. The decision and backtest keep the batch snapshot; each selected candidate keeps its generation-specific snapshot.
+
+The same provenance and lineage ids continue through `LotteryTicketPack`, `LotteryTicketPackItem`, `LotteryTicket`, `LotteryStrategyNoteEvidence`, decision outcomes, outcome attribution, and ledger performance. Ledger performance supports `DECISION_SET`, `MINIGPT_RUN`, and `MINIGPT_BATCH` dimensions. A BACKTEST note attachment resolves its source report by id and replaces client-supplied provenance with the server-owned report snapshot.
+
+Candidate-pool backtests use a deterministic paired baseline:
+
+```text
+baselineSeed default: 42
+baselineAlgorithm: FNV1A64_JAVA_RANDOM_V1
+one random replay row per model replay row
+sameWindow: paired issue coverage is identical
+sameBudget: paired total cost is identical
+```
+
+`LotteryBacktestReport` persists model and baseline rows, ticket counts, costs, prizes, net results, ROI, red/blue hit metrics, hit/prize distributions, candidate diversity, overlap/blue coverage, all deltas, comparability flags, and warning codes. Decision-set replay uses `STATIC_POOL_HISTORICAL_REPLAY`: one saved pool is scored across the selected history and is not regenerated at each historical cutoff. It therefore must not be described as walk-forward validation. Warning codes expose static replay, unknown or overlapping corpus windows, small samples, low diversity, no random advantage, and baseline window/budget mismatch.
+
+Explicit decision review is exposed through:
+
+```text
+PATCH /lottery/decision-sets/{id}/review
+reviewAction: PROMOTE | WATCH | PAUSE | RETIRE
+backtestId: required and owned by the same decision set
+```
+
+Manual review wins over automatic recommendation classification. Without manual review, automatic `PROMOTE` requires a winning candidate, positive net result, positive `backtestRoiPercentDelta`, and no backtest warning; warnings or a negative delta lead to `PAUSE`, while inconclusive evidence stays `WATCH`. Recommendation refresh updates evidence and recommendation state without resetting the existing lifecycle status such as `OPEN`, `APPLIED`, `SNOOZED`, or `ARCHIVED`.
+
+Ticket-pack handoff remains deliberately two-step:
+
+```text
+POST /lottery/ticket-packs/preview  -> validation/budget preview, no draft write
+POST /lottery/ticket-packs          -> explicit DRAFT only
+PATCH approve / POST save-tickets   -> separate manual operations
+```
+
+The MiniGPT page requires a saved decision, a comparable backtest with `sameWindow=true` and `sameBudget=true`, and a successful preview before enabling explicit draft creation. Neither preview nor draft creation approves the pack or creates tickets.
+
 ## Statistics Contract
 
 `LotteryStatisticsSummary` is the first public statistics DTO for the lottery cockpit. `GET /lottery/statistics/summary` returns record count, first/latest draw metadata, red/blue frequency, and structural distributions for red sum, odd count, big count, and span. `POST /lottery/statistics/summary/refresh` forces a recalculation and rewrites the Redis cache. `GET /lottery/statistics/frequency` and `GET /lottery/statistics/distribution` expose the same data in smaller endpoint-specific shapes for pages that do not need the full summary.

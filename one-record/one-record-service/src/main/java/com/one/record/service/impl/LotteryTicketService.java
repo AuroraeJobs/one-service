@@ -6,6 +6,7 @@ import com.one.record.lottery.LotteryAuditMetadata;
 import com.one.record.lottery.LotteryBudgetStatus;
 import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.lottery.LotteryPrizeResult;
+import com.one.record.lottery.LotteryResearchProvenance;
 import com.one.record.lottery.LotteryTicketBudgetPrecheckRequest;
 import com.one.record.lottery.LotteryTicketBudgetPrecheckResult;
 import com.one.record.lottery.LotteryTicketBatchSaveRequest;
@@ -736,6 +737,21 @@ public class LotteryTicketService implements ILotteryTicketService {
         target.setPrizeGrade(trimToNull(source.getPrizeGrade()));
         target.setPrizeResult(source.getPrizeResult());
         target.setPredictionSnapshotId(trimToNull(source.getPredictionSnapshotId()));
+        if (StringUtils.hasText(source.getTicketPackId())) {
+            target.setTicketPackId(source.getTicketPackId().trim());
+        }
+        if (StringUtils.hasText(source.getDecisionSetId())) {
+            target.setDecisionSetId(source.getDecisionSetId().trim());
+        }
+        if (StringUtils.hasText(source.getCandidateKey())) {
+            target.setCandidateKey(source.getCandidateKey().trim());
+        }
+        if (StringUtils.hasText(source.getGenerationId())) {
+            target.setGenerationId(source.getGenerationId().trim());
+        }
+        if (source.getProvenance() != null) {
+            target.setProvenance(copyProvenance(source.getProvenance()));
+        }
         target.setNote(trimToNull(source.getNote()));
     }
 
@@ -759,6 +775,14 @@ public class LotteryTicketService implements ILotteryTicketService {
                 || ticket.getRedNumbers().isEmpty() || !StringUtils.hasText(ticket.getBlueNumber())) {
             return null;
         }
+        if (hasResearchLineage(ticket)) {
+            List<LotteryTicket> duplicates = repository.findByUserIdAndIssueAndRedNumbersAndBlueNumber(
+                    DEFAULT_USER_ID, ticket.getIssue(), ticket.getRedNumbers(), ticket.getBlueNumber());
+            return (duplicates == null ? List.<LotteryTicket>of() : duplicates).stream()
+                    .filter(existing -> sameResearchLineage(existing, ticket))
+                    .findFirst()
+                    .orElse(null);
+        }
         java.util.Optional<LotteryTicket> duplicate = repository.findFirstByUserIdAndIssueAndRedNumbersAndBlueNumber(
                 DEFAULT_USER_ID, ticket.getIssue(), ticket.getRedNumbers(), ticket.getBlueNumber());
         return duplicate == null ? null : duplicate.orElse(null);
@@ -766,7 +790,8 @@ public class LotteryTicketService implements ILotteryTicketService {
 
     private boolean duplicateInBatch(List<LotteryTicket> savedTickets, LotteryTicket ticket) {
         return savedTickets.stream()
-                .anyMatch(saved -> sameTicketNumbers(saved, ticket));
+                .anyMatch(saved -> sameTicketNumbers(saved, ticket)
+                        && (!hasResearchLineage(ticket) || sameResearchLineage(saved, ticket)));
     }
 
     private boolean sameTicketNumbers(LotteryTicket left, LotteryTicket right) {
@@ -774,6 +799,36 @@ public class LotteryTicketService implements ILotteryTicketService {
                 && java.util.Objects.equals(left.getIssue(), right.getIssue())
                 && java.util.Objects.equals(left.getRedNumbers(), right.getRedNumbers())
                 && java.util.Objects.equals(left.getBlueNumber(), right.getBlueNumber());
+    }
+
+    private boolean hasResearchLineage(LotteryTicket ticket) {
+        return ticket != null && (StringUtils.hasText(ticket.getDecisionSetId())
+                || StringUtils.hasText(ticket.getGenerationId())
+                || ticket.getProvenance() != null);
+    }
+
+    private boolean sameResearchLineage(LotteryTicket left, LotteryTicket right) {
+        if (!hasResearchLineage(left) || !hasResearchLineage(right)) {
+            return false;
+        }
+        return java.util.Objects.equals(lineageValue(left.getTicketPackId()), lineageValue(right.getTicketPackId()))
+                && java.util.Objects.equals(lineageValue(left.getDecisionSetId()), lineageValue(right.getDecisionSetId()))
+                && java.util.Objects.equals(lineageValue(left.getCandidateKey()), lineageValue(right.getCandidateKey()))
+                && java.util.Objects.equals(generationLineage(left), generationLineage(right));
+    }
+
+    private String generationLineage(LotteryTicket ticket) {
+        if (ticket == null) {
+            return null;
+        }
+        if (StringUtils.hasText(ticket.getGenerationId())) {
+            return ticket.getGenerationId().trim();
+        }
+        return ticket.getProvenance() == null ? null : lineageValue(ticket.getProvenance().getGenerationId());
+    }
+
+    private String lineageValue(String value) {
+        return StringUtils.hasText(value) ? value.trim() : null;
     }
 
     private BigDecimal costSince(List<LotteryTicket> tickets, long startAt) {
@@ -923,5 +978,39 @@ public class LotteryTicketService implements ILotteryTicketService {
 
     private String value(String value) {
         return value == null ? "" : value;
+    }
+
+    private LotteryResearchProvenance copyProvenance(LotteryResearchProvenance source) {
+        if (source == null) {
+            return null;
+        }
+        return LotteryResearchProvenance.builder()
+                .sourceType(source.getSourceType())
+                .generationId(source.getGenerationId())
+                .batchId(source.getBatchId())
+                .runId(source.getRunId())
+                .runName(source.getRunName())
+                .corpusVersion(source.getCorpusVersion())
+                .trainSha256(source.getTrainSha256())
+                .validationSha256(source.getValidationSha256())
+                .checkpointSha256(source.getCheckpointSha256())
+                .prompt(source.getPrompt())
+                .maxNewTokens(source.getMaxNewTokens())
+                .temperature(source.getTemperature())
+                .topK(source.getTopK())
+                .seed(source.getSeed())
+                .strategyLabel(source.getStrategyLabel())
+                .trainFirstIssue(source.getTrainFirstIssue())
+                .trainLatestIssue(source.getTrainLatestIssue())
+                .validationFirstIssue(source.getValidationFirstIssue())
+                .validationLatestIssue(source.getValidationLatestIssue())
+                .batchBaseSeed(source.getBatchBaseSeed())
+                .batchMaxRedOverlap(source.getBatchMaxRedOverlap())
+                .batchMinimumBlueCoverage(source.getBatchMinimumBlueCoverage())
+                .batchMinimumBlueCoverageMet(source.getBatchMinimumBlueCoverageMet())
+                .batchStrategies(source.getBatchStrategies() == null ? new ArrayList<>() : new ArrayList<>(source.getBatchStrategies()))
+                .modelConfig(source.getModelConfig() == null ? new LinkedHashMap<>() : new LinkedHashMap<>(source.getModelConfig()))
+                .capturedAt(source.getCapturedAt())
+                .build();
     }
 }

@@ -12,4 +12,5 @@ export const lotteryDecisionMessages: Record<string, MessageTemplate> = {
   '最佳红球命中 · 蓝球命中 {{count}}': 'Best Red Ball Hits · Blue Ball Hits {{count}}',
   '第 {{issue}} 期 · 命中 {{winningCount}}/{{candidateCount}}': 'Issue {{issue}} · Hits {{winningCount}}/{{candidateCount}}',
   '已选候选': 'Selected Candidates',
+  '复核动作已保存：{{action}}': 'Review action saved: {{action}}',
 };
