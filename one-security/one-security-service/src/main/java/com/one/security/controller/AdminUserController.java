@@ -222,19 +222,9 @@ public class AdminUserController {
             return ResponseEntity.status(404).body(Response.error(404, "用户不存在"));
         }
 
-        String username = trimToNull(request.getUsername());
-        if (target.getId().equals(currentUser.getId()) && !target.getUsername().equals(username)) {
-            return ResponseEntity.badRequest().body(Response.error(400, "不能在用户管理中修改当前登录用户的用户名"));
-        }
-        User existing = userRepository.findByUsername(username).orElse(null);
-        if (existing != null && !existing.getId().equals(target.getId())) {
-            return ResponseEntity.badRequest().body(Response.error(400, "用户名已存在"));
-        }
-
-        target.setUsername(username);
         target.setPassword(passwordEncoder.encode(request.getPassword()));
         target.setUpdateTime(System.currentTimeMillis());
-        return ResponseEntity.ok(Response.success("用户名和密码已重置", toSummary(userRepository.save(target))));
+        return ResponseEntity.ok(Response.success("密码已重置", toSummary(userRepository.save(target))));
     }
 
     @DeleteMapping("/{id}")

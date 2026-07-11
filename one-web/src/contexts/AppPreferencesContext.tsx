@@ -4,9 +4,9 @@ import type { AppLanguage, ColorMode } from '../types/appPreferences';
 interface AppPreferencesContextValue {
   colorMode: ColorMode;
   language: AppLanguage;
+  /** @deprecated Use useI18n().t() instead. Kept while legacy screens migrate. */
   isEnglish: boolean;
   onToggleColorMode: () => void;
-  onToggleLanguage: () => void;
 }
 
 const AppPreferencesContext = createContext<AppPreferencesContextValue | undefined>(undefined);

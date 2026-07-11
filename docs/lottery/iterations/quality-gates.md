@@ -30,13 +30,14 @@ Use these gates when finishing a lottery milestone.
 - Run `npm run lottery:release-check` in `one-web` when frontend lottery release evidence needs to be committed or handed off. It refreshes route smoke, writes the human-readable report to `one-web/reports/lottery-release-evidence.md`, and verifies the production build.
 - Use `npm run lottery:release-evidence` only when the report needs to be refreshed without a production build.
 - Use `npm run lottery:release-evidence:check` to verify the committed Markdown report still matches the current smoke summary and fixture without rewriting files.
-- Browser QA for those routes still requires a valid local login session and backend service. Proxy-related provider failures, including HTTP 403 when a proxy is enabled, should be recorded as provider/sync evidence rather than treated as route-render failures.
+- Browser QA can use `npm run dev:qa` for frontend-only visual checks without a local login session. Data-backed interactions still require the backend service. Proxy-related provider failures, including HTTP 403 when a proxy is enabled, should be recorded as provider/sync evidence rather than treated as route-render failures.
 
 ## Protected Browser QA
 
 Use this gate when a lottery milestone needs screenshots or manual browser inspection for protected routes.
 
-- Confirm the browser has a valid local login session before opening `/lottery/*`. The frontend guard reads local storage key `aurorae_auth`; if it is missing or stale, protected lottery routes redirect to `/login` and the screenshot only proves the login shell.
+- For a real authenticated flow, confirm the browser has a valid local login session before opening `/lottery/*`. The frontend guard reads local storage key `aurorae_auth`; if it is missing or stale, protected lottery routes redirect to `/login` and the screenshot only proves the login shell.
+- For frontend-only layout and interaction QA, start `one-web` with `npm run dev:qa`. The explicit `qa` Vite mode supplies a local QA identity without writing `aurorae_auth`, skips `/auth/me`, and requires the Vite development server on a loopback hostname, so production builds and non-local hosts cannot enable it. Do not use this mode as evidence for backend authorization or session behavior.
 - Confirm the local backend service is running before judging route rendering. The Vite proxy must be able to reach project-owned lottery APIs such as `/lottery/records/draws`, `/lottery/workbench/summary`, and `/lottery/providers/health`.
 - Treat `ECONNREFUSED` on `/lottery/records/draws?page=0&size=500` as a backend/proxy availability blocker, not a frontend dark-mode or layout failure.
 - If login or backend availability blocks screenshots, still run `npm run lottery:release-check` in `one-web`, record the blocker signature, and continue only after noting that browser evidence is incomplete.

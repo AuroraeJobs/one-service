@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Card, Empty, Select, Statistic, Tag } from 'antd';
 import { HistoryOutlined } from '@ant-design/icons';
 import LotteryBalls from './LotteryBalls';
+import { useI18n } from '../../contexts/I18nContext';
 import {
   buildLotteryReplayForPeriod,
   buildLotteryReplayReport,
@@ -13,11 +14,7 @@ interface LotteryPredictionReplayProps {
   allRecords: string | string[];
 }
 
-const replayOptions = [
-  { label: '最近 5 期', value: 5 },
-  { label: '最近 10 期', value: 10 },
-  { label: '最近 20 期', value: 20 }
-];
+const replayCounts = [5, 10, 20];
 
 const prizeOrder = ['一等奖', '二等奖', '三等奖', '四等奖', '五等奖', '六等奖', '未中奖'];
 
@@ -45,48 +42,70 @@ const getPrizeColor = (prizeLevel: number) => {
   return 'blue';
 };
 
+const localizeReplayTip = (
+  tip: string,
+  t: ReturnType<typeof useI18n>['t'],
+  translateText: ReturnType<typeof useI18n>['translateText'],
+) => {
+  const bestStrategyMatch = tip.match(/^(.+) 在当前回放窗口内平均表现最好，可提高该策略权重。$/);
+  return bestStrategyMatch
+    ? t('{{strategy}} 在当前回放窗口内平均表现最好，可提高该策略权重。', {
+      strategy: translateText(bestStrategyMatch[1]),
+    })
+    : translateText(tip);
+};
+
 const ReplayRow = ({ replay }: { replay: LotteryPredictionReplayResult }) => {
+  const { t, translateText } = useI18n();
   const best = replay.bestPrediction;
 
   return (
     <div className="lottery-replay-row">
       <div className="lottery-replay-period">
-        <strong>预测第 {replay.targetDraw.period} 期</strong>
-        <span>基于前 {replay.trainingDrawCount} 期数据</span>
+        <strong>{t('预测第 {{period}} 期', { period: replay.targetDraw.period })}</strong>
+        <span>{t('基于前 {{count}} 期数据', { count: replay.trainingDrawCount })}</span>
       </div>
       <div className="lottery-replay-comparison">
         <div>
-          <span>预测号码</span>
+          <span>{t('预测号码')}</span>
           <LotteryBalls redNumbers={best.redNumbers} blueNumber={best.blueNumber} />
         </div>
         <div>
-          <span>实际开奖</span>
+          <span>{t('实际开奖')}</span>
           <LotteryBalls redNumbers={replay.targetDraw.redNumbers} blueNumber={replay.targetDraw.blueNumber} />
         </div>
       </div>
       <div className="lottery-replay-score">
-        <Tag color={getPrizeColor(best.result.prizeLevel)}>{best.result.prizeName}</Tag>
-        <Tag color={getScoreColor(best.result.score)}>评分 {best.result.score}</Tag>
-        <span>红球 {best.result.redHits}/6</span>
-        <span>{best.result.blueHit ? '蓝球命中' : '蓝球未中'}</span>
-        <span>结构 {best.result.structureHits}/4</span>
-        <span>{best.title}</span>
+        <Tag color={getPrizeColor(best.result.prizeLevel)}>{translateText(best.result.prizeName)}</Tag>
+        <Tag color={getScoreColor(best.result.score)}>{t('评分 {{score}}', { score: best.result.score })}</Tag>
+        <span>{t('红球 {{hits}}/6', { hits: best.result.redHits })}</span>
+        <span>{best.result.blueHit ? t('蓝球命中') : t('蓝球未中')}</span>
+        <span>{t('结构 {{hits}}/4', { hits: best.result.structureHits })}</span>
+        <span>{translateText(best.title)}</span>
       </div>
     </div>
   );
 };
 
 const LotteryPredictionReplay = ({ allRecords }: LotteryPredictionReplayProps) => {
+  const { t, translateText } = useI18n();
   const [replayCount, setReplayCount] = useState(5);
   const draws = useMemo(() => parseLotteryDraws(allRecords), [allRecords]);
+  const replayOptions = useMemo(
+    () => replayCounts.map(count => ({
+      label: t('最近 {{count}} 期', { count }),
+      value: count
+    })),
+    [t]
+  );
   const targetOptions = useMemo(
     () => draws
       .filter(draw => draw.period > 1)
       .map(draw => ({
-        label: `第 ${draw.period} 期`,
+        label: t('第 {{period}} 期', { period: draw.period }),
         value: draw.period
       })),
-    [draws]
+    [draws, t]
   );
   const [targetPeriod, setTargetPeriod] = useState<number>();
   const selectedTargetPeriod = targetPeriod || targetOptions[targetOptions.length - 1]?.value;
@@ -100,8 +119,8 @@ const LotteryPredictionReplay = ({ allRecords }: LotteryPredictionReplayProps) =
     <Card className="life-panel-card lottery-prediction-panel lottery-replay-panel">
       <div className="lottery-card-title-row">
         <div>
-          <h2>预测回放</h2>
-          <p>逐期回到开奖前，只用当时已有数据生成预测，再与真实开奖评分。</p>
+          <h2>{t('预测回放')}</h2>
+          <p>{t('逐期回到开奖前，只用当时已有数据生成预测，再与真实开奖评分。')}</p>
         </div>
         <HistoryOutlined />
       </div>
@@ -109,7 +128,7 @@ const LotteryPredictionReplay = ({ allRecords }: LotteryPredictionReplayProps) =
       <div className="lottery-replay-toolbar">
         <div className="lottery-replay-controls">
           <div>
-            <span>手动目标期</span>
+            <span>{t('手动目标期')}</span>
             <Select
               showSearch
               value={selectedTargetPeriod}
@@ -117,11 +136,11 @@ const LotteryPredictionReplay = ({ allRecords }: LotteryPredictionReplayProps) =
               onChange={setTargetPeriod}
               className="lottery-replay-select"
               optionFilterProp="label"
-              placeholder="选择目标期"
+              placeholder={t('选择目标期')}
             />
           </div>
           <div>
-            <span>批量窗口</span>
+            <span>{t('批量窗口')}</span>
             <Select
               value={replayCount}
               options={replayOptions}
@@ -131,24 +150,27 @@ const LotteryPredictionReplay = ({ allRecords }: LotteryPredictionReplayProps) =
           </div>
         </div>
         <div className="lottery-replay-summary">
-          <Statistic title="回放期数" value={report.summary.total} />
-          <Statistic title="平均评分" value={report.summary.averageScore} />
-          <Statistic title="平均红球" value={report.summary.averageRedHits} suffix="/6" />
-          <Statistic title="蓝球命中" value={report.summary.blueHitRate} suffix="%" />
+          <Statistic title={t('回放期数')} value={report.summary.total} />
+          <Statistic title={t('平均评分')} value={report.summary.averageScore} />
+          <Statistic title={t('平均红球')} value={report.summary.averageRedHits} suffix="/6" />
+          <Statistic title={t('蓝球命中率')} value={report.summary.blueHitRate} suffix="%" />
         </div>
       </div>
 
       <div className="lottery-replay-manual">
         <div className="lottery-card-title-row">
           <div>
-            <h3>单期手动回放</h3>
+            <h3>{t('单期手动回放')}</h3>
             <p>
               {selectedTargetPeriod
-                ? `选择第 ${selectedTargetPeriod} 期：仅使用前 ${Math.max(0, selectedTargetPeriod - 1)} 期数据生成预测，再对照第 ${selectedTargetPeriod} 期开奖。`
-                : '请选择目标期号。'}
+                ? t('选择第 {{period}} 期：仅使用前 {{historyCount}} 期数据生成预测，再对照第 {{period}} 期开奖。', {
+                  period: selectedTargetPeriod,
+                  historyCount: Math.max(0, selectedTargetPeriod - 1),
+                })
+                : t('请选择目标期号。')}
             </p>
           </div>
-          <Tag color="blue">严格时间切片</Tag>
+          <Tag color="blue">{t('严格时间切片')}</Tag>
         </div>
         {singleReplay ? (
           <>
@@ -156,23 +178,23 @@ const LotteryPredictionReplay = ({ allRecords }: LotteryPredictionReplayProps) =
             <div className="lottery-replay-candidate-list">
               {singleReplay.predictions.map(prediction => (
                 <div key={`${singleReplay.targetDraw.id}-${prediction.title}`} className="lottery-replay-candidate-row">
-                  <strong>{prediction.title}</strong>
+                  <strong>{translateText(prediction.title)}</strong>
                   <LotteryBalls redNumbers={prediction.redNumbers} blueNumber={prediction.blueNumber} />
-                  <Tag color={getPrizeColor(prediction.result.prizeLevel)}>{prediction.result.prizeName}</Tag>
-                  <span>红球 {prediction.result.redHits}/6</span>
-                  <span>{prediction.result.blueHit ? '蓝球命中' : '蓝球未中'}</span>
-                  <span>评分 {prediction.result.score}</span>
+                  <Tag color={getPrizeColor(prediction.result.prizeLevel)}>{translateText(prediction.result.prizeName)}</Tag>
+                  <span>{t('红球 {{hits}}/6', { hits: prediction.result.redHits })}</span>
+                  <span>{prediction.result.blueHit ? t('蓝球命中') : t('蓝球未中')}</span>
+                  <span>{t('评分 {{score}}', { score: prediction.result.score })}</span>
                 </div>
               ))}
             </div>
           </>
         ) : (
-          <Empty description="请选择第 2 期或之后的目标期，系统会用目标期之前的数据回放预测" />
+          <Empty description={t('请选择第 2 期或之后的目标期，系统会用目标期之前的数据回放预测')} />
         )}
       </div>
 
       {report.replays.length === 0 ? (
-        <Empty description="历史期数不足，至少需要 20 期后才能回放评分" />
+        <Empty description={t('历史期数不足，至少需要 20 期后才能回放评分')} />
       ) : (
         <>
           <div className="lottery-prize-distribution">
@@ -180,13 +202,16 @@ const LotteryPredictionReplay = ({ allRecords }: LotteryPredictionReplayProps) =
               .filter(prizeName => report.summary.prizeDistribution[prizeName])
               .map(prizeName => (
                 <Tag key={prizeName} color={getPrizeColor(prizeLevelByName[prizeName])}>
-                  {prizeName} {report.summary.prizeDistribution[prizeName]}期
+                  {t('{{prizeName}} {{count}} 期', {
+                    prizeName: translateText(prizeName),
+                    count: report.summary.prizeDistribution[prizeName],
+                  })}
                 </Tag>
               ))}
           </div>
           <div className="lottery-replay-tips">
             {report.summary.improvementTips.map(tip => (
-              <span key={tip}>{tip}</span>
+              <span key={tip}>{localizeReplayTip(tip, t, translateText)}</span>
             ))}
           </div>
           <div className="lottery-replay-list">

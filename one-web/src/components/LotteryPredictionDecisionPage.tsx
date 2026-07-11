@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Key } from 'react';
 import { Alert, Button, Card, Empty, Input, Select, Space, Spin, Table, Tag, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -21,6 +21,8 @@ import {
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import LotteryBalls from './lottery/LotteryBalls';
+import { useI18n } from '../contexts/I18nContext';
+import type { TranslationParams } from '../i18n/types';
 import {
   lotteryDecisionSetApi,
   lotteryPredictionApi,
@@ -104,18 +106,45 @@ const outcomeAlertOptions = [
   { label: '无提醒', value: 'CLEAN' }
 ];
 
-const sourceLabel = (source: DecisionCandidateRow['source']) => source === 'PRIMARY' ? '主预测' : '候选';
+type Translate = (source: string, params?: TranslationParams) => string;
+
+const localizeOptions = (options: Array<{ label: string; value: string }>, t: Translate) =>
+  options.map(option => ({ ...option, label: t(option.label) }));
+
+const sourceLabel = (source: DecisionCandidateRow['source'], t: Translate) =>
+  t(source === 'PRIMARY' ? '主预测' : '候选');
 
 const decisionSetStatusColor = (dirty: boolean) => dirty ? 'orange' : 'green';
 
-const budgetPrecheckMessages = (result?: LotteryTicketBudgetPrecheckResult) =>
-  (result?.warnings || []).map(item => item.message).filter(Boolean).join('；');
+const localizeBudgetWarning = (value: string, translateText: Translate, t: Translate) => {
+  const translated = translateText(value);
+  if (translated !== value) return translated;
+  const exposureMatch = value.match(/^第 (.+) 期保存后票据数量超过上限 (.+)$/);
+  return exposureMatch
+    ? t('第 {{issue}} 期保存后票据数量超过上限 {{limit}}', {
+      issue: exposureMatch[1],
+      limit: exposureMatch[2]
+    })
+    : translated;
+};
 
-const formatTime = (value?: number) => {
+const budgetPrecheckMessages = (
+  result: LotteryTicketBudgetPrecheckResult | undefined,
+  language: string,
+  translateText: Translate,
+  t: Translate
+) => {
+  const warnings = (result?.warnings || [])
+    .map(item => item.message ? localizeBudgetWarning(item.message, translateText, t) : '')
+    .filter(Boolean);
+  return warnings.length ? new Intl.ListFormat(language, { style: 'short', type: 'conjunction' }).format(warnings) : '';
+};
+
+const formatTime = (value: number | undefined, language: string) => {
   if (!value) {
     return '-';
   }
-  return new Intl.DateTimeFormat('zh-CN', {
+  return new Intl.DateTimeFormat(language, {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
@@ -127,12 +156,54 @@ const formatMoney = (value?: number) => `¥${Number(value || 0).toFixed(2)}`;
 
 const formatPercent = (value?: number) => `${Number(value || 0).toFixed(2)}%`;
 
-const deltaText = (value?: number) => {
+const deltaText = (value: number | undefined, t: Translate) => {
   if (value === undefined || value === null) {
-    return '暂无基准';
+    return t('暂无基准');
   }
   const sign = Number(value) > 0 ? '+' : '';
   return `${sign}${Number(value).toFixed(2)}`;
+};
+
+const localizeSnapshotTitle = (value: string, translateText: Translate, t: Translate) => {
+  const match = value.match(/^第 (.+) 期预测$/);
+  return match ? t('第 {{issue}} 期预测', { issue: match[1] }) : translateText(value);
+};
+
+const localizeCandidateTitle = (value: string, translateText: Translate, t: Translate) => {
+  const match = value.match(/^候选 (\d+)$/);
+  return match ? t('候选 {{index}}', { index: match[1] }) : translateText(value);
+};
+
+const localizeResultLabel = (value: string, translateText: Translate, t: Translate) => {
+  const match = value.match(/^(.+) · 红 (.+)\/6 · (蓝中|蓝未中)$/);
+  if (!match) return translateText(value);
+  return t('{{prize}} · 红球 {{redHits}}/6 · {{blueResult}}', {
+    prize: translateText(match[1]),
+    redHits: match[2],
+    blueResult: translateText(match[3])
+  });
+};
+
+const localizeTicketState = (value: string, translateText: Translate, t: Translate) => {
+  const match = value.match(/^已转 (\d+) 注$/);
+  return match ? t('已转 {{count}} 注', { count: match[1] }) : translateText(value);
+};
+
+const localizeDecisionSetTitle = (value: string, translateText: Translate, t: Translate) => {
+  const match = value.match(/^第 (.+) 期决策集$/);
+  return match ? t('第 {{issue}} 期决策集', { issue: match[1] }) : translateText(value);
+};
+
+const localizeReplayText = (value: string, translateText: Translate) => translateText(value);
+
+const localizeConversionState = (value: string, translateText: Translate) => {
+  const labels: Record<string, string> = {
+    DRAFT: '草稿',
+    PARTIALLY_CONVERTED: '部分已转票',
+    CONVERTED: '已转票',
+    ARCHIVED: '已归档'
+  };
+  return translateText(labels[value] || value);
 };
 
 const notebookPathForDecisionOutcome = (item?: LotteryDecisionOutcomeItem) => {
@@ -334,6 +405,9 @@ const decisionRowToSelection = (row: DecisionCandidateRow): LotteryDecisionCandi
 const LotteryPredictionDecisionPage = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { language, t, translateText } = useI18n();
+  const translateTextRef = useRef(translateText);
+  translateTextRef.current = translateText;
   const [predictions, setPredictions] = useState<LotteryPredictionSnapshot[]>([]);
   const [pageResponse, setPageResponse] = useState<LotteryPageResponse<LotteryPredictionSnapshot>>();
   const [ruleComparison, setRuleComparison] = useState<LotteryRuleComparison>();
@@ -361,6 +435,14 @@ const LotteryPredictionDecisionPage = () => {
   const outcomeState = searchParams.get('outcomeState') || 'ALL';
   const conversionState = searchParams.get('conversionState') || 'ALL';
   const outcomeAlertState = searchParams.get('outcomeAlert') || 'ALL';
+
+  const localizedOptions = useMemo(() => ({
+    evidence: localizeOptions(evidenceOptions, t),
+    result: localizeOptions(resultOptions, t),
+    outcome: localizeOptions(outcomeOptions, t),
+    conversion: localizeOptions(conversionOptions, t),
+    alerts: localizeOptions(outcomeAlertOptions, t)
+  }), [t]);
 
   const updateQuery = useCallback((patch: Record<string, string | number | undefined>) => {
     const next = new URLSearchParams(searchParams);
@@ -396,7 +478,7 @@ const LotteryPredictionDecisionPage = () => {
       setDecisionOutcomeSummary(outcomes);
     } catch (requestError) {
       console.error('读取已保存决策集失败:', requestError);
-      message.warning('已使用当前页面状态，暂未读取到已保存决策集');
+      message.warning(translateTextRef.current('已使用当前页面状态，暂未读取到已保存决策集'));
     } finally {
       setLoadingDecisionSets(false);
     }
@@ -426,7 +508,9 @@ const LotteryPredictionDecisionPage = () => {
       setPredictionTickets(tickets.items || []);
     } catch (requestError) {
       console.error('读取预测决策板失败:', requestError);
-      setError(requestError instanceof Error ? requestError.message : '读取预测决策板失败');
+      setError(requestError instanceof Error
+        ? requestError.message
+        : translateTextRef.current('读取预测决策板失败'));
     } finally {
       setLoading(false);
     }
@@ -488,10 +572,19 @@ const LotteryPredictionDecisionPage = () => {
     return selectedIssue ? `第 ${selectedIssue} 期决策集` : '预测决策集';
   }, [selectedRows, targetIssue]);
 
+  const defaultDecisionSetPlaceholder = useMemo(
+    () => localizeDecisionSetTitle(defaultDecisionSetTitle, translateText, t),
+    [defaultDecisionSetTitle, t, translateText]
+  );
+
   const decisionSetOptions = useMemo(() => decisionSets.map(item => ({
-    label: item.title || item.targetIssue || item.id || '未命名决策集',
+    label: localizeDecisionSetTitle(
+      item.title || item.targetIssue || item.id || '未命名决策集',
+      translateText,
+      t
+    ),
     value: item.id || ''
-  })).filter(item => item.value), [decisionSets]);
+  })).filter(item => item.value), [decisionSets, t, translateText]);
 
   const summary = useMemo(() => {
     const stable = filteredRows.filter(row => row.evidence?.tag === 'STABLE').length;
@@ -518,14 +611,19 @@ const LotteryPredictionDecisionPage = () => {
     };
   }, [filteredDecisionOutcomes]);
 
+  const budgetWarningText = useMemo(
+    () => budgetPrecheckMessages(ticketBudgetPrecheck, language, translateText, t),
+    [language, t, ticketBudgetPrecheck, translateText]
+  );
+
   const saveSelectedTickets = async () => {
     if (!selectedRows.length) {
-      message.warning('请先选择候选号码');
+      message.warning(t('请先选择候选号码'));
       return;
     }
     const targetWithoutIssue = selectedRows.filter(row => !row.targetPeriod);
     if (targetWithoutIssue.length) {
-      message.warning('选中项缺少目标期号');
+      message.warning(t('选中项缺少目标期号'));
       return;
     }
     setSavingTickets(true);
@@ -544,7 +642,7 @@ const LotteryPredictionDecisionPage = () => {
       }));
       const precheck = await lotteryTicketApi.budgetPrecheck({ tickets: ticketPayload });
       setTicketBudgetPrecheck(precheck);
-      const warnings = budgetPrecheckMessages(precheck);
+      const warnings = budgetPrecheckMessages(precheck, language, translateText, t);
       if (warnings) {
         message.warning(warnings);
       }
@@ -552,7 +650,10 @@ const LotteryPredictionDecisionPage = () => {
       if (result.budgetPrecheck) {
         setTicketBudgetPrecheck(result.budgetPrecheck);
       }
-      message.success(`已保存 ${result.savedCount || 0} 注，跳过重复 ${result.duplicateCount || 0} 注`);
+      message.success(t('已保存 {{savedCount}} 注，跳过重复 {{duplicateCount}} 注', {
+        savedCount: result.savedCount || 0,
+        duplicateCount: result.duplicateCount || 0
+      }));
       if (activeDecisionSetId) {
         setDecisionDirty(true);
       } else {
@@ -561,8 +662,10 @@ const LotteryPredictionDecisionPage = () => {
       await loadDecision();
     } catch (requestError) {
       console.error('保存决策候选为票据失败:', requestError);
-      setError(requestError instanceof Error ? requestError.message : '保存决策候选为票据失败');
-      message.error('保存决策候选失败');
+      setError(requestError instanceof Error
+        ? requestError.message
+        : t('保存决策候选为票据失败'));
+      message.error(t('保存决策候选失败'));
     } finally {
       setSavingTickets(false);
     }
@@ -585,7 +688,7 @@ const LotteryPredictionDecisionPage = () => {
 
   const saveDecisionSet = async () => {
     if (!selectedRows.length) {
-      message.warning('请先选择要保存的候选号码');
+      message.warning(t('请先选择要保存的候选号码'));
       return;
     }
     setSavingDecisionSet(true);
@@ -600,11 +703,15 @@ const LotteryPredictionDecisionPage = () => {
       setDecisionSetNote(saved.note || '');
       setDecisionDirty(false);
       await loadDecisionSets();
-      message.success(activeDecisionSetId ? '决策集已更新' : '决策集已保存');
+      message.success(activeDecisionSetId
+        ? t('决策集已更新')
+        : t('决策集已保存'));
     } catch (requestError) {
       console.error('保存决策集失败:', requestError);
-      setError(requestError instanceof Error ? requestError.message : '保存决策集失败');
-      message.error('保存决策集失败');
+      setError(requestError instanceof Error
+        ? requestError.message
+        : t('保存决策集失败'));
+      message.error(t('保存决策集失败'));
     } finally {
       setSavingDecisionSet(false);
     }
@@ -639,7 +746,7 @@ const LotteryPredictionDecisionPage = () => {
 
   const archiveDecisionSet = async () => {
     if (!activeDecisionSetId) {
-      message.warning('请先选择已保存决策集');
+      message.warning(t('请先选择已保存决策集'));
       return;
     }
     setArchivingDecisionSet(true);
@@ -651,11 +758,13 @@ const LotteryPredictionDecisionPage = () => {
       setDecisionSetNote('');
       setDecisionDirty(false);
       await loadDecisionSets();
-      message.success('决策集已归档');
+      message.success(t('决策集已归档'));
     } catch (requestError) {
       console.error('归档决策集失败:', requestError);
-      setError(requestError instanceof Error ? requestError.message : '归档决策集失败');
-      message.error('归档决策集失败');
+      setError(requestError instanceof Error
+        ? requestError.message
+        : t('归档决策集失败'));
+      message.error(t('归档决策集失败'));
     } finally {
       setArchivingDecisionSet(false);
     }
@@ -663,72 +772,74 @@ const LotteryPredictionDecisionPage = () => {
 
   const columns: ColumnsType<DecisionCandidateRow> = [
     {
-      title: '候选',
+      title: t('候选'),
       key: 'candidate',
       width: 210,
       render: (_, record) => (
         <Space direction="vertical" size={2}>
-          <strong>{record.candidateTitle}</strong>
-          <span className="stock-quote-code">{record.snapshotTitle}</span>
+          <strong>{localizeCandidateTitle(record.candidateTitle, translateText, t)}</strong>
+          <span className="stock-quote-code">{localizeSnapshotTitle(record.snapshotTitle, translateText, t)}</span>
           <Space wrap size={4}>
-            <Tag color={record.source === 'PRIMARY' ? 'blue' : 'default'}>{sourceLabel(record.source)}</Tag>
-            <Tag>{record.targetPeriod || '-'}</Tag>
+            <Tag color={record.source === 'PRIMARY' ? 'blue' : 'default'}>{sourceLabel(record.source, t)}</Tag>
+            <Tag>{record.targetPeriod ? t('第 {{issue}} 期', { issue: record.targetPeriod }) : '-'}</Tag>
           </Space>
         </Space>
       )
     },
     {
-      title: '号码',
+      title: t('号码'),
       key: 'numbers',
       render: (_, record) => <LotteryBalls redNumbers={record.redNumbers} blueNumber={record.blueNumber || ''} />
     },
     {
-      title: '证据',
+      title: t('证据'),
       key: 'evidence',
       width: 220,
       render: (_, record) => (
         <Space direction="vertical" size={2}>
           <Space wrap size={4}>
-            <Tag color={lotteryEvidenceColor(record.evidence?.tag)}>{lotteryEvidenceLabel(record.evidence)}</Tag>
-            <Tag>{lotteryDriftLabel(record.driftLabel)}</Tag>
+            <Tag color={lotteryEvidenceColor(record.evidence?.tag)}>{translateText(lotteryEvidenceLabel(record.evidence))}</Tag>
+            <Tag>{translateText(lotteryDriftLabel(record.driftLabel))}</Tag>
           </Space>
-          <span className="stock-quote-code">{record.replayText}</span>
-          {record.warning ? <Tag color="orange">{record.warning}</Tag> : null}
+          <span className="stock-quote-code">{localizeReplayText(record.replayText, translateText)}</span>
+          {record.warning ? <Tag color="orange">{translateText(record.warning)}</Tag> : null}
         </Space>
       )
     },
     {
-      title: '对比',
+      title: t('对比'),
       key: 'overlap',
       width: 128,
       render: (_, record) => (
         <Space direction="vertical" size={2}>
-          <span>红球重合 {record.redOverlap}/6</span>
-          <Tag color={record.blueOverlap ? 'blue' : 'default'}>{record.blueOverlap ? '蓝球重合' : '蓝球不同'}</Tag>
+          <span>{t('红球重合')} {record.redOverlap}/6</span>
+          <Tag color={record.blueOverlap ? 'blue' : 'default'}>
+            {t(record.blueOverlap ? '蓝球重合' : '蓝球不同')}
+          </Tag>
         </Space>
       )
     },
     {
-      title: '结果/转票',
+      title: t('结果/转票'),
       key: 'result',
       width: 210,
       render: (_, record) => (
         <Space direction="vertical" size={2}>
           <Tag color={record.resultState === 'WON' ? 'blue' : record.resultState === 'MISSED' ? 'default' : 'gold'}>
-            {record.resultLabel}
+            {localizeResultLabel(record.resultLabel, translateText, t)}
           </Tag>
-          <Tag color={record.ticketCount ? 'green' : 'default'}>{record.ticketState}</Tag>
-          <span className="stock-quote-code">评分 {record.score ?? '-'}</span>
+          <Tag color={record.ticketCount ? 'green' : 'default'}>{localizeTicketState(record.ticketState, translateText, t)}</Tag>
+          <span className="stock-quote-code">{t('评分')} {record.score ?? '-'}</span>
         </Space>
       )
     },
     {
-      title: '操作',
+      title: t('操作'),
       key: 'actions',
       width: 108,
       render: (_, record) => record.snapshotId ? (
         <Button size="small" icon={<HistoryOutlined />} onClick={() => navigate(`/lottery/predictions/${record.snapshotId}`)}>
-          快照
+          {t('快照')}
         </Button>
       ) : null
     }
@@ -737,47 +848,47 @@ const LotteryPredictionDecisionPage = () => {
   return (
     <LifePageShell
       className="lottery-prediction-page lottery-decision-page"
-      eyebrow="彩票数据"
-      title="预测决策板"
+      eyebrow={t('彩票数据')}
+      title={t('预测决策板')}
       actions={
         <Space wrap>
           <Button type="primary" icon={<FileAddOutlined />} loading={savingTickets} onClick={saveSelectedTickets}>
-            转为票据
+            {t('转为票据')}
           </Button>
           <Button icon={<ReloadOutlined />} loading={loading} onClick={loadDecision}>
-            刷新
+            {t('刷新')}
           </Button>
           <Button icon={<ThunderboltOutlined />} onClick={() => navigate('/lottery/prediction')}>
-            训练
+            {t('训练')}
           </Button>
           <Button icon={<HistoryOutlined />} onClick={() => navigate('/lottery/predictions/history')}>
-            历史
+            {t('历史')}
           </Button>
           <Button icon={<FileAddOutlined />} onClick={() => navigate(notebookPathForDecisionOutcome(activeDecisionOutcome))}>
-            写入笔记
+            {t('写入笔记')}
           </Button>
           <Button icon={<CompassOutlined />} onClick={() => navigate('/lottery/recommendations')}>
-            推荐
+            {t('推荐')}
           </Button>
           <Button icon={<PrinterOutlined />} onClick={() => window.print()}>
-            打印
+            {t('打印')}
           </Button>
         </Space>
       }
     >
-      {error ? <Alert className="lottery-overview-status-alert" type="error" showIcon message={error} /> : null}
+      {error ? <Alert className="lottery-overview-status-alert" type="error" showIcon message={translateText(error)} /> : null}
       <Alert
         className="lottery-overview-status-alert"
         type="info"
         showIcon
-        message="决策板只汇总历史预测、回放、规则证据和个人票据状态，用于复盘和记录，不代表结果承诺。"
+        message={t('决策板只汇总历史预测、回放、规则证据和个人票据状态，用于复盘和记录，不代表结果承诺。')}
       />
-      {budgetPrecheckMessages(ticketBudgetPrecheck) ? (
+      {budgetWarningText ? (
         <Alert
           className="lottery-overview-status-alert"
           type={ticketBudgetPrecheck?.status === 'OVER' ? 'error' : 'warning'}
           showIcon
-          message={budgetPrecheckMessages(ticketBudgetPrecheck)}
+          message={budgetWarningText}
         />
       ) : null}
 
@@ -786,7 +897,7 @@ const LotteryPredictionDecisionPage = () => {
           allowClear
           suffixIcon={<FolderOpenOutlined />}
           loading={loadingDecisionSets}
-          placeholder="已保存决策集"
+          placeholder={t('已保存决策集')}
           value={activeDecisionSetId}
           options={decisionSetOptions}
           onChange={value => applyDecisionSet(value || undefined)}
@@ -794,7 +905,7 @@ const LotteryPredictionDecisionPage = () => {
         <Input
           allowClear
           prefix={<SaveOutlined />}
-          placeholder={defaultDecisionSetTitle}
+          placeholder={defaultDecisionSetPlaceholder}
           value={decisionSetTitle}
           onChange={event => {
             setDecisionSetTitle(event.target.value);
@@ -803,7 +914,7 @@ const LotteryPredictionDecisionPage = () => {
         />
         <Input
           allowClear
-          placeholder="备注"
+          placeholder={t('备注')}
           value={decisionSetNote}
           onChange={event => {
             setDecisionSetNote(event.target.value);
@@ -812,17 +923,19 @@ const LotteryPredictionDecisionPage = () => {
         />
         <Space wrap>
           <Button icon={<SaveOutlined />} loading={savingDecisionSet} onClick={saveDecisionSet}>
-            保存决策集
+            {t('保存决策集')}
           </Button>
           <Button icon={<InboxOutlined />} disabled={!activeDecisionSetId} loading={archivingDecisionSet} onClick={archiveDecisionSet}>
-            归档
+            {t('归档')}
           </Button>
           {activeDecisionSet ? (
             <Tag color={decisionSetStatusColor(decisionDirty)}>
-              {decisionDirty ? '有未保存变更' : (activeDecisionSet.conversionState || '已保存')}
+              {decisionDirty
+                ? t('有未保存变更')
+                : localizeConversionState(activeDecisionSet.conversionState || '已保存', translateText)}
             </Tag>
           ) : (
-            <Tag>未保存</Tag>
+            <Tag>{t('未保存')}</Tag>
           )}
         </Space>
       </section>
@@ -831,35 +944,35 @@ const LotteryPredictionDecisionPage = () => {
         <Input
           allowClear
           prefix={<FilterOutlined />}
-          placeholder="目标期号"
+          placeholder={t('目标期号')}
           value={targetIssue}
           onChange={event => updateDecisionQuery({ targetIssue: event.target.value })}
         />
         <Input
           allowClear
           prefix={<SafetyCertificateOutlined />}
-          placeholder="规则名称"
+          placeholder={t('规则名称')}
           value={ruleName}
           onChange={event => updateDecisionQuery({ ruleName: event.target.value })}
         />
-        <Select value={evidenceState} options={evidenceOptions} onChange={value => updateDecisionQuery({ evidence: value })} />
-        <Select value={resultState} options={resultOptions} onChange={value => updateDecisionQuery({ resultState: value })} />
+        <Select value={evidenceState} options={localizedOptions.evidence} onChange={value => updateDecisionQuery({ evidence: value })} />
+        <Select value={resultState} options={localizedOptions.result} onChange={value => updateDecisionQuery({ resultState: value })} />
       </section>
 
       <section className="lottery-decision-outcome-filter-bar">
         <Select
           value={outcomeState}
-          options={outcomeOptions}
+          options={localizedOptions.outcome}
           onChange={value => updateQuery({ outcomeState: value })}
         />
         <Select
           value={conversionState}
-          options={conversionOptions}
+          options={localizedOptions.conversion}
           onChange={value => updateQuery({ conversionState: value })}
         />
         <Select
           value={outcomeAlertState}
-          options={outcomeAlertOptions}
+          options={localizedOptions.alerts}
           onChange={value => updateQuery({ outcomeAlert: value })}
         />
         <Button
@@ -872,7 +985,7 @@ const LotteryPredictionDecisionPage = () => {
             navigate(`/lottery/exports?${next.toString()}`);
           }}
         >
-          导出复盘
+          {t('导出复盘')}
         </Button>
       </section>
 
@@ -882,7 +995,7 @@ const LotteryPredictionDecisionPage = () => {
             <ThunderboltOutlined />
             <div>
               <strong>{filteredRows.length}</strong>
-              <span>候选号码</span>
+              <span>{t('候选号码')}</span>
             </div>
           </div>
         </Card>
@@ -891,7 +1004,7 @@ const LotteryPredictionDecisionPage = () => {
             <SafetyCertificateOutlined />
             <div>
               <strong>{summary.stable}</strong>
-              <span>稳定证据</span>
+              <span>{t('稳定证据')}</span>
             </div>
           </div>
         </Card>
@@ -900,7 +1013,7 @@ const LotteryPredictionDecisionPage = () => {
             <WarningOutlined />
             <div>
               <strong>{summary.warning}</strong>
-              <span>证据提醒</span>
+              <span>{t('证据提醒')}</span>
             </div>
           </div>
         </Card>
@@ -909,7 +1022,7 @@ const LotteryPredictionDecisionPage = () => {
             <CheckCircleOutlined />
             <div>
               <strong>{summary.converted}</strong>
-              <span>已转票候选</span>
+              <span>{t('已转票候选')}</span>
             </div>
           </div>
         </Card>
@@ -918,48 +1031,62 @@ const LotteryPredictionDecisionPage = () => {
       <section className="lottery-decision-outcome-summary-grid">
         <article>
           <strong>{outcomeSummary.count}</strong>
-          <span>复盘决策集</span>
-          <Tag color={outcomeSummary.hit ? 'blue' : 'default'}>命中 {outcomeSummary.hit}</Tag>
+          <span>{t('复盘决策集')}</span>
+          <Tag color={outcomeSummary.hit ? 'blue' : 'default'}>{t('命中')} {outcomeSummary.hit}</Tag>
         </article>
         <article>
           <strong>{formatMoney(outcomeSummary.net)}</strong>
-          <span>筛选范围净结果</span>
+          <span>{t('筛选范围净结果')}</span>
           <Tag color={outcomeSummary.roi > 0 ? 'green' : 'default'}>ROI {formatPercent(outcomeSummary.roi)}</Tag>
         </article>
         <article>
           <strong>{outcomeSummary.unchecked}</strong>
-          <span>仍需核奖</span>
-          <Tag color={outcomeSummary.unchecked ? 'gold' : 'green'}>{outcomeSummary.unchecked ? '待处理' : '已处理'}</Tag>
+          <span>{t('仍需核奖')}</span>
+          <Tag color={outcomeSummary.unchecked ? 'gold' : 'green'}>
+            {t(outcomeSummary.unchecked ? '待处理' : '已处理')}
+          </Tag>
         </article>
         <article>
           <strong>{outcomeSummary.warning}</strong>
-          <span>证据提醒</span>
-          <Tag color={outcomeSummary.warning ? 'orange' : 'green'}>{outcomeSummary.warning ? '需复核' : '无提醒'}</Tag>
+          <span>{t('证据提醒')}</span>
+          <Tag color={outcomeSummary.warning ? 'orange' : 'green'}>
+            {t(outcomeSummary.warning ? '需复核' : '无提醒')}
+          </Tag>
         </article>
       </section>
 
       {activeDecisionOutcome ? (
         <Card
           className="life-panel-card lottery-clean-panel lottery-report-print-area"
-          title={<Space><SafetyCertificateOutlined />保存决策复盘</Space>}
-          extra={<Tag color={activeDecisionOutcome.warningCount ? 'gold' : 'green'}>{activeDecisionOutcome.title || '最近决策'}</Tag>}
+          title={<Space><SafetyCertificateOutlined />{t('保存决策复盘')}</Space>}
+          extra={(
+            <Tag color={activeDecisionOutcome.warningCount ? 'gold' : 'green'}>
+              {activeDecisionOutcome.title
+                ? localizeDecisionSetTitle(activeDecisionOutcome.title, translateText, t)
+                : t('最近决策')}
+            </Tag>
+          )}
         >
           <div className="lottery-decision-brief-grid">
             <article>
               <strong>{activeDecisionOutcome.bestRedHits ?? '-'}/6</strong>
-              <span>最佳红球命中 · 蓝球命中 {activeDecisionOutcome.blueHitCount || 0}</span>
-              <Tag color={activeDecisionOutcome.winningCandidateCount ? 'blue' : 'default'}>候选中奖 {activeDecisionOutcome.winningCandidateCount || 0}</Tag>
+              <span>{t('最佳红球命中 · 蓝球命中 {{count}}', {
+                count: activeDecisionOutcome.blueHitCount || 0
+              })}</span>
+              <Tag color={activeDecisionOutcome.winningCandidateCount ? 'blue' : 'default'}>
+                {t('候选中奖')} {activeDecisionOutcome.winningCandidateCount || 0}
+              </Tag>
             </article>
             <article>
               <strong>{activeDecisionOutcome.checkedConvertedTicketCount || 0}/{activeDecisionOutcome.convertedTicketCount || 0}</strong>
-              <span>已转票核奖 · 中奖票 {activeDecisionOutcome.winningConvertedTicketCount || 0}</span>
-              <Tag color="green">净 {formatMoney(activeDecisionOutcome.netResult)}</Tag>
+              <span>{t('已转票核奖 · 中奖票')} {activeDecisionOutcome.winningConvertedTicketCount || 0}</span>
+              <Tag color="green">{t('净')} {formatMoney(activeDecisionOutcome.netResult)}</Tag>
             </article>
             <article>
               <strong>{formatPercent(activeDecisionOutcome.roiPercent)}</strong>
-              <span>决策 ROI · 规则差额 {deltaText(activeDecisionOutcome.ruleDelta?.netResultDelta)}</span>
+              <span>{t('决策 ROI · 规则差额')} {deltaText(activeDecisionOutcome.ruleDelta?.netResultDelta, t)}</span>
               <Tag color={activeDecisionOutcome.sourceDelta?.netResultDelta && activeDecisionOutcome.sourceDelta.netResultDelta > 0 ? 'blue' : 'default'}>
-                来源差额 {deltaText(activeDecisionOutcome.sourceDelta?.netResultDelta)}
+                {t('来源差额')} {deltaText(activeDecisionOutcome.sourceDelta?.netResultDelta, t)}
               </Tag>
             </article>
           </div>
@@ -967,19 +1094,23 @@ const LotteryPredictionDecisionPage = () => {
             {(activeDecisionOutcome.candidates || []).slice(0, 6).map(candidate => (
               <article key={candidate.candidateKey || `${candidate.candidateTitle}-${candidate.blueNumber}`}>
                 <Tag color={lotteryEvidenceColor(candidate.evidenceTag)}>{candidate.evidenceTag || 'MISSING'}</Tag>
-                <strong>{candidate.candidateTitle || '候选号码'}</strong>
-                <span>红 {candidate.redHits ?? '-'}/6 · {candidate.blueHit ? '蓝中' : '蓝未中'} · {candidate.prizeName || '待开奖'}</span>
+                <strong>{candidate.candidateTitle
+                  ? localizeCandidateTitle(candidate.candidateTitle, translateText, t)
+                  : t('候选号码')}</strong>
+                <span>
+                  {t('红球')} {candidate.redHits ?? '-'}/6 · {t(candidate.blueHit ? '蓝中' : '蓝未中')} · {translateText(candidate.prizeName || '待开奖')}
+                </span>
                 <small>
-                  转票 {candidate.checkedTicketCount || 0}/{candidate.convertedTicketCount || 0} · 净 {formatMoney(candidate.netResult)}
+                  {t('转票')} {candidate.checkedTicketCount || 0}/{candidate.convertedTicketCount || 0} · {t('净')} {formatMoney(candidate.netResult)}
                 </small>
               </article>
             ))}
             {(activeDecisionOutcome.evidenceAlerts || []).slice(0, 4).map(alert => (
               <article key={`alert-${alert}`}>
-                <Tag color="orange">提醒</Tag>
-                <strong>{alert}</strong>
-                <span>保存决策集证据需要复核</span>
-                <small>过期/波动/样本不足会在这里聚合。</small>
+                <Tag color="orange">{t('提醒')}</Tag>
+                <strong>{translateText(alert)}</strong>
+                <span>{t('保存决策集证据需要复核')}</span>
+                <small>{t('过期/波动/样本不足会在这里聚合。')}</small>
               </article>
             ))}
           </div>
@@ -996,41 +1127,53 @@ const LotteryPredictionDecisionPage = () => {
                   updateQuery({ targetIssue: item.targetIssue });
                 }}
               >
-                <strong>{item.title || item.targetIssue || '保存决策'}</strong>
-                <span>第 {item.targetIssue || '-'} 期 · 命中 {item.winningCandidateCount || 0}/{item.scoredCandidateCount || item.candidateCount || 0}</span>
-                <small>转票 {item.checkedConvertedTicketCount || 0}/{item.convertedTicketCount || 0} · 净 {formatMoney(item.netResult)} · 提醒 {item.warningCount || 0}</small>
+                <strong>{item.title
+                  ? localizeDecisionSetTitle(item.title, translateText, t)
+                  : (item.targetIssue ? t('第 {{issue}} 期', { issue: item.targetIssue }) : t('保存决策'))}</strong>
+                <span>{t('第 {{issue}} 期 · 命中 {{winningCount}}/{{candidateCount}}', {
+                  issue: item.targetIssue || '-',
+                  winningCount: item.winningCandidateCount || 0,
+                  candidateCount: item.scoredCandidateCount || item.candidateCount || 0
+                })}</span>
+                <small>
+                  {t('转票')} {item.checkedConvertedTicketCount || 0}/{item.convertedTicketCount || 0} · {t('净')} {formatMoney(item.netResult)} · {t('提醒')} {item.warningCount || 0}
+                </small>
               </button>
             ))}
           </div>
         </Card>
       ) : (
         <Card className="life-panel-card lottery-clean-panel">
-          <Empty description={(decisionOutcomeSummary?.items || []).length ? '当前复盘筛选下暂无结果' : '暂无保存决策复盘结果'} />
+          <Empty description={t(
+            (decisionOutcomeSummary?.items || []).length ? '当前复盘筛选下暂无结果' : '暂无保存决策复盘结果'
+          )} />
         </Card>
       )}
 
       <section className="lottery-decision-brief-grid">
         <article>
           <strong>{ruleComparison?.bestRuleName || '-'}</strong>
-          <span>当前最佳规则 · {ruleComparison?.bestRankScore ?? '-'} 分</span>
+          <span>{t('当前最佳规则')} · {ruleComparison?.bestRankScore ?? '-'} {t('分')}</span>
           {ruleComparison?.bestEvidence ? (
             <Tag color={lotteryEvidenceColor(ruleComparison.bestEvidence.tag)}>
-              {lotteryEvidenceLabel(ruleComparison.bestEvidence)}
+              {translateText(lotteryEvidenceLabel(ruleComparison.bestEvidence))}
             </Tag>
           ) : null}
         </article>
         <article>
-          <strong>{lotteryReplayText(replayMetrics?.replaySummary)}</strong>
-          <span>回放窗口 {replayMetrics?.actualWindow || replayMetrics?.requestedWindow || '-'} · 生成 {formatTime(replayMetrics?.generatedAt)}</span>
+          <strong>{localizeReplayText(lotteryReplayText(replayMetrics?.replaySummary), translateText)}</strong>
+          <span>
+            {t('回放窗口')} {replayMetrics?.actualWindow || replayMetrics?.requestedWindow || '-'} · {t('生成')} {formatTime(replayMetrics?.generatedAt, language)}
+          </span>
           {replayMetrics?.evidence ? (
-            <Tag color={lotteryEvidenceColor(replayMetrics.evidence.tag)}>{lotteryEvidenceLabel(replayMetrics.evidence)}</Tag>
+            <Tag color={lotteryEvidenceColor(replayMetrics.evidence.tag)}>{translateText(lotteryEvidenceLabel(replayMetrics.evidence))}</Tag>
           ) : null}
         </article>
         <article>
           <strong>{selectedRows.length}</strong>
-          <span>已选候选 · 待开奖 {summary.pending}</span>
+          <span>{t('已选候选')} · {t('待开奖')} {summary.pending}</span>
           <Button size="small" icon={<FileAddOutlined />} loading={savingTickets} onClick={saveSelectedTickets}>
-            保存选中
+            {t('保存选中')}
           </Button>
         </article>
       </section>
@@ -1040,7 +1183,7 @@ const LotteryPredictionDecisionPage = () => {
           className="lottery-overview-status-alert"
           type="warning"
           showIcon
-          message="存在样本不足、证据过期、规则波动或缺少回放摘要的候选，转票前建议先查看预测详情或重新训练。"
+          message={t('存在样本不足、证据过期、规则波动或缺少回放摘要的候选，转票前建议先查看预测详情或重新训练。')}
         />
       ) : null}
 
@@ -1062,7 +1205,9 @@ const LotteryPredictionDecisionPage = () => {
               scroll={{ x: 980 }}
             />
           ) : (
-            <Empty description={pageResponse?.total ? '当前筛选下暂无候选' : '暂无预测候选，先运行一次预测训练。'} />
+            <Empty description={t(
+              pageResponse?.total ? '当前筛选下暂无候选' : '暂无预测候选，先运行一次预测训练。'
+            )} />
           )}
         </Spin>
       </Card>
@@ -1071,16 +1216,16 @@ const LotteryPredictionDecisionPage = () => {
         {filteredRows.map(row => (
           <article key={row.key}>
             <div>
-              <strong>{row.candidateTitle}</strong>
-              <Tag color={row.source === 'PRIMARY' ? 'blue' : 'default'}>{sourceLabel(row.source)}</Tag>
+              <strong>{localizeCandidateTitle(row.candidateTitle, translateText, t)}</strong>
+              <Tag color={row.source === 'PRIMARY' ? 'blue' : 'default'}>{sourceLabel(row.source, t)}</Tag>
             </div>
             <LotteryBalls redNumbers={row.redNumbers} blueNumber={row.blueNumber || ''} />
             <Space wrap>
-              <Tag color={lotteryEvidenceColor(row.evidence?.tag)}>{lotteryEvidenceLabel(row.evidence)}</Tag>
-              <Tag>{row.resultLabel}</Tag>
-              <Tag color={row.ticketCount ? 'green' : 'default'}>{row.ticketState}</Tag>
+              <Tag color={lotteryEvidenceColor(row.evidence?.tag)}>{translateText(lotteryEvidenceLabel(row.evidence))}</Tag>
+              <Tag>{localizeResultLabel(row.resultLabel, translateText, t)}</Tag>
+              <Tag color={row.ticketCount ? 'green' : 'default'}>{localizeTicketState(row.ticketState, translateText, t)}</Tag>
             </Space>
-            {row.warning ? <span>{row.warning}</span> : null}
+            {row.warning ? <span>{translateText(row.warning)}</span> : null}
           </article>
         ))}
       </div>

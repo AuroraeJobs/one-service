@@ -5,7 +5,7 @@ import { CloudFilled, EyeInvisibleOutlined, EyeOutlined, FastBackwardOutlined, F
 import { HEXAGRAMS } from '../constants/hexagrams';
 import { useRecordContext } from '../contexts/RecordContext';
 // 导入 ECharts
-import ReactECharts from 'echarts-for-react';
+import ReactECharts from './LotteryLocalizedECharts';
 
 const { Text } = Typography;
 

@@ -9,12 +9,12 @@ import {
   getLifeSubNavItems,
   type LifeSubNavItem
 } from '../constants/lifeDataModules';
-import { useAppPreferences } from '../contexts/AppPreferencesContext';
+import { useI18n } from '../contexts/I18nContext';
 
 const SeasonFooterNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { language, isEnglish } = useAppPreferences();
+  const { language, t } = useI18n();
   const fullPath = `${location.pathname}${location.search}`;
   const items = getLifeSubNavItems(fullPath);
   const activePath = getLifeActiveSubNavPath(fullPath);
@@ -42,7 +42,7 @@ const SeasonFooterNav = () => {
       <button
         type="button"
         className={`footer-menu-item season-footer-item ${isActive ? 'season-footer-item-active' : ''}`}
-        aria-label={isEnglish ? `Open ${getLifeItemLabel(item, language)}` : `打开${getLifeItemLabel(item, language)}`}
+        aria-label={t('打开{{label}}', { label: getLifeItemLabel(item, language) })}
         onClick={() => navigate(item.path)}
       >
         <span className="season-footer-icon" style={{ color: item.accent }}>
@@ -61,7 +61,7 @@ const SeasonFooterNav = () => {
         key={item.id}
         type="button"
         className={`footer-menu-item season-footer-item ${isActive ? 'season-footer-item-active' : ''}`}
-        aria-label={isEnglish ? `Open ${getLifeItemLabel(item, language)}` : `打开${getLifeItemLabel(item, language)}`}
+        aria-label={t('打开{{label}}', { label: getLifeItemLabel(item, language) })}
         onClick={() => navigate(item.path)}
       >
         <span className="season-footer-icon" style={{ color: item.accent }}>
@@ -77,7 +77,7 @@ const SeasonFooterNav = () => {
       <div className="season-footer-inner">
         <CloudFilled
           className="season-footer-home"
-          aria-label={isEnglish ? 'Back to home' : '返回首页'}
+          aria-label={t('返回首页')}
           onClick={() => navigate('/')}
         />
         <nav className="season-footer-items" aria-label={getLifeSubNavAriaLabel(fullPath, language)}>

@@ -1,0 +1,28 @@
+import type { MessageTemplate } from '../../types';
+
+export const lotteryInsightsMessages: Record<string, MessageTemplate> = {
+  '参考评分 {{score}}': 'Reference score: {{score}}',
+  '来自 {{count}} 组候选': 'From {{count}} candidate sets',
+  '红球累计 {{redVotes}} 票 · 蓝球 {{blueVotes}} 票': 'Red balls: {{redVotes}} votes · Blue ball: {{blueVotes}} votes',
+  '{{count}} 票': '{{count}} votes',
+  '录入最新开奖号后自动对照预测结果。': 'Enter the latest winning numbers to compare prediction results automatically.',
+  '对照第 {{period}} 期最新开奖号': 'Compared with the latest winning numbers for issue {{period}}',
+  '最佳 {{prizeName}} · 红球 {{redHits}}/6': 'Best: {{prizeName}} · Red balls {{redHits}}/6',
+  '{{count}} 组': '{{count}} groups',
+  '最佳红 {{hits}}/6': 'Best red {{hits}}/6',
+  '均红 {{average}}': 'Avg red {{average}}',
+  '蓝球 {{blueNumber}} · {{count}} 组命中': 'Blue ball {{blueNumber}} · {{count}} matching sets',
+  '当前复盘预测集覆盖了本期开奖的全部红球': 'The current prediction review set covers every red ball in this draw.',
+  '红 {{hits}}/6': 'Red {{hits}}/6',
+  '未覆盖红球：{{numbers}}': 'Uncovered red balls: {{numbers}}',
+  '差红 {{count}}': 'Red misses {{count}}',
+  '点击卡片录入最新中奖号码。': 'Click the card to enter the latest winning numbers.',
+  '历史 {{count}}': 'History {{count}}',
+  '均遗 {{count}}': 'Avg. omission {{count}}',
+  '概率 = {{score}} / {{poolTotalScore}} × {{probabilityPool}}% = {{probability}}%': 'Probability = {{score}} / {{poolTotalScore}} × {{probabilityPool}}% = {{probability}}%',
+  '基于前 {{period}} 期': 'Based on the previous {{period}} issues',
+  '最新记录 / 本期预测': 'Latest Record / Current Prediction',
+  '左侧是你输入的最新中奖记录，右侧是下一期预测。': 'The latest winning record you entered is on the left, and the next-issue prediction is on the right.',
+  '备选 {{index}} · {{title}}': 'Alternative {{index}} · {{title}}',
+  '综合历史频次、近期活跃、遗漏压力、奇偶性、大小分组和区间结构；遗漏超过平均后，未出现时间越长，回补压力越高。': 'Combines historical frequency, recent activity, omission pressure, odd/even, size groups, and zone structure. Once omission exceeds average, a longer absence means higher rebound pressure.',
+};

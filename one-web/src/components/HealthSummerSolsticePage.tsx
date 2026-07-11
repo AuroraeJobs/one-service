@@ -5,8 +5,67 @@ import { Card, Button, Drawer, Form, Input, InputNumber, message, Row, Col, Sele
 import { PlusOutlined, EditOutlined, DeleteOutlined, SaveOutlined, CalendarOutlined } from '@ant-design/icons';
 import { salaryRecordApi } from '../services/api';
 import type { SalaryRecord, SalaryStatistics } from '../services/api';
+import { useAppPreferences } from '../contexts/AppPreferencesContext';
+
+type SalaryRecordFormValues = Omit<SalaryRecord, 'id' | 'createdAt' | 'updatedAt'>;
 
 const HealthSummerSolsticePage: React.FC = () => {
+  const { isEnglish } = useAppPreferences();
+  const text = {
+    totalRecords: isEnglish ? 'Records' : '记录总数',
+    totalActualIncome: isEnglish ? 'Total Net Income' : '累计实发',
+    avgActualIncome: isEnglish ? 'Average Salary' : '平均工资',
+    totalTaxPaid: isEnglish ? 'Total Tax Paid' : '累计已纳税',
+    noRecords: isEnglish ? 'No salary records' : '暂无工资记录',
+    monthlyIncome: isEnglish ? 'Monthly Income' : '当月收入',
+    currentTaxDeclaration: isEnglish ? 'Current Tax Declaration' : '本期申报税额',
+    actualIncome: isEnglish ? 'Net Income' : '实际所得额',
+    addRecord: isEnglish ? 'Add Salary Record' : '添加工资记录',
+    salaryDetails: isEnglish ? 'Salary Details' : '工资详情',
+    save: isEnglish ? 'Save' : '保存',
+    basicInfo: isEnglish ? 'Basic Info' : '基本信息',
+    year: isEnglish ? 'Year' : '年份',
+    month: isEnglish ? 'Month' : '月份',
+    selectYear: isEnglish ? 'Please select year' : '请选择年份',
+    selectMonth: isEnglish ? 'Please select month' : '请选择月份',
+    enterYear: isEnglish ? 'Enter year' : '请输入年份',
+    incomeInfo: isEnglish ? 'Income Info' : '收入信息',
+    enterMonthlyIncome: isEnglish ? 'Please enter monthly income' : '请输入当月收入',
+    standardDeduction: isEnglish ? 'Standard Deduction' : '减除费用',
+    enterStandardDeduction: isEnglish ? 'Please enter standard deduction' : '请输入减除费用',
+    socialInsurance: isEnglish ? 'Social Insurance and Housing Fund' : '五险一金',
+    endowmentInsurance: isEnglish ? 'Pension Insurance' : '养老保险',
+    medicalInsurance: isEnglish ? 'Medical Insurance' : '医疗保险',
+    unemploymentInsurance: isEnglish ? 'Unemployment Insurance' : '失业保险',
+    housingFund: isEnglish ? 'Housing Fund' : '住房公积金',
+    specialDeduction: isEnglish ? 'Special Deduction' : '专项扣除',
+    notes: isEnglish ? 'Notes' : '备注',
+    notesPlaceholder: isEnglish ? 'Notes' : '备注信息',
+    calculationResults: isEnglish ? 'Calculation Results' : '计算结果',
+    monthlyTaxableIncome: isEnglish ? 'Monthly Taxable Income' : '本月应纳税所得额',
+    cumulativeTaxableIncome: isEnglish ? 'Cumulative Taxable Income' : '累计应纳税所得额',
+    cumulativeTaxPayable: isEnglish ? 'Cumulative Tax Payable' : '累计应纳税额',
+    cumulativeTaxPaid: isEnglish ? 'Cumulative Tax Paid' : '累计已缴纳税',
+    fetchRecordsFailed: isEnglish ? 'Failed to load salary records' : '获取工资记录失败',
+    fetchStatsFailed: isEnglish ? 'Failed to load statistics' : '获取统计数据失败',
+    addSuccess: isEnglish ? 'Salary record added' : '工资记录添加成功',
+    addFailed: isEnglish ? 'Failed to add salary record' : '添加失败',
+    updateSuccess: isEnglish ? 'Salary record updated' : '工资记录更新成功',
+    updateFailed: isEnglish ? 'Failed to update salary record' : '更新失败',
+    deleteSuccess: isEnglish ? 'Salary record deleted' : '删除成功',
+    deleteFailed: isEnglish ? 'Failed to delete salary record' : '删除失败'
+  };
+  const monthOptions = Array.from({ length: 12 }, (_, index) => {
+    const month = index + 1;
+    return {
+      value: month,
+      label: isEnglish ? new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date(2026, index, 1)) : `${month}月`
+    };
+  });
+  const formatYearMonth = (record: SalaryRecord) => (
+    isEnglish ? `${monthOptions[record.month - 1]?.label || record.month} ${record.year}` : `${record.year}年${record.month}月`
+  );
+
   const [salaryRecords, setSalaryRecords] = useState<SalaryRecord[]>([]);
   const [statistics, setStatistics] = useState<SalaryStatistics | null>(null);
   const [isAddDrawerVisible, setIsAddDrawerVisible] = useState(false);
@@ -34,8 +93,8 @@ const HealthSummerSolsticePage: React.FC = () => {
     try {
       const records = await salaryRecordApi.findAll();
       setSalaryRecords(records);
-    } catch (error) {
-      message.error('获取工资记录失败');
+    } catch {
+      message.error(text.fetchRecordsFailed);
     }
   };
 
@@ -43,14 +102,17 @@ const HealthSummerSolsticePage: React.FC = () => {
     try {
       const stats = await salaryRecordApi.getStatistics();
       setStatistics(stats);
-    } catch (error) {
-      message.error('获取统计数据失败');
+    } catch {
+      message.error(text.fetchStatsFailed);
     }
   };
 
   useEffect(() => {
-    fetchSalaryRecords();
-    fetchStatistics();
+    queueMicrotask(() => {
+      void fetchSalaryRecords();
+      void fetchStatistics();
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const showAddDrawer = () => {
@@ -99,45 +161,45 @@ const HealthSummerSolsticePage: React.FC = () => {
     setIsEditDrawerVisible(true);
   };
 
-  const handleAdd = async (values: any) => {
+  const handleAdd = async (values: SalaryRecordFormValues) => {
     try {
       await salaryRecordApi.save(values);
-      message.success('工资记录添加成功');
+      message.success(text.addSuccess);
       setIsAddDrawerVisible(false);
       addForm.resetFields();
       fetchSalaryRecords();
       fetchStatistics();
-    } catch (error) {
-      message.error('添加失败');
+    } catch {
+      message.error(text.addFailed);
     }
   };
 
-  const handleEdit = async (values: any) => {
+  const handleEdit = async (values: SalaryRecordFormValues) => {
     if (!editingRecord) return;
     try {
       await salaryRecordApi.update({ ...values, id: editingRecord.id });
-      message.success('工资记录更新成功');
+      message.success(text.updateSuccess);
       fetchSalaryRecords();
       fetchStatistics();
       const updatedRecord = await salaryRecordApi.findById(editingRecord.id!);
       setEditingRecord(updatedRecord);
       editForm.setFieldsValue(updatedRecord);
       setIsEditing(false);
-    } catch (error) {
-      message.error('更新失败');
+    } catch {
+      message.error(text.updateFailed);
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await salaryRecordApi.delete(id);
-      message.success('删除成功');
+      message.success(text.deleteSuccess);
       fetchSalaryRecords();
       fetchStatistics();
       setIsEditDrawerVisible(false);
       setEditingRecord(null);
-    } catch (error) {
-      message.error('删除失败');
+    } catch {
+      message.error(text.deleteFailed);
     }
   };
 
@@ -162,10 +224,10 @@ const HealthSummerSolsticePage: React.FC = () => {
       }}>
         {statistics && (
           <MetricGrid gap={20} minColumnWidth={200} style={{ marginBottom: '32px' }}>
-            <MetricCard title="记录总数" value={statistics.totalRecords} prefix={<CalendarOutlined />} accent="#FF9800" minWidth={200} />
-            <MetricCard title="累计实发" value={statistics.totalActualIncome} prefix="¥" accent="#52c41a" minWidth={200} />
-            <MetricCard title="平均工资" value={statistics.avgActualIncome} prefix="¥" accent="#1890ff" minWidth={200} />
-            <MetricCard title="累计已纳税" value={statistics.totalTaxPaid} prefix="¥" accent="#9c27b0" minWidth={200} />
+            <MetricCard title={text.totalRecords} value={statistics.totalRecords} prefix={<CalendarOutlined />} accent="#FF9800" minWidth={200} />
+            <MetricCard title={text.totalActualIncome} value={statistics.totalActualIncome} prefix="¥" accent="#52c41a" minWidth={200} />
+            <MetricCard title={text.avgActualIncome} value={statistics.avgActualIncome} prefix="¥" accent="#1890ff" minWidth={200} />
+            <MetricCard title={text.totalTaxPaid} value={statistics.totalTaxPaid} prefix="¥" accent="#9c27b0" minWidth={200} />
           </MetricGrid>
         )}
 
@@ -202,7 +264,7 @@ const HealthSummerSolsticePage: React.FC = () => {
               padding: '60px 20px',
               color: '#666'
             }}>
-              暂无工资记录
+              {text.noRecords}
             </div>
           ) : (
             <div className="record-grid">
@@ -214,23 +276,23 @@ const HealthSummerSolsticePage: React.FC = () => {
                   onClick={() => showEditDrawer(record)}
                 >
                   <div style={{ color: '#FF9800', fontSize: '16px', fontWeight: 'bold', marginBottom: '12px' }}>
-                    {record.year}年{record.month}月
+                    {formatYearMonth(record)}
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
                     <div>
-                      <div style={{ color: '#999', fontSize: '12px' }}>当月收入</div>
+                      <div style={{ color: '#999', fontSize: '12px' }}>{text.monthlyIncome}</div>
                       <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
                         {formatCurrency(record.monthlyIncome)}
                       </div>
                     </div>
                     <div>
-                      <div style={{ color: '#999', fontSize: '12px' }}>本期申报税额</div>
+                      <div style={{ color: '#999', fontSize: '12px' }}>{text.currentTaxDeclaration}</div>
                       <div style={{ color: '#FF9800', fontSize: '14px', fontWeight: 'bold' }}>
                         {formatCurrency(record.currentTaxDeclaration)}
                       </div>
                     </div>
                     <div>
-                      <div style={{ color: '#999', fontSize: '12px' }}>实际所得额</div>
+                      <div style={{ color: '#999', fontSize: '12px' }}>{text.actualIncome}</div>
                       <div style={{ color: '#52c41a', fontSize: '14px', fontWeight: 'bold' }}>
                         {formatCurrency(record.actualIncome)}
                       </div>
@@ -244,7 +306,7 @@ const HealthSummerSolsticePage: React.FC = () => {
       </div>
 
       <Drawer
-        title="添加工资记录"
+        title={text.addRecord}
         placement="right"
         width={500}
         open={isAddDrawerVisible}
@@ -263,7 +325,7 @@ const HealthSummerSolsticePage: React.FC = () => {
               marginRight: '8px'
             }}
           >
-            保存
+            {text.save}
           </Button>
         }
         styles={{
@@ -278,7 +340,7 @@ const HealthSummerSolsticePage: React.FC = () => {
           onFinish={handleAdd}
         >
           <Card 
-            title="基本信息" 
+            title={text.basicInfo}
             style={{
               marginBottom: '16px', 
               backgroundColor: '#2D2D2D', 
@@ -291,11 +353,11 @@ const HealthSummerSolsticePage: React.FC = () => {
               <Col span={12}>
                 <Form.Item
                   name="year"
-                  label="年份"
-                  rules={[{ required: true, message: '请选择年份' }]}
+                  label={text.year}
+                  rules={[{ required: true, message: text.selectYear }]}
                 >
                   <InputNumber 
-                    placeholder="请输入年份"
+                    placeholder={text.enterYear}
                     style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
                   />
                 </Form.Item>
@@ -303,26 +365,13 @@ const HealthSummerSolsticePage: React.FC = () => {
               <Col span={12}>
                 <Form.Item
                   name="month"
-                  label="月份"
-                  rules={[{ required: true, message: '请选择月份' }]}
+                  label={text.month}
+                  rules={[{ required: true, message: text.selectMonth }]}
                 >
                   <Select 
-                    placeholder="请选择月份"
+                    placeholder={text.selectMonth}
                     style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
-                    options={[
-                      { value: 1, label: '1月' },
-                      { value: 2, label: '2月' },
-                      { value: 3, label: '3月' },
-                      { value: 4, label: '4月' },
-                      { value: 5, label: '5月' },
-                      { value: 6, label: '6月' },
-                      { value: 7, label: '7月' },
-                      { value: 8, label: '8月' },
-                      { value: 9, label: '9月' },
-                      { value: 10, label: '10月' },
-                      { value: 11, label: '11月' },
-                      { value: 12, label: '12月' },
-                    ]}
+                    options={monthOptions}
                   />
                 </Form.Item>
               </Col>
@@ -330,7 +379,7 @@ const HealthSummerSolsticePage: React.FC = () => {
           </Card>
 
           <Card 
-            title="收入信息" 
+            title={text.incomeInfo}
             style={{
               marginBottom: '16px', 
               backgroundColor: '#2D2D2D', 
@@ -341,22 +390,22 @@ const HealthSummerSolsticePage: React.FC = () => {
           >
             <Form.Item
               name="monthlyIncome"
-              label="当月收入"
-              rules={[{ required: true, message: '请输入当月收入' }]}
+              label={text.monthlyIncome}
+              rules={[{ required: true, message: text.enterMonthlyIncome }]}
             >
               <InputNumber 
-                placeholder="当月收入"
+                placeholder={text.monthlyIncome}
                 prefix="¥"
                 style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
               />
             </Form.Item>
             <Form.Item
               name="standardDeduction"
-              label="减除费用"
-              rules={[{ required: true, message: '请输入减除费用' }]}
+              label={text.standardDeduction}
+              rules={[{ required: true, message: text.enterStandardDeduction }]}
             >
               <InputNumber 
-                placeholder="减除费用"
+                placeholder={text.standardDeduction}
                 prefix="¥"
                 style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
               />
@@ -364,7 +413,7 @@ const HealthSummerSolsticePage: React.FC = () => {
           </Card>
 
           <Card 
-            title="五险一金" 
+            title={text.socialInsurance}
             style={{
               marginBottom: '16px', 
               backgroundColor: '#2D2D2D', 
@@ -375,46 +424,46 @@ const HealthSummerSolsticePage: React.FC = () => {
           >
             <Form.Item
               name="endowmentInsurance"
-              label="养老保险"
+              label={text.endowmentInsurance}
             >
               <InputNumber 
-                placeholder="养老保险"
+                placeholder={text.endowmentInsurance}
                 prefix="¥"
                 style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
               />
             </Form.Item>
             <Form.Item
               name="medicalInsurance"
-              label="医疗保险"
+              label={text.medicalInsurance}
             >
               <InputNumber 
-                placeholder="医疗保险"
+                placeholder={text.medicalInsurance}
                 prefix="¥"
                 style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
               />
             </Form.Item>
             <Form.Item
               name="unemploymentInsurance"
-              label="失业保险"
+              label={text.unemploymentInsurance}
             >
               <InputNumber 
-                placeholder="失业保险"
+                placeholder={text.unemploymentInsurance}
                 prefix="¥"
                 style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
               />
             </Form.Item>
             <Form.Item
               name="housingFund"
-              label="住房公积金"
+              label={text.housingFund}
             >
               <InputNumber 
-                placeholder="住房公积金"
+                placeholder={text.housingFund}
                 prefix="¥"
                 style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
               />
             </Form.Item>
             <Form.Item
-              label="专项扣除"
+              label={text.specialDeduction}
             >
               <InputNumber 
                 disabled
@@ -426,7 +475,7 @@ const HealthSummerSolsticePage: React.FC = () => {
           </Card>
 
           <Card 
-            title="备注" 
+            title={text.notes}
             style={{
               marginBottom: '16px', 
               backgroundColor: '#2D2D2D', 
@@ -440,7 +489,7 @@ const HealthSummerSolsticePage: React.FC = () => {
               label=""
             >
               <Input.TextArea 
-                placeholder="备注信息"
+                placeholder={text.notesPlaceholder}
                 style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
               />
             </Form.Item>
@@ -449,7 +498,7 @@ const HealthSummerSolsticePage: React.FC = () => {
       </Drawer>
 
       <Drawer
-        title="工资详情"
+        title={text.salaryDetails}
         placement="right"
         width={500}
         open={isEditDrawerVisible}
@@ -518,7 +567,7 @@ const HealthSummerSolsticePage: React.FC = () => {
             onFinish={handleEdit}
           >
             <Card 
-              title="基本信息" 
+              title={text.basicInfo}
               style={{
                 marginBottom: '16px', 
                 backgroundColor: '#2D2D2D', 
@@ -531,11 +580,11 @@ const HealthSummerSolsticePage: React.FC = () => {
                 <Col span={12}>
                   <Form.Item
                     name="year"
-                    label="年份"
-                    rules={[{ required: true, message: '请选择年份' }]}
+                    label={text.year}
+                    rules={[{ required: true, message: text.selectYear }]}
                   >
                     <InputNumber 
-                      placeholder="请输入年份"
+                      placeholder={text.enterYear}
                       style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
                     />
                   </Form.Item>
@@ -543,26 +592,13 @@ const HealthSummerSolsticePage: React.FC = () => {
                 <Col span={12}>
                   <Form.Item
                     name="month"
-                    label="月份"
-                    rules={[{ required: true, message: '请选择月份' }]}
+                    label={text.month}
+                    rules={[{ required: true, message: text.selectMonth }]}
                   >
                     <Select 
-                      placeholder="请选择月份"
+                      placeholder={text.selectMonth}
                       style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
-                      options={[
-                        { value: 1, label: '1月' },
-                        { value: 2, label: '2月' },
-                        { value: 3, label: '3月' },
-                        { value: 4, label: '4月' },
-                        { value: 5, label: '5月' },
-                        { value: 6, label: '6月' },
-                        { value: 7, label: '7月' },
-                        { value: 8, label: '8月' },
-                        { value: 9, label: '9月' },
-                        { value: 10, label: '10月' },
-                        { value: 11, label: '11月' },
-                        { value: 12, label: '12月' },
-                      ]}
+                      options={monthOptions}
                     />
                   </Form.Item>
                 </Col>
@@ -570,7 +606,7 @@ const HealthSummerSolsticePage: React.FC = () => {
             </Card>
 
             <Card 
-              title="收入信息" 
+              title={text.incomeInfo}
               style={{
                 marginBottom: '16px', 
                 backgroundColor: '#2D2D2D', 
@@ -581,22 +617,22 @@ const HealthSummerSolsticePage: React.FC = () => {
             >
               <Form.Item
                 name="monthlyIncome"
-                label="当月收入"
-                rules={[{ required: true, message: '请输入当月收入' }]}
+                label={text.monthlyIncome}
+                rules={[{ required: true, message: text.enterMonthlyIncome }]}
               >
                 <InputNumber 
-                  placeholder="当月收入"
+                  placeholder={text.monthlyIncome}
                   prefix="¥"
                   style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
                 />
               </Form.Item>
               <Form.Item
                 name="standardDeduction"
-                label="减除费用"
-                rules={[{ required: true, message: '请输入减除费用' }]}
+                label={text.standardDeduction}
+                rules={[{ required: true, message: text.enterStandardDeduction }]}
               >
                 <InputNumber 
-                  placeholder="减除费用"
+                  placeholder={text.standardDeduction}
                   prefix="¥"
                   style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
                 />
@@ -604,7 +640,7 @@ const HealthSummerSolsticePage: React.FC = () => {
             </Card>
 
             <Card 
-              title="五险一金" 
+              title={text.socialInsurance}
               style={{
                 marginBottom: '16px', 
                 backgroundColor: '#2D2D2D', 
@@ -615,46 +651,46 @@ const HealthSummerSolsticePage: React.FC = () => {
             >
               <Form.Item
                 name="endowmentInsurance"
-                label="养老保险"
+                label={text.endowmentInsurance}
               >
                 <InputNumber 
-                  placeholder="养老保险"
+                  placeholder={text.endowmentInsurance}
                   prefix="¥"
                   style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
                 />
               </Form.Item>
               <Form.Item
                 name="medicalInsurance"
-                label="医疗保险"
+                label={text.medicalInsurance}
               >
                 <InputNumber 
-                  placeholder="医疗保险"
+                  placeholder={text.medicalInsurance}
                   prefix="¥"
                   style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
                 />
               </Form.Item>
               <Form.Item
                 name="unemploymentInsurance"
-                label="失业保险"
+                label={text.unemploymentInsurance}
               >
                 <InputNumber 
-                  placeholder="失业保险"
+                  placeholder={text.unemploymentInsurance}
                   prefix="¥"
                   style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
                 />
               </Form.Item>
               <Form.Item
                 name="housingFund"
-                label="住房公积金"
+                label={text.housingFund}
               >
                 <InputNumber 
-                  placeholder="住房公积金"
+                  placeholder={text.housingFund}
                   prefix="¥"
                   style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
                 />
               </Form.Item>
               <Form.Item
-                label="专项扣除"
+                label={text.specialDeduction}
               >
                 <InputNumber 
                   disabled
@@ -666,7 +702,7 @@ const HealthSummerSolsticePage: React.FC = () => {
             </Card>
 
             <Card 
-              title="备注" 
+              title={text.notes}
               style={{
                 marginBottom: '16px', 
                 backgroundColor: '#2D2D2D', 
@@ -680,7 +716,7 @@ const HealthSummerSolsticePage: React.FC = () => {
                 label=""
               >
                 <Input.TextArea 
-                  placeholder="备注信息"
+                  placeholder={text.notesPlaceholder}
                   style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
                 />
               </Form.Item>
@@ -689,7 +725,7 @@ const HealthSummerSolsticePage: React.FC = () => {
         ) : editingRecord ? (
           <div>
             <Card 
-              title="基本信息" 
+              title={text.basicInfo}
               style={{
                 marginBottom: '16px', 
                 backgroundColor: '#2D2D2D', 
@@ -700,22 +736,22 @@ const HealthSummerSolsticePage: React.FC = () => {
             >
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>年份</div>
+                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.year}</div>
                   <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
-                    {editingRecord.year}年
+                    {isEnglish ? editingRecord.year : `${editingRecord.year}年`}
                   </div>
                 </div>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>月份</div>
+                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.month}</div>
                   <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
-                    {editingRecord.month}月
+                    {isEnglish ? monthOptions[editingRecord.month - 1]?.label || editingRecord.month : `${editingRecord.month}月`}
                   </div>
                 </div>
               </div>
             </Card>
 
             <Card 
-              title="收入信息" 
+              title={text.incomeInfo}
               style={{
                 marginBottom: '16px', 
                 backgroundColor: '#2D2D2D', 
@@ -726,13 +762,13 @@ const HealthSummerSolsticePage: React.FC = () => {
             >
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>当月收入</div>
+                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.monthlyIncome}</div>
                   <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.monthlyIncome)}
                   </div>
                 </div>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>减除费用</div>
+                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.standardDeduction}</div>
                   <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.standardDeduction)}
                   </div>
@@ -741,7 +777,7 @@ const HealthSummerSolsticePage: React.FC = () => {
             </Card>
 
             <Card 
-              title="五险一金" 
+              title={text.socialInsurance}
               style={{
                 marginBottom: '16px', 
                 backgroundColor: '#2D2D2D', 
@@ -752,31 +788,31 @@ const HealthSummerSolsticePage: React.FC = () => {
             >
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>养老保险</div>
+                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.endowmentInsurance}</div>
                   <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.endowmentInsurance)}
                   </div>
                 </div>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>医疗保险</div>
+                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.medicalInsurance}</div>
                   <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.medicalInsurance)}
                   </div>
                 </div>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>失业保险</div>
+                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.unemploymentInsurance}</div>
                   <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.unemploymentInsurance)}
                   </div>
                 </div>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>住房公积金</div>
+                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.housingFund}</div>
                   <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.housingFund)}
                   </div>
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>专项扣除</div>
+                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.specialDeduction}</div>
                   <div style={{ color: '#FF9800', fontSize: '16px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.specialDeduction)}
                   </div>
@@ -785,7 +821,7 @@ const HealthSummerSolsticePage: React.FC = () => {
             </Card>
 
             <Card 
-              title="计算结果" 
+              title={text.calculationResults}
               style={{
                 marginBottom: '16px', 
                 backgroundColor: '#2D2D2D', 
@@ -796,37 +832,37 @@ const HealthSummerSolsticePage: React.FC = () => {
             >
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px' }}>本月应纳税所得额</div>
+                  <div style={{ color: '#999', fontSize: '12px' }}>{text.monthlyTaxableIncome}</div>
                   <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.monthlyTaxableIncome)}
                   </div>
                 </div>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px' }}>累计应纳税所得额</div>
+                  <div style={{ color: '#999', fontSize: '12px' }}>{text.cumulativeTaxableIncome}</div>
                   <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.cumulativeTaxableIncome)}
                   </div>
                 </div>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px' }}>累计应纳税额</div>
+                  <div style={{ color: '#999', fontSize: '12px' }}>{text.cumulativeTaxPayable}</div>
                   <div style={{ color: '#FF9800', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.cumulativeTaxPayable)}
                   </div>
                 </div>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px' }}>本期申报税额</div>
+                  <div style={{ color: '#999', fontSize: '12px' }}>{text.currentTaxDeclaration}</div>
                   <div style={{ color: '#FF9800', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.currentTaxDeclaration)}
                   </div>
                 </div>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px' }}>累计已缴纳税</div>
+                  <div style={{ color: '#999', fontSize: '12px' }}>{text.cumulativeTaxPaid}</div>
                   <div style={{ color: '#9c27b0', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.cumulativeTaxPaid)}
                   </div>
                 </div>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px' }}>实际所得额</div>
+                  <div style={{ color: '#999', fontSize: '12px' }}>{text.actualIncome}</div>
                   <div style={{ color: '#52c41a', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.actualIncome)}
                   </div>
@@ -836,7 +872,7 @@ const HealthSummerSolsticePage: React.FC = () => {
 
             {editingRecord.notes && (
               <Card 
-                title="备注" 
+                title={text.notes}
                 style={{
                   marginBottom: '16px', 
                   backgroundColor: '#2D2D2D', 

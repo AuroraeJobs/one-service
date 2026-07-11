@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Empty, Pagination, Segmented, Select } from 'antd';
 import { useRecordContext } from '../contexts/RecordContext';
+import { useI18n } from '../contexts/I18nContext';
 import { buildLotteryStats, type LotteryDraw } from '../utils/lotteryStats';
 import './LotteryOverviewPage.css';
 
@@ -67,17 +68,20 @@ interface LotteryPixelCardProps {
 }
 
 const LotteryPixelCard = ({ draw, mode }: LotteryPixelCardProps) => {
+  const { t, translateText } = useI18n();
   const redSet = useMemo(() => new Set(draw.redNumbers), [draw.redNumbers]);
   const config = pixelModeConfig[mode];
   const lotteryPixelCells = useMemo(() => createLotteryPixelCells(mode), [mode]);
+  const issueLabel = t('第 {{period}} 期', { period: draw.period });
+  const modeLabel = translateText(config.label);
 
   return (
-    <div className={`lottery-pixel-card lottery-pixel-card-${mode}`} title={`第 ${draw.period} 期`}>
+    <div className={`lottery-pixel-card lottery-pixel-card-${mode}`} title={issueLabel}>
       <div
         className={`lottery-pixel-grid lottery-pixel-grid-${mode}`}
         style={{ gridTemplateColumns: `repeat(${config.columns}, var(--lottery-pixel-dot))` }}
         role="img"
-        aria-label={`第 ${draw.period} 期${config.label}像素图`}
+        aria-label={t('{{issueLabel}}{{modeLabel}}像素图', { issueLabel, modeLabel })}
       >
         {lotteryPixelCells.map(cell => {
           const isHit = !cell.empty && (cell.type === 'red' ? redSet.has(cell.number) : draw.blueNumber === cell.number);
@@ -91,7 +95,15 @@ const LotteryPixelCard = ({ draw, mode }: LotteryPixelCardProps) => {
                 cell.empty ? 'lottery-pixel-dot-empty' : '',
                 isHit ? 'lottery-pixel-dot-hit' : ''
               ].filter(Boolean).join(' ')}
-              title={cell.empty ? '空位' : `${cell.type === 'red' ? '红球' : '蓝球'} ${cell.number}${isHit ? ' 已中奖' : ''}`}
+              title={cell.empty
+                ? t('空位')
+                : cell.type === 'red'
+                  ? isHit
+                    ? t('红球 {{number}} 已中奖', { number: cell.number })
+                    : t('红球 {{number}}', { number: cell.number })
+                  : isHit
+                    ? t('蓝球 {{number}} 已中奖', { number: cell.number })
+                    : t('蓝球 {{number}}', { number: cell.number })}
             >
               {isHit ? cell.number : ''}
             </span>
@@ -104,6 +116,7 @@ const LotteryPixelCard = ({ draw, mode }: LotteryPixelCardProps) => {
 
 const LotteryPixelCardPage = () => {
   const { allRecords } = useRecordContext();
+  const { translateText } = useI18n();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [pixelMode, setPixelMode] = useState<PixelMode>('redBlue');
@@ -126,7 +139,10 @@ const LotteryPixelCardPage = () => {
           <div className="lottery-pixel-mode-switch">
             <Segmented<PixelMode>
               value={pixelMode}
-              options={[...PIXEL_MODE_OPTIONS]}
+              options={PIXEL_MODE_OPTIONS.map(option => ({
+                value: option.value,
+                label: translateText(option.label)
+              }))}
               onChange={value => {
                 setPixelMode(value);
                 setPageSize(value === 'red' ? RED_PAGE_SIZE : value === 'blue' ? BLUE_PAGE_SIZE : DEFAULT_PAGE_SIZE);

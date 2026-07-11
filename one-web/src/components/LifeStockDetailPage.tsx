@@ -8,6 +8,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import MetricCard from './MetricCard';
 import MetricGrid from './MetricGrid';
+import { useAppPreferences } from '../contexts/AppPreferencesContext';
 import { stockApi, type StockAlertRule, type StockHoldingSummary, type StockKLine, type StockQuote, type StockTrade } from '../services/api';
 
 const MA_WINDOWS = [5, 10, 20];
@@ -15,6 +16,49 @@ const MA_WINDOWS = [5, 10, 20];
 const LifeStockDetailPage = () => {
   const navigate = useNavigate();
   const { symbol = '' } = useParams();
+  const { isEnglish } = useAppPreferences();
+  const text = useMemo(() => ({
+    missingSymbol: isEnglish ? 'Missing stock symbol' : '缺少股票代码',
+    loadFailed: isEnglish ? 'Failed to load stock details' : '获取股票详情失败',
+    notRefreshed: isEnglish ? 'Not refreshed yet' : '尚未刷新',
+    type: isEnglish ? 'Type' : '类型',
+    quantity: isEnglish ? 'Quantity' : '数量',
+    price: isEnglish ? 'Price' : '价格',
+    time: isEnglish ? 'Time' : '时间',
+    direction: isEnglish ? 'Direction' : '方向',
+    targetValue: isEnglish ? 'Target Value' : '目标值',
+    lastTriggered: isEnglish ? 'Last Triggered' : '最近触发',
+    eyebrow: isEnglish ? 'Stock Detail' : '股票详情',
+    back: isEnglish ? 'Back' : '返回',
+    addTrade: isEnglish ? 'Add Trade' : '新增交易',
+    alert: isEnglish ? 'Alert' : '告警',
+    kline: isEnglish ? 'K-Line' : 'K线',
+    sync: isEnglish ? 'Sync' : '同步',
+    refresh: isEnglish ? 'Refresh' : '刷新',
+    latestPrice: isEnglish ? 'Latest Price' : '最新价',
+    changePercent: isEnglish ? 'Change %' : '涨跌幅',
+    turnover: isEnglish ? 'Turnover' : '成交额',
+    quoteTime: isEnglish ? 'Quote Time' : '行情时间',
+    cachedQuote: isEnglish ? 'Cached Quote' : '缓存行情',
+    chartTitle: isEnglish ? 'K-Line Trend' : 'K 线走势',
+    noKline: isEnglish ? 'No K-line data yet' : '暂无 K 线数据',
+    holdingTitle: isEnglish ? 'Holding Summary' : '持仓摘要',
+    positionsPage: isEnglish ? 'Positions' : '持仓页',
+    holdingQuantity: isEnglish ? 'Holding Quantity' : '持仓数量',
+    costPrice: isEnglish ? 'Cost Price' : '成本价',
+    marketValue: isEnglish ? 'Market Value' : '市值',
+    floatingPnl: isEnglish ? 'Floating P/L' : '浮动盈亏',
+    noHolding: isEnglish ? 'No holding for this symbol yet. Add a trade and the backend will recalculate positions.' : '暂无该标的持仓，新增交易后会由后端重算持仓。',
+    recentTrades: isEnglish ? 'Recent Trades' : '近期交易',
+    allTrades: isEnglish ? 'All Trades' : '全部交易',
+    emptyTrades: isEnglish ? 'No trade records for this symbol yet.' : '暂无该标的交易记录。',
+    activeAlerts: isEnglish ? 'Active Alerts' : '有效告警',
+    alertsPage: isEnglish ? 'Alerts' : '告警页',
+    emptyAlerts: isEnglish ? 'No enabled alerts for this symbol yet.' : '暂无该标的启用告警。',
+    dailyK: isEnglish ? 'Daily K' : '日K',
+    volume: isEnglish ? 'Volume' : '成交量',
+    amountUnit: isEnglish ? 'B' : '亿'
+  }), [isEnglish]);
   const [quote, setQuote] = useState<StockQuote>();
   const [kLines, setKLines] = useState<StockKLine[]>([]);
   const [holding, setHolding] = useState<StockHoldingSummary>();
@@ -26,7 +70,7 @@ const LifeStockDetailPage = () => {
   const loadStockDetail = useCallback(async () => {
     const normalizedSymbol = symbol.trim();
     if (!normalizedSymbol) {
-      setError('缺少股票代码');
+      setError(text.missingSymbol);
       return;
     }
     setLoading(true);
@@ -46,98 +90,98 @@ const LifeStockDetailPage = () => {
       setAlertRules(activeRules.filter(item => item.symbol === normalizedSymbol));
     } catch (requestError) {
       console.error('获取股票详情失败:', requestError);
-      setError(requestError instanceof Error ? requestError.message : '获取股票详情失败');
+      setError(requestError instanceof Error ? requestError.message : text.loadFailed);
     } finally {
       setLoading(false);
     }
-  }, [symbol]);
+  }, [symbol, text.loadFailed, text.missingSymbol]);
 
   useEffect(() => {
     loadStockDetail();
   }, [loadStockDetail]);
 
-  const chartOption = useMemo(() => buildKLineChartOption(kLines), [kLines]);
-  const fetchedAt = quote?.fetchedAt ? new Date(quote.fetchedAt).toLocaleString() : '尚未刷新';
+  const chartOption = useMemo(() => buildKLineChartOption(kLines, text), [kLines, text]);
+  const fetchedAt = quote?.fetchedAt ? new Date(quote.fetchedAt).toLocaleString() : text.notRefreshed;
   const tradeColumns = useMemo<ColumnsType<StockTrade>>(() => [
     {
-      title: '类型',
+      title: text.type,
       dataIndex: 'tradeType',
       key: 'tradeType',
-      render: value => <Tag color={tradeTypeColor(value)}>{tradeTypeLabel(value)}</Tag>
+      render: value => <Tag color={tradeTypeColor(value)}>{tradeTypeLabel(value, isEnglish)}</Tag>
     },
     {
-      title: '数量',
+      title: text.quantity,
       dataIndex: 'quantity',
       key: 'quantity',
       align: 'right',
       render: value => formatQuantity(value)
     },
     {
-      title: '价格',
+      title: text.price,
       dataIndex: 'price',
       key: 'price',
       align: 'right',
       render: value => formatPrice(value)
     },
     {
-      title: '时间',
+      title: text.time,
       dataIndex: 'tradedAt',
       key: 'tradedAt',
       render: value => formatTime(value)
     }
-  ], []);
+  ], [isEnglish, text.price, text.quantity, text.time, text.type]);
   const alertColumns = useMemo<ColumnsType<StockAlertRule>>(() => [
     {
-      title: '类型',
+      title: text.type,
       dataIndex: 'ruleType',
       key: 'ruleType',
-      render: value => <Tag color="blue">{ruleTypeLabel(value)}</Tag>
+      render: value => <Tag color="blue">{ruleTypeLabel(value, isEnglish)}</Tag>
     },
     {
-      title: '方向',
+      title: text.direction,
       dataIndex: 'direction',
       key: 'direction',
-      render: value => <Tag color={directionColor(value)}>{directionLabel(value)}</Tag>
+      render: value => <Tag color={directionColor(value)}>{directionLabel(value, isEnglish)}</Tag>
     },
     {
-      title: '目标值',
+      title: text.targetValue,
       dataIndex: 'targetValue',
       key: 'targetValue',
       align: 'right',
       render: value => formatQuantity(value)
     },
     {
-      title: '最近触发',
+      title: text.lastTriggered,
       dataIndex: 'lastTriggeredAt',
       key: 'lastTriggeredAt',
       render: value => formatTime(value)
     }
-  ], []);
+  ], [isEnglish, text.direction, text.lastTriggered, text.targetValue, text.type]);
 
   return (
     <LifePageShell
       className="life-stock-detail-page"
-      eyebrow="股票详情"
+      eyebrow={text.eyebrow}
       title={quote?.name || quote?.symbol || symbol}
       actions={
         <Space wrap>
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/investments')}>
-            返回
+            {text.back}
           </Button>
           <Button icon={<BarChartOutlined />} onClick={() => navigate(`/investments/trades?symbol=${encodeURIComponent(symbol)}&action=create`)}>
-            新增交易
+            {text.addTrade}
           </Button>
           <Button icon={<AlertOutlined />} onClick={() => navigate(`/investments/alerts?symbol=${encodeURIComponent(symbol)}&action=create`)}>
-            告警
+            {text.alert}
           </Button>
           <Button icon={<LineChartOutlined />} onClick={() => navigate(`/investments/klines?symbol=${encodeURIComponent(symbol)}&period=daily`)}>
-            K线
+            {text.kline}
           </Button>
           <Button icon={<SyncOutlined />} onClick={() => navigate(`/investments/sync?symbol=${encodeURIComponent(symbol)}`)}>
-            同步
+            {text.sync}
           </Button>
           <Button type="primary" icon={<ReloadOutlined spin={loading} />} onClick={loadStockDetail}>
-            刷新
+            {text.refresh}
           </Button>
         </Space>
       }
@@ -146,10 +190,10 @@ const LifeStockDetailPage = () => {
 
       <Spin spinning={loading}>
         <MetricGrid gap={16} minColumnWidth={180}>
-          <MetricCard title="最新价" value={formatPrice(quote?.price)} accent={quoteAccent(quote)} />
-          <MetricCard title="涨跌幅" value={formatChangePercent(quote)} accent={quoteAccent(quote)} />
-          <MetricCard title="成交额" value={formatAmount(quote?.amount)} accent="#ff9500" />
-          <MetricCard title="行情时间" value={fetchedAt} accent="#34c759" valueStyle={{ fontSize: 18 }} />
+          <MetricCard title={text.latestPrice} value={formatPrice(quote?.price)} accent={quoteAccent(quote)} />
+          <MetricCard title={text.changePercent} value={formatChangePercent(quote)} accent={quoteAccent(quote)} />
+          <MetricCard title={text.turnover} value={formatAmount(quote?.amount, text.amountUnit)} accent="#ff9500" />
+          <MetricCard title={text.quoteTime} value={fetchedAt} accent="#34c759" valueStyle={{ fontSize: 18 }} />
         </MetricGrid>
 
         <Card className="life-panel-card stock-detail-header-card">
@@ -160,7 +204,7 @@ const LifeStockDetailPage = () => {
                 <Tag color="blue">{quote?.symbol || symbol}</Tag>
                 {quote?.market ? <Tag>{quote.market}</Tag> : null}
                 {quote?.source ? <Tag color="purple">{quote.source}</Tag> : null}
-                {quote?.stale ? <Tag color="orange">{quote.staleReason || '缓存行情'}</Tag> : null}
+                {quote?.stale ? <Tag color="orange">{quote.staleReason || text.cachedQuote}</Tag> : null}
               </Space>
             </div>
             <QuoteChange quote={quote} />
@@ -169,37 +213,37 @@ const LifeStockDetailPage = () => {
 
         <Card className="life-panel-card stock-chart-card">
           <div className="life-panel-title-row">
-            <h2>K 线走势</h2>
+            <h2>{text.chartTitle}</h2>
             <LineChartOutlined className="stock-chart-title-icon" />
           </div>
           {kLines.length > 0 ? (
             <ReactECharts option={chartOption} className="stock-kline-chart" notMerge lazyUpdate />
           ) : (
-            <div className="stock-empty-chart">暂无 K 线数据</div>
+            <div className="stock-empty-chart">{text.noKline}</div>
           )}
         </Card>
 
         <Card className="life-panel-card stock-market-panel">
           <div className="life-panel-title-row">
-            <h2>持仓摘要</h2>
+            <h2>{text.holdingTitle}</h2>
             <Button type="link" onClick={() => navigate(`/investments/positions?accountId=${encodeURIComponent(holding?.accountId || '')}`)}>
-              持仓页
+              {text.positionsPage}
             </Button>
           </div>
           <MetricGrid gap={12} minColumnWidth={160}>
-            <MetricCard title="持仓数量" value={formatQuantity(holding?.quantity)} accent="#0071e3" />
-            <MetricCard title="成本价" value={formatPrice(holding?.costPrice)} accent="#ff9500" />
-            <MetricCard title="市值" value={formatMoney(holding?.marketValue)} accent="#34c759" />
-            <MetricCard title="浮动盈亏" value={formatMoney(holding?.floatingPnl)} accent={pnlAccent(holding?.floatingPnl)} />
+            <MetricCard title={text.holdingQuantity} value={formatQuantity(holding?.quantity)} accent="#0071e3" />
+            <MetricCard title={text.costPrice} value={formatPrice(holding?.costPrice)} accent="#ff9500" />
+            <MetricCard title={text.marketValue} value={formatMoney(holding?.marketValue)} accent="#34c759" />
+            <MetricCard title={text.floatingPnl} value={formatMoney(holding?.floatingPnl)} accent={pnlAccent(holding?.floatingPnl)} />
           </MetricGrid>
-          {!holding ? <Alert type="info" showIcon message="暂无该标的持仓，新增交易后会由后端重算持仓。" className="stock-market-alert stock-detail-inline-alert" /> : null}
+          {!holding ? <Alert type="info" showIcon message={text.noHolding} className="stock-market-alert stock-detail-inline-alert" /> : null}
         </Card>
 
         <Card className="life-panel-card stock-market-panel">
           <div className="life-panel-title-row">
-            <h2>近期交易</h2>
+            <h2>{text.recentTrades}</h2>
             <Button type="link" onClick={() => navigate(`/investments/trades?symbol=${encodeURIComponent(symbol)}`)}>
-              全部交易
+              {text.allTrades}
             </Button>
           </div>
           <Table
@@ -208,16 +252,16 @@ const LifeStockDetailPage = () => {
             dataSource={trades}
             pagination={false}
             size="small"
-            locale={{ emptyText: '暂无该标的交易记录。' }}
+            locale={{ emptyText: text.emptyTrades }}
             rowClassName="stock-quote-row"
           />
         </Card>
 
         <Card className="life-panel-card stock-market-panel">
           <div className="life-panel-title-row">
-            <h2>有效告警</h2>
+            <h2>{text.activeAlerts}</h2>
             <Button type="link" onClick={() => navigate(`/investments/alerts?symbol=${encodeURIComponent(symbol)}`)}>
-              告警页
+              {text.alertsPage}
             </Button>
           </div>
           <Table
@@ -226,7 +270,7 @@ const LifeStockDetailPage = () => {
             dataSource={alertRules}
             pagination={false}
             size="small"
-            locale={{ emptyText: '暂无该标的启用告警。' }}
+            locale={{ emptyText: text.emptyAlerts }}
             rowClassName="stock-quote-row"
           />
         </Card>
@@ -235,7 +279,12 @@ const LifeStockDetailPage = () => {
   );
 };
 
-const buildKLineChartOption = (kLines: StockKLine[]): EChartsOption => {
+type StockDetailText = {
+  dailyK: string;
+  volume: string;
+};
+
+const buildKLineChartOption = (kLines: StockKLine[], text: StockDetailText): EChartsOption => {
   const sortedKLines = [...kLines].sort((left, right) => left.tradeDate.localeCompare(right.tradeDate));
   const dates = sortedKLines.map(item => item.tradeDate);
   const candleData = sortedKLines.map(item => [
@@ -313,7 +362,7 @@ const buildKLineChartOption = (kLines: StockKLine[]): EChartsOption => {
     ],
     series: [
       {
-        name: '日K',
+        name: text.dailyK,
         type: 'candlestick',
         data: candleData,
         itemStyle: {
@@ -332,7 +381,7 @@ const buildKLineChartOption = (kLines: StockKLine[]): EChartsOption => {
         lineStyle: { width: 1.4 }
       })),
       {
-        name: '成交量',
+        name: text.volume,
         type: 'bar',
         xAxisIndex: 1,
         yAxisIndex: 1,
@@ -381,11 +430,11 @@ const formatTime = (value?: number) => {
   return new Date(value).toLocaleString();
 };
 
-const formatAmount = (value?: number) => {
+const formatAmount = (value?: number, unit = '亿') => {
   if (typeof value !== 'number' || value <= 0) {
     return '-';
   }
-  return `${(value / 100000000).toFixed(2)}亿`;
+  return `${(value / 100000000).toFixed(2)}${unit}`;
 };
 
 const formatChangePercent = (quote?: StockQuote) => {
@@ -416,14 +465,14 @@ const pnlAccent = (value?: number) => {
   return value >= 0 ? '#f5222d' : '#16a34a';
 };
 
-const tradeTypeLabel = (value?: string) => {
+const tradeTypeLabel = (value?: string, isEnglish = false) => {
   const labels: Record<string, string> = {
-    BUY: '买入',
-    SELL: '卖出',
-    DIVIDEND: '分红',
-    FEE: '费用',
-    BONUS_SHARE: '送股',
-    SPLIT: '拆股'
+    BUY: isEnglish ? 'Buy' : '买入',
+    SELL: isEnglish ? 'Sell' : '卖出',
+    DIVIDEND: isEnglish ? 'Dividend' : '分红',
+    FEE: isEnglish ? 'Fee' : '费用',
+    BONUS_SHARE: isEnglish ? 'Bonus Share' : '送股',
+    SPLIT: isEnglish ? 'Split' : '拆股'
   };
   return value ? labels[value] || value : '-';
 };
@@ -438,21 +487,21 @@ const tradeTypeColor = (value?: string) => {
   return 'blue';
 };
 
-const ruleTypeLabel = (value?: string) => {
+const ruleTypeLabel = (value?: string, isEnglish = false) => {
   const labels: Record<string, string> = {
-    PRICE: '价格',
-    PERCENT_CHANGE: '涨跌幅',
-    VOLUME_ABNORMAL: '成交量异常'
+    PRICE: isEnglish ? 'Price' : '价格',
+    PERCENT_CHANGE: isEnglish ? 'Percent Change' : '涨跌幅',
+    VOLUME_ABNORMAL: isEnglish ? 'Volume Anomaly' : '成交量异常'
   };
   return value ? labels[value] || value : '-';
 };
 
-const directionLabel = (value?: string) => {
+const directionLabel = (value?: string, isEnglish = false) => {
   const labels: Record<string, string> = {
-    ABOVE: '高于/向上',
-    BELOW: '低于/向下',
-    UP: '上涨触发',
-    DOWN: '下跌触发'
+    ABOVE: isEnglish ? 'Above/Upward' : '高于/向上',
+    BELOW: isEnglish ? 'Below/Downward' : '低于/向下',
+    UP: isEnglish ? 'Trigger on Rise' : '上涨触发',
+    DOWN: isEnglish ? 'Trigger on Drop' : '下跌触发'
   };
   return value ? labels[value] || value : '-';
 };

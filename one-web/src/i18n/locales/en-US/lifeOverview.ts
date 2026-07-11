@@ -1,0 +1,26 @@
+import type { MessageTemplate } from '../../types';
+
+export const lifeOverviewMessages: Record<string, MessageTemplate> = {
+  '个人生活数据中台': 'Personal Life Data Hub',
+  '把车辆、收入、投资、账单和彩票沉淀成自己的生活仪表盘。': 'Turn vehicles, income, investments, bills, and lottery research into your own life dashboard.',
+  '数据接入': 'Data Connections',
+  '查看车辆': 'View Vehicles',
+  '已接入模块': 'Connected Modules',
+  '沉淀能力点': 'Live Capabilities',
+  '彩票记录': 'Lottery Records',
+  '充电次数': 'Charging Sessions',
+  '累计实发': 'Net Income',
+  '等待接入': 'Waiting for connection',
+  '当前系统已经有的骨架': 'Current System Foundation',
+  '彩票数据': 'Lottery Data',
+  '历史开奖、统计、分析、卦象视图已经形成完整闭环。': 'Draw history, statistics, analysis, and hexagram views already form a full loop.',
+  '车辆能源': 'Vehicle Energy',
+  '电车充电记录、成本、充电站已经可以继续扩展到 Fleet API。': 'EV charging records, costs, and stations are ready to expand into Fleet API data.',
+  '工资税费': 'Salary and Tax',
+  '工资、五险一金、个税和实发收入已经有基础模型。': 'Salary, social insurance, tax, and net income already have a base model.',
+  '下一步数据接入顺序': 'Next Data Connection Order',
+  '现金流账本：支付宝、微信、银行卡账单导入': 'Cash ledger: import Alipay, WeChat, and bank card bills',
+  '车辆数据：Tesla Fleet API、油车加油记录': 'Vehicle data: Tesla Fleet API and fuel records',
+  '投资资产：券商持仓、基金账户、行情数据': 'Investment assets: brokerage positions, funds, and market data',
+  '彩票账户：下注、中奖、成本收益归集': 'Lottery account: tickets, prize checks, cost and return rollups',
+};

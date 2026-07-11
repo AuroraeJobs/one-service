@@ -2,12 +2,28 @@ import { useMemo } from 'react';
 import type { CSSProperties } from 'react';
 import { BorderOutlined, DatabaseOutlined, DotChartOutlined } from '@ant-design/icons';
 import { useRecordContext } from '../contexts/RecordContext';
+import { useI18n } from '../contexts/I18nContext';
 import { buildFrequency, buildLotteryStats, getRecentDraws, type LotteryDraw } from '../utils/lotteryStats';
 import './LotteryOverviewPage.css';
 
 const GRID_SIZE = 7;
 const RED_TOTAL = 33;
 const PIXEL_TOTAL = 49;
+
+interface PixelShapeStat {
+  key: string;
+  rowCount: number;
+  columnCount: number;
+  count: number;
+  indexes: number[];
+}
+
+type Translate = ReturnType<typeof useI18n>['t'];
+
+const formatShapeLabel = (shape: PixelShapeStat, t: Translate) => t('{{rowLabel}}{{columnLabel}}', {
+  rowLabel: t('{{count}}行', { count: shape.rowCount }),
+  columnLabel: t('{{count}}列', { count: shape.columnCount })
+});
 
 const numberLabel = (value: number) => String(value).padStart(2, '0');
 
@@ -40,7 +56,7 @@ const getDrawIndexes = (draw: LotteryDraw) => [
 ];
 
 const getShapeStats = (draws: LotteryDraw[], onlyRed = false) => {
-  const shapeCounts = new Map<string, { label: string; count: number; indexes: number[] }>();
+  const shapeCounts = new Map<string, PixelShapeStat>();
 
   draws.forEach(draw => {
     const indexes = onlyRed
@@ -48,18 +64,24 @@ const getShapeStats = (draws: LotteryDraw[], onlyRed = false) => {
       : getDrawIndexes(draw);
     const rows = new Set(indexes.map(index => Math.floor(index / GRID_SIZE)));
     const columns = new Set(indexes.map(index => index % GRID_SIZE));
-    const label = `${rows.size}行${columns.size}列`;
-    const current = shapeCounts.get(label);
+    const key = `${rows.size}-${columns.size}`;
+    const current = shapeCounts.get(key);
 
-    shapeCounts.set(label, {
-      label,
+    shapeCounts.set(key, {
+      key,
+      rowCount: rows.size,
+      columnCount: columns.size,
       count: (current?.count || 0) + 1,
       indexes
     });
   });
 
   return Array.from(shapeCounts.values())
-    .sort((left, right) => right.count - left.count || left.label.localeCompare(right.label, 'zh-Hans-CN'))
+    .sort((left, right) => (
+      right.count - left.count
+      || left.rowCount - right.rowCount
+      || left.columnCount - right.columnCount
+    ))
     .slice(0, 7);
 };
 
@@ -130,6 +152,7 @@ const RecentPixel = ({ draw, active = false }: RecentPixelProps) => {
 
 const LotteryPixelUniversePage = () => {
   const { allRecords } = useRecordContext();
+  const { t } = useI18n();
   const lotteryStats = useMemo(() => buildLotteryStats(allRecords), [allRecords]);
   const pixelCells = useMemo(() => getPixelCells(lotteryStats.draws), [lotteryStats.draws]);
   const shapeStats = useMemo(() => getShapeStats(lotteryStats.draws), [lotteryStats.draws]);
@@ -159,62 +182,68 @@ const LotteryPixelUniversePage = () => {
       <section className="lottery-universe-shell">
         <header className="lottery-universe-header">
           <div>
-            <h1>像素宇宙</h1>
-            <span>双色球数据分析</span>
+            <h1>{t('像素宇宙')}</h1>
+            <span>{t('双色球数据分析')}</span>
           </div>
           <div className="lottery-universe-header-actions">
-            <span><DotChartOutlined /> 像素矩阵</span>
-            <span><BorderOutlined /> 行列分析</span>
-            <span><DatabaseOutlined /> 数据工具</span>
+            <span><DotChartOutlined /> {t('像素矩阵')}</span>
+            <span><BorderOutlined /> {t('行列分析')}</span>
+            <span><DatabaseOutlined /> {t('数据工具')}</span>
           </div>
         </header>
 
         <section className="lottery-universe-kpis">
           <div>
-            <span>最热像素</span>
-            <strong>{hottestPixel ? `${hottestPixel.type === 'red' ? '红' : '蓝'}${hottestPixel.label}` : '--'}</strong>
+            <span>{t('最热像素')}</span>
+            <strong>
+              {hottestPixel
+                ? hottestPixel.type === 'red'
+                  ? t('红{{number}}', { number: hottestPixel.label })
+                  : t('蓝{{number}}', { number: hottestPixel.label })
+                : '--'}
+            </strong>
           </div>
           <div>
-            <span>主导行</span>
-            <strong>{dominantRow ? `${dominantRow.index + 1}行` : '--'}</strong>
+            <span>{t('主导行')}</span>
+            <strong>{dominantRow ? t('第 {{index}} 行', { index: dominantRow.index + 1 }) : '--'}</strong>
           </div>
           <div>
-            <span>主导列</span>
-            <strong>{dominantColumn ? `${dominantColumn.index + 1}列` : '--'}</strong>
+            <span>{t('主导列')}</span>
+            <strong>{dominantColumn ? t('第 {{index}} 列', { index: dominantColumn.index + 1 }) : '--'}</strong>
           </div>
           <div>
-            <span>红球形态</span>
-            <strong>{dominantRedShape?.label || '--'}</strong>
+            <span>{t('红球形态')}</span>
+            <strong>{dominantRedShape ? formatShapeLabel(dominantRedShape, t) : '--'}</strong>
           </div>
           <div>
-            <span>蓝球热点</span>
-            <strong>{hottestBlue ? `蓝${hottestBlue.number}` : '--'}</strong>
+            <span>{t('蓝球热点')}</span>
+            <strong>{hottestBlue ? t('蓝{{number}}', { number: hottestBlue.number }) : '--'}</strong>
           </div>
         </section>
 
         <main className="lottery-universe-grid">
           <aside className="lottery-universe-panel lottery-universe-side-panel">
-            <h2>行覆盖</h2>
+            <h2>{t('行覆盖')}</h2>
             <div className="lottery-universe-bar-list">
               {coverage.rows.map(row => (
                 <div className="lottery-universe-bar-row" key={row.index}>
-                  <span>{row.index + 1}行</span>
+                  <span>{t('第 {{index}} 行', { index: row.index + 1 })}</span>
                   <i><b style={{ width: `${(row.count / coverage.maxCount) * 100}%` }} /></i>
                   <em>{row.count}</em>
                 </div>
               ))}
             </div>
-            <h2>列覆盖</h2>
+            <h2>{t('列覆盖')}</h2>
             <div className="lottery-universe-bar-list">
               {coverage.columns.map(column => (
                 <div className="lottery-universe-bar-row" key={column.index}>
-                  <span>{column.index + 1}列</span>
+                  <span>{t('第 {{index}} 列', { index: column.index + 1 })}</span>
                   <i><b style={{ width: `${(column.count / coverage.maxCount) * 100}%` }} /></i>
                   <em>{column.count}</em>
                 </div>
               ))}
             </div>
-            <h2>蓝球分布</h2>
+            <h2>{t('蓝球分布')}</h2>
             <div className="lottery-universe-blue-bars">
               {blueFrequency
                 .slice()
@@ -230,15 +259,23 @@ const LotteryPixelUniversePage = () => {
 
           <section className="lottery-universe-panel lottery-universe-matrix-panel">
             <div className="lottery-universe-panel-title">
-              <h2>双色球 7x7 像素矩阵</h2>
-              <span>红球 01-33 · 蓝球 01-16</span>
+              <h2>{t('双色球 7x7 像素矩阵')}</h2>
+              <span>{t('红球 01-33 · 蓝球 01-16')}</span>
             </div>
             <div className="lottery-universe-matrix">
               {pixelCells.map(cell => (
                 <div
                   key={cell.index}
                   className={`lottery-universe-cell lottery-universe-cell-${cell.type}`}
-                  title={`${cell.type === 'red' ? '红球' : '蓝球'} ${cell.label}: ${cell.count}`}
+                  title={cell.type === 'red'
+                    ? t('红球 {{number}}：{{count}} 次', {
+                        number: cell.label,
+                        count: cell.count
+                      })
+                    : t('蓝球 {{number}}：{{count}} 次', {
+                        number: cell.label,
+                        count: cell.count
+                      })}
                   style={{ '--cell-alpha': 0.18 + cell.intensity * 0.82 } as CSSProperties}
                 >
                   <strong>{cell.label}</strong>
@@ -249,15 +286,15 @@ const LotteryPixelUniversePage = () => {
           </section>
 
           <aside className="lottery-universe-panel lottery-universe-rank-panel">
-            <h2>形态排行</h2>
+            <h2>{t('形态排行')}</h2>
             <div className="lottery-universe-rank-list">
               {shapeStats.map((shape, index) => (
-                <div className="lottery-universe-rank-item" key={shape.label}>
+                <div className="lottery-universe-rank-item" key={shape.key}>
                   <span className="lottery-universe-rank-index">{index + 1}</span>
                   <MiniPixelPattern indexes={shape.indexes} />
                   <div>
-                    <strong>{shape.label}</strong>
-                    <span>{shape.count} 期</span>
+                    <strong>{formatShapeLabel(shape, t)}</strong>
+                    <span>{t('{{count}} 期开奖', { count: shape.count })}</span>
                   </div>
                 </div>
               ))}
@@ -267,25 +304,25 @@ const LotteryPixelUniversePage = () => {
 
         <section className="lottery-universe-mobile-stack">
           <div className="lottery-universe-panel">
-            <h2>红球覆盖</h2>
+            <h2>{t('红球覆盖')}</h2>
             <div className="lottery-universe-mobile-bars">
               {redCoverage.rows.map(row => (
                 <span key={row.index}>
                   <b style={{ height: `${(row.count / redCoverage.maxCount) * 100}%` }} />
-                  <em>{row.index + 1}行</em>
+                  <em>{t('第 {{index}} 行', { index: row.index + 1 })}</em>
                 </span>
               ))}
             </div>
           </div>
           <div className="lottery-universe-panel">
-            <h2>红球形态</h2>
+            <h2>{t('红球形态')}</h2>
             <div className="lottery-universe-rank-list lottery-universe-rank-list-compact">
               {redShapeStats.slice(0, 5).map((shape, index) => (
-                <div className="lottery-universe-rank-item" key={shape.label}>
+                <div className="lottery-universe-rank-item" key={shape.key}>
                   <span className="lottery-universe-rank-index">{index + 1}</span>
                   <div>
-                    <strong>{shape.label}</strong>
-                    <span>{shape.count} 期</span>
+                    <strong>{formatShapeLabel(shape, t)}</strong>
+                    <span>{t('{{count}} 期开奖', { count: shape.count })}</span>
                   </div>
                 </div>
               ))}
@@ -295,8 +332,10 @@ const LotteryPixelUniversePage = () => {
 
         <section className="lottery-universe-panel lottery-universe-trace-panel">
           <div className="lottery-universe-panel-title">
-            <h2>近期轨迹</h2>
-            <span>最近 {recentDraws.length} 期</span>
+            <h2>{t('近期轨迹')}</h2>
+            <span>
+              {t('最近 {{count}} 期开奖', { count: recentDraws.length })}
+            </span>
           </div>
           <div className="lottery-universe-trace-list">
             {recentDraws.map((draw, index) => (

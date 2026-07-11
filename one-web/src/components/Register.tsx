@@ -3,11 +3,12 @@ import { Form, Input, Button, Card, message, Typography } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useI18n } from '../contexts/I18nContext';
+import LanguageSwitcher from './LanguageSwitcher';
 import './Login.css';
 
 const { Title, Text } = Typography;
 const passwordPattern = /^[a-zA-Z][\w-]{7,29}$/;
-const passwordRuleMessage = '密码必须以字母开头，长度8-30位，仅支持字母、数字、下划线和短横线';
 
 interface RegisterFormData {
   username: string;
@@ -21,15 +22,17 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [form] = Form.useForm();
+  const { t, translateText } = useI18n();
+  const passwordRuleMessage = t('密码必须以字母开头，长度8-30位，仅支持字母、数字、下划线和短横线');
 
   const handleRegister = async (values: RegisterFormData) => {
     if (values.password !== values.confirmPassword) {
-      message.error('两次输入的密码不一致');
+      message.error(t('两次输入的密码不一致'));
       return;
     }
 
     if (values.password.length < 8 || values.password.length > 30) {
-      message.error('密码长度必须在8-30位之间');
+      message.error(t('密码长度必须在8-30位之间'));
       return;
     }
 
@@ -50,17 +53,17 @@ const Register = () => {
       });
 
       if (response.data.code === 200) {
-        message.success('注册成功！请登录');
+        message.success(t('注册成功！请登录'));
         navigate('/login');
       } else {
-        message.error(response.data.message || '注册失败，请稍后重试');
+        message.error(response.data.message ? translateText(response.data.message) : t('注册失败，请稍后重试'));
       }
     } catch (error: unknown) {
       console.error('注册错误:', error);
       if (axios.isAxiosError<{ message?: string }>(error) && error.response?.data?.message) {
-        message.error(error.response.data.message);
+        message.error(translateText(error.response.data.message));
       } else {
-        message.error('注册失败，请稍后重试');
+        message.error(t('注册失败，请稍后重试'));
       }
     } finally {
       setLoading(false);
@@ -82,6 +85,7 @@ const Register = () => {
       </div>
       
       <Card className="login-card" bordered={false}>
+        <LanguageSwitcher className="login-language-switcher" />
         <div className="login-header">
           <div className="login-logo">
             <div className="logo-icon">
@@ -96,10 +100,10 @@ const Register = () => {
                 </defs>
               </svg>
             </div>
-            <Title level={2} className="login-title">注册账号</Title>
+            <Title level={2} className="login-title">{t('注册账号')}</Title>
           </div>
           <Text type="secondary" className="login-subtitle">
-            创建新账号，开始探索之旅
+            {t('创建新账号，开始探索之旅')}
           </Text>
         </div>
 
@@ -114,13 +118,13 @@ const Register = () => {
           <Form.Item
             name="username"
             rules={[
-              { required: true, message: '请输入用户名' },
-              { pattern: /^[a-zA-Z]\w{2,15}$/, message: '用户名必须以字母开头，长度3-16位' }
+              { required: true, message: t('请输入用户名') },
+              { pattern: /^[a-zA-Z]\w{2,15}$/, message: t('用户名必须以字母开头，长度3-16位') }
             ]}
           >
             <Input
               prefix={<UserOutlined />}
-              placeholder="用户名"
+              placeholder={t('用户名')}
               className="login-input"
             />
           </Form.Item>
@@ -128,13 +132,13 @@ const Register = () => {
           <Form.Item
             name="password"
             rules={[
-              { required: true, message: '请输入密码' },
+              { required: true, message: t('请输入密码') },
               { pattern: passwordPattern, message: passwordRuleMessage }
             ]}
           >
             <Input.Password
               prefix={<LockOutlined />}
-              placeholder="密码"
+              placeholder={t('密码')}
               className="login-input"
             />
           </Form.Item>
@@ -142,20 +146,20 @@ const Register = () => {
           <Form.Item
             name="confirmPassword"
             rules={[
-              { required: true, message: '请确认密码' },
+              { required: true, message: t('请确认密码') },
               ({ getFieldValue }) => ({
                 validator(_, value) {
                   if (!value || getFieldValue('password') === value) {
                     return Promise.resolve();
                   }
-                  return Promise.reject(new Error('两次输入的密码不一致'));
+                  return Promise.reject(new Error(t('两次输入的密码不一致')));
                 },
               }),
             ]}
           >
             <Input.Password
               prefix={<LockOutlined />}
-              placeholder="确认密码"
+              placeholder={t('确认密码')}
               className="login-input"
             />
           </Form.Item>
@@ -163,12 +167,12 @@ const Register = () => {
           <Form.Item
             name="phone"
             rules={[
-              { pattern: /^[1]([3-9])[0-9]{9}$/, message: '请输入有效的手机号' }
+              { pattern: /^[1]([3-9])[0-9]{9}$/, message: t('请输入有效的手机号') }
             ]}
           >
             <Input
               prefix={<PhoneOutlined />}
-              placeholder="手机号"
+              placeholder={t('手机号')}
               className="login-input"
             />
           </Form.Item>
@@ -176,12 +180,12 @@ const Register = () => {
           <Form.Item
             name="email"
             rules={[
-              { type: 'email', message: '请输入有效的邮箱地址' }
+              { type: 'email', message: t('请输入有效的邮箱地址') }
             ]}
           >
             <Input
               prefix={<MailOutlined />}
-              placeholder="邮箱"
+              placeholder={t('邮箱')}
               className="login-input"
             />
           </Form.Item>
@@ -194,7 +198,7 @@ const Register = () => {
               block
               className="login-button"
             >
-              注 册
+              {t('注 册')}
             </Button>
           </Form.Item>
         </Form>

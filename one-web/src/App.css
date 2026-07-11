@@ -771,6 +771,11 @@ body {
   margin-bottom: 16px;
 }
 
+.user-management-drawer-footer {
+  width: 100%;
+  justify-content: flex-end;
+}
+
 @media (max-width: 640px) {
   .user-management-page.life-page-shell {
     padding-right: var(--app-page-inline-padding);

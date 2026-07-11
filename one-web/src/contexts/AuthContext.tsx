@@ -24,6 +24,19 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const AUTH_STORAGE_KEY = 'aurorae_auth';
+const LOOPBACK_HOSTNAMES = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
+const QA_AUTH_BYPASS_ENABLED = (
+  import.meta.env.DEV
+  && import.meta.env.MODE === 'qa'
+  && Boolean(import.meta.hot)
+  && typeof window !== 'undefined'
+  && LOOPBACK_HOSTNAMES.has(window.location.hostname)
+);
+const QA_AUTH_USER: AuthUser = {
+  id: 'local-qa',
+  username: '本地 QA',
+  role: 'USER'
+};
 
 const isAuthRejected = (status?: number, code?: number | string) => {
   const normalizedCode = Number(code);
@@ -32,6 +45,10 @@ const isAuthRejected = (status?: number, code?: number | string) => {
 
 // 同步从localStorage读取认证信息
 const getStoredAuth = (): AuthUser | null => {
+  if (QA_AUTH_BYPASS_ENABLED) {
+    return QA_AUTH_USER;
+  }
+
   try {
     const storedAuth = localStorage.getItem(AUTH_STORAGE_KEY);
     if (storedAuth) {
@@ -46,9 +63,14 @@ const getStoredAuth = (): AuthUser | null => {
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // 初始化时立即从localStorage读取，不等待useEffect
   const [user, setUser] = useState<AuthUser | null>(getStoredAuth);
-  const [authChecking, setAuthChecking] = useState(true);
+  const [authChecking, setAuthChecking] = useState(!QA_AUTH_BYPASS_ENABLED);
 
   useEffect(() => {
+    // `npm run dev:qa` 只跳过本地页面守卫；生产构建中的 import.meta.env.DEV 恒为 false。
+    if (QA_AUTH_BYPASS_ENABLED) {
+      return;
+    }
+
     let cancelled = false;
 
     const verifyStoredAuth = async () => {

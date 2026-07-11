@@ -4,6 +4,7 @@ import { Card, Form, Input, Select, Button, Popconfirm, message, Drawer } from '
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { chargeStationApi, chargeRecordApi } from '../services/api';
 import type { ChargeRecord } from '../services/api';
+import { useAppPreferences } from '../contexts/AppPreferencesContext';
 
 interface ChargeProviderOption {
   label: string;
@@ -57,6 +58,41 @@ const errorMessage = (error: unknown, fallback: string) => {
 
 const HealthChargeStationPage: React.FC = () => {
   const navigate = useNavigate();
+  const { isEnglish } = useAppPreferences();
+  const text = {
+    stationUnit: isEnglish ? 'stations' : '个站点',
+    chargeCount: isEnglish ? 'Sessions' : '充电次数',
+    chargeCountUnit: isEnglish ? '' : '次',
+    energy: isEnglish ? 'Energy' : '充电度数',
+    totalCost: isEnglish ? 'Total Cost' : '总费用',
+    avgPrice: isEnglish ? 'Avg Price' : '平均单价',
+    providerPlaceholder: isEnglish ? 'Select provider' : '选择充电提供方',
+    searchPlaceholder: isEnglish ? 'Search station code/name/location' : '搜索站点编码/名称/地点',
+    noStations: isEnglish ? 'No charging station data' : '暂无充电站数据',
+    deleteConfirm: isEnglish ? 'Delete this charging station?' : '确定要删除这个充电站吗？',
+    ok: isEnglish ? 'OK' : '确定',
+    cancel: isEnglish ? 'Cancel' : '取消',
+    stationCode: isEnglish ? 'Station Code' : '站点编码',
+    location: isEnglish ? 'Charging Location' : '充电地点',
+    addStation: isEnglish ? 'Add Charging Station' : '添加充电站',
+    editStation: isEnglish ? 'Edit Charging Station' : '编辑充电站',
+    provider: isEnglish ? 'Provider' : '充电提供方',
+    stationName: isEnglish ? 'Station Name' : '站点名称',
+    save: isEnglish ? 'Save' : '保存',
+    providerRequired: isEnglish ? 'Please select a provider' : '请选择充电提供方',
+    locationRequired: isEnglish ? 'Please enter a charging location' : '请输入充电地点',
+    codeRequired: isEnglish ? 'Please enter a station code' : '请输入站点编码',
+    codeExists: isEnglish ? 'Station code already exists' : '站点编码已存在',
+    stationNamePlaceholder: isEnglish ? 'Enter station name (optional)' : '请输入站点名称（可选）',
+    addSuccess: isEnglish ? 'Charging station added' : '添加充电站成功',
+    addFailed: isEnglish ? 'Failed to add charging station' : '添加充电站失败',
+    updateSuccess: isEnglish ? 'Charging station updated' : '更新充电站成功',
+    updateFailed: isEnglish ? 'Failed to update charging station' : '更新充电站失败',
+    deleteSuccess: isEnglish ? 'Charging station deleted' : '删除充电站成功',
+    deleteFailed: isEnglish ? 'Failed to delete charging station' : '删除充电站失败',
+    loadFailed: isEnglish ? 'Failed to load charging stations' : '加载充电站列表失败',
+    providerLoadFailed: isEnglish ? 'Failed to load charging providers' : '加载充电提供方列表失败'
+  };
   const [stations, setStations] = useState<ChargeStation[]>([]);
   const [providers, setProviders] = useState<ChargeProviderOption[]>([]);
   const [chargeRecords, setChargeRecords] = useState<ChargeRecord[]>([]);
@@ -76,7 +112,7 @@ const HealthChargeStationPage: React.FC = () => {
     
     try {
       await chargeStationApi.findByStationCode(value);
-      return Promise.reject(new Error('站点编码已存在'));
+      return Promise.reject(new Error(text.codeExists));
     } catch {
       return Promise.resolve();
     }
@@ -93,7 +129,7 @@ const HealthChargeStationPage: React.FC = () => {
     
     try {
       await chargeStationApi.findByStationCode(value);
-      return Promise.reject(new Error('站点编码已存在'));
+      return Promise.reject(new Error(text.codeExists));
     } catch {
       return Promise.resolve();
     }
@@ -105,7 +141,7 @@ const HealthChargeStationPage: React.FC = () => {
       setStations(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('加载充电站列表失败:', error);
-      message.error('加载充电站列表失败');
+      message.error(text.loadFailed);
     }
   };
 
@@ -115,7 +151,7 @@ const HealthChargeStationPage: React.FC = () => {
       setProviders(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('加载充电提供方列表失败:', error);
-      message.error('加载充电提供方列表失败');
+      message.error(text.providerLoadFailed);
     }
   };
 
@@ -134,6 +170,7 @@ const HealthChargeStationPage: React.FC = () => {
       void loadProviders();
       void loadChargeRecords();
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getProviderLabel = (providerValue: string): string => {
@@ -195,13 +232,13 @@ const HealthChargeStationPage: React.FC = () => {
   const handleAdd = async (values: ChargeStationFormValues) => {
     try {
       await chargeStationApi.save(values);
-      message.success('添加充电站成功');
+      message.success(text.addSuccess);
       setIsAddDrawerVisible(false);
       addForm.resetFields();
       loadStations();
     } catch (error: unknown) {
       console.error('添加充电站错误:', error);
-      message.error(errorMessage(error, '添加充电站失败'));
+      message.error(errorMessage(error, text.addFailed));
     }
   };
 
@@ -210,25 +247,25 @@ const HealthChargeStationPage: React.FC = () => {
     
     try {
       await chargeStationApi.update({ ...values, id: selectedStation.id });
-      message.success('更新充电站成功');
+      message.success(text.updateSuccess);
       setIsEditDrawerVisible(false);
       editForm.resetFields();
       setSelectedStation(null);
       loadStations();
     } catch (error: unknown) {
       console.error('更新充电站错误:', error);
-      message.error(errorMessage(error, '更新充电站失败'));
+      message.error(errorMessage(error, text.updateFailed));
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await chargeStationApi.delete(id);
-      message.success('删除充电站成功');
+      message.success(text.deleteSuccess);
       loadStations();
     } catch (error: unknown) {
       console.error('删除充电站错误:', error);
-      message.error(errorMessage(error, '删除充电站失败'));
+      message.error(errorMessage(error, text.deleteFailed));
     }
   };
 
@@ -289,24 +326,24 @@ const HealthChargeStationPage: React.FC = () => {
                     borderRadius: '10px',
                     border: '1px solid rgba(82, 196, 26, 0.3)'
                   }}>
-                    {stat.stationCount}个站点
+                    {stat.stationCount} {text.stationUnit}
                   </div>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#999', fontSize: '12px' }}>充电次数</span>
-                    <span style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>{stat.chargeCount}次</span>
+                    <span style={{ color: '#999', fontSize: '12px' }}>{text.chargeCount}</span>
+                    <span style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>{stat.chargeCount}{text.chargeCountUnit}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#999', fontSize: '12px' }}>充电度数</span>
+                    <span style={{ color: '#999', fontSize: '12px' }}>{text.energy}</span>
                     <span style={{ color: '#52c41a', fontSize: '14px', fontWeight: 'bold' }}>{stat.totalAmount.toFixed(2)}kWh</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#999', fontSize: '12px' }}>总费用</span>
+                    <span style={{ color: '#999', fontSize: '12px' }}>{text.totalCost}</span>
                     <span style={{ color: '#faad14', fontSize: '14px', fontWeight: 'bold' }}>¥{stat.totalCost.toFixed(2)}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#999', fontSize: '12px' }}>平均单价</span>
+                    <span style={{ color: '#999', fontSize: '12px' }}>{text.avgPrice}</span>
                     <span style={{ color: '#1890ff', fontSize: '14px', fontWeight: 'bold' }}>¥{stat.avgPrice.toFixed(2)}/kWh</span>
                   </div>
                 </div>
@@ -334,7 +371,7 @@ const HealthChargeStationPage: React.FC = () => {
             />
           </div>
           <Select
-            placeholder="选择充电提供方"
+            placeholder={text.providerPlaceholder}
             style={{ width: 200 }}
             allowClear
             value={searchProvider}
@@ -342,7 +379,7 @@ const HealthChargeStationPage: React.FC = () => {
             options={providers}
           />
           <Input
-            placeholder="搜索站点编码/名称/地点"
+            placeholder={text.searchPlaceholder}
             prefix={<SearchOutlined />}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
@@ -372,7 +409,7 @@ const HealthChargeStationPage: React.FC = () => {
             padding: '60px 20px',
             color: '#666'
           }}>
-            暂无充电站数据
+            {text.noStations}
           </div>
         ) : (
           <div style={{
@@ -403,10 +440,10 @@ const HealthChargeStationPage: React.FC = () => {
                       style={{ color: '#1890ff' }}
                     />
                     <Popconfirm
-                      title="确定要删除这个充电站吗？"
+                      title={text.deleteConfirm}
                       onConfirm={() => station.id && handleDelete(station.id)}
-                      okText="确定"
-                      cancelText="取消"
+                      okText={text.ok}
+                      cancelText={text.cancel}
                     >
                       <Button type="text" danger icon={<DeleteOutlined />} />
                     </Popconfirm>
@@ -414,13 +451,13 @@ const HealthChargeStationPage: React.FC = () => {
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
                   <div>
-                    <div style={{ color: '#999', fontSize: '12px' }}>站点编码</div>
+                    <div style={{ color: '#999', fontSize: '12px' }}>{text.stationCode}</div>
                     <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
                       {station.stationCode}
                     </div>
                   </div>
                   <div>
-                    <div style={{ color: '#999', fontSize: '12px' }}>充电地点</div>
+                    <div style={{ color: '#999', fontSize: '12px' }}>{text.location}</div>
                     <div style={{ color: '#52c41a', fontSize: '14px', fontWeight: 'bold' }}>
                       {station.location}
                     </div>
@@ -432,7 +469,7 @@ const HealthChargeStationPage: React.FC = () => {
         )}
 
       <Drawer
-        title="添加充电站"
+        title={text.addStation}
         placement="right"
         width={400}
         open={isAddDrawerVisible}
@@ -459,33 +496,33 @@ const HealthChargeStationPage: React.FC = () => {
         >
           <Form.Item
             name="provider"
-            label="充电提供方"
-            rules={[{ required: true, message: '请选择充电提供方' }]}
+            label={text.provider}
+            rules={[{ required: true, message: text.providerRequired }]}
           >
-            <Select placeholder="请选择充电提供方" options={providers} />
+            <Select placeholder={text.providerPlaceholder} options={providers} />
           </Form.Item>
           <Form.Item
             name="location"
-            label="充电地点"
-            rules={[{ required: true, message: '请输入充电地点' }]}
+            label={text.location}
+            rules={[{ required: true, message: text.locationRequired }]}
           >
-            <Input placeholder="请输入充电地点" />
+            <Input placeholder={text.locationRequired} />
           </Form.Item>
           <Form.Item
             name="stationCode"
-            label="站点编码"
+            label={text.stationCode}
             rules={[
-              { required: true, message: '请输入站点编码' },
+              { required: true, message: text.codeRequired },
               { validator: validateStationCode }
             ]}
           >
-            <Input placeholder="请输入站点编码" />
+            <Input placeholder={text.codeRequired} />
           </Form.Item>
           <Form.Item
             name="stationName"
-            label="站点名称"
+            label={text.stationName}
           >
-            <Input placeholder="请输入站点名称（可选）" />
+            <Input placeholder={text.stationNamePlaceholder} />
           </Form.Item>
           <Form.Item style={{ marginTop: '24px', textAlign: 'right' }}>
             <Button
@@ -496,14 +533,14 @@ const HealthChargeStationPage: React.FC = () => {
                 boxShadow: '0 2px 8px rgba(24, 144, 255, 0.4)'
               }}
             >
-              保存
+              {text.save}
             </Button>
           </Form.Item>
         </Form>
       </Drawer>
 
       <Drawer
-        title="编辑充电站"
+        title={text.editStation}
         placement="right"
         width={400}
         open={isEditDrawerVisible}
@@ -521,33 +558,33 @@ const HealthChargeStationPage: React.FC = () => {
         <Form form={editForm} layout="vertical" onFinish={handleEdit} style={{ color: '#fff' }}>
           <Form.Item
             name="provider"
-            label="充电提供方"
-            rules={[{ required: true, message: '请选择充电提供方' }]}
+            label={text.provider}
+            rules={[{ required: true, message: text.providerRequired }]}
           >
-            <Select placeholder="请选择充电提供方" options={providers} />
+            <Select placeholder={text.providerPlaceholder} options={providers} />
           </Form.Item>
           <Form.Item
             name="location"
-            label="充电地点"
-            rules={[{ required: true, message: '请输入充电地点' }]}
+            label={text.location}
+            rules={[{ required: true, message: text.locationRequired }]}
           >
-            <Input placeholder="请输入充电地点" />
+            <Input placeholder={text.locationRequired} />
           </Form.Item>
           <Form.Item
             name="stationCode"
-            label="站点编码"
+            label={text.stationCode}
             rules={[
-              { required: true, message: '请输入站点编码' },
+              { required: true, message: text.codeRequired },
               { validator: validateStationCodeEdit }
             ]}
           >
-            <Input placeholder="请输入站点编码" />
+            <Input placeholder={text.codeRequired} />
           </Form.Item>
           <Form.Item
             name="stationName"
-            label="站点名称"
+            label={text.stationName}
           >
-            <Input placeholder="请输入站点名称（可选）" />
+            <Input placeholder={text.stationNamePlaceholder} />
           </Form.Item>
           <Form.Item style={{ marginTop: '24px', textAlign: 'right' }}>
             <Button
@@ -558,7 +595,7 @@ const HealthChargeStationPage: React.FC = () => {
                 boxShadow: '0 2px 8px rgba(24, 144, 255, 0.4)'
               }}
             >
-              保存
+              {text.save}
             </Button>
           </Form.Item>
         </Form>

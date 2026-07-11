@@ -2,12 +2,12 @@ import { CloudFilled } from '@ant-design/icons';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getLifeItemLabel, getLifeModuleKeyByPath, lifeNavItems } from '../constants/lifeDataModules';
-import { useAppPreferences } from '../contexts/AppPreferencesContext';
+import { useI18n } from '../contexts/I18nContext';
 import AppHeaderWithUser from './AppHeaderWithUser';
 
 const AppHeader = () => {
   const { isAuthenticated } = useAuth();
-  const { isEnglish, language } = useAppPreferences();
+  const { language, t } = useI18n();
   const location = useLocation();
   const currentNav = getLifeModuleKeyByPath(location.pathname);
 
@@ -15,11 +15,11 @@ const AppHeader = () => {
     <header className="app-header">
       <div className="app-header-inner">
         <div className="app-header-left">
-          <Link to="/" className="app-header-brand" aria-label={isEnglish ? 'Back to home' : '返回首页'}>
+          <Link to="/" className="app-header-brand" aria-label={t('返回首页')}>
             <CloudFilled />
           </Link>
 
-          <nav className="app-header-nav" aria-label={isEnglish ? 'Main navigation' : '主导航'}>
+          <nav className="app-header-nav" aria-label={t('主导航')}>
             {lifeNavItems.map(item => (
               <Link
                 key={item.path}

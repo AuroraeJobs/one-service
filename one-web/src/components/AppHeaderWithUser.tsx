@@ -1,9 +1,10 @@
 import React from 'react';
 import { Dropdown, Typography } from 'antd';
-import { GlobalOutlined, LogoutOutlined, SettingOutlined, MoonOutlined, SunOutlined, TeamOutlined } from '@ant-design/icons';
+import { CheckOutlined, GlobalOutlined, LogoutOutlined, SettingOutlined, MoonOutlined, SunOutlined, TeamOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppPreferences } from '../contexts/AppPreferencesContext';
+import { useI18n } from '../contexts/I18nContext';
 import { useNavigate } from 'react-router-dom';
 import { getAvatarColor, getAvatarInitial } from '../utils/avatar';
 import './AppHeaderWithUser.css';
@@ -12,7 +13,8 @@ const { Text } = Typography;
 
 const AppHeaderWithUser: React.FC = () => {
   const { user, logout } = useAuth();
-  const { colorMode, isEnglish, onToggleColorMode, onToggleLanguage } = useAppPreferences();
+  const { colorMode, onToggleColorMode } = useAppPreferences();
+  const { locale, setLanguage, supportedLocales, t } = useI18n();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -23,8 +25,7 @@ const AppHeaderWithUser: React.FC = () => {
   const initial = getAvatarInitial(user?.username || '');
   const color = getAvatarColor(user?.username || '');
   const avatarSrc = user?.avatar?.trim() || user?.avatarUrl?.trim();
-  const userName = user?.username || (isEnglish ? 'User' : '用户');
-  const languageText = isEnglish ? 'English' : '中文';
+  const userName = user?.username || t('用户');
   const isAdmin = user?.role?.toUpperCase() === 'ADMIN';
 
   const items: MenuProps['items'] = [
@@ -34,7 +35,7 @@ const AppHeaderWithUser: React.FC = () => {
       icon: (
         <div className="avatar-mini" style={avatarSrc ? undefined : { backgroundColor: color }}>
           {avatarSrc ? (
-            <img className="avatar-image" src={avatarSrc} alt={isEnglish ? `${userName} avatar` : `${userName}头像`} />
+            <img className="avatar-image" src={avatarSrc} alt={t('{{name}}头像', { name: userName })} />
           ) : (
             <span className="avatar-mini-text">{initial}</span>
           )}
@@ -48,21 +49,21 @@ const AppHeaderWithUser: React.FC = () => {
     {
       key: '1',
       icon: <SettingOutlined />,
-      label: isEnglish ? 'User Settings' : '用户设置',
+      label: t('用户设置'),
       onClick: () => navigate('/settings'),
     },
     ...(isAdmin ? [{
       key: 'admin-users',
       icon: <TeamOutlined />,
-      label: isEnglish ? 'User Management' : '用户管理',
+      label: t('用户管理'),
       onClick: () => navigate('/admin/users'),
     }] : []),
     {
       key: 'theme',
       icon: colorMode === 'dark' ? <SunOutlined /> : <MoonOutlined />,
       label: colorMode === 'dark'
-        ? (isEnglish ? 'Light Mode' : '日间模式')
-        : (isEnglish ? 'Dark Mode' : '夜间模式'),
+        ? t('日间模式')
+        : t('夜间模式'),
       onClick: onToggleColorMode,
     },
     {
@@ -70,11 +71,16 @@ const AppHeaderWithUser: React.FC = () => {
       icon: <GlobalOutlined />,
       label: (
         <span className="header-user-language-label">
-          <span>{isEnglish ? 'Language' : '语言'}</span>
-          <span className="header-user-language-value">{languageText}</span>
+          <span>{t('语言')}</span>
+          <span className="header-user-language-value">{locale.nativeName}</span>
         </span>
       ),
-      onClick: onToggleLanguage,
+      children: supportedLocales.map(option => ({
+        key: `language-${option.code}`,
+        icon: option.code === locale.code ? <CheckOutlined /> : undefined,
+        label: option.nativeName,
+        onClick: () => setLanguage(option.code),
+      })),
     },
     {
       type: 'divider',
@@ -82,7 +88,7 @@ const AppHeaderWithUser: React.FC = () => {
     {
       key: '2',
       icon: <LogoutOutlined />,
-      label: isEnglish ? 'Log Out' : '退出登录',
+      label: t('退出登录'),
       onClick: handleLogout,
     },
   ];
@@ -100,7 +106,7 @@ const AppHeaderWithUser: React.FC = () => {
           <div className="avatar-ring"></div>
           <div className="avatar-main" style={avatarSrc ? undefined : { backgroundColor: color }}>
             {avatarSrc ? (
-              <img className="avatar-image" src={avatarSrc} alt={isEnglish ? `${userName} avatar` : `${userName}头像`} />
+              <img className="avatar-image" src={avatarSrc} alt={t('{{name}}头像', { name: userName })} />
             ) : (
               <span className="avatar-text">{initial}</span>
             )}

@@ -13,7 +13,7 @@ import {
   WalletOutlined
 } from '@ant-design/icons';
 import type { EChartsOption } from 'echarts';
-import ReactECharts from 'echarts-for-react';
+import ReactECharts from './LotteryLocalizedECharts';
 import { useNavigate } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import {

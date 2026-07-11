@@ -7,6 +7,7 @@ import {
 } from '@ant-design/icons';
 import LifePageShell from './LifePageShell';
 import { useAuth } from '../contexts/AuthContext';
+import { useAppPreferences } from '../contexts/AppPreferencesContext';
 import {
   teslaFleetApi,
   type TeslaFleetApiCache,
@@ -233,6 +234,10 @@ const formatSwitch = (value?: string) => {
   return value;
 };
 
+const humanizeKey = (value: string) => value
+  .replace(/_/g, ' ')
+  .replace(/\b\w/g, char => char.toUpperCase());
+
 const vehicleDataModuleLabels: Record<string, string> = {
   charge_state: '充电与电池',
   climate_state: '空调与温度',
@@ -418,35 +423,43 @@ const timestampFields = new Set([
   'scheduled_departure_time'
 ]);
 
-const formatTeslaFieldValue = (key: string, value: unknown) => {
-  if (value === null || value === undefined || value === '') return '未返回';
-  if (typeof value === 'boolean') return value ? '开' : '关';
+const formatTeslaFieldValue = (key: string, value: unknown, isEnglish: boolean) => {
+  if (value === null || value === undefined || value === '') return isEnglish ? 'Not returned' : '未返回';
+  if (typeof value === 'boolean') return value ? (isEnglish ? 'On' : '开') : (isEnglish ? 'Off' : '关');
   if (typeof value === 'number') {
     if (timestampFields.has(key)) return formatTimestamp(value);
     if (rangeFields.has(key)) return `${formatNumber(value, ' mi')} / ${formatMilesAsKm(value)}`;
     return Number.isInteger(value) ? String(value) : value.toFixed(2);
   }
   if (typeof value === 'string') {
-    if (value === 'true' || value === 'false') return formatSwitch(value);
+    if (value === 'true' || value === 'false') {
+      if (isEnglish) return value === 'true' ? 'On' : 'Off';
+      return formatSwitch(value);
+    }
     return value;
   }
   return JSON.stringify(value);
 };
 
-const renderTeslaDataField = (key: string, value: unknown) => (
+const renderTeslaDataField = (key: string, value: unknown, isEnglish: boolean) => {
+  const label = isEnglish ? humanizeKey(key) : (vehicleDataFieldLabels[key] || key);
+  const hasFriendlyLabel = isEnglish || Boolean(vehicleDataFieldLabels[key]);
+
+  return (
   <div key={key}>
     <span>
-      {vehicleDataFieldLabels[key] || key}
-      {vehicleDataFieldLabels[key] && <small>{key}</small>}
+      {label}
+      {hasFriendlyLabel && <small>{key}</small>}
     </span>
-    <strong>{formatTeslaFieldValue(key, value)}</strong>
+    <strong>{formatTeslaFieldValue(key, value, isEnglish)}</strong>
   </div>
-);
+  );
+};
 
-const renderField = (label: string, value?: string | number) => (
+const renderField = (label: string, value: string | number | undefined, emptyText = '未返回') => (
   <div>
     <span>{label}</span>
-    <strong>{value === undefined || value === '' ? '未返回' : value}</strong>
+    <strong>{value === undefined || value === '' ? emptyText : value}</strong>
   </div>
 );
 
@@ -491,6 +504,95 @@ const sessionMatchesVehicle = (session: Record<string, unknown>, vehicle?: Tesla
 
 const TeslaFleetManagerPage = () => {
   const { user } = useAuth();
+  const { isEnglish } = useAppPreferences();
+  const text = {
+    title: isEnglish ? 'Vehicle, charging, and Fleet API data management.' : '车辆、充电与 Fleet API 数据管理。',
+    refreshVehicles: isEnglish ? 'Refresh Vehicles' : '刷新车辆信息',
+    vehicleList: isEnglish ? 'Vehicle List' : '车辆列表',
+    vehicleData: isEnglish ? 'Live Vehicle Data' : '车辆实时数据',
+    nearbyChargingSites: isEnglish ? 'Nearby Charging Sites' : '附近充电站',
+    chargingHistory: isEnglish ? 'Charging History' : '充电历史',
+    vehicleCommands: isEnglish ? 'Vehicle Commands' : '车辆指令',
+    offlineVehicleData: isEnglish ? 'Live data is hidden while the vehicle is offline' : '车辆离线时暂不显示实时数据',
+    offlineChargingSites: isEnglish ? 'Nearby charging sites are hidden while the vehicle is offline' : '车辆离线时暂不显示附近充电站',
+    records: isEnglish ? 'Records' : '记录数',
+    totalEnergy: isEnglish ? 'Total Energy' : '总电量',
+    totalCost: isEnglish ? 'Total Cost' : '总费用',
+    latestCharge: isEnglish ? 'Latest Charge' : '最近充电',
+    cacheUpdatedAt: isEnglish ? 'Cache updated at' : '缓存更新时间',
+    chargeRecord: isEnglish ? 'Charging record' : '充电记录',
+    start: isEnglish ? 'Start' : '开始',
+    end: isEnglish ? 'End' : '结束',
+    energy: isEnglish ? 'Energy' : '电量',
+    cost: isEnglish ? 'Cost' : '费用',
+    status: isEnglish ? 'Status' : '状态',
+    invoice: isEnglish ? 'Invoice' : '发票',
+    notReturned: isEnglish ? 'Not returned' : '未返回',
+    noChargingHistory: isEnglish ? 'No cached charging history for this vehicle' : '暂无该车辆的充电历史缓存',
+    noNearbyChargingSites: isEnglish ? 'No nearby charging-site cache' : '暂无附近充电站数据',
+    superchargers: isEnglish ? 'Superchargers' : '超级充电站',
+    destinationChargers: isEnglish ? 'Destination Chargers' : '目的地充电站',
+    refresh: isEnglish ? 'Refresh' : '刷新',
+    execute: isEnglish ? 'Execute' : '执行',
+    recentCommandResponse: isEnglish ? 'Recent Command Response' : '最近指令响应',
+    noData: isEnglish ? 'No data' : '暂无数据',
+    waitingTelemetry: isEnglish ? 'Waiting for vehicle telemetry data' : '等待车辆推送遥测数据',
+    submitConfig: isEnglish ? 'Submit Config' : '提交配置',
+    configStatus: isEnglish ? 'Config Status' : '配置状态',
+    errors: isEnglish ? 'Errors' : '错误',
+    latestData: isEnglish ? 'Latest Data' : '最新数据',
+    deleteConfig: isEnglish ? 'Delete Config' : '删除配置',
+    vehicleTelemetry: isEnglish ? 'Vehicle Data' : '车辆数据',
+    connectivity: isEnglish ? 'Connectivity' : '连接状态',
+    configResponse: isEnglish ? 'Config Response' : '配置响应',
+    errorResponse: isEnglish ? 'Error Response' : '错误响应',
+    baseInfo: isEnglish ? 'Base Info' : '基础信息',
+    noVehicleData: isEnglish ? 'No live vehicle-data cache' : '暂无车辆实时数据缓存',
+    chargingSite: isEnglish ? 'Charging Site' : '充电站',
+    closed: isEnglish ? 'Closed' : '已关闭',
+    available: isEnglish ? 'Available' : '可用',
+    distance: isEnglish ? 'Distance' : '距离',
+    stalls: isEnglish ? 'Stalls' : '桩位',
+    unknown: isEnglish ? 'Unknown' : '未知',
+    unnamedVehicle: isEnglish ? 'Unnamed Vehicle' : '未命名车辆',
+    vinNotReturned: isEnglish ? 'VIN not returned' : 'VIN 未返回',
+    selectVehicle: isEnglish ? 'Select a vehicle' : '请选择车辆',
+    fleetOperationFailed: isEnglish ? 'Tesla Fleet operation failed' : 'Tesla Fleet 操作失败',
+    cacheReadFailed: isEnglish ? 'Failed to read Tesla vehicle API cache' : 'Tesla 车辆 API 缓存读取失败',
+    vehiclesRefreshed: isEnglish ? 'Vehicle data refreshed and saved to Redis' : '车辆信息已刷新并保存到 Redis',
+    apiRefreshed: isEnglish ? 'refreshed and saved to Redis' : '已刷新并保存到 Redis',
+    chargingHistoryRefreshed: isEnglish ? 'Charging history refreshed and saved to Redis' : '充电历史已刷新并保存到 Redis',
+    commandSent: isEnglish ? 'command sent' : '指令已发送',
+    telemetryConfigSubmitted: isEnglish ? 'Fleet Telemetry config submitted' : 'Fleet Telemetry 配置已提交',
+    telemetryConfigLoaded: isEnglish ? 'Fleet Telemetry config status refreshed' : 'Fleet Telemetry 配置状态已刷新',
+    telemetryConfigDeleted: isEnglish ? 'Fleet Telemetry config deleted' : 'Fleet Telemetry 配置已删除',
+    telemetryErrorsLoaded: isEnglish ? 'Fleet Telemetry errors refreshed' : 'Fleet Telemetry 错误已刷新',
+    telemetryCacheLoaded: isEnglish ? 'Fleet Telemetry latest cache refreshed' : 'Fleet Telemetry 最新缓存已刷新'
+  };
+  const vehicleCacheType = (kind: 'detail' | 'data' | 'sites', vin: string) => {
+    const prefix = kind === 'detail'
+      ? (isEnglish ? 'Vehicle detail' : '车辆详情')
+      : kind === 'data'
+        ? (isEnglish ? 'Live vehicle data' : '车辆实时数据')
+        : (isEnglish ? 'Nearby charging sites' : '附近充电站');
+    return `${prefix}:${vin}`;
+  };
+  const commandGroupTitle = (title: string) => {
+    if (!isEnglish) return title;
+    const labels: Record<string, string> = {
+      基础控制: 'Basic Controls',
+      车门与开合件: 'Doors and Closures',
+      充电控制: 'Charging Controls',
+      空调与座舱: 'Climate and Cabin',
+      安全与驾驶: 'Security and Driving',
+      媒体: 'Media',
+      '导航与 HomeLink': 'Navigation and HomeLink'
+    };
+    return labels[title] || title;
+  };
+  const commandLabel = (command: TeslaCommandDefinition) => isEnglish ? humanizeKey(command.command) : command.label;
+  const paramLabel = (param: TeslaCommandParam) => isEnglish ? humanizeKey(param.name) : param.label;
+  const moduleLabel = (moduleKey: string) => isEnglish ? humanizeKey(moduleKey) : (vehicleDataModuleLabels[moduleKey] || moduleKey);
   const defaultAccountKey = buildThirdPartyAccountKey('Tesla', user?.id, user?.username);
   const [accountKey, setAccountKey] = useState(defaultAccountKey);
   const [vehicleCache, setVehicleCache] = useState<TeslaFleetVehicleCache | null>(null);
@@ -543,7 +645,7 @@ const TeslaFleetManagerPage = () => {
     try {
       await action();
     } catch (caught: unknown) {
-      setError(caught instanceof Error ? caught.message : 'Tesla Fleet 操作失败');
+      setError(caught instanceof Error ? caught.message : text.fleetOperationFailed);
     }
   };
 
@@ -583,10 +685,10 @@ const TeslaFleetManagerPage = () => {
             .flatMap(vin => [
               teslaFleetApi
                 .getApiCache(accountKey, 'vehicle-data', vin)
-                .then(cache => ({ vin, type: `车辆实时数据:${vin}`, cache })),
+                .then(cache => ({ vin, type: vehicleCacheType('data', vin), cache })),
               teslaFleetApi
                 .getApiCache(accountKey, 'nearby-charging-sites', vin)
-                .then(cache => ({ vin, type: `附近充电站:${vin}`, cache }))
+                .then(cache => ({ vin, type: vehicleCacheType('sites', vin), cache }))
             ])
         );
 
@@ -598,11 +700,12 @@ const TeslaFleetManagerPage = () => {
 
         setVehicleApiCaches(prev => ({ ...prev, ...nextCaches }));
       } catch (caught: unknown) {
-        setError(caught instanceof Error ? caught.message : 'Tesla 车辆 API 缓存读取失败');
+        setError(caught instanceof Error ? caught.message : text.cacheReadFailed);
       }
     };
 
     loadCachedVehicleApis();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountKey, vehicles]);
 
   const refreshVehicles = async () => {
@@ -610,7 +713,7 @@ const TeslaFleetManagerPage = () => {
     await withFeedback(async () => {
       const cache = await teslaFleetApi.refreshCachedVehicles(accountKey);
       setVehicleCache(cache);
-      setSuccess('车辆信息已刷新并保存到 Redis');
+      setSuccess(text.vehiclesRefreshed);
     });
     setVehicleLoading(false);
   };
@@ -620,7 +723,7 @@ const TeslaFleetManagerPage = () => {
     await withFeedback(async () => {
       const cache = await action();
       setVehicleApiCaches(prev => ({ ...prev, [vin]: { ...prev[vin], [type]: cache } }));
-      setSuccess(`${type} 已刷新并保存到 Redis`);
+      setSuccess(`${type} ${text.apiRefreshed}`);
     });
     setApiLoading('');
   };
@@ -630,7 +733,7 @@ const TeslaFleetManagerPage = () => {
     await withFeedback(async () => {
       const cache = await teslaFleetApi.refreshCachedChargingHistory(accountKey, {});
       setChargingHistoryCache(cache);
-      setSuccess('充电历史已刷新并保存到 Redis');
+      setSuccess(text.chargingHistoryRefreshed);
     });
     setChargingHistoryLoading(false);
   };
@@ -654,7 +757,7 @@ const TeslaFleetManagerPage = () => {
       }, {});
       const response = await teslaFleetApi.vehicleCommand(accountKey, vin, command.command, body);
       setLastCommandResponse(response);
-      setSuccess(`${command.label} 指令已发送`);
+      setSuccess(`${commandLabel(command)} ${text.commandSent}`);
       if (command.command === 'wake_up') {
         await refreshVehicles();
       }
@@ -668,7 +771,7 @@ const TeslaFleetManagerPage = () => {
       const body = JSON.parse(telemetryConfigJson || buildDefaultTelemetryConfig(vin)) as Record<string, unknown>;
       const response = await teslaFleetApi.createFleetTelemetryConfig(accountKey, body);
       setTelemetryConfigResponse(response);
-      setSuccess('Fleet Telemetry 配置已提交');
+      setSuccess(text.telemetryConfigSubmitted);
     });
     setTelemetryLoading('');
   };
@@ -678,7 +781,7 @@ const TeslaFleetManagerPage = () => {
     await withFeedback(async () => {
       const response = await teslaFleetApi.getFleetTelemetryConfig(accountKey, vin);
       setTelemetryConfigResponse(response);
-      setSuccess('Fleet Telemetry 配置状态已刷新');
+      setSuccess(text.telemetryConfigLoaded);
     });
     setTelemetryLoading('');
   };
@@ -688,7 +791,7 @@ const TeslaFleetManagerPage = () => {
     await withFeedback(async () => {
       const response = await teslaFleetApi.deleteFleetTelemetryConfig(accountKey, vin);
       setTelemetryConfigResponse(response);
-      setSuccess('Fleet Telemetry 配置已删除');
+      setSuccess(text.telemetryConfigDeleted);
     });
     setTelemetryLoading('');
   };
@@ -698,7 +801,7 @@ const TeslaFleetManagerPage = () => {
     await withFeedback(async () => {
       const response = await teslaFleetApi.fleetTelemetryErrors(accountKey, vin);
       setTelemetryErrorsResponse(response);
-      setSuccess('Fleet Telemetry 错误已刷新');
+      setSuccess(text.telemetryErrorsLoaded);
     });
     setTelemetryLoading('');
   };
@@ -712,7 +815,7 @@ const TeslaFleetManagerPage = () => {
       ]);
       setTelemetryCache(vehicleData);
       setTelemetryConnectivityCache(connectivity);
-      setSuccess('Fleet Telemetry 最新缓存已刷新');
+      setSuccess(text.telemetryCacheLoaded);
     });
     setTelemetryLoading('');
   };
@@ -720,7 +823,7 @@ const TeslaFleetManagerPage = () => {
   const renderPanelHeader = (loading: boolean, onRefresh: () => void) => (
     <div className="tesla-friendly-title-row">
       <Button size="small" icon={<ReloadOutlined />} loading={loading} onClick={onRefresh}>
-        刷新
+        {text.refresh}
       </Button>
     </div>
   );
@@ -730,7 +833,7 @@ const TeslaFleetManagerPage = () => {
     if (param.type === 'boolean') {
       return (
         <label key={param.name} className="tesla-command-switch">
-          <span>{param.label}</span>
+          <span>{paramLabel(param)}</span>
           <Switch checked={Boolean(value)} onChange={checked => updateCommandValue(command.key, param.name, checked)} />
         </label>
       );
@@ -741,7 +844,7 @@ const TeslaFleetManagerPage = () => {
         <InputNumber
           key={param.name}
           size="small"
-          placeholder={param.label}
+          placeholder={paramLabel(param)}
           value={typeof value === 'number' ? value : undefined}
           onChange={next => updateCommandValue(command.key, param.name, next)}
         />
@@ -753,7 +856,7 @@ const TeslaFleetManagerPage = () => {
       <InputComponent
         key={param.name}
         size="small"
-        placeholder={param.label}
+        placeholder={paramLabel(param)}
         value={String(value)}
         onChange={event => updateCommandValue(command.key, param.name, event.target.value)}
       />
@@ -765,12 +868,12 @@ const TeslaFleetManagerPage = () => {
       <div className="tesla-command-groups">
         {teslaCommandGroups.map(group => (
           <section key={group.title} className="tesla-command-group">
-            <div className="tesla-site-group-title">{group.title}</div>
+            <div className="tesla-site-group-title">{commandGroupTitle(group.title)}</div>
             <div className="tesla-command-list">
               {group.commands.map(command => (
                 <div key={command.key} className="tesla-command-item">
                   <div className="tesla-command-main">
-                    <strong>{command.label}</strong>
+                    <strong>{commandLabel(command)}</strong>
                     <span>{command.command}</span>
                   </div>
                   {command.params && (
@@ -783,7 +886,7 @@ const TeslaFleetManagerPage = () => {
                     loading={commandLoading === command.key}
                     onClick={() => runVehicleCommand(vin, command)}
                   >
-                    执行
+                    {text.execute}
                   </Button>
                 </div>
               ))}
@@ -793,7 +896,7 @@ const TeslaFleetManagerPage = () => {
       </div>
       {lastCommandResponse && (
         <details className="tesla-fleet-json tesla-command-response">
-          <summary>最近指令响应</summary>
+          <summary>{text.recentCommandResponse}</summary>
           <pre>{JSON.stringify(lastCommandResponse, null, 2)}</pre>
         </details>
       )}
@@ -804,12 +907,12 @@ const TeslaFleetManagerPage = () => {
     <div className="tesla-telemetry-cache-card">
       <div>
         <strong>{title}</strong>
-        <span>{cache?.updatedAt ? formatTimestamp(cache.updatedAt) : '暂无数据'}</span>
+        <span>{cache?.updatedAt ? formatTimestamp(cache.updatedAt) : text.noData}</span>
       </div>
       {cache?.data ? (
         <pre>{JSON.stringify(cache.data, null, 2)}</pre>
       ) : (
-        <p>等待车辆推送遥测数据</p>
+        <p>{text.waitingTelemetry}</p>
       )}
     </div>
   );
@@ -818,19 +921,19 @@ const TeslaFleetManagerPage = () => {
     <div className="tesla-friendly-panel tesla-telemetry-panel">
       <div className="tesla-telemetry-actions">
         <Button size="small" type="primary" loading={telemetryLoading === 'create'} onClick={() => createTelemetryConfig(vin)}>
-          提交配置
+          {text.submitConfig}
         </Button>
         <Button size="small" loading={telemetryLoading === 'config'} onClick={() => loadTelemetryConfig(vin)}>
-          配置状态
+          {text.configStatus}
         </Button>
         <Button size="small" loading={telemetryLoading === 'errors'} onClick={() => loadTelemetryErrors(vin)}>
-          错误
+          {text.errors}
         </Button>
         <Button size="small" loading={telemetryLoading === 'cache'} onClick={() => loadTelemetryCache(vin)}>
-          最新数据
+          {text.latestData}
         </Button>
         <Button size="small" danger loading={telemetryLoading === 'delete'} onClick={() => deleteTelemetryConfig(vin)}>
-          删除配置
+          {text.deleteConfig}
         </Button>
       </div>
 
@@ -842,19 +945,19 @@ const TeslaFleetManagerPage = () => {
       />
 
       <div className="tesla-telemetry-cache-grid">
-        {renderTelemetryCache('车辆数据', telemetryCache)}
-        {renderTelemetryCache('连接状态', telemetryConnectivityCache)}
+        {renderTelemetryCache(text.vehicleTelemetry, telemetryCache)}
+        {renderTelemetryCache(text.connectivity, telemetryConnectivityCache)}
       </div>
 
       {telemetryConfigResponse && (
         <details className="tesla-fleet-json">
-          <summary>配置响应</summary>
+          <summary>{text.configResponse}</summary>
           <pre>{JSON.stringify(telemetryConfigResponse, null, 2)}</pre>
         </details>
       )}
       {telemetryErrorsResponse && (
         <details className="tesla-fleet-json">
-          <summary>错误响应</summary>
+          <summary>{text.errorResponse}</summary>
           <pre>{JSON.stringify(telemetryErrorsResponse, null, 2)}</pre>
         </details>
       )}
@@ -869,16 +972,16 @@ const TeslaFleetManagerPage = () => {
     return (
       <div className="tesla-friendly-panel">
         {renderPanelHeader(
-          apiLoading === `车辆实时数据:${vin}`,
-          () => refreshVehicleApi(vin, `车辆实时数据:${vin}`, () => teslaFleetApi.refreshVehicleDataCache(accountKey, vin))
+          apiLoading === vehicleCacheType('data', vin),
+          () => refreshVehicleApi(vin, vehicleCacheType('data', vin), () => teslaFleetApi.refreshVehicleDataCache(accountKey, vin))
         )}
         {cache ? (
           <div className="tesla-vehicle-data-modules">
             {topLevelFields.length > 0 && (
               <section className="tesla-vehicle-data-module">
-                <div className="tesla-site-group-title">基础信息</div>
+                <div className="tesla-site-group-title">{text.baseInfo}</div>
                 <div className="tesla-manager-status-grid">
-                  {topLevelFields.map(([key, value]) => renderTeslaDataField(key, value))}
+                  {topLevelFields.map(([key, value]) => renderTeslaDataField(key, value, isEnglish))}
                 </div>
               </section>
             )}
@@ -888,16 +991,16 @@ const TeslaFleetManagerPage = () => {
 
               return (
                 <section key={moduleKey} className="tesla-vehicle-data-module">
-                  <div className="tesla-site-group-title">{vehicleDataModuleLabels[moduleKey] || moduleKey}</div>
+                  <div className="tesla-site-group-title">{moduleLabel(moduleKey)}</div>
                   <div className="tesla-manager-status-grid">
-                    {Object.entries(moduleRecord).map(([key, value]) => renderTeslaDataField(key, value))}
+                    {Object.entries(moduleRecord).map(([key, value]) => renderTeslaDataField(key, value, isEnglish))}
                   </div>
                 </section>
               );
             })}
           </div>
         ) : (
-          <div className="tesla-empty-hint">暂无车辆实时数据缓存</div>
+          <div className="tesla-empty-hint">{text.noVehicleData}</div>
         )}
       </div>
     );
@@ -909,11 +1012,11 @@ const TeslaFleetManagerPage = () => {
     const destinationChargers = Array.isArray(response.destination_charging) ? response.destination_charging : [];
     const siteGroups = [
       {
-        title: '超级充电站',
+        title: text.superchargers,
         sites: superchargers.map(asRecord).filter((site): site is Record<string, unknown> => Boolean(site))
       },
       {
-        title: '目的地充电站',
+        title: text.destinationChargers,
         sites: destinationChargers.map(asRecord).filter((site): site is Record<string, unknown> => Boolean(site))
       }
     ].filter(group => group.sites.length > 0);
@@ -921,8 +1024,8 @@ const TeslaFleetManagerPage = () => {
     return (
       <div className="tesla-friendly-panel">
         {renderPanelHeader(
-          apiLoading === `附近充电站:${vin}`,
-          () => refreshVehicleApi(vin, `附近充电站:${vin}`, () => teslaFleetApi.refreshNearbyChargingSitesCache(accountKey, vin))
+          apiLoading === vehicleCacheType('sites', vin),
+          () => refreshVehicleApi(vin, vehicleCacheType('sites', vin), () => teslaFleetApi.refreshNearbyChargingSitesCache(accountKey, vin))
         )}
         {siteGroups.length > 0 ? (
           <div className="tesla-site-groups">
@@ -931,19 +1034,19 @@ const TeslaFleetManagerPage = () => {
                 <div className="tesla-site-group-title">{group.title}</div>
                 <div className="tesla-site-list">
                   {group.sites.map((site, index) => {
-                    const name = valueAsString(site, ['name', 'location_name']) || `充电站 ${index + 1}`;
+                    const name = valueAsString(site, ['name', 'location_name']) || `${text.chargingSite} ${index + 1}`;
                     const distance = valueAsNumber(site, ['distance_miles', 'distance_km']);
                     const unit = site.distance_km !== undefined ? ' km' : ' mi';
                     const available = valueAsString(site, ['available_stalls', 'available_charging_stalls']);
                     const total = valueAsString(site, ['total_stalls', 'total_charging_stalls']);
-                    const status = valueAsString(site, ['site_closed']) === 'true' ? '已关闭' : '可用';
+                    const status = valueAsString(site, ['site_closed']) === 'true' ? text.closed : text.available;
 
                     return (
                       <div key={`${group.title}-${name}-${index}`} className="tesla-site-item">
                         <strong>{name}</strong>
-                        <span>距离: {formatNumber(distance, unit)}</span>
-                        <span>桩位: {available || '未知'} / {total || '未知'}</span>
-                        <span>状态: {status}</span>
+                        <span>{text.distance}: {distance === undefined ? text.notReturned : formatNumber(distance, unit)}</span>
+                        <span>{text.stalls}: {available || text.unknown} / {total || text.unknown}</span>
+                        <span>{text.status}: {status}</span>
                       </div>
                     );
                   })}
@@ -952,7 +1055,7 @@ const TeslaFleetManagerPage = () => {
             ))}
           </div>
         ) : (
-          <div className="tesla-empty-hint">暂无附近充电站数据</div>
+          <div className="tesla-empty-hint">{text.noNearbyChargingSites}</div>
         )}
       </div>
     );
@@ -974,18 +1077,18 @@ const TeslaFleetManagerPage = () => {
       <div className="tesla-friendly-panel">
         {renderPanelHeader(chargingHistoryLoading, refreshChargingHistory)}
         <div className="tesla-charging-summary">
-          {renderField('记录数', sessions.length)}
-          {renderField('总电量', sessions.length > 0 ? formatNumber(totalEnergy, ' kWh') : undefined)}
-          {renderField('总费用', sessions.length > 0 ? formatCurrency(totalCost) : undefined)}
-          {renderField('最近充电', formatTimestamp(valueAsString(latestSession, ['start_date_time', 'start_time', 'session_start_time', 'created_at'])))}
+          {renderField(text.records, sessions.length, text.notReturned)}
+          {renderField(text.totalEnergy, sessions.length > 0 ? formatNumber(totalEnergy, ' kWh') : undefined, text.notReturned)}
+          {renderField(text.totalCost, sessions.length > 0 ? formatCurrency(totalCost) : undefined, text.notReturned)}
+          {renderField(text.latestCharge, latestSession ? formatTimestamp(valueAsString(latestSession, ['start_date_time', 'start_time', 'session_start_time', 'created_at'])) : undefined, text.notReturned)}
         </div>
         {historyUpdated && (
-          <div className="tesla-cache-footnote">缓存更新时间: {formatTimestamp(historyUpdated)}</div>
+          <div className="tesla-cache-footnote">{text.cacheUpdatedAt}: {formatTimestamp(historyUpdated)}</div>
         )}
         {sessions.length > 0 ? (
           <div className="tesla-charging-history-list">
             {sessions.slice(0, 12).map((session, index) => {
-              const location = valueAsString(session, ['site_name', 'location_name', 'site', 'location', 'name']) || `充电记录 ${index + 1}`;
+              const location = valueAsString(session, ['site_name', 'location_name', 'site', 'location', 'name']) || `${text.chargeRecord} ${index + 1}`;
               const start = valueAsString(session, ['start_date_time', 'start_time', 'session_start_time', 'created_at']);
               const end = valueAsString(session, ['stop_date_time', 'end_time', 'session_end_time', 'completed_at']);
               const energy = valueAsNumber(session, ['charge_energy_added', 'energy_added', 'kwh', 'total_kwh', 'usage']);
@@ -997,18 +1100,18 @@ const TeslaFleetManagerPage = () => {
               return (
                 <div key={`${invoiceId || location}-${start || index}`} className="tesla-charging-history-item">
                   <strong>{location}</strong>
-                  <span>开始: {formatTimestamp(start)}</span>
-                  <span>结束: {formatTimestamp(end)}</span>
-                  <span>电量: {formatNumber(energy, ' kWh')}</span>
-                  <span>费用: {formatCurrency(cost, currency)}</span>
-                  <span>状态: {status || '未返回'}</span>
-                  <span>发票: {invoiceId || '未返回'}</span>
+                  <span>{text.start}: {start ? formatTimestamp(start) : text.notReturned}</span>
+                  <span>{text.end}: {end ? formatTimestamp(end) : text.notReturned}</span>
+                  <span>{text.energy}: {energy === undefined ? text.notReturned : formatNumber(energy, ' kWh')}</span>
+                  <span>{text.cost}: {cost === undefined ? text.notReturned : formatCurrency(cost, currency)}</span>
+                  <span>{text.status}: {status || text.notReturned}</span>
+                  <span>{text.invoice}: {invoiceId || text.notReturned}</span>
                 </div>
               );
             })}
           </div>
         ) : (
-          <div className="tesla-empty-hint">暂无该车辆的充电历史缓存</div>
+          <div className="tesla-empty-hint">{text.noChargingHistory}</div>
         )}
       </div>
     );
@@ -1024,26 +1127,26 @@ const TeslaFleetManagerPage = () => {
         items={[
           {
             key: 'vehicle-data',
-            label: '车辆实时数据',
-            children: isOnline ? renderVehicleData(vin, caches?.[`车辆实时数据:${vin}`]) : (
-              <div className="tesla-empty-hint">车辆离线时暂不显示实时数据</div>
+            label: text.vehicleData,
+            children: isOnline ? renderVehicleData(vin, caches?.[vehicleCacheType('data', vin)]) : (
+              <div className="tesla-empty-hint">{text.offlineVehicleData}</div>
             )
           },
           {
             key: 'nearby-charging-sites',
-            label: '附近充电站',
-            children: isOnline ? renderChargingSites(vin, caches?.[`附近充电站:${vin}`]) : (
-              <div className="tesla-empty-hint">车辆离线时暂不显示附近充电站</div>
+            label: text.nearbyChargingSites,
+            children: isOnline ? renderChargingSites(vin, caches?.[vehicleCacheType('sites', vin)]) : (
+              <div className="tesla-empty-hint">{text.offlineChargingSites}</div>
             )
           },
           {
             key: 'charging-history',
-            label: '充电历史',
+            label: text.chargingHistory,
             children: renderChargingHistory(vehicle)
           },
           {
             key: 'commands',
-            label: '车辆指令',
+            label: text.vehicleCommands,
             children: renderVehicleCommands(vin)
           },
           {
@@ -1063,10 +1166,10 @@ const TeslaFleetManagerPage = () => {
     <LifePageShell
       className="tesla-fleet-manager-page"
       eyebrow="Tesla Fleet"
-      title="车辆、充电与 Fleet API 数据管理。"
+      title={text.title}
       actions={
         <Button type="primary" icon={<CloudSyncOutlined />} loading={vehicleLoading} onClick={refreshVehicles}>
-          刷新车辆信息
+          {text.refreshVehicles}
         </Button>
       }
     >
@@ -1081,7 +1184,7 @@ const TeslaFleetManagerPage = () => {
 
       <Card className="life-panel-card tesla-manager-vehicle-card">
         <div className="life-panel-title-row">
-          <h2>车辆列表</h2>
+          <h2>{text.vehicleList}</h2>
           <CarOutlined />
         </div>
 
@@ -1112,18 +1215,18 @@ const TeslaFleetManagerPage = () => {
                       <CarOutlined />
                     </span>
                     <div className="tesla-vehicle-card-main">
-                      <strong>{vehicle.display_name || '未命名车辆'}</strong>
-                      <span>{vehicle.vin || 'VIN 未返回'}</span>
+                      <strong>{vehicle.display_name || text.unnamedVehicle}</strong>
+                      <span>{vehicle.vin || text.vinNotReturned}</span>
                     </div>
                     <Button
                       size="small"
                       shape="circle"
                       icon={<ReloadOutlined />}
-                      loading={apiLoading === `车辆详情:${vin}`}
+                      loading={apiLoading === vehicleCacheType('detail', vin)}
                       onClick={event => {
                         event.stopPropagation();
                         if (vin) {
-                          refreshVehicleApi(vin, `车辆详情:${vin}`, () => teslaFleetApi.refreshVehicleCache(accountKey, vin));
+                          refreshVehicleApi(vin, vehicleCacheType('detail', vin), () => teslaFleetApi.refreshVehicleCache(accountKey, vin));
                         }
                       }}
                     />
@@ -1135,7 +1238,7 @@ const TeslaFleetManagerPage = () => {
               {selectedVehicle && selectedVin ? (
                 renderVehicleTabs(selectedVin, selectedVehicle, selectedVehicleCaches)
               ) : (
-                <div className="tesla-empty-hint">请选择车辆</div>
+                <div className="tesla-empty-hint">{text.selectVehicle}</div>
               )}
             </div>
           </div>

@@ -60,7 +60,7 @@ Iteration 27 should start from `docs/lottery/iterations/iteration-27-plan.md` an
 open workbench -> scan next-step focus -> hand off to mobile, governance, tickets, recommendations, or exports
 ```
 
-For protected browser QA, use [Quality gates](iterations/quality-gates.md). A valid `aurorae_auth` login session and running backend are required before screenshots are meaningful; `ECONNREFUSED` on `/lottery/records/draws?page=0&size=500` is a backend/proxy blocker, not a page-layout failure.
+For protected browser QA, use [Quality gates](iterations/quality-gates.md). Start the frontend with `npm run dev:qa` for frontend-only visual checks without a login session; this explicit Vite QA mode bypasses only the loopback-hosted local route guard and is disabled in production builds. A running backend is still required for data-backed interactions. `ECONNREFUSED` on `/lottery/records/draws?page=0&size=500` is a backend/proxy blocker, not a page-layout failure.
 
 The latest generated frontend release evidence is written to `one-web/reports/lottery-release-evidence.md`. Historical snapshots are indexed in `one-web/reports/lottery-release-history/README.md`. Run `npm run lottery:release-check` from `one-web` before frontend lottery release handoff; use `npm run lottery:release-evidence` only when you need to refresh the report without a production build, and `npm run lottery:release-evidence:check` when you only need to verify freshness. Run `npm run lottery:release-archive` when the passed evidence should be kept as a historical snapshot.
 

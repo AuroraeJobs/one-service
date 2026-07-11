@@ -84,7 +84,7 @@ export const RecordProvider: React.FC<RecordProviderProps> = ({ children }) => {
   const [error, setError] = useState<string | null>(null);
 
   // 从API获取所有记录
-  const fetchAllRecords = async () => {
+  const fetchAllRecords = async (throwOnError = false) => {
     try {
       setLoading(true);
       setError(null);
@@ -104,6 +104,9 @@ export const RecordProvider: React.FC<RecordProviderProps> = ({ children }) => {
     } catch (err) {
       console.error('获取记录失败:', err);
       setError('获取记录失败，请稍后重试');
+      if (throwOnError) {
+        throw err;
+      }
     } finally {
       setLoading(false);
     }
@@ -111,7 +114,7 @@ export const RecordProvider: React.FC<RecordProviderProps> = ({ children }) => {
 
   // 刷新记录数据
   const refreshRecords = async () => {
-    await fetchAllRecords();
+    await fetchAllRecords(true);
   };
 
   // 组件初始化时获取数据
@@ -137,6 +140,7 @@ export const RecordProvider: React.FC<RecordProviderProps> = ({ children }) => {
 };
 
 // 自定义Hook，方便组件使用Context
+// eslint-disable-next-line react-refresh/only-export-components
 export const useRecordContext = () => {
   const context = useContext(RecordContext);
   if (context === undefined) {

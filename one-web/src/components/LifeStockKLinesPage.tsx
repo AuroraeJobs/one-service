@@ -5,14 +5,40 @@ import { LineChartOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/i
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import { stockApi, type StockKLine } from '../services/api';
-
-const periodOptions = [
-  { label: '日线', value: 'daily' },
-  { label: '周线', value: 'weekly' },
-  { label: '月线', value: 'monthly' }
-];
+import { useAppPreferences } from '../contexts/AppPreferencesContext';
 
 const LifeStockKLinesPage = () => {
+  const { isEnglish } = useAppPreferences();
+  const text = {
+    daily: isEnglish ? 'Daily' : '日线',
+    weekly: isEnglish ? 'Weekly' : '周线',
+    monthly: isEnglish ? 'Monthly' : '月线',
+    enterSymbol: isEnglish ? 'Please enter stock symbol' : '请输入股票代码',
+    loadFailed: isEnglish ? 'Failed to load stock K-lines' : '获取股票K线失败',
+    tradeDate: isEnglish ? 'Trade Date' : '交易日',
+    symbol: isEnglish ? 'Symbol' : '标的',
+    open: isEnglish ? 'Open' : '开盘',
+    close: isEnglish ? 'Close' : '收盘',
+    high: isEnglish ? 'High' : '最高',
+    low: isEnglish ? 'Low' : '最低',
+    changePercent: isEnglish ? 'Change %' : '涨跌幅',
+    volume: isEnglish ? 'Volume' : '成交量',
+    source: isEnglish ? 'Source' : '来源',
+    eyebrow: isEnglish ? 'Stock K-Lines' : '股票K线',
+    title: isEnglish ? 'Query historical market data stored in MongoDB and inspect the data foundation used by charts and analysis.' : '查询已沉淀到 MongoDB 的历史行情，检查图表和分析使用的数据基础。',
+    openStock: isEnglish ? 'Open Stock' : '打开个股',
+    panelTitle: isEnglish ? 'K-Line Data' : 'K线数据',
+    description: isEnglish ? 'This page displays standardized K-lines returned by internal /stock/* APIs and does not depend on any specific third-party data source.' : '这里展示内部 `/stock/*` API 返回的标准化 K线，页面不依赖任何具体第三方数据源。',
+    startDate: isEnglish ? 'Start date' : '开始日期',
+    endDate: isEnglish ? 'End date' : '结束日期',
+    query: isEnglish ? 'Query' : '查询',
+    empty: isEnglish ? 'No K-line data yet. Import it on the Sync page or wait for provider sync.' : '暂无K线数据，可先到同步页导入或等待 provider 同步接入。'
+  };
+  const periodOptions = [
+    { label: text.daily, value: 'daily' },
+    { label: text.weekly, value: 'weekly' },
+    { label: text.monthly, value: 'monthly' }
+  ];
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [symbol, setSymbol] = useState(searchParams.get('symbol') || '600519');
@@ -27,7 +53,7 @@ const LifeStockKLinesPage = () => {
 
   const loadKLines = useCallback(async () => {
     if (!normalizedSymbol) {
-      setError('请输入股票代码');
+      setError(text.enterSymbol);
       return;
     }
     setLoading(true);
@@ -41,11 +67,11 @@ const LifeStockKLinesPage = () => {
       setKLines(data);
     } catch (requestError) {
       console.error('获取股票K线失败:', requestError);
-      setError(requestError instanceof Error ? requestError.message : '获取股票K线失败');
+      setError(requestError instanceof Error ? requestError.message : text.loadFailed);
     } finally {
       setLoading(false);
     }
-  }, [endDate, normalizedSymbol, period, startDate]);
+  }, [endDate, normalizedSymbol, period, startDate, text.enterSymbol, text.loadFailed]);
 
   useEffect(() => {
     if (searchParams.get('symbol')) {
@@ -55,14 +81,14 @@ const LifeStockKLinesPage = () => {
 
   const columns: ColumnsType<StockKLine> = [
     {
-      title: '交易日',
+      title: text.tradeDate,
       dataIndex: 'tradeDate',
       key: 'tradeDate',
       fixed: 'left',
       width: 120
     },
     {
-      title: '标的',
+      title: text.symbol,
       dataIndex: 'symbol',
       key: 'symbol',
       render: (_, record) => (
@@ -73,49 +99,49 @@ const LifeStockKLinesPage = () => {
       )
     },
     {
-      title: '开盘',
+      title: text.open,
       dataIndex: 'open',
       key: 'open',
       align: 'right',
       render: value => formatNumber(value)
     },
     {
-      title: '收盘',
+      title: text.close,
       dataIndex: 'close',
       key: 'close',
       align: 'right',
       render: value => formatNumber(value)
     },
     {
-      title: '最高',
+      title: text.high,
       dataIndex: 'high',
       key: 'high',
       align: 'right',
       render: value => formatNumber(value)
     },
     {
-      title: '最低',
+      title: text.low,
       dataIndex: 'low',
       key: 'low',
       align: 'right',
       render: value => formatNumber(value)
     },
     {
-      title: '涨跌幅',
+      title: text.changePercent,
       dataIndex: 'changePercent',
       key: 'changePercent',
       align: 'right',
       render: value => formatPercent(value)
     },
     {
-      title: '成交量',
+      title: text.volume,
       dataIndex: 'volume',
       key: 'volume',
       align: 'right',
       render: value => formatLargeNumber(value)
     },
     {
-      title: '来源',
+      title: text.source,
       dataIndex: 'source',
       key: 'source',
       render: value => value ? <Tag color="purple">{value}</Tag> : '-'
@@ -125,11 +151,11 @@ const LifeStockKLinesPage = () => {
   return (
     <LifePageShell
       className="life-investment-page"
-      eyebrow="股票K线"
-      title="查询已沉淀到 MongoDB 的历史行情，检查图表和分析使用的数据基础。"
+      eyebrow={text.eyebrow}
+      title={text.title}
       actions={
         <Button type="primary" icon={<LineChartOutlined />} disabled={!normalizedSymbol} onClick={() => navigate(`/investments/stocks/${normalizedSymbol}`)}>
-          打开个股
+          {text.openStock}
         </Button>
       }
     >
@@ -138,8 +164,8 @@ const LifeStockKLinesPage = () => {
       <Card className="life-panel-card stock-market-panel">
         <div className="stock-market-toolbar">
           <div>
-            <h2>K线数据</h2>
-            <p>这里展示内部 `/stock/*` API 返回的标准化 K线，页面不依赖任何具体第三方数据源。</p>
+            <h2>{text.panelTitle}</h2>
+            <p>{text.description}</p>
           </div>
           <div className="stock-market-actions">
             <Space wrap>
@@ -152,10 +178,10 @@ const LifeStockKLinesPage = () => {
                 style={{ width: 160 }}
               />
               <Select value={period} options={periodOptions} onChange={setPeriod} style={{ width: 96 }} />
-              <Input value={startDate} onChange={event => setStartDate(event.target.value)} placeholder="开始日期" style={{ width: 120 }} />
-              <Input value={endDate} onChange={event => setEndDate(event.target.value)} placeholder="结束日期" style={{ width: 120 }} />
+              <Input value={startDate} onChange={event => setStartDate(event.target.value)} placeholder={text.startDate} style={{ width: 120 }} />
+              <Input value={endDate} onChange={event => setEndDate(event.target.value)} placeholder={text.endDate} style={{ width: 120 }} />
               <Button icon={<ReloadOutlined spin={loading} />} loading={loading} onClick={loadKLines}>
-                查询
+                {text.query}
               </Button>
             </Space>
           </div>
@@ -166,7 +192,7 @@ const LifeStockKLinesPage = () => {
           dataSource={kLines}
           loading={loading}
           pagination={{ pageSize: 12, showSizeChanger: false }}
-          locale={{ emptyText: '暂无K线数据，可先到同步页导入或等待 provider 同步接入。' }}
+          locale={{ emptyText: text.empty }}
           scroll={{ x: 980 }}
           rowClassName="stock-quote-row"
         />

@@ -4,6 +4,7 @@ import { Alert, AutoComplete, Button, Card, Empty, Form, Input, InputNumber, Pro
 import { BarChartOutlined, BookOutlined, BulbOutlined, CloseCircleOutlined, CopyOutlined, DatabaseOutlined, DownloadOutlined, PlayCircleOutlined, ReloadOutlined, SaveOutlined, TrophyOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
 import LifePageShell from './LifePageShell';
+import { useAppPreferences } from '../contexts/AppPreferencesContext';
 import {
   lotteryBacktestApi,
   lotteryDecisionSetApi,
@@ -179,7 +180,7 @@ const buildComparisonChartOption = (comparisonLogs: Record<string, MiniGptTraini
   };
 };
 
-const comparisonSummaryItems = (comparisonLogs: Record<string, MiniGptTrainingLogRecord[]>) => (
+const comparisonSummaryItems = (comparisonLogs: Record<string, MiniGptTrainingLogRecord[]>, isEnglish = false) => (
   Object.entries(comparisonLogs).map(([runName, logs]) => {
     const latestLog = logs[logs.length - 1];
     const trainLoss = latestLog?.trainLoss;
@@ -188,12 +189,12 @@ const comparisonSummaryItems = (comparisonLogs: Record<string, MiniGptTrainingLo
       ? Number(evalLoss) - Number(trainLoss)
       : undefined;
     const verdict = !latestLog
-      ? '暂无日志'
+      ? (isEnglish ? 'No logs' : '暂无日志')
       : Number.isFinite(gap) && Math.abs(Number(gap)) > 0.5
-        ? 'gap 偏大'
+        ? (isEnglish ? 'Large gap' : 'gap 偏大')
         : Number.isFinite(evalLoss)
-          ? '验证可比'
-          : '仅训练 loss';
+          ? (isEnglish ? 'Eval comparable' : '验证可比')
+          : (isEnglish ? 'Train loss only' : '仅训练 loss');
 
     return {
       runName,
@@ -270,6 +271,25 @@ const trainingRecipes: MiniGptTrainingRecipe[] = [
   }
 ];
 
+const trainingRecipeEnglish: Record<string, Pick<MiniGptTrainingRecipe, 'title' | 'description'>> = {
+  'tiny-baseline': {
+    title: 'Tiny Baseline',
+    description: 'Run the smallest model first to verify corpus, loss, and generation flow.'
+  },
+  'low-lr': {
+    title: 'Low Learning Rate',
+    description: 'Check whether loss gets smoother and training slows down.'
+  },
+  'long-context': {
+    title: 'Long Context',
+    description: 'Increase block size to see whether the model uses longer context.'
+  },
+  'small-model': {
+    title: 'Small Comparison',
+    description: 'Increase model capacity and compare generalization gap and sample quality against tiny.'
+  }
+};
+
 const hyperparameterGuideRows = [
   {
     key: 'learning-rate',
@@ -329,6 +349,49 @@ const hyperparameterGuideRows = [
   }
 ];
 
+const hyperparameterGuideEnglish: Record<string, { effect: string; watch: string; next: string }> = {
+  'learning-rate': {
+    effect: 'step size',
+    watch: 'too high can oscillate; too low descends slowly',
+    next: 'lower one level when loss jitters'
+  },
+  'batch-size': {
+    effect: 'samples seen per step',
+    watch: 'larger is steadier but uses more memory',
+    next: 'increase moderately when loss is noisy'
+  },
+  'block-size': {
+    effect: 'context length',
+    watch: 'longer sees farther but trains slower',
+    next: 'try longer context when generation breaks'
+  },
+  'n-embd': {
+    effect: 'token vector width',
+    watch: 'larger has more capacity and overfits more easily',
+    next: 'increase only when samples feel too weak'
+  },
+  'n-head': {
+    effect: 'attention perspectives',
+    watch: 'must divide embedding size',
+    next: 'adjust together when scaling the model'
+  },
+  'n-layer': {
+    effect: 'Transformer depth',
+    watch: 'deeper is more expressive but harder to train',
+    next: 'increase after tiny is stable'
+  },
+  temperature: {
+    effect: 'generation randomness',
+    watch: 'higher diverges more; lower is more conservative',
+    next: 'raise when repetitive, lower when off-topic'
+  },
+  'top-k': {
+    effect: 'sampling candidate range',
+    watch: 'smaller is steadier; larger is more diverse',
+    next: 'compare 10, 20, and 50 first'
+  }
+};
+
 const promptPresetRows = [
   {
     key: 'lottery-balanced',
@@ -368,6 +431,39 @@ const promptPresetRows = [
   }
 ];
 
+const promptPresetEnglish: Record<string, { title: string; intent: string; prompt?: string }> = {
+  'lottery-balanced': {
+    title: 'Balanced Picks',
+    intent: 'Observe whether the model can output structured candidates'
+  },
+  'lottery-risk': {
+    title: 'Explore Diversity',
+    intent: 'Test candidate diversity under higher randomness'
+  },
+  'explain-mini-gpt': {
+    title: 'Concept Probe',
+    intent: 'Check whether the training corpus style was learned',
+    prompt: 'language model'
+  },
+  'low-temperature': {
+    title: 'Conservative Draft',
+    intent: 'Reduce repetition and off-topic drift'
+  }
+};
+
+const localizedPromptPresetRows = (isEnglish = false) => (
+  promptPresetRows.map(preset => ({
+    ...preset,
+    ...(isEnglish ? promptPresetEnglish[preset.key] : undefined)
+  }))
+);
+
+const qualityGateDisplay = (status?: string) => {
+  if (!status) return '-';
+  if (status === 'NOT_CONFIGURED') return 'Not Configured';
+  return status.replaceAll('_', ' ');
+};
+
 const metricItems = (run?: MiniGptRunRecord, logs: MiniGptTrainingLogRecord[] = []) => {
   const latestLog = logs[logs.length - 1];
   return [
@@ -376,13 +472,13 @@ const metricItems = (run?: MiniGptRunRecord, logs: MiniGptTrainingLogRecord[] = 
     { label: 'Eval Loss', value: formatLoss(run?.finalEvalLoss ?? latestLog?.evalLoss) },
     { label: 'Gap', value: formatLoss(run?.lossGap) },
     { label: 'Fixed Eval', value: formatLoss(run?.fixedEvalLoss) },
-    { label: 'Gate', value: run?.qualityGateStatus || '-' },
+    { label: 'Gate', value: qualityGateDisplay(run?.qualityGateStatus) },
     { label: 'Train Tokens', value: formatInteger(run?.trainTokens) },
     { label: 'Eval Tokens', value: formatInteger(run?.evalTokens) }
   ];
 };
 
-const lossDiagnostics = (run?: MiniGptRunRecord, logs: MiniGptTrainingLogRecord[] = []) => {
+const lossDiagnostics = (run?: MiniGptRunRecord, logs: MiniGptTrainingLogRecord[] = [], isEnglish = false) => {
   const firstLog = logs[0];
   const latestLog = logs[logs.length - 1];
   const firstLoss = firstLog?.evalLoss ?? firstLog?.trainLoss;
@@ -400,33 +496,35 @@ const lossDiagnostics = (run?: MiniGptRunRecord, logs: MiniGptTrainingLogRecord[
   return [
     {
       key: 'trend',
-      title: '下降趋势',
+      title: isEnglish ? 'Downtrend' : '下降趋势',
       status: Number.isFinite(improved) && Number(improved) > 0 ? 'PASS' : 'WATCH',
       value: Number.isFinite(improved) ? formatLoss(improved) : '-',
       detail: Number.isFinite(improved) && Number(improved) > 0
-        ? 'eval loss 比开头更低'
-        : '日志不足或下降不明显'
+        ? (isEnglish ? 'eval loss is lower than the first point' : 'eval loss 比开头更低')
+        : (isEnglish ? 'Not enough logs or no clear decrease' : '日志不足或下降不明显')
     },
     {
       key: 'gap',
-      title: '泛化差距',
+      title: isEnglish ? 'Generalization Gap' : '泛化差距',
       status: Number.isFinite(gap) && Math.abs(Number(gap)) <= 0.5 ? 'PASS' : 'WATCH',
       value: formatLoss(gap),
       detail: Number.isFinite(gap) && Math.abs(Number(gap)) <= 0.5
-        ? 'train/eval 暂时接近'
-        : '注意过拟合或验证集分布差异'
+        ? (isEnglish ? 'train/eval are close for now' : 'train/eval 暂时接近')
+        : (isEnglish ? 'Watch overfitting or validation distribution shift' : '注意过拟合或验证集分布差异')
     },
     {
       key: 'validation',
-      title: '验证集',
+      title: isEnglish ? 'Validation Set' : '验证集',
       status: run?.validationEnabled ? 'PASS' : 'WATCH',
       value: run?.validationEnabled ? 'on' : 'off',
-      detail: run?.validationEnabled ? '可以观察泛化' : '语料太短时可能关闭'
+      detail: run?.validationEnabled
+        ? (isEnglish ? 'Generalization can be observed' : '可以观察泛化')
+        : (isEnglish ? 'May be disabled when corpus is too short' : '语料太短时可能关闭')
     }
   ];
 };
 
-const corpusDiagnostics = (corpusInsight?: MiniGptCorpusInsight) => {
+const corpusDiagnostics = (corpusInsight?: MiniGptCorpusInsight, isEnglish = false) => {
   const charCount = corpusInsight?.charCount || 0;
   const lineCount = corpusInsight?.lineCount || 0;
   const vocabSize = corpusInsight?.vocabSize || 0;
@@ -437,31 +535,39 @@ const corpusDiagnostics = (corpusInsight?: MiniGptCorpusInsight) => {
   return [
     {
       key: 'scale',
-      title: '语料规模',
+      title: isEnglish ? 'Corpus Size' : '语料规模',
       status: charCount >= 1000 ? 'pass' : charCount >= 200 ? 'watch' : 'todo',
       value: formatInteger(charCount),
-      detail: charCount >= 1000 ? '足够做小基线' : '先补到 1000 字以上再观察 loss'
+      detail: charCount >= 1000
+        ? (isEnglish ? 'Enough for a small baseline' : '足够做小基线')
+        : (isEnglish ? 'Add at least 1,000 characters before judging loss' : '先补到 1000 字以上再观察 loss')
     },
     {
       key: 'line-density',
-      title: '行密度',
+      title: isEnglish ? 'Line Density' : '行密度',
       status: charsPerLine >= 12 ? 'pass' : lineCount > 0 ? 'watch' : 'todo',
       value: lineCount > 0 ? charsPerLine.toFixed(1) : '-',
-      detail: charsPerLine >= 12 ? '句子上下文较完整' : '行太短会削弱上下文学习'
+      detail: charsPerLine >= 12
+        ? (isEnglish ? 'Sentence context is reasonably complete' : '句子上下文较完整')
+        : (isEnglish ? 'Short lines weaken context learning' : '行太短会削弱上下文学习')
     },
     {
       key: 'vocab-density',
-      title: '词表密度',
+      title: isEnglish ? 'Vocabulary Density' : '词表密度',
       status: vocabDensity > 0 && vocabDensity <= 0.35 ? 'pass' : vocabDensity > 0 ? 'watch' : 'todo',
       value: vocabDensity > 0 ? `${(vocabDensity * 100).toFixed(1)}%` : '-',
-      detail: vocabDensity > 0 && vocabDensity <= 0.35 ? '字符复用较好' : '生僻字符多时需要更多数据'
+      detail: vocabDensity > 0 && vocabDensity <= 0.35
+        ? (isEnglish ? 'Characters are reused well' : '字符复用较好')
+        : (isEnglish ? 'Rare characters need more data' : '生僻字符多时需要更多数据')
     },
     {
       key: 'sample-encode',
-      title: '样例编码',
+      title: isEnglish ? 'Sample Encoding' : '样例编码',
       status: encodedLength >= 8 ? 'pass' : encodedLength > 1 ? 'watch' : 'todo',
       value: encodedLength ? `${encodedLength} tokens` : '-',
-      detail: encodedLength >= 8 ? '可以检查 x/y 平移' : '样例太短，batch 解释不明显'
+      detail: encodedLength >= 8
+        ? (isEnglish ? 'Good enough to inspect the x/y shift' : '可以检查 x/y 平移')
+        : (isEnglish ? 'Sample is too short for a clear batch explanation' : '样例太短，batch 解释不明显')
     }
   ];
 };
@@ -479,7 +585,8 @@ const repeatedCharRatio = (text: string) => {
 const generationDiagnostics = (
   run: MiniGptRunRecord | undefined,
   logs: MiniGptTrainingLogRecord[],
-  generationResult?: MiniGptGenerationResult
+  generationResult?: MiniGptGenerationResult,
+  isEnglish = false
 ) => {
   const generatedText = generationResult?.generatedText || latestSample(logs);
   const prompt = generationResult?.prompt || run?.samplePrompt || '';
@@ -491,31 +598,39 @@ const generationDiagnostics = (
   return [
     {
       key: 'length',
-      title: '输出长度',
+      title: isEnglish ? 'Output Length' : '输出长度',
       status: outputLength >= 60 ? 'pass' : outputLength > 0 ? 'watch' : 'todo',
       value: outputLength ? `${outputLength} chars` : '-',
-      detail: outputLength >= 60 ? '样例足够复盘风格' : '太短时先增加 tokens 或检查 checkpoint'
+      detail: outputLength >= 60
+        ? (isEnglish ? 'Long enough to review style' : '样例足够复盘风格')
+        : (isEnglish ? 'If too short, increase tokens or check the checkpoint' : '太短时先增加 tokens 或检查 checkpoint')
     },
     {
       key: 'repeat',
-      title: '重复程度',
+      title: isEnglish ? 'Repetition' : '重复程度',
       status: outputLength === 0 ? 'todo' : repeatRatio <= 0.08 ? 'pass' : repeatRatio <= 0.18 ? 'watch' : 'todo',
       value: outputLength ? `${(repeatRatio * 100).toFixed(1)}%` : '-',
-      detail: repeatRatio <= 0.08 ? '连续重复较少' : '重复高时调低温度或增加语料'
+      detail: repeatRatio <= 0.08
+        ? (isEnglish ? 'Low consecutive repetition' : '连续重复较少')
+        : (isEnglish ? 'When repetition is high, lower temperature or add corpus text' : '重复高时调低温度或增加语料')
     },
     {
       key: 'prompt',
-      title: 'Prompt 延续',
+      title: isEnglish ? 'Prompt Continuity' : 'Prompt 延续',
       status: outputLength === 0 ? 'todo' : continuedPrompt ? 'pass' : 'watch',
       value: prompt ? (continuedPrompt ? 'matched' : 'check') : '-',
-      detail: prompt ? '确认生成是否接住提示词' : '训练时建议固定采样提示'
+      detail: prompt
+        ? (isEnglish ? 'Confirm generation continues the prompt' : '确认生成是否接住提示词')
+        : (isEnglish ? 'Use a fixed sampling prompt during training' : '训练时建议固定采样提示')
     },
     {
       key: 'latency',
-      title: '采样耗时',
+      title: isEnglish ? 'Sampling Latency' : '采样耗时',
       status: elapsedMillis === undefined ? 'watch' : elapsedMillis <= 3000 ? 'pass' : 'watch',
       value: elapsedMillis === undefined ? '-' : `${elapsedMillis}ms`,
-      detail: elapsedMillis === undefined ? '历史日志样例无耗时' : '同一 checkpoint 可对比采样参数'
+      detail: elapsedMillis === undefined
+        ? (isEnglish ? 'Historical log samples have no latency' : '历史日志样例无耗时')
+        : (isEnglish ? 'Compare sampling parameters on the same checkpoint' : '同一 checkpoint 可对比采样参数')
     }
   ];
 };
@@ -555,15 +670,6 @@ type ReviewQualityItem = {
 };
 
 type LabSectionKey = 'training' | 'corpus' | 'explain' | 'review' | 'generate' | 'records';
-
-const labSectionOptions: Array<{ label: string; value: LabSectionKey }> = [
-  { label: '训练', value: 'training' },
-  { label: '语料', value: 'corpus' },
-  { label: '解释', value: 'explain' },
-  { label: '复盘', value: 'review' },
-  { label: '生成', value: 'generate' },
-  { label: '记录', value: 'records' }
-];
 
 type GenerationRankItem = {
   key: string;
@@ -693,9 +799,9 @@ const uniqueDecisionCandidates = (results: MiniGptGenerationResult[]) => {
   return Array.from(byKey.values());
 };
 
-const resultCandidateText = (result: MiniGptGenerationResult) => {
+const resultCandidateText = (result: MiniGptGenerationResult, isEnglish = false) => {
   const candidate = result.lotteryCandidate;
-  if (!candidate?.parseable) return '未解析';
+  if (!candidate?.parseable) return isEnglish ? 'Unparsed' : '未解析';
   const redNumbers = candidate.valid ? candidate.redNumbers : candidate.repairedRedNumbers;
   const blueNumber = candidate.valid ? candidate.blueNumber : candidate.repairedBlueNumber;
   return `${(redNumbers || []).join(' ')} + ${blueNumber || '--'}`;
@@ -715,7 +821,7 @@ const scoreGenerationResult = (result: MiniGptGenerationResult) => {
   return Math.max(0, Math.min(100, diversity + structure + validity + speed - repeatPenalty));
 };
 
-const generationRankItems = (results: MiniGptGenerationResult[]): GenerationRankItem[] => (
+const generationRankItems = (results: MiniGptGenerationResult[], isEnglish = false): GenerationRankItem[] => (
   results
     .filter(item => item.generatedText || item.lotteryCandidate)
     .map((result, index) => {
@@ -726,12 +832,12 @@ const generationRankItems = (results: MiniGptGenerationResult[]): GenerationRank
       const candidate = result.lotteryCandidate;
       const status = candidate?.valid ? 'VALID' : candidate?.parseable ? 'REPAIR' : text ? 'TEXT' : 'EMPTY';
       const summary = candidate?.valid
-        ? '号码结构合规，可进入候选池'
+        ? (isEnglish ? 'Number structure is valid and can enter the candidate pool' : '号码结构合规，可进入候选池')
         : candidate?.parseable
-          ? '能解析号码，但需要按规则修复'
+          ? (isEnglish ? 'Numbers are parseable, but need rule-based repair' : '能解析号码，但需要按规则修复')
           : repeat > 0.16
-            ? '文本重复偏高，适合降低温度'
-            : '更适合做文本风格观察';
+            ? (isEnglish ? 'Text repetition is high; lower temperature is a better fit' : '文本重复偏高，适合降低温度')
+            : (isEnglish ? 'Better suited for text-style observation' : '更适合做文本风格观察');
       return {
         key: `${result.temperature ?? 't'}-${result.topK ?? 'k'}-${index}`,
         index,
@@ -744,23 +850,23 @@ const generationRankItems = (results: MiniGptGenerationResult[]): GenerationRank
         validity: candidate?.valid ? 100 : candidate?.parseable ? 60 : 15,
         speed: result.elapsedMillis === undefined ? 60 : Math.max(0, Math.min(100, Math.round(100 - result.elapsedMillis / 35))),
         repeatPenalty: Math.round(repeat * 100),
-        candidateText: resultCandidateText(result)
+        candidateText: resultCandidateText(result, isEnglish)
       };
     })
     .sort((left, right) => right.score - left.score)
 );
 
-const buildGenerationRadarOption = (item?: GenerationRankItem) => ({
+const buildGenerationRadarOption = (item?: GenerationRankItem, isEnglish = false) => ({
   color: ['#00c7be'],
   tooltip: {},
   radar: {
     radius: '68%',
     indicator: [
-      { name: '结构', max: 100 },
-      { name: '合规', max: 100 },
-      { name: '多样', max: 100 },
-      { name: '速度', max: 100 },
-      { name: '低重复', max: 100 }
+      { name: isEnglish ? 'Structure' : '结构', max: 100 },
+      { name: isEnglish ? 'Validity' : '合规', max: 100 },
+      { name: isEnglish ? 'Diversity' : '多样', max: 100 },
+      { name: isEnglish ? 'Speed' : '速度', max: 100 },
+      { name: isEnglish ? 'Low Repeat' : '低重复', max: 100 }
     ],
     axisName: {
       color: 'inherit'
@@ -861,25 +967,26 @@ const currentTrainingValue = (
 
 const experimentVariableDiffs = (
   run: MiniGptRunRecord | undefined,
-  values: MiniGptTrainingRequest = {}
+  values: MiniGptTrainingRequest = {},
+  isEnglish = false
 ): ExperimentVariableDiff[] => {
   const rows: Array<[keyof MiniGptTrainingRequest, string, unknown]> = [
-    ['preset', '预设', run?.preset],
-    ['resumeFromRun', '续训来源', run?.parentRunName],
-    ['data', '语料', run?.data],
-    ['evalData', '固定评估集', run?.evalData],
-    ['qualityGateMaxEvalLoss', 'Eval 门禁', run?.qualityGateMaxEvalLoss],
-    ['qualityGateMaxLossGap', 'Gap 门禁', run?.qualityGateMaxLossGap],
-    ['maxSteps', '步数', run?.maxSteps],
+    ['preset', isEnglish ? 'Preset' : '预设', run?.preset],
+    ['resumeFromRun', isEnglish ? 'Resume Source' : '续训来源', run?.parentRunName],
+    ['data', isEnglish ? 'Corpus' : '语料', run?.data],
+    ['evalData', isEnglish ? 'Fixed Eval Set' : '固定评估集', run?.evalData],
+    ['qualityGateMaxEvalLoss', isEnglish ? 'Eval Gate' : 'Eval 门禁', run?.qualityGateMaxEvalLoss],
+    ['qualityGateMaxLossGap', isEnglish ? 'Gap Gate' : 'Gap 门禁', run?.qualityGateMaxLossGap],
+    ['maxSteps', isEnglish ? 'Steps' : '步数', run?.maxSteps],
     ['batchSize', 'Batch Size', run?.batchSize],
     ['learningRate', 'Learning Rate', run?.learningRate],
     ['blockSize', 'Block Size', configNumber(run, 'block_size')],
     ['nEmbd', 'Embedding', configNumber(run, 'n_embd')],
     ['nHead', 'Heads', configNumber(run, 'n_head')],
     ['nLayer', 'Layers', configNumber(run, 'n_layer')],
-    ['valRatio', '验证比例', run?.valRatio],
-    ['samplePrompt', '采样提示', run?.samplePrompt],
-    ['sampleTokens', '采样长度', run?.sampleTokens],
+    ['valRatio', isEnglish ? 'Validation Ratio' : '验证比例', run?.valRatio],
+    ['samplePrompt', isEnglish ? 'Sample Prompt' : '采样提示', run?.samplePrompt],
+    ['sampleTokens', isEnglish ? 'Sample Tokens' : '采样长度', run?.sampleTokens],
     ['temperature', 'Temperature', undefined],
     ['topK', 'Top-K', undefined]
   ];
@@ -895,36 +1002,36 @@ const experimentVariableDiffs = (
     .filter(item => item.from !== item.to);
 };
 
-const variableGuard = (run: MiniGptRunRecord | undefined, diffs: ExperimentVariableDiff[]) => {
+const variableGuard = (run: MiniGptRunRecord | undefined, diffs: ExperimentVariableDiff[], isEnglish = false) => {
   if (!run) {
     return {
       status: 'baseline',
       tagColor: 'blue',
-      title: '基线实验',
-      detail: '这是第一轮实验，先确认训练链路和样例输出。'
+      title: isEnglish ? 'Baseline Run' : '基线实验',
+      detail: isEnglish ? 'This is the first run. Verify the training flow and sample output first.' : '这是第一轮实验，先确认训练链路和样例输出。'
     };
   }
   if (diffs.length === 0) {
     return {
       status: 'idle',
       tagColor: 'default',
-      title: '未选择变量',
-      detail: '当前表单与最新实验一致，建议先应用一个计划项或手动改一个变量。'
+      title: isEnglish ? 'No Variable Selected' : '未选择变量',
+      detail: isEnglish ? 'The current form matches the latest run. Apply a plan item or change one variable manually.' : '当前表单与最新实验一致，建议先应用一个计划项或手动改一个变量。'
     };
   }
   if (diffs.length === 1) {
     return {
       status: 'ready',
       tagColor: 'green',
-      title: '单变量就绪',
-      detail: `本轮只改变 ${diffs[0].label}，适合做对照实验。`
+      title: isEnglish ? 'Single Variable Ready' : '单变量就绪',
+      detail: isEnglish ? `Only ${diffs[0].label} changes in this run. Good for a controlled comparison.` : `本轮只改变 ${diffs[0].label}，适合做对照实验。`
     };
   }
   return {
     status: 'multi',
     tagColor: 'orange',
-    title: '多变量变更',
-    detail: `当前同时改变 ${diffs.length} 个变量，结论可能难以归因。`
+    title: isEnglish ? 'Multiple Changes' : '多变量变更',
+    detail: isEnglish ? `${diffs.length} variables changed at once, which makes conclusions harder to attribute.` : `当前同时改变 ${diffs.length} 个变量，结论可能难以归因。`
   };
 };
 
@@ -933,39 +1040,40 @@ const launchChecklist = (
   corpusItems: ReturnType<typeof corpusDiagnostics>,
   variableState: ReturnType<typeof variableGuard>,
   hasRunNameConflict: boolean,
-  plannedExperiments: PlannedExperiment[]
+  plannedExperiments: PlannedExperiment[],
+  isEnglish = false
 ): LaunchChecklistItem[] => {
   const corpusReady = corpusItems.find(item => item.key === 'scale')?.status === 'pass';
   return [
     {
       key: 'corpus',
-      label: '语料',
+      label: isEnglish ? 'Corpus' : '语料',
       status: corpusReady ? 'PASS' : 'WATCH',
-      detail: corpusReady ? '语料规模足够做小基线' : '语料较短，建议先补文本或降低预期'
+      detail: corpusReady ? (isEnglish ? 'Corpus is large enough for a small baseline' : '语料规模足够做小基线') : (isEnglish ? 'Corpus is short; add text or lower expectations first' : '语料较短，建议先补文本或降低预期')
     },
     {
       key: 'variable',
-      label: '变量',
+      label: isEnglish ? 'Variable' : '变量',
       status: variableState.status === 'ready' || variableState.status === 'baseline' ? 'PASS' : variableState.status === 'multi' ? 'WATCH' : 'TODO',
       detail: variableState.detail
     },
     {
       key: 'run-name',
-      label: '实验名',
+      label: isEnglish ? 'Run Name' : '实验名',
       status: hasRunNameConflict ? 'WATCH' : 'PASS',
-      detail: hasRunNameConflict ? '实验名已存在，先使用替代名' : '实验名不会和已加载历史 run 冲突'
+      detail: hasRunNameConflict ? (isEnglish ? 'Run name already exists; use the alternative first' : '实验名已存在，先使用替代名') : (isEnglish ? 'Run name does not conflict with loaded history' : '实验名不会和已加载历史 run 冲突')
     },
     {
       key: 'plan',
-      label: '计划',
+      label: isEnglish ? 'Plan' : '计划',
       status: plannedExperiments.length ? 'PASS' : 'WATCH',
-      detail: plannedExperiments.length ? `已有 ${plannedExperiments.length} 个待做实验` : '可从下一步建议加入计划'
+      detail: plannedExperiments.length ? (isEnglish ? `${plannedExperiments.length} planned experiments queued` : `已有 ${plannedExperiments.length} 个待做实验`) : (isEnglish ? 'Add items from next suggestions to the plan' : '可从下一步建议加入计划')
     },
     {
       key: 'review',
-      label: '复盘',
+      label: isEnglish ? 'Review' : '复盘',
       status: run?.hypothesis || run?.conclusion ? 'PASS' : run ? 'WATCH' : 'TODO',
-      detail: run ? '建议保留上一轮假设/结论，再启动下一轮' : '首轮实验完成后补复盘'
+      detail: run ? (isEnglish ? 'Keep the previous hypothesis/conclusion before starting the next run' : '建议保留上一轮假设/结论，再启动下一轮') : (isEnglish ? 'Write a review after the first run completes' : '首轮实验完成后补复盘')
     }
   ];
 };
@@ -991,15 +1099,16 @@ const nextExperimentActions = (
   run: MiniGptRunRecord | undefined,
   logs: MiniGptTrainingLogRecord[],
   corpusInsight: MiniGptCorpusInsight | undefined,
-  generationResult?: MiniGptGenerationResult
+  generationResult?: MiniGptGenerationResult,
+  isEnglish = false
 ): NextExperimentAction[] => {
   if (!run) {
     return [
       {
         key: 'start-baseline',
-        title: '先跑 Tiny 基线',
-        reason: '还没有 Mongo run，先确认训练、日志、checkpoint、生成链路都能闭环。',
-        action: '使用 Tiny 基线模板，训练 200 step。',
+        title: isEnglish ? 'Run Tiny Baseline First' : '先跑 Tiny 基线',
+        reason: isEnglish ? 'No Mongo run yet. Confirm training, logs, checkpoints, and generation all close the loop.' : '还没有 Mongo run，先确认训练、日志、checkpoint、生成链路都能闭环。',
+        action: isEnglish ? 'Use the Tiny baseline template and train for 200 steps.' : '使用 Tiny 基线模板，训练 200 step。',
         formValues: {
           preset: 'tiny',
           maxSteps: 200,
@@ -1022,18 +1131,18 @@ const nextExperimentActions = (
   if (charCount > 0 && charCount < 1000) {
     actions.push({
       key: 'expand-corpus',
-      title: '先扩充语料',
-      reason: `当前只有 ${formatInteger(charCount)} 字，loss 和生成质量容易被小样本噪声主导。`,
-      action: '把 data/sample.txt 替换为更长、更统一风格的文本，再重复 Tiny 基线。'
+      title: isEnglish ? 'Expand Corpus First' : '先扩充语料',
+      reason: isEnglish ? `Only ${formatInteger(charCount)} characters are available, so loss and generation quality are easily dominated by small-sample noise.` : `当前只有 ${formatInteger(charCount)} 字，loss 和生成质量容易被小样本噪声主导。`,
+      action: isEnglish ? 'Replace data/sample.txt with longer, more consistent text, then repeat the Tiny baseline.' : '把 data/sample.txt 替换为更长、更统一风格的文本，再重复 Tiny 基线。'
     });
   }
 
   if (run.validationEnabled === false) {
     actions.push({
       key: 'enable-validation',
-      title: '恢复验证集',
-      reason: '没有验证集时只能看到训练文本上的拟合，难以判断泛化。',
-      action: '增加语料或调低 valRatio 后重训，直到 eval loss 可稳定记录。',
+      title: isEnglish ? 'Restore Validation Set' : '恢复验证集',
+      reason: isEnglish ? 'Without a validation set, you only see fit on training text and cannot judge generalization well.' : '没有验证集时只能看到训练文本上的拟合，难以判断泛化。',
+      action: isEnglish ? 'Add corpus text or lower valRatio, then retrain until eval loss is recorded reliably.' : '增加语料或调低 valRatio 后重训，直到 eval loss 可稳定记录。',
       formValues: {
         valRatio: 0.1
       }
@@ -1043,9 +1152,9 @@ const nextExperimentActions = (
   if (Number.isFinite(run.lossGap) && Math.abs(run.lossGap || 0) > 0.5) {
     actions.push({
       key: 'gap-control',
-      title: '控制泛化差距',
-      reason: `当前 loss gap=${formatLoss(run.lossGap)}，训练和验证表现已经分开。`,
-      action: '优先增加数据；若数据暂时不变，就降低 max steps 或模型尺寸做对照。',
+      title: isEnglish ? 'Control Generalization Gap' : '控制泛化差距',
+      reason: isEnglish ? `Current loss gap=${formatLoss(run.lossGap)}, so train and eval behavior have separated.` : `当前 loss gap=${formatLoss(run.lossGap)}，训练和验证表现已经分开。`,
+      action: isEnglish ? 'Prioritize more data; if data stays fixed, lower max steps or model size for comparison.' : '优先增加数据；若数据暂时不变，就降低 max steps 或模型尺寸做对照。',
       formValues: {
         maxSteps: Math.max(80, Math.floor((run.maxSteps || 200) * 0.7))
       }
@@ -1055,9 +1164,9 @@ const nextExperimentActions = (
   if (logs.length >= 2 && Number.isFinite(trainLoss) && Number.isFinite(evalLoss) && Number(evalLoss) > Number(trainLoss) + 0.2) {
     actions.push({
       key: 'regularize',
-      title: '做保守训练对照',
-      reason: 'eval loss 明显高于 train loss，模型可能更会背训练文本。',
-      action: '复制当前实验，只把 learning rate 降低一档或减少训练步数。',
+      title: isEnglish ? 'Run Conservative Training Control' : '做保守训练对照',
+      reason: isEnglish ? 'Eval loss is clearly higher than train loss, so the model may be memorizing training text.' : 'eval loss 明显高于 train loss，模型可能更会背训练文本。',
+      action: isEnglish ? 'Copy the current run and only lower learning rate one level or reduce training steps.' : '复制当前实验，只把 learning rate 降低一档或减少训练步数。',
       formValues: {
         learningRate: Number(((run.learningRate || 0.0003) * 0.5).toPrecision(3)),
         maxSteps: Math.max(80, Math.floor((run.maxSteps || 200) * 0.8))
@@ -1068,16 +1177,16 @@ const nextExperimentActions = (
   if (!sampleText) {
     actions.push({
       key: 'generate-sample',
-      title: '补一次生成样例',
-      reason: '没有生成文本时，loss 只能说明优化过程，不能说明输出行为。',
-      action: '使用固定 Prompt 生成一次，并把结果写入观察笔记。'
+      title: isEnglish ? 'Generate One Sample' : '补一次生成样例',
+      reason: isEnglish ? 'Without generated text, loss only describes optimization, not output behavior.' : '没有生成文本时，loss 只能说明优化过程，不能说明输出行为。',
+      action: isEnglish ? 'Generate once with a fixed prompt and write the result into observation notes.' : '使用固定 Prompt 生成一次，并把结果写入观察笔记。'
     });
   } else if (repeatRatio > 0.12) {
     actions.push({
       key: 'reduce-repeat',
-      title: '降低重复输出',
-      reason: `连续重复比例约 ${(repeatRatio * 100).toFixed(1)}%，生成可能在局部循环。`,
-      action: '先用更低 temperature/top-k 对比；若仍重复，再补语料或减少训练步数。',
+      title: isEnglish ? 'Reduce Repetition' : '降低重复输出',
+      reason: isEnglish ? `Consecutive repetition is about ${(repeatRatio * 100).toFixed(1)}%, suggesting local loops in generation.` : `连续重复比例约 ${(repeatRatio * 100).toFixed(1)}%，生成可能在局部循环。`,
+      action: isEnglish ? 'First compare with lower temperature/top-k; if repetition remains, add corpus text or reduce steps.' : '先用更低 temperature/top-k 对比；若仍重复，再补语料或减少训练步数。',
       formValues: {
         temperature: 0.7,
         topK: 20
@@ -1088,23 +1197,38 @@ const nextExperimentActions = (
   if (!run.hypothesis || !run.conclusion) {
     actions.push({
       key: 'write-notes',
-      title: '补齐实验笔记',
-      reason: '假设和结论缺失时，下一个实验很容易同时改多个变量。',
-      action: '写一句假设、一句观察、一句结论，再只选择一个变量继续。'
+      title: isEnglish ? 'Complete Experiment Notes' : '补齐实验笔记',
+      reason: isEnglish ? 'When hypothesis and conclusion are missing, the next run easily changes multiple variables at once.' : '假设和结论缺失时，下一个实验很容易同时改多个变量。',
+      action: isEnglish ? 'Write one hypothesis, one observation, and one conclusion, then continue with only one variable.' : '写一句假设、一句观察、一句结论，再只选择一个变量继续。'
     });
   }
 
   actions.push({
     key: 'one-variable',
-    title: '下一轮只改一个变量',
-    reason: '单变量对照最容易看清 learning rate、block size、模型容量或采样参数的影响。',
-    action: '从低学习率、长上下文、Small 对照里选一个，和当前 run 做曲线对比。',
+    title: isEnglish ? 'Change Only One Variable Next' : '下一轮只改一个变量',
+    reason: isEnglish ? 'Single-variable controls make it easiest to see the effect of learning rate, block size, model capacity, or sampling parameters.' : '单变量对照最容易看清 learning rate、block size、模型容量或采样参数的影响。',
+    action: isEnglish ? 'Choose one from Low Learning Rate, Long Context, or Small Comparison, then compare curves with the current run.' : '从低学习率、长上下文、Small 对照里选一个，和当前 run 做曲线对比。',
     formValues: {
       learningRate: 0.0001
     }
   });
 
   return actions.slice(0, 5);
+};
+
+const localizePlannedExperiment = (item: PlannedExperiment, isEnglish = false): PlannedExperiment => {
+  if (!isEnglish) return item;
+  const localized = nextExperimentActions(undefined, [], undefined, undefined, true)
+    .find(action => action.key === item.key)
+    || nextExperimentActions({
+      runName: item.sourceRun || 'current',
+      status: 'SUCCESS',
+      validationEnabled: false,
+      maxSteps: item.formValues?.maxSteps,
+      learningRate: item.formValues?.learningRate
+    }, [], { charCount: 222 } as MiniGptCorpusInsight, undefined, true).find(action => action.key === item.key);
+
+  return localized ? { ...item, title: localized.title, reason: localized.reason, action: localized.action } : item;
 };
 
 const configEntries = (run?: MiniGptRunRecord): [string, string][] => {
@@ -1281,7 +1405,8 @@ const modelStages = (run?: MiniGptRunRecord, corpusInsight?: MiniGptCorpusInsigh
 const tensorShapeRows = (
   run: MiniGptRunRecord | undefined,
   corpusInsight: MiniGptCorpusInsight | undefined,
-  encodedSample: number[]
+  encodedSample: number[],
+  isEnglish = false
 ) => {
   const config = run?.config || {};
   const batch = run?.batchSize || config.batch_size || '-';
@@ -1294,31 +1419,31 @@ const tensorShapeRows = (
       key: 'batch-x',
       label: 'x / y',
       shape: `[${batch}, ${block}]`,
-      note: '输入 token 与下一个 token 目标'
+      note: isEnglish ? 'Input tokens and next-token targets' : '输入 token 与下一个 token 目标'
     },
     {
       key: 'embedding',
       label: 'token + position',
       shape: `[${batch}, ${block}, ${embedding}]`,
-      note: '离散 token 进入连续向量空间'
+      note: isEnglish ? 'Discrete tokens enter a continuous vector space' : '离散 token 进入连续向量空间'
     },
     {
       key: 'attention',
       label: 'attention scores',
       shape: `[${batch}, ${heads}, ${block}, ${block}]`,
-      note: '每个位置对历史位置打分'
+      note: isEnglish ? 'Each position scores previous positions' : '每个位置对历史位置打分'
     },
     {
       key: 'logits',
       label: 'logits',
       shape: `[${batch}, ${block}, ${vocab}]`,
-      note: '每个位置预测词表分布'
+      note: isEnglish ? 'Each position predicts a vocabulary distribution' : '每个位置预测词表分布'
     },
     {
       key: 'loss',
       label: 'cross entropy',
       shape: `[${Number.isFinite(Number(batch)) && Number.isFinite(Number(block)) ? Number(batch) * Number(block) : 'B*T'}, ${vocab}]`,
-      note: '展平后计算 next-token loss'
+      note: isEnglish ? 'Flattened before computing next-token loss' : '展平后计算 next-token loss'
     }
   ];
 };
@@ -1375,12 +1500,48 @@ const codeReferenceRows = [
   }
 ];
 
+const localizedCodeReferenceRows = (isEnglish = false) => {
+  if (!isEnglish) return codeReferenceRows;
+  return codeReferenceRows.map(row => ({
+    ...row,
+    ...(row.key === 'tokenizer' ? {
+      note: 'Convert between characters and token ids',
+      action: 'After replacing the corpus, check whether vocab changes'
+    } : {}),
+    ...(row.key === 'batch' ? {
+      note: 'Build x/y next-token samples',
+      action: 'Confirm y is exactly one position after x'
+    } : {}),
+    ...(row.key === 'attention' ? {
+      note: 'Mask, Q/K/V, and attention weights',
+      action: 'Compare the mask to verify future tokens are blocked'
+    } : {}),
+    ...(row.key === 'block' ? {
+      note: 'Attention, MLP, residuals, and layer norm',
+      action: 'Trace tensor shapes before and after residual connections'
+    } : {}),
+    ...(row.key === 'model' ? {
+      note: 'Embeddings, blocks, logits, and loss',
+      action: 'Confirm the last logits dimension equals vocab size'
+    } : {}),
+    ...(row.key === 'train' ? {
+      note: 'AdamW, eval, checkpoint, and logs',
+      action: 'Compare train/eval loss and generated samples'
+    } : {}),
+    ...(row.key === 'generate' ? {
+      note: 'Temperature, top-k, and sampling',
+      action: 'Compare sampling parameters with the same prompt'
+    } : {})
+  }));
+};
+
 type LearningMilestoneStatus = 'done' | 'active' | 'todo';
 
 const learningMilestones = (
   run: MiniGptRunRecord | undefined,
   logs: MiniGptTrainingLogRecord[],
-  corpusInsight: MiniGptCorpusInsight | undefined
+  corpusInsight: MiniGptCorpusInsight | undefined,
+  isEnglish = false
 ) => {
   const hasCorpus = Boolean(corpusInsight?.charCount && corpusInsight.charCount > 0 && corpusInsight.vocabSize);
   const hasBatch = Boolean((corpusInsight?.encodedSample?.length || 0) > 1);
@@ -1401,43 +1562,43 @@ const learningMilestones = (
     {
       key: 'tokenizer',
       title: 'Tokenizer',
-      target: '理解字符如何映射为 token id',
-      evidence: hasCorpus ? `vocab=${formatInteger(corpusInsight?.vocabSize)}` : '等待语料',
+      target: isEnglish ? 'Understand how characters map to token ids' : '理解字符如何映射为 token id',
+      evidence: hasCorpus ? `vocab=${formatInteger(corpusInsight?.vocabSize)}` : (isEnglish ? 'Waiting for corpus' : '等待语料'),
       status: status(hasCorpus, !hasCorpus)
     },
     {
       key: 'batch',
       title: 'Batch',
-      target: '看清 x/y 错位一位的 next-token 目标',
-      evidence: hasBatch ? `${Math.max(0, (corpusInsight?.encodedSample?.length || 1) - 1)} pairs` : '等待样例',
+      target: isEnglish ? 'Verify x/y are shifted by one token for next-token targets' : '看清 x/y 错位一位的 next-token 目标',
+      evidence: hasBatch ? `${Math.max(0, (corpusInsight?.encodedSample?.length || 1) - 1)} pairs` : (isEnglish ? 'Waiting for sample' : '等待样例'),
       status: status(hasBatch, hasCorpus)
     },
     {
       key: 'attention',
       title: 'Causal Attention',
-      target: '确认当前位置只能看见历史 token',
-      evidence: hasBatch ? `${buildMaskSize(run, corpusInsight?.encodedSample || [])}x mask` : '等待 batch',
+      target: isEnglish ? 'Confirm each position can only see historical tokens' : '确认当前位置只能看见历史 token',
+      evidence: hasBatch ? `${buildMaskSize(run, corpusInsight?.encodedSample || [])}x mask` : (isEnglish ? 'Waiting for batch' : '等待 batch'),
       status: status(hasBatch && hasTraining, hasBatch)
     },
     {
       key: 'loss',
       title: 'Loss',
-      target: '比较 train/eval loss 是否一起下降',
-      evidence: hasEval ? `eval=${formatLoss(run?.finalEvalLoss ?? logs[logs.length - 1]?.evalLoss)}` : '等待验证',
+      target: isEnglish ? 'Compare whether train/eval loss fall together' : '比较 train/eval loss 是否一起下降',
+      evidence: hasEval ? `eval=${formatLoss(run?.finalEvalLoss ?? logs[logs.length - 1]?.evalLoss)}` : (isEnglish ? 'Waiting for eval' : '等待验证'),
       status: status(hasEnoughLogs && hasEval, hasTraining)
     },
     {
       key: 'sample',
       title: 'Generate',
-      target: '观察生成文本是否从重复变得更像语料',
-      evidence: hasSample ? '已有样例' : '等待采样',
+      target: isEnglish ? 'Watch whether generated text becomes less repetitive and more corpus-like' : '观察生成文本是否从重复变得更像语料',
+      evidence: hasSample ? (isEnglish ? 'Sample available' : '已有样例') : (isEnglish ? 'Waiting for sampling' : '等待采样'),
       status: status(hasSample, hasEnoughLogs)
     },
     {
       key: 'review',
       title: 'Review',
-      target: '写下假设、观察、结论和下一步',
-      evidence: hasNotes ? '已有笔记' : isFinished ? '待复盘' : '等待实验结束',
+      target: isEnglish ? 'Write the hypothesis, observations, conclusion, and next step' : '写下假设、观察、结论和下一步',
+      evidence: hasNotes ? (isEnglish ? 'Notes available' : '已有笔记') : isFinished ? (isEnglish ? 'Needs review' : '待复盘') : (isEnglish ? 'Waiting for run to finish' : '等待实验结束'),
       status: status(hasNotes, isFinished)
     }
   ];
@@ -1446,33 +1607,41 @@ const learningMilestones = (
 const reviewQuestions = (
   run: MiniGptRunRecord | undefined,
   logs: MiniGptTrainingLogRecord[],
-  generationResult?: MiniGptGenerationResult
+  generationResult?: MiniGptGenerationResult,
+  isEnglish = false
 ) => {
   if (!run) {
-    return [
+    return isEnglish ? [
+      'Run a Tiny baseline first: can the corpus be read and does the tokenizer match expectations?',
+      'Do the training logs record both train/eval loss?',
+      'Does the generated sample show any shadow of the corpus style?'
+    ] : [
       '先跑一次 Tiny 基线：语料能否被读取、tokenizer 是否符合预期？',
       '训练日志里 train/eval loss 是否都有记录？',
       '生成样例是否能看出语料风格的影子？'
     ];
   }
   const latestLog = logs[logs.length - 1];
-  const questions = [
+  const questions = isEnglish ? [
+    `What is the goal of this ${run.preset || 'custom'} run, and which single variable changed from the previous run?`,
+    `At the final step, train=${formatLoss(run.finalTrainLoss ?? latestLog?.trainLoss)} and eval=${formatLoss(run.finalEvalLoss ?? latestLog?.evalLoss)}. Is the trend falling steadily?`
+  ] : [
     `本次 ${run.preset || 'custom'} 实验的目标是什么，和上一个实验只改了哪个变量？`,
     `最后一步 train=${formatLoss(run.finalTrainLoss ?? latestLog?.trainLoss)}、eval=${formatLoss(run.finalEvalLoss ?? latestLog?.evalLoss)}，趋势是否稳定下降？`
   ];
   if (run.validationEnabled === false) {
-    questions.push('验证集没有启用：是语料太短，还是 valRatio 设置不合适？');
+    questions.push(isEnglish ? 'Validation is disabled: is the corpus too short, or is valRatio unsuitable?' : '验证集没有启用：是语料太短，还是 valRatio 设置不合适？');
   }
   if (Number.isFinite(run.lossGap) && Math.abs(run.lossGap || 0) > 0.5) {
-    questions.push(`泛化差距 ${formatLoss(run.lossGap)} 偏大：模型是在记忆训练文本，还是验证集分布不同？`);
+    questions.push(isEnglish ? `The generalization gap ${formatLoss(run.lossGap)} is large: is the model memorizing training text, or is the validation distribution different?` : `泛化差距 ${formatLoss(run.lossGap)} 偏大：模型是在记忆训练文本，还是验证集分布不同？`);
   }
   if (!latestSample(logs) && !generationResult?.generatedText) {
-    questions.push('还没有生成样例：当前 checkpoint 是否保存成功，采样 prompt 是否在词表内？');
+    questions.push(isEnglish ? 'No generated sample yet: was the checkpoint saved successfully, and is the sampling prompt inside the vocabulary?' : '还没有生成样例：当前 checkpoint 是否保存成功，采样 prompt 是否在词表内？');
   } else {
-    questions.push('生成文本里最明显的问题是什么：重复、跑题、标点混乱，还是上下文断裂？');
+    questions.push(isEnglish ? 'What is the most obvious issue in the generated text: repetition, off-topic drift, punctuation noise, or broken context?' : '生成文本里最明显的问题是什么：重复、跑题、标点混乱，还是上下文断裂？');
   }
   if (!run.conclusion) {
-    questions.push('这次实验能形成哪一句结论，下一次要改学习率、上下文长度还是模型容量？');
+    questions.push(isEnglish ? 'What single conclusion can this run support, and should the next run change learning rate, context length, or model capacity?' : '这次实验能形成哪一句结论，下一次要改学习率、上下文长度还是模型容量？');
   }
   return questions.slice(0, 6);
 };
@@ -1483,23 +1652,26 @@ const buildReviewDraft = (
   variableDiffs: ExperimentVariableDiff[],
   checklistItems: LaunchChecklistItem[],
   actionItems: NextExperimentAction[],
-  generationResult?: MiniGptGenerationResult
+  generationResult?: MiniGptGenerationResult,
+  isEnglish = false
 ): MiniGptRunNoteRequest => {
   const latestLog = logs[logs.length - 1];
   const primaryDiff = variableDiffs[0];
   const sampleText = generationResult?.generatedText || latestSample(logs);
-  const watchItems = checklistItems.filter(item => item.status !== 'PASS').map(item => item.label).join('、') || '暂无明显风险';
+  const watchItems = checklistItems.filter(item => item.status !== 'PASS').map(item => item.label).join(isEnglish ? ', ' : '、') || (isEnglish ? 'no obvious risk' : '暂无明显风险');
   const nextAction = actionItems[0];
 
   return {
     hypothesis: primaryDiff
-      ? `如果只调整 ${primaryDiff.label}（${primaryDiff.from} -> ${primaryDiff.to}），应该能更清楚地观察它对 eval loss 和生成样例的影响。`
-      : `本次 ${run?.preset || 'MiniGPT'} 实验先作为观察基线，确认训练链路、loss 记录和生成样例是否稳定。`,
-    observation: `当前 train=${formatLoss(run?.finalTrainLoss ?? latestLog?.trainLoss)}，eval=${formatLoss(run?.finalEvalLoss ?? latestLog?.evalLoss)}；启动检查风险：${watchItems}；生成样例${sampleText ? '已有可复盘输出' : '暂缺，需要补一次采样'}。`,
+      ? (isEnglish ? `If only ${primaryDiff.label} changes (${primaryDiff.from} -> ${primaryDiff.to}), its effect on eval loss and generated samples should be easier to observe.` : `如果只调整 ${primaryDiff.label}（${primaryDiff.from} -> ${primaryDiff.to}），应该能更清楚地观察它对 eval loss 和生成样例的影响。`)
+      : (isEnglish ? `Use this ${run?.preset || 'MiniGPT'} run as an observation baseline to confirm the training path, loss logs, and generated samples are stable.` : `本次 ${run?.preset || 'MiniGPT'} 实验先作为观察基线，确认训练链路、loss 记录和生成样例是否稳定。`),
+    observation: isEnglish
+      ? `Current train=${formatLoss(run?.finalTrainLoss ?? latestLog?.trainLoss)}, eval=${formatLoss(run?.finalEvalLoss ?? latestLog?.evalLoss)}; launch-check risks: ${watchItems}; generated sample is ${sampleText ? 'available for review' : 'missing and needs one sampling run'}.`
+      : `当前 train=${formatLoss(run?.finalTrainLoss ?? latestLog?.trainLoss)}，eval=${formatLoss(run?.finalEvalLoss ?? latestLog?.evalLoss)}；启动检查风险：${watchItems}；生成样例${sampleText ? '已有可复盘输出' : '暂缺，需要补一次采样'}。`,
     conclusion: run?.lossGap !== undefined
-      ? `当前 loss gap=${formatLoss(run.lossGap)}，先把它作为判断过拟合和验证集差异的主要信号。`
-      : '当前日志还不足以下强结论，先保留为待观察状态。',
-    nextStep: nextAction ? `${nextAction.title}：${nextAction.action}` : '下一轮保持单变量对照，并补齐生成样例。'
+      ? (isEnglish ? `Current loss gap=${formatLoss(run.lossGap)}; use it as the main signal for overfitting and validation-set differences.` : `当前 loss gap=${formatLoss(run.lossGap)}，先把它作为判断过拟合和验证集差异的主要信号。`)
+      : (isEnglish ? 'The logs are not enough for a strong conclusion yet; keep this in watch state.' : '当前日志还不足以下强结论，先保留为待观察状态。'),
+    nextStep: nextAction ? `${nextAction.title}: ${nextAction.action}` : (isEnglish ? 'Keep the next run as a single-variable control and add a generated sample.' : '下一轮保持单变量对照，并补齐生成样例。')
   };
 };
 
@@ -1509,7 +1681,8 @@ const reviewDraftSources = (
   variableDiffs: ExperimentVariableDiff[],
   checklistItems: LaunchChecklistItem[],
   actionItems: NextExperimentAction[],
-  generationResult?: MiniGptGenerationResult
+  generationResult?: MiniGptGenerationResult,
+  isEnglish = false
 ) => {
   const latestLog = logs[logs.length - 1];
   const sampleText = generationResult?.generatedText || latestSample(logs);
@@ -1522,33 +1695,33 @@ const reviewDraftSources = (
     },
     {
       key: 'variable',
-      label: '变量',
-      value: variableDiffs[0] ? `${variableDiffs[0].label}: ${variableDiffs[0].from} -> ${variableDiffs[0].to}` : '暂无变量差异'
+      label: isEnglish ? 'Variable' : '变量',
+      value: variableDiffs[0] ? `${variableDiffs[0].label}: ${variableDiffs[0].from} -> ${variableDiffs[0].to}` : (isEnglish ? 'No variable diff' : '暂无变量差异')
     },
     {
       key: 'checklist',
-      label: '启动检查',
-      value: watchCount ? `${watchCount} 项需注意` : '全部通过'
+      label: isEnglish ? 'Launch Check' : '启动检查',
+      value: watchCount ? (isEnglish ? `${watchCount} items need attention` : `${watchCount} 项需注意`) : (isEnglish ? 'All passed' : '全部通过')
     },
     {
       key: 'sample',
-      label: '生成样例',
-      value: sampleText ? '已有输出' : '暂缺采样'
+      label: isEnglish ? 'Sample' : '生成样例',
+      value: sampleText ? (isEnglish ? 'Output available' : '已有输出') : (isEnglish ? 'No sample yet' : '暂缺采样')
     },
     {
       key: 'next',
-      label: '下一步',
-      value: actionItems[0]?.title || '暂无建议'
+      label: isEnglish ? 'Next Step' : '下一步',
+      value: actionItems[0]?.title || (isEnglish ? 'No suggestion' : '暂无建议')
     }
   ];
 };
 
-const reviewQualityItems = (values: MiniGptRunNoteRequest = {}): ReviewQualityItem[] => {
+const reviewQualityItems = (values: MiniGptRunNoteRequest = {}, isEnglish = false): ReviewQualityItem[] => {
   const rows: Array<[keyof MiniGptRunNoteRequest, string, string]> = [
-    ['hypothesis', '假设', '说明本轮实验要验证什么'],
-    ['observation', '观察', '记录 loss、样例或异常现象'],
-    ['conclusion', '结论', '写出当前能确认和不能确认的判断'],
-    ['nextStep', '下一步', '明确下一轮只改哪个变量']
+    ['hypothesis', isEnglish ? 'Hypothesis' : '假设', isEnglish ? 'Explain what this run is testing' : '说明本轮实验要验证什么'],
+    ['observation', isEnglish ? 'Observation' : '观察', isEnglish ? 'Record loss, samples, or abnormal behavior' : '记录 loss、样例或异常现象'],
+    ['conclusion', isEnglish ? 'Conclusion' : '结论', isEnglish ? 'State what is and is not confirmed' : '写出当前能确认和不能确认的判断'],
+    ['nextStep', isEnglish ? 'Next Step' : '下一步', isEnglish ? 'Specify which single variable changes next' : '明确下一轮只改哪个变量']
   ];
 
   return rows.map(([key, label, hint]) => {
@@ -1557,13 +1730,18 @@ const reviewQualityItems = (values: MiniGptRunNoteRequest = {}): ReviewQualityIt
       key,
       label,
       status: length >= 18 ? 'PASS' : length > 0 ? 'WATCH' : 'TODO',
-      detail: length >= 18 ? '内容足够复盘' : length > 0 ? '再补一点具体依据' : hint
+      detail: length >= 18
+        ? (isEnglish ? 'Enough detail for review' : '内容足够复盘')
+        : length > 0
+          ? (isEnglish ? 'Add one more concrete detail' : '再补一点具体依据')
+          : hint
     };
   });
 };
 
 const MiniGptLearningPage = () => {
   const navigate = useNavigate();
+  const { isEnglish } = useAppPreferences();
   const [form] = Form.useForm<MiniGptTrainingRequest>();
   const [noteForm] = Form.useForm<MiniGptRunNoteRequest>();
   const [generationForm] = Form.useForm<MiniGptGenerationRequest>();
@@ -1598,6 +1776,179 @@ const MiniGptLearningPage = () => {
   const watchedTrainingValues = Form.useWatch([], form) as MiniGptTrainingRequest | undefined;
   const watchedRunName = Form.useWatch('runName', form) as string | undefined;
   const watchedNoteValues = Form.useWatch([], noteForm) as MiniGptRunNoteRequest | undefined;
+  const text = useMemo(() => ({
+    title: isEnglish ? 'MiniGPT Learning Lab' : 'MiniGPT 学习实验',
+    selectRun: isEnglish ? 'Select run' : '选择实验',
+    refresh: isEnglish ? 'Refresh' : '刷新',
+    sections: [
+      { label: isEnglish ? 'Training' : '训练', value: 'training' as LabSectionKey },
+      { label: isEnglish ? 'Corpus' : '语料', value: 'corpus' as LabSectionKey },
+      { label: isEnglish ? 'Explain' : '解释', value: 'explain' as LabSectionKey },
+      { label: isEnglish ? 'Review' : '复盘', value: 'review' as LabSectionKey },
+      { label: isEnglish ? 'Generate' : '生成', value: 'generate' as LabSectionKey },
+      { label: isEnglish ? 'Records' : '记录', value: 'records' as LabSectionKey }
+    ],
+    trainingControl: isEnglish ? 'Training Control' : '训练控制',
+    chooseCorpus: isEnglish ? 'Choose Corpus' : '选择语料',
+    chooseCorpusDesc: isEnglish ? 'Pick training data first. Resume sources are limited to checkpoints from the same corpus.' : '先确定训练数据，续训来源会只保留同一语料的 checkpoint。',
+    trainingData: isEnglish ? 'Training Corpus' : '训练语料',
+    trainingDataPlaceholder: isEnglish ? 'Select or enter a corpus path' : '选择或输入语料路径',
+    evalData: isEnglish ? 'Fixed Eval Set' : '固定评估集',
+    lotteryCorpus: isEnglish ? 'Lottery Training Corpus' : '双色球训练语料',
+    drawFormat: isEnglish ? 'Draw Format' : '开奖格式',
+    structuredFeatures: isEnglish ? 'Structured Features' : '结构特征',
+    periods: isEnglish ? 'draws' : '期',
+    lotteryCorpusDesc: isEnglish ? 'Export MiniGPT training text from Mongo lottery records and fill the corpus path automatically.' : '从 Mongo 开奖记录导出 MiniGPT 训练文本，并自动填入语料路径。',
+    setupTraining: isEnglish ? 'Configure Training' : '设置训练',
+    setupTrainingDesc: isEnglish ? 'After choosing the corpus, configure preset, run name, resume source, and training parameters.' : '语料确定后，再配置预设、实验名、续训来源和训练参数。',
+    preset: isEnglish ? 'Preset' : '预设',
+    runName: isEnglish ? 'Run Name' : '实验名',
+    autoNamePlaceholder: isEnglish ? 'Leave blank to auto-generate' : '留空自动生成',
+    name: isEnglish ? 'Name' : '命名',
+    resumeSource: isEnglish ? 'Resume Source' : '续训来源',
+    resumeSourcePlaceholder: isEnglish ? 'Only same-corpus checkpoints are shown' : '仅显示同语料 checkpoint',
+    maxSteps: isEnglish ? 'Steps' : '步数',
+    valRatio: isEnglish ? 'Validation Ratio' : '验证比例',
+    samplePrompt: isEnglish ? 'Sample Prompt' : '采样提示',
+    sampleTokens: isEnglish ? 'Sample Tokens' : '采样长度',
+    evalGate: isEnglish ? 'Eval Gate' : 'Eval 门禁',
+    gapGate: isEnglish ? 'Gap Gate' : 'Gap 门禁',
+    startTraining: isEnglish ? 'Start Training' : '开始训练',
+    cancel: isEnglish ? 'Cancel' : '取消',
+    idle: isEnglish ? 'Idle' : '空闲',
+    noRunningTraining: isEnglish ? 'No running MiniGPT training' : '暂无运行中的 MiniGPT 训练',
+    currentStep: isEnglish ? 'Current Step' : '当前 Step',
+    latestLoss: isEnglish ? 'Latest Loss' : '最近 Loss',
+    updatedAt: isEnglish ? 'Updated At' : '更新时间',
+    environment: isEnglish ? 'Training Environment' : '训练环境',
+    check: isEnglish ? 'Check' : '检查',
+    available: isEnglish ? 'Available' : '可用',
+    unknown: isEnglish ? 'Unknown' : '未确认',
+    unavailable: isEnglish ? 'Unavailable' : '不可用',
+    envDesc: isEnglish ? 'Check the dependency path for Python writing directly to Mongo.' : '检查 Python 直接写 Mongo 的依赖链路',
+    nextDiff: isEnglish ? 'Next Run Variable Diff' : '下一轮变量差异',
+    suggestedRunName: isEnglish ? 'Suggested run name:' : '建议实验名：',
+    runNameExists: isEnglish ? 'Run name already exists. Suggested alternative:' : '实验名已存在，建议改用',
+    useAlternative: isEnglish ? 'Use Alternative' : '使用替代名',
+    keepFirstVariable: isEnglish ? 'Keep First Variable Only' : '只保留第一个变量',
+    unchangedForm: isEnglish ? 'The current training form matches the latest run. Apply a plan item or change one variable manually before the next run.' : '当前训练表单与最新实验一致。应用一个计划项，或只手动改一个变量再开始下一轮。',
+    firstBaseline: isEnglish ? 'No historical runs yet. The current form will be the first Tiny baseline.' : '还没有历史实验，当前表单会作为第一个 Tiny 基线。',
+    launchChecklist: isEnglish ? 'Training Launch Checklist' : '训练启动检查',
+    hparamQuickRef: isEnglish ? 'Parameter Quick Reference' : '参数速查',
+    corpusTokenizer: isEnglish ? 'Corpus and Tokenizer' : '语料与 Tokenizer',
+    refreshCorpus: isEnglish ? 'Refresh Corpus' : '刷新语料',
+    charCount: isEnglish ? 'Characters' : '字符数',
+    lineCount: isEnglish ? 'Lines' : '行数',
+    vocabSize: isEnglish ? 'Vocabulary Size' : '词表大小',
+    corpusPreview: isEnglish ? 'Corpus Preview' : '语料预览',
+    noCorpusPreview: isEnglish ? 'No corpus preview' : '暂无语料预览',
+    processExplain: isEnglish ? 'Training Process Explanation' : '训练过程解释',
+    batchEmpty: isEnglish ? 'No batch sample' : '暂无 batch 样例',
+    learningChecklist: isEnglish ? 'Learning Stage Checklist' : '学习阶段清单',
+    reviewQuestions: isEnglish ? 'Review Questions' : '复盘问题',
+    nextSuggestions: isEnglish ? 'Next Experiment Suggestions' : '下一步实验建议',
+    addToPlan: isEnglish ? 'Add to Plan' : '加入计划',
+    planQueue: isEnglish ? 'Experiment Plan Queue' : '实验计划队列',
+    clearPlan: isEnglish ? 'Clear Plan' : '清空计划',
+    applyToForm: isEnglish ? 'Apply to Form' : '应用到表单',
+    doneRemove: isEnglish ? 'Done / Remove' : '完成/移除',
+    emptyPlan: isEnglish ? 'Add items from next suggestions. Saved locally on this device.' : '从下一步建议加入计划，本机自动保存',
+    noMongoData: isEnglish ? 'No MiniGPT Mongo Data' : '暂无 MiniGPT Mongo 数据',
+    noMongoDesc: isEnglish ? 'Start a tiny training run from the training control above. Completed runs will show experiments, loss curves, and samples here.' : '可以直接使用上方训练控制启动一次 tiny 训练；完成后这里会显示实验、loss 曲线和生成样例。',
+    currentRun: isEnglish ? 'Current Run' : '当前实验',
+    compareNotes: isEnglish ? 'Experiment Comparison and Notes' : '实验对比与笔记',
+    copyReport: isEnglish ? 'Copy Report' : '复制报告',
+    compareRuns: isEnglish ? 'Compare Runs' : '对比实验',
+    compareRunsPlaceholder: isEnglish ? 'Select up to 4 runs' : '选择最多 4 个实验',
+    noCompareLogs: isEnglish ? 'No comparable training logs' : '暂无可对比的训练日志',
+    hypothesis: isEnglish ? 'Training Hypothesis' : '训练假设',
+    hypothesisPlaceholder: isEnglish ? 'Example: lower learning rate reduces eval loss jitter' : '例如：更小学习率会降低 eval loss 抖动',
+    observation: isEnglish ? 'Observation' : '观察记录',
+    observationPlaceholder: isEnglish ? 'Record loss, sample output, or overfitting signals' : '记录 loss、样例输出、过拟合迹象',
+    conclusion: isEnglish ? 'Conclusion' : '阶段结论',
+    conclusionPlaceholder: isEnglish ? 'What this run shows' : '这次实验说明了什么',
+    nextStep: isEnglish ? 'Next Step' : '下一步',
+    nextStepPlaceholder: isEnglish ? 'The next parameter or corpus change' : '下一次要调整的参数或语料',
+    generateReviewDraft: isEnglish ? 'Generate Review Draft' : '生成复盘草稿',
+    saveNotes: isEnglish ? 'Save Notes' : '保存笔记',
+    lossCurve: isEnglish ? 'Loss Curve' : 'Loss 曲线',
+    runningRun: isEnglish ? 'Running Run' : '运行实验',
+    waitingLoss: isEnglish ? 'Waiting for the first loss log' : '等待第一条 loss 日志',
+    insufficientLogs: isEnglish ? 'Insufficient training logs' : '训练日志不足',
+    generationLab: isEnglish ? 'Generation Lab' : '生成试验台',
+    defaultPrompt: isEnglish ? 'language model' : '语言模型',
+    generate: isEnglish ? 'Generate' : '生成',
+    compareParams: isEnglish ? 'Parameter Compare' : '参数对比',
+    currentCheckpointOutput: isEnglish ? 'Current checkpoint output' : '当前 checkpoint 生成结果',
+    noGeneratedSample: isEnglish ? 'No generated sample' : '暂无生成样例',
+    currentBestOutput: isEnglish ? 'Current Best Output' : '当前最佳输出',
+    points: isEnglish ? 'pts' : '分',
+    repeat: isEnglish ? 'Repeat' : '重复',
+    tokenReplay: isEnglish ? 'Token Replay' : 'Token 回放',
+    position: isEnglish ? 'Position' : '位置',
+    source: isEnglish ? 'Source' : '来源',
+    modelGenerated: isEnglish ? 'Model Generated' : '模型生成',
+    lotteryCandidateCheck: isEnglish ? 'Lottery Candidate Check' : '双色球候选校验',
+    redCount: isEnglish ? 'Red Count' : '红球数',
+    redSum: isEnglish ? 'Red Sum' : '和值',
+    span: isEnglish ? 'Span' : '跨度',
+    oddEven: isEnglish ? 'Odd / Even' : '奇偶',
+    candidateValid: isEnglish ? 'Candidate satisfies baseline constraints and can enter the pool or backtest.' : '候选满足基础合规约束，可以进入候选池或回测。',
+    repairReference: isEnglish ? 'Repair reference:' : '修复参考：',
+    lotteryCandidateWaiting: isEnglish ? 'After generating text with 6 red balls and 1 blue ball, this panel parses and checks baseline constraints.' : '生成一段包含 6 个红球和 1 个蓝球的文本后，这里会解析并检查基础约束。',
+    incompleteCandidate: isEnglish ? 'No complete candidate numbers parsed' : '未解析到完整候选号码',
+    config: isEnglish ? 'Run Configuration' : '实验配置',
+    history: isEnglish ? 'Historical Runs' : '历史实验',
+    trainingLogs: isEnglish ? 'Training Logs' : '训练日志'
+  }), [isEnglish]);
+  const displayTrainingRecipes = useMemo(() => (
+    trainingRecipes.map(recipe => ({
+      ...recipe,
+      ...(isEnglish ? trainingRecipeEnglish[recipe.key] : undefined)
+    }))
+  ), [isEnglish]);
+  const displayHyperparameterGuideRows = useMemo(() => (
+    hyperparameterGuideRows.map(row => ({
+      ...row,
+      ...(isEnglish ? hyperparameterGuideEnglish[row.key] : undefined)
+    }))
+  ), [isEnglish]);
+  const environmentMessage = useMemo(() => {
+    const messageText = environmentCheck.message;
+    if (!messageText) return text.envDesc;
+    if (!isEnglish) return messageText;
+    if (messageText.includes('Python 可以直接写 Mongo')) {
+      return 'Python can write directly to Mongo';
+    }
+    return messageText;
+  }, [environmentCheck.message, isEnglish, text.envDesc]);
+  const trainingStageText = useMemo(() => {
+    const stage = trainingStatus.stage;
+    if (!stage) return text.idle;
+    if (!isEnglish) return stage;
+    const stageMap: Record<string, string> = {
+      空闲: 'Idle',
+      运行中: 'Running',
+      训练中: 'Training',
+      已完成: 'Completed',
+      已失败: 'Failed',
+      已取消: 'Cancelled',
+      取消中: 'Cancelling'
+    };
+    return stageMap[stage] || stage;
+  }, [isEnglish, text.idle, trainingStatus.stage]);
+  const trainingStatusMessage = useMemo(() => {
+    const statusMessage = trainingStatus.message;
+    if (!statusMessage) return text.noRunningTraining;
+    if (!isEnglish) return statusMessage;
+    if (statusMessage.includes('暂无运行中的 MiniGPT 训练')) {
+      return text.noRunningTraining;
+    }
+    if (statusMessage.includes('已发送取消请求')) {
+      return 'Cancel request sent';
+    }
+    return statusMessage;
+  }, [isEnglish, text.noRunningTraining, trainingStatus.message]);
 
   const labSectionClass = useCallback((section: LabSectionKey) => (
     `mini-gpt-lab-section ${activeLabSection === section ? 'active' : ''}`
@@ -1801,7 +2152,7 @@ const MiniGptLearningPage = () => {
   }, []);
 
   const handleStartTraining = async (values: MiniGptTrainingRequest) => {
-    const startDiffs = experimentVariableDiffs(run, values);
+    const startDiffs = experimentVariableDiffs(run, values, isEnglish);
     if (run && startDiffs.length === 0) {
       message.warning('当前表单与最新实验一致，建议先修改一个变量再训练');
     }
@@ -1856,7 +2207,7 @@ const MiniGptLearningPage = () => {
   };
 
   const handleDraftReviewNotes = () => {
-    const draft = buildReviewDraft(run, logs, variableDiffItems, launchChecklistItems, nextActionItems, generationResult);
+    const draft = buildReviewDraft(run, logs, variableDiffItems, launchChecklistItems, nextActionItems, generationResult, isEnglish);
     noteForm.setFieldsValue({
       ...noteForm.getFieldsValue(),
       ...draft
@@ -2057,39 +2408,41 @@ const MiniGptLearningPage = () => {
   );
   const sample = latestSample(logs);
   const chartOption = useMemo(() => buildChartOption(logs), [logs]);
-  const lossDiagnosticItems = useMemo(() => lossDiagnostics(run, logs), [logs, run]);
+  const lossDiagnosticItems = useMemo(() => lossDiagnostics(run, logs, isEnglish), [isEnglish, logs, run]);
   const latestStatusLog = trainingStatus.latestLog;
   const trainingPercent = trainingStatus.running ? trainingStatus.percent ?? 1 : trainingStatus.failed ? 100 : trainingStatus.percent ?? 0;
   const encodedSample = useMemo(() => corpusInsight.encodedSample || [], [corpusInsight.encodedSample]);
   const tokenRows = useMemo(() => corpusInsight.tokens || [], [corpusInsight.tokens]);
-  const corpusDiagnosticItems = useMemo(() => corpusDiagnostics(corpusInsight), [corpusInsight]);
+  const corpusDiagnosticItems = useMemo(() => corpusDiagnostics(corpusInsight, isEnglish), [corpusInsight, isEnglish]);
   const batchRows = useMemo(() => buildBatchRows(encodedSample, tokenRows), [encodedSample, tokenRows]);
   const maskSize = useMemo(() => buildMaskSize(run, encodedSample), [encodedSample, run]);
   const architectureStages = useMemo(() => modelStages(run, corpusInsight), [corpusInsight, run]);
-  const shapeRows = useMemo(() => tensorShapeRows(run, corpusInsight, encodedSample), [corpusInsight, encodedSample, run]);
+  const shapeRows = useMemo(() => tensorShapeRows(run, corpusInsight, encodedSample, isEnglish), [corpusInsight, encodedSample, isEnglish, run]);
+  const codeRows = useMemo(() => localizedCodeReferenceRows(isEnglish), [isEnglish]);
+  const displayPromptPresetRows = useMemo(() => localizedPromptPresetRows(isEnglish), [isEnglish]);
   const comparisonChartOption = useMemo(() => buildComparisonChartOption(comparisonLogs), [comparisonLogs]);
-  const comparisonSummary = useMemo(() => comparisonSummaryItems(comparisonLogs), [comparisonLogs]);
-  const milestones = useMemo(() => learningMilestones(run, logs, corpusInsight), [corpusInsight, logs, run]);
-  const reviewQuestionItems = useMemo(() => reviewQuestions(run, logs, generationResult), [generationResult, logs, run]);
+  const comparisonSummary = useMemo(() => comparisonSummaryItems(comparisonLogs, isEnglish), [comparisonLogs, isEnglish]);
+  const milestones = useMemo(() => learningMilestones(run, logs, corpusInsight, isEnglish), [corpusInsight, isEnglish, logs, run]);
+  const reviewQuestionItems = useMemo(() => reviewQuestions(run, logs, generationResult, isEnglish), [generationResult, isEnglish, logs, run]);
   const generationDiagnosticItems = useMemo(
-    () => generationDiagnostics(run, logs, generationResult),
-    [generationResult, logs, run]
+    () => generationDiagnostics(run, logs, generationResult, isEnglish),
+    [generationResult, isEnglish, logs, run]
   );
   const lotteryCandidate = generationResult?.lotteryCandidate;
   const generationRankRows = useMemo(
     () => generationRankItems([
       ...(generationResult ? [generationResult] : []),
       ...generationComparisons
-    ]),
-    [generationComparisons, generationResult]
+    ], isEnglish),
+    [generationComparisons, generationResult, isEnglish]
   );
   const selectedGenerationRank = useMemo(
     () => generationRankRows.find(item => item.key === selectedGenerationKey) || generationRankRows[0],
     [generationRankRows, selectedGenerationKey]
   );
   const generationRadarOption = useMemo(
-    () => buildGenerationRadarOption(selectedGenerationRank),
-    [selectedGenerationRank]
+    () => buildGenerationRadarOption(selectedGenerationRank, isEnglish),
+    [isEnglish, selectedGenerationRank]
   );
   const generationTokenTrace = useMemo(
     () => buildGenerationTokenTrace(generationResult),
@@ -2107,8 +2460,8 @@ const MiniGptLearningPage = () => {
     [generationComparisons, generationResult]
   );
   const nextActionItems = useMemo(
-    () => nextExperimentActions(run, logs, corpusInsight, generationResult),
-    [corpusInsight, generationResult, logs, run]
+    () => nextExperimentActions(run, logs, corpusInsight, generationResult, isEnglish),
+    [corpusInsight, generationResult, isEnglish, logs, run]
   );
   const trainingFormValues = useMemo(
     () => ({ ...form.getFieldsValue(), ...(watchedTrainingValues || {}) }),
@@ -2153,12 +2506,12 @@ const MiniGptLearningPage = () => {
   }, [form, resumeSourceRuns, trainingFormValues.resumeFromRun]);
 
   const variableDiffItems = useMemo(
-    () => experimentVariableDiffs(run, trainingFormValues),
-    [run, trainingFormValues]
+    () => experimentVariableDiffs(run, trainingFormValues, isEnglish),
+    [isEnglish, run, trainingFormValues]
   );
   const variableGuardState = useMemo(
-    () => variableGuard(run, variableDiffItems),
-    [run, variableDiffItems]
+    () => variableGuard(run, variableDiffItems, isEnglish),
+    [isEnglish, run, variableDiffItems]
   );
   const suggestedRunName = useMemo(
     () => variableDiffItems.length === 1 ? buildSuggestedRunName(run, variableDiffItems) : '',
@@ -2173,16 +2526,20 @@ const MiniGptLearningPage = () => {
     [runs, suggestedRunName, watchedRunName]
   );
   const launchChecklistItems = useMemo(
-    () => launchChecklist(run, corpusDiagnosticItems, variableGuardState, runNameExists, plannedExperiments),
-    [corpusDiagnosticItems, plannedExperiments, run, runNameExists, variableGuardState]
+    () => launchChecklist(run, corpusDiagnosticItems, variableGuardState, runNameExists, plannedExperiments, isEnglish),
+    [corpusDiagnosticItems, isEnglish, plannedExperiments, run, runNameExists, variableGuardState]
+  );
+  const displayPlannedExperiments = useMemo(
+    () => plannedExperiments.map(item => localizePlannedExperiment(item, isEnglish)),
+    [isEnglish, plannedExperiments]
   );
   const reviewDraftSourceItems = useMemo(
-    () => reviewDraftSources(run, logs, variableDiffItems, launchChecklistItems, nextActionItems, generationResult),
-    [generationResult, launchChecklistItems, logs, nextActionItems, run, variableDiffItems]
+    () => reviewDraftSources(run, logs, variableDiffItems, launchChecklistItems, nextActionItems, generationResult, isEnglish),
+    [generationResult, isEnglish, launchChecklistItems, logs, nextActionItems, run, variableDiffItems]
   );
   const reviewQualityCheckItems = useMemo(
-    () => reviewQualityItems(noteFormValues),
-    [noteFormValues]
+    () => reviewQualityItems(noteFormValues, isEnglish),
+    [isEnglish, noteFormValues]
   );
   const experimentReport = useMemo(
     () => run ? buildExperimentReport(
@@ -2237,7 +2594,7 @@ const MiniGptLearningPage = () => {
       nextStep: run?.nextStep
     });
     generationForm.setFieldsValue({
-      prompt: run?.samplePrompt || '语言模型',
+      prompt: run?.samplePrompt || text.defaultPrompt,
       maxNewTokens: run?.sampleTokens || 120,
       temperature: 0.9,
       topK: 20
@@ -2248,7 +2605,7 @@ const MiniGptLearningPage = () => {
     setSelectedTraceTokenKey(undefined);
     setSavedCandidateSet(undefined);
     setCandidateBacktest(undefined);
-  }, [generationForm, noteForm, run]);
+  }, [generationForm, noteForm, run, text.defaultPrompt]);
 
   const columns = [
     {
@@ -2269,13 +2626,13 @@ const MiniGptLearningPage = () => {
       render: (value?: number) => formatLoss(value)
     },
     {
-      title: '耗时',
+      title: isEnglish ? 'Elapsed' : '耗时',
       dataIndex: 'elapsedSeconds',
       width: 100,
       render: (value?: number) => Number.isFinite(value) ? `${value}s` : '-'
     },
     {
-      title: '样例',
+      title: isEnglish ? 'Sample' : '样例',
       dataIndex: 'sample',
       render: (value?: string) => <pre className="mini-gpt-table-sample">{value || '-'}</pre>
     }
@@ -2303,13 +2660,13 @@ const MiniGptLearningPage = () => {
   return (
     <LifePageShell
       eyebrow="OneAI / MiniGPT"
-      title="MiniGPT 学习实验"
+      title={text.title}
       className="mini-gpt-page"
       actions={(
         <Space wrap>
           <Select
             className="mini-gpt-run-select"
-            placeholder="选择实验"
+            placeholder={text.selectRun}
             value={selectedRun}
             options={runGroupsByData.map(group => ({
               label: group.data,
@@ -2323,7 +2680,7 @@ const MiniGptLearningPage = () => {
             onChange={(value) => loadDashboard(value)}
           />
           <Button icon={<ReloadOutlined />} onClick={() => loadDashboard(selectedRun)} loading={loading}>
-            刷新
+            {text.refresh}
           </Button>
         </Space>
       )}
@@ -2333,12 +2690,12 @@ const MiniGptLearningPage = () => {
           <section className="mini-gpt-lab-switcher">
             <Segmented
               value={activeLabSection}
-              options={labSectionOptions}
+              options={text.sections}
               onChange={(value) => setActiveLabSection(value as LabSectionKey)}
             />
           </section>
           <section className={labSectionClass('training')}>
-          <Card className="mini-gpt-panel mini-gpt-training-card" title="训练控制">
+          <Card className="mini-gpt-panel mini-gpt-training-card" title={text.trainingControl}>
             <div className="mini-gpt-training-grid">
               <Form
                 form={form}
@@ -2358,27 +2715,27 @@ const MiniGptLearningPage = () => {
                   <div className="mini-gpt-step-head">
                     <Tag color="cyan">1</Tag>
                     <div>
-                      <strong>选择语料</strong>
-                      <p>先确定训练数据，续训来源会只保留同一语料的 checkpoint。</p>
+                      <strong>{text.chooseCorpus}</strong>
+                      <p>{text.chooseCorpusDesc}</p>
                     </div>
                   </div>
                   <div className="mini-gpt-corpus-step-grid">
-                    <Form.Item name="data" label="训练语料">
+                    <Form.Item name="data" label={text.trainingData}>
                       <AutoComplete
                         options={trainingDataOptions}
-                        placeholder="选择或输入语料路径"
+                        placeholder={text.trainingDataPlaceholder}
                         filterOption={(inputValue, option) => (
                           String(option?.value || '').toLowerCase().includes(inputValue.toLowerCase())
                         )}
                       />
                     </Form.Item>
-                    <Form.Item name="evalData" label="固定评估集">
+                    <Form.Item name="evalData" label={text.evalData}>
                       <Input placeholder="例如 data/eval.txt" />
                     </Form.Item>
                   </div>
                   <section className="mini-gpt-lottery-corpus">
                     <div className="mini-gpt-lottery-corpus-head">
-                      <Text type="secondary">双色球训练语料</Text>
+                      <Text type="secondary">{text.lotteryCorpus}</Text>
                       <Space wrap>
                         <Button
                           size="small"
@@ -2387,7 +2744,7 @@ const MiniGptLearningPage = () => {
                           disabled={trainingStatus.running}
                           onClick={() => handleExportLotteryCorpus('raw')}
                         >
-                          开奖格式
+                          {text.drawFormat}
                         </Button>
                         <Button
                           size="small"
@@ -2396,19 +2753,19 @@ const MiniGptLearningPage = () => {
                           disabled={trainingStatus.running}
                           onClick={() => handleExportLotteryCorpus('features')}
                         >
-                          结构特征
+                          {text.structuredFeatures}
                         </Button>
                       </Space>
                     </div>
                     {lotteryCorpusExport ? (
                       <div className="mini-gpt-lottery-corpus-result">
                         <Tag color="cyan">{lotteryCorpusExport.format}</Tag>
-                        <span>{lotteryCorpusExport.drawCount || 0} 期</span>
+                        <span>{lotteryCorpusExport.drawCount || 0} {text.periods}</span>
                         <code>{lotteryCorpusExport.dataPath || '-'}</code>
                         <p>{lotteryCorpusExport.firstIssue || '-'} - {lotteryCorpusExport.latestIssue || '-'}</p>
                       </div>
                     ) : (
-                      <p>从 Mongo 开奖记录导出 MiniGPT 训练文本，并自动填入语料路径。</p>
+                      <p>{text.lotteryCorpusDesc}</p>
                     )}
                   </section>
                 </section>
@@ -2416,12 +2773,12 @@ const MiniGptLearningPage = () => {
                   <div className="mini-gpt-step-head">
                     <Tag color="blue">2</Tag>
                     <div>
-                      <strong>设置训练</strong>
-                      <p>语料确定后，再配置预设、实验名、续训来源和训练参数。</p>
+                      <strong>{text.setupTraining}</strong>
+                      <p>{text.setupTrainingDesc}</p>
                     </div>
                   </div>
                   <div className="mini-gpt-training-step-grid">
-                    <Form.Item name="preset" label="预设">
+                    <Form.Item name="preset" label={text.preset}>
                       <Select
                         options={[
                           { value: 'tiny', label: 'tiny' },
@@ -2431,9 +2788,9 @@ const MiniGptLearningPage = () => {
                         ]}
                       />
                     </Form.Item>
-                    <Form.Item name="runName" label="实验名">
+                    <Form.Item name="runName" label={text.runName}>
                       <Input
-                        placeholder="留空自动生成"
+                        placeholder={text.autoNamePlaceholder}
                         addonAfter={(
                           <Button
                             type="link"
@@ -2441,15 +2798,15 @@ const MiniGptLearningPage = () => {
                             disabled={variableDiffItems.length !== 1}
                             onClick={handleSuggestRunName}
                           >
-                            命名
+                            {text.name}
                           </Button>
                         )}
                       />
                     </Form.Item>
-                    <Form.Item name="resumeFromRun" label="续训来源">
+                    <Form.Item name="resumeFromRun" label={text.resumeSource}>
                       <Select
                         allowClear
-                        placeholder="仅显示同语料 checkpoint"
+                        placeholder={text.resumeSourcePlaceholder}
                         options={resumeSourceRuns
                           .map(item => ({
                             value: item.runName,
@@ -2459,16 +2816,16 @@ const MiniGptLearningPage = () => {
                           }))}
                       />
                     </Form.Item>
-                    <Form.Item name="maxSteps" label="步数">
+                    <Form.Item name="maxSteps" label={text.maxSteps}>
                       <InputNumber min={1} max={5000} />
                     </Form.Item>
-                    <Form.Item name="valRatio" label="验证比例">
+                    <Form.Item name="valRatio" label={text.valRatio}>
                       <InputNumber min={0} max={0.5} step={0.05} />
                     </Form.Item>
-                    <Form.Item name="samplePrompt" label="采样提示">
+                    <Form.Item name="samplePrompt" label={text.samplePrompt}>
                       <Input />
                     </Form.Item>
-                    <Form.Item name="sampleTokens" label="采样长度">
+                    <Form.Item name="sampleTokens" label={text.sampleTokens}>
                       <InputNumber min={1} max={500} />
                     </Form.Item>
                   </div>
@@ -2498,15 +2855,15 @@ const MiniGptLearningPage = () => {
                   <Form.Item name="topK" label="Top-K">
                     <InputNumber min={1} max={200} />
                   </Form.Item>
-                  <Form.Item name="qualityGateMaxEvalLoss" label="Eval 门禁">
+                  <Form.Item name="qualityGateMaxEvalLoss" label={text.evalGate}>
                     <InputNumber min={0} max={20} step={0.1} />
                   </Form.Item>
-                  <Form.Item name="qualityGateMaxLossGap" label="Gap 门禁">
+                  <Form.Item name="qualityGateMaxLossGap" label={text.gapGate}>
                     <InputNumber min={0} max={10} step={0.05} />
                   </Form.Item>
                 </section>
                 <section className="mini-gpt-recipe-grid">
-                  {trainingRecipes.map(recipe => (
+                  {displayTrainingRecipes.map(recipe => (
                     <button
                       type="button"
                       key={recipe.key}
@@ -2519,7 +2876,7 @@ const MiniGptLearningPage = () => {
                   ))}
                 </section>
                 <Form.Item className="mini-gpt-training-actions">
-                  <Space wrap>
+                  <Space>
                     <Button
                       type="primary"
                       htmlType="submit"
@@ -2527,7 +2884,7 @@ const MiniGptLearningPage = () => {
                       loading={starting}
                       disabled={trainingStatus.running}
                     >
-                      开始训练
+                      {text.startTraining}
                     </Button>
                     <Button
                       danger
@@ -2536,7 +2893,7 @@ const MiniGptLearningPage = () => {
                       disabled={!trainingStatus.running}
                       onClick={handleCancelTraining}
                     >
-                      取消
+                      {text.cancel}
                     </Button>
                   </Space>
                 </Form.Item>
@@ -2545,7 +2902,7 @@ const MiniGptLearningPage = () => {
               <div className="mini-gpt-status-panel">
                 <Space wrap>
                   <Tag color={trainingStatus.running ? 'processing' : trainingStatus.failed ? 'error' : trainingStatus.cancelled ? 'warning' : 'default'}>
-                    {trainingStatus.stage || '空闲'}
+                    {trainingStageText}
                   </Tag>
                   {trainingStatus.runName && <Tag>{trainingStatus.runName}</Tag>}
                 </Space>
@@ -2553,37 +2910,37 @@ const MiniGptLearningPage = () => {
                   percent={trainingPercent}
                   status={trainingStatus.failed ? 'exception' : trainingStatus.running ? 'active' : 'normal'}
                 />
-                <p>{trainingStatus.message || '暂无运行中的 MiniGPT 训练'}</p>
+                <p>{trainingStatusMessage}</p>
                 <dl>
                   <div>
-                    <dt>当前 Step</dt>
+                    <dt>{text.currentStep}</dt>
                     <dd>{formatInteger(trainingStatus.processedStep)} / {formatInteger(trainingStatus.totalSteps)}</dd>
                   </div>
                   <div>
-                    <dt>最近 Loss</dt>
+                    <dt>{text.latestLoss}</dt>
                     <dd>{formatLoss(latestStatusLog?.evalLoss)}</dd>
                   </div>
                   <div>
-                    <dt>更新时间</dt>
+                    <dt>{text.updatedAt}</dt>
                     <dd>{formatTime(trainingStatus.updatedAt)}</dd>
                   </div>
                 </dl>
                 <section className="mini-gpt-env-check">
                   <div className="mini-gpt-env-check-head">
-                    <Text type="secondary">训练环境</Text>
+                    <Text type="secondary">{text.environment}</Text>
                     <Space wrap>
                       <Tag color={environmentCheck.status === 'PASS' ? 'green' : 'orange'}>
                         {environmentCheck.status || 'CHECK'}
                       </Tag>
                       <Button size="small" icon={<ReloadOutlined />} loading={environmentLoading} onClick={() => loadEnvironmentCheck()}>
-                        检查
+                        {text.check}
                       </Button>
                     </Space>
                   </div>
                   <div className="mini-gpt-env-check-grid">
                     <div className={environmentCheck.pythonAvailable ? 'pass' : 'watch'}>
                       <span>Python</span>
-                      <strong>{environmentCheck.pythonAvailable ? '可用' : '未确认'}</strong>
+                      <strong>{environmentCheck.pythonAvailable ? text.available : text.unknown}</strong>
                     </div>
                     <div className={environmentCheck.pymongoAvailable ? 'pass' : 'watch'}>
                       <span>pymongo</span>
@@ -2591,16 +2948,16 @@ const MiniGptLearningPage = () => {
                     </div>
                     <div className={environmentCheck.mongoAvailable ? 'pass' : 'watch'}>
                       <span>Mongo</span>
-                      <strong>{environmentCheck.mongoAvailable ? environmentCheck.mongoDb || 'test' : '不可用'}</strong>
+                      <strong>{environmentCheck.mongoAvailable ? environmentCheck.mongoDb || 'test' : text.unavailable}</strong>
                     </div>
                   </div>
-                  <p>{environmentCheck.message || '检查 Python 直接写 Mongo 的依赖链路'}</p>
+                  <p>{environmentMessage}</p>
                 </section>
               </div>
             </div>
             <section className="mini-gpt-variable-diff">
               <div className="mini-gpt-variable-diff-head">
-                <Text type="secondary">下一轮变量差异</Text>
+                <Text type="secondary">{text.nextDiff}</Text>
                 <Space wrap>
                   <Tag color={variableGuardState.tagColor}>{variableGuardState.title}</Tag>
                   <Tag color={variableDiffItems.length === 1 ? 'green' : variableDiffItems.length > 1 ? 'orange' : 'default'}>
@@ -2610,19 +2967,19 @@ const MiniGptLearningPage = () => {
               </div>
               <p className={`mini-gpt-variable-guard ${variableGuardState.status}`}>{variableGuardState.detail}</p>
               {suggestedRunName && (
-                <p className="mini-gpt-run-name-suggestion">建议实验名：<code>{suggestedRunName}</code></p>
+                <p className="mini-gpt-run-name-suggestion"> {text.suggestedRunName} <code>{suggestedRunName}</code></p>
               )}
               {runNameExists && (
                 <div className="mini-gpt-run-name-conflict">
-                  <Text type="secondary">实验名已存在，建议改用 <code>{fallbackRunName}</code></Text>
+                  <Text type="secondary">{text.runNameExists} <code>{fallbackRunName}</code></Text>
                   <Button size="small" onClick={() => form.setFieldsValue({ ...form.getFieldsValue(), runName: fallbackRunName })}>
-                    使用替代名
+                    {text.useAlternative}
                   </Button>
                 </div>
               )}
               {run && variableDiffItems.length > 1 && (
                 <Button size="small" onClick={handleKeepFirstVariableOnly}>
-                  只保留第一个变量
+                  {text.keepFirstVariable}
                 </Button>
               )}
               {run ? (
@@ -2637,15 +2994,15 @@ const MiniGptLearningPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p>当前训练表单与最新实验一致。应用一个计划项，或只手动改一个变量再开始下一轮。</p>
+                  <p>{text.unchangedForm}</p>
                 )
               ) : (
-                <p>还没有历史实验，当前表单会作为第一个 Tiny 基线。</p>
+                <p>{text.firstBaseline}</p>
               )}
             </section>
             <section className="mini-gpt-launch-checklist">
               <div className="mini-gpt-variable-diff-head">
-                <Text type="secondary">训练启动检查</Text>
+                <Text type="secondary">{text.launchChecklist}</Text>
                 <Tag color={launchChecklistItems.every(item => item.status === 'PASS') ? 'green' : 'orange'}>
                   {launchChecklistItems.filter(item => item.status === 'PASS').length} / {launchChecklistItems.length}
                 </Tag>
@@ -2662,9 +3019,9 @@ const MiniGptLearningPage = () => {
             </section>
           </Card>
 
-          <Card className="mini-gpt-panel" title="参数速查">
+          <Card className="mini-gpt-panel" title={text.hparamQuickRef}>
             <div className="mini-gpt-hparam-grid">
-              {hyperparameterGuideRows.map(row => (
+              {displayHyperparameterGuideRows.map(row => (
                 <section className="mini-gpt-hparam-card" key={row.key}>
                   <div>
                     <strong>{row.label}</strong>
@@ -2681,23 +3038,23 @@ const MiniGptLearningPage = () => {
           <section className={labSectionClass('corpus')}>
           <Card
             className="mini-gpt-panel"
-            title="语料与 Tokenizer"
-            extra={<Button size="small" icon={<ReloadOutlined />} onClick={() => loadCorpusInsight()}>刷新语料</Button>}
+            title={text.corpusTokenizer}
+            extra={<Button size="small" icon={<ReloadOutlined />} onClick={() => loadCorpusInsight()}>{text.refreshCorpus}</Button>}
           >
             <Spin spinning={corpusLoading}>
               <div className="mini-gpt-tokenizer-grid">
                 <div className="mini-gpt-corpus-overview">
                   <section className="mini-gpt-tokenizer-metrics">
                     <div>
-                      <span>字符数</span>
+                      <span>{text.charCount}</span>
                       <strong>{formatInteger(corpusInsight.charCount)}</strong>
                     </div>
                     <div>
-                      <span>行数</span>
+                      <span>{text.lineCount}</span>
                       <strong>{formatInteger(corpusInsight.lineCount)}</strong>
                     </div>
                     <div>
-                      <span>词表大小</span>
+                      <span>{text.vocabSize}</span>
                       <strong>{formatInteger(corpusInsight.vocabSize)}</strong>
                     </div>
                   </section>
@@ -2714,8 +3071,8 @@ const MiniGptLearningPage = () => {
                     ))}
                   </section>
                   <div className="mini-gpt-tokenizer-block">
-                    <Text type="secondary">语料预览</Text>
-                    <pre>{corpusInsight.preview || '暂无语料预览'}</pre>
+                    <Text type="secondary">{text.corpusPreview}</Text>
+                    <pre>{corpusInsight.preview || text.noCorpusPreview}</pre>
                   </div>
                   <div className="mini-gpt-tokenizer-block">
                     <Text type="secondary">Encode / Decode</Text>
@@ -2738,7 +3095,7 @@ const MiniGptLearningPage = () => {
           </section>
 
           <section className={labSectionClass('explain')}>
-          <Card className="mini-gpt-panel" title="训练过程解释">
+          <Card className="mini-gpt-panel" title={text.processExplain}>
             <div className="mini-gpt-explain-grid">
               <section className="mini-gpt-explain-section">
                 <div className="mini-gpt-explain-heading">
@@ -2754,7 +3111,7 @@ const MiniGptLearningPage = () => {
                       <code>{row.targetToken}</code>
                     </div>
                   )) : (
-                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无 batch 样例" />
+                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={text.batchEmpty} />
                   )}
                 </div>
               </section>
@@ -2812,7 +3169,7 @@ const MiniGptLearningPage = () => {
             </div>
 
             <div className="mini-gpt-code-map">
-              {codeReferenceRows.map(row => (
+              {codeRows.map(row => (
                 <section className="mini-gpt-code-card" key={row.key}>
                   <span>{row.concept}</span>
                   <code>{row.symbol}</code>
@@ -2823,14 +3180,18 @@ const MiniGptLearningPage = () => {
             </div>
           </Card>
 
-          <Card className="mini-gpt-panel" title="学习阶段清单">
+          <Card className="mini-gpt-panel" title={text.learningChecklist}>
             <div className="mini-gpt-learning-grid">
               {milestones.map(item => (
                 <section className={`mini-gpt-learning-card ${item.status}`} key={item.key}>
                   <div className="mini-gpt-learning-card-head">
                     <strong>{item.title}</strong>
                     <Tag color={item.status === 'done' ? 'success' : item.status === 'active' ? 'processing' : 'default'}>
-                      {item.status === 'done' ? '完成' : item.status === 'active' ? '进行中' : '待开始'}
+                      {item.status === 'done'
+                        ? (isEnglish ? 'Done' : '完成')
+                        : item.status === 'active'
+                          ? (isEnglish ? 'In Progress' : '进行中')
+                          : (isEnglish ? 'Pending' : '待开始')}
                     </Tag>
                   </div>
                   <p>{item.target}</p>
@@ -2842,7 +3203,7 @@ const MiniGptLearningPage = () => {
           </section>
 
           <section className={labSectionClass('review')}>
-          <Card className="mini-gpt-panel" title="复盘问题">
+          <Card className="mini-gpt-panel" title={text.reviewQuestions}>
             <ol className="mini-gpt-review-list">
               {reviewQuestionItems.map(question => (
                 <li key={question}>{question}</li>
@@ -2850,7 +3211,7 @@ const MiniGptLearningPage = () => {
             </ol>
           </Card>
 
-          <Card className="mini-gpt-panel" title="下一步实验建议">
+          <Card className="mini-gpt-panel" title={text.nextSuggestions}>
             <div className="mini-gpt-next-actions">
               {nextActionItems.map(item => (
                 <section key={item.key}>
@@ -2858,7 +3219,7 @@ const MiniGptLearningPage = () => {
                   <strong>{item.title}</strong>
                   <p>{item.action}</p>
                   <Button size="small" onClick={() => handleAddPlan(item)}>
-                    加入计划
+                    {text.addToPlan}
                   </Button>
                 </section>
               ))}
@@ -2867,16 +3228,16 @@ const MiniGptLearningPage = () => {
 
           <Card
             className="mini-gpt-panel"
-            title="实验计划队列"
+            title={text.planQueue}
             extra={(
               <Button size="small" onClick={handleClearPlans} disabled={!plannedExperiments.length}>
-                清空计划
+                {text.clearPlan}
               </Button>
             )}
           >
             {plannedExperiments.length ? (
               <div className="mini-gpt-plan-list">
-                {plannedExperiments.map(item => (
+                {displayPlannedExperiments.map(item => (
                   <section key={item.id}>
                     <div>
                       <strong>{item.title}</strong>
@@ -2889,17 +3250,17 @@ const MiniGptLearningPage = () => {
                     )}
                     <Space wrap>
                       <Button size="small" onClick={() => handleApplyPlanToForm(item)} disabled={!item.formValues}>
-                        应用到表单
+                        {text.applyToForm}
                       </Button>
                       <Button size="small" onClick={() => handleRemovePlan(item.id)}>
-                        完成/移除
+                        {text.doneRemove}
                       </Button>
                     </Space>
                   </section>
                 ))}
               </div>
             ) : (
-              <Empty description="从下一步建议加入计划，本机自动保存" />
+              <Empty description={text.emptyPlan} />
             )}
           </Card>
           </section>
@@ -2909,15 +3270,15 @@ const MiniGptLearningPage = () => {
               type="info"
               showIcon
               icon={<DatabaseOutlined />}
-              message="暂无 MiniGPT Mongo 数据"
-              description="可以直接使用上方训练控制启动一次 tiny 训练；完成后这里会显示实验、loss 曲线和生成样例。"
+              message={text.noMongoData}
+              description={text.noMongoDesc}
             />
           ) : (
             <>
             <section className={labSectionClass('records')}>
             <section className="mini-gpt-summary-band">
               <div>
-                <Text type="secondary">当前实验</Text>
+                <Text type="secondary">{text.currentRun}</Text>
                 <h2>{run.runName}</h2>
                 <Space wrap>
                   <Tag color={statusColor(run.status)}>{run.status || 'UNKNOWN'}</Tag>
@@ -2968,20 +3329,20 @@ const MiniGptLearningPage = () => {
             <section className={labSectionClass('review')}>
             <Card
               className="mini-gpt-panel"
-              title="实验对比与笔记"
+              title={text.compareNotes}
               extra={(
                 <Button size="small" icon={<CopyOutlined />} onClick={handleCopyReport} disabled={!run}>
-                  复制报告
+                  {text.copyReport}
                 </Button>
               )}
             >
               <div className="mini-gpt-comparison-grid">
                 <section className="mini-gpt-comparison-chart-panel">
                   <div className="mini-gpt-comparison-toolbar">
-                    <Text type="secondary">对比实验</Text>
+                    <Text type="secondary">{text.compareRuns}</Text>
                     <Select
                       mode="multiple"
-                      placeholder="选择最多 4 个实验"
+                      placeholder={text.compareRunsPlaceholder}
                       value={comparisonRunNames}
                       options={runs.map(item => ({
                         value: item.runName,
@@ -3015,7 +3376,7 @@ const MiniGptLearningPage = () => {
                       </section>
                     </>
                   ) : (
-                    <Empty description="暂无可对比的训练日志" />
+                    <Empty description={text.noCompareLogs} />
                   )}
                 </section>
 
@@ -3042,24 +3403,24 @@ const MiniGptLearningPage = () => {
                       </div>
                     ))}
                   </section>
-                  <Form.Item name="hypothesis" label="训练假设">
-                    <Input.TextArea rows={3} placeholder="例如：更小学习率会降低 eval loss 抖动" />
+                  <Form.Item name="hypothesis" label={text.hypothesis}>
+                    <Input.TextArea rows={3} placeholder={text.hypothesisPlaceholder} />
                   </Form.Item>
-                  <Form.Item name="observation" label="观察记录">
-                    <Input.TextArea rows={3} placeholder="记录 loss、样例输出、过拟合迹象" />
+                  <Form.Item name="observation" label={text.observation}>
+                    <Input.TextArea rows={3} placeholder={text.observationPlaceholder} />
                   </Form.Item>
-                  <Form.Item name="conclusion" label="阶段结论">
-                    <Input.TextArea rows={3} placeholder="这次实验说明了什么" />
+                  <Form.Item name="conclusion" label={text.conclusion}>
+                    <Input.TextArea rows={3} placeholder={text.conclusionPlaceholder} />
                   </Form.Item>
-                  <Form.Item name="nextStep" label="下一步">
-                    <Input.TextArea rows={2} placeholder="下一次要调整的参数或语料" />
+                  <Form.Item name="nextStep" label={text.nextStep}>
+                    <Input.TextArea rows={2} placeholder={text.nextStepPlaceholder} />
                   </Form.Item>
                   <Space wrap>
                     <Button onClick={handleDraftReviewNotes} disabled={!run?.runName}>
-                      生成复盘草稿
+                      {text.generateReviewDraft}
                     </Button>
                     <Button type="primary" htmlType="submit" loading={savingNotes} disabled={!run?.runName}>
-                      保存笔记
+                      {text.saveNotes}
                     </Button>
                   </Space>
                 </Form>
@@ -3068,16 +3429,16 @@ const MiniGptLearningPage = () => {
             </section>
 
             <section className={labSectionClass('generate')}>
-            <section className="mini-gpt-main-grid">
-              <Card className="mini-gpt-panel" title="Loss 曲线">
+            <section className="mini-gpt-main-grid mini-gpt-generate-grid">
+              <Card className="mini-gpt-panel" title={text.lossCurve}>
                 {trainingStatus.runName && (
                   <section className="mini-gpt-live-loss">
                     <div>
-                      <span>运行实验</span>
+                      <span>{text.runningRun}</span>
                       <strong>{trainingStatus.runName}</strong>
                     </div>
                     <div>
-                      <span>当前 Step</span>
+                      <span>{text.currentStep}</span>
                       <strong>{formatInteger(trainingStatus.processedStep)} / {formatInteger(trainingStatus.totalSteps)}</strong>
                     </div>
                     <div>
@@ -3093,13 +3454,13 @@ const MiniGptLearningPage = () => {
                 {logs.length ? (
                   <ReactECharts option={chartOption} className="mini-gpt-chart" notMerge />
                 ) : (
-                  <Empty description={trainingStatus.running ? '等待第一条 loss 日志' : '训练日志不足'} />
+                  <Empty description={trainingStatus.running ? text.waitingLoss : text.insufficientLogs} />
                 )}
               </Card>
 
-              <Card className="mini-gpt-panel" title="生成试验台">
+              <Card className="mini-gpt-panel" title={text.generationLab}>
                 <section className="mini-gpt-prompt-presets">
-                  {promptPresetRows.map(preset => (
+                  {displayPromptPresetRows.map(preset => (
                     <button
                       type="button"
                       key={preset.key}
@@ -3135,10 +3496,10 @@ const MiniGptLearningPage = () => {
                     </Form.Item>
                     <Space wrap className="mini-gpt-generation-buttons">
                       <Button type="primary" htmlType="submit" loading={generating} disabled={!run?.checkpoint}>
-                        生成
+                        {text.generate}
                       </Button>
                       <Button loading={comparingGeneration} disabled={!run?.checkpoint} onClick={handleCompareGeneration}>
-                        参数对比
+                        {text.compareParams}
                       </Button>
                     </Space>
                   </div>
@@ -3147,10 +3508,10 @@ const MiniGptLearningPage = () => {
                   <Text type="secondary">
                     {generationResult?.elapsedMillis !== undefined
                       ? `${generationResult.runName || run.runName} · ${generationResult.elapsedMillis}ms`
-                      : '当前 checkpoint 生成结果'}
+                      : text.currentCheckpointOutput}
                   </Text>
                   <pre className="mini-gpt-sample">
-                    {generationResult?.generatedText || sample || '暂无生成样例'}
+                    {generationResult?.generatedText || sample || text.noGeneratedSample}
                   </pre>
                   <section className="mini-gpt-generation-diagnostics">
                     {generationDiagnosticItems.map(item => (
@@ -3165,11 +3526,11 @@ const MiniGptLearningPage = () => {
                     <section className="mini-gpt-generation-cockpit">
                       <div className="mini-gpt-generation-best">
                         <div>
-                          <Text type="secondary">当前最佳输出</Text>
+                          <Text type="secondary">{text.currentBestOutput}</Text>
                           <strong>{selectedGenerationRank.candidateText}</strong>
                         </div>
                         <Tag color={selectedGenerationRank.status === 'VALID' ? 'green' : selectedGenerationRank.status === 'REPAIR' ? 'orange' : 'blue'}>
-                          {selectedGenerationRank.score} pts
+                          {selectedGenerationRank.score} {text.points}
                         </Tag>
                         <p>{selectedGenerationRank.summary}</p>
                         <dl>
@@ -3182,7 +3543,7 @@ const MiniGptLearningPage = () => {
                             <dd>{selectedGenerationRank.result.topK ?? '-'}</dd>
                           </div>
                           <div>
-                            <dt>重复</dt>
+                            <dt>{text.repeat}</dt>
                             <dd>{selectedGenerationRank.repeatPenalty}%</dd>
                           </div>
                         </dl>
@@ -3193,7 +3554,7 @@ const MiniGptLearningPage = () => {
                   {generationTokenTrace.length > 0 && (
                     <section className="mini-gpt-token-replay">
                       <div className="mini-gpt-lottery-candidate-head">
-                        <Text type="secondary">Token 回放</Text>
+                        <Text type="secondary">{text.tokenReplay}</Text>
                         <Space wrap>
                           <Tag color="blue">prompt</Tag>
                           <Tag color="green">generated</Tag>
@@ -3220,12 +3581,12 @@ const MiniGptLearningPage = () => {
                       {selectedTraceToken && (
                         <div className="mini-gpt-token-replay-detail">
                           <div>
-                            <span>位置</span>
+                            <span>{text.position}</span>
                             <strong>#{selectedTraceToken.index}</strong>
                           </div>
                           <div>
-                            <span>来源</span>
-                            <strong>{selectedTraceToken.role === 'prompt' ? 'Prompt' : '模型生成'}</strong>
+                            <span>{text.source}</span>
+                            <strong>{selectedTraceToken.role === 'prompt' ? 'Prompt' : text.modelGenerated}</strong>
                           </div>
                           <div>
                             <span>Code Point</span>
@@ -3241,7 +3602,7 @@ const MiniGptLearningPage = () => {
                   )}
                   <section className="mini-gpt-lottery-candidate-check">
                     <div className="mini-gpt-lottery-candidate-head">
-                      <Text type="secondary">双色球候选校验</Text>
+                      <Text type="secondary">{text.lotteryCandidateCheck}</Text>
                       <Tag color={lotteryCandidateStatusColor(lotteryCandidate?.status)}>
                         {lotteryCandidate?.status || 'WAITING'}
                       </Tag>
@@ -3256,19 +3617,19 @@ const MiniGptLearningPage = () => {
                         </div>
                         <div className="mini-gpt-lottery-candidate-metrics">
                           <div>
-                            <span>红球数</span>
+                            <span>{text.redCount}</span>
                             <strong>{lotteryCandidate.redCount ?? '-'}</strong>
                           </div>
                           <div>
-                            <span>和值</span>
+                            <span>{text.redSum}</span>
                             <strong>{lotteryCandidate.redSum ?? '-'}</strong>
                           </div>
                           <div>
-                            <span>跨度</span>
+                            <span>{text.span}</span>
                             <strong>{lotteryCandidate.span ?? '-'}</strong>
                           </div>
                           <div>
-                            <span>奇偶</span>
+                            <span>{text.oddEven}</span>
                             <strong>{lotteryCandidate.oddCount ?? '-'} / {lotteryCandidate.evenCount ?? '-'}</strong>
                           </div>
                         </div>
@@ -3279,17 +3640,17 @@ const MiniGptLearningPage = () => {
                             ))}
                           </ul>
                         ) : (
-                          <p>候选满足基础合规约束，可以进入候选池或回测。</p>
+                          <p>{text.candidateValid}</p>
                         )}
                         {(lotteryCandidate.repairedRedNumbers?.length || lotteryCandidate.repairedBlueNumber) && !lotteryCandidate.valid && (
                           <p>
-                            修复参考：
+                            {text.repairReference}
                             <code>{lotteryCandidate.repairedRedNumbers?.join(' ') || '--'} + {lotteryCandidate.repairedBlueNumber || '--'}</code>
                           </p>
                         )}
                       </>
                     ) : (
-                      <p>生成一段包含 6 个红球和 1 个蓝球的文本后，这里会解析并检查基础约束。</p>
+                      <p>{text.lotteryCandidateWaiting}</p>
                     )}
                   </section>
                   {decisionCandidateSelections.length > 0 && (
@@ -3401,7 +3762,7 @@ const MiniGptLearningPage = () => {
                                 {item.lotteryCandidate.blueNumber || '--'}
                               </p>
                             ) : (
-                              <p>未解析到完整候选号码</p>
+                              <p>{text.incompleteCandidate}</p>
                             )}
                             <pre>{item.generatedText || '-'}</pre>
                           </article>
@@ -3416,7 +3777,7 @@ const MiniGptLearningPage = () => {
 
             <section className={labSectionClass('records')}>
             <section className="mini-gpt-main-grid">
-              <Card className="mini-gpt-panel" title="实验配置">
+              <Card className="mini-gpt-panel" title={text.config}>
                 <dl className="mini-gpt-config-list">
                   {configEntries(run).map(([key, value]) => (
                     <div key={key}>
@@ -3427,7 +3788,7 @@ const MiniGptLearningPage = () => {
                 </dl>
               </Card>
 
-              <Card className="mini-gpt-panel" title="历史实验">
+              <Card className="mini-gpt-panel" title={text.history}>
                 <div className="mini-gpt-run-list">
                   {runGroupsByData.map(group => (
                     <section className="mini-gpt-run-group" key={group.data}>
@@ -3452,7 +3813,7 @@ const MiniGptLearningPage = () => {
               </Card>
             </section>
 
-            <Card className="mini-gpt-panel" title="训练日志">
+            <Card className="mini-gpt-panel" title={text.trainingLogs}>
               <Table
                 rowKey={(record) => `${record.runName}-${record.step}`}
                 columns={columns}

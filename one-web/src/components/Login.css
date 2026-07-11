@@ -69,6 +69,26 @@
   box-shadow: none !important;
 }
 
+.login-language-switcher {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.login-language-switcher .ant-select {
+  min-width: 112px;
+}
+
+.login-language-switcher .ant-select-selector,
+.login-language-switcher .ant-select-arrow,
+.login-language-switcher .ant-select-selection-item {
+  color: rgba(255, 255, 255, 0.86) !important;
+}
+
 .app-theme-light .login-card.ant-card,
 .app-theme-dark .login-card.ant-card,
 .app-theme-light .login-card.ant-card > .ant-card-body,

@@ -143,8 +143,11 @@
 
 .mini-gpt-metric strong {
   color: var(--mini-gpt-text);
-  font-size: 24px;
+  font-size: clamp(18px, 2vw, 24px);
   letter-spacing: 0;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .mini-gpt-diagnostic-grid {
@@ -195,6 +198,11 @@
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
   gap: 16px;
+}
+
+.mini-gpt-generate-grid {
+  grid-template-columns: 1fr;
+  align-items: start;
 }
 
 .mini-gpt-live-loss {
@@ -268,7 +276,16 @@
 }
 
 .mini-gpt-training-actions {
+  grid-column: 1 / -1;
   align-self: end;
+  justify-self: end;
+  width: auto;
+  margin-top: 12px;
+}
+
+.mini-gpt-training-actions .ant-form-item-control-input-content {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .mini-gpt-corpus-step,
@@ -1312,6 +1329,10 @@
   height: 340px;
 }
 
+.mini-gpt-generate-grid .mini-gpt-chart {
+  height: 300px;
+}
+
 .mini-gpt-learning-grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -1676,7 +1697,7 @@
 
 .mini-gpt-prompt-presets {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
   gap: 10px;
   margin-bottom: 14px;
 }
@@ -1707,11 +1728,11 @@
 }
 
 .mini-gpt-prompt-presets strong {
-  overflow: hidden;
   color: var(--mini-gpt-text);
   font-size: 13px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.3;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .mini-gpt-prompt-presets span {
@@ -1737,9 +1758,14 @@
 
 .mini-gpt-generation-controls {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  grid-template-columns: repeat(3, minmax(96px, 1fr));
   gap: 10px;
   align-items: end;
+}
+
+.mini-gpt-generation-buttons {
+  grid-column: 1 / -1;
+  justify-self: end;
 }
 
 .mini-gpt-generation-controls .ant-input-number {
@@ -1838,7 +1864,7 @@
 
 .mini-gpt-generation-best dl {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
   gap: 8px;
   margin: 0;
 }
@@ -1846,6 +1872,7 @@
 .mini-gpt-generation-best dl div {
   display: grid;
   gap: 4px;
+  min-width: 0;
   min-height: 58px;
   padding: 9px;
   border: 1px solid var(--mini-gpt-border);
@@ -1857,6 +1884,7 @@
   color: var(--mini-gpt-muted);
   font-size: 12px;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .mini-gpt-generation-best dd {
@@ -1864,6 +1892,7 @@
   color: var(--mini-gpt-text);
   font-size: 15px;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .mini-gpt-generation-radar {
@@ -2283,6 +2312,16 @@
 
   .mini-gpt-generation-controls {
     grid-template-columns: 1fr;
+  }
+
+  .mini-gpt-generation-buttons {
+    justify-self: stretch;
+  }
+
+  .mini-gpt-generation-buttons,
+  .mini-gpt-generation-buttons .ant-space-item,
+  .mini-gpt-generation-buttons .ant-btn {
+    width: 100%;
   }
 
   .mini-gpt-candidate-set-save {

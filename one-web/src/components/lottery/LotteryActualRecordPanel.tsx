@@ -7,6 +7,7 @@ import {
   type LotteryActualRecord,
   type LotteryLatestPrediction
 } from '../../services/api';
+import { useI18n } from '../../contexts/I18nContext';
 
 interface LotteryActualRecordPanelProps {
   prediction?: LotteryLatestPrediction;
@@ -26,6 +27,7 @@ const LotteryActualRecordPanel = ({
   onPredictionUpdated,
   onActualRecordUpdated
 }: LotteryActualRecordPanelProps) => {
+  const { t, translateText } = useI18n();
   const [form] = Form.useForm();
   const [record, setRecord] = useState<LotteryActualRecord | undefined>();
   const [saving, setSaving] = useState(false);
@@ -55,7 +57,7 @@ const LotteryActualRecordPanel = ({
     const values = await form.validateFields();
     const redNumbers = splitNumbers(values.redNumbers);
     if (redNumbers.length !== 6) {
-      message.error('请输入 6 个红球号码');
+      message.error(t('请输入 6 个红球号码'));
       return;
     }
     setSaving(true);
@@ -69,10 +71,10 @@ const LotteryActualRecordPanel = ({
       onActualRecordUpdated?.(saved);
       const latestPrediction = await lotteryTrainingApi.latestPrediction();
       onPredictionUpdated?.(latestPrediction);
-      message.success('最新中奖记录已保存');
+      message.success(t('最新中奖记录已保存'));
     } catch (error) {
       console.error('保存最新中奖记录失败:', error);
-      message.error('保存失败，请检查号码格式');
+      message.error(t('保存失败，请检查号码格式'));
     } finally {
       setSaving(false);
     }
@@ -82,33 +84,33 @@ const LotteryActualRecordPanel = ({
     <section className="lottery-clean-panel lottery-actual-record-panel">
       <div className="lottery-card-title-row">
         <div>
-          <h2>最新中奖记录</h2>
-          <p>手动录入最新期开奖，保存到 Redis 后用于给训练后预测打分。</p>
+          <h2>{t('最新中奖记录')}</h2>
+          <p>{t('手动录入最新期开奖，保存到 Redis 后用于给训练后预测打分。')}</p>
         </div>
         <TrophyOutlined />
       </div>
 
       <div className="lottery-actual-record-grid">
         <Form form={form} layout="vertical" className="lottery-actual-form">
-          <Form.Item name="period" label="期号">
-            <InputNumber min={1} placeholder="例如 2026" />
+          <Form.Item name="period" label={t('期号')}>
+            <InputNumber min={1} placeholder={t('例如 2026')} />
           </Form.Item>
           <Form.Item
             name="redNumbers"
-            label="红球"
-            rules={[{ required: true, message: '请输入 6 个红球号码' }]}
+            label={t('红球')}
+            rules={[{ required: true, message: t('请输入 6 个红球号码') }]}
           >
-            <Input placeholder="例如 03 05 16 18 29 32" />
+            <Input placeholder={t('例如 03 05 16 18 29 32')} />
           </Form.Item>
           <Form.Item
             name="blueNumber"
-            label="蓝球"
-            rules={[{ required: true, message: '请输入蓝球号码' }]}
+            label={t('蓝球')}
+            rules={[{ required: true, message: t('请输入蓝球号码') }]}
           >
-            <Input placeholder="例如 04" />
+            <Input placeholder={t('例如 04')} />
           </Form.Item>
           <Button type="primary" icon={<SaveOutlined />} loading={saving} onClick={saveRecord}>
-            保存中奖记录
+            {t('保存中奖记录')}
           </Button>
         </Form>
 
@@ -116,24 +118,26 @@ const LotteryActualRecordPanel = ({
           {record ? (
             <>
               <div>
-                <strong>已保存第 {record.period || prediction?.targetPeriod} 期</strong>
+                <strong>
+                  {t('已保存第 {{period}} 期', { period: record.period || prediction?.targetPeriod || '-' })}
+                </strong>
                 <LotteryBalls redNumbers={record.redNumbers} blueNumber={record.blueNumber} />
               </div>
               {prediction?.result ? (
                 <div className="lottery-actual-score">
                   <Tag color={prediction.result.prizeName === '未中奖' ? 'default' : 'blue'}>
-                    {prediction.result.prizeName}
+                    {translateText(prediction.result.prizeName)}
                   </Tag>
-                  <span>红球 {prediction.result.redHits}/6</span>
-                  <span>{prediction.result.blueHit ? '蓝球命中' : '蓝球未中'}</span>
-                  <span>评分 {prediction.result.score}</span>
+                  <span>{t('红球 {{hits}}/6', { hits: prediction.result.redHits })}</span>
+                  <span>{prediction.result.blueHit ? t('蓝球命中') : t('蓝球未中')}</span>
+                  <span>{t('评分 {{score}}', { score: prediction.result.score })}</span>
                 </div>
               ) : (
-                <span>保存后会对训练后预测进行评分</span>
+                <span>{t('保存后会对训练后预测进行评分')}</span>
               )}
             </>
           ) : (
-            <span>尚未保存最新中奖记录</span>
+            <span>{t('尚未保存最新中奖记录')}</span>
           )}
         </div>
       </div>

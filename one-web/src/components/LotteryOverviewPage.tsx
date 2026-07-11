@@ -1,16 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Empty, Space, Spin, Tag } from 'antd';
-import { BarChartOutlined, DatabaseOutlined, FileTextOutlined, PieChartOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Alert, Button, Card, Empty, message, Space, Spin, Tag } from 'antd';
+import { DatabaseOutlined, SyncOutlined } from '@ant-design/icons';
 import type { EChartsOption } from 'echarts';
-import ReactECharts from 'echarts-for-react';
+import ReactECharts from './LotteryLocalizedECharts';
 import { useNavigate } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
-import LotteryAiPanel from './lottery/LotteryAiPanel';
 import LotteryBalls from './lottery/LotteryBalls';
 import LotteryFrequencyCharts from './lottery/LotteryFrequencyCharts';
 import LotteryPeriodDetail from './lottery/LotteryPeriodDetail';
 import LotterySummaryCards from './lottery/LotterySummaryCards';
+import { useI18n } from '../contexts/I18nContext';
 import { useRecordContext } from '../contexts/RecordContext';
+import { localizeLotteryCombination, type TranslateText } from '../i18n/formatLotteryText';
 import { lotteryRecordApi, lotteryStatisticsApi, type LotteryStatisticsSummary, type RecordYearCount } from '../services/api';
 import { buildLotteryStats, getRecentDraws, type LotteryDraw } from '../utils/lotteryStats';
 import './LotteryOverviewPage.css';
@@ -52,7 +53,12 @@ const getCurrentThemeKey = () => {
   return document.documentElement.dataset.theme || 'dark';
 };
 
-const createYearlyPieOption = (yearlyCounts: RecordYearCount[], themeKey: string): EChartsOption => ({
+// eslint-disable-next-line react-refresh/only-export-components
+export const createYearlyPieOption = (
+  yearlyCounts: RecordYearCount[],
+  themeKey: string,
+  translateText: TranslateText,
+): EChartsOption => ({
   backgroundColor: 'transparent',
   color: themeKey === 'light' ? YEARLY_PIE_COLORS : YEARLY_PIE_DARK_COLORS,
   tooltip: {
@@ -60,7 +66,7 @@ const createYearlyPieOption = (yearlyCounts: RecordYearCount[], themeKey: string
   },
   series: [
     {
-      name: '年度记录数',
+      name: translateText('年度记录数'),
       type: 'pie',
       radius: ['56%', '74%'],
       center: ['50%', '50%'],
@@ -78,7 +84,7 @@ const createYearlyPieOption = (yearlyCounts: RecordYearCount[], themeKey: string
         show: true,
         formatter: params => {
           const item = params as { name: string; value: number };
-          return `${item.name}年\n${item.value}条`;
+          return translateText('{{year}}年\n{{count}}条', { year: item.name, count: item.value });
         },
         color: getThemeValue('--app-text-muted', '#6b7280'),
         fontSize: 10,
@@ -107,11 +113,11 @@ const createYearlyPieOption = (yearlyCounts: RecordYearCount[], themeKey: string
   ]
 });
 
-const formatDateTime = (timestamp?: number) => {
+const formatDateTime = (timestamp: number | undefined, language: string) => {
   if (!timestamp) {
     return undefined;
   }
-  return new Date(timestamp).toLocaleString('zh-CN', {
+  return new Date(timestamp).toLocaleString(language, {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
@@ -121,20 +127,22 @@ const formatDateTime = (timestamp?: number) => {
 
 const LotteryOverviewPage = () => {
   const navigate = useNavigate();
+  const { language, t, translateText } = useI18n();
+  const [messageApi, messageContextHolder] = message.useMessage();
   const { allRecords, loading, refreshRecords } = useRecordContext();
   const [selectedDraw, setSelectedDraw] = useState<LotteryDraw | undefined>();
   const [statisticsSummary, setStatisticsSummary] = useState<LotteryStatisticsSummary>();
   const [statisticsLoading, setStatisticsLoading] = useState(false);
-  const [statisticsRefreshing, setStatisticsRefreshing] = useState(false);
   const [statisticsError, setStatisticsError] = useState(false);
   const [yearlyCounts, setYearlyCounts] = useState<RecordYearCount[]>([]);
   const [yearlyCountsLoading, setYearlyCountsLoading] = useState(false);
-  const [yearlyCountsRefreshing, setYearlyCountsRefreshing] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [updateError, setUpdateError] = useState<string>();
   const [yearlyThemeKey, setYearlyThemeKey] = useState(getCurrentThemeKey);
   const stats = useMemo(() => buildLotteryStats(allRecords), [allRecords]);
   const redFrequency = statisticsSummary?.redFrequency ?? stats.redFrequency;
   const blueFrequency = statisticsSummary?.blueFrequency ?? stats.blueFrequency;
-  const statisticsGeneratedAt = formatDateTime(statisticsSummary?.generatedAt);
+  const statisticsGeneratedAt = formatDateTime(statisticsSummary?.generatedAt, language);
   const statisticsStale = Boolean(
     statisticsSummary && stats.draws.length > 0 && statisticsSummary.totalDraws !== stats.draws.length
   );
@@ -150,8 +158,8 @@ const LotteryOverviewPage = () => {
     [yearlyCounts]
   );
   const yearlyPieOption = useMemo(
-    () => createYearlyPieOption(sortedYearlyCounts, yearlyThemeKey),
-    [sortedYearlyCounts, yearlyThemeKey]
+    () => createYearlyPieOption(sortedYearlyCounts, yearlyThemeKey, t),
+    [sortedYearlyCounts, yearlyThemeKey, t]
   );
 
   useEffect(() => {
@@ -191,34 +199,42 @@ const LotteryOverviewPage = () => {
     }
   };
 
-  const handleRefreshRecords = async () => {
-    await refreshRecords();
-    await Promise.all([fetchYearlyCounts(), fetchStatisticsSummary()]);
-  };
-
-  const handleRefreshYearlyCounts = async () => {
-    setYearlyCountsRefreshing(true);
+  const handleUpdateAll = async () => {
+    setUpdating(true);
+    setUpdateError(undefined);
+    let syncCompleted = false;
     try {
-      const data = await lotteryRecordApi.refreshYearlyCounts();
-      setYearlyCounts(data);
-    } catch (error) {
-      console.error('手动统计年度记录失败:', error);
-    } finally {
-      setYearlyCountsRefreshing(false);
-    }
-  };
+      const syncResult = await lotteryRecordApi.sync();
+      if (syncResult.status === 'FAILED') {
+        throw new Error(syncResult.message ? translateText(syncResult.message) : t('开奖记录同步失败'));
+      }
+      if (syncResult.status !== 'SUCCESS') {
+        messageApi.warning(syncResult.message ? translateText(syncResult.message) : t('同步未完成，请稍后重试'));
+        return;
+      }
+      syncCompleted = true;
 
-  const handleRefreshStatistics = async () => {
-    setStatisticsRefreshing(true);
-    setStatisticsError(false);
-    try {
-      const data = await lotteryStatisticsApi.refreshSummary();
-      setStatisticsSummary(data);
+      const [nextYearlyCounts, nextStatisticsSummary] = await Promise.all([
+        lotteryRecordApi.refreshYearlyCounts(),
+        lotteryStatisticsApi.refreshSummary(),
+        refreshRecords()
+      ]);
+      setYearlyCounts(nextYearlyCounts);
+      setStatisticsSummary(nextStatisticsSummary);
+      setStatisticsError(false);
+      messageApi.success(t('一键更新完成'));
     } catch (error) {
-      console.error('手动重算彩票统计失败:', error);
-      setStatisticsError(true);
+      console.error('一键更新彩票数据失败:', error);
+      const detail = error instanceof Error && error.message
+        ? translateText(error.message)
+        : t('一键更新失败，请稍后重试');
+      const errorMessage = syncCompleted
+        ? t('开奖记录已同步，但统计或页面刷新失败：{{message}}', { message: detail })
+        : detail;
+      setUpdateError(errorMessage);
+      messageApi.error(errorMessage);
     } finally {
-      setStatisticsRefreshing(false);
+      setUpdating(false);
     }
   };
 
@@ -230,63 +246,43 @@ const LotteryOverviewPage = () => {
   return (
     <LifePageShell
       className="lottery-overview-page"
-      eyebrow="彩票数据"
-      title="双色球数据概览"
+      eyebrow={t('彩票数据')}
+      title={t('双色球数据概览')}
       actions={
         <Space wrap>
-          <LotteryAiPanel stats={stats} recentDraws={recentDraws} />
-          <Button icon={<ReloadOutlined />} loading={loading || yearlyCountsLoading} onClick={handleRefreshRecords}>
-            更新数据
-          </Button>
           <Button
-            icon={<BarChartOutlined />}
-            loading={statisticsLoading || statisticsRefreshing}
-            onClick={handleRefreshStatistics}
+            type="primary"
+            icon={<SyncOutlined />}
+            loading={updating}
+            disabled={loading || statisticsLoading || yearlyCountsLoading}
+            onClick={handleUpdateAll}
           >
-            重算统计
+            {t('一键更新')}
           </Button>
-          <Button icon={<PieChartOutlined />} onClick={() => navigate('/lottery/statistics?tab=frequency')}>
-            统计分析
-          </Button>
-          <Button icon={<FileTextOutlined />} onClick={() => navigate('/lottery/tickets')}>
-            票据
-          </Button>
-          <Button icon={<PieChartOutlined />} onClick={() => navigate('/lottery/ledger')}>
-            账本
-          </Button>
-          <Button type="primary" icon={<DatabaseOutlined />} onClick={() => navigate('/lottery/records')}>
-            开奖记录
+          <Button icon={<DatabaseOutlined />} onClick={() => navigate('/lottery/records')}>
+            {t('开奖记录')}
           </Button>
         </Space>
       }
     >
-      {(statisticsLoading || statisticsRefreshing || statisticsError || statisticsStale || syncNeeded) && (
+      {messageContextHolder}
+      {(updating || statisticsLoading || updateError || statisticsError || statisticsStale || syncNeeded) && (
         <Alert
           className="lottery-overview-status-alert"
-          type={statisticsError || statisticsStale ? 'warning' : 'info'}
+          type={updateError ? 'error' : statisticsError || statisticsStale ? 'warning' : 'info'}
           showIcon
           message={
-            syncNeeded
-              ? '暂无开奖记录，请先同步数据'
-              : statisticsLoading || statisticsRefreshing
-                ? '正在加载彩票统计'
-                : statisticsStale
-                  ? '统计缓存与当前开奖记录数不一致'
-                  : '统计服务暂不可用，当前使用本地开奖记录计算'
-          }
-          action={
-            <Space className="lottery-overview-alert-actions" wrap>
-              {statisticsStale && (
-                <Button size="small" loading={statisticsRefreshing} onClick={handleRefreshStatistics}>
-                  重算
-                </Button>
-              )}
-              {syncNeeded && (
-                <Button size="small" loading={loading} onClick={handleRefreshRecords}>
-                  同步
-                </Button>
-              )}
-            </Space>
+            updating
+              ? t('正在一键更新彩票数据')
+              : updateError
+                ? updateError
+                : syncNeeded
+                  ? t('暂无开奖记录，请点击一键更新')
+                  : statisticsLoading
+                    ? t('正在加载彩票统计')
+                    : statisticsStale
+                      ? t('统计缓存与当前开奖记录数不一致')
+                      : t('统计服务暂不可用，当前使用本地开奖记录计算')
           }
         />
       )}
@@ -295,11 +291,13 @@ const LotteryOverviewPage = () => {
         <Card className="life-panel-card lottery-latest-card">
           <div className="lottery-card-title-row">
             <div>
-              <h2>最近开奖</h2>
-              <p>最近四期开奖记录，点击查看完整结构。</p>
+              <h2>{t('最近开奖')}</h2>
+              <p>{t('最近四期开奖记录，点击查看完整结构。')}</p>
             </div>
             <Tag color={recentTopDraws.length ? 'success' : 'default'}>
-              {recentTopDraws.length ? `${statisticsSummary?.totalDraws ?? stats.draws.length} 期` : '暂无数据'}
+              {recentTopDraws.length
+                ? t('{{count}} 期', { count: statisticsSummary?.totalDraws ?? stats.draws.length })
+                : t('暂无数据')}
             </Tag>
           </div>
 
@@ -308,57 +306,56 @@ const LotteryOverviewPage = () => {
               {recentTopDraws.map(draw => (
                 <button key={draw.id} type="button" className="lottery-draw-card lottery-latest-draw-card" onClick={() => setSelectedDraw(draw)}>
                   <div className="lottery-draw-card-head">
-                    <strong>第 {draw.period} 期</strong>
-                    <span>{draw.combination}</span>
+                    <strong>{t('第 {{period}} 期', { period: draw.period })}</strong>
+                    <span>{localizeLotteryCombination(draw.combination, t, translateText)}</span>
                   </div>
                   <LotteryBalls redNumbers={draw.redNumbers} blueNumber={draw.blueNumber} />
                   <div className="lottery-draw-meta">
-                    <span>和值 {draw.redSum}</span>
-                    <span>{draw.hexagramName}</span>
-                    <span>{draw.planetName}</span>
+                    <span>{t('和值 {{sum}}', { sum: draw.redSum })}</span>
+                    <span>{translateText(draw.hexagramName)}</span>
+                    <span>{translateText(draw.planetName)}</span>
                   </div>
                 </button>
               ))}
             </div>
           ) : (
-            <Empty description="暂无开奖数据" />
+            <Empty description={t('暂无开奖数据')} />
           )}
         </Card>
 
         <Card className="life-panel-card lottery-yearly-card lottery-yearly-card-compact">
           <div className="lottery-card-title-row">
             <div>
-              <h2>年度记录占比</h2>
-              <p>按开奖年份拆分历史样本。</p>
+              <h2>{t('年度记录占比')}</h2>
+              <p>{t('按开奖年份拆分历史样本。')}</p>
             </div>
             <div className="lottery-yearly-actions">
-              <Button
-                size="small"
-                icon={<ReloadOutlined />}
-                loading={yearlyCountsRefreshing}
-                onClick={handleRefreshYearlyCounts}
-              >
-                统计
-              </Button>
               <span>
-                {statisticsGeneratedAt ? `统计生成 ${statisticsGeneratedAt}` : '本地临时统计'}
-                {statisticsStale ? ' · 待重算' : ''}
+                {statisticsGeneratedAt
+                  ? t('统计生成 {{time}}', { time: statisticsGeneratedAt })
+                  : t('本地临时统计')}
+                {statisticsStale ? (
+                  <>
+                    {' '}
+                    {t('· 待重算')}
+                  </>
+                ) : null}
               </span>
             </div>
           </div>
-          <Spin spinning={yearlyCountsLoading || yearlyCountsRefreshing || statisticsLoading}>
+          <Spin spinning={yearlyCountsLoading || updating || statisticsLoading}>
             {yearlyCounts.length > 0 ? (
               <div className="lottery-yearly-content">
                 <div className="lottery-yearly-chart-shell">
                   <ReactECharts option={yearlyPieOption} className="lottery-yearly-chart" />
                   <div className="lottery-yearly-center" aria-hidden="true">
-                    <strong>{totalYearlyRecords.toLocaleString()}</strong>
-                    <span>总记录</span>
+                    <strong>{totalYearlyRecords.toLocaleString(language)}</strong>
+                    <span>{t('总记录')}</span>
                   </div>
                 </div>
               </div>
             ) : (
-              <Empty description="暂无年度统计数据" />
+              <Empty description={t('暂无年度统计数据')} />
             )}
           </Spin>
         </Card>

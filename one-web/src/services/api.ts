@@ -386,7 +386,6 @@ export interface AdminUpdateUserRequest {
 }
 
 export interface AdminResetUserCredentialsRequest {
-  username: string;
   password: string;
 }
 
@@ -1816,9 +1815,9 @@ export const adminUserApi = {
       if (isSuccessCode(response.code)) {
         return response.data;
       }
-      throw new Error(response.message || '用户名密码重置失败');
+      throw new Error(response.message || '密码重置失败');
     } catch (error: unknown) {
-      throw new Error(getApiErrorMessage(error, '用户名密码重置失败'));
+      throw new Error(getApiErrorMessage(error, '密码重置失败'));
     }
   },
   deleteDisabledUser: async (id: string): Promise<void> => {

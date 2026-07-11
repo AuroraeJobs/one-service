@@ -24,6 +24,95 @@
       ]
     },
     {
+      "scope": "lottery overview one-click update",
+      "file": "src/components/LotteryOverviewPage.tsx",
+      "includes": [
+        "const handleUpdateAll = async () =>",
+        "await lotteryRecordApi.sync()",
+        "lotteryRecordApi.refreshYearlyCounts()",
+        "lotteryStatisticsApi.refreshSummary()",
+        "refreshRecords()",
+        "onClick={handleUpdateAll}",
+        "一键更新"
+      ],
+      "excludes": [
+        "handleRefreshRecords",
+        "handleRefreshYearlyCounts",
+        "handleRefreshStatistics",
+        "更新数据",
+        "重算统计"
+      ]
+    },
+    {
+      "scope": "application localization mount",
+      "file": "src/App.tsx",
+      "includes": [
+        "import AppTextLocalizer from './components/AppTextLocalizer'",
+        "import { I18nProvider } from './contexts/I18nContext'",
+        "<I18nProvider language={language} onLanguageChange={setLanguage}>",
+        "<AppTextLocalizer />"
+      ]
+    },
+    {
+      "scope": "application localization registry",
+      "file": "src/i18n/registry.ts",
+      "includes": [
+        "import.meta.glob<LocaleModule>('./locales/*.ts'",
+        "export const supportedLocales",
+        "export const getNextLanguage",
+        "export const translateForLanguage"
+      ]
+    },
+    {
+      "scope": "application dynamic language menu",
+      "file": "src/components/AppHeaderWithUser.tsx",
+      "includes": [
+        "supportedLocales.map",
+        "setLanguage(option.code)",
+        "locale.nativeName"
+      ],
+      "excludes": [
+        "isEnglish"
+      ]
+    },
+    {
+      "scope": "application localization compatibility runtime",
+      "file": "src/components/AppTextLocalizer.tsx",
+      "includes": [
+        "useI18n",
+        "const root = document.body",
+        "interface LocalizedValueState",
+        "previous && currentValue === previous.translated",
+        "language !== defaultLanguage",
+        "data-i18n-ignore"
+      ]
+    },
+    {
+      "scope": "lottery english locale resource",
+      "file": "src/i18n/locales/en-US/lotteryText.ts",
+      "includes": [
+        "'提醒中心': 'Reminder Center'",
+        "'双色球号码预测': 'Double Color Ball Prediction'",
+        "'预测决策板': 'Prediction Decision Board'",
+        "'彩票设置': 'Lottery Settings'"
+      ],
+      "excludes": [
+        "[/高/g, 'High']",
+        "[/中/g, 'Medium']",
+        "[/低/g, 'Low']"
+      ]
+    },
+    {
+      "scope": "lottery english chart localization",
+      "file": "src/components/LotteryLocalizedECharts.tsx",
+      "includes": [
+        "useI18n",
+        "translateText",
+        "localizeChartValue",
+        "option={localizedOption}"
+      ]
+    },
+    {
       "scope": "workbench closure path",
       "file": "src/components/LotteryWorkbenchPage.tsx",
       "includes": [

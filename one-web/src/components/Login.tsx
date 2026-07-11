@@ -4,6 +4,8 @@ import { GithubOutlined, LockOutlined, UserOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import { useI18n } from '../contexts/I18nContext';
+import LanguageSwitcher from './LanguageSwitcher';
 import './Login.css';
 
 const { Title, Text } = Typography;
@@ -20,6 +22,7 @@ const Login = () => {
   const location = useLocation();
   const [form] = Form.useForm();
   const { login } = useAuth();
+  const { t, translateText } = useI18n();
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -33,27 +36,27 @@ const Login = () => {
             login(response.data.data);
             navigate('/', { replace: true });
           } else {
-            message.error(response.data.message || 'GitHub 登录状态获取失败');
+            message.error(response.data.message ? translateText(response.data.message) : t('GitHub 登录状态获取失败'));
             navigate('/login', { replace: true });
           }
         })
         .catch(error => {
           if (axios.isAxiosError(error) && error.response?.data?.message) {
-            message.error(error.response.data.message);
+            message.error(translateText(error.response.data.message));
           } else {
-            message.error('GitHub 登录状态获取失败');
+            message.error(t('GitHub 登录状态获取失败'));
           }
           navigate('/login', { replace: true });
         })
         .finally(() => setGithubLoading(false));
     } else if (oauth === 'error') {
-      message.error('GitHub 登录失败');
+      message.error(t('GitHub 登录失败'));
       navigate('/login', { replace: true });
     } else if (oauthBind === 'github') {
-      message.info('请登录本系统账号，登录成功后将自动绑定 GitHub');
+      message.info(t('请登录本系统账号，登录成功后将自动绑定 GitHub'));
       navigate('/login', { replace: true });
     }
-  }, [location.search, login, navigate]);
+  }, [location.search, login, navigate, t, translateText]);
 
   const submitWhenUsernameReady = () => {
     const username = form.getFieldValue('username');
@@ -76,19 +79,19 @@ const Login = () => {
 
       if (response.data.code === 200) {
         login(response.data.data);
-        message.success(response.data.message || '登录成功');
+        message.success(response.data.message ? translateText(response.data.message) : t('登录成功'));
         navigate('/');
       } else {
-        message.error(response.data.message || '登录失败，请检查账号和密码');
+        message.error(response.data.message ? translateText(response.data.message) : t('登录失败，请检查账号和密码'));
       }
     } catch (error: unknown) {
       console.error('登录错误:', error);
       if (axios.isAxiosError(error) && error.response?.data?.message) {
-        message.error(error.response.data.message);
+        message.error(translateText(error.response.data.message));
       } else if (error instanceof Error) {
-        message.error(error.message);
+        message.error(translateText(error.message));
       } else {
-        message.error('登录失败，请稍后重试');
+        message.error(t('登录失败，请稍后重试'));
       }
     } finally {
       setLoading(false);
@@ -115,12 +118,13 @@ const Login = () => {
       </div>
       
       <Card className="login-card" bordered={false}>
+        <LanguageSwitcher className="login-language-switcher" />
         <div className="login-header">
           <div className="login-logo">
             <Title level={2} className="login-title">OneAI</Title>
           </div>
           <Text type="secondary" className="login-subtitle">
-            你的未来搭子
+            {t('你的未来搭子')}
           </Text>
         </div>
 
@@ -134,22 +138,22 @@ const Login = () => {
         >
           <Form.Item
             name="username"
-            rules={[{ required: true, message: '请输入用户名、邮箱或电话' }]}
+            rules={[{ required: true, message: t('请输入用户名、邮箱或电话') }]}
           >
             <Input
               prefix={<UserOutlined />}
-              placeholder="用户名 / 邮箱 / 电话"
+              placeholder={t('用户名 / 邮箱 / 电话')}
               className="login-input"
             />
           </Form.Item>
 
           <Form.Item
             name="password"
-            rules={[{ required: true, message: '请输入密码' }]}
+            rules={[{ required: true, message: t('请输入密码') }]}
           >
             <Input.Password
               prefix={<LockOutlined />}
-              placeholder="密码"
+              placeholder={t('密码')}
               className="login-input"
               onPressEnter={submitWhenUsernameReady}
             />
@@ -163,7 +167,7 @@ const Login = () => {
               block
               className="login-button"
             >
-              登 录
+              {t('登 录')}
             </Button>
           </Form.Item>
         </Form>
@@ -175,7 +179,7 @@ const Login = () => {
           className="github-login-button"
           onClick={handleGitHubLogin}
         >
-          GitHub 认证登录
+          {t('GitHub 认证登录')}
         </Button>
       </Card>
     </div>

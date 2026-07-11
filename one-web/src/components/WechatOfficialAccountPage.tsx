@@ -8,11 +8,12 @@ import {
   type WechatRenderedArticle,
   type WechatTokenStatus
 } from '../services/api';
+import { useAppPreferences } from '../contexts/AppPreferencesContext';
 import './WechatOfficialAccountPage.css';
 
 const { TextArea } = Input;
 
-const defaultMarkdown = `---
+const defaultMarkdownZh = `---
 title: "OneAI Daily"
 author: "OneAI"
 digest: "今天值得关注的 AI 与招聘动态。"
@@ -31,8 +32,57 @@ show_cover_pic: 0
 
 这里的内部备注不会进入公众号正文。`;
 
+const defaultMarkdownEn = `---
+title: "OneAI Daily"
+author: "OneAI"
+digest: "AI and hiring updates worth watching today."
+cover_media_id: ""
+show_cover_pic: 0
+---
+
+# OneAI Daily
+
+## Today's Focus
+
+- AI products are entering a phase that cares more about reliability and cost.
+- Enterprise hiring continues to revolve around automation, compliance, and efficiency.
+
+## Publishing Notes
+
+These internal notes will not be included in the WeChat article body.`;
+
 const WechatOfficialAccountPage = () => {
-  const [markdown, setMarkdown] = useState(defaultMarkdown);
+  const { isEnglish } = useAppPreferences();
+  const text = {
+    title: isEnglish ? 'Official Account Draft' : '公众号草稿',
+    waitingRender: isEnglish ? 'Waiting for render' : '等待渲染',
+    configured: isEnglish ? 'Configured' : '已配置',
+    notConfigured: isEnglish ? 'Not configured' : '未配置',
+    tokenCached: isEnglish ? 'Token cached' : 'Token 已缓存',
+    tokenNotCached: isEnglish ? 'Token not cached' : 'Token 未缓存',
+    refreshToken: isEnglish ? 'Refresh Token' : '刷新 Token',
+    imageUpload: isEnglish ? 'Images' : '图片',
+    publish: isEnglish ? 'Publish' : '发布',
+    postPathPlaceholder: isEnglish
+      ? 'Article path, for example /path/to/oneai-daily-wechat/content/daily/2026-07-06-daily-briefing.md'
+      : '文章路径，例如 /path/to/oneai-daily-wechat/content/daily/2026-07-06-daily-briefing.md',
+    coverPathPlaceholder: isEnglish
+      ? 'Cover image path, for example /path/to/oneai-daily-wechat/assets/brand/oneai-daily-cover.png'
+      : '封面图片路径，例如 /path/to/oneai-daily-wechat/assets/brand/oneai-daily-cover.png',
+    render: isEnglish ? 'Render' : '渲染',
+    createDraft: isEnglish ? 'Create Draft' : '创建草稿',
+    preview: isEnglish ? 'Preview' : '预览',
+    rendered: isEnglish ? 'Rendered' : '已渲染',
+    renderFailed: isEnglish ? 'Render failed' : '渲染失败',
+    publishSubmitted: isEnglish ? 'Publish submitted' : '已提交发布',
+    draftCreated: isEnglish ? 'Draft created' : '草稿已创建',
+    createDraftFailed: isEnglish ? 'Failed to create draft' : '创建草稿失败',
+    missingMediaId: isEnglish ? 'Missing media_id' : '缺少 media_id',
+    submitPublishFailed: isEnglish ? 'Failed to submit publish' : '提交发布失败',
+    tokenRefreshed: isEnglish ? 'Token refreshed' : 'Token 已刷新',
+    tokenRefreshFailed: isEnglish ? 'Token refresh failed' : 'Token 刷新失败'
+  };
+  const [markdown, setMarkdown] = useState(() => (isEnglish ? defaultMarkdownEn : defaultMarkdownZh));
   const [postPath, setPostPath] = useState('');
   const [coverPath, setCoverPath] = useState('');
   const [mediaId, setMediaId] = useState('');
@@ -44,10 +94,10 @@ const WechatOfficialAccountPage = () => {
 
   const previewHtml = useMemo(() => {
     if (!article?.content) {
-      return '<body style="margin:0;background:#141414;"><section style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;color:#9ca3af;padding:36px 40px;font-size:16px;font-weight:600;">等待渲染</section></body>';
+      return `<body style="margin:0;background:#141414;"><section style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;color:#9ca3af;padding:36px 40px;font-size:16px;font-weight:600;">${text.waitingRender}</section></body>`;
     }
     return `<body style="margin:0;background:#141414;padding:24px;"><main style="max-width:760px;min-height:520px;margin:0 auto;background:#fff;padding:28px 34px;box-sizing:border-box;">${article.content}</main></body>`;
-  }, [article?.content]);
+  }, [article?.content, text.waitingRender]);
 
   const loadTokenStatus = async () => {
     try {
@@ -81,9 +131,9 @@ const WechatOfficialAccountPage = () => {
     try {
       const result = await wechatOfficialAccountApi.render(buildArticleRequest(false));
       setArticle(result);
-      message.success('已渲染');
+      message.success(text.rendered);
     } catch (error) {
-      message.error(error instanceof Error ? error.message : '渲染失败');
+      message.error(error instanceof Error ? error.message : text.renderFailed);
     } finally {
       setLoading(false);
     }
@@ -95,10 +145,10 @@ const WechatOfficialAccountPage = () => {
       const result = await wechatOfficialAccountApi.createDraft(buildArticleRequest(true));
       setArticle(result.article);
       setMediaId(result.mediaId || '');
-      message.success(result.publishSubmitted ? '已提交发布' : '草稿已创建');
+      message.success(result.publishSubmitted ? text.publishSubmitted : text.draftCreated);
       loadTokenStatus();
     } catch (error) {
-      message.error(error instanceof Error ? error.message : '创建草稿失败');
+      message.error(error instanceof Error ? error.message : text.createDraftFailed);
     } finally {
       setLoading(false);
     }
@@ -106,15 +156,15 @@ const WechatOfficialAccountPage = () => {
 
   const submitPublish = async () => {
     if (!mediaId.trim()) {
-      message.warning('缺少 media_id');
+      message.warning(text.missingMediaId);
       return;
     }
     setLoading(true);
     try {
       await wechatOfficialAccountApi.submitPublish(mediaId.trim());
-      message.success('已提交发布');
+      message.success(text.publishSubmitted);
     } catch (error) {
-      message.error(error instanceof Error ? error.message : '提交发布失败');
+      message.error(error instanceof Error ? error.message : text.submitPublishFailed);
     } finally {
       setLoading(false);
     }
@@ -125,9 +175,9 @@ const WechatOfficialAccountPage = () => {
     try {
       await wechatOfficialAccountApi.refreshAccessToken();
       await loadTokenStatus();
-      message.success('Token 已刷新');
+      message.success(text.tokenRefreshed);
     } catch (error) {
-      message.error(error instanceof Error ? error.message : 'Token 刷新失败');
+      message.error(error instanceof Error ? error.message : text.tokenRefreshFailed);
     } finally {
       setLoading(false);
     }
@@ -136,17 +186,17 @@ const WechatOfficialAccountPage = () => {
   return (
     <LifePageShell
       eyebrow="OneAI Daily"
-      title="公众号草稿"
+      title={text.title}
       actions={(
         <Space wrap>
           <Tag color={tokenStatus?.configured ? 'green' : 'orange'}>
-            {tokenStatus?.configured ? '已配置' : '未配置'}
+            {tokenStatus?.configured ? text.configured : text.notConfigured}
           </Tag>
           <Tag color={tokenStatus?.cached ? 'blue' : 'default'}>
-            {tokenStatus?.cached ? 'Token 已缓存' : 'Token 未缓存'}
+            {tokenStatus?.cached ? text.tokenCached : text.tokenNotCached}
           </Tag>
           <Button icon={<ReloadOutlined />} onClick={refreshToken} loading={loading}>
-            刷新 Token
+            {text.refreshToken}
           </Button>
         </Space>
       )}
@@ -156,8 +206,8 @@ const WechatOfficialAccountPage = () => {
           <div className="wechat-official-account-panel-header">
             <strong>Markdown</strong>
             <Space>
-              <Switch checked={uploadImages} onChange={setUploadImages} checkedChildren="图片" unCheckedChildren="图片" />
-              <Switch checked={publishAfterDraft} onChange={setPublishAfterDraft} checkedChildren="发布" unCheckedChildren="发布" />
+              <Switch checked={uploadImages} onChange={setUploadImages} checkedChildren={text.imageUpload} unCheckedChildren={text.imageUpload} />
+              <Switch checked={publishAfterDraft} onChange={setPublishAfterDraft} checkedChildren={text.publish} unCheckedChildren={text.publish} />
             </Space>
           </div>
           <TextArea
@@ -171,22 +221,22 @@ const WechatOfficialAccountPage = () => {
               value={postPath}
               onChange={(event) => setPostPath(event.target.value)}
               prefix={<FileSearchOutlined />}
-              placeholder="文章路径，例如 /path/to/oneai-daily-wechat/content/daily/2026-07-06-daily-briefing.md"
+              placeholder={text.postPathPlaceholder}
             />
             <Input
               value={coverPath}
               onChange={(event) => setCoverPath(event.target.value)}
               prefix={<CloudUploadOutlined />}
-              placeholder="封面图片路径，例如 /path/to/oneai-daily-wechat/assets/brand/oneai-daily-cover.png"
+              placeholder={text.coverPathPlaceholder}
             />
           </div>
           <div className="wechat-official-account-toolbar">
             <Space>
               <Button type="primary" icon={<EyeOutlined />} onClick={renderArticle} loading={loading}>
-                渲染
+                {text.render}
               </Button>
               <Button icon={<CloudUploadOutlined />} onClick={createDraft} loading={loading}>
-                创建草稿
+                {text.createDraft}
               </Button>
             </Space>
             <Input.Search
@@ -202,7 +252,7 @@ const WechatOfficialAccountPage = () => {
 
         <section className="wechat-official-account-panel">
           <div className="wechat-official-account-panel-header">
-            <strong>{article?.title || '预览'}</strong>
+            <strong>{article?.title || text.preview}</strong>
             {article?.digest && <Tag>{article.digest}</Tag>}
           </div>
           <iframe

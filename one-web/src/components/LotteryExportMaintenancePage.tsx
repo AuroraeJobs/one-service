@@ -23,6 +23,7 @@ import {
   type LotteryMaintenanceSummary
 } from '../services/api';
 import { lotteryCodeLabel, lotteryStatusLabel } from '../utils/lotteryStatusLabel';
+import { useI18n } from '../contexts/I18nContext';
 import './LotteryOverviewPage.css';
 
 const exportTypeOptions = [
@@ -213,11 +214,11 @@ const v15EvidencePacks = [
   }
 ];
 
-const formatDateTime = (timestamp?: number) => {
+const formatDateTime = (timestamp: number | undefined, language: string) => {
   if (!timestamp) {
     return '-';
   }
-  return new Intl.DateTimeFormat('zh-CN', {
+  return new Intl.DateTimeFormat(language, {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
@@ -246,15 +247,23 @@ const toParams = (type: string, primaryFilter: string, limit: string) => {
   return params;
 };
 
-const exportTypeLabel = (type?: string) =>
-  exportTypeOptions.find(option => option.value === type)?.label || type || '-';
+const exportTypeLabel = (
+  type: string | undefined,
+  translateText: ReturnType<typeof useI18n>['translateText']
+) => {
+  const option = exportTypeOptions.find(item => item.value === type);
+  return translateText(option?.label || lotteryCodeLabel(type, type || '-'));
+};
 
 const isSupportedExportType = (value?: string | null) =>
   Boolean(value && exportTypeOptions.some(option => option.value === value));
 
-const downloadCsv = (result?: LotteryExportResult) => {
+const downloadCsv = (
+  result: LotteryExportResult | undefined,
+  t: ReturnType<typeof useI18n>['t']
+) => {
   if (!result?.content) {
-    message.warning('暂无可下载内容');
+    message.warning(t('暂无可下载内容'));
     return;
   }
   const fileName = result.fileName || `${result.exportType || 'lottery-export'}.csv`;
@@ -286,6 +295,7 @@ const toDateEnd = (value: string) => {
 };
 
 const LotteryExportMaintenancePage = () => {
+  const { language, t, translateText } = useI18n();
   const [searchParams, setSearchParams] = useSearchParams();
   const [exportType, setExportType] = useState(() => {
     const requestedType = searchParams.get('type');
@@ -319,6 +329,13 @@ const LotteryExportMaintenancePage = () => {
   const [dryRunning, setDryRunning] = useState(false);
   const [error, setError] = useState<string>();
   const releaseArchiveFocus = searchParams.get('focus') === 'release-archive';
+  const localizedExportTypeOptions = useMemo(
+    () => exportTypeOptions.map(option => ({
+      label: translateText(option.label),
+      value: option.value
+    })),
+    [translateText]
+  );
   const archiveEvidenceContext = useMemo(() => {
     const scope = searchParams.get('archiveScope');
     const status = searchParams.get('archiveStatus');
@@ -327,11 +344,13 @@ const LotteryExportMaintenancePage = () => {
       return '';
     }
     return [
-      scope && scope !== 'all' ? `范围 ${scope}` : '范围 全部',
-      status && status !== 'all' ? `状态 ${lotteryStatusLabel(status)}` : '状态 全部',
-      query ? `关键词 ${query}` : undefined
+      scope && scope !== 'all' ? t('范围：{{scope}}', { scope }) : t('范围：全部'),
+      status && status !== 'all'
+        ? t('状态：{{status}}', { status: translateText(lotteryStatusLabel(status)) })
+        : t('状态：全部'),
+      query ? t('关键词：{{query}}', { query }) : undefined
     ].filter(Boolean).join(' · ');
-  }, [searchParams]);
+  }, [searchParams, t, translateText]);
 
   const updateExportType = (value: string) => {
     setExportType(value);
@@ -357,11 +376,11 @@ const LotteryExportMaintenancePage = () => {
       setMaintenance(maintenanceSummary);
     } catch (requestError) {
       console.error('读取彩票导出审计失败:', requestError);
-      setError(requestError instanceof Error ? requestError.message : '读取彩票导出审计失败');
+      setError(requestError instanceof Error ? translateText(requestError.message) : t('读取彩票导出审计失败'));
     } finally {
       setLoading(false);
     }
-  }, [auditPage, auditPageSize]);
+  }, [auditPage, auditPageSize, t, translateText]);
 
   useEffect(() => {
     loadState();
@@ -381,12 +400,15 @@ const LotteryExportMaintenancePage = () => {
     try {
       const data = await lotteryExportApi.export(exportType, toParams(exportType, primaryFilter, limit));
       setResult(data);
-      message.success(`已生成 ${exportTypeLabel(data.exportType)} ${data.rowCount || 0} 行`);
+      message.success(t('已生成 {{type}} {{rows}} 行', {
+        type: exportTypeLabel(data.exportType, translateText),
+        rows: data.rowCount || 0
+      }));
       await loadState();
     } catch (requestError) {
       console.error('导出彩票数据失败:', requestError);
-      setError(requestError instanceof Error ? requestError.message : '导出彩票数据失败');
-      message.error('导出彩票数据失败');
+      setError(requestError instanceof Error ? translateText(requestError.message) : t('导出彩票数据失败'));
+      message.error(t('导出彩票数据失败'));
     } finally {
       setExporting(false);
     }
@@ -394,7 +416,7 @@ const LotteryExportMaintenancePage = () => {
 
   const buildReport = async () => {
     if (!reportSections.length) {
-      message.warning('请选择报表区块');
+      message.warning(t('请选择至少一个报表区块'));
       return;
     }
     setReporting(true);
@@ -404,12 +426,12 @@ const LotteryExportMaintenancePage = () => {
         lotteryExportApi.export(type, toParams(type, primaryFilter, limit))
       )));
       setReportResults(results);
-      message.success(`已生成 ${results.length} 个报表区块`);
+      message.success(t('已生成 {{count}} 个报表区块', { count: results.length }));
       await loadState();
     } catch (requestError) {
       console.error('生成彩票报表失败:', requestError);
-      setError(requestError instanceof Error ? requestError.message : '生成彩票报表失败');
-      message.error('生成彩票报表失败');
+      setError(requestError instanceof Error ? translateText(requestError.message) : t('生成彩票报表失败'));
+      message.error(t('生成彩票报表失败'));
     } finally {
       setReporting(false);
     }
@@ -422,7 +444,7 @@ const LotteryExportMaintenancePage = () => {
       setMaintenance(await lotteryExportApi.cleanupDryRun());
     } catch (requestError) {
       console.error('执行彩票维护 dry-run 失败:', requestError);
-      setError(requestError instanceof Error ? requestError.message : '执行彩票维护 dry-run 失败');
+      setError(requestError instanceof Error ? translateText(requestError.message) : t('执行彩票维护 dry-run 失败'));
     } finally {
       setDryRunning(false);
     }
@@ -468,12 +490,12 @@ const LotteryExportMaintenancePage = () => {
     const historyCollections = collections.filter(item => /history|prediction|experiment|backtest|ticket|record/i.test(item.collection || ''));
     const otherCollections = collections.filter(item => !logCollections.includes(item) && !historyCollections.includes(item));
     return [
-      { key: 'cache', title: '缓存', count: caches.length, stale: caches.filter(item => !item.present || item.noExpiry).length },
-      { key: 'log', title: '日志', count: logCollections.length, stale: logCollections.reduce((sum, item) => sum + Number(item.staleCount || 0), 0) },
-      { key: 'history', title: '历史', count: historyCollections.length, stale: historyCollections.reduce((sum, item) => sum + Number(item.staleCount || 0), 0) },
-      { key: 'other', title: '其他', count: otherCollections.length, stale: otherCollections.reduce((sum, item) => sum + Number(item.staleCount || 0), 0) }
+      { key: 'cache', title: t('缓存'), count: caches.length, stale: caches.filter(item => !item.present || item.noExpiry).length },
+      { key: 'log', title: t('日志'), count: logCollections.length, stale: logCollections.reduce((sum, item) => sum + Number(item.staleCount || 0), 0) },
+      { key: 'history', title: t('历史'), count: historyCollections.length, stale: historyCollections.reduce((sum, item) => sum + Number(item.staleCount || 0), 0) },
+      { key: 'other', title: t('其他'), count: otherCollections.length, stale: otherCollections.reduce((sum, item) => sum + Number(item.staleCount || 0), 0) }
     ];
-  }, [maintenance?.caches, maintenance?.collections]);
+  }, [maintenance?.caches, maintenance?.collections, t]);
   const releaseReadinessChecks = useMemo(() => [
     {
       key: 'decision-route',
@@ -736,27 +758,52 @@ const LotteryExportMaintenancePage = () => {
     }
   ], []);
 
-  const auditColumns: ColumnsType<LotteryAuditEvent> = [
-    { title: '类型', dataIndex: 'targetType', key: 'targetType', render: value => <Tag color="blue">{lotteryCodeLabel(value, '-')}</Tag> },
-    { title: '行数', dataIndex: 'rowCount', key: 'rowCount', align: 'right' },
-    { title: '范围', dataIndex: 'requesterScope', key: 'requesterScope', render: value => lotteryCodeLabel(value, '-') },
-    { title: '生成', dataIndex: 'generatedAt', key: 'generatedAt', render: value => formatDateTime(value) }
-  ];
+  const auditColumns = useMemo<ColumnsType<LotteryAuditEvent>>(() => [
+    {
+      title: t('类型'),
+      dataIndex: 'targetType',
+      key: 'targetType',
+      render: value => <Tag color="blue">{exportTypeLabel(value, translateText)}</Tag>
+    },
+    { title: t('行数'), dataIndex: 'rowCount', key: 'rowCount', align: 'right' },
+    {
+      title: t('范围'),
+      dataIndex: 'requesterScope',
+      key: 'requesterScope',
+      render: value => translateText(lotteryCodeLabel(value, '-'))
+    },
+    { title: t('生成时间'), dataIndex: 'generatedAt', key: 'generatedAt', render: value => formatDateTime(value, language) }
+  ], [language, t, translateText]);
 
-  const maintenanceColumns: ColumnsType<LotteryMaintenanceCollectionStatus> = [
-    { title: '集合', dataIndex: 'collection', key: 'collection' },
-    { title: '总量', dataIndex: 'totalCount', key: 'totalCount', align: 'right' },
-    { title: '过期', dataIndex: 'staleCount', key: 'staleCount', align: 'right' },
-    { title: '超量', dataIndex: 'oversizedBy', key: 'oversizedBy', align: 'right' },
-    { title: '模式', dataIndex: 'cleanupSupported', key: 'cleanupSupported', render: value => <Tag color={value ? 'gold' : 'default'}>{value ? '预演' : '报告'}</Tag> }
-  ];
+  const maintenanceColumns = useMemo<ColumnsType<LotteryMaintenanceCollectionStatus>>(() => [
+    { title: t('集合'), dataIndex: 'collection', key: 'collection', render: value => translateText(value || '-') },
+    { title: t('总量'), dataIndex: 'totalCount', key: 'totalCount', align: 'right' },
+    { title: t('过期'), dataIndex: 'staleCount', key: 'staleCount', align: 'right' },
+    { title: t('超量'), dataIndex: 'oversizedBy', key: 'oversizedBy', align: 'right' },
+    {
+      title: t('模式'),
+      dataIndex: 'cleanupSupported',
+      key: 'cleanupSupported',
+      render: value => <Tag color={value ? 'gold' : 'default'}>{t(value ? '预演' : '报告')}</Tag>
+    }
+  ], [t, translateText]);
 
-  const cacheColumns: ColumnsType<LotteryMaintenanceCacheStatus> = [
-    { title: '缓存', dataIndex: 'cacheKey', key: 'cacheKey' },
-    { title: '状态', dataIndex: 'present', key: 'present', render: value => <Tag color={value ? 'green' : 'default'}>{value ? '存在' : '缺失'}</Tag> },
-    { title: 'TTL', dataIndex: 'ttlSeconds', key: 'ttlSeconds', align: 'right', render: value => (value === undefined || value === null ? '-' : value) },
-    { title: '过期', dataIndex: 'noExpiry', key: 'noExpiry', render: value => <Tag color={value ? 'gold' : 'default'}>{value ? '无过期' : '有过期'}</Tag> }
-  ];
+  const cacheColumns = useMemo<ColumnsType<LotteryMaintenanceCacheStatus>>(() => [
+    { title: t('缓存'), dataIndex: 'cacheKey', key: 'cacheKey', render: value => translateText(value || '-') },
+    {
+      title: t('状态'),
+      dataIndex: 'present',
+      key: 'present',
+      render: value => <Tag color={value ? 'green' : 'default'}>{t(value ? '存在' : '缺失')}</Tag>
+    },
+    { title: t('TTL'), dataIndex: 'ttlSeconds', key: 'ttlSeconds', align: 'right', render: value => (value === undefined || value === null ? '-' : value) },
+    {
+      title: t('过期'),
+      dataIndex: 'noExpiry',
+      key: 'noExpiry',
+      render: value => <Tag color={value ? 'gold' : 'default'}>{t(value ? '无过期' : '有过期')}</Tag>
+    }
+  ], [t, translateText]);
 
   const resultLines = useMemo(() => csvPreview(result?.content, 12), [result?.content]);
   const reportTotalRows = useMemo(
@@ -767,18 +814,18 @@ const LotteryExportMaintenancePage = () => {
   return (
     <LifePageShell
       className="lottery-prediction-page lottery-export-page"
-      eyebrow="彩票数据"
-      title="导出审计"
+      eyebrow={t('彩票数据')}
+      title={t('导出审计')}
       actions={
         <Space wrap>
           <Button icon={<ReloadOutlined />} loading={loading} onClick={loadState}>
-            刷新
+            {t('刷新')}
           </Button>
           <Button icon={<ToolOutlined />} loading={dryRunning} onClick={runDryRun}>
-            Dry-run
+            {t('预演')}
           </Button>
           <Button icon={<PrinterOutlined />} disabled={!reportResults.length} onClick={() => window.print()}>
-            打印报表
+            {t('打印报表')}
           </Button>
         </Space>
       }
@@ -787,26 +834,26 @@ const LotteryExportMaintenancePage = () => {
 
       <Card className="life-panel-card lottery-clean-panel">
         <Space wrap>
-          <Select value={exportType} onChange={updateExportType} options={exportTypeOptions} style={{ width: 160 }} />
-          <Input allowClear value={primaryFilter} onChange={event => setPrimaryFilter(event.target.value)} placeholder="过滤值" style={{ width: 180 }} />
-          <Input value={limit} onChange={event => setLimit(event.target.value)} placeholder="行数" style={{ width: 96 }} />
+          <Select value={exportType} onChange={updateExportType} options={localizedExportTypeOptions} style={{ width: 160 }} />
+          <Input allowClear value={primaryFilter} onChange={event => setPrimaryFilter(event.target.value)} placeholder={t('过滤值')} style={{ width: 180 }} />
+          <Input value={limit} onChange={event => setLimit(event.target.value)} placeholder={t('行数')} style={{ width: 96 }} />
           <Button type="primary" icon={<DownloadOutlined />} loading={exporting} onClick={runExport}>
-            导出
+            {t('导出')}
           </Button>
         </Space>
       </Card>
 
       <Card
         className="life-panel-card lottery-clean-panel"
-        title={<Space><FileTextOutlined />报表构建器</Space>}
+        title={<Space><FileTextOutlined />{t('报表构建器')}</Space>}
         extra={
           <Space wrap>
-            <Tag color="blue">区块 {reportSections.length}</Tag>
+            <Tag color="blue">{t('区块 {{count}}', { count: reportSections.length })}</Tag>
             <Button icon={<PrinterOutlined />} disabled={!reportResults.length} onClick={() => window.print()}>
-              打印
+              {t('打印')}
             </Button>
             <Button type="primary" icon={<FileTextOutlined />} loading={reporting} onClick={buildReport}>
-              生成报表
+              {t('生成报表')}
             </Button>
           </Space>
         }
@@ -815,28 +862,28 @@ const LotteryExportMaintenancePage = () => {
           <Space wrap className="lottery-report-preset-bar">
             {reportPresets.map(preset => (
               <Button key={preset.key} size="small" icon={<FilterOutlined />} onClick={() => setReportSections(preset.sections)}>
-                {preset.label}
+                {translateText(preset.label)}
               </Button>
             ))}
           </Space>
           <Checkbox.Group
-            options={exportTypeOptions}
+            options={localizedExportTypeOptions}
             value={reportSections}
             onChange={values => setReportSections(values.map(String))}
           />
           <Space wrap>
-            <span>共用筛选 {primaryFilter.trim() || '全部'}</span>
-            <span>行数上限 {Number(limit) > 0 ? Number(limit) : 500}</span>
-            <span>已生成 {reportResults.length} 个区块 / {reportTotalRows} 行</span>
-            {archiveEvidenceContext ? <Tag color="purple">归档上下文：{archiveEvidenceContext}</Tag> : null}
+            <span>{t('共用筛选：{{filter}}', { filter: primaryFilter.trim() || t('全部') })}</span>
+            <span>{t('行数上限：{{limit}}', { limit: Number(limit) > 0 ? Number(limit) : 500 })}</span>
+            <span>{t('已生成 {{sections}} 个区块 / {{rows}} 行', { sections: reportResults.length, rows: reportTotalRows })}</span>
+            {archiveEvidenceContext ? <Tag color="purple">{t('归档上下文：{{context}}', { context: archiveEvidenceContext })}</Tag> : null}
           </Space>
         </div>
       </Card>
 
       <Card
         className="life-panel-card lottery-clean-panel lottery-v15-evidence-card"
-        title={<Space><SafetyCertificateOutlined />闭环证据包</Space>}
-        extra={<Tag color="blue">归因 / 推荐 / 移动 / 治理 / 异常 / Provider / Runbook / 长期</Tag>}
+        title={<Space><SafetyCertificateOutlined />{t('闭环证据包')}</Space>}
+        extra={<Tag color="blue">{t('归因 / 推荐 / 移动 / 治理 / 异常 / Provider / Runbook / 长期')}</Tag>}
       >
         <div className="lottery-v15-evidence-grid">
           {v15EvidencePacks.map(pack => (
@@ -848,9 +895,9 @@ const LotteryExportMaintenancePage = () => {
                 window.history.replaceState(null, '', `/lottery/exports?preset=${pack.key}`);
               }}
             >
-              <strong>{pack.title}</strong>
-              <span>{pack.preset} · {pack.route}</span>
-              <small>{pack.auditTypes.join(' / ')}</small>
+              <strong>{translateText(pack.title)}</strong>
+              <span>{translateText(pack.preset)} · {pack.route}</span>
+              <small>{pack.auditTypes.map(type => translateText(type)).join(' / ')}</small>
             </button>
           ))}
         </div>
@@ -860,30 +907,34 @@ const LotteryExportMaintenancePage = () => {
         <Card
           className="life-panel-card lottery-clean-panel"
           title={<Space><DownloadOutlined />{result.fileName}</Space>}
-          extra={<Button size="small" icon={<DownloadOutlined />} onClick={() => downloadCsv(result)}>下载 CSV</Button>}
+          extra={<Button size="small" icon={<DownloadOutlined />} onClick={() => downloadCsv(result, t)}>{t('下载 CSV')}</Button>}
         >
           <Space wrap size="large">
-            <span>类型 {exportTypeLabel(result.exportType)}</span>
-            <span>行数 {result.rowCount || 0}</span>
-            <span>生成 {formatDateTime(result.generatedAt)}</span>
+            <span>{t('类型：{{type}}', { type: exportTypeLabel(result.exportType, translateText) })}</span>
+            <span>{t('行数：{{rows}}', { rows: result.rowCount || 0 })}</span>
+            <span>{t('生成时间：{{time}}', { time: formatDateTime(result.generatedAt, language) })}</span>
           </Space>
-          {resultLines ? <pre className="lottery-export-preview">{resultLines}</pre> : <Empty description="本次导出没有数据" />}
+          {resultLines ? <pre className="lottery-export-preview">{resultLines}</pre> : <Empty description={t('本次导出没有数据')} />}
         </Card>
       ) : null}
 
       {reportResults.length ? (
-        <Card className="life-panel-card lottery-clean-panel lottery-report-print-area" title={<Space><FileTextOutlined />报表预览</Space>}>
+        <Card className="life-panel-card lottery-clean-panel lottery-report-print-area" title={<Space><FileTextOutlined />{t('报表预览')}</Space>}>
           <div className="lottery-report-section-grid">
             {reportResults.map(section => (
               <article className="lottery-report-section" key={`${section.exportType}-${section.generatedAt}`}>
                 <div className="lottery-report-section-head">
                   <div>
-                    <strong>{exportTypeLabel(section.exportType)}</strong>
-                    <span>{section.fileName || '-'} · {section.rowCount || 0} 行 · {formatDateTime(section.generatedAt)}</span>
+                    <strong>{exportTypeLabel(section.exportType, translateText)}</strong>
+                    <span>{t('{{fileName}} · {{rows}} 行 · {{time}}', {
+                      fileName: section.fileName || '-',
+                      rows: section.rowCount || 0,
+                      time: formatDateTime(section.generatedAt, language)
+                    })}</span>
                   </div>
-                  <Button size="small" icon={<DownloadOutlined />} onClick={() => downloadCsv(section)}>CSV</Button>
+                  <Button size="small" icon={<DownloadOutlined />} onClick={() => downloadCsv(section, t)}>{t('CSV')}</Button>
                 </div>
-                {section.content ? <pre className="lottery-export-preview">{csvPreview(section.content, 8)}</pre> : <Empty description="暂无数据" />}
+                {section.content ? <pre className="lottery-export-preview">{csvPreview(section.content, 8)}</pre> : <Empty description={t('暂无数据')} />}
               </article>
             ))}
           </div>
@@ -893,27 +944,27 @@ const LotteryExportMaintenancePage = () => {
       {releaseArchiveFocus ? (
         <Card
           className="life-panel-card lottery-clean-panel"
-          title={<Space><SafetyCertificateOutlined />发布证据归档焦点</Space>}
-          extra={<Tag color="blue">docs-only</Tag>}
+          title={<Space><SafetyCertificateOutlined />{t('发布证据归档焦点')}</Space>}
+          extra={<Tag color="blue">{t('仅文档')}</Tag>}
         >
           <div className="lottery-release-readiness-grid">
             <button type="button" onClick={() => window.location.assign('/lottery/exports')}>
               <span><FileTextOutlined /></span>
-              <Tag color="blue">报告</Tag>
+              <Tag color="blue">{t('报告')}</Tag>
               <strong>reports/lottery-release-evidence.md</strong>
-              <small>最新前端彩票发布证据</small>
+              <small>{t('最新前端彩票发布证据')}</small>
             </button>
             <button type="button" onClick={() => window.location.assign('/lottery/exports')}>
               <span><FileTextOutlined /></span>
-              <Tag color="blue">历史</Tag>
+              <Tag color="blue">{t('历史')}</Tag>
               <strong>reports/lottery-release-history/README.md</strong>
-              <small>本地 Markdown 快照索引</small>
+              <small>{t('本地 Markdown 快照索引')}</small>
             </button>
             <button type="button" onClick={() => window.location.assign('/lottery/exports')}>
               <span><ThunderboltOutlined /></span>
-              <Tag color="green">命令</Tag>
+              <Tag color="green">{t('命令')}</Tag>
               <strong>npm run lottery:release-archive</strong>
-              <small>release-check 通过后生成历史快照</small>
+              <small>{t('release-check 通过后生成历史快照')}</small>
             </button>
           </div>
         </Card>
@@ -921,16 +972,16 @@ const LotteryExportMaintenancePage = () => {
 
       <Card
         className="life-panel-card lottery-clean-panel lottery-release-readiness-card"
-        title={<Space><CheckCircleOutlined />前端发布就绪</Space>}
-        extra={<Tag color="blue">{releaseReadinessChecks.length} 项</Tag>}
+        title={<Space><CheckCircleOutlined />{t('前端发布就绪')}</Space>}
+        extra={<Tag color="blue">{t('{{count}} 项', { count: releaseReadinessChecks.length })}</Tag>}
       >
         <div className="lottery-release-readiness-grid">
           {releaseReadinessChecks.map(item => (
             <button key={item.key} type="button" onClick={() => window.location.assign(item.path)}>
               <span>{item.status === 'PASS' ? <CheckCircleOutlined /> : <ThunderboltOutlined />}</span>
-              <Tag color={item.status === 'PASS' ? 'green' : 'blue'}>{lotteryStatusLabel(item.status)}</Tag>
-              <strong>{item.label}</strong>
-              <small>{item.message}</small>
+              <Tag color={item.status === 'PASS' ? 'green' : 'blue'}>{translateText(lotteryStatusLabel(item.status))}</Tag>
+              <strong>{translateText(item.label)}</strong>
+              <small>{translateText(item.message)}</small>
             </button>
           ))}
         </div>
@@ -939,41 +990,41 @@ const LotteryExportMaintenancePage = () => {
       <section className="lottery-workbench-main-grid">
         <Card
           className="life-panel-card lottery-clean-panel"
-          title={<Space><SafetyCertificateOutlined />审计事件</Space>}
-          extra={<Tag>{filteredAuditEvents.length}/{auditEvents.length} 条</Tag>}
+          title={<Space><SafetyCertificateOutlined />{t('审计事件')}</Space>}
+          extra={<Tag>{t('{{filtered}}/{{total}} 条', { filtered: filteredAuditEvents.length, total: auditEvents.length })}</Tag>}
         >
           <div className="lottery-audit-filter-bar">
             <div className="lottery-filter-preset-bar">
               <Button size="small" onClick={() => {
                 setAuditTypeFilter('LOTTERY_RECOMMENDATION_REFRESH');
                 setAuditTargetFilter('lottery');
-              }}>V15</Button>
+              }}>{t('V15')}</Button>
               <Button size="small" onClick={() => {
                 setAuditTypeFilter('EXPORT');
                 setAuditTargetFilter('');
-              }}>导出</Button>
+              }}>{t('导出')}</Button>
               <Button size="small" onClick={() => {
                 setAuditTypeFilter('LOTTERY_RECOMMENDATION_STATUS');
                 setAuditTargetFilter('');
-              }}>推荐</Button>
+              }}>{t('推荐')}</Button>
               <Button size="small" onClick={() => {
                 setAuditTypeFilter('LOTTERY_RECOMMENDATION_STATUS');
                 setAuditTargetFilter('lottery-recommendation');
-              }}>V29</Button>
-              <Button size="small" onClick={clearAuditFilters}>清除</Button>
+              }}>{t('V29')}</Button>
+              <Button size="small" onClick={clearAuditFilters}>{t('清除')}</Button>
             </div>
             <Select
               allowClear
-              placeholder="类型"
+              placeholder={t('类型')}
               value={auditTypeFilter}
               onChange={setAuditTypeFilter}
               options={[
-                { label: '导出', value: 'EXPORT' },
-                { label: '报告导出', value: 'REPORT_EXPORT' },
-                { label: '归因审计', value: 'LOTTERY_OUTCOME_ATTRIBUTION' },
-                { label: '推荐刷新', value: 'LOTTERY_RECOMMENDATION_REFRESH' },
-                { label: '推荐状态', value: 'LOTTERY_RECOMMENDATION_STATUS' },
-                ...exportTypeOptions
+                { label: t('导出'), value: 'EXPORT' },
+                { label: t('报告导出'), value: 'REPORT_EXPORT' },
+                { label: t('归因审计'), value: 'LOTTERY_OUTCOME_ATTRIBUTION' },
+                { label: t('推荐刷新'), value: 'LOTTERY_RECOMMENDATION_REFRESH' },
+                { label: t('推荐状态'), value: 'LOTTERY_RECOMMENDATION_STATUS' },
+                ...localizedExportTypeOptions
               ]}
               style={{ width: 140 }}
             />
@@ -982,7 +1033,7 @@ const LotteryExportMaintenancePage = () => {
               prefix={<FilterOutlined />}
               value={auditTargetFilter}
               onChange={event => setAuditTargetFilter(event.target.value)}
-              placeholder="目标/消息"
+              placeholder={t('目标/消息')}
               style={{ width: 180 }}
             />
             <Input type="date" value={auditStartDate} onChange={event => setAuditStartDate(event.target.value)} style={{ width: 150 }} />
@@ -990,10 +1041,10 @@ const LotteryExportMaintenancePage = () => {
             <Input
               value={auditMinRows}
               onChange={event => setAuditMinRows(event.target.value)}
-              placeholder="最少行数"
+              placeholder={t('最少行数')}
               style={{ width: 110 }}
             />
-            <Button onClick={clearAuditFilters}>清除</Button>
+            <Button onClick={clearAuditFilters}>{t('清除')}</Button>
           </div>
           <Table
             rowKey={record => record.id || record.targetId || `${record.targetType}-${record.generatedAt}`}
@@ -1001,7 +1052,7 @@ const LotteryExportMaintenancePage = () => {
             dataSource={filteredAuditEvents}
             loading={loading}
             size="small"
-            locale={{ emptyText: <Empty description="暂无审计事件" /> }}
+            locale={{ emptyText: <Empty description={t('暂无审计事件')} /> }}
             pagination={{
               current: auditPage,
               pageSize: auditPageSize,
@@ -1015,13 +1066,13 @@ const LotteryExportMaintenancePage = () => {
             scroll={{ x: 680 }}
           />
         </Card>
-        <Card className="life-panel-card lottery-clean-panel" title={<Space><ToolOutlined />维护预览</Space>}>
+        <Card className="life-panel-card lottery-clean-panel" title={<Space><ToolOutlined />{t('维护预览')}</Space>}>
           <div className="lottery-maintenance-group-grid">
             {maintenanceGroups.map(group => (
               <span key={group.key}>
                 <small>{group.title}</small>
                 <strong>{group.count}</strong>
-                <em>需关注 {group.stale}</em>
+                <em>{t('需关注 {{count}}', { count: group.stale })}</em>
               </span>
             ))}
           </div>
@@ -1032,7 +1083,7 @@ const LotteryExportMaintenancePage = () => {
             loading={loading || dryRunning}
             pagination={false}
             size="small"
-            locale={{ emptyText: <Empty description="暂无集合状态" /> }}
+            locale={{ emptyText: <Empty description={t('暂无集合状态')} /> }}
             scroll={{ x: 720 }}
           />
           <Table
@@ -1043,7 +1094,7 @@ const LotteryExportMaintenancePage = () => {
             loading={loading || dryRunning}
             pagination={false}
             size="small"
-            locale={{ emptyText: <Empty description="暂无缓存状态" /> }}
+            locale={{ emptyText: <Empty description={t('暂无缓存状态')} /> }}
             scroll={{ x: 620 }}
           />
         </Card>

@@ -40,6 +40,8 @@ import {
 } from '@ant-design/icons';
 import type { ReactNode } from 'react';
 import TeslaIcon from '../components/TeslaIcon';
+import { translateForLanguage } from '../i18n/registry';
+import { resolveLocalizedText } from '../i18n/resolveLocalizedText';
 import type { AppLanguage } from '../types/appPreferences';
 
 export type LifeModuleStatus = 'live' | 'partial' | 'planned';
@@ -260,26 +262,54 @@ const lifeModuleEnglish: Record<string, LifeModuleEnglishText> = {
   }
 };
 
-const isEnglishLanguage = (language: AppLanguage) => language === 'en-US';
+const legacyTextFallbacks: Record<string, (english?: string) => string | undefined> = {
+  'en-US': english => english,
+};
+
+const translateLifeText = (
+  source: string,
+  language: AppLanguage,
+  legacyEnglish?: string,
+) => {
+  // These module/nav strings already have curated English copy. Prefer it to
+  // the phrase-level compatibility translator, which may only replace part of
+  // a Chinese sentence (for example `首页` -> `首Page`). Other languages still
+  // resolve entirely through their locale file.
+  const curatedTranslation = legacyTextFallbacks[language]?.(legacyEnglish);
+  const translated = translateForLanguage(language, source);
+  return resolveLocalizedText({ source, translated, curatedTranslation });
+};
+
+const translateLifeTextList = (
+  sources: string[],
+  language: AppLanguage,
+  legacyEnglish: string[] = [],
+) => sources.map((source, index) => (
+  translateLifeText(source, language, legacyEnglish[index])
+));
 
 export const getLifeModuleTitle = (module: LifeDataModule, language: AppLanguage) => (
-  isEnglishLanguage(language) ? lifeModuleEnglish[module.id]?.title || module.title : module.title
+  translateLifeText(module.title, language, lifeModuleEnglish[module.id]?.title)
 );
 
 export const getLifeModuleShortTitle = (module: LifeDataModule, language: AppLanguage) => (
-  isEnglishLanguage(language) ? lifeModuleEnglish[module.id]?.shortTitle || module.shortTitle : module.shortTitle
+  translateLifeText(module.shortTitle, language, lifeModuleEnglish[module.id]?.shortTitle)
 );
 
 export const getLifeModuleDescription = (module: LifeDataModule, language: AppLanguage) => (
-  isEnglishLanguage(language) ? lifeModuleEnglish[module.id]?.description || module.description : module.description
+  translateLifeText(module.description, language, lifeModuleEnglish[module.id]?.description)
 );
 
 export const getLifeModuleLiveCapabilities = (module: LifeDataModule, language: AppLanguage) => (
-  isEnglishLanguage(language) ? lifeModuleEnglish[module.id]?.liveCapabilities || module.liveCapabilities : module.liveCapabilities
+  translateLifeTextList(module.liveCapabilities, language, lifeModuleEnglish[module.id]?.liveCapabilities)
+);
+
+export const getLifeModulePlannedCapabilities = (module: LifeDataModule, language: AppLanguage) => (
+  translateLifeTextList(module.plannedCapabilities, language, lifeModuleEnglish[module.id]?.plannedCapabilities)
 );
 
 export const getLifeModuleDataSources = (module: LifeDataModule, language: AppLanguage) => (
-  isEnglishLanguage(language) ? lifeModuleEnglish[module.id]?.dataSources || module.dataSources : module.dataSources
+  translateLifeTextList(module.dataSources, language, lifeModuleEnglish[module.id]?.dataSources)
 );
 
 export const lifeNavItems: LifeNavItem[] = [
@@ -288,8 +318,8 @@ export const lifeNavItems: LifeNavItem[] = [
   { path: '/investments', key: 'investment', label: '股票', labelEn: 'Stocks', icon: <ChromeOutlined /> },
   { path: '/wechat', key: 'wechat', label: '微信', labelEn: 'WeChat', icon: <WechatOutlined /> },
   { path: '/finance/salary', key: 'finance', label: '支付宝', labelEn: 'Alipay', icon: <AlipayOutlined /> },
-  { path: '/vehicle/charging', key: 'vehicle', label: 'Tesla', icon: <TeslaIcon /> },
-  { path: '/ai/chat', key: 'ai', label: 'OpenAI', icon: <OpenAIOutlined /> }
+  { path: '/vehicle/charging', key: 'vehicle', label: 'Tesla', labelEn: 'Tesla', icon: <TeslaIcon /> },
+  { path: '/ai/chat', key: 'ai', label: 'OpenAI', labelEn: 'OpenAI', icon: <OpenAIOutlined /> }
 ];
 
 export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
@@ -526,9 +556,12 @@ export const getLifeItemLabel = (
   item: LifeNavItem | LifeSubNavItem,
   language: AppLanguage
 ) => {
-  if (!isEnglishLanguage(language)) return item.label;
-  if ('labelEn' in item && item.labelEn) return item.labelEn;
-  return 'id' in item ? lifeSubNavEnglishLabels[item.id] || item.label : item.label;
+  const legacyEnglish = 'labelEn' in item && item.labelEn
+    ? item.labelEn
+    : 'id' in item
+      ? lifeSubNavEnglishLabels[item.id]
+      : undefined;
+  return translateLifeText(item.label, language, legacyEnglish);
 };
 
 export const legacyPathMap: Record<string, string> = {
@@ -597,19 +630,20 @@ export const getLifeActiveSubNavPath = (pathname: string) => {
 
 export const getLifeSubNavAriaLabel = (pathname: string, language: AppLanguage = 'zh-CN') => {
   const moduleKey = getLifeModuleKeyByPath(pathname);
-  const labels: Record<LifeModuleKey, { zh: string; en: string }> = {
-    overview: { zh: '生活数据总览导航', en: 'Life data overview navigation' },
-    vehicle: { zh: '车辆数据导航', en: 'Vehicle data navigation' },
-    finance: { zh: '财务数据导航', en: 'Finance data navigation' },
-    investment: { zh: '投资数据导航', en: 'Investment data navigation' },
-    lottery: { zh: '彩票数据导航', en: 'Lottery data navigation' },
-    ai: { zh: 'AI 对话导航', en: 'AI navigation' },
-    wechat: { zh: '微信公众号导航', en: 'WeChat Official Account navigation' },
-    connectors: { zh: '数据接入导航', en: 'Data connection navigation' }
+  const labels: Record<LifeModuleKey, { source: string; legacyEnglish: string }> = {
+    overview: { source: '生活数据总览导航', legacyEnglish: 'Life data overview navigation' },
+    vehicle: { source: '车辆数据导航', legacyEnglish: 'Vehicle data navigation' },
+    finance: { source: '财务数据导航', legacyEnglish: 'Finance data navigation' },
+    investment: { source: '投资数据导航', legacyEnglish: 'Investment data navigation' },
+    lottery: { source: '彩票数据导航', legacyEnglish: 'Lottery data navigation' },
+    ai: { source: 'AI 对话导航', legacyEnglish: 'AI navigation' },
+    wechat: { source: '微信公众号导航', legacyEnglish: 'WeChat Official Account navigation' },
+    connectors: { source: '数据接入导航', legacyEnglish: 'Data connection navigation' }
   };
 
-  if (!moduleKey) return isEnglishLanguage(language) ? 'Module navigation' : '模块导航';
-  return isEnglishLanguage(language) ? labels[moduleKey].en : labels[moduleKey].zh;
+  if (!moduleKey) return translateLifeText('模块导航', language, 'Module navigation');
+  const label = labels[moduleKey];
+  return translateLifeText(label.source, language, label.legacyEnglish);
 };
 
 export const lifeStatusText: Record<LifeModuleStatus, { zh: string; en: string }> = {
@@ -619,7 +653,7 @@ export const lifeStatusText: Record<LifeModuleStatus, { zh: string; en: string }
 };
 
 export const getLifeStatusText = (status: LifeModuleStatus, language: AppLanguage) => (
-  isEnglishLanguage(language) ? lifeStatusText[status].en : lifeStatusText[status].zh
+  translateLifeText(lifeStatusText[status].zh, language, lifeStatusText[status].en)
 );
 
 export const integrationPrinciples = [

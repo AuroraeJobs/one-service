@@ -2,12 +2,27 @@ import { useMemo } from 'react';
 import { Card, Empty, Tag } from 'antd';
 import LifePageShell from './LifePageShell';
 import { useRecordContext } from '../contexts/RecordContext';
+import { useI18n } from '../contexts/I18nContext';
 import { buildLotteryStats, type LotteryDraw } from '../utils/lotteryStats';
 import './LotteryOverviewPage.css';
 
 const RED_TOTAL = 33;
 const GRID_SIZE = 7;
 const CELL_TOTAL = GRID_SIZE * GRID_SIZE;
+
+interface PixelShapeStat {
+  key: string;
+  rowCount: number;
+  columnCount: number;
+  count: number;
+}
+
+type Translate = ReturnType<typeof useI18n>['t'];
+
+const formatShapeLabel = (shape: PixelShapeStat, t: Translate) => t('{{rowLabel}}{{columnLabel}}', {
+  rowLabel: t('{{count}}行', { count: shape.rowCount }),
+  columnLabel: t('{{count}}列', { count: shape.columnCount })
+});
 
 const getCellIndex = (type: 'red' | 'blue', number: string) => {
   const offset = type === 'red' ? 0 : RED_TOTAL;
@@ -38,7 +53,7 @@ const buildCoverageStats = (
     index,
     count: 0
   }));
-  const shapeCounts = new Map<string, number>();
+  const shapeCounts = new Map<string, PixelShapeStat>();
 
   draws.forEach(draw => {
     const drawRows = new Set<number>();
@@ -56,13 +71,22 @@ const buildCoverageStats = (
       drawColumns.add(columnIndex);
     });
 
-    const shapeKey = `${drawRows.size}行${drawColumns.size}列`;
-    shapeCounts.set(shapeKey, (shapeCounts.get(shapeKey) || 0) + 1);
+    const shapeKey = `${drawRows.size}-${drawColumns.size}`;
+    const current = shapeCounts.get(shapeKey);
+    shapeCounts.set(shapeKey, {
+      key: shapeKey,
+      rowCount: drawRows.size,
+      columnCount: drawColumns.size,
+      count: (current?.count || 0) + 1
+    });
   });
 
-  const shapes = Array.from(shapeCounts.entries())
-    .map(([label, count]) => ({ label, count }))
-    .sort((left, right) => right.count - left.count || left.label.localeCompare(right.label, 'zh-Hans-CN'));
+  const shapes = Array.from(shapeCounts.values())
+    .sort((left, right) => (
+      right.count - left.count
+      || left.rowCount - right.rowCount
+      || left.columnCount - right.columnCount
+    ));
 
   return {
     rows,
@@ -110,6 +134,7 @@ const PixelStatBars = ({ title, items, maxCount, prefix }: PixelStatBarsProps) =
 
 const LotteryPixelStatsPage = () => {
   const { allRecords } = useRecordContext();
+  const { t } = useI18n();
   const stats = useMemo(() => buildLotteryStats(allRecords), [allRecords]);
   const pixelStats = useMemo(() => buildPixelStats(stats.draws), [stats.draws]);
   const redPixelStats = useMemo(() => buildRedPixelStats(stats.draws), [stats.draws]);
@@ -118,27 +143,31 @@ const LotteryPixelStatsPage = () => {
   return (
     <LifePageShell
       className="lottery-pixel-stats-page"
-      eyebrow="象数"
-      title="像素行列统计"
-      actions={<Tag color={stats.draws.length ? 'processing' : 'default'}>{totalHits} 次</Tag>}
+      eyebrow={t('象数')}
+      title={t('像素行列统计')}
+      actions={(
+        <Tag color={stats.draws.length ? 'processing' : 'default'}>
+          {t('{{count}} 次命中', { count: totalHits })}
+        </Tag>
+      )}
     >
       {stats.draws.length > 0 ? (
         <>
           <section className="lottery-pixel-stat-layout">
-            <PixelStatBars title="行" items={pixelStats.rows} maxCount={pixelStats.maxRowCount} prefix="R" />
-            <PixelStatBars title="列" items={pixelStats.columns} maxCount={pixelStats.maxColumnCount} prefix="C" />
+            <PixelStatBars title={t('行')} items={pixelStats.rows} maxCount={pixelStats.maxRowCount} prefix="R" />
+            <PixelStatBars title={t('列')} items={pixelStats.columns} maxCount={pixelStats.maxColumnCount} prefix="C" />
           </section>
 
           <Card className="life-panel-card lottery-pixel-shape-card">
             <div className="lottery-card-title-row">
               <div>
-                <h2>行列组合</h2>
+                <h2>{t('行列组合')}</h2>
               </div>
             </div>
             <div className="lottery-pixel-shape-grid">
               {pixelStats.shapes.map(shape => (
-                <div className="lottery-pixel-shape-item" key={shape.label}>
-                  <strong>{shape.label}</strong>
+                <div className="lottery-pixel-shape-item" key={shape.key}>
+                  <strong>{formatShapeLabel(shape, t)}</strong>
                   <span className="lottery-pixel-stat-track">
                     <span style={{ width: `${Math.max(3, (shape.count / pixelStats.maxShapeCount) * 100)}%` }} />
                   </span>
@@ -149,25 +178,27 @@ const LotteryPixelStatsPage = () => {
           </Card>
 
           <section className="lottery-pixel-section-title">
-            <h2>红球覆盖</h2>
-            <Tag color="error">{stats.draws.length * 6} 次</Tag>
+            <h2>{t('红球覆盖')}</h2>
+            <Tag color="error">
+              {t('{{count}} 次命中', { count: stats.draws.length * 6 })}
+            </Tag>
           </section>
 
           <section className="lottery-pixel-stat-layout lottery-pixel-stat-layout-red">
-            <PixelStatBars title="红球行" items={redPixelStats.rows} maxCount={redPixelStats.maxRowCount} prefix="R" />
-            <PixelStatBars title="红球列" items={redPixelStats.columns} maxCount={redPixelStats.maxColumnCount} prefix="C" />
+            <PixelStatBars title={t('红球行')} items={redPixelStats.rows} maxCount={redPixelStats.maxRowCount} prefix="R" />
+            <PixelStatBars title={t('红球列')} items={redPixelStats.columns} maxCount={redPixelStats.maxColumnCount} prefix="C" />
           </section>
 
           <Card className="life-panel-card lottery-pixel-shape-card lottery-pixel-shape-card-red">
             <div className="lottery-card-title-row">
               <div>
-                <h2>红球行列组合</h2>
+                <h2>{t('红球行列组合')}</h2>
               </div>
             </div>
             <div className="lottery-pixel-shape-grid">
               {redPixelStats.shapes.map(shape => (
-                <div className="lottery-pixel-shape-item" key={shape.label}>
-                  <strong>{shape.label}</strong>
+                <div className="lottery-pixel-shape-item" key={shape.key}>
+                  <strong>{formatShapeLabel(shape, t)}</strong>
                   <span className="lottery-pixel-stat-track lottery-pixel-stat-track-red">
                     <span style={{ width: `${Math.max(3, (shape.count / redPixelStats.maxShapeCount) * 100)}%` }} />
                   </span>

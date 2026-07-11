@@ -23,7 +23,7 @@ import {
 } from '@ant-design/icons';
 import { useRecordContext } from '../contexts/RecordContext';
 // 导入 ECharts
-import ReactECharts from 'echarts-for-react';
+import ReactECharts from './LotteryLocalizedECharts';
 // 导入全局颜色和人物配置
 import { GLOBAL_COMBINATION_COLORS, GLOBAL_CHARACTER_MAPS } from '../constants/colors';
 // 导入六十四卦配置

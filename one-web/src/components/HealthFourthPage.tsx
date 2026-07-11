@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Card } from 'antd';
-import ReactECharts from 'echarts-for-react';
+import ReactECharts from './LotteryLocalizedECharts';
 import { useRecordContext } from '../contexts/RecordContext';
 
 const HealthFourthPage: React.FC = () => {

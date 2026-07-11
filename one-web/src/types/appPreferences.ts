@@ -1,3 +1,3 @@
 export type ColorMode = 'light' | 'dark';
 
-export type AppLanguage = 'zh-CN' | 'en-US';
+export type { AppLanguage } from '../i18n/registry';

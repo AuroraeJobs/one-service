@@ -8,11 +8,6 @@ import lombok.Data;
 @Data
 public class AdminResetUserCredentialsRequest {
 
-    @NotBlank(message = "用户名不能为空")
-    @Size(min = 3, max = 16, message = "用户名长度必须在3-16位之间")
-    @Pattern(regexp = "^[a-zA-Z]\\w{2,15}$", message = "用户名必须以字母开头")
-    private String username;
-
     @NotBlank(message = "密码不能为空")
     @Size(min = 8, max = 30, message = "密码长度必须在8-30位之间")
     @Pattern(regexp = "^[a-zA-Z][\\w-]{7,29}$", message = "密码必须以字母开头，仅支持字母、数字、下划线和短横线")

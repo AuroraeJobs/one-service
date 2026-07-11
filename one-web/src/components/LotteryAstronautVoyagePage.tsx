@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Button, Card, Empty, Select, Space, Spin, Tag, message } from 'antd';
 import { ArrowLeftOutlined, RocketOutlined } from '@ant-design/icons';
 import LifePageShell from './LifePageShell';
+import { useI18n } from '../contexts/I18nContext';
 import { lotteryAstronautApi } from '../services/api';
 import type { LotteryAstronaut, LotteryAstronautVoyage } from '../services/api';
 
@@ -30,6 +31,7 @@ const topDistribution = (values: string[]) => {
 
 const LotteryAstronautVoyagePage = () => {
   const navigate = useNavigate();
+  const { t, translateText } = useI18n();
   const params = useParams<{ camp: string; number: string }>();
   const camp = params.camp?.toUpperCase() === 'BLUE' ? 'BLUE' : 'RED';
   const number = String(params.number || '').padStart(2, '0');
@@ -49,32 +51,39 @@ const LotteryAstronautVoyagePage = () => {
         setVoyage(voyageData);
       } catch (requestError) {
         console.error('读取宇航员航行记录失败:', requestError);
-        message.error('航行记录加载失败');
+        message.error(t('航行记录加载失败'));
       } finally {
         setLoading(false);
       }
     };
 
     loadVoyage();
-  }, [camp, number]);
+  }, [camp, number, t]);
 
   const astronaut = useMemo(() => (
     voyage?.astronaut || astronauts.find(item => item.camp === camp && item.number === number)
   ), [astronauts, camp, number, voyage]);
 
-  const voyageRecords = voyage?.records || [];
+  const voyageRecords = useMemo(() => voyage?.records || [], [voyage?.records]);
 
   const availableAstronauts = useMemo(() => (
     astronauts
       .filter(item => item.camp === camp)
       .map(item => ({
         value: item.number,
-        label: `${item.number} ${item.name || '未命名'}`
+        label: t('{{number}} {{name}}', {
+          number: item.number,
+          name: item.name ? translateText(item.name) : t('未命名')
+        })
       }))
-  ), [astronauts, camp]);
+  ), [astronauts, camp, t, translateText]);
 
-  const title = astronaut ? `${astronaut.name}的航行记录` : `${number}号宇航员航行记录`;
+  const title = astronaut
+    ? t('{{name}}的航行记录', { name: translateText(astronaut.name) })
+    : t('{{number}}号宇航员航行记录', { number });
   const isBlueVoyage = camp === 'BLUE';
+  const localizePlanetName = (name?: string) => name ? translateText(name) : '-';
+  const localizeHexagramName = (name?: string) => name ? translateText(name) : '-';
   const voyageAnalysis = useMemo(() => {
     const sortedRecords = [...voyageRecords].sort((a, b) => b.period - a.period);
     const ascendingRecords = [...voyageRecords].sort((a, b) => a.period - b.period);
@@ -103,7 +112,8 @@ const LotteryAstronautVoyagePage = () => {
       planetDistribution,
       hexagramDistribution,
       averageRedSum: total ? sumTotal / total : 0,
-      oddEvenLabel: `${oddTotal}奇 / ${evenTotal}偶`,
+      oddTotal,
+      evenTotal,
       averageGap,
       latestGap,
       longestGap,
@@ -116,7 +126,7 @@ const LotteryAstronautVoyagePage = () => {
   return (
     <LifePageShell
       className="lottery-astronaut-voyage-page"
-      eyebrow="Lottery / Astronaut Voyage"
+      eyebrow={t('彩票 / 宇航员航行')}
       title={title}
       actions={(
         <Space wrap>
@@ -127,7 +137,7 @@ const LotteryAstronautVoyagePage = () => {
             onChange={nextNumber => navigate(`/lottery/astronauts/${camp.toLowerCase()}/${nextNumber}`)}
           />
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/lottery/astronauts')}>
-            返回名单
+            {t('返回名单')}
           </Button>
         </Space>
       )}
@@ -135,35 +145,57 @@ const LotteryAstronautVoyagePage = () => {
       <Spin spinning={loading}>
         {voyageRecords.length > 0 ? (
           <>
-            <section className="lottery-voyage-summary" aria-label="航行分析摘要">
+            <section
+              className="lottery-voyage-summary"
+              aria-label={t('航行分析摘要')}
+            >
               <Card size="small">
-                <span>航行总数</span>
+                <span>{t('航行总数')}</span>
                 <strong>{voyageAnalysis.total}</strong>
-                <small>第 {voyageAnalysis.earliestRecord?.period || '-'} - {voyageAnalysis.latestRecord?.period || '-'}</small>
+                <small>
+                  {t('第 {{startPeriod}} - {{endPeriod}} 期', {
+                    startPeriod: voyageAnalysis.earliestRecord?.period || '-',
+                    endPeriod: voyageAnalysis.latestRecord?.period || '-'
+                  })}
+                </small>
               </Card>
               <Card size="small">
-                <span>最近航行</span>
-                <strong>{voyageAnalysis.latestRecord?.planetName || '-'}</strong>
-                <small>第 {voyageAnalysis.latestRecord?.period || '-'} 期</small>
+                <span>{t('最近航行')}</span>
+                <strong>{localizePlanetName(voyageAnalysis.latestRecord?.planetName)}</strong>
+                <small>
+                  {t('第 {{period}} 期', {
+                    period: voyageAnalysis.latestRecord?.period || '-'
+                  })}
+                </small>
               </Card>
               <Card size="small">
-                <span>主访问星球</span>
-                <strong>{voyageAnalysis.planetDistribution[0]?.name || '-'}</strong>
-                <small>{voyageAnalysis.planetDistribution[0]?.count || 0} 次</small>
+                <span>{t('主访问星球')}</span>
+                <strong>{localizePlanetName(voyageAnalysis.planetDistribution[0]?.name)}</strong>
+                <small>
+                  {t('{{count}} 次访问', {
+                    count: voyageAnalysis.planetDistribution[0]?.count || 0
+                  })}
+                </small>
               </Card>
               <Card size="small">
-                <span>平均间隔</span>
+                <span>{t('平均间隔')}</span>
                 <strong>{voyageAnalysis.averageGap ? voyageAnalysis.averageGap.toFixed(1) : '-'}</strong>
-                <small>期 / 次</small>
+                <small>{t('期 / 次')}</small>
               </Card>
             </section>
 
-            <section className="lottery-voyage-analysis-grid" aria-label="航行结构分析">
-              <Card className="life-panel-card lottery-clean-panel" title="星球分布">
+            <section
+              className="lottery-voyage-analysis-grid"
+              aria-label={t('航行结构分析')}
+            >
+              <Card
+                className="life-panel-card lottery-clean-panel"
+                title={t('星球分布')}
+              >
                 <div className="lottery-voyage-analysis-list">
                   {voyageAnalysis.planetDistribution.slice(0, 8).map(item => (
                     <div key={item.name}>
-                      <span>{item.name}</span>
+                      <span>{localizePlanetName(item.name)}</span>
                       <strong>{item.count}</strong>
                       <em style={{ width: `${Math.max(8, (item.count / voyageAnalysis.total) * 100)}%` }} />
                     </div>
@@ -171,29 +203,70 @@ const LotteryAstronautVoyagePage = () => {
                 </div>
               </Card>
               {isBlueVoyage ? (
-                <Card className="life-panel-card lottery-clean-panel" title="蓝舰队星球节奏">
+                <Card
+                  className="life-panel-card lottery-clean-panel"
+                  title={t('蓝舰队星球节奏')}
+                >
                   <div className="lottery-voyage-hexagram-summary">
-                    <strong>{voyageAnalysis.planetDistribution[0]?.name || '-'}</strong>
-                    <span>主星占比 {voyageAnalysis.primaryPlanetPercent}%</span>
-                    <span>最近间隔 {voyageAnalysis.latestGap || '-'} 期</span>
-                    <span>间隔范围 {voyageAnalysis.shortestGap || '-'} - {voyageAnalysis.longestGap || '-'} 期</span>
+                    <strong>{localizePlanetName(voyageAnalysis.planetDistribution[0]?.name)}</strong>
+                    <span>
+                      {t('主星占比 {{percent}}%', {
+                        percent: voyageAnalysis.primaryPlanetPercent
+                      })}
+                    </span>
+                    <span>
+                      {voyageAnalysis.latestGap
+                        ? t('最近间隔 {{count}} 期', { count: voyageAnalysis.latestGap })
+                        : t('最近间隔 -')}
+                    </span>
+                    <span>
+                      {voyageAnalysis.longestGap
+                        ? t('间隔范围 {{shortest}} - {{longest}} 期', {
+                            shortest: voyageAnalysis.shortestGap,
+                            longest: voyageAnalysis.longestGap
+                          })
+                        : t('间隔范围 -')}
+                    </span>
                   </div>
                 </Card>
               ) : (
-                <Card className="life-panel-card lottery-clean-panel" title="红舰队卦象与结构">
+                <Card
+                  className="life-panel-card lottery-clean-panel"
+                  title={t('红舰队卦象与结构')}
+                >
                   <div className="lottery-voyage-hexagram-summary">
-                    <strong>{voyageAnalysis.hexagramDistribution[0]?.name || '-'}</strong>
-                    <span>最高频卦象 {voyageAnalysis.hexagramDistribution[0]?.count || 0} 次</span>
-                    <span>平均和值 {voyageAnalysis.averageRedSum ? voyageAnalysis.averageRedSum.toFixed(1) : '-'}</span>
-                    <span>累计奇偶 {voyageAnalysis.oddEvenLabel}</span>
+                    <strong>{localizeHexagramName(voyageAnalysis.hexagramDistribution[0]?.name)}</strong>
+                    <span>
+                      {t('最高频卦象 {{count}} 次', {
+                        count: voyageAnalysis.hexagramDistribution[0]?.count || 0
+                      })}
+                    </span>
+                    <span>
+                      {t('平均和值 {{value}}', {
+                        value: voyageAnalysis.averageRedSum
+                          ? voyageAnalysis.averageRedSum.toFixed(1)
+                          : '-'
+                      })}
+                    </span>
+                    <span>
+                      {t('累计奇偶 {{odd}}奇 / {{even}}偶', {
+                        odd: voyageAnalysis.oddTotal,
+                        even: voyageAnalysis.evenTotal
+                      })}
+                    </span>
                   </div>
                 </Card>
               )}
-              <Card className="life-panel-card lottery-clean-panel" title="近 12 次趋势">
+              <Card
+                className="life-panel-card lottery-clean-panel"
+                title={t('近 12 次趋势')}
+              >
                 <div className="lottery-voyage-trend-tags">
                   {voyageAnalysis.recentPlanets.length ? voyageAnalysis.recentPlanets.map(item => (
-                    <Tag key={item.name} color={planetColors[item.name] ? 'blue' : 'default'}>{item.name} {item.count}</Tag>
-                  )) : <Tag>暂无趋势</Tag>}
+                    <Tag key={item.name} color={planetColors[item.name] ? 'blue' : 'default'}>
+                      {localizePlanetName(item.name)} {item.count}
+                    </Tag>
+                  )) : <Tag>{t('暂无趋势')}</Tag>}
                 </div>
               </Card>
             </section>
@@ -207,11 +280,13 @@ const LotteryAstronautVoyagePage = () => {
                 >
                   <div className="lottery-voyage-planet">
                     <RocketOutlined />
-                    <strong>{record.planetName}</strong>
+                    <strong>{localizePlanetName(record.planetName)}</strong>
                   </div>
                   <div className="lottery-voyage-item-main">
                     <div>
-                      <div className="lottery-voyage-period">第 {record.period} 期</div>
+                      <div className="lottery-voyage-period">
+                        {t('第 {{period}} 期', { period: record.period })}
+                      </div>
                       <div className="lottery-voyage-balls">
                         {record.redNumbers.length > 0 ? record.redNumbers.join(' ') : record.blueNumber || record.raw}
                       </div>
@@ -220,14 +295,27 @@ const LotteryAstronautVoyagePage = () => {
                   <div className="lottery-voyage-tags">
                     {isBlueVoyage ? (
                       <>
-                        <Tag color="blue">蓝球 {record.blueNumber || record.raw}</Tag>
-                        <Tag>星球 {record.planetName}</Tag>
+                        <Tag color="blue">
+                          {t('蓝球 {{number}}', {
+                            number: record.blueNumber || record.raw
+                          })}
+                        </Tag>
+                        <Tag>
+                          {t('星球 {{name}}', {
+                            name: localizePlanetName(record.planetName)
+                          })}
+                        </Tag>
                       </>
                     ) : (
                       <>
-                        <Tag color="gold">{record.hexagramName}</Tag>
-                        <Tag>和值 {record.redSum}</Tag>
-                        <Tag>{record.oddCount}奇{record.evenCount}偶</Tag>
+                        <Tag color="gold">{localizeHexagramName(record.hexagramName)}</Tag>
+                        <Tag>{t('和值 {{sum}}', { sum: record.redSum })}</Tag>
+                        <Tag>
+                          {t('{{odd}}奇{{even}}偶', {
+                            odd: record.oddCount,
+                            even: record.evenCount
+                          })}
+                        </Tag>
                       </>
                     )}
                   </div>
@@ -236,7 +324,9 @@ const LotteryAstronautVoyagePage = () => {
             </section>
           </>
         ) : (
-          <Empty description="这个宇航员暂时没有航行记录" />
+          <Empty
+            description={t('这个宇航员暂时没有航行记录')}
+          />
         )}
       </Spin>
     </LifePageShell>

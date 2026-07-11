@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Progress, Spin, Table, Tag, Typography, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -13,6 +13,7 @@ import {
   RocketOutlined
 } from '@ant-design/icons';
 import LifePageShell from './LifePageShell';
+import { useAppPreferences } from '../contexts/AppPreferencesContext';
 import {
   openAiTrainingApi,
   type OpenAiTrainingAuditEvent,
@@ -86,6 +87,183 @@ const fallbackTrainingDashboard: OpenAiTrainingManagementDashboard = {
     { key: 'api', icon: 'api', title: '接真实 API', detail: '逐步接入 OpenAI file、fine-tuning job、checkpoint、eval API。' },
     { key: 'gate', icon: 'check', title: '上线门禁', detail: '用 eval pass rate、失败案例和回滚模型决定是否灰度。' }
   ]
+};
+
+const localizeFallbackTrainingDashboard = (
+  dashboard: OpenAiTrainingManagementDashboard,
+  isEnglish: boolean
+): OpenAiTrainingManagementDashboard => {
+  if (!isEnglish) return dashboard;
+  const evalFailureMap: Record<string, Partial<OpenAiTrainingEvalFailureCase>> = {
+    'format-drift': {
+      category: 'format drift',
+      prompt: 'Generate a WeChat publishing plan summary',
+      expected: 'Keep title, target readers, publish time, and review metrics',
+      observed: 'Review metrics were omitted',
+      nextAction: 'Add positive samples with review metrics and eval assertions for field completeness'
+    },
+    deploy: {
+      category: 'insufficient evidence',
+      prompt: 'Explain why the current checkpoint was selected',
+      expected: 'Cite valid loss, pass rate, and failure cases',
+      observed: 'Only pass rate was cited; failure-case explanation was missing',
+      nextAction: 'Add the failure-case summary from the training report into the answer template'
+    },
+    base: {
+      category: 'tool routing',
+      prompt: 'Determine whether training job status should be queried',
+      expected: 'Classify as a training-job query and call the API',
+      observed: 'Misclassified as a normal chat answer',
+      nextAction: 'Add boundary samples to the tool-routing dataset'
+    }
+  };
+  const costNoteMap: Record<string, string> = {
+    'training-wechat': 'Token estimate for training and validation sets.',
+    eval: 'Pre-release regression eval cost snapshot.',
+    canary: 'Estimated with one week of grayscale-period samples.'
+  };
+  const auditNoteMap: Record<string, string> = {
+    'dataset-approved': 'Training set passed purpose, source, and quality review.',
+    create_job: 'Created a managed training job with gpt-4.1-mini.',
+    promote_checkpoint: 'Marked as candidate checkpoint after eval passed.',
+    bind_deployment: 'Bound the model and preserved rollbackModelId.'
+  };
+  const datasetSourceMap: Record<string, string> = {
+    公众号人工精选样本: 'curated WeChat article samples',
+    发布回归用例: 'publishing regression cases',
+    'MiniGPT 复盘笔记': 'MiniGPT review notes'
+  };
+  const checkpointNoteMap: Record<string, string> = {
+    '候选 checkpoint，Eval 提升明显。': 'Candidate checkpoint with clear eval improvement.',
+    '风格开始稳定，但标题仍偏模板化。': 'Style is becoming stable, but titles are still too template-like.',
+    '适合作为 canary，继续补失败样例。': 'Suitable as canary; continue adding failure cases.'
+  };
+  const readinessMap: Record<string, { label: string; detail: string }> = {
+    'dataset-reviewed': {
+      label: 'Dataset Review',
+      detail: 'Training samples have purpose, source, and review status.'
+    },
+    'training-job': {
+      label: 'Training Job',
+      detail: 'The main candidate job has completed and produced a fine-tuned model.'
+    },
+    'eval-threshold': {
+      label: 'Eval Threshold',
+      detail: 'Use a fixed eval set to confirm whether the candidate model beats the baseline.'
+    },
+    rollback: {
+      label: 'Rollback Model',
+      detail: 'Each active/canary binding keeps rollbackModelId.'
+    },
+    canary: {
+      label: 'Canary Observation',
+      detail: 'The canary model still needs more failure cases and manual review.'
+    }
+  };
+  const readinessLabelMap: Record<string, { label: string; detail: string }> = {
+    数据集审核: readinessMap['dataset-reviewed'],
+    训练任务: readinessMap['training-job'],
+    'Eval 门槛': readinessMap['eval-threshold'],
+    回滚模型: readinessMap.rollback,
+    灰度观察: readinessMap.canary
+  };
+  const nextActionMap: Record<string, { title: string; detail: string }> = {
+    api: {
+      title: 'Connect Real APIs',
+      detail: 'Gradually integrate OpenAI file, fine-tuning job, checkpoint, and eval APIs.'
+    },
+    mongo: {
+      title: 'Mongo Persistence',
+      detail: 'Persist training job status, metrics, eval results, and deployment binding history.'
+    },
+    gate: {
+      title: 'Release Gates',
+      detail: 'Use eval pass rate, failure cases, and rollback models to decide canary rollout.'
+    }
+  };
+  const nextActionTitleMap: Record<string, { title: string; detail: string }> = {
+    '接真实API': nextActionMap.api,
+    '接真实 API': nextActionMap.api,
+    'Mongo 持久化': nextActionMap.mongo,
+    '上线门禁': nextActionMap.gate
+  };
+  const localizeText = (value?: string) => ({
+    证据不足: 'insufficient evidence',
+    工具路由: 'tool routing',
+    训练任务: 'Training Job',
+    回滚模型: 'Rollback Model',
+    灰度观察: 'Canary Observation',
+    'Mongo 持久化': 'Mongo Persistence'
+  }[value || ''] || value);
+
+  return {
+    ...dashboard,
+    lifecycleStages: dashboard.lifecycleStages?.map(stage => ({
+      ...stage,
+      detail: ({
+        eval: 'Measure the base model first to locate whether issues come from prompts, data, tools, or model behavior.',
+        dataset: 'Prepare supervised samples and track source, purpose, review status, and training files.',
+        job: 'Create training jobs and monitor queued, running, succeeded, and failed states.',
+        checkpoint: 'Compare intermediate models by loss, accuracy, sample outputs, and failure cases.',
+        deploy: 'Bind model versions to business capabilities only after evals pass.'
+      } as Record<string, string>)[stage.key] || stage.detail
+    })),
+    entities: dashboard.entities?.map(entity => ({
+      ...entity,
+      value: ({
+        dataset: 'training/eval datasets',
+        job: 'managed training jobs',
+        metric: 'step and loss metrics',
+        checkpoint: 'intermediate model versions',
+        eval: 'pre-release evals',
+        deployment: 'business bindings and rollback'
+      } as Record<string, string>)[entity.key] || entity.value
+    })),
+    datasets: dashboard.datasets?.map(dataset => ({
+      ...dataset,
+      source: dataset.key === 'wechat-style'
+        ? 'curated WeChat article samples'
+        : dataset.key === 'wechat-publish-eval'
+          ? 'publishing regression cases'
+          : datasetSourceMap[dataset.source || ''] || dataset.source
+    })),
+    checkpoints: dashboard.checkpoints?.map(checkpoint => ({
+      ...checkpoint,
+      notes: checkpoint.key === 'wechat-240'
+        ? 'Candidate checkpoint with clear eval improvement.'
+        : checkpointNoteMap[checkpoint.notes || ''] || checkpoint.notes
+    })),
+    evalFailureCases: dashboard.evalFailureCases?.map(failure => {
+      const localizedFailure = evalFailureMap[failure.key] || evalFailureMap[failure.evalRunId || ''];
+      return {
+        ...failure,
+        ...(localizedFailure || {}),
+        category: localizedFailure?.category || localizeText(failure.category),
+        prompt: localizedFailure?.prompt || failure.prompt,
+        expected: localizedFailure?.expected || failure.expected,
+        observed: localizedFailure?.observed || failure.observed,
+        nextAction: localizedFailure?.nextAction || failure.nextAction
+      };
+    }),
+    costItems: dashboard.costItems?.map(cost => ({
+      ...cost,
+      note: costNoteMap[cost.key] || costNoteMap[cost.scope || ''] || cost.note
+    })),
+    auditEvents: dashboard.auditEvents?.map(event => ({
+      ...event,
+      note: auditNoteMap[event.key] || auditNoteMap[event.action || ''] || event.note
+    })),
+    readinessChecks: dashboard.readinessChecks?.map(check => ({
+      ...check,
+      label: (readinessMap[check.key] || readinessLabelMap[check.label || ''])?.label || localizeText(check.label),
+      detail: (readinessMap[check.key] || readinessLabelMap[check.label || ''])?.detail || check.detail
+    })),
+    nextActions: dashboard.nextActions?.map(action => ({
+      ...action,
+      title: (nextActionMap[action.key] || nextActionTitleMap[action.title || ''])?.title || localizeText(action.title),
+      detail: (nextActionMap[action.key] || nextActionTitleMap[action.title || ''])?.detail || action.detail
+    }))
+  };
 };
 
 const isNil = (value: unknown) => value === undefined || value === null;
@@ -511,10 +689,42 @@ const reportColumns: ColumnsType<OpenAiTrainingReportRecord> = [
 ];
 
 const OpenAiTrainingManagementPage = () => {
+  const { isEnglish } = useAppPreferences();
   const [dashboard, setDashboard] = useState<OpenAiTrainingManagementDashboard>(fallbackTrainingDashboard);
   const [reports, setReports] = useState<OpenAiTrainingReportRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [dashboardError, setDashboardError] = useState(false);
+
+  const text = useMemo(() => ({
+    title: isEnglish ? 'OpenAI Training Management' : 'OpenAI 训练管理',
+    copyAndSave: isEnglish ? 'Copy and Save' : '复制并保存',
+    noReport: isEnglish ? 'No OpenAI training report to copy yet' : '暂无 OpenAI 训练管理报告可复制',
+    reportTitle: isEnglish ? 'OpenAI Training Management Report' : 'OpenAI 训练管理报告',
+    copySaved: isEnglish ? 'Training report copied and saved' : '训练管理报告已复制并保存',
+    copySavedSnapshotFailed: isEnglish ? 'Training report copied, but Mongo snapshot save failed' : '训练管理报告已复制，Mongo 快照保存失败',
+    copyFailed: isEnglish ? 'Failed to copy training report' : '训练管理报告复制失败',
+    apiUnavailable: isEnglish ? 'Training console API is unavailable. Showing the local enterprise training blueprint.' : '训练台接口暂不可用，已显示本地企业训练蓝图',
+    introMessage: isEnglish ? 'This is an enterprise model training management page, not a direct MiniGPT training launcher.' : '训练台是企业模型训练管理页，不是直接开始 MiniGPT 训练的按钮',
+    introFallback: isEnglish ? 'The backend training console API is unavailable, so this page is showing a local blueprint. MiniGPT training still runs from the MiniGPT page.' : '当前后端训练台接口不可用，页面已降级展示本地蓝图；MiniGPT 实际训练仍在 MiniGPT 页面里操作。',
+    introNormal: isEnglish ? 'Use this page to study and manage enterprise training workflows: datasets, jobs, metrics, checkpoints, evals, deployments, cost, audit, and release gates.' : '这里用于学习和管理企业正规训练流程：数据集、训练任务、指标、checkpoint、评测、部署绑定、成本、审计和上线门禁。',
+    noData: isEnglish ? 'No OpenAI training management data' : '暂无 OpenAI 训练管理数据',
+    entities: isEnglish ? 'Managed Objects' : '管理对象',
+    miniGptMap: isEnglish ? 'MiniGPT Mapping' : 'MiniGPT 对照',
+    experimentCompare: isEnglish ? 'experiment comparison' : '实验对比',
+    copyReport: isEnglish ? 'copy report' : '复制报告',
+    datasets: isEnglish ? 'Dataset Assets' : '数据集资产',
+    jobs: isEnglish ? 'Training Job Monitoring' : '训练任务观测',
+    metrics: isEnglish ? 'Training Metric Snapshot' : '训练指标快照',
+    checkpoints: isEnglish ? 'Checkpoint Assets' : 'Checkpoint 资产',
+    evalDecision: isEnglish ? 'Eval Decisions' : 'Eval 决策',
+    deployments: isEnglish ? 'Model Deployment Bindings' : '模型部署绑定',
+    evalFailures: isEnglish ? 'Eval Failure Cases' : 'Eval 失败案例',
+    costs: isEnglish ? 'Cost and Token Snapshot' : '成本与 Token 快照',
+    audit: isEnglish ? 'Training Audit Events' : '训练审计事件',
+    reports: isEnglish ? 'Report Snapshots' : '报告快照',
+    readiness: isEnglish ? 'Release Gate Checks' : '上线门禁检查',
+    nextActions: isEnglish ? 'Next Implementation Steps' : '下一步实现'
+  }), [isEnglish]);
 
   const loadReports = useCallback(async () => {
     try {
@@ -534,7 +744,7 @@ const OpenAiTrainingManagementPage = () => {
       console.error('加载 OpenAI 训练管理数据失败:', error);
       setDashboard(fallbackTrainingDashboard);
       setDashboardError(true);
-      message.warning('训练台接口暂不可用，已显示本地企业训练蓝图');
+      message.warning(text.apiUnavailable);
     }
 
     try {
@@ -544,66 +754,67 @@ const OpenAiTrainingManagementPage = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [text.apiUnavailable]);
 
   useEffect(() => {
     loadDashboard();
   }, [loadDashboard]);
 
-  const lifecycleStages = dashboard.lifecycleStages || [];
-  const entityCards = dashboard.entities || [];
-  const datasetRows = dashboard.datasets || [];
-  const jobRows = dashboard.jobs || [];
-  const metricRows = dashboard.metrics || [];
-  const checkpointRows = dashboard.checkpoints || [];
-  const evalRows = dashboard.evalRuns || [];
-  const evalFailureRows = dashboard.evalFailureCases || [];
-  const costRows = dashboard.costItems || [];
-  const auditRows = dashboard.auditEvents || [];
-  const deploymentRows = dashboard.deploymentBindings || [];
-  const readinessChecks = dashboard.readinessChecks || [];
-  const nextActions = dashboard.nextActions || [];
+  const displayDashboard = useMemo(() => localizeFallbackTrainingDashboard(dashboard, isEnglish), [dashboard, isEnglish]);
+  const lifecycleStages = displayDashboard.lifecycleStages || [];
+  const entityCards = displayDashboard.entities || [];
+  const datasetRows = displayDashboard.datasets || [];
+  const jobRows = displayDashboard.jobs || [];
+  const metricRows = displayDashboard.metrics || [];
+  const checkpointRows = displayDashboard.checkpoints || [];
+  const evalRows = displayDashboard.evalRuns || [];
+  const evalFailureRows = displayDashboard.evalFailureCases || [];
+  const costRows = displayDashboard.costItems || [];
+  const auditRows = displayDashboard.auditEvents || [];
+  const deploymentRows = displayDashboard.deploymentBindings || [];
+  const readinessChecks = displayDashboard.readinessChecks || [];
+  const nextActions = displayDashboard.nextActions || [];
 
   const handleCopyReport = useCallback(async () => {
     if (!lifecycleStages.length) {
-      message.warning('暂无 OpenAI 训练管理报告可复制');
+      message.warning(text.noReport);
       return;
     }
 
     try {
-      const reportContent = buildTrainingReport(dashboard);
+      const reportContent = buildTrainingReport(displayDashboard);
       await navigator.clipboard.writeText(reportContent);
       try {
         await openAiTrainingApi.saveReport({
-          title: 'OpenAI 训练管理报告',
+          title: text.reportTitle,
           content: reportContent,
           source: 'one-web-copy',
-          dashboardGeneratedAt: dashboard.generatedAt
+          dashboardGeneratedAt: displayDashboard.generatedAt
         });
         await loadReports();
-        message.success('训练管理报告已复制并保存');
+        message.success(text.copySaved);
       } catch (saveError) {
         console.error('保存 OpenAI 训练管理报告失败:', saveError);
-        message.warning('训练管理报告已复制，Mongo 快照保存失败');
+        message.warning(text.copySavedSnapshotFailed);
       }
     } catch (error) {
       console.error('复制 OpenAI 训练管理报告失败:', error);
-      message.error('训练管理报告复制失败');
+      message.error(text.copyFailed);
     }
-  }, [dashboard, lifecycleStages.length, loadReports]);
+  }, [displayDashboard, lifecycleStages.length, loadReports, text.copyFailed, text.copySaved, text.copySavedSnapshotFailed, text.noReport, text.reportTitle]);
 
   return (
     <LifePageShell
       className="openai-training-page"
       eyebrow="OpenAI / Training Management"
-      title="OpenAI 训练管理"
+      title={text.title}
       actions={(
         <Button
           disabled={loading || !lifecycleStages.length}
           icon={<CopyOutlined />}
           onClick={handleCopyReport}
         >
-          复制并保存
+          {text.copyAndSave}
         </Button>
       )}
     >
@@ -612,13 +823,13 @@ const OpenAiTrainingManagementPage = () => {
           className="openai-training-intro"
           type={dashboardError ? 'warning' : 'info'}
           showIcon
-          message="训练台是企业模型训练管理页，不是直接开始 MiniGPT 训练的按钮"
+          message={text.introMessage}
           description={dashboardError
-            ? '当前后端训练台接口不可用，页面已降级展示本地蓝图；MiniGPT 实际训练仍在 MiniGPT 页面里操作。'
-            : '这里用于学习和管理企业正规训练流程：数据集、训练任务、指标、checkpoint、评测、部署绑定、成本、审计和上线门禁。'}
+            ? text.introFallback
+            : text.introNormal}
         />
         {!loading && !lifecycleStages.length ? (
-          <Alert type="warning" showIcon message="暂无 OpenAI 训练管理数据" />
+          <Alert type="warning" showIcon message={text.noData} />
         ) : (
           <>
             <section className="openai-training-overview">
@@ -632,7 +843,7 @@ const OpenAiTrainingManagementPage = () => {
             </section>
 
             <section className="openai-training-grid">
-              <Card className="openai-training-panel" title="管理对象">
+              <Card className="openai-training-panel" title={text.entities}>
                 <div className="openai-training-entity-grid">
                   {entityCards.map(entity => (
                     <div key={entity.key} style={{ borderColor: entity.accent }}>
@@ -643,19 +854,19 @@ const OpenAiTrainingManagementPage = () => {
                 </div>
               </Card>
 
-              <Card className="openai-training-panel" title="MiniGPT 对照">
+              <Card className="openai-training-panel" title={text.miniGptMap}>
                 <div className="openai-training-map">
                   <div><span>MiniGPT run</span><strong>fine-tuning job</strong></div>
                   <div><span>data/sample.txt</span><strong>training file</strong></div>
                   <div><span>logs</span><strong>training metrics</strong></div>
                   <div><span>checkpoint</span><strong>checkpoint model</strong></div>
-                  <div><span>实验对比</span><strong>eval comparison</strong></div>
-                  <div><span>复制报告</span><strong>training report</strong></div>
+                  <div><span>{text.experimentCompare}</span><strong>eval comparison</strong></div>
+                  <div><span>{text.copyReport}</span><strong>training report</strong></div>
                 </div>
               </Card>
             </section>
 
-            <Card className="openai-training-panel" title="数据集资产">
+            <Card className="openai-training-panel" title={text.datasets}>
               <Table
                 columns={datasetColumns}
                 dataSource={datasetRows}
@@ -665,7 +876,7 @@ const OpenAiTrainingManagementPage = () => {
               />
             </Card>
 
-            <Card className="openai-training-panel" title="训练任务观测">
+            <Card className="openai-training-panel" title={text.jobs}>
               <Table
                 columns={jobColumns}
                 dataSource={jobRows}
@@ -675,7 +886,7 @@ const OpenAiTrainingManagementPage = () => {
               />
             </Card>
 
-            <Card className="openai-training-panel" title="训练指标快照">
+            <Card className="openai-training-panel" title={text.metrics}>
               <Table
                 columns={metricColumns}
                 dataSource={metricRows}
@@ -685,7 +896,7 @@ const OpenAiTrainingManagementPage = () => {
               />
             </Card>
 
-            <Card className="openai-training-panel" title="Checkpoint 资产">
+            <Card className="openai-training-panel" title={text.checkpoints}>
               <Table
                 columns={checkpointColumns}
                 dataSource={checkpointRows}
@@ -696,7 +907,7 @@ const OpenAiTrainingManagementPage = () => {
             </Card>
 
             <section className="openai-training-grid">
-              <Card className="openai-training-panel" title="Eval 决策">
+              <Card className="openai-training-panel" title={text.evalDecision}>
                 <Table
                   columns={evalColumns}
                   dataSource={evalRows}
@@ -706,7 +917,7 @@ const OpenAiTrainingManagementPage = () => {
                 />
               </Card>
 
-              <Card className="openai-training-panel" title="模型部署绑定">
+              <Card className="openai-training-panel" title={text.deployments}>
                 <Table
                   columns={deploymentColumns}
                   dataSource={deploymentRows}
@@ -717,7 +928,7 @@ const OpenAiTrainingManagementPage = () => {
               </Card>
             </section>
 
-            <Card className="openai-training-panel" title="Eval 失败案例">
+            <Card className="openai-training-panel" title={text.evalFailures}>
               <Table
                 columns={evalFailureColumns}
                 dataSource={evalFailureRows}
@@ -727,7 +938,7 @@ const OpenAiTrainingManagementPage = () => {
               />
             </Card>
 
-            <Card className="openai-training-panel" title="成本与 Token 快照">
+            <Card className="openai-training-panel" title={text.costs}>
               <Table
                 columns={costColumns}
                 dataSource={costRows}
@@ -737,7 +948,7 @@ const OpenAiTrainingManagementPage = () => {
               />
             </Card>
 
-            <Card className="openai-training-panel" title="训练审计事件">
+            <Card className="openai-training-panel" title={text.audit}>
               <Table
                 columns={auditColumns}
                 dataSource={auditRows}
@@ -747,7 +958,7 @@ const OpenAiTrainingManagementPage = () => {
               />
             </Card>
 
-            <Card className="openai-training-panel" title="报告快照">
+            <Card className="openai-training-panel" title={text.reports}>
               <Table
                 columns={reportColumns}
                 dataSource={reports}
@@ -758,7 +969,7 @@ const OpenAiTrainingManagementPage = () => {
               />
             </Card>
 
-            <Card className="openai-training-panel" title="上线门禁检查">
+            <Card className="openai-training-panel" title={text.readiness}>
               <section className="openai-training-readiness">
                 {readinessChecks.map(item => (
                   <div className={(item.status || 'WARNING').toLowerCase()} key={item.key}>
@@ -771,7 +982,7 @@ const OpenAiTrainingManagementPage = () => {
             </Card>
 
             <section className="openai-training-grid">
-              <Card className="openai-training-panel" title="下一步实现">
+              <Card className="openai-training-panel" title={text.nextActions}>
                 <div className="openai-training-next">
                   {nextActions.map(action => (
                     <div key={action.key}>

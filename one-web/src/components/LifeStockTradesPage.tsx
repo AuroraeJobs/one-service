@@ -4,6 +4,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
+import { useAppPreferences } from '../contexts/AppPreferencesContext';
 import { stockApi, type StockAccount, type StockTrade } from '../services/api';
 
 interface StockTradeFormValues {
@@ -20,19 +21,59 @@ interface StockTradeFormValues {
   remark?: string;
 }
 
-const tradeTypeOptions = [
-  { label: '买入', value: 'BUY' },
-  { label: '卖出', value: 'SELL' },
-  { label: '分红', value: 'DIVIDEND' },
-  { label: '费用', value: 'FEE' },
-  { label: '送股', value: 'BONUS_SHARE' },
-  { label: '拆股', value: 'SPLIT' }
-];
-
 const LifeStockTradesPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [form] = Form.useForm<StockTradeFormValues>();
+  const { isEnglish } = useAppPreferences();
+  const text = {
+    unnamedAccount: isEnglish ? 'Unnamed account' : '未命名账户',
+    loadTradesFailed: isEnglish ? 'Failed to load stock trades' : '获取股票交易失败',
+    tradeUpdated: isEnglish ? 'Trade updated. Positions were recalculated from trade records.' : '交易已更新，后端已按交易记录触发持仓重算。',
+    tradeSaved: isEnglish ? 'Trade saved. Positions were recalculated from trade records.' : '交易已保存，后端已按交易记录触发持仓重算。',
+    saveFailed: isEnglish ? 'Failed to save stock trade' : '保存股票交易失败',
+    tradeDeleted: isEnglish ? 'Trade deleted. Positions were recalculated from trade records.' : '交易已删除，后端已按交易记录触发持仓重算。',
+    deleteFailed: isEnglish ? 'Failed to delete stock trade' : '删除股票交易失败',
+    symbol: isEnglish ? 'Symbol' : '标的',
+    type: isEnglish ? 'Type' : '类型',
+    account: isEnglish ? 'Account' : '账户',
+    defaultAccount: isEnglish ? 'Default' : '默认',
+    quantity: isEnglish ? 'Quantity' : '数量',
+    price: isEnglish ? 'Price' : '价格',
+    amount: isEnglish ? 'Amount' : '金额',
+    feeTax: isEnglish ? 'Fee/Tax' : '费用/税',
+    tradedAt: isEnglish ? 'Trade Time' : '交易时间',
+    action: isEnglish ? 'Action' : '操作',
+    detail: isEnglish ? 'Detail' : '个股',
+    editAria: isEnglish ? 'Edit trade record' : '编辑交易记录',
+    deleteTitle: isEnglish ? 'Delete this trade record?' : '删除交易记录？',
+    delete: isEnglish ? 'Delete' : '删除',
+    cancel: isEnglish ? 'Cancel' : '取消',
+    eyebrow: isEnglish ? 'Stock Trades' : '股票交易',
+    title: isEnglish ? 'Record trade flows so backend positions can be recalculated automatically.' : '录入交易流水，让后端按交易记录自动重算持仓。',
+    addTrade: isEnglish ? 'Add Trade' : '新增交易',
+    panelTitle: isEnglish ? 'Trade Ledger' : '交易流水',
+    panelDescription: isEnglish
+      ? 'Buy, sell, dividend, fee, bonus share, and split records are stored in MongoDB; backend services recalculate positions.'
+      : '买入、卖出、分红、费用、送股和拆股都会保存到 MongoDB；持仓重算由后端触发。',
+    accountPlaceholder: isEnglish ? 'Account ID' : '账户 ID',
+    symbolPlaceholder: isEnglish ? 'Stock symbol' : '股票代码',
+    query: isEnglish ? 'Query' : '查询',
+    empty: isEnglish ? 'No trade records yet. Add a buy record to trigger position recalculation.' : '暂无交易记录，新增一条买入记录后会触发持仓重算。',
+    editTrade: isEnglish ? 'Edit Trade' : '编辑交易',
+    newTrade: isEnglish ? 'New Trade' : '新增交易',
+    save: isEnglish ? 'Save' : '保存',
+    requiredSymbol: isEnglish ? 'Please enter a stock symbol' : '请输入股票代码',
+    tradeType: isEnglish ? 'Trade Type' : '交易类型',
+    requiredTradeType: isEnglish ? 'Please select a trade type' : '请选择交易类型',
+    optional: isEnglish ? 'Optional' : '可选',
+    name: isEnglish ? 'Name' : '名称',
+    fee: isEnglish ? 'Fee' : '费用',
+    tax: isEnglish ? 'Tax' : '税费',
+    timestamp: isEnglish ? 'Trade Timestamp' : '交易时间戳',
+    remark: isEnglish ? 'Remark' : '备注'
+  };
+  const tradeTypeOptions = useMemo(() => buildTradeTypeOptions(isEnglish), [isEnglish]);
   const [trades, setTrades] = useState<StockTrade[]>([]);
   const [accounts, setAccounts] = useState<StockAccount[]>([]);
   const initialAccountId = searchParams.get('accountId') || '';
@@ -52,9 +93,9 @@ const LifeStockTradesPage = () => {
   }), [accountId, symbol]);
 
   const accountOptions = useMemo(() => accounts.map(account => ({
-    label: `${account.name || account.id || '未命名账户'}${account.broker ? ` · ${account.broker}` : ''}`,
+    label: `${account.name || account.id || text.unnamedAccount}${account.broker ? ` · ${account.broker}` : ''}`,
     value: account.id || ''
-  })).filter(item => item.value), [accounts]);
+  })).filter(item => item.value), [accounts, text.unnamedAccount]);
 
   const loadAccounts = useCallback(async () => {
     try {
@@ -73,11 +114,11 @@ const LifeStockTradesPage = () => {
       setTrades(data);
     } catch (requestError) {
       console.error('获取股票交易失败:', requestError);
-      setError(requestError instanceof Error ? requestError.message : '获取股票交易失败');
+      setError(requestError instanceof Error ? requestError.message : text.loadTradesFailed);
     } finally {
       setLoading(false);
     }
-  }, [queryParams]);
+  }, [queryParams, text.loadTradesFailed]);
 
   useEffect(() => {
     loadTrades();
@@ -138,17 +179,17 @@ const LifeStockTradesPage = () => {
       };
       if (editingTrade?.id) {
         await stockApi.updateTrade(editingTrade.id, payload);
-        setSuccess('交易已更新，后端已按交易记录触发持仓重算。');
+        setSuccess(text.tradeUpdated);
       } else {
         await stockApi.saveTrade(payload);
-        setSuccess('交易已保存，后端已按交易记录触发持仓重算。');
+        setSuccess(text.tradeSaved);
       }
       setModalOpen(false);
       setEditingTrade(undefined);
       await loadTrades();
     } catch (requestError) {
       console.error('保存股票交易失败:', requestError);
-      setError(requestError instanceof Error ? requestError.message : '保存股票交易失败');
+      setError(requestError instanceof Error ? requestError.message : text.saveFailed);
     } finally {
       setSaving(false);
     }
@@ -162,17 +203,17 @@ const LifeStockTradesPage = () => {
     setSuccess(undefined);
     try {
       await stockApi.deleteTrade(id);
-      setSuccess('交易已删除，后端已按交易记录触发持仓重算。');
+      setSuccess(text.tradeDeleted);
       await loadTrades();
     } catch (requestError) {
       console.error('删除股票交易失败:', requestError);
-      setError(requestError instanceof Error ? requestError.message : '删除股票交易失败');
+      setError(requestError instanceof Error ? requestError.message : text.deleteFailed);
     }
   };
 
   const columns: ColumnsType<StockTrade> = [
     {
-      title: '标的',
+      title: text.symbol,
       dataIndex: 'name',
       key: 'name',
       render: (_, record) => (
@@ -183,63 +224,63 @@ const LifeStockTradesPage = () => {
       )
     },
     {
-      title: '类型',
+      title: text.type,
       dataIndex: 'tradeType',
       key: 'tradeType',
-      render: value => <Tag color={tradeTypeColor(value)}>{tradeTypeLabel(value)}</Tag>
+      render: value => <Tag color={tradeTypeColor(value)}>{tradeTypeLabel(value, isEnglish)}</Tag>
     },
     {
-      title: '账户',
+      title: text.account,
       dataIndex: 'accountId',
       key: 'accountId',
-      render: value => value || <Tag>默认</Tag>
+      render: value => value || <Tag>{text.defaultAccount}</Tag>
     },
     {
-      title: '数量',
+      title: text.quantity,
       dataIndex: 'quantity',
       key: 'quantity',
       align: 'right',
       render: value => formatQuantity(value)
     },
     {
-      title: '价格',
+      title: text.price,
       dataIndex: 'price',
       key: 'price',
       align: 'right',
       render: value => formatMoney(value)
     },
     {
-      title: '金额',
+      title: text.amount,
       dataIndex: 'amount',
       key: 'amount',
       align: 'right',
       render: value => formatMoney(value)
     },
     {
-      title: '费用/税',
+      title: text.feeTax,
       key: 'feeTax',
       align: 'right',
       render: (_, record) => `${formatMoney(record.fee)} / ${formatMoney(record.tax)}`
     },
     {
-      title: '交易时间',
+      title: text.tradedAt,
       dataIndex: 'tradedAt',
       key: 'tradedAt',
       render: value => formatTime(value)
     },
     {
-      title: '操作',
+      title: text.action,
       key: 'action',
       fixed: 'right',
       width: 120,
       render: (_, record) => (
         <Space>
           <Button type="link" onClick={() => navigate(`/investments/stocks/${record.symbol}`)}>
-            个股
+            {text.detail}
           </Button>
-          <Button type="text" icon={<EditOutlined />} aria-label="编辑交易记录" onClick={() => openEditModal(record)} />
-          <Popconfirm title="删除交易记录？" okText="删除" cancelText="取消" onConfirm={() => deleteTrade(record.id)}>
-            <Button type="text" danger icon={<DeleteOutlined />} aria-label="删除交易记录" />
+          <Button type="text" icon={<EditOutlined />} aria-label={text.editAria} onClick={() => openEditModal(record)} />
+          <Popconfirm title={text.deleteTitle} okText={text.delete} cancelText={text.cancel} onConfirm={() => deleteTrade(record.id)}>
+            <Button type="text" danger icon={<DeleteOutlined />} aria-label={text.deleteTitle} />
           </Popconfirm>
         </Space>
       )
@@ -249,11 +290,11 @@ const LifeStockTradesPage = () => {
   return (
     <LifePageShell
       className="life-investment-page"
-      eyebrow="股票交易"
-      title="录入交易流水，让后端按交易记录自动重算持仓。"
+      eyebrow={text.eyebrow}
+      title={text.title}
       actions={
         <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
-          新增交易
+          {text.addTrade}
         </Button>
       }
     >
@@ -263,8 +304,8 @@ const LifeStockTradesPage = () => {
       <Card className="life-panel-card stock-market-panel">
         <div className="stock-market-toolbar">
           <div>
-            <h2>交易流水</h2>
-            <p>买入、卖出、分红、费用、送股和拆股都会保存到 MongoDB；持仓重算由后端触发。</p>
+            <h2>{text.panelTitle}</h2>
+            <p>{text.panelDescription}</p>
           </div>
           <div className="stock-market-actions">
             <Space wrap>
@@ -274,18 +315,18 @@ const LifeStockTradesPage = () => {
                 value={accountId}
                 onChange={value => setAccountId(value || '')}
                 options={accountOptions}
-                placeholder="账户 ID"
+                placeholder={text.accountPlaceholder}
                 style={{ width: 220 }}
               />
               <Input
                 value={symbol}
                 onChange={event => setSymbol(event.target.value)}
                 onPressEnter={loadTrades}
-                placeholder="股票代码"
+                placeholder={text.symbolPlaceholder}
                 prefix={<SearchOutlined />}
               />
               <Button icon={<ReloadOutlined spin={loading} />} loading={loading} onClick={loadTrades}>
-                查询
+                {text.query}
               </Button>
             </Space>
           </div>
@@ -296,17 +337,17 @@ const LifeStockTradesPage = () => {
           dataSource={trades}
           loading={loading}
           pagination={{ pageSize: 10, showSizeChanger: false }}
-          locale={{ emptyText: '暂无交易记录，新增一条买入记录后会触发持仓重算。' }}
+          locale={{ emptyText: text.empty }}
           scroll={{ x: 1040 }}
           rowClassName="stock-quote-row"
         />
       </Card>
 
       <Modal
-        title={editingTrade ? '编辑交易' : '新增交易'}
+        title={editingTrade ? text.editTrade : text.newTrade}
         open={modalOpen}
-        okText="保存"
-        cancelText="取消"
+        okText={text.save}
+        cancelText={text.cancel}
         confirmLoading={saving}
         onOk={saveTrade}
         onCancel={() => {
@@ -316,41 +357,41 @@ const LifeStockTradesPage = () => {
         destroyOnHidden
       >
         <Form form={form} layout="vertical">
-          <Form.Item name="symbol" label="股票代码" rules={[{ required: true, message: '请输入股票代码' }]}>
+          <Form.Item name="symbol" label={text.symbolPlaceholder} rules={[{ required: true, message: text.requiredSymbol }]}>
             <Input placeholder="600519" />
           </Form.Item>
-          <Form.Item name="tradeType" label="交易类型" rules={[{ required: true, message: '请选择交易类型' }]}>
+          <Form.Item name="tradeType" label={text.tradeType} rules={[{ required: true, message: text.requiredTradeType }]}>
             <Select options={tradeTypeOptions} />
           </Form.Item>
-          <Form.Item name="accountId" label="账户">
-            <Select allowClear showSearch options={accountOptions} placeholder="可留空" />
+          <Form.Item name="accountId" label={text.account}>
+            <Select allowClear showSearch options={accountOptions} placeholder={text.optional} />
           </Form.Item>
-          <Form.Item name="name" label="名称">
-            <Input placeholder="可选" />
+          <Form.Item name="name" label={text.name}>
+            <Input placeholder={text.optional} />
           </Form.Item>
           <Space.Compact style={{ width: '100%' }}>
-            <Form.Item name="quantity" label="数量" style={{ width: '50%' }}>
+            <Form.Item name="quantity" label={text.quantity} style={{ width: '50%' }}>
               <InputNumber min={0} precision={4} style={{ width: '100%' }} />
             </Form.Item>
-            <Form.Item name="price" label="价格" style={{ width: '50%' }}>
+            <Form.Item name="price" label={text.price} style={{ width: '50%' }}>
               <InputNumber min={0} precision={4} style={{ width: '100%' }} />
             </Form.Item>
           </Space.Compact>
           <Space.Compact style={{ width: '100%' }}>
-            <Form.Item name="amount" label="金额" style={{ width: '34%' }}>
+            <Form.Item name="amount" label={text.amount} style={{ width: '34%' }}>
               <InputNumber min={0} precision={2} style={{ width: '100%' }} />
             </Form.Item>
-            <Form.Item name="fee" label="费用" style={{ width: '33%' }}>
+            <Form.Item name="fee" label={text.fee} style={{ width: '33%' }}>
               <InputNumber min={0} precision={2} style={{ width: '100%' }} />
             </Form.Item>
-            <Form.Item name="tax" label="税费" style={{ width: '33%' }}>
+            <Form.Item name="tax" label={text.tax} style={{ width: '33%' }}>
               <InputNumber min={0} precision={2} style={{ width: '100%' }} />
             </Form.Item>
           </Space.Compact>
-          <Form.Item name="tradedAt" label="交易时间戳">
+          <Form.Item name="tradedAt" label={text.timestamp}>
             <InputNumber min={0} precision={0} style={{ width: '100%' }} />
           </Form.Item>
-          <Form.Item name="remark" label="备注">
+          <Form.Item name="remark" label={text.remark}>
             <Input.TextArea rows={3} />
           </Form.Item>
         </Form>
@@ -359,8 +400,17 @@ const LifeStockTradesPage = () => {
   );
 };
 
-const tradeTypeLabel = (value?: string) => {
-  return tradeTypeOptions.find(item => item.value === value)?.label || value || '-';
+const buildTradeTypeOptions = (isEnglish: boolean) => [
+  { label: isEnglish ? 'Buy' : '买入', value: 'BUY' },
+  { label: isEnglish ? 'Sell' : '卖出', value: 'SELL' },
+  { label: isEnglish ? 'Dividend' : '分红', value: 'DIVIDEND' },
+  { label: isEnglish ? 'Fee' : '费用', value: 'FEE' },
+  { label: isEnglish ? 'Bonus Share' : '送股', value: 'BONUS_SHARE' },
+  { label: isEnglish ? 'Split' : '拆股', value: 'SPLIT' }
+];
+
+const tradeTypeLabel = (value?: string, isEnglish = false) => {
+  return buildTradeTypeOptions(isEnglish).find(item => item.value === value)?.label || value || '-';
 };
 
 const tradeTypeColor = (value?: string) => {

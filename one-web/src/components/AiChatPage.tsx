@@ -10,6 +10,7 @@ import {
   RightOutlined
 } from '@ant-design/icons';
 import LifePageShell from './LifePageShell';
+import { useAppPreferences } from '../contexts/AppPreferencesContext';
 import { useAuth } from '../contexts/AuthContext';
 import { DEFAULT_LOCAL_AI_MODEL_KEYWORD, aiApi, type AiModel, type AiProvider } from '../services/api';
 import { getAvatarColor, getAvatarInitial } from '../utils/avatar';
@@ -38,6 +39,7 @@ interface ModelDropdownContentProps {
   groups: CombinedModelGroup[];
   selectedValue?: string;
   collapsedProviders: Partial<Record<AiProvider, boolean>>;
+  emptyText: string;
   onToggleProvider: (provider: AiProvider) => void;
   onSelectModel: (value: string) => void;
 }
@@ -431,6 +433,7 @@ const ModelDropdownContent = ({
   groups,
   selectedValue,
   collapsedProviders,
+  emptyText,
   onToggleProvider,
   onSelectModel
 }: ModelDropdownContentProps) => (
@@ -469,7 +472,7 @@ const ModelDropdownContent = ({
                   );
                 })
               ) : (
-                <div className="ai-chat-model-empty">暂无模型</div>
+                <div className="ai-chat-model-empty">{emptyText}</div>
               )}
             </div>
           )}
@@ -481,6 +484,7 @@ const ModelDropdownContent = ({
 
 const AiChatPage = () => {
   const { user } = useAuth();
+  const { isEnglish } = useAppPreferences();
   const [selectedProvider, setSelectedProvider] = useState<AiProvider>('local');
   const [modelsByProvider, setModelsByProvider] = useState<Partial<Record<AiProvider, AiModel[]>>>({});
   const [selectedModel, setSelectedModel] = useState(`local:${DEFAULT_LOCAL_AI_MODEL_KEYWORD}`);
@@ -498,6 +502,25 @@ const AiChatPage = () => {
   const userAvatarInitial = getAvatarInitial(user?.username || '');
   const userAvatarColor = getAvatarColor(user?.username || '');
   const userAvatarSrc = user?.avatar?.trim() || user?.avatarUrl?.trim();
+  const text = useMemo(() => ({
+    newChat: isEnglish ? 'New Chat' : '新建对话',
+    refreshModels: isEnglish ? 'Refresh Models' : '刷新模型',
+    clearContext: isEnglish ? 'Clear Context' : '清空上下文',
+    startChat: isEnglish ? 'Start a conversation' : '开始一次对话',
+    noModels: isEnglish ? 'No models' : '暂无模型',
+    selectModel: isEnglish ? 'Select a model' : '请选择模型',
+    loadingReply: isEnglish ? 'Model is replying' : '模型正在回复',
+    voiceInput: isEnglish ? 'Voice input' : '语音输入',
+    send: isEnglish ? 'Send' : '发送',
+    userAvatarAlt: isEnglish ? `${user?.username || 'User'} avatar` : `${user?.username || '用户'}头像`,
+    loadModelsFailed: isEnglish ? 'Failed to load models' : '获取模型列表失败',
+    modelsRefreshed: isEnglish ? 'Model list refreshed' : '模型列表已刷新',
+    modelsRefreshEmpty: isEnglish ? 'Model list refreshed, but no models were found' : '模型列表刷新完成，但未获取到模型',
+    refreshModelsFailed: isEnglish ? 'Failed to refresh models' : '刷新模型列表失败',
+    sendFailed: isEnglish ? 'Failed to send message' : '发送消息失败',
+    requestFailed: isEnglish ? 'Request failed. Check the model service or try again later.' : '请求失败，请检查模型服务或稍后重试。',
+    clearContextPartial: isEnglish ? 'Frontend conversation was cleared, but backend context cleanup failed' : '前端会话已清空，后端上下文清空失败'
+  }), [isEnglish, user?.username]);
 
   const selectedProviderModels = useMemo(
     () => modelsByProvider[selectedProvider] || [],
@@ -526,9 +549,9 @@ const AiChatPage = () => {
   const selectedModelLabel = useMemo(
     () => {
       const selectedModelInfo = selectedProviderModels.find(model => model.id === selectedModel);
-      return selectedModelInfo ? getModelDisplayName(selectedModelInfo) : selectedModel || '请选择模型';
+      return selectedModelInfo ? getModelDisplayName(selectedModelInfo) : selectedModel || text.selectModel;
     },
-    [selectedModel, selectedProviderModels]
+    [selectedModel, selectedProviderModels, text.selectModel]
   );
   const selectedCombinedModelValue = selectedModel ? buildCombinedModelValue(selectedProvider, selectedModel) : undefined;
   const selectedCombinedModelOption = useMemo(
@@ -599,13 +622,13 @@ const AiChatPage = () => {
       applyModelsByProvider(nextModelsByProvider);
     } catch (error) {
       console.error('获取模型列表失败:', error);
-      messageApi.error('获取模型列表失败');
+      messageApi.error(text.loadModelsFailed);
       setModelsByProvider({});
       setSelectedModel('');
     } finally {
       setModelsLoading(false);
     }
-  }, [applyModelsByProvider, messageApi]);
+  }, [applyModelsByProvider, messageApi, text.loadModelsFailed]);
 
   useEffect(() => {
     loadModels();
@@ -630,13 +653,13 @@ const AiChatPage = () => {
       if (refreshedModels.length > 0) {
         const nextModelsByProvider = groupModelsByProvider(refreshedModels);
         applyModelsByProvider(nextModelsByProvider);
-        messageApi.success('模型列表已刷新');
+        messageApi.success(text.modelsRefreshed);
       } else {
-        messageApi.warning('模型列表刷新完成，但未获取到模型');
+        messageApi.warning(text.modelsRefreshEmpty);
       }
     } catch (error) {
       console.error('刷新模型列表失败:', error);
-      messageApi.error('刷新模型列表失败');
+      messageApi.error(text.refreshModelsFailed);
     } finally {
       setModelsLoading(false);
     }
@@ -685,13 +708,13 @@ const AiChatPage = () => {
       ]);
     } catch (error) {
       console.error('发送消息失败:', error);
-      messageApi.error('发送消息失败');
+      messageApi.error(text.sendFailed);
       setMessages(prev => [
         ...prev,
         {
           id: buildMessageId(),
           role: 'assistant',
-          content: '请求失败，请检查模型服务或稍后重试。',
+          content: text.requestFailed,
           model: selectedModel,
           createdAt: Date.now()
         }
@@ -707,7 +730,7 @@ const AiChatPage = () => {
       await aiApi.clearSession(sessionId);
     } catch (error) {
       console.error('清空会话失败:', error);
-      messageApi.warning('前端会话已清空，后端上下文清空失败');
+      messageApi.warning(text.clearContextPartial);
     }
   };
 
@@ -732,13 +755,13 @@ const AiChatPage = () => {
       actions={(
         <Space wrap>
           <Button icon={<PlusOutlined />} onClick={handleNewChat}>
-            新建对话
+            {text.newChat}
           </Button>
           <Button icon={<ReloadOutlined />} loading={modelsLoading} onClick={handleReloadModels}>
-            刷新模型
+            {text.refreshModels}
           </Button>
           <Button icon={<ClearOutlined />} onClick={handleClear}>
-            清空上下文
+            {text.clearContext}
           </Button>
         </Space>
       )}
@@ -748,7 +771,7 @@ const AiChatPage = () => {
         <main className="ai-chat-panel">
           <div className="ai-chat-transcript" ref={transcriptRef}>
             {messages.length === 0 ? (
-              <Empty description="开始一次对话" />
+              <Empty description={text.startChat} />
             ) : (
               messages.map(item => {
                 const isAssistant = item.role === 'assistant';
@@ -778,7 +801,7 @@ const AiChatPage = () => {
                     {!isAssistant && (
                       <div className="ai-chat-avatar ai-chat-avatar-user" style={userAvatarSrc ? undefined : { backgroundColor: userAvatarColor }}>
                         {userAvatarSrc ? (
-                          <img className="ai-chat-avatar-image" src={userAvatarSrc} alt={`${user?.username || '用户'}头像`} />
+                          <img className="ai-chat-avatar-image" src={userAvatarSrc} alt={text.userAvatarAlt} />
                         ) : (
                           userAvatarInitial
                         )}
@@ -795,7 +818,7 @@ const AiChatPage = () => {
                 </div>
                 <div className="ai-chat-bubble ai-chat-loading">
                   <Spin size="small" />
-                  <span>模型正在回复</span>
+                  <span>{text.loadingReply}</span>
                 </div>
               </div>
             )}
@@ -806,8 +829,8 @@ const AiChatPage = () => {
               type="text"
               icon={<PlusOutlined />}
               onClick={handleNewChat}
-              aria-label="新建对话"
-              title="新建对话"
+              aria-label={text.newChat}
+              title={text.newChat}
               className="ai-chat-composer-plus-button"
             />
             <Input.TextArea
@@ -837,6 +860,7 @@ const AiChatPage = () => {
                       groups={combinedModelOptions}
                       selectedValue={selectedCombinedModelOption?.value}
                       collapsedProviders={collapsedModelProviders}
+                      emptyText={text.noModels}
                       onToggleProvider={handleModelProviderToggle}
                       onSelectModel={handleModelDropdownSelect}
                     />
@@ -845,14 +869,14 @@ const AiChatPage = () => {
                   popupClassName="ai-chat-combined-model-popup"
                   popupMatchSelectWidth={false}
                   disabled={modelsLoading || modelOptionCount === 0}
-                  placeholder="请选择模型"
+                  placeholder={text.selectModel}
                 />
               </div>
               <Button
                 type="text"
                 icon={<AudioOutlined />}
-                aria-label="语音输入"
-                title="语音输入"
+                aria-label={text.voiceInput}
+                title={text.voiceInput}
                 className="ai-chat-mic-button"
               />
               <Button
@@ -861,8 +885,8 @@ const AiChatPage = () => {
                 loading={replyLoading}
                 disabled={!input.trim() || !selectedModel || !selectedCombinedModelOption || modelsLoading}
                 onClick={handleSend}
-                aria-label="发送"
-                title="发送"
+                aria-label={text.send}
+                title={text.send}
                 className="ai-chat-send-button"
               />
             </div>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Avatar, Button, Card, Form, Input, Popconfirm, Space, Tag } from 'antd';
 import {
   EditOutlined,
@@ -12,6 +12,7 @@ import {
 import { useLocation, useNavigate } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import { useAuth } from '../contexts/AuthContext';
+import { useI18n } from '../contexts/I18nContext';
 import {
   authApi,
   teslaFleetApi,
@@ -23,32 +24,12 @@ import {
   type ThirdPartyUserBinding
 } from '../services/api';
 
-const providers: Array<{
-  provider: ThirdPartyProvider;
-  title: string;
-  description: string;
-  bindPath?: string;
-}> = [
-  {
-    provider: 'Tesla',
-    title: 'Tesla',
-    description: '车辆、充电、位置与 Fleet API 数据。',
-    bindPath: '/vehicle/tesla'
-  },
-  {
-    provider: 'GitHub',
-    title: 'GitHub',
-    description: '代码仓库、Issue、Pull Request 与开发身份。'
-  }
-];
-
 const providerColor: Record<string, string> = {
   Tesla: '#e82127',
   GitHub: '#24292f'
 };
 
 const passwordPattern = /^[a-zA-Z][\w-]{7,29}$/;
-const passwordRuleMessage = '密码必须以字母开头，长度8-30位，仅支持字母、数字、下划线和短横线';
 
 type EditableTokenField = 'access_token' | 'refresh_token';
 
@@ -65,9 +46,9 @@ interface PasswordFormValues {
   confirmPassword: string;
 }
 
-const formatTimestamp = (value?: number) => {
-  if (!value) return '未记录';
-  return new Date(value).toLocaleString('zh-CN', { hour12: false });
+const formatTimestamp = (value: number | undefined, fallback: string, locale: string) => {
+  if (!value) return fallback;
+  return new Date(value).toLocaleString(locale, { hour12: false });
 };
 
 const buildThirdPartyAccountKey = (provider: string, userId?: string, username?: string) => {
@@ -114,6 +95,110 @@ const PersonalSettingsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, updateUser } = useAuth();
+  const { t, language } = useI18n();
+  const text = useMemo(() => ({
+    teslaDescription: t('车辆、充电、位置与 Fleet API 数据。'),
+    githubDescription: t('代码仓库、Issue、Pull Request 与开发身份。'),
+    passwordRule: t('密码必须以字母开头，长度8-30位，仅支持字母、数字、下划线和短横线'),
+    noRecord: t('未记录'),
+    sessionExpired: t('登录状态已失效，请重新登录'),
+    profileUpdated: t('用户信息已更新'),
+    profileUpdateFailed: t('用户信息更新失败'),
+    passwordUpdated: t('密码已更新'),
+    passwordUpdateFailed: t('密码更新失败'),
+    loadBindingsFailed: t('第三方账户绑定加载失败'),
+    loadTeslaTokenFailed: t('Tesla token 状态加载失败'),
+    loadTeslaRegionFailed: t('Tesla 用户区域缓存读取失败'),
+    unbindFailed: t('第三方账户解除绑定失败'),
+    rebindUrlFailed: t('第三方账户重新绑定链接生成失败'),
+    teslaAuthUrlFailed: t('Tesla 认证链接生成失败'),
+    enterTeslaCode: t('请输入 Tesla 授权回调 code'),
+    teslaTokenSaved: t('Tesla token 与 refresh_token 已保存到 Redis'),
+    teslaCodeExchangeFailed: t('Tesla code 换 token 失败'),
+    enterField: (field: string) => t('请输入 {{field}}', { field }),
+    fieldSaved: (field: string) => t('{{field}} 已保存到 Redis', { field }),
+    saveTeslaTokenFailed: t('保存 Tesla token 失败'),
+    teslaAccessTokenRefreshed: t('Tesla access_token 已刷新'),
+    refreshTeslaTokenFailed: t('刷新 Tesla token 失败'),
+    missingTeslaThirdPartyId: t('Tesla 用户信息缺少第三方 ID'),
+    teslaAuthCompleted: t('Tesla 授权已完成，token 已保存'),
+    teslaTokenSavedBindingFailed: t('Tesla token 已保存，但用户信息绑定失败'),
+    githubBound: t('GitHub 账户已绑定'),
+    githubBindFailed: t('GitHub 账户绑定失败'),
+    teslaProfileRefreshed: t('Tesla 用户信息已刷新'),
+    getTeslaProfileFailed: t('获取 Tesla 用户信息失败'),
+    teslaRegionSaved: t('Tesla 用户区域已获取并保存到 Redis'),
+    getTeslaRegionFailed: t('获取 Tesla 用户区域失败'),
+    notReturned: t('未返回'),
+    tokenInputPlaceholder: (field: string) => t('输入 {{field}}，回车保存', { field }),
+    saved: t('已保存'),
+    unsaved: t('未保存'),
+    updatedAt: t('更新时间'),
+    expiresAt: t('过期时间'),
+    refreshToken: t('刷新 token'),
+    teslaUserInfo: t('Tesla 用户信息'),
+    userRegion: t('用户区域'),
+    openLink: t('打开链接'),
+    copyLink: t('复制链接'),
+    authCallbackCode: t('授权回调 code'),
+    eyebrow: t('个人设置'),
+    title: t('管理第三方账户绑定。'),
+    refresh: t('刷新'),
+    profileTitle: t('用户资料'),
+    editingProfile: t('资料修改中'),
+    profile: t('资料'),
+    editingPassword: t('密码修改中'),
+    editProfile: t('修改资料'),
+    changePassword: t('修改密码'),
+    avatar: t('头像'),
+    avatarPlaceholder: t('头像图片 URL'),
+    username: t('用户名'),
+    requiredUsername: t('请输入用户名'),
+    usernameLength: t('用户名长度必须在3-16位之间'),
+    usernameStartsWithLetter: t('用户名必须以字母开头'),
+    email: t('邮箱'),
+    invalidEmail: t('邮箱格式不正确'),
+    phone: t('电话'),
+    invalidPhone: t('手机号格式不正确'),
+    cancel: t('取消'),
+    saveProfile: t('保存资料'),
+    notSet: t('未设置'),
+    currentPassword: t('当前密码'),
+    requiredCurrentPassword: t('请输入当前密码'),
+    newPassword: t('新密码'),
+    requiredNewPassword: t('请输入新密码'),
+    passwordLength: t('密码长度必须在8-30位之间'),
+    confirmNewPassword: t('确认新密码'),
+    requiredConfirmPassword: t('请再次输入新密码'),
+    passwordMismatch: t('两次输入的新密码不一致'),
+    savePassword: t('保存密码'),
+    thirdPartyBinding: t('第三方账户绑定'),
+    unbound: t('未绑定'),
+    bind: t('去绑定'),
+    pendingIntegration: t('待接入'),
+    rebind: t('重新绑定'),
+    unbindTitle: t('解除这个绑定？'),
+    unbind: t('解除绑定'),
+    locale: language
+  }), [language, t]);
+  const providers = useMemo<Array<{
+    provider: ThirdPartyProvider;
+    title: string;
+    description: string;
+    bindPath?: string;
+  }>>(() => [
+    {
+      provider: 'Tesla',
+      title: 'Tesla',
+      description: text.teslaDescription,
+      bindPath: '/vehicle/tesla'
+    },
+    {
+      provider: 'GitHub',
+      title: 'GitHub',
+      description: text.githubDescription
+    }
+  ], [text.githubDescription, text.teslaDescription]);
   const teslaAccountKey = buildThirdPartyAccountKey('Tesla', user?.id, user?.username);
   const teslaCallbackRedirectUri = typeof window === 'undefined' ? '' : `${window.location.origin}/settings`;
   const handledTeslaCallbackRef = useRef('');
@@ -159,7 +244,7 @@ const PersonalSettingsPage = () => {
         updateUser(currentUser);
       })
       .catch(() => {
-        setError('登录状态已失效，请重新登录');
+        setError(text.sessionExpired);
         setProfileEditing(false);
         setPasswordEditing(false);
       });
@@ -218,9 +303,9 @@ const PersonalSettingsPage = () => {
         phone: updatedUser.phone || ''
       });
       setProfileEditing(false);
-      setSuccess('用户信息已更新');
+      setSuccess(text.profileUpdated);
     } catch (caught: unknown) {
-      setError(caught instanceof Error ? caught.message : '用户信息更新失败');
+      setError(caught instanceof Error ? caught.message : text.profileUpdateFailed);
     } finally {
       setProfileSaving(false);
     }
@@ -237,9 +322,9 @@ const PersonalSettingsPage = () => {
       });
       passwordForm.resetFields();
       setPasswordEditing(false);
-      setSuccess('密码已更新');
+      setSuccess(text.passwordUpdated);
     } catch (caught: unknown) {
-      setError(caught instanceof Error ? caught.message : '密码更新失败');
+      setError(caught instanceof Error ? caught.message : text.passwordUpdateFailed);
     } finally {
       setPasswordSaving(false);
     }
@@ -253,7 +338,7 @@ const PersonalSettingsPage = () => {
       const data = await thirdPartyUserBindingApi.findByLocalUserId(user.id);
       setBindings(data || []);
     } catch (caught: unknown) {
-      setError(caught instanceof Error ? caught.message : '第三方账户绑定加载失败');
+      setError(caught instanceof Error ? caught.message : text.loadBindingsFailed);
     } finally {
       setLoading(false);
     }
@@ -285,7 +370,7 @@ const PersonalSettingsPage = () => {
       setTokenStatus(status);
       setTokenCache(storedToken);
     } catch (caught: unknown) {
-      setError(caught instanceof Error ? caught.message : 'Tesla token 状态加载失败');
+      setError(caught instanceof Error ? caught.message : text.loadTeslaTokenFailed);
     } finally {
       setTokenLoading('');
     }
@@ -296,7 +381,7 @@ const PersonalSettingsPage = () => {
       const cache = await teslaFleetApi.getApiCache(teslaAccountKey, 'user-region', 'current');
       setTeslaRegionCache(cache);
     } catch (caught: unknown) {
-      setError(caught instanceof Error ? caught.message : 'Tesla 用户区域缓存读取失败');
+      setError(caught instanceof Error ? caught.message : text.loadTeslaRegionFailed);
     }
   };
 
@@ -316,7 +401,7 @@ const PersonalSettingsPage = () => {
       await thirdPartyUserBindingApi.delete(id);
       await loadBindings();
     } catch (caught: unknown) {
-      setError(caught instanceof Error ? caught.message : '第三方账户解除绑定失败');
+      setError(caught instanceof Error ? caught.message : text.unbindFailed);
       setLoading(false);
     }
   };
@@ -346,7 +431,7 @@ const PersonalSettingsPage = () => {
       setRebindUrls(prev => ({ ...prev, [binding.provider]: url }));
       setVisibleTokenPanels(prev => ({ ...prev, [binding.provider]: true }));
     } catch (caught: unknown) {
-      setError(caught instanceof Error ? caught.message : '第三方账户重新绑定链接生成失败');
+      setError(caught instanceof Error ? caught.message : text.rebindUrlFailed);
     } finally {
       setRebindLoading('');
     }
@@ -369,7 +454,7 @@ const PersonalSettingsPage = () => {
       setVisibleTokenPanels(prev => ({ ...prev, Tesla: true }));
       window.location.assign(url);
     } catch (caught: unknown) {
-      setError(caught instanceof Error ? caught.message : 'Tesla 认证链接生成失败');
+      setError(caught instanceof Error ? caught.message : text.teslaAuthUrlFailed);
     } finally {
       setRebindLoading('');
     }
@@ -378,7 +463,7 @@ const PersonalSettingsPage = () => {
   const exchangeTeslaCode = async () => {
     const code = teslaAuthCode.trim();
     if (!code) {
-      setError('请输入 Tesla 授权回调 code');
+      setError(text.enterTeslaCode);
       return;
     }
     setTokenLoading('exchange');
@@ -389,10 +474,10 @@ const PersonalSettingsPage = () => {
         code,
         redirectUri: teslaCallbackRedirectUri
       });
-      setSuccess('Tesla token 与 refresh_token 已保存到 Redis');
+      setSuccess(text.teslaTokenSaved);
       await loadTeslaTokenStatus();
     } catch (caught: unknown) {
-      setError(caught instanceof Error ? caught.message : 'Tesla code 换 token 失败');
+      setError(caught instanceof Error ? caught.message : text.teslaCodeExchangeFailed);
     } finally {
       setTokenLoading('');
     }
@@ -409,7 +494,7 @@ const PersonalSettingsPage = () => {
     if (!editingTokenField) return;
     const tokenValue = editingTokenValue.trim();
     if (!tokenValue) {
-      setError(`请输入 ${editingTokenField}`);
+      setError(text.enterField(editingTokenField));
       return;
     }
     setTokenLoading(`manual-${editingTokenField}`);
@@ -421,12 +506,12 @@ const PersonalSettingsPage = () => {
         refresh_token: editingTokenField === 'refresh_token' ? tokenValue : undefined,
         token_type: 'Bearer'
       });
-      setSuccess(`${editingTokenField} 已保存到 Redis`);
+      setSuccess(text.fieldSaved(editingTokenField));
       setEditingTokenField(null);
       setEditingTokenValue('');
       await loadTeslaTokenStatus();
     } catch (caught: unknown) {
-      setError(caught instanceof Error ? caught.message : '保存 Tesla token 失败');
+      setError(caught instanceof Error ? caught.message : text.saveTeslaTokenFailed);
     } finally {
       setTokenLoading('');
     }
@@ -438,10 +523,10 @@ const PersonalSettingsPage = () => {
     setSuccess('');
     try {
       await teslaFleetApi.refreshStoredToken(teslaAccountKey);
-      setSuccess('Tesla access_token 已刷新');
+      setSuccess(text.teslaAccessTokenRefreshed);
       await loadTeslaTokenStatus();
     } catch (caught: unknown) {
-      setError(caught instanceof Error ? caught.message : '刷新 Tesla token 失败');
+      setError(caught instanceof Error ? caught.message : text.refreshTeslaTokenFailed);
     } finally {
       setTokenLoading('');
     }
@@ -454,7 +539,7 @@ const PersonalSettingsPage = () => {
     const profile = unwrapTeslaResponse(profileData);
     const thirdPartyUserId = valueAsString(profile, ['vault_uuid', 'id', 'user_id', 'sub', 'email']);
     if (!profile || !thirdPartyUserId) {
-      throw new Error('Tesla 用户信息缺少第三方 ID');
+      throw new Error(text.missingTeslaThirdPartyId);
     }
 
     await thirdPartyUserBindingApi.saveOrUpdate({
@@ -496,20 +581,20 @@ const PersonalSettingsPage = () => {
     })
       .then(async () => {
         setTeslaAuthCode('');
-        setSuccess('Tesla 授权已完成，token 已保存');
+        setSuccess(text.teslaAuthCompleted);
         await loadTeslaTokenStatus(callbackAccountKey);
         try {
           const profile = await teslaFleetApi.userMeWithStoredToken(callbackAccountKey);
           await saveTeslaUserBindingFromProfile(profile, callbackAccountKey);
           await loadBindings();
         } catch (caught: unknown) {
-          setError(caught instanceof Error ? caught.message : 'Tesla token 已保存，但用户信息绑定失败');
+          setError(caught instanceof Error ? caught.message : text.teslaTokenSavedBindingFailed);
         }
         const cleanPath = `${location.pathname}${location.hash}`;
         navigate(cleanPath, { replace: true });
       })
       .catch((caught: unknown) => {
-        setError(caught instanceof Error ? caught.message : 'Tesla code 换 token 失败');
+        setError(caught instanceof Error ? caught.message : text.teslaCodeExchangeFailed);
       })
       .finally(() => {
         setTokenLoading('');
@@ -523,10 +608,10 @@ const PersonalSettingsPage = () => {
     if (!githubBind) return;
 
     if (githubBind === 'success') {
-      setSuccess('GitHub 账户已绑定');
+      setSuccess(text.githubBound);
       loadBindings();
     } else {
-      setError('GitHub 账户绑定失败');
+      setError(text.githubBindFailed);
     }
     navigate(location.pathname, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -540,9 +625,9 @@ const PersonalSettingsPage = () => {
       const profile = await teslaFleetApi.userMeWithStoredToken(teslaAccountKey);
       await saveTeslaUserBindingFromProfile(profile);
       await loadBindings();
-      setSuccess('Tesla 用户信息已刷新');
+      setSuccess(text.teslaProfileRefreshed);
     } catch (caught: unknown) {
-      setError(caught instanceof Error ? caught.message : '获取 Tesla 用户信息失败');
+      setError(caught instanceof Error ? caught.message : text.getTeslaProfileFailed);
     } finally {
       setProfileLoading('');
     }
@@ -555,9 +640,9 @@ const PersonalSettingsPage = () => {
     try {
       const cache = await teslaFleetApi.refreshUserRegionCache(teslaAccountKey);
       setTeslaRegionCache(cache);
-      setSuccess('Tesla 用户区域已获取并保存到 Redis');
+      setSuccess(text.teslaRegionSaved);
     } catch (caught: unknown) {
-      setError(caught instanceof Error ? caught.message : '获取 Tesla 用户区域失败');
+      setError(caught instanceof Error ? caught.message : text.getTeslaRegionFailed);
     } finally {
       setProfileLoading('');
     }
@@ -572,11 +657,11 @@ const PersonalSettingsPage = () => {
           <div className="tesla-manager-status-grid">
             <div>
               <span>Region</span>
-              <strong>{region || '未返回'}</strong>
+              <strong>{region || text.notReturned}</strong>
             </div>
             <div>
               <span>API Base URL</span>
-              <strong>{apiBaseUrl || '未返回'}</strong>
+              <strong>{apiBaseUrl || text.notReturned}</strong>
             </div>
           </div>
         )}
@@ -593,7 +678,7 @@ const PersonalSettingsPage = () => {
             <Input.Password
               autoFocus
               value={editingTokenValue}
-              placeholder="输入 access_token，回车保存"
+              placeholder={text.tokenInputPlaceholder('access_token')}
               onChange={event => setEditingTokenValue(event.target.value)}
               onClick={event => event.stopPropagation()}
               onKeyDown={event => {
@@ -607,7 +692,7 @@ const PersonalSettingsPage = () => {
             />
           ) : (
             <Tag color={tokenCache?.token?.access_token ? 'success' : 'default'}>
-              {tokenCache?.token?.access_token ? '已保存' : '未保存'}
+              {tokenCache?.token?.access_token ? text.saved : text.unsaved}
             </Tag>
           )}
         </div>
@@ -617,7 +702,7 @@ const PersonalSettingsPage = () => {
             <Input.Password
               autoFocus
               value={editingTokenValue}
-              placeholder="输入 refresh_token，回车保存"
+              placeholder={text.tokenInputPlaceholder('refresh_token')}
               onChange={event => setEditingTokenValue(event.target.value)}
               onClick={event => event.stopPropagation()}
               onKeyDown={event => {
@@ -631,30 +716,30 @@ const PersonalSettingsPage = () => {
             />
           ) : (
             <Tag color={tokenCache?.token?.refresh_token ? 'success' : 'default'}>
-              {tokenCache?.token?.refresh_token ? '已保存' : '未保存'}
+              {tokenCache?.token?.refresh_token ? text.saved : text.unsaved}
             </Tag>
           )}
         </div>
         <div>
-          <span>更新时间</span>
-          <strong>{formatTimestamp(tokenStatus?.updatedAt)}</strong>
+          <span>{text.updatedAt}</span>
+          <strong>{formatTimestamp(tokenStatus?.updatedAt, text.noRecord, text.locale)}</strong>
         </div>
         <div>
-          <span>过期时间</span>
-          <strong>{formatTimestamp(tokenStatus?.expiresAt)}</strong>
+          <span>{text.expiresAt}</span>
+          <strong>{formatTimestamp(tokenStatus?.expiresAt, text.noRecord, text.locale)}</strong>
         </div>
       </div>
       <Space wrap>
         <Button loading={tokenLoading === 'refresh'} onClick={refreshTeslaToken}>
-          刷新 token
+          {text.refreshToken}
         </Button>
         {showProfileActions && (
           <>
             <Button icon={<UserOutlined />} loading={profileLoading === 'user-me'} onClick={refreshTeslaUserProfile}>
-              Tesla 用户信息
+              {text.teslaUserInfo}
             </Button>
             <Button icon={<EnvironmentOutlined />} loading={profileLoading === 'user-region'} onClick={refreshTeslaUserRegion}>
-              用户区域
+              {text.userRegion}
             </Button>
           </>
         )}
@@ -664,16 +749,16 @@ const PersonalSettingsPage = () => {
           <Input.TextArea value={rebindUrls.Tesla} autoSize readOnly />
           <Space wrap>
             <Button href={rebindUrls.Tesla} target="_blank" icon={<LinkOutlined />}>
-              打开链接
+              {text.openLink}
             </Button>
             <Button onClick={() => navigator.clipboard.writeText(rebindUrls.Tesla)}>
-              复制链接
+              {text.copyLink}
             </Button>
           </Space>
         </div>
       )}
       <div className="tesla-fleet-field">
-        <span>授权回调 code</span>
+        <span>{text.authCallbackCode}</span>
         <Input
           value={teslaAuthCode}
           onChange={event => setTeslaAuthCode(event.target.value)}
@@ -690,10 +775,10 @@ const PersonalSettingsPage = () => {
           <Input.TextArea value={rebindUrls.GitHub} autoSize readOnly />
           <Space wrap>
             <Button href={rebindUrls.GitHub} target="_blank" icon={<LinkOutlined />}>
-              打开链接
+              {text.openLink}
             </Button>
             <Button onClick={() => navigator.clipboard.writeText(rebindUrls.GitHub)}>
-              复制链接
+              {text.copyLink}
             </Button>
           </Space>
         </div>
@@ -704,11 +789,11 @@ const PersonalSettingsPage = () => {
   return (
     <LifePageShell
       className="personal-settings-page"
-      eyebrow="个人设置"
-      title="管理第三方账户绑定。"
+      eyebrow={text.eyebrow}
+      title={text.title}
       actions={
         <Button icon={<ReloadOutlined />} loading={loading} onClick={loadBindings}>
-          刷新
+          {text.refresh}
         </Button>
       }
     >
@@ -718,20 +803,20 @@ const PersonalSettingsPage = () => {
       <section className="personal-settings-layout">
         <Card className="life-panel-card personal-profile-card">
           <div className="life-panel-title-row">
-            <h2>用户资料</h2>
+            <h2>{text.profileTitle}</h2>
             <Space size={8}>
               <Tag color={profileEditing ? 'processing' : profileAvatar ? 'success' : 'default'}>
-                {profileEditing ? '资料修改中' : '资料'}
+                {profileEditing ? text.editingProfile : text.profile}
               </Tag>
-              {passwordEditing && <Tag color="processing">密码修改中</Tag>}
+              {passwordEditing && <Tag color="processing">{text.editingPassword}</Tag>}
               {!profileEditing && (
                 <Button icon={<EditOutlined />} onClick={startProfileEdit}>
-                  修改资料
+                  {text.editProfile}
                 </Button>
               )}
               {!passwordEditing && (
                 <Button icon={<EditOutlined />} onClick={startPasswordEdit}>
-                  修改密码
+                  {text.changePassword}
                 </Button>
               )}
             </Space>
@@ -749,66 +834,66 @@ const PersonalSettingsPage = () => {
                 className="personal-profile-form"
                 onFinish={saveUserProfile}
               >
-                <Form.Item label="头像" name="avatar">
-                  <Input placeholder="头像图片 URL" allowClear />
+                <Form.Item label={text.avatar} name="avatar">
+                  <Input placeholder={text.avatarPlaceholder} allowClear />
                 </Form.Item>
                 <div className="personal-profile-field-grid">
                   <Form.Item
-                    label="用户名"
+                    label={text.username}
                     name="username"
                     rules={[
-                      { required: true, message: '请输入用户名' },
-                      { min: 3, max: 16, message: '用户名长度必须在3-16位之间' },
-                      { pattern: /^[a-zA-Z]\w{2,15}$/, message: '用户名必须以字母开头' }
+                      { required: true, message: text.requiredUsername },
+                      { min: 3, max: 16, message: text.usernameLength },
+                      { pattern: /^[a-zA-Z]\w{2,15}$/, message: text.usernameStartsWithLetter }
                     ]}
                   >
-                    <Input placeholder="用户名" />
+                    <Input placeholder={text.username} />
                   </Form.Item>
                   <Form.Item
-                    label="邮箱"
+                    label={text.email}
                     name="email"
-                    rules={[{ type: 'email', message: '邮箱格式不正确' }]}
+                    rules={[{ type: 'email', message: text.invalidEmail }]}
                   >
-                    <Input placeholder="邮箱" allowClear />
+                    <Input placeholder={text.email} allowClear />
                   </Form.Item>
                   <Form.Item
-                    label="电话"
+                    label={text.phone}
                     name="phone"
                     rules={[
                       {
                         validator: (_, value?: string) => (
                           !value || /^1[3-9]\d{9}$/.test(value)
                             ? Promise.resolve()
-                            : Promise.reject(new Error('手机号格式不正确'))
+                            : Promise.reject(new Error(text.invalidPhone))
                         )
                       }
                     ]}
                   >
-                    <Input placeholder="电话" allowClear />
+                    <Input placeholder={text.phone} allowClear />
                   </Form.Item>
                 </div>
                 <div className="personal-profile-actions">
                   <Button onClick={cancelProfileEdit} disabled={profileSaving}>
-                    取消
+                    {text.cancel}
                   </Button>
                   <Button type="primary" htmlType="submit" loading={profileSaving}>
-                    保存资料
+                    {text.saveProfile}
                   </Button>
                 </div>
               </Form>
             ) : (
               <div className="personal-profile-view">
                 <div>
-                  <span>用户名</span>
-                  <strong>{user?.username || '未设置'}</strong>
+                  <span>{text.username}</span>
+                  <strong>{user?.username || text.notSet}</strong>
                 </div>
                 <div>
-                  <span>邮箱</span>
-                  <strong>{user?.email || '未设置'}</strong>
+                  <span>{text.email}</span>
+                  <strong>{user?.email || text.notSet}</strong>
                 </div>
                 <div>
-                  <span>电话</span>
-                  <strong>{user?.phone || '未设置'}</strong>
+                  <span>{text.phone}</span>
+                  <strong>{user?.phone || text.notSet}</strong>
                 </div>
               </div>
             )}
@@ -817,7 +902,7 @@ const PersonalSettingsPage = () => {
           {passwordEditing && (
             <div className="personal-password-section">
               <div className="life-panel-title-row personal-password-title-row">
-                <h2>修改密码</h2>
+                <h2>{text.changePassword}</h2>
               </div>
               <Form
                 form={passwordForm}
@@ -827,47 +912,47 @@ const PersonalSettingsPage = () => {
               >
                 <div className="personal-profile-field-grid">
                   <Form.Item
-                    label="当前密码"
+                    label={text.currentPassword}
                     name="currentPassword"
-                    rules={[{ required: true, message: '请输入当前密码' }]}
+                    rules={[{ required: true, message: text.requiredCurrentPassword }]}
                   >
-                    <Input.Password placeholder="当前密码" autoComplete="current-password" />
+                    <Input.Password placeholder={text.currentPassword} autoComplete="current-password" />
                   </Form.Item>
                   <Form.Item
-                    label="新密码"
+                    label={text.newPassword}
                     name="newPassword"
                     rules={[
-                      { required: true, message: '请输入新密码' },
-                      { min: 8, max: 30, message: '密码长度必须在8-30位之间' },
-                      { pattern: passwordPattern, message: passwordRuleMessage }
+                      { required: true, message: text.requiredNewPassword },
+                      { min: 8, max: 30, message: text.passwordLength },
+                      { pattern: passwordPattern, message: text.passwordRule }
                     ]}
                   >
-                    <Input.Password placeholder="新密码" autoComplete="new-password" />
+                    <Input.Password placeholder={text.newPassword} autoComplete="new-password" />
                   </Form.Item>
                   <Form.Item
-                    label="确认新密码"
+                    label={text.confirmNewPassword}
                     name="confirmPassword"
                     dependencies={['newPassword']}
                     rules={[
-                      { required: true, message: '请再次输入新密码' },
+                      { required: true, message: text.requiredConfirmPassword },
                       ({ getFieldValue }) => ({
                         validator: (_, value?: string) => (
                           !value || getFieldValue('newPassword') === value
                             ? Promise.resolve()
-                            : Promise.reject(new Error('两次输入的新密码不一致'))
+                            : Promise.reject(new Error(text.passwordMismatch))
                         )
                       })
                     ]}
                   >
-                    <Input.Password placeholder="确认新密码" autoComplete="new-password" />
+                    <Input.Password placeholder={text.confirmNewPassword} autoComplete="new-password" />
                   </Form.Item>
                 </div>
                 <div className="personal-profile-actions">
                   <Button onClick={cancelPasswordEdit} disabled={passwordSaving}>
-                    取消
+                    {text.cancel}
                   </Button>
                   <Button type="primary" htmlType="submit" loading={passwordSaving}>
-                    保存密码
+                    {text.savePassword}
                   </Button>
                 </div>
               </Form>
@@ -877,7 +962,7 @@ const PersonalSettingsPage = () => {
 
         <Card className="life-panel-card">
           <div className="life-panel-title-row">
-            <h2>第三方账户绑定</h2>
+            <h2>{text.thirdPartyBinding}</h2>
             <Tag color={bindings.length > 0 ? 'success' : 'default'}>{bindings.length}</Tag>
           </div>
 
@@ -890,7 +975,7 @@ const PersonalSettingsPage = () => {
                     <div className="third-party-binding-main">
                       <div className="third-party-binding-title">
                         <strong>{item.title}</strong>
-                        <Tag>未绑定</Tag>
+                        <Tag>{text.unbound}</Tag>
                       </div>
                       <div className="third-party-binding-meta">
                         <span>{item.description}</span>
@@ -906,7 +991,7 @@ const PersonalSettingsPage = () => {
                         loading={rebindLoading === 'Tesla'}
                         onClick={generateTeslaAuthUrl}
                       >
-                        去绑定
+                        {text.bind}
                       </Button>
                     ) : item.provider === 'GitHub' ? (
                       <Button
@@ -915,15 +1000,15 @@ const PersonalSettingsPage = () => {
                         loading={rebindLoading === 'GitHub'}
                         onClick={generateGitHubAuthUrl}
                       >
-                        去绑定
+                        {text.bind}
                       </Button>
                     ) : item.bindPath ? (
                       <Button icon={<LinkOutlined />} type="primary" onClick={() => navigate(item.bindPath!)}>
-                        去绑定
+                        {text.bind}
                       </Button>
                     ) : (
                       <Button icon={<LinkOutlined />} disabled>
-                        待接入
+                        {text.pendingIntegration}
                       </Button>
                     )}
                   </div>
@@ -951,10 +1036,10 @@ const PersonalSettingsPage = () => {
                     {binding.provider === 'Tesla' && (
                       <>
                         <Button icon={<UserOutlined />} loading={profileLoading === 'user-me'} onClick={refreshTeslaUserProfile}>
-                          用户信息
+                          {text.teslaUserInfo}
                         </Button>
                         <Button icon={<EnvironmentOutlined />} loading={profileLoading === 'user-region'} onClick={refreshTeslaUserRegion}>
-                          用户区域
+                          {text.userRegion}
                         </Button>
                       </>
                     )}
@@ -963,11 +1048,11 @@ const PersonalSettingsPage = () => {
                       loading={rebindLoading === binding.provider}
                       onClick={() => generateRebindUrl(binding)}
                     >
-                      重新绑定
+                      {text.rebind}
                     </Button>
-                    <Popconfirm title="解除这个绑定？" onConfirm={() => unbindAccount(binding.id)}>
+                    <Popconfirm title={text.unbindTitle} okText={text.unbind} cancelText={text.cancel} onConfirm={() => unbindAccount(binding.id)}>
                       <Button icon={<DeleteOutlined />} danger>
-                        解除绑定
+                        {text.unbind}
                       </Button>
                     </Popconfirm>
                   </div>

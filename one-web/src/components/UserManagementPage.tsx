@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Empty, Form, Input, Modal, Pagination, Popconfirm, Select, Space, Spin, Tag, message } from 'antd';
+import { Alert, Button, Card, Drawer, Empty, Form, Input, Pagination, Popconfirm, Select, Space, Spin, Tag, message } from 'antd';
 import {
   DeleteOutlined,
   EditOutlined,
@@ -52,20 +52,23 @@ const UserManagementPage = () => {
     password: isEnglish ? 'Password' : '密码',
     email: isEnglish ? 'Email' : '邮箱',
     phone: isEnglish ? 'Phone' : '手机号',
+    avatar: isEnglish ? 'Avatar' : '头像',
     role: isEnglish ? 'Role' : '角色',
     status: isEnglish ? 'Status' : '状态',
+    ok: isEnglish ? 'OK' : '确定',
+    cancel: isEnglish ? 'Cancel' : '取消',
     enabled: isEnglish ? 'Enabled' : '启用',
     disabled: isEnglish ? 'Disabled' : '禁用',
     actions: isEnglish ? 'Actions' : '操作',
     disable: isEnglish ? 'Disable' : '禁用',
     enable: isEnglish ? 'Enable' : '启用',
     delete: isEnglish ? 'Delete' : '删除',
-    reset: isEnglish ? 'Reset Credentials' : '重置用户名密码',
+    reset: isEnglish ? 'Reset Password' : '重置密码',
     edit: isEnglish ? 'Edit' : '修改',
     noAccess: isEnglish ? 'Only ADMIN users can access user management.' : '仅 ADMIN 角色用户可以访问用户管理。',
     createTitle: isEnglish ? 'Add User' : '新增用户',
     editTitle: isEnglish ? 'Edit User' : '修改用户',
-    resetTitle: isEnglish ? 'Reset Username and Password' : '重置用户名和密码',
+    resetTitle: isEnglish ? 'Reset Password' : '重置密码',
     confirmDisable: isEnglish ? 'Disable this user?' : '确认禁用该用户？',
     confirmDelete: isEnglish ? 'Delete this disabled user?' : '确认删除该禁用用户？',
     createSuccess: isEnglish ? 'User created' : '用户已创建',
@@ -73,7 +76,7 @@ const UserManagementPage = () => {
     enableSuccess: isEnglish ? 'User enabled' : '用户已启用',
     deleteSuccess: isEnglish ? 'User deleted' : '用户已删除',
     editSuccess: isEnglish ? 'User updated' : '用户资料已更新',
-    resetSuccess: isEnglish ? 'Credentials reset' : '用户名密码已重置',
+    resetSuccess: isEnglish ? 'Password reset' : '密码已重置',
     selfHint: isEnglish ? 'Current user' : '当前用户',
     usernameRule: isEnglish ? '3-16 chars, start with a letter, letters/numbers/underscore only' : '3-16位，必须以字母开头，仅支持字母、数字、下划线',
     passwordRule: isEnglish ? '8-30 chars, start with a letter, letters/numbers/underscore/hyphen only' : '8-30位，必须以字母开头，仅支持字母、数字、下划线和短横线'
@@ -162,7 +165,7 @@ const UserManagementPage = () => {
 
   const openReset = (target: AdminUserSummary) => {
     setResetTarget(target);
-    resetForm.setFieldsValue({ username: target.username, password: '' });
+    resetForm.setFieldsValue({ password: '' });
   };
 
   const openEdit = (target: AdminUserSummary) => {
@@ -222,7 +225,7 @@ const UserManagementPage = () => {
       resetForm.resetFields();
       await loadUsers(page, size);
     } catch (error: unknown) {
-      message.error(error instanceof Error ? error.message : (isEnglish ? 'Failed to reset credentials' : '用户名密码重置失败'));
+      message.error(error instanceof Error ? error.message : (isEnglish ? 'Failed to reset password' : '密码重置失败'));
     } finally {
       setActionLoading('');
     }
@@ -381,13 +384,21 @@ const UserManagementPage = () => {
         </Space>
       )}
 
-      <Modal
+      <Drawer
         title={text.createTitle}
         open={createOpen}
-        onCancel={() => setCreateOpen(false)}
-        onOk={handleCreate}
-        confirmLoading={actionLoading === 'create'}
+        placement="right"
+        width="min(480px, 100vw)"
+        onClose={() => setCreateOpen(false)}
         destroyOnHidden
+        footer={(
+          <Space className="user-management-drawer-footer">
+            <Button onClick={() => setCreateOpen(false)}>{text.cancel}</Button>
+            <Button type="primary" loading={actionLoading === 'create'} onClick={handleCreate}>
+              {text.ok}
+            </Button>
+          </Space>
+        )}
       >
         <Form form={createForm} layout="vertical" initialValues={{ role: 'USER' }}>
           <Form.Item name="username" label={text.username} rules={[
@@ -412,18 +423,37 @@ const UserManagementPage = () => {
             <Input />
           </Form.Item>
         </Form>
-      </Modal>
+      </Drawer>
 
-      <Modal
+      <Drawer
         title={text.editTitle}
         open={Boolean(editTarget)}
-        onCancel={() => {
+        placement="right"
+        width="min(480px, 100vw)"
+        onClose={() => {
           setEditTarget(null);
           setEditError('');
         }}
-        onOk={handleEdit}
-        confirmLoading={Boolean(editTarget && actionLoading === `edit-${editTarget.id}`)}
         destroyOnHidden
+        footer={(
+          <Space className="user-management-drawer-footer">
+            <Button
+              onClick={() => {
+                setEditTarget(null);
+                setEditError('');
+              }}
+            >
+              {text.cancel}
+            </Button>
+            <Button
+              type="primary"
+              loading={Boolean(editTarget && actionLoading === `edit-${editTarget.id}`)}
+              onClick={handleEdit}
+            >
+              {text.ok}
+            </Button>
+          </Space>
+        )}
       >
         {editError && (
           <Alert
@@ -455,27 +485,33 @@ const UserManagementPage = () => {
           <Form.Item name="phone" label={text.phone}>
             <Input allowClear />
           </Form.Item>
-          <Form.Item name="avatar" label="Avatar">
+          <Form.Item name="avatar" label={text.avatar}>
             <Input allowClear />
           </Form.Item>
         </Form>
-      </Modal>
+      </Drawer>
 
-      <Modal
+      <Drawer
         title={text.resetTitle}
         open={Boolean(resetTarget)}
-        onCancel={() => setResetTarget(null)}
-        onOk={handleReset}
-        confirmLoading={Boolean(resetTarget && actionLoading === `reset-${resetTarget.id}`)}
+        placement="right"
+        width="min(480px, 100vw)"
+        onClose={() => setResetTarget(null)}
         destroyOnHidden
+        footer={(
+          <Space className="user-management-drawer-footer">
+            <Button onClick={() => setResetTarget(null)}>{text.cancel}</Button>
+            <Button
+              type="primary"
+              loading={Boolean(resetTarget && actionLoading === `reset-${resetTarget.id}`)}
+              onClick={handleReset}
+            >
+              {text.ok}
+            </Button>
+          </Space>
+        )}
       >
         <Form form={resetForm} layout="vertical">
-          <Form.Item name="username" label={text.username} rules={[
-            { required: true, message: text.usernameRule },
-            { pattern: usernamePattern, message: text.usernameRule }
-          ]}>
-            <Input />
-          </Form.Item>
           <Form.Item name="password" label={text.password} rules={[
             { required: true, message: text.passwordRule },
             { pattern: passwordPattern, message: text.passwordRule }
@@ -483,7 +519,7 @@ const UserManagementPage = () => {
             <Input.Password />
           </Form.Item>
         </Form>
-      </Modal>
+      </Drawer>
     </LifePageShell>
   );
 };
