@@ -4,6 +4,7 @@ import com.one.record.lottery.LotteryBacktestRunRequest;
 import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.model.LotteryBacktestReport;
 import com.one.record.repository.LotteryBacktestReportRepository;
+import com.one.record.repository.LotteryDecisionSetRepository;
 import com.one.record.response.Record;
 import com.one.record.service.IRecordService;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +23,8 @@ class LotteryBacktestServiceTest {
 
     private LotteryBacktestReportRepository repository;
 
+    private LotteryDecisionSetRepository decisionSetRepository;
+
     private IRecordService recordService;
 
     private LotteryBacktestService service;
@@ -29,8 +32,9 @@ class LotteryBacktestServiceTest {
     @BeforeEach
     void setUp() {
         repository = mock(LotteryBacktestReportRepository.class);
+        decisionSetRepository = mock(LotteryDecisionSetRepository.class);
         recordService = mock(IRecordService.class);
-        service = new LotteryBacktestService(repository, recordService);
+        service = new LotteryBacktestService(repository, decisionSetRepository, recordService);
     }
 
     @Test

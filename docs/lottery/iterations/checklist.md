@@ -1,6 +1,6 @@
 # Lottery Module Checklist
 
-Last updated: 2026-07-04
+Last updated: 2026-07-11
 
 Use this file as the durable task board for the lottery module. When a task is finished, change `[ ]` to `[x]` and add a short note if there is useful context for the next thread.
 
@@ -1220,3 +1220,38 @@ Goal: close the current sync-operations, backend-safety, database-pagination, na
 - [x] Run `npm run i18n:audit`, `npm run lottery:smoke`, file-scoped ESLint, `npm run build`, and `npm run lottery:release-check` from `one-web`. Final smoke result: 808 checks across 18 routes; production build passed.
 - [x] Browser-check `/lottery` and `/lottery/sync` in Chinese and English, desktop and 390px narrow layouts, and light and dark themes. Verified real local data, status filtering, delete confirmation followed by cancellation, and preserved-route footer ownership without deleting data.
 - [x] Review `git status --short`, generated evidence, staged scope, and `git diff --check`; keep unrelated local changes outside the Iteration 46 delivery scope unless explicitly included.
+
+## Iteration 47: MiniGPT Lottery Research Loop V1
+
+Goal: build a reproducible research chain from versioned lottery corpora and chronological validation through model generation, compliant candidate pools, random-baseline backtests, and outcome review without presenting historical evidence as a winning guarantee.
+
+Formal plan: [Iteration 47 plan](iteration-47-plan.md).
+
+### Wave 47A: Reproducible Corpus And Time-Split Baseline
+
+- [x] Add the `strategy` corpus format beside `raw` and `features`, with complete deterministic rows containing target/source issue context, strategy label, normalized numbers, and documented reason tags.
+- [x] Sort draws by issue ascending and split complete rows into the earlier 80% training set and later 20% validation set, with non-empty sets, no overlap, and no random fallback.
+- [x] Persist `all.txt`, `train.txt`, `validation.txt`, and `manifest.json` under `data/lottery-corpora/<format>/<corpusVersion>/` and record stable schema/template versions, ranges, counts, data/file paths, and SHA-256 hashes using locked atomic publication.
+- [x] Preserve `data/lottery-<format>.txt` plus legacy `dataPath`/`filePath` full-corpus semantics while exposing versioned full, train, validation, and manifest paths.
+- [x] Update the MiniGPT page to export all three formats, display corpus/split provenance, and use `trainDataPath` as the training input while keeping validation and manifest artifacts visible.
+- [x] Add focused tests for serialization, insufficient data, deterministic boundaries, no leakage, repeatable hashes, manifest/DTO fields, compatibility files, concurrent publication, filesystem failure semantics, and frontend API/render behavior.
+- [x] Align the Iteration 47 plan, selection/training strategy, technical design, README, long-term plan, and this checklist after verification.
+- [x] Run focused backend tests (17 passed), frontend i18n audit, 831-check lottery smoke/release check, file-scoped ESLint, production build, Chinese/English desktop/mobile browser QA, and `git diff --check`; record exact evidence before checking Wave 47A.
+
+### Wave 47B: Training And Generation Provenance
+
+- [ ] Validate that training context contains a complete structured sample and record corpus/run/checkpoint/model/generation provenance.
+- [ ] Measure parseable rate, legal-number rate, repair outcomes, and post-repair legal-number rate instead of relying on training loss alone.
+- [ ] Produce differentiated candidate batches with controlled overlap, blue-ball coverage, and traceable strategy composition.
+
+### Wave 47C: Random-Baseline And Outcome Chain
+
+- [ ] Compare provenance-backed candidate pools with same-window, same-budget random baselines.
+- [ ] Preserve provenance through decision sets, ticket-pack drafts, research notes, actual results, prize/ledger outcomes, and lifecycle review.
+- [ ] Report diversity, hit/prize distributions, cost, ROI, random-baseline delta, and overfit warnings as historical-window evidence.
+
+### Wave 47D: Month-End Review And Release Evidence
+
+- [ ] Add the MiniGPT research chain to month-end review and export evidence with restrained research language.
+- [ ] Update final module/iteration docs and quality gates after the complete chain is verified.
+- [ ] Run the full release evidence and browser handoff, audit staged scope, commit, and push only verified Iteration 47 work.

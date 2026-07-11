@@ -103,6 +103,8 @@ Only the next candidate is promoted. Later ideas remain in the long-horizon them
 
 ### Iteration 47: MiniGPT Lottery Research Loop V1
 
+Formal delivery plan: [Iteration 47 plan](iteration-47-plan.md). Wave 47A is complete; Wave 47B training and generation provenance is next, while later waves remain follow-up work.
+
 - Add a strategy-sample corpus alongside raw draw and structural-feature corpora, with versioned export metadata and a reproducible time-based train/validation split.
 - Use a training context long enough to contain a full structured lottery sample and record run, checkpoint, prompt, temperature, top-k, parsing, and repair provenance.
 - Close the manual research chain from corpus export and training through candidate generation, compliance repair, differentiated candidate pools, random-baseline backtests, decision sets, tickets, actual results, and month-end review.
@@ -121,7 +123,7 @@ Only the next candidate is promoted. Later ideas remain in the long-horizon them
 
 ## Review Cadence
 
-- 2026-07-11 planning review: work is complete through Iteration 45. Iterations 41-45 closed evidence-quality focus, provider-reliability focus, release-archive focus, recommendation-retirement review, and archive-review pressure handoff. Promote only Iteration 46 for sync/release closure and Iteration 47 for the MiniGPT lottery research loop.
+- 2026-07-11 planning review: work is complete through Iteration 46, and Iteration 47 Wave 47A has closed the reproducible corpus/time-split baseline. Continue only with Wave 47B training and generation provenance before promoting later research-loop waves.
 - Review this long-term plan after every five completed iterations.
 - Promote only the next one or two candidate iterations into `docs/lottery/iterations/checklist.md`.
 - Keep completed tactical plans as historical evidence, but let this file carry the long-horizon direction.

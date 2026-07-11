@@ -5,6 +5,7 @@ import com.one.common.exception.DuplicateException;
 import com.one.common.exception.NotFoundException;
 import com.one.record.dto.Response;
 import com.one.record.exception.LotteryRecordSyncLogConflictException;
+import com.one.record.exception.MiniGptLotteryCorpusException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -38,6 +39,13 @@ public class GlobalExceptionHandler {
     public Response<Object> handleLotteryRecordSyncLogConflictException(LotteryRecordSyncLogConflictException e) {
         log.warn("Lottery record sync log conflict: {}", e.getMessage());
         return Response.error(409, e.getMessage());
+    }
+
+    @ExceptionHandler(MiniGptLotteryCorpusException.class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    public Response<Object> handleMiniGptLotteryCorpusException(MiniGptLotteryCorpusException e) {
+        log.warn("MiniGPT lottery corpus export rejected: {}", e.getMessage());
+        return Response.error(422, e.getMessage());
     }
 
     @ExceptionHandler(Exception.class)

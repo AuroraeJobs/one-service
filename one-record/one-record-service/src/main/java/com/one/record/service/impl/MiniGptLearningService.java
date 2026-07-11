@@ -2,6 +2,7 @@ package com.one.record.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.util.concurrent.Striped;
 import com.one.record.ai.MiniGptDashboard;
 import com.one.record.ai.MiniGptEnvironmentCheck;
 import com.one.record.ai.MiniGptCorpusInsight;
@@ -13,6 +14,7 @@ import com.one.record.ai.MiniGptLotteryCorpusExport;
 import com.one.record.ai.MiniGptRunNoteRequest;
 import com.one.record.ai.MiniGptTrainingRequest;
 import com.one.record.ai.MiniGptTrainingStatus;
+import com.one.record.exception.MiniGptLotteryCorpusException;
 import com.one.record.lottery.LotteryDraw;
 import com.one.record.model.MiniGptRunRecord;
 import com.one.record.model.MiniGptTrainingLogRecord;
@@ -32,22 +34,28 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -106,6 +114,22 @@ public class MiniGptLearningService implements IMiniGptLearningService {
     private static final int DEFAULT_LOTTERY_CORPUS_LIMIT = 2000;
 
     private static final int MAX_LOTTERY_CORPUS_LIMIT = 5000;
+
+    private static final int LOTTERY_CORPUS_SCHEMA_VERSION = 1;
+
+    private static final String LOTTERY_CORPUS_SPLIT_MODE = "TIME_ORDERED_80_20";
+
+    private static final double LOTTERY_CORPUS_VALIDATION_RATIO = 0.2;
+
+    private static final String LOTTERY_CORPUS_SORT_ORDER = "issue:asc";
+
+    private static final String LOTTERY_CORPUS_VERSION_ROOT = "lottery-corpora";
+
+    private static final String CORPUS_LINE_SEPARATOR = "\n";
+
+    private static final Striped<Lock> LOTTERY_CORPUS_VERSION_LOCKS = Striped.lazyWeakLock(64);
+
+    private static final Striped<Lock> LOTTERY_CORPUS_FORMAT_LOCKS = Striped.lazyWeakLock(8);
 
     private final MiniGptRunRepository runRepository;
 
@@ -338,36 +362,146 @@ public class MiniGptLearningService implements IMiniGptLearningService {
     public MiniGptLotteryCorpusExport exportLotteryCorpus(String format, Integer limit) {
         String normalizedFormat = normalizeLotteryCorpusFormat(format);
         List<LotteryDraw> draws = loadLotteryDraws(normalizeLimit(limit, DEFAULT_LOTTERY_CORPUS_LIMIT, MAX_LOTTERY_CORPUS_LIMIT));
-        String content = draws.stream()
-                .map(draw -> "features".equals(normalizedFormat) ? featureCorpusLine(draw) : rawCorpusLine(draw))
-                .filter(StringUtils::hasText)
-                .collect(java.util.stream.Collectors.joining(System.lineSeparator()));
+        if (draws.size() < 2) {
+            throw new MiniGptLotteryCorpusException("MiniGPT 彩票语料至少需要 2 个有效且唯一的期号");
+        }
 
+        List<String> lines = draws.stream()
+                .map(draw -> lotteryCorpusLine(draw, normalizedFormat))
+                .toList();
+        int trainDrawCount = Math.max(1, Math.min(draws.size() - 1, (draws.size() * 80) / 100));
+        List<LotteryDraw> trainDraws = draws.subList(0, trainDrawCount);
+        List<LotteryDraw> validationDraws = draws.subList(trainDrawCount, draws.size());
+        String content = corpusContent(lines);
+        String trainContent = corpusContent(lines.subList(0, trainDrawCount));
+        String validationContent = corpusContent(lines.subList(trainDrawCount, lines.size()));
+        String contentSha256 = sha256(content);
+        String trainSha256 = sha256(trainContent);
+        String validationSha256 = sha256(validationContent);
+        String templateVersion = "lottery-" + normalizedFormat + "-v1";
+        String corpusVersion = corpusVersion(
+                normalizedFormat,
+                templateVersion,
+                contentSha256,
+                trainSha256,
+                validationSha256
+        );
         Path playgroundDir = resolvePlaygroundDir();
         Path dataDir = playgroundDir.resolve("data").normalize();
-        Path outputPath = dataDir.resolve("lottery-" + normalizedFormat + ".txt").normalize();
-        if (!outputPath.startsWith(dataDir)) {
+        Path legacyPath = dataDir.resolve("lottery-" + normalizedFormat + ".txt").normalize();
+        Path versionDir = dataDir.resolve(LOTTERY_CORPUS_VERSION_ROOT)
+                .resolve(normalizedFormat)
+                .resolve(corpusVersion)
+                .normalize();
+        Path fullPath = versionDir.resolve("all.txt").normalize();
+        Path trainPath = versionDir.resolve("train.txt").normalize();
+        Path validationPath = versionDir.resolve("validation.txt").normalize();
+        Path manifestPath = versionDir.resolve("manifest.json").normalize();
+        if (!legacyPath.startsWith(dataDir)
+                || !versionDir.startsWith(dataDir)
+                || !fullPath.startsWith(versionDir)
+                || !trainPath.startsWith(versionDir)
+                || !validationPath.startsWith(versionDir)
+                || !manifestPath.startsWith(versionDir)) {
             throw new IllegalArgumentException("MiniGPT 彩票语料路径非法");
         }
+
+        String legacyDataPath = relativeDataPath(playgroundDir, legacyPath);
+        String fullDataPath = relativeDataPath(playgroundDir, fullPath);
+        String trainDataPath = relativeDataPath(playgroundDir, trainPath);
+        String validationDataPath = relativeDataPath(playgroundDir, validationPath);
+        String manifestDataPath = relativeDataPath(playgroundDir, manifestPath);
+        String legacyFilePath = legacyPath.toString();
+        String fullFilePath = fullPath.toString();
+        String trainFilePath = trainPath.toString();
+        String validationFilePath = validationPath.toString();
+        String manifestFilePath = manifestPath.toString();
+
+        long generatedAt;
+        Lock versionLock = LOTTERY_CORPUS_VERSION_LOCKS.get(versionDir.toString());
+        versionLock.lock();
         try {
-            Files.createDirectories(dataDir);
-            Files.writeString(outputPath, content + System.lineSeparator(), StandardCharsets.UTF_8);
+            generatedAt = existingManifestGeneratedAt(manifestPath);
+            Map<String, Object> manifest = lotteryCorpusManifest(
+                    normalizedFormat,
+                    templateVersion,
+                    corpusVersion,
+                    legacyDataPath,
+                    legacyFilePath,
+                    fullDataPath,
+                    fullFilePath,
+                    trainDataPath,
+                    trainFilePath,
+                    validationDataPath,
+                    validationFilePath,
+                    manifestDataPath,
+                    manifestFilePath,
+                    draws,
+                    trainDraws,
+                    validationDraws,
+                    contentSha256,
+                    trainSha256,
+                    validationSha256,
+                    generatedAt
+            );
+            String manifestContent = OBJECT_MAPPER.writerWithDefaultPrettyPrinter()
+                    .writeValueAsString(manifest) + CORPUS_LINE_SEPARATOR;
+            publishVersionArtifacts(
+                    versionDir,
+                    content,
+                    trainContent,
+                    validationContent,
+                    manifestContent
+            );
         } catch (IOException exception) {
             throw new IllegalStateException("写入 MiniGPT 彩票语料失败", exception);
+        } finally {
+            versionLock.unlock();
         }
 
-        LotteryDraw first = draws.isEmpty() ? null : draws.get(0);
-        LotteryDraw latest = draws.isEmpty() ? null : draws.get(draws.size() - 1);
-        String dataPath = playgroundDir.relativize(outputPath).toString();
+        Lock formatLock = LOTTERY_CORPUS_FORMAT_LOCKS.get(legacyPath.toString());
+        formatLock.lock();
+        try {
+            writeStringAtomically(legacyPath, content);
+        } catch (IOException exception) {
+            throw new IllegalStateException("写入 MiniGPT 彩票兼容语料失败", exception);
+        } finally {
+            formatLock.unlock();
+        }
+
         return MiniGptLotteryCorpusExport.builder()
+                .schemaVersion(LOTTERY_CORPUS_SCHEMA_VERSION)
+                .templateVersion(templateVersion)
+                .corpusVersion(corpusVersion)
                 .format(normalizedFormat)
-                .dataPath(dataPath)
-                .filePath(outputPath.toString())
+                .splitMode(LOTTERY_CORPUS_SPLIT_MODE)
+                .validationRatio(LOTTERY_CORPUS_VALIDATION_RATIO)
+                .sortOrder(LOTTERY_CORPUS_SORT_ORDER)
+                .dataPath(legacyDataPath)
+                .filePath(legacyFilePath)
+                .legacyDataPath(legacyDataPath)
+                .fullDataPath(fullDataPath)
+                .fullFilePath(fullFilePath)
+                .trainDataPath(trainDataPath)
+                .trainFilePath(trainFilePath)
+                .validationDataPath(validationDataPath)
+                .validationFilePath(validationFilePath)
+                .manifestDataPath(manifestDataPath)
+                .manifestFilePath(manifestFilePath)
                 .drawCount(draws.size())
-                .firstIssue(first == null ? null : first.getIssue())
-                .latestIssue(latest == null ? null : latest.getIssue())
+                .trainDrawCount(trainDraws.size())
+                .validationDrawCount(validationDraws.size())
+                .firstIssue(firstIssue(draws))
+                .latestIssue(latestIssue(draws))
+                .trainFirstIssue(firstIssue(trainDraws))
+                .trainLatestIssue(latestIssue(trainDraws))
+                .validationFirstIssue(firstIssue(validationDraws))
+                .validationLatestIssue(latestIssue(validationDraws))
+                .contentSha256(contentSha256)
+                .trainSha256(trainSha256)
+                .validationSha256(validationSha256)
                 .preview(content.substring(0, Math.min(content.length(), PREVIEW_LIMIT)))
-                .generatedAt(System.currentTimeMillis())
+                .generatedAt(generatedAt)
                 .build();
     }
 
@@ -1074,82 +1208,415 @@ public class MiniGptLearningService implements IMiniGptLearningService {
     }
 
     private List<LotteryDraw> loadLotteryDraws(int limit) {
-        List<LotteryDraw> draws = new ArrayList<>();
+        Map<String, LotteryDraw> drawsByIssue = new TreeMap<>();
+        int fetchSize = Math.min(LOTTERY_CORPUS_PAGE_SIZE, limit);
         int page = 0;
-        while (draws.size() < limit) {
-            List<LotteryDraw> pageDraws = recordService.findDraws(new RecordRequest(), page, LOTTERY_CORPUS_PAGE_SIZE);
+        while (drawsByIssue.size() < limit) {
+            List<LotteryDraw> pageDraws = recordService.findDraws(new RecordRequest(), page, fetchSize);
             if (pageDraws == null || pageDraws.isEmpty()) {
                 break;
             }
-            draws.addAll(pageDraws);
-            if (pageDraws.size() < LOTTERY_CORPUS_PAGE_SIZE) {
+            for (LotteryDraw draw : pageDraws) {
+                if (!isValidCorpusDraw(draw)) {
+                    continue;
+                }
+                String issue = safeIssue(draw);
+                if (!drawsByIssue.containsKey(issue) && drawsByIssue.size() >= limit) {
+                    break;
+                }
+                drawsByIssue.merge(issue, draw, MiniGptLearningService::canonicalCorpusDraw);
+            }
+            if (pageDraws.size() < fetchSize) {
                 break;
             }
             page++;
         }
-        return draws.stream()
-                .filter(draw -> draw != null && draw.getRedNumbers() != null && draw.getBlueNumber() != null)
-                .sorted(Comparator.comparing(MiniGptLearningService::safeIssue))
+        return drawsByIssue.values().stream()
                 .limit(limit)
                 .toList();
     }
 
     private static String normalizeLotteryCorpusFormat(String format) {
-        if ("features".equalsIgnoreCase(format)) {
+        if (!StringUtils.hasText(format)) {
+            return "raw";
+        }
+        String normalized = format.trim();
+        if ("raw".equalsIgnoreCase(normalized)) {
+            return "raw";
+        }
+        if ("features".equalsIgnoreCase(normalized)) {
             return "features";
         }
-        return "raw";
+        if ("strategy".equalsIgnoreCase(normalized)) {
+            return "strategy";
+        }
+        throw new MiniGptLotteryCorpusException("不支持的 MiniGPT 彩票语料格式: " + normalized);
+    }
+
+    private static String lotteryCorpusLine(LotteryDraw draw, String format) {
+        return switch (format) {
+            case "features" -> featureCorpusLine(draw);
+            case "strategy" -> strategyCorpusLine(draw);
+            default -> rawCorpusLine(draw);
+        };
+    }
+
+    private static String corpusContent(List<String> lines) {
+        return String.join(CORPUS_LINE_SEPARATOR, lines) + CORPUS_LINE_SEPARATOR;
     }
 
     private static String rawCorpusLine(LotteryDraw draw) {
         return String.format(
                 "%s: %s + %s",
                 safeIssue(draw),
-                String.join(" ", draw.getRedNumbers()),
-                draw.getBlueNumber()
+                String.join(" ", normalizedRedNumbers(draw)),
+                normalizedBlueNumber(draw)
         );
     }
 
     private static String featureCorpusLine(LotteryDraw draw) {
+        List<Integer> redValues = redValues(draw);
+        int oddCount = (int) redValues.stream().filter(value -> value % 2 != 0).count();
+        int bigCount = (int) redValues.stream().filter(value -> value >= 17).count();
         return String.format(
                 "issue=%s red=%s blue=%s sum=%s odd=%s even=%s big=%s small=%s span=%s consecutive=%s zone=%s",
                 safeIssue(draw),
-                String.join(",", draw.getRedNumbers()),
-                draw.getBlueNumber(),
-                safeInteger(draw.getRedSum()),
-                safeInteger(draw.getOddCount()),
-                safeInteger(draw.getEvenCount()),
-                safeInteger(draw.getBigCount()),
-                safeInteger(draw.getSmallCount()),
-                safeInteger(draw.getSpan()),
-                safeInteger(draw.getConsecutivePairs()),
-                zoneSignature(draw.getRedNumbers())
+                String.join(",", normalizedRedNumbers(draw)),
+                normalizedBlueNumber(draw),
+                redValues.stream().mapToInt(Integer::intValue).sum(),
+                oddCount,
+                redValues.size() - oddCount,
+                bigCount,
+                redValues.size() - bigCount,
+                span(redValues),
+                consecutivePairs(redValues),
+                zoneSignature(redValues)
         );
     }
 
-    private static String zoneSignature(List<String> redNumbers) {
-        int low = 0;
-        int middle = 0;
-        int high = 0;
-        for (String number : redNumbers) {
-            int value = Integer.parseInt(number);
-            if (value <= 11) {
-                low++;
-            } else if (value <= 22) {
-                middle++;
-            } else {
-                high++;
-            }
-        }
-        return low + "," + middle + "," + high;
+    private static String strategyCorpusLine(LotteryDraw draw) {
+        List<Integer> redValues = redValues(draw);
+        int redSum = redValues.stream().mapToInt(Integer::intValue).sum();
+        int oddCount = (int) redValues.stream().filter(value -> value % 2 != 0).count();
+        int evenCount = redValues.size() - oddCount;
+        int bigCount = (int) redValues.stream().filter(value -> value >= 17).count();
+        int smallCount = redValues.size() - bigCount;
+        int[] zones = zoneCounts(redValues);
+        String reason = String.join(";",
+                "sum_" + bucket(redSum, 80, 130),
+                "odd_even_" + oddCount + "_" + evenCount,
+                "big_small_" + bigCount + "_" + smallCount,
+                "zone_" + zones[0] + "_" + zones[1] + "_" + zones[2],
+                "span_" + bucket(span(redValues), 20, 28)
+        );
+        return String.format(
+                "target=next strategy=%s red=%s blue=%s reason=%s source_issue=%s",
+                strategyLabel(oddCount, evenCount, bigCount, smallCount, zones),
+                String.join(",", normalizedRedNumbers(draw)),
+                normalizedBlueNumber(draw),
+                reason,
+                safeIssue(draw)
+        );
     }
 
     private static String safeIssue(LotteryDraw draw) {
-        return StringUtils.hasText(draw.getIssue()) ? draw.getIssue() : String.valueOf(draw.getPeriod());
+        if (StringUtils.hasText(draw.getIssue())) {
+            return draw.getIssue().trim();
+        }
+        return draw.getPeriod() == null ? "" : String.valueOf(draw.getPeriod());
     }
 
-    private static String safeInteger(Integer value) {
-        return value == null ? "-" : value.toString();
+    private static boolean isValidCorpusDraw(LotteryDraw draw) {
+        if (draw == null
+                || (!StringUtils.hasText(draw.getIssue()) && draw.getPeriod() == null)
+                || draw.getRedNumbers() == null
+                || draw.getRedNumbers().size() != 6) {
+            return false;
+        }
+        List<Integer> redValues = draw.getRedNumbers().stream()
+                .map(MiniGptLearningService::parseInteger)
+                .toList();
+        Integer blueValue = parseInteger(draw.getBlueNumber());
+        return redValues.stream().allMatch(value -> value != null && value >= 1 && value <= 33)
+                && redValues.stream().distinct().count() == 6
+                && blueValue != null
+                && blueValue >= 1
+                && blueValue <= 16;
+    }
+
+    private static LotteryDraw canonicalCorpusDraw(LotteryDraw first, LotteryDraw second) {
+        return canonicalDrawKey(first).compareTo(canonicalDrawKey(second)) <= 0 ? first : second;
+    }
+
+    private static String canonicalDrawKey(LotteryDraw draw) {
+        return String.join(",", normalizedRedNumbers(draw)) + "+" + normalizedBlueNumber(draw);
+    }
+
+    private static List<Integer> redValues(LotteryDraw draw) {
+        return draw.getRedNumbers().stream()
+                .map(MiniGptLearningService::parseInteger)
+                .sorted()
+                .toList();
+    }
+
+    private static List<String> normalizedRedNumbers(LotteryDraw draw) {
+        return redValues(draw).stream().map(MiniGptLearningService::formatBall).toList();
+    }
+
+    private static String normalizedBlueNumber(LotteryDraw draw) {
+        return formatBall(parseInteger(draw.getBlueNumber()));
+    }
+
+    private static int span(List<Integer> values) {
+        return values.isEmpty() ? 0 : values.get(values.size() - 1) - values.get(0);
+    }
+
+    private static int consecutivePairs(List<Integer> values) {
+        int pairs = 0;
+        for (int index = 1; index < values.size(); index++) {
+            if (values.get(index) - values.get(index - 1) == 1) {
+                pairs++;
+            }
+        }
+        return pairs;
+    }
+
+    private static int[] zoneCounts(List<Integer> redNumbers) {
+        int[] zones = new int[3];
+        for (Integer value : redNumbers) {
+            zones[value <= 11 ? 0 : value <= 22 ? 1 : 2]++;
+        }
+        return zones;
+    }
+
+    private static String zoneSignature(List<Integer> redNumbers) {
+        int[] zones = zoneCounts(redNumbers);
+        return zones[0] + "," + zones[1] + "," + zones[2];
+    }
+
+    private static String strategyLabel(int oddCount,
+                                        int evenCount,
+                                        int bigCount,
+                                        int smallCount,
+                                        int[] zones) {
+        int zoneMin = Math.min(zones[0], Math.min(zones[1], zones[2]));
+        int zoneMax = Math.max(zones[0], Math.max(zones[1], zones[2]));
+        if (zoneMax - zoneMin <= 1) {
+            return "zone-balance";
+        }
+        if (Math.abs(oddCount - evenCount) <= 2 && Math.abs(bigCount - smallCount) <= 2 && zoneMin > 0) {
+            return "balanced";
+        }
+        return "structure-observed";
+    }
+
+    private static String bucket(int value, int lowExclusiveBoundary, int highExclusiveBoundary) {
+        if (value < lowExclusiveBoundary) {
+            return "low";
+        }
+        if (value > highExclusiveBoundary) {
+            return "high";
+        }
+        return "mid";
+    }
+
+    private static String sha256(String content) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of().formatHex(digest.digest(content.getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("当前 JVM 不支持 SHA-256", exception);
+        }
+    }
+
+    private static String corpusVersion(String format,
+                                        String templateVersion,
+                                        String contentSha256,
+                                        String trainSha256,
+                                        String validationSha256) {
+        String versionMaterial = String.join(CORPUS_LINE_SEPARATOR,
+                "schemaVersion=" + LOTTERY_CORPUS_SCHEMA_VERSION,
+                "templateVersion=" + templateVersion,
+                "format=" + format,
+                "sortOrder=" + LOTTERY_CORPUS_SORT_ORDER,
+                "splitMode=" + LOTTERY_CORPUS_SPLIT_MODE,
+                "validationRatio=" + LOTTERY_CORPUS_VALIDATION_RATIO,
+                "contentSha256=" + contentSha256,
+                "trainSha256=" + trainSha256,
+                "validationSha256=" + validationSha256
+        );
+        return sha256(versionMaterial);
+    }
+
+    private static String relativeDataPath(Path playgroundDir, Path path) {
+        return playgroundDir.relativize(path).toString().replace('\\', '/');
+    }
+
+    private static void publishVersionArtifacts(Path versionDir,
+                                                String content,
+                                                String trainContent,
+                                                String validationContent,
+                                                String manifestContent) throws IOException {
+        Path formatDir = versionDir.getParent();
+        Files.createDirectories(formatDir);
+        if (Files.notExists(versionDir)) {
+            publishNewVersionDirectory(
+                    formatDir,
+                    versionDir,
+                    content,
+                    trainContent,
+                    validationContent,
+                    manifestContent
+            );
+            return;
+        }
+
+        Files.createDirectories(versionDir);
+        writeStringAtomically(versionDir.resolve("all.txt"), content);
+        writeStringAtomically(versionDir.resolve("train.txt"), trainContent);
+        writeStringAtomically(versionDir.resolve("validation.txt"), validationContent);
+        writeStringAtomically(versionDir.resolve("manifest.json"), manifestContent);
+    }
+
+    private static void publishNewVersionDirectory(Path formatDir,
+                                                   Path versionDir,
+                                                   String content,
+                                                   String trainContent,
+                                                   String validationContent,
+                                                   String manifestContent) throws IOException {
+        Path stagingDir = Files.createTempDirectory(formatDir, "." + versionDir.getFileName() + "-");
+        boolean published = false;
+        try {
+            Files.writeString(stagingDir.resolve("all.txt"), content, StandardCharsets.UTF_8);
+            Files.writeString(stagingDir.resolve("train.txt"), trainContent, StandardCharsets.UTF_8);
+            Files.writeString(stagingDir.resolve("validation.txt"), validationContent, StandardCharsets.UTF_8);
+            Files.writeString(stagingDir.resolve("manifest.json"), manifestContent, StandardCharsets.UTF_8);
+            moveDirectoryAtomically(stagingDir, versionDir);
+            published = true;
+        } finally {
+            if (!published) {
+                deleteStagingDirectory(stagingDir);
+            }
+        }
+    }
+
+    private static void writeStringAtomically(Path target, String content) throws IOException {
+        Path parent = target.getParent();
+        Files.createDirectories(parent);
+        Path stagingPath = Files.createTempFile(parent, "." + target.getFileName() + "-", ".tmp");
+        try {
+            Files.writeString(stagingPath, content, StandardCharsets.UTF_8);
+            try {
+                Files.move(
+                        stagingPath,
+                        target,
+                        StandardCopyOption.ATOMIC_MOVE,
+                        StandardCopyOption.REPLACE_EXISTING
+                );
+            } catch (AtomicMoveNotSupportedException exception) {
+                Files.move(stagingPath, target, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally {
+            Files.deleteIfExists(stagingPath);
+        }
+    }
+
+    private static void moveDirectoryAtomically(Path source, Path target) throws IOException {
+        try {
+            Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
+        } catch (AtomicMoveNotSupportedException exception) {
+            Files.move(source, target);
+        }
+    }
+
+    private static void deleteStagingDirectory(Path stagingDir) {
+        try {
+            Files.deleteIfExists(stagingDir.resolve("all.txt"));
+            Files.deleteIfExists(stagingDir.resolve("train.txt"));
+            Files.deleteIfExists(stagingDir.resolve("validation.txt"));
+            Files.deleteIfExists(stagingDir.resolve("manifest.json"));
+            Files.deleteIfExists(stagingDir);
+        } catch (IOException cleanupException) {
+            log.warn("清理 MiniGPT 彩票语料临时目录失败: {}", stagingDir, cleanupException);
+        }
+    }
+
+    private long existingManifestGeneratedAt(Path manifestPath) {
+        if (!Files.exists(manifestPath)) {
+            return System.currentTimeMillis();
+        }
+        try {
+            Map<String, Object> existing = OBJECT_MAPPER.readValue(manifestPath.toFile(), new TypeReference<>() {
+            });
+            Long generatedAt = asLong(existing.get("generatedAt"));
+            return generatedAt == null ? System.currentTimeMillis() : generatedAt;
+        } catch (IOException exception) {
+            log.warn("读取既有 MiniGPT 彩票语料 manifest 失败，将重新生成: {}", manifestPath, exception);
+            return System.currentTimeMillis();
+        }
+    }
+
+    private static Map<String, Object> lotteryCorpusManifest(String format,
+                                                              String templateVersion,
+                                                              String corpusVersion,
+                                                              String legacyDataPath,
+                                                              String legacyFilePath,
+                                                              String fullDataPath,
+                                                              String fullFilePath,
+                                                              String trainDataPath,
+                                                              String trainFilePath,
+                                                              String validationDataPath,
+                                                              String validationFilePath,
+                                                              String manifestDataPath,
+                                                              String manifestFilePath,
+                                                              List<LotteryDraw> draws,
+                                                              List<LotteryDraw> trainDraws,
+                                                              List<LotteryDraw> validationDraws,
+                                                              String contentSha256,
+                                                              String trainSha256,
+                                                              String validationSha256,
+                                                              long generatedAt) {
+        Map<String, Object> manifest = new LinkedHashMap<>();
+        manifest.put("schemaVersion", LOTTERY_CORPUS_SCHEMA_VERSION);
+        manifest.put("templateVersion", templateVersion);
+        manifest.put("corpusVersion", corpusVersion);
+        manifest.put("format", format);
+        manifest.put("splitMode", LOTTERY_CORPUS_SPLIT_MODE);
+        manifest.put("validationRatio", LOTTERY_CORPUS_VALIDATION_RATIO);
+        manifest.put("sortOrder", LOTTERY_CORPUS_SORT_ORDER);
+        manifest.put("dataPath", legacyDataPath);
+        manifest.put("filePath", legacyFilePath);
+        manifest.put("legacyDataPath", legacyDataPath);
+        manifest.put("fullDataPath", fullDataPath);
+        manifest.put("fullFilePath", fullFilePath);
+        manifest.put("trainDataPath", trainDataPath);
+        manifest.put("trainFilePath", trainFilePath);
+        manifest.put("validationDataPath", validationDataPath);
+        manifest.put("validationFilePath", validationFilePath);
+        manifest.put("manifestDataPath", manifestDataPath);
+        manifest.put("manifestFilePath", manifestFilePath);
+        manifest.put("drawCount", draws.size());
+        manifest.put("trainDrawCount", trainDraws.size());
+        manifest.put("validationDrawCount", validationDraws.size());
+        manifest.put("firstIssue", firstIssue(draws));
+        manifest.put("latestIssue", latestIssue(draws));
+        manifest.put("trainFirstIssue", firstIssue(trainDraws));
+        manifest.put("trainLatestIssue", latestIssue(trainDraws));
+        manifest.put("validationFirstIssue", firstIssue(validationDraws));
+        manifest.put("validationLatestIssue", latestIssue(validationDraws));
+        manifest.put("contentSha256", contentSha256);
+        manifest.put("trainSha256", trainSha256);
+        manifest.put("validationSha256", validationSha256);
+        manifest.put("generatedAt", generatedAt);
+        return manifest;
+    }
+
+    private static String firstIssue(List<LotteryDraw> draws) {
+        return draws.isEmpty() ? null : safeIssue(draws.get(0));
+    }
+
+    private static String latestIssue(List<LotteryDraw> draws) {
+        return draws.isEmpty() ? null : safeIssue(draws.get(draws.size() - 1));
     }
 
     private record ParsedLotteryCandidate(List<Integer> redValues, Integer blueValue) {
@@ -1227,6 +1694,20 @@ public class MiniGptLearningService implements IMiniGptLearningService {
         if (value instanceof String text && StringUtils.hasText(text)) {
             try {
                 return Integer.parseInt(text);
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private static Long asLong(Object value) {
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        if (value instanceof String text && StringUtils.hasText(text)) {
+            try {
+                return Long.parseLong(text);
             } catch (NumberFormatException ignored) {
                 return null;
             }

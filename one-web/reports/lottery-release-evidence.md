@@ -7,12 +7,12 @@ Generated from `npm run lottery:smoke`.
 | Field | Value |
 | --- | --- |
 | Target | Lottery unified overview default smoke |
-| Generated at | 2026-07-11T11:19:12.951Z |
+| Generated at | 2026-07-11T12:11:38.531Z |
 | Status | PASSED |
 | Mode | mocked-fixture |
 | Provider network | not-required |
 | Routes | 18 |
-| Checks | 808 |
+| Checks | 831 |
 | Failures | 0 |
 
 ## Protected Browser QA
@@ -21,7 +21,7 @@ Generated from `npm run lottery:smoke`.
 | --- | --- |
 | Authentication | Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session. |
 | Backend/proxy | Manual browser screenshots require the local backend and Vite proxy to reach project-owned lottery APIs. |
-| Known blocker | `ECONNREFUSED` on `/lottery/records/draws?page=0&size=500` means backend/proxy availability is blocking browser evidence. |
+| Diagnostic signature | If `ECONNREFUSED` appears on `/lottery/records/draws?page=0&size=500`, backend/proxy availability is blocking browser evidence. |
 | Fallback | Static smoke and build remain baseline verification when login or backend availability blocks screenshots. |
 
 ## Source Guards
@@ -37,6 +37,8 @@ Generated from `npm run lottery:smoke`.
 | application localization compatibility runtime | `src/components/AppTextLocalizer.tsx` | 6 | 0 |
 | lottery english locale resource | `src/i18n/locales/en-US/lotteryText.ts` | 4 | 3 |
 | lottery english chart localization | `src/components/LotteryLocalizedECharts.tsx` | 4 | 0 |
+| iteration 47A MiniGPT corpus workflow | `src/components/MiniGptLearningPage.tsx` | 14 | 0 |
+| iteration 47A MiniGPT corpus API contract | `src/services/api.ts` | 7 | 0 |
 | workbench closure path | `src/components/LotteryWorkbenchPage.tsx` | 49 | 0 |
 | mobile dark-mode CSS safeguards | `src/components/LotteryOverviewPage.css` | 7 | 0 |
 | visible lottery label helpers | `src/utils/lotteryStatusLabel.ts` | 4 | 0 |

@@ -15,3 +15,5 @@ checkpoints/
 */checkpoints/
 runs/
 */runs/
+**/playground/mini-gpt/data/lottery-corpora/
+**/playground/mini-gpt/data/lottery-strategy.txt

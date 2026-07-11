@@ -122,6 +122,39 @@
       ]
     },
     {
+      "scope": "iteration 47A MiniGPT corpus workflow",
+      "file": "src/components/MiniGptLearningPage.tsx",
+      "includes": [
+        "format: 'raw' | 'features' | 'strategy'",
+        "handleExportLotteryCorpus('strategy')",
+        "exported.trainDataPath || exported.dataPath",
+        "evalData: exported.validationDataPath",
+        "lotteryCorpusExport.corpusVersion",
+        "lotteryCorpusExport.trainDataPath",
+        "lotteryCorpusExport.validationDataPath",
+        "lotteryCorpusExport.manifestDataPath",
+        "lotteryCorpusExport.trainSha256",
+        "lotteryCorpusExport.validationSha256",
+        "lotteryCorpusExportSuccess",
+        "evalDataPlaceholder",
+        "Chronological 80/20 Split",
+        "时间顺序 80/20 切分"
+      ]
+    },
+    {
+      "scope": "iteration 47A MiniGPT corpus API contract",
+      "file": "src/services/api.ts",
+      "includes": [
+        "corpusVersion?: string",
+        "fullDataPath?: string",
+        "trainDataPath?: string",
+        "validationDataPath?: string",
+        "manifestDataPath?: string",
+        "trainSha256?: string",
+        "validationSha256?: string"
+      ]
+    },
+    {
       "scope": "workbench closure path",
       "file": "src/components/LotteryWorkbenchPage.tsx",
       "includes": [

@@ -1,6 +1,6 @@
 # 双色球选号策略与模型训练方向
 
-Last updated: 2026-07-08
+Last updated: 2026-07-11
 
 ## 目标边界
 
@@ -53,7 +53,7 @@ issue=2026001 red=03,08,12,19,25,31 blue=06 sum=98 odd=4 even=2 span=28 zone=2,2
 ### 策略样本格式
 
 ```text
-target=2026004 strategy=balanced red=04,10,16,21,26,32 blue=09 reason=sum_mid;odd_even_3_3;zone_2_2_2
+target=next strategy=zone-balance red=01,02,12,13,23,24 blue=01 reason=sum_low;odd_even_3_3;big_small_2_4;zone_2_2_2;span_mid source_issue=2026001
 ```
 
 适合学习：
@@ -62,13 +62,27 @@ target=2026004 strategy=balanced red=04,10,16,21,26,32 blue=09 reason=sum_mid;od
 - 解释选号理由。
 - 把规则、号码和复盘连接起来。
 
+Iteration 47A 将 `strategy` 固定为第三种正式导出格式。每一行必须是完整样本，至少包含：
+
+```text
+target=next strategy=<template> red=<six-normalized-reds> blue=<normalized-blue> reason=<documented-tags> source_issue=<issue>
+```
+
+约束：
+
+- `target=next` 与训练/生成提示保持一致，`source_issue` 对应本行来源期号；同一期的字段不得跨训练集与验证集。
+- `strategy` 和 `reason` 来自带版本号的确定性模板，不能根据验证窗口结果反向改写训练样本。
+- 红球、蓝球和结构标签必须通过现有规范化/校验规则。
+- 策略语料用于学习格式、约束和解释结构，不代表模板可以预测未来开奖结果。
+
 ## 训练/验证切分
 
-可以用两种切分方式，后续实验需要明确记录。
+Iteration 47 的正式研究基线固定使用完整样本行的时间切分。随机切分只能用于独立的格式学习探索，不能替代正式验证或回测证据。
 
 ### 时间切分
 
 ```text
+按期号升序排列完整样本行
 前 80% 期数训练
 后 20% 期数验证
 ```
@@ -76,6 +90,14 @@ target=2026004 strategy=balanced red=04,10,16,21,26,32 blue=09 reason=sum_mid;od
 优点：更像真实未来预测，能检查策略是否只适合旧数据。
 
 缺点：如果历史分布阶段性变化，验证结果可能波动较大。
+
+正式切分规则：
+
+- 切分单位是完整的开奖/特征/策略样本行，禁止按字符、token 或行内位置切分。
+- `validationCount = max(1, ceil(totalCount * 0.20))`，其余较早样本进入训练集；少于 2 条有效记录时拒绝导出。
+- 训练集最后一期必须早于验证集第一期，两个集合不得重叠。
+- 相同规范化数据快照、格式、schema/template 版本和切分参数必须产生相同内容、边界与 SHA-256。
+- 不允许因数据不足静默退化为随机切分。
 
 ### 随机切分
 
@@ -88,7 +110,34 @@ target=2026004 strategy=balanced red=04,10,16,21,26,32 blue=09 reason=sum_mid;od
 
 缺点：不能很好模拟“用过去预测未来”。
 
-建议：早期用随机切分学习模型行为；进入策略评估后必须用时间切分做回测。
+建议：随机切分只保留为不进入正式结论的格式学习实验；策略评估、候选生成门禁和回测一律引用上述时间切分语料与 manifest。
+
+## Iteration 47A 语料版本与 Manifest 契约
+
+每次正式导出在以下版本目录中保存不可混淆的一组产物：
+
+```text
+data/lottery-corpora/<format>/<corpusVersion>/all.txt
+data/lottery-corpora/<format>/<corpusVersion>/train.txt
+data/lottery-corpora/<format>/<corpusVersion>/validation.txt
+data/lottery-corpora/<format>/<corpusVersion>/manifest.json
+```
+
+`manifest.json` 与导出 DTO 至少记录：
+
+- `format`、`schemaVersion`、`templateVersion`、`corpusVersion`。
+- `splitMode=TIME_ORDERED_80_20`、`validationRatio=0.20`、`sortOrder=issue:asc`。
+- 总记录、训练记录、验证记录的数量及首末期号。
+- 完整、训练、验证、manifest 的数据路径和绝对文件路径。
+- 完整、训练、验证内容的 SHA-256。
+- `generatedAt`，记录该版本产物首次成功创建的时间；重复导出同一版本时保持稳定，但不参与内容 hash。
+
+兼容约定：
+
+- 继续写入 `data/lottery-<format>.txt` 作为完整语料兼容文件。
+- 现有 `dataPath`/`filePath` 保持指向该兼容完整文件，避免旧页面和调用方改变语义。
+- `fullDataPath`/`fullFilePath` 指向版本目录的 `all.txt`；新客户端显式使用 `trainDataPath`、`validationDataPath` 和 `manifestDataPath`。
+- MiniGPT 训练表单默认填入 `trainDataPath`，同时展示验证集范围、数量、hash 和 manifest，不能把未切分兼容文件误当正式训练输入。
 
 ## MiniGPT 参数解释
 
@@ -305,6 +354,7 @@ red=04,10,16,21,26,32 blue=09 reason=sum_mid;odd_even_3_3;zone_2_2_2
 
 后续训练计划从这里拆：
 
-1. 用 MiniGPT 训练“格式学习”基线。
-2. 形成“模型生成 + 规则过滤 + 随机基线对比 + 研究笔记”的第一版闭环。
-3. 将 MiniGPT 候选池回测报告继续纳入月度复盘。
+1. 完成 Iteration 47A：strategy 语料、版本目录、manifest、完整行 80/20 时间切分和兼容路径。
+2. 基于版本化训练集和验证集记录训练、checkpoint、prompt、采样、解析与修复 provenance。
+3. 形成“模型生成 + 规则过滤 + 随机基线对比 + 研究笔记”的第一版闭环。
+4. 将 MiniGPT 候选池回测报告继续纳入月度复盘。

@@ -1794,11 +1794,23 @@ const MiniGptLearningPage = () => {
     trainingData: isEnglish ? 'Training Corpus' : '训练语料',
     trainingDataPlaceholder: isEnglish ? 'Select or enter a corpus path' : '选择或输入语料路径',
     evalData: isEnglish ? 'Fixed Eval Set' : '固定评估集',
+    evalDataPlaceholder: isEnglish ? 'For example, data/eval.txt' : '例如 data/eval.txt',
     lotteryCorpus: isEnglish ? 'Lottery Training Corpus' : '双色球训练语料',
     drawFormat: isEnglish ? 'Draw Format' : '开奖格式',
     structuredFeatures: isEnglish ? 'Structured Features' : '结构特征',
+    strategySamples: isEnglish ? 'Strategy Samples' : '策略样本',
     periods: isEnglish ? 'draws' : '期',
     lotteryCorpusDesc: isEnglish ? 'Export MiniGPT training text from Mongo lottery records and fill the corpus path automatically.' : '从 Mongo 开奖记录导出 MiniGPT 训练文本，并自动填入语料路径。',
+    corpusVersion: isEnglish ? 'Corpus Version' : '语料版本',
+    timeSplit: isEnglish ? 'Chronological 80/20 Split' : '时间顺序 80/20 切分',
+    trainSplit: isEnglish ? 'Train' : '训练集',
+    validationSplit: isEnglish ? 'Validation' : '验证集',
+    manifest: isEnglish ? 'Manifest' : '清单',
+    exported: isEnglish ? 'Exported' : '已导出',
+    lotteryCorpusExportSuccess: (count: number) => isEnglish
+      ? `Exported ${count} lottery draws`
+      : `已导出 ${count} 期双色球语料`,
+    lotteryCorpusExportFailed: isEnglish ? 'Lottery corpus export failed' : '双色球语料导出失败',
     setupTraining: isEnglish ? 'Configure Training' : '设置训练',
     setupTrainingDesc: isEnglish ? 'After choosing the corpus, configure preset, run name, resume source, and training parameters.' : '语料确定后，再配置预设、实验名、续训来源和训练参数。',
     preset: isEnglish ? 'Preset' : '预设',
@@ -2023,28 +2035,30 @@ const MiniGptLearningPage = () => {
     }
   }, []);
 
-  const handleExportLotteryCorpus = useCallback(async (format: 'raw' | 'features') => {
+  const handleExportLotteryCorpus = useCallback(async (format: 'raw' | 'features' | 'strategy') => {
     setLotteryCorpusLoading(true);
     try {
       const exported = await miniGptApi.exportLotteryCorpus({ format, limit: 2000 });
       setLotteryCorpusExport(exported);
+      const trainDataPath = exported.trainDataPath || exported.dataPath || `data/lottery-${format}.txt`;
       const nextValues = {
         ...form.getFieldsValue(),
-        data: exported.dataPath || `data/lottery-${format}.txt`,
-        samplePrompt: format === 'features'
+        data: trainDataPath,
+        evalData: exported.validationDataPath || form.getFieldValue('evalData'),
+        samplePrompt: format === 'features' || format === 'strategy'
           ? 'target=next strategy=balanced'
           : exported.latestIssue ? `${exported.latestIssue}:` : '2026001:'
       };
       form.setFieldsValue(nextValues);
       await loadCorpusInsight(nextValues);
-      message.success(`已导出 ${exported.drawCount || 0} 期双色球语料`);
+      message.success(text.lotteryCorpusExportSuccess(exported.drawCount || 0));
     } catch (error) {
       console.error('导出 MiniGPT 双色球语料失败:', error);
-      message.error('双色球语料导出失败');
+      message.error(text.lotteryCorpusExportFailed);
     } finally {
       setLotteryCorpusLoading(false);
     }
-  }, [form, loadCorpusInsight]);
+  }, [form, loadCorpusInsight, text]);
 
   const handleApplyTrainingRecipe = (recipe: MiniGptTrainingRecipe) => {
     const mergedValues = {
@@ -2474,20 +2488,21 @@ const MiniGptLearningPage = () => {
   );
   const runGroupsByData = useMemo(() => groupRunsByData(runs), [runs]);
   const trainingDataOptions = useMemo(() => {
+    const exportedTrainingPath = lotteryCorpusExport?.trainDataPath || lotteryCorpusExport?.dataPath;
     const dataPaths = [
       'data/sample.txt',
       ...runGroupsByData.map(group => group.data),
-      lotteryCorpusExport?.dataPath
+      exportedTrainingPath
     ]
       .map(item => normalizeTrainingData(item))
       .filter(Boolean);
     return Array.from(new Set(dataPaths)).map(dataPath => ({
       value: dataPath,
-      label: dataPath === lotteryCorpusExport?.dataPath
-        ? `${dataPath} · 已导出`
+      label: dataPath === exportedTrainingPath
+        ? `${dataPath} · ${text.exported}`
         : dataPath
     }));
-  }, [lotteryCorpusExport?.dataPath, runGroupsByData]);
+  }, [lotteryCorpusExport?.dataPath, lotteryCorpusExport?.trainDataPath, runGroupsByData, text.exported]);
   const noteFormValues = useMemo(
     () => ({ ...noteForm.getFieldsValue(), ...(watchedNoteValues || {}) }),
     [noteForm, watchedNoteValues]
@@ -2730,7 +2745,7 @@ const MiniGptLearningPage = () => {
                       />
                     </Form.Item>
                     <Form.Item name="evalData" label={text.evalData}>
-                      <Input placeholder="例如 data/eval.txt" />
+                      <Input placeholder={text.evalDataPlaceholder} />
                     </Form.Item>
                   </div>
                   <section className="mini-gpt-lottery-corpus">
@@ -2755,14 +2770,42 @@ const MiniGptLearningPage = () => {
                         >
                           {text.structuredFeatures}
                         </Button>
+                        <Button
+                          size="small"
+                          icon={<DatabaseOutlined />}
+                          loading={lotteryCorpusLoading}
+                          disabled={trainingStatus.running}
+                          onClick={() => handleExportLotteryCorpus('strategy')}
+                        >
+                          {text.strategySamples}
+                        </Button>
                       </Space>
                     </div>
                     {lotteryCorpusExport ? (
                       <div className="mini-gpt-lottery-corpus-result">
                         <Tag color="cyan">{lotteryCorpusExport.format}</Tag>
-                        <span>{lotteryCorpusExport.drawCount || 0} {text.periods}</span>
-                        <code>{lotteryCorpusExport.dataPath || '-'}</code>
-                        <p>{lotteryCorpusExport.firstIssue || '-'} - {lotteryCorpusExport.latestIssue || '-'}</p>
+                        <Tag color="blue" title={lotteryCorpusExport.corpusVersion}>
+                          {lotteryCorpusExport.corpusVersion?.slice(0, 16) || text.corpusVersion}
+                        </Tag>
+                        <span>{lotteryCorpusExport.drawCount || 0} {text.periods} · {text.timeSplit}</span>
+                        <p>
+                          schema v{lotteryCorpusExport.schemaVersion || '-'} · {lotteryCorpusExport.templateVersion || '-'} · {lotteryCorpusExport.sortOrder || '-'}
+                        </p>
+                        <div className="mini-gpt-lottery-corpus-splits">
+                          <article>
+                            <strong>{text.trainSplit} · {lotteryCorpusExport.trainDrawCount || 0} {text.periods}</strong>
+                            <span>{lotteryCorpusExport.trainFirstIssue || '-'} - {lotteryCorpusExport.trainLatestIssue || '-'}</span>
+                            <small title={lotteryCorpusExport.trainSha256}>SHA-256 {lotteryCorpusExport.trainSha256?.slice(0, 16) || '-'}</small>
+                            <code>{lotteryCorpusExport.trainDataPath || lotteryCorpusExport.dataPath || '-'}</code>
+                          </article>
+                          <article>
+                            <strong>{text.validationSplit} · {lotteryCorpusExport.validationDrawCount || 0} {text.periods}</strong>
+                            <span>{lotteryCorpusExport.validationFirstIssue || '-'} - {lotteryCorpusExport.validationLatestIssue || '-'}</span>
+                            <small title={lotteryCorpusExport.validationSha256}>SHA-256 {lotteryCorpusExport.validationSha256?.slice(0, 16) || '-'}</small>
+                            <code>{lotteryCorpusExport.validationDataPath || '-'}</code>
+                          </article>
+                        </div>
+                        <p>{text.manifest}: <code>{lotteryCorpusExport.manifestDataPath || '-'}</code></p>
                       </div>
                     ) : (
                       <p>{text.lotteryCorpusDesc}</p>

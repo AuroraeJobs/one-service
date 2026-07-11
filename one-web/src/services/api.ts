@@ -1232,11 +1232,35 @@ export interface MiniGptEnvironmentCheck {
 
 export interface MiniGptLotteryCorpusExport {
   format?: string;
+  schemaVersion?: number;
+  templateVersion?: string;
+  corpusVersion?: string;
+  splitMode?: string;
+  validationRatio?: number;
+  sortOrder?: string;
   dataPath?: string;
   filePath?: string;
+  legacyDataPath?: string;
+  fullDataPath?: string;
+  fullFilePath?: string;
+  trainDataPath?: string;
+  trainFilePath?: string;
+  validationDataPath?: string;
+  validationFilePath?: string;
+  manifestDataPath?: string;
+  manifestFilePath?: string;
   drawCount?: number;
+  trainDrawCount?: number;
+  validationDrawCount?: number;
   firstIssue?: string;
   latestIssue?: string;
+  trainFirstIssue?: string;
+  trainLatestIssue?: string;
+  validationFirstIssue?: string;
+  validationLatestIssue?: string;
+  contentSha256?: string;
+  trainSha256?: string;
+  validationSha256?: string;
   preview?: string;
   generatedAt?: number;
 }

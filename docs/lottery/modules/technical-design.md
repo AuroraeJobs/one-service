@@ -1,6 +1,6 @@
 # Lottery Technical Design
 
-Last updated: 2026-07-07
+Last updated: 2026-07-11
 
 ## Module Shape
 
@@ -135,6 +135,58 @@ Training operations expose both legacy `/lottery/training/status|cancel|retry` a
 The frontend prediction history page at `/lottery/predictions/history` reads `GET /lottery/predictions` and presents recent durable snapshots with rule metadata, generated numbers, result state, candidate counts, evidence tags, and replay summary text.
 
 The frontend prediction detail page at `/lottery/predictions/:id` reads `GET /lottery/predictions/{id}` and displays the saved primary prediction, candidate predictions, rule metadata, scores, actual draw, hit results, evidence reasons, and primary/candidate hit distributions.
+
+## MiniGPT Lottery Corpus Export Contract
+
+Iteration 47A extends `POST /ai/minigpt/corpus/lottery/export` without breaking the existing raw/features callers. The endpoint accepts `format=raw|features|strategy`; every format is serialized as one complete sample per line after normalized draws are sorted by issue ascending.
+
+The formal split is deterministic and chronological:
+
+```text
+validationCount = max(1, ceil(totalCount * 0.20))
+trainCount = totalCount - validationCount
+train = earlier complete rows
+validation = later complete rows
+```
+
+Exports with fewer than two valid rows are rejected. No row may appear in both files, no row may be split by character/token position, and the endpoint must not fall back to a random split.
+
+Each export owns a versioned directory:
+
+```text
+data/lottery-corpora/<format>/<corpusVersion>/all.txt
+data/lottery-corpora/<format>/<corpusVersion>/train.txt
+data/lottery-corpora/<format>/<corpusVersion>/validation.txt
+data/lottery-corpora/<format>/<corpusVersion>/manifest.json
+```
+
+`MiniGptLotteryCorpusExport` is extended with the following provenance groups:
+
+```text
+format, schemaVersion, templateVersion, corpusVersion
+splitMode, validationRatio, sortOrder
+drawCount, trainDrawCount, validationDrawCount
+firstIssue, latestIssue
+trainFirstIssue, trainLatestIssue
+validationFirstIssue, validationLatestIssue
+contentSha256, trainSha256, validationSha256
+dataPath, filePath, legacyDataPath
+fullDataPath, fullFilePath
+trainDataPath, trainFilePath
+validationDataPath, validationFilePath
+manifestDataPath, manifestFilePath
+preview, generatedAt
+```
+
+Compatibility rules:
+
+- The service continues writing the full corpus to `data/lottery-<format>.txt`.
+- Existing `dataPath` and `filePath` retain their old meaning and point to that compatibility full-corpus file.
+- `legacyDataPath` makes the compatibility location explicit; `fullDataPath`/`fullFilePath` point to the versioned `all.txt`.
+- New training UI uses `trainDataPath` and displays the paired validation and manifest evidence. Old callers can continue reading `dataPath` without understanding version directories.
+- `generatedAt` records the first successful creation time of the version artifact and remains stable when the same version is exported again. Reproducibility is established by the schema/template versions, source/split ranges, and SHA-256 values.
+
+The `strategy` serializer emits complete `target/strategy/red/blue/reason` rows from versioned deterministic templates. It must use normalized legal numbers and documented reason labels, and it must not read validation outcomes to construct training rows. This corpus supports format, constraint, and explanation learning; it is not a prediction-success claim.
 
 ## Statistics Contract
 

@@ -102,7 +102,7 @@ Generated from \`npm run lottery:smoke\`.
 | --- | --- |
 | Authentication | ${escapeCell(summary.authentication)} |
 | Backend/proxy | Manual browser screenshots require the local backend and Vite proxy to reach project-owned lottery APIs. |
-| Known blocker | \`ECONNREFUSED\` on \`/lottery/records/draws?page=0&size=500\` means backend/proxy availability is blocking browser evidence. |
+| Diagnostic signature | If \`ECONNREFUSED\` appears on \`/lottery/records/draws?page=0&size=500\`, backend/proxy availability is blocking browser evidence. |
 | Fallback | Static smoke and build remain baseline verification when login or backend availability blocks screenshots. |
 
 ## Source Guards
