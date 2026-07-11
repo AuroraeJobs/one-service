@@ -17,8 +17,11 @@ Use these gates when finishing a lottery milestone.
 - Formal MiniGPT decisions resolve persisted generation ids server-side and preserve typed `LotteryResearchProvenance`; client note text is not a provenance source of truth.
 - Candidate-pool backtests persist seed/algorithm and paired baseline rows, require equal issue coverage and cost for `sameWindow`/`sameBudget`, report model/baseline financial and hit deltas, and label static-pool historical replay as non-walk-forward evidence.
 - Decision review accepts only `PROMOTE`, `WATCH`, `PAUSE`, or `RETIRE`, requires a backtest owned by the same decision set, and takes priority over automatic recommendation classification without resetting recommendation lifecycle status.
+- Once a decision has `reviewBacktestId`, outcome, month-end, and export review metrics resolve a report only when both its id equals `reviewBacktestId` and its `decisionSetId` equals the reviewed decision id. A newer replay or an unrelated MiniGPT backtest must not replace the reviewed deltas, warnings, or comparability flags.
 - Ticket-pack preview is read-only. A separate explicit create action may save only `DRAFT`; approval and save-as-tickets remain separate manual operations.
 - Export and maintenance endpoints have dry-run, preview, or bounded-output behavior where appropriate.
+- Existing `decision-sets`, `backtests`, and `decision-outcomes` CSV exports collectively preserve lineage, typed research provenance, review binding, and warnings. Backtest rows specifically preserve model/random financial metrics, `averageRedHitsDelta`, `blueHitRateDelta`, `totalPrizeDelta`, `sameWindow`/`sameBudget`, and evaluation mode; a MiniGPT release preset must not create a parallel source of truth.
+- CSV serialization must quote fields containing comma, quote, LF, or CR and neutralize spreadsheet formulas in free text by prefixing an apostrophe for `=`, `@`, or nonnumeric `+`/`-` prefixes (including leading-whitespace variants). Legitimate numeric values such as negative cost, net result, or ROI must remain numeric rather than being formula-escaped.
 
 ## Frontend
 
@@ -31,9 +34,12 @@ Use these gates when finishing a lottery milestone.
 - Workbench drill-through links preserve useful filters in query parameters.
 - Experiment, backtest, alert, export, and audit pages keep research language restrained and evidence-oriented.
 - MiniGPT closed-loop controls enforce `saved decision -> comparable backtest -> preview -> explicit DRAFT`; no UI action in this chain automatically approves a pack or creates tickets.
-- Backtest comparisons show `sameWindow`, `sameBudget`, baseline seed/evaluation mode, model and random metrics/deltas, and warnings. Static-pool historical replay must not be labelled walk-forward.
+- Backtest comparisons show `sameWindow`, `sameBudget`, baseline seed/evaluation mode, model and random metrics/deltas, and warnings. PASS requires `sameWindow === true && sameBudget === true`; false is FAIL and missing/null is UNKNOWN, which must never receive PASS or passing-color treatment. Static-pool historical replay must not be labelled walk-forward.
 - Lifecycle UI shows the current manual review action and keeps promote/watch/pause/retire separate from recommendation lifecycle states such as applied, snoozed, and archived.
-- Run `npm run lottery:smoke` in `one-web` after changing `/lottery/workbench`, `/lottery/predictions/decision`, `/lottery/tickets`, `/lottery/research`, or `/lottery/exports`; this fixture smoke does not require live provider access.
+- MiniGPT month-end evidence must start from the most recent reviewed provenance-backed decision outcome and show a backtest matching both `reviewBacktestId` and `decisionSetId` beside model/random values. Ticket-pack evidence may match only when `pack.decisionSetId` or `pack.sourceId` equals that selected decision id. If either owned artifact is unavailable, show missing evidence instead of falling back by provenance, batch, recency, or another MiniGPT chain.
+- The `v47-minigpt-research` export preset and `MiniGPT研究链复核证据` pack expose reproducible generation, same-window/same-budget baseline, draft, and manual-review handoffs with historical-only/no-future-guarantee copy. They must not approve a pack or create tickets.
+- English QA must preserve the exact safety copy `Historical-window research evidence only; do not extrapolate future performance.`, `The reviewed backtest is unavailable. Results from another research chain are not substituted.`, and `No automatic approval or ticket creation` alongside the corresponding Chinese text.
+- Run `npm run lottery:smoke` in `one-web` after changing `/lottery/workbench`, `/lottery/predictions/decision`, `/lottery/tickets`, `/lottery/research`, `/lottery/month-end`, or `/lottery/exports`; this fixture smoke does not require live provider access.
 - Run `npm run lottery:release-check` in `one-web` when frontend lottery release evidence needs to be committed or handed off. It refreshes route smoke, writes the human-readable report to `one-web/reports/lottery-release-evidence.md`, and verifies the production build.
 - Use `npm run lottery:release-evidence` only when the report needs to be refreshed without a production build.
 - Use `npm run lottery:release-evidence:check` to verify the committed Markdown report still matches the current smoke summary and fixture without rewriting files.
@@ -61,6 +67,7 @@ Use this gate when a lottery milestone needs screenshots or manual browser inspe
 - Audit metadata is preserved for generated predictions, saved tickets, daily-run steps, experiments, backtests, and exports once those flows exist.
 - Generation, decision, backtest, ticket-pack, ticket, note, outcome, ledger, and recommendation evidence keep typed provenance and lineage ids without relying on free-text reconstruction.
 - A random baseline has one paired row per evaluated model row; its ticket count, issue coverage, and total cost must remain directly comparable before downstream preview is allowed.
+- Reviewed evidence is stable by identity and ownership: `reviewBacktestId` plus `decisionSetId` freeze the report used for outcome and month-end interpretation even when later backtests exist, while ticket packs must resolve through that same decision id.
 
 ## Documentation
 

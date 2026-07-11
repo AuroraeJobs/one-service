@@ -67,6 +67,11 @@ const reportPresets = [
     sections: ['ledger-issues', 'tickets', 'predictions', 'experiments', 'backtests', 'decision-sets', 'decision-outcomes', 'settlement-reviews', 'rule-evidence', 'replay-evidence', 'sync-logs', 'probe-logs']
   },
   {
+    key: 'v47-minigpt-research',
+    label: 'MiniGPT研究链复核包',
+    sections: ['ledger-issues', 'tickets', 'predictions', 'experiments', 'backtests', 'decision-sets', 'decision-outcomes', 'settlement-reviews', 'rule-evidence', 'replay-evidence']
+  },
+  {
     key: 'v34-archive-search',
     label: '归档搜索包',
     sections: ['ledger-issues', 'tickets', 'decision-outcomes', 'settlement-reviews', 'rule-evidence', 'replay-evidence', 'sync-logs', 'probe-logs']
@@ -203,6 +208,14 @@ const v15EvidencePacks = [
     preset: '长期研究包',
     auditTypes: ['EXPORT', 'REPORT_EXPORT', 'LOTTERY_RECOMMENDATION_STATUS', 'LOTTERY_OUTCOME_ATTRIBUTION'],
     sections: ['ledger-issues', 'tickets', 'predictions', 'experiments', 'backtests', 'decision-outcomes', 'rule-evidence', 'replay-evidence']
+  },
+  {
+    key: 'v47-minigpt-research',
+    title: 'MiniGPT研究链复核证据',
+    route: '/ai/minigpt',
+    preset: 'MiniGPT研究链复核包',
+    auditTypes: ['DECISION_SET_MINIGPT_CREATE', 'DECISION_SET_REVIEW', 'TICKET_PACK_CREATE', 'LOTTERY_OUTCOME_ATTRIBUTION'],
+    sections: ['ledger-issues', 'tickets', 'predictions', 'experiments', 'backtests', 'decision-sets', 'decision-outcomes', 'settlement-reviews', 'rule-evidence', 'replay-evidence']
   },
   {
     key: 'v34-archive-search',
@@ -568,6 +581,27 @@ const LotteryExportMaintenancePage = () => {
       path: '/lottery/exports?preset=v34-archive-search'
     },
     {
+      key: 'v47-minigpt-provenance-chain',
+      label: 'V47可复现生成链',
+      status: 'PASS',
+      message: '版本化语料、时间切分、run/checkpoint/generation 溯源可复核；只描述研究过程，不声明预测收益',
+      path: '/ai/minigpt'
+    },
+    {
+      key: 'v47-random-baseline-review',
+      label: 'V47同窗同预算基线',
+      status: 'PASS',
+      message: '模型候选与确定性同窗口、同预算随机基线并列；静态历史回放不视为 walk-forward 或未来表现',
+      path: '/lottery/backtests?strategyName=MiniGPT'
+    },
+    {
+      key: 'v47-explicit-review-chain',
+      label: 'V47草稿与人工复核链',
+      status: 'PASS',
+      message: '票包需先预览再显式创建 DRAFT；生命周期复核、结果归因和 MiniGPT run/batch 账本保留溯源，不会自动审批或落票',
+      path: '/lottery/ledger?dimension=minigpt_run'
+    },
+    {
       key: 'v33-review-runbook',
       label: 'V33复核Runbook',
       status: 'PASS',
@@ -883,7 +917,7 @@ const LotteryExportMaintenancePage = () => {
       <Card
         className="life-panel-card lottery-clean-panel lottery-v15-evidence-card"
         title={<Space><SafetyCertificateOutlined />{t('闭环证据包')}</Space>}
-        extra={<Tag color="blue">{t('归因 / 推荐 / 移动 / 治理 / 异常 / Provider / Runbook / 长期')}</Tag>}
+        extra={<Tag color="blue">{t('归因 / 推荐 / 移动 / 治理 / 异常 / Provider / Runbook / 长期')} / MiniGPT</Tag>}
       >
         <div className="lottery-v15-evidence-grid">
           {v15EvidencePacks.map(pack => (
@@ -901,6 +935,13 @@ const LotteryExportMaintenancePage = () => {
             </button>
           ))}
         </div>
+        <Alert
+          className="lottery-overview-status-alert"
+          type="info"
+          showIcon
+          message={t('仅作为历史窗口研究证据，不外推未来表现。')}
+          description={t('复核只记录研究生命周期动作，不会自动审批票包或生成票据。')}
+        />
       </Card>
 
       {result ? (

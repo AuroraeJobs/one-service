@@ -266,9 +266,7 @@ public class LotteryDecisionSetService implements ILotteryDecisionSetService {
         }
         String ruleName = firstText(decisionSet.getRuleName(), firstCandidateRule(decisionSet));
         String sourceName = firstCandidateSource(decisionSet);
-        LotteryBacktestReport latestBacktest = backtestReportRepository
-                .findFirstByDecisionSetIdOrderByCreatedAtDesc(decisionSet.getId())
-                .orElse(null);
+        LotteryBacktestReport reviewedBacktest = outcomeBacktest(decisionSet);
         LotteryDecisionOutcomeItem item = LotteryDecisionOutcomeItem.builder()
                 .decisionSetId(decisionSet.getId())
                 .title(decisionSet.getTitle())
@@ -305,11 +303,11 @@ public class LotteryDecisionSetService implements ILotteryDecisionSetService {
                 .hitDistribution(hitDistribution)
                 .prizeDistribution(prizeDistribution)
                 .evidenceAlerts(new ArrayList<>(evidenceAlerts))
-                .backtestNetResultDelta(latestBacktest == null ? null : latestBacktest.getNetResultDelta())
-                .backtestRoiPercentDelta(latestBacktest == null ? null : latestBacktest.getRoiPercentDelta())
-                .backtestWarnings(latestBacktest == null || latestBacktest.getOverfitWarnings() == null
+                .backtestNetResultDelta(reviewedBacktest == null ? null : reviewedBacktest.getNetResultDelta())
+                .backtestRoiPercentDelta(reviewedBacktest == null ? null : reviewedBacktest.getRoiPercentDelta())
+                .backtestWarnings(reviewedBacktest == null || reviewedBacktest.getOverfitWarnings() == null
                         ? new ArrayList<>()
-                        : new ArrayList<>(latestBacktest.getOverfitWarnings()))
+                        : new ArrayList<>(reviewedBacktest.getOverfitWarnings()))
                 .candidates(candidates)
                 .createdAt(decisionSet.getCreatedAt())
                 .updatedAt(decisionSet.getUpdatedAt())
@@ -317,6 +315,18 @@ public class LotteryDecisionSetService implements ILotteryDecisionSetService {
         item.setRuleDelta(performanceDelta("RULE", ruleName, item, ruleBenchmarks.get(performanceKey(ruleName))));
         item.setSourceDelta(performanceDelta("SOURCE", sourceName, item, sourceBenchmarks.get(performanceKey(sourceName))));
         return item;
+    }
+
+    private LotteryBacktestReport outcomeBacktest(LotteryDecisionSet decisionSet) {
+        String reviewBacktestId = normalizeText(decisionSet.getReviewBacktestId());
+        if (StringUtils.hasText(reviewBacktestId)) {
+            return backtestReportRepository.findById(reviewBacktestId)
+                    .filter(report -> Objects.equals(decisionSet.getId(), report.getDecisionSetId()))
+                    .orElse(null);
+        }
+        return backtestReportRepository
+                .findFirstByDecisionSetIdOrderByCreatedAtDesc(decisionSet.getId())
+                .orElse(null);
     }
 
     private LotteryDecisionCandidateOutcome buildCandidateOutcome(LotteryDecisionSet decisionSet,

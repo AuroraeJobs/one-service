@@ -6,7 +6,10 @@ import com.one.record.lottery.LotteryDecisionOutcomeSummary;
 import com.one.record.lottery.LotteryExportResult;
 import com.one.record.lottery.LotteryIssueLedger;
 import com.one.record.lottery.LotteryPageResponse;
+import com.one.record.lottery.LotteryResearchProvenance;
 import com.one.record.model.LotteryAuditEvent;
+import com.one.record.model.LotteryBacktestReport;
+import com.one.record.model.LotteryDecisionCandidateSelection;
 import com.one.record.model.LotteryDecisionSet;
 import com.one.record.model.LotteryPredictionRuleRecord;
 import com.one.record.model.LotteryTicket;
@@ -47,6 +50,8 @@ class LotteryExportServiceTest {
 
     private LotteryDecisionSetRepository decisionSetRepository;
 
+    private LotteryBacktestReportRepository backtestReportRepository;
+
     private ILotteryLedgerService ledgerService;
 
     private ILotteryTrainingService trainingService;
@@ -60,6 +65,7 @@ class LotteryExportServiceTest {
         ticketRepository = mock(LotteryTicketRepository.class);
         auditEventRepository = mock(LotteryAuditEventRepository.class);
         decisionSetRepository = mock(LotteryDecisionSetRepository.class);
+        backtestReportRepository = mock(LotteryBacktestReportRepository.class);
         ledgerService = mock(ILotteryLedgerService.class);
         trainingService = mock(ILotteryTrainingService.class);
         decisionSetService = mock(ILotteryDecisionSetService.class);
@@ -68,7 +74,7 @@ class LotteryExportServiceTest {
                 decisionSetRepository,
                 mock(LotteryPredictionSnapshotRepository.class),
                 mock(LotteryStrategyExperimentRepository.class),
-                mock(LotteryBacktestReportRepository.class),
+                backtestReportRepository,
                 mock(LotteryRecordSyncLogRepository.class),
                 mock(LotteryProviderProbeLogRepository.class),
                 auditEventRepository,
@@ -165,7 +171,14 @@ class LotteryExportServiceTest {
                 .targetIssue("2026068")
                 .ruleName("稳态规则")
                 .conversionState("PARTIALLY_CONVERTED")
-                .selectedCandidates(List.of())
+                .provenance(miniGptProvenance())
+                .reviewAction("WATCH")
+                .reviewBacktestId("backtest-1")
+                .reviewedAt(200L)
+                .selectedCandidates(List.of(LotteryDecisionCandidateSelection.builder()
+                        .key("candidate-1")
+                        .generationId("generation-1")
+                        .build()))
                 .build()));
 
         LotteryExportResult result = service.export("decision-sets", Map.of("targetIssue", "2026068"));
@@ -173,6 +186,77 @@ class LotteryExportServiceTest {
         assertThat(result.getExportType()).isEqualTo("decision-sets");
         assertThat(result.getRowCount()).isEqualTo(1);
         assertThat(result.getContent()).contains("decision-1,复盘决策,2026068,稳态规则");
+        assertThat(result.getContent()).contains("candidateKeys,candidateGenerationIds");
+        assertThat(result.getContent()).contains("candidate-1,generation-1");
+        assertThat(result.getContent()).contains("WATCH,backtest-1,200");
+        assertThat(result.getContent()).contains("batchId,runId,runName,corpusVersion");
+        assertThat(result.getContent()).contains("batch-1,run-1,minigpt-run,corpus-v1");
+    }
+
+    @Test
+    void exportBacktestsIncludesComparableRandomBaselineAndResearchLineage() {
+        when(backtestReportRepository.findAll(any(Sort.class))).thenReturn(List.of(LotteryBacktestReport.builder()
+                .id("backtest-1")
+                .decisionSetId("decision-1")
+                .strategyName("MiniGPT balanced")
+                .presetWindow("latest30")
+                .issueStart("2026049")
+                .issueEnd("2026078")
+                .replayCount(30)
+                .baselineSeed(42L)
+                .baselineAlgorithm("FNV1A64_JAVA_RANDOM_V1")
+                .windowIssueCount(30)
+                .candidateCount(2)
+                .uniqueCandidateCount(2)
+                .ticketCount(60)
+                .baselineTicketCount(60)
+                .sameWindow(true)
+                .sameBudget(true)
+                .averageRedHits(new BigDecimal("1.47"))
+                .baselineAverageRedHits(new BigDecimal("1.20"))
+                .averageRedHitsDelta(new BigDecimal("0.27"))
+                .blueHitRate(new BigDecimal("12.50"))
+                .baselineBlueHitRate(new BigDecimal("8.33"))
+                .blueHitRateDelta(new BigDecimal("4.17"))
+                .totalCost(new BigDecimal("60"))
+                .baselineTotalCost(new BigDecimal("60"))
+                .totalPrize(new BigDecimal("75"))
+                .baselineTotalPrize(new BigDecimal("50"))
+                .totalPrizeDelta(new BigDecimal("25"))
+                .netResult(new BigDecimal("-40"))
+                .baselineNetResult(new BigDecimal("-50"))
+                .netResultDelta(new BigDecimal("10"))
+                .roiPercent(new BigDecimal("-66.67"))
+                .baselineRoiPercent(new BigDecimal("-83.33"))
+                .roiPercentDelta(new BigDecimal("16.66"))
+                .candidateDiversity(new BigDecimal("1.0"))
+                .maxRedOverlap(0)
+                .distinctBlueCount(1)
+                .evaluationMode("STATIC_POOL_HISTORICAL_REPLAY")
+                .overfitWarnings(List.of("UNKNOWN_CORPUS_WINDOW", "LOW_CANDIDATE_DIVERSITY"))
+                .provenance(miniGptProvenance())
+                .createdAt(300L)
+                .build()));
+
+        LotteryExportResult result = service.export("backtests", Map.of("strategyName", "minigpt"));
+
+        assertThat(result.getRowCount()).isEqualTo(1);
+        assertThat(result.getContent()).contains("decisionSetId,strategyName");
+        assertThat(result.getContent()).contains("baselineSeed,baselineAlgorithm");
+        assertThat(result.getContent()).contains("42,FNV1A64_JAVA_RANDOM_V1");
+        assertThat(result.getContent()).contains("sameWindow,sameBudget");
+        assertThat(result.getContent()).contains("true,true");
+        assertThat(result.getContent()).contains("averageRedHits,baselineAverageRedHits,averageRedHitsDelta");
+        assertThat(result.getContent()).contains("1.47,1.20,0.27");
+        assertThat(result.getContent()).contains("blueHitRate,baselineBlueHitRate,blueHitRateDelta");
+        assertThat(result.getContent()).contains("12.50,8.33,4.17");
+        assertThat(result.getContent()).contains("totalPrize,baselineTotalPrize,totalPrizeDelta");
+        assertThat(result.getContent()).contains("75,50,25");
+        assertThat(result.getContent()).contains("-40,-50,10");
+        assertThat(result.getContent()).contains("\"'=HYPERLINK(\"\"https://example.test\"\",\"\"research\"\")\rnext\"");
+        assertThat(result.getContent()).contains("STATIC_POOL_HISTORICAL_REPLAY");
+        assertThat(result.getContent()).contains("UNKNOWN_CORPUS_WINDOW | LOW_CANDIDATE_DIVERSITY");
+        assertThat(result.getContent()).contains("batch-1,run-1,minigpt-run,corpus-v1");
     }
 
     @Test
@@ -182,8 +266,15 @@ class LotteryExportServiceTest {
                         .decisionSetId("decision-1")
                         .title("复盘决策")
                         .targetIssue("2026068")
+                        .reviewAction("WATCH")
+                        .reviewBacktestId("backtest-1")
+                        .backtestNetResultDelta(new BigDecimal("10"))
+                        .backtestRoiPercentDelta(new BigDecimal("16.66"))
+                        .backtestWarnings(List.of("STATIC_POOL_HISTORICAL_REPLAY"))
+                        .provenance(miniGptProvenance())
                         .candidates(List.of(LotteryDecisionCandidateOutcome.builder()
                                 .candidateKey("candidate-1")
+                                .generationId("generation-1")
                                 .candidateTitle("主预测")
                                 .ruleName("稳态规则")
                                 .redNumbers(List.of("01", "02", "03", "04", "05", "06"))
@@ -206,6 +297,10 @@ class LotteryExportServiceTest {
         assertThat(result.getRowCount()).isEqualTo(1);
         assertThat(result.getContent()).contains("candidate-1");
         assertThat(result.getContent()).contains("规则波动");
+        assertThat(result.getContent()).contains("WATCH,backtest-1");
+        assertThat(result.getContent()).contains("STATIC_POOL_HISTORICAL_REPLAY");
+        assertThat(result.getContent()).contains("generation-1");
+        assertThat(result.getContent()).contains("batch-1,run-1,minigpt-run,corpus-v1");
     }
 
     @Test
@@ -241,5 +336,29 @@ class LotteryExportServiceTest {
         assertThat(result.getTotal()).isEqualTo(11L);
         assertThat(result.getHasNext()).isTrue();
         assertThat(result.getItems()).hasSize(1);
+    }
+
+    private LotteryResearchProvenance miniGptProvenance() {
+        return LotteryResearchProvenance.builder()
+                .sourceType("MINIGPT")
+                .generationId("generation-1")
+                .batchId("batch-1")
+                .runId("run-1")
+                .runName("minigpt-run")
+                .corpusVersion("corpus-v1")
+                .trainSha256("train-sha")
+                .validationSha256("validation-sha")
+                .checkpointSha256("checkpoint-sha")
+                .prompt("=HYPERLINK(\"https://example.test\",\"research\")\rnext")
+                .seed(42L)
+                .strategyLabel("balanced")
+                .trainFirstIssue("2023001")
+                .trainLatestIssue("2025001")
+                .validationFirstIssue("2025002")
+                .validationLatestIssue("2026078")
+                .batchBaseSeed(42L)
+                .batchStrategies(List.of("balanced", "blue-focus"))
+                .capturedAt(100L)
+                .build();
     }
 }

@@ -7,12 +7,12 @@ Generated from `npm run lottery:smoke`.
 | Field | Value |
 | --- | --- |
 | Target | Lottery unified overview default smoke |
-| Generated at | 2026-07-11T14:08:44.352Z |
+| Generated at | 2026-07-11T15:42:46.778Z |
 | Status | PASSED |
 | Mode | mocked-fixture |
 | Provider network | not-required |
 | Routes | 18 |
-| Checks | 1027 |
+| Checks | 1065 |
 | Failures | 0 |
 
 ## Protected Browser QA
@@ -52,6 +52,8 @@ Generated from `npm run lottery:smoke`.
 | iteration 47C outcome deep-link preservation | `src/components/LotteryOutcomeAttributionPage.tsx` | 6 | 0 |
 | iteration 47C ledger dimension-value deep-link restore | `src/components/LotteryLedgerPage.tsx` | 7 | 0 |
 | iteration 47C recommendation target deep-link restore | `src/components/LotteryRecommendationPage.tsx` | 5 | 0 |
+| iteration 47D month-end MiniGPT research handoff | `src/components/LotteryMonthEndReviewPage.tsx` | 19 | 0 |
+| iteration 47D MiniGPT release evidence handoff | `src/components/LotteryExportMaintenancePage.tsx` | 11 | 0 |
 | workbench closure path | `src/components/LotteryWorkbenchPage.tsx` | 49 | 0 |
 | mobile dark-mode CSS safeguards | `src/components/LotteryOverviewPage.css` | 7 | 0 |
 | visible lottery label helpers | `src/utils/lotteryStatusLabel.ts` | 4 | 0 |
@@ -88,7 +90,7 @@ Generated from `npm run lottery:smoke`.
 | 移动 | `/lottery/mobile` | LotteryMobileCommandPage | 11 | 4 | 5 |
 | 策略组合 | `/lottery/strategy-portfolios` | LotteryStrategyPortfolioPage | 3 | 1 | 3 |
 | 沙盘 | `/lottery/simulator` | LotterySimulatorPage | 2 | 2 | 1 |
-| 月末复盘 | `/lottery/month-end` | LotteryMonthEndReviewPage | 11 | 24 | 1 |
+| 月末复盘 | `/lottery/month-end` | LotteryMonthEndReviewPage | 14 | 29 | 1 |
 | 预测决策板 | `/lottery/predictions/decision` | LotteryPredictionDecisionPage | 12 | 3 | 3 |
 | 票据 | `/lottery/tickets` | LotteryTicketPage | 9 | 4 | 5 |
 | 票包 | `/lottery/ticket-packs` | LotteryTicketPackPage | 7 | 3 | 4 |
@@ -98,7 +100,7 @@ Generated from `npm run lottery:smoke`.
 | 研究对比 | `/lottery/research` | LotteryResearchPage | 6 | 6 | 1 |
 | 策略笔记 | `/lottery/research/notebook` | LotteryResearchNotebookPage | 4 | 27 | 4 |
 | 宇航员航行分析 | `/lottery/astronauts/:camp/:number` | LotteryAstronautVoyagePage | 2 | 6 | 1 |
-| 导出审计 | `/lottery/exports` | LotteryExportMaintenancePage | 4 | 47 | 4 |
+| 导出审计 | `/lottery/exports` | LotteryExportMaintenancePage | 4 | 53 | 4 |
 
 ## Failures
 

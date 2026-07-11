@@ -416,6 +416,48 @@
       ]
     },
     {
+      "scope": "iteration 47D month-end MiniGPT research handoff",
+      "file": "src/components/LotteryMonthEndReviewPage.tsx",
+      "includes": [
+        "lotteryDecisionSetApi.outcomes({ includeArchived: true, limit: 12 })",
+        "lotteryBacktestApi.reports({ page: 0, pageSize: 24 })",
+        "lotteryBacktestApi.detail(reviewedMiniGptDecision.reviewBacktestId)",
+        "lotteryTicketPackApi.ticketPacks({ includeArchived: true, page: 1, pageSize: 24 })",
+        "hasMiniGptProvenance",
+        ".filter(item => hasMiniGptProvenance(item.provenance) && item.reviewBacktestId)",
+        "reviewedBacktest?.id === reviewedMiniGptDecision.reviewBacktestId",
+        "reviewedBacktest.decisionSetId === reviewedMiniGptDecision.decisionSetId",
+        "item.decisionSetId === miniGptDecision.decisionSetId",
+        "miniGptGenerationIds",
+        "miniGptComparisonPassed",
+        "comparisonState(miniGptBacktest?.sameWindow)",
+        "comparisonState(miniGptBacktest?.sameBudget)",
+        "preset: 'v47-minigpt-research'",
+        "未知评估模式",
+        "reviewedAt=",
+        "当前决策的回测证据未加载，不跨研究链拼接其他模型或随机基线结果。",
+        "仅作为历史窗口研究证据，不外推未来表现。",
+        "不会自动审批或生成票据"
+      ]
+    },
+    {
+      "scope": "iteration 47D MiniGPT release evidence handoff",
+      "file": "src/components/LotteryExportMaintenancePage.tsx",
+      "includes": [
+        "key: 'v47-minigpt-research'",
+        "label: 'MiniGPT研究链复核包'",
+        "title: 'MiniGPT研究链复核证据'",
+        "V47可复现生成链",
+        "V47同窗同预算基线",
+        "V47草稿与人工复核链",
+        "/lottery/backtests?strategyName=MiniGPT",
+        "/lottery/ledger?dimension=minigpt_run",
+        "静态历史回放不视为 walk-forward 或未来表现",
+        "不会自动审批票包或生成票据",
+        "仅作为历史窗口研究证据，不外推未来表现。"
+      ]
+    },
+    {
       "scope": "workbench closure path",
       "file": "src/components/LotteryWorkbenchPage.tsx",
       "includes": [
@@ -1115,9 +1157,12 @@
         "lotteryRecommendationApi.rollup",
         "lotteryStrategyNoteApi.notes",
         "lotteryReminderApi.summary",
-        "lotteryExportApi.auditEvents"
+        "lotteryExportApi.auditEvents",
+        "lotteryBacktestApi.reports",
+        "lotteryBacktestApi.detail",
+        "lotteryTicketPackApi.ticketPacks"
       ],
-      "emptyStates": ["暂无期号复盘", "暂无研究证据", "暂无归因质量摘要", "暂无推荐生命周期摘要", "异常复核闭环", "长期计划复盘", "35-39 复盘窗口", "长期研究包", "复核笔记", "下轮执行", "长期计划检查点", "nextPhaseCandidateItems", "证据质量趋势", "focus=evidence-quality", "Provider可靠性", "focus=provider-reliability", "归档复核压力", "ARCHIVE_REVIEW", "发布证据归档", "focus=release-archive", "全部范围", "全部状态", "暂无研究归档", "暂无月末导出证据"],
+      "emptyStates": ["暂无期号复盘", "暂无研究证据", "暂无归因质量摘要", "暂无推荐生命周期摘要", "异常复核闭环", "长期计划复盘", "35-39 复盘窗口", "长期研究包", "复核笔记", "下轮执行", "长期计划检查点", "nextPhaseCandidateItems", "证据质量趋势", "focus=evidence-quality", "Provider可靠性", "focus=provider-reliability", "归档复核压力", "ARCHIVE_REVIEW", "发布证据归档", "focus=release-archive", "全部范围", "全部状态", "暂无研究归档", "暂无月末导出证据", "MiniGPT", "Random Baseline", "同窗口随机基线 ROI 差额", "仅作为历史窗口研究证据，不外推未来表现。", "不会自动审批或生成票据"],
       "errorStates": ["读取彩票月末复盘失败"],
       "fixtureData": {
         "review": {
@@ -1438,7 +1483,7 @@
         "lotteryExportApi.maintenanceSummary",
         "lotteryExportApi.cleanupDryRun"
       ],
-      "emptyStates": ["本次导出没有数据", "暂无数据", "暂无审计事件", "暂无集合状态", "暂无缓存状态", "复盘运营", "月末复盘", "长期研究包", "年度复盘包", "异常复盘包", "Provider可靠性包", "复核Runbook包", "归因闭环包", "归因质量包", "推荐生命周期包", "推荐跟进包", "移动指挥包", "V15治理证据包", "异常观察证据", "Provider可靠性证据", "复核Runbook证据", "长期研究证据", "闭环证据包", "V33复核Runbook", "V39复核笔记质量", "V40长期计划复盘", "V41证据质量趋势", "V32Provider可靠性", "V44策略退休复盘", "V45归档复核压力", "发布证据归档焦点", "reports/lottery-release-evidence.md", "reports/lottery-release-history/README.md", "npm run lottery:release-archive", "V31异常复盘", "V30长期复盘导出", "V29推荐跟进", "V28归因质量", "V16导航易用性", "V16操作体验", "V16筛选可读性", "V16响应式打磨", "V18今日优先事项", "V18航行记录分析", "V18号码综合可能性", "V18深度规律分析", "前端发布就绪"],
+      "emptyStates": ["本次导出没有数据", "暂无数据", "暂无审计事件", "暂无集合状态", "暂无缓存状态", "复盘运营", "月末复盘", "长期研究包", "年度复盘包", "异常复盘包", "Provider可靠性包", "复核Runbook包", "归因闭环包", "归因质量包", "推荐生命周期包", "推荐跟进包", "移动指挥包", "V15治理证据包", "异常观察证据", "Provider可靠性证据", "复核Runbook证据", "长期研究证据", "闭环证据包", "V33复核Runbook", "V39复核笔记质量", "V40长期计划复盘", "V41证据质量趋势", "V32Provider可靠性", "V44策略退休复盘", "V45归档复核压力", "MiniGPT研究链复核包", "V47可复现生成链", "V47同窗同预算基线", "V47草稿与人工复核链", "仅作为历史窗口研究证据，不外推未来表现。", "复核只记录研究生命周期动作，不会自动审批票包或生成票据。", "发布证据归档焦点", "reports/lottery-release-evidence.md", "reports/lottery-release-history/README.md", "npm run lottery:release-archive", "V31异常复盘", "V30长期复盘导出", "V29推荐跟进", "V28归因质量", "V16导航易用性", "V16操作体验", "V16筛选可读性", "V16响应式打磨", "V18今日优先事项", "V18航行记录分析", "V18号码综合可能性", "V18深度规律分析", "前端发布就绪"],
       "errorStates": ["读取彩票导出审计失败", "导出彩票数据失败", "生成彩票报表失败", "执行彩票维护 dry-run 失败"],
       "fixtureData": {
         "releaseEvidence": {

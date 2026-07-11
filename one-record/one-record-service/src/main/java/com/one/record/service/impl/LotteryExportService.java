@@ -6,6 +6,7 @@ import com.one.record.lottery.LotteryDecisionOutcomeSummary;
 import com.one.record.lottery.LotteryExportResult;
 import com.one.record.lottery.LotteryIssueLedger;
 import com.one.record.lottery.LotteryPageResponse;
+import com.one.record.lottery.LotteryResearchProvenance;
 import com.one.record.model.LotteryAuditEvent;
 import com.one.record.model.LotteryBacktestReport;
 import com.one.record.model.LotteryDecisionSet;
@@ -280,18 +281,33 @@ public class LotteryExportService implements ILotteryExportService {
         return limit(decisionSetRepository.findAll(Sort.by(Sort.Direction.DESC, "updatedAt")).stream()
                 .filter(item -> !hasText(targetIssue) || targetIssue.equals(item.getTargetIssue()))
                 .filter(item -> !hasText(ruleName) || containsUpper(item.getRuleName(), ruleName) || containsUpper(item.getTitle(), ruleName))
-                .map(item -> row(
+                .map(item -> appendResearchProvenance(row(
                         "id", value(item.getId()),
                         "title", value(item.getTitle()),
                         "targetIssue", value(item.getTargetIssue()),
                         "ruleName", value(item.getRuleName()),
                         "candidateCount", value(item.getSelectedCandidates() == null ? 0 : item.getSelectedCandidates().size()),
+                        "candidateKeys", item.getSelectedCandidates() == null ? "" : item.getSelectedCandidates().stream()
+                                .map(candidate -> value(candidate.getKey()))
+                                .filter(this::hasText)
+                                .reduce((left, right) -> left + " | " + right)
+                                .orElse(""),
+                        "candidateGenerationIds", item.getSelectedCandidates() == null ? "" : item.getSelectedCandidates().stream()
+                                .map(candidate -> hasText(candidate.getGenerationId())
+                                        ? candidate.getGenerationId()
+                                        : candidate.getProvenance() == null ? "" : value(candidate.getProvenance().getGenerationId()))
+                                .filter(this::hasText)
+                                .reduce((left, right) -> left + " | " + right)
+                                .orElse(""),
                         "conversionState", value(item.getConversionState()),
                         "status", value(item.getStatus()),
+                        "reviewAction", value(item.getReviewAction()),
+                        "reviewBacktestId", value(item.getReviewBacktestId()),
+                        "reviewedAt", value(item.getReviewedAt()),
                         "archived", value(item.getArchived()),
                         "createdAt", value(item.getCreatedAt()),
                         "updatedAt", value(item.getUpdatedAt())
-                ))
+                ), item.getProvenance()))
                 .toList(), filters);
     }
 
@@ -308,12 +324,22 @@ public class LotteryExportService implements ILotteryExportService {
 
     private Map<String, String> decisionOutcomeRow(LotteryDecisionOutcomeItem item,
                                                    LotteryDecisionCandidateOutcome candidate) {
-        return row(
+        LotteryResearchProvenance provenance = candidate.getProvenance() == null
+                ? item.getProvenance()
+                : candidate.getProvenance();
+        return appendResearchProvenance(row(
                 "decisionSetId", value(item.getDecisionSetId()),
                 "title", value(item.getTitle()),
                 "targetIssue", value(item.getTargetIssue()),
+                "reviewAction", value(item.getReviewAction()),
+                "reviewBacktestId", value(item.getReviewBacktestId()),
+                "reviewedAt", value(item.getReviewedAt()),
+                "backtestNetResultDelta", money(item.getBacktestNetResultDelta()),
+                "backtestRoiPercentDelta", money(item.getBacktestRoiPercentDelta()),
+                "backtestWarnings", String.join(" | ", item.getBacktestWarnings() == null ? List.of() : item.getBacktestWarnings()),
                 "ruleName", value(candidate.getRuleName()),
                 "candidateKey", value(candidate.getCandidateKey()),
+                "candidateGenerationId", value(candidate.getGenerationId()),
                 "candidateTitle", value(candidate.getCandidateTitle()),
                 "source", value(candidate.getSource()),
                 "redNumbers", String.join(" ", candidate.getRedNumbers() == null ? List.of() : candidate.getRedNumbers()),
@@ -331,7 +357,7 @@ public class LotteryExportService implements ILotteryExportService {
                 "totalPrize", money(candidate.getTotalPrize()),
                 "netResult", money(candidate.getNetResult()),
                 "warnings", String.join(" | ", candidate.getWarnings() == null ? List.of() : candidate.getWarnings())
-        );
+        ), provenance);
     }
 
     private List<Map<String, String>> ticketImportPreviewRows(Map<String, String> filters) {
@@ -413,17 +439,48 @@ public class LotteryExportService implements ILotteryExportService {
         return limit(backtestReportRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt")).stream()
                 .filter(item -> !hasText(strategyName) || containsUpper(item.getStrategyName(), strategyName))
                 .filter(item -> !hasText(presetWindow) || presetWindow.equals(lower(item.getPresetWindow())))
-                .map(item -> row(
+                .map(item -> appendResearchProvenance(row(
                         "id", value(item.getId()),
+                        "decisionSetId", value(item.getDecisionSetId()),
                         "strategyName", value(item.getStrategyName()),
                         "presetWindow", value(item.getPresetWindow()),
                         "issueStart", value(item.getIssueStart()),
                         "issueEnd", value(item.getIssueEnd()),
                         "replayCount", value(item.getReplayCount()),
+                        "baselineSeed", value(item.getBaselineSeed()),
+                        "baselineAlgorithm", value(item.getBaselineAlgorithm()),
+                        "windowIssueCount", value(item.getWindowIssueCount()),
+                        "candidateCount", value(item.getCandidateCount()),
+                        "uniqueCandidateCount", value(item.getUniqueCandidateCount()),
+                        "ticketCount", value(item.getTicketCount()),
+                        "baselineTicketCount", value(item.getBaselineTicketCount()),
+                        "sameWindow", value(item.getSameWindow()),
+                        "sameBudget", value(item.getSameBudget()),
+                        "averageRedHits", money(item.getAverageRedHits()),
+                        "baselineAverageRedHits", money(item.getBaselineAverageRedHits()),
+                        "averageRedHitsDelta", money(item.getAverageRedHitsDelta()),
+                        "blueHitRate", money(item.getBlueHitRate()),
+                        "baselineBlueHitRate", money(item.getBaselineBlueHitRate()),
+                        "blueHitRateDelta", money(item.getBlueHitRateDelta()),
+                        "totalCost", money(item.getTotalCost()),
+                        "baselineTotalCost", money(item.getBaselineTotalCost()),
+                        "totalPrize", money(item.getTotalPrize()),
+                        "baselineTotalPrize", money(item.getBaselineTotalPrize()),
+                        "totalPrizeDelta", money(item.getTotalPrizeDelta()),
                         "netResult", money(item.getNetResult()),
+                        "baselineNetResult", money(item.getBaselineNetResult()),
+                        "netResultDelta", money(item.getNetResultDelta()),
+                        "roiPercent", money(item.getRoiPercent()),
+                        "baselineRoiPercent", money(item.getBaselineRoiPercent()),
+                        "roiPercentDelta", money(item.getRoiPercentDelta()),
+                        "candidateDiversity", money(item.getCandidateDiversity()),
+                        "maxRedOverlap", value(item.getMaxRedOverlap()),
+                        "distinctBlueCount", value(item.getDistinctBlueCount()),
+                        "evaluationMode", value(item.getEvaluationMode()),
+                        "overfitWarnings", String.join(" | ", item.getOverfitWarnings() == null ? List.of() : item.getOverfitWarnings()),
                         "stabilityScore", value(item.getStabilityScore()),
                         "createdAt", value(item.getCreatedAt())
-                ))
+                ), item.getProvenance()))
                 .toList(), filters);
     }
 
@@ -497,6 +554,39 @@ public class LotteryExportService implements ILotteryExportService {
         return row;
     }
 
+    private Map<String, String> appendResearchProvenance(Map<String, String> row,
+                                                         LotteryResearchProvenance provenance) {
+        row.put("provenanceSourceType", provenance == null ? "" : value(provenance.getSourceType()));
+        row.put("generationId", provenance == null ? "" : value(provenance.getGenerationId()));
+        row.put("batchId", provenance == null ? "" : value(provenance.getBatchId()));
+        row.put("runId", provenance == null ? "" : value(provenance.getRunId()));
+        row.put("runName", provenance == null ? "" : value(provenance.getRunName()));
+        row.put("corpusVersion", provenance == null ? "" : value(provenance.getCorpusVersion()));
+        row.put("trainSha256", provenance == null ? "" : value(provenance.getTrainSha256()));
+        row.put("validationSha256", provenance == null ? "" : value(provenance.getValidationSha256()));
+        row.put("checkpointSha256", provenance == null ? "" : value(provenance.getCheckpointSha256()));
+        row.put("prompt", provenance == null ? "" : value(provenance.getPrompt()));
+        row.put("maxNewTokens", provenance == null ? "" : value(provenance.getMaxNewTokens()));
+        row.put("temperature", provenance == null ? "" : value(provenance.getTemperature()));
+        row.put("topK", provenance == null ? "" : value(provenance.getTopK()));
+        row.put("seed", provenance == null ? "" : value(provenance.getSeed()));
+        row.put("strategyLabel", provenance == null ? "" : value(provenance.getStrategyLabel()));
+        row.put("trainFirstIssue", provenance == null ? "" : value(provenance.getTrainFirstIssue()));
+        row.put("trainLatestIssue", provenance == null ? "" : value(provenance.getTrainLatestIssue()));
+        row.put("validationFirstIssue", provenance == null ? "" : value(provenance.getValidationFirstIssue()));
+        row.put("validationLatestIssue", provenance == null ? "" : value(provenance.getValidationLatestIssue()));
+        row.put("batchBaseSeed", provenance == null ? "" : value(provenance.getBatchBaseSeed()));
+        row.put("batchMaxRedOverlap", provenance == null ? "" : value(provenance.getBatchMaxRedOverlap()));
+        row.put("batchMinimumBlueCoverage", provenance == null ? "" : value(provenance.getBatchMinimumBlueCoverage()));
+        row.put("batchMinimumBlueCoverageMet", provenance == null ? "" : value(provenance.getBatchMinimumBlueCoverageMet()));
+        row.put("batchStrategies", provenance == null || provenance.getBatchStrategies() == null
+                ? ""
+                : String.join(" | ", provenance.getBatchStrategies()));
+        row.put("modelConfig", provenance == null ? "" : value(provenance.getModelConfig()));
+        row.put("provenanceCapturedAt", provenance == null ? "" : value(provenance.getCapturedAt()));
+        return row;
+    }
+
     private String csv(List<Map<String, String>> rows) {
         if (rows.isEmpty()) {
             return "";
@@ -514,11 +604,35 @@ public class LotteryExportService implements ILotteryExportService {
     }
 
     private String escape(String value) {
-        String safe = value == null ? "" : value;
-        if (safe.contains(",") || safe.contains("\"") || safe.contains("\n")) {
+        String safe = protectSpreadsheetFormula(value == null ? "" : value);
+        if (safe.contains(",") || safe.contains("\"") || safe.contains("\n") || safe.contains("\r")) {
             return "\"" + safe.replace("\"", "\"\"") + "\"";
         }
         return safe;
+    }
+
+    private String protectSpreadsheetFormula(String value) {
+        if (value.isEmpty()) {
+            return value;
+        }
+        String candidate = value.stripLeading();
+        if (candidate.isEmpty()) {
+            return value;
+        }
+        char first = candidate.charAt(0);
+        boolean explicitFormula = first == '=' || first == '@';
+        boolean signedFormula = (first == '+' || first == '-') && !isNumeric(candidate);
+        boolean controlPrefix = value.charAt(0) == '\t' || value.charAt(0) == '\r';
+        return explicitFormula || signedFormula || controlPrefix ? "'" + value : value;
+    }
+
+    private boolean isNumeric(String value) {
+        try {
+            new BigDecimal(value);
+            return true;
+        } catch (NumberFormatException exception) {
+            return false;
+        }
     }
 
     private Map<String, String> normalizeFilters(Map<String, String> filters) {

@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.domain.PageRequest;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -218,6 +219,47 @@ class LotteryDecisionSetServiceTest {
                     assertThat(item.getCandidates()).singleElement()
                             .satisfies(candidate -> assertThat(candidate.getWarnings()).contains("规则波动，谨慎转票"));
                 });
+    }
+
+    @Test
+    void outcomeSummaryKeepsTheReviewedBacktestWhenANewerReplayExists() {
+        LotteryDecisionSet decisionSet = LotteryDecisionSet.builder()
+                .id("decision-1")
+                .userId("default")
+                .targetIssue("2026079")
+                .reviewAction("WATCH")
+                .reviewBacktestId("reviewed-backtest")
+                .selectedCandidates(List.of())
+                .build();
+        when(repository.countByUserIdAndArchivedFalse("default")).thenReturn(1L);
+        when(repository.findByUserIdAndArchivedFalseOrderByUpdatedAtDesc("default", PageRequest.of(0, 10)))
+                .thenReturn(List.of(decisionSet));
+        when(backtestReportRepository.findById("reviewed-backtest")).thenReturn(Optional.of(LotteryBacktestReport.builder()
+                .id("reviewed-backtest")
+                .decisionSetId("decision-1")
+                .netResultDelta(new BigDecimal("10"))
+                .roiPercentDelta(new BigDecimal("16.66"))
+                .overfitWarnings(List.of("STATIC_POOL_HISTORICAL_REPLAY"))
+                .createdAt(100L)
+                .build()));
+        when(backtestReportRepository.findFirstByDecisionSetIdOrderByCreatedAtDesc("decision-1"))
+                .thenReturn(Optional.of(LotteryBacktestReport.builder()
+                        .id("newer-backtest")
+                        .decisionSetId("decision-1")
+                        .netResultDelta(new BigDecimal("999"))
+                        .roiPercentDelta(new BigDecimal("999"))
+                        .overfitWarnings(List.of("UNREVIEWED_NEWER_REPLAY"))
+                        .createdAt(200L)
+                        .build()));
+
+        LotteryDecisionOutcomeSummary summary = service.outcomeSummary(false, 10);
+
+        assertThat(summary.getItems()).singleElement().satisfies(item -> {
+            assertThat(item.getReviewBacktestId()).isEqualTo("reviewed-backtest");
+            assertThat(item.getBacktestNetResultDelta()).isEqualByComparingTo("10");
+            assertThat(item.getBacktestRoiPercentDelta()).isEqualByComparingTo("16.66");
+            assertThat(item.getBacktestWarnings()).containsExactly("STATIC_POOL_HISTORICAL_REPLAY");
+        });
     }
 
     @Test

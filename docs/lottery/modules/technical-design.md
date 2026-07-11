@@ -260,6 +260,45 @@ PATCH approve / POST save-tickets   -> separate manual operations
 
 The MiniGPT page requires a saved decision, a comparable backtest with `sameWindow=true` and `sameBudget=true`, and a successful preview before enabling explicit draft creation. Neither preview nor draft creation approves the pack or creates tickets.
 
+## MiniGPT Month-End And Release Evidence Contract
+
+Iteration 47D does not add a month-end DTO, route, collection, or model-performance calculation. `/lottery/month-end` composes the existing project-owned contracts in parallel: `GET /lottery/decision-sets/outcomes?includeArchived=true`, the bounded first page of `GET /lottery/backtests`, `GET /lottery/ticket-packs?includeArchived=true`, and the existing ledger/outcome/audit summaries. Optional backtest-list and ticket-pack failures keep the broader month-end review available; the page still attempts the exact reviewed-backtest detail lookup, and any evidence that remains unavailable is shown explicitly.
+
+The page selects the most recent reviewed decision with typed MiniGPT provenance. Its `reviewBacktestId` is authoritative:
+
+```text
+list report.id == reviewBacktestId
+  && report.decisionSetId == decision.decisionSetId -> use report
+reviewBacktestId is outside bounded list             -> GET /lottery/backtests/{reviewBacktestId}
+detail id and decisionSetId both match                -> append and use report
+either id is wrong or exact report is unavailable     -> show missing evidence
+unrelated/newer MiniGPT report                        -> never substitute
+```
+
+The backend outcome contract follows the same rule. For a reviewed decision, `LotteryDecisionSetService` resolves `reviewBacktestId`, verifies that the report belongs to that decision set, and uses its deltas and warnings without fallback. Only an unreviewed decision may use the newest report for the same decision set. A later replay therefore cannot rewrite the evidence behind an already recorded `PROMOTE`, `WATCH`, `PAUSE`, or `RETIRE` action.
+
+Ticket-pack association is decision-owned rather than provenance-inferred:
+
+```text
+pack.decisionSetId == selectedDecision.decisionSetId
+  || pack.sourceId == selectedDecision.decisionSetId -> associated pack
+otherwise                                            -> unrelated; do not use
+```
+
+The MiniGPT month-end card presents model and random-baseline cost, prize, net result, and ROI; `sameWindow` and `sameBudget`; evaluation mode and warnings; corpus/run/batch/generation lineage; review action/note/time; draft/approval state; and project-owned decision, backtest, ticket-pack, outcome, ledger, and export handoffs. Comparison state is tri-valued: both flags explicitly `true` are PASS, either explicitly `false` is FAIL, and absent/null evidence is UNKNOWN. UNKNOWN must not receive PASS text or color. Absence remains explicit, and no cross-chain decision, report, or ticket-pack fallback is allowed.
+
+Release evidence extends the existing CSV types rather than introducing a fourth MiniGPT export domain:
+
+- `decision-sets` includes candidate keys/generation ids, review action/backtest/time, and shared `LotteryResearchProvenance` columns.
+- `backtests` includes decision binding, baseline seed/algorithm, comparability flags, model/baseline ticket counts and financial values, ROI/deltas including `averageRedHitsDelta`, `blueHitRateDelta`, and `totalPrizeDelta`, diversity/overlap/blue coverage, evaluation mode, warnings, and shared provenance.
+- `decision-outcomes` includes review binding/state, backtest deltas/warnings, candidate generation id, and candidate-level provenance with item-level fallback.
+
+The shared CSV serializer treats CR as a quoting boundary alongside comma, quote, and LF. Before quoting, it protects spreadsheet consumers by prefixing an apostrophe when free text begins, after leading whitespace, with `=`, `@`, or a nonnumeric `+`/`-` formula prefix (and for leading tab/CR control prefixes); `BigDecimal`-parseable values such as `-40`, `-50`, or negative ROI remain unmodified numeric cells. This applies to provenance prompt text as well as ordinary export fields.
+
+The shared provenance columns retain source type, generation/batch/run identity, corpus/train/validation/checkpoint hashes, prompt/sampling/seed/strategy, model configuration, train/validation issue ranges, batch policy/composition, and capture time. The report preset `v47-minigpt-research`, evidence pack `MiniGPT研究链复核证据`, and release rows `V47可复现生成链`, `V47同窗同预算基线`, and `V47草稿与人工复核链` point back to the owning pages.
+
+All 47D output is static historical-window research evidence. It must not be described as walk-forward validation or a future-performance guarantee. English rendering keeps the exact strings `Historical-window research evidence only; do not extrapolate future performance.`, `The reviewed backtest is unavailable. Results from another research chain are not substituted.`, and `No automatic approval or ticket creation` so safety semantics do not weaken after language switching. Month-end and export actions do not approve ticket packs and do not create tickets; approval and save-as-tickets remain separate manual commands.
+
 ## Statistics Contract
 
 `LotteryStatisticsSummary` is the first public statistics DTO for the lottery cockpit. `GET /lottery/statistics/summary` returns record count, first/latest draw metadata, red/blue frequency, and structural distributions for red sum, odd count, big count, and span. `POST /lottery/statistics/summary/refresh` forces a recalculation and rewrites the Redis cache. `GET /lottery/statistics/frequency` and `GET /lottery/statistics/distribution` expose the same data in smaller endpoint-specific shapes for pages that do not need the full summary.

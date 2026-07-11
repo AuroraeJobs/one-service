@@ -205,6 +205,20 @@ sameBudget = 模型总成本与随机总成本相等
 
 票包保持严格人工边界：先调用 preview 做预算/冲突检查，再由独立显式动作创建 `DRAFT`。创建草稿不能自动审批，也不能自动生成票据；审批与 save-as-tickets 继续留在票包执行流程。
 
+## Iteration 47D 月末与发布证据
+
+月末复盘不增加第二套模型结论。`/lottery/month-end` 只选择最近一条已经人工复核且带类型化 MiniGPT provenance 的决策，并以其 `reviewBacktestId` 作为人工复核事实来源。列表第一页没有这份报告时可以按 id 获取详情，但详情必须同时满足 `report.id == reviewBacktestId` 和 `report.decisionSetId == decision.decisionSetId`；找不到时显示证据缺失，不能拿最新回测或其他 MiniGPT 决策的报告代替。票包也只能在 `pack.decisionSetId` 或 `pack.sourceId` 等于这条决策 id 时关联，不能按相似 provenance 或批次拼接。
+
+月末研究卡必须并列展示模型与随机基线的成本、奖金、净结果和 ROI，以及 `sameWindow`、`sameBudget`、evaluation mode、warning、corpus/run/batch/generation id、人工复核动作和草稿票包状态。只有 `sameWindow` 与 `sameBudget` 都显式为 `true` 才是 PASS；`false` 为 FAIL，缺失值为 UNKNOWN，UNKNOWN 不能显示成通过。这个视图只复用 outcomes、backtests、ticket packs 和 ledger，不重新计算模型表现，也不把静态候选池历史重放解释成 walk-forward 验证或未来收益保证。
+
+发布侧继续复用既有 CSV 类型：
+
+- `decision-sets` 增加候选 generation、人工复核绑定和共享 provenance。
+- `backtests` 增加决策绑定、随机种子/算法、可比性、模型/随机财务指标、`averageRedHitsDelta`、`blueHitRateDelta`、`totalPrizeDelta` 等差额、多样性、evaluation mode、warning 和共享 provenance。
+- `decision-outcomes` 增加人工复核绑定、回测差额/warning、候选 generation 与候选级 provenance。
+
+`v47-minigpt-research` 预设和 `MiniGPT研究链复核证据` 只负责把可复现生成、同窗同预算基线、草稿和人工复核路径集中展示。它们不增加新的导出事实源，不自动审批票包，也不自动创建票据。英文状态必须和中文边界一致，明确显示 `Historical-window research evidence only; do not extrapolate future performance.`、跨链不替换提示和 `No automatic approval or ticket creation`。
+
 ## 选号策略方向
 
 后续候选策略可以分为四类，每类都要能独立回测。
@@ -377,17 +391,16 @@ red=04,10,16,21,26,32 blue=09 reason=sum_mid;odd_even_3_3;zone_2_2_2
 
 当前已落地：
 
-- `POST /ai/minigpt/corpus/lottery/export` 支持从 Mongo 开奖记录导出 `data/lottery-raw.txt` 和 `data/lottery-features.txt`。
-- MiniGPT 页面训练控制区支持一键生成“开奖格式”和“结构特征”两类语料，并自动填入训练表单的语料路径。
+- `POST /ai/minigpt/corpus/lottery/export` 支持从 Mongo 开奖记录导出 raw、features 和 strategy 三种完整语料，并发布带 manifest/hash 的时间切分版本目录。
+- MiniGPT 页面训练控制区支持一键生成三类语料，使用 `trainDataPath` 训练，并同时显示验证集和 manifest 证据。
 - 导出后会刷新语料与 Tokenizer 洞察，便于先检查字符数、词表和编码样例，再启动训练。
 - `POST /ai/minigpt/lottery-candidate/validate` 支持解析 MiniGPT 生成文本中的红蓝球，并检查数量、范围、重复、升序、和值、跨度和奇偶。
 - MiniGPT 生成试验台会直接显示“双色球候选校验”，把模型生成文本分成“未解析、可修复、不合规、通过”几种状态。
-- `POST /ai/minigpt/generate/compare` 支持同一 prompt 下批量对比不同 `temperature/top-k`，页面会并排显示生成文本和候选校验结果。
-- MiniGPT 生成试验台可以把合规或可修复候选保存为现有彩票决策集草稿，后续可进入决策板、票包和回测链路。
-- `POST /lottery/backtests/run` 支持 `decisionSetId`，可对 MiniGPT 候选池做最近窗口历史回测，并附带同窗口随机基线。
-- MiniGPT 候选池回测完成后，页面可直接进入回测详情、研究对比，把 `backtest:<id>` 挂到策略笔记，并按策略名跳转导出回测证据。
+- 批量生成、训练 run、checkpoint 和候选结果持久化 corpus/hash、模型配置、prompt、采样、seed、解析、修复和差异化策略证据。
+- MiniGPT 生成试验台通过 generation id 把合规候选保存为现有彩票决策集，后续进入同窗同预算随机基线回测、票包草稿、票据、结果归因、账本和人工复核链路。
+- 月末页显示精确人工复核回测与模型/随机指标；既有 decision-set/backtest/outcome CSV 和 `v47-minigpt-research` 预设输出同一条类型化证据链。
 
-建议新增或复用的能力：
+持续复用的能力：
 
 - 语料导出：把历史开奖导出为格式学习、结构特征、策略样本三种文本。
 - 策略模板：balanced、blue-focus、zone-balance、low-overlap 等。
@@ -407,9 +420,4 @@ red=04,10,16,21,26,32 blue=09 reason=sum_mid;odd_even_3_3;zone_2_2_2
 
 ## 下一步
 
-后续训练计划从这里拆：
-
-1. 完成 Iteration 47A：strategy 语料、版本目录、manifest、完整行 80/20 时间切分和兼容路径。
-2. 基于版本化训练集和验证集记录训练、checkpoint、prompt、采样、解析与修复 provenance。
-3. 形成“模型生成 + 规则过滤 + 随机基线对比 + 研究笔记”的第一版闭环。
-4. 将 MiniGPT 候选池回测报告继续纳入月度复盘。
+Iteration 47A-47D 已把 strategy 语料、版本化时间切分、训练/生成 provenance、随机基线、人工复核、月末复盘和发布导出连接成第一版研究闭环。完成最终 production release、浏览器、暂存范围、提交和推送证据后，再在下一次规划复核中选择后续候选；不提前把历史静态回放扩张成新的预测承诺。

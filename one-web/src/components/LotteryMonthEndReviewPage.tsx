@@ -17,7 +17,9 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
+import { useI18n } from '../contexts/I18nContext';
 import {
+  lotteryBacktestApi,
   lotteryDecisionSetApi,
   lotteryExportApi,
   lotteryLedgerApi,
@@ -27,8 +29,11 @@ import {
   lotteryReminderApi,
   lotteryStrategyNoteApi,
   lotteryTicketApi,
+  lotteryTicketPackApi,
   lotteryWorkbenchApi,
   type LotteryAuditEvent,
+  type LotteryBacktestReport,
+  type LotteryDecisionOutcomeItem,
   type LotteryDecisionOutcomeSummary,
   type LotteryIssueLedger,
   type LotteryLedgerSummary,
@@ -37,10 +42,13 @@ import {
   type LotteryPageResponse,
   type LotteryRecommendationRollup,
   type LotteryReminderSummary,
+  type LotteryResearchProvenance,
   type LotteryStrategyNote,
+  type LotteryTicketPack,
   type LotteryTicketSummary,
   type LotteryWorkbenchSummary
 } from '../services/api';
+import { lotteryOverfitWarningsText } from '../utils/lotteryBacktestEvidence';
 import { lotteryMessageLabel, lotteryStatusLabel } from '../utils/lotteryStatusLabel';
 import './LotteryOverviewPage.css';
 
@@ -148,6 +156,36 @@ const archiveScopeLabel = (scope: string) => {
 
 const safeCount = (value?: number) => Number(value || 0);
 
+const hasMiniGptProvenance = (provenance?: LotteryResearchProvenance) => Boolean(
+  provenance?.batchId
+  || provenance?.generationId
+  || String(provenance?.sourceType || '').toUpperCase().includes('MINIGPT')
+);
+
+const researchReviewLabel = (action?: string, isEnglish = false) => {
+  const labels: Record<string, [string, string]> = {
+    PROMOTE: ['推广', 'Promote'],
+    WATCH: ['观察', 'Watch'],
+    PAUSE: ['暂停', 'Pause'],
+    RETIRE: ['退役', 'Retire']
+  };
+  return labels[action || '']?.[isEnglish ? 1 : 0] || action || (isEnglish ? 'Not Reviewed' : '未复核');
+};
+
+const researchReviewColor = (action?: string) => {
+  if (action === 'PROMOTE') return 'green';
+  if (action === 'WATCH' || action === 'PAUSE') return 'gold';
+  return 'default';
+};
+
+const comparisonState = (value?: boolean) => value === true ? 'PASS' : value === false ? 'FAIL' : 'UNKNOWN';
+
+const decisionRecency = (item: LotteryDecisionOutcomeItem) => Math.max(
+  item.reviewedAt || 0,
+  item.updatedAt || 0,
+  item.createdAt || 0
+);
+
 const archiveSupportedExportTypes = new Set([
   'tickets',
   'ledger-issues',
@@ -219,6 +257,9 @@ const archivePathForExportAudit = (item: LotteryAuditEvent) => {
 
 const LotteryMonthEndReviewPage = () => {
   const navigate = useNavigate();
+  const { language, translateText } = useI18n();
+  const isEnglish = language.toLowerCase().startsWith('en');
+  const researchText = (zh: string, en: string) => isEnglish ? en : zh;
   const [workbench, setWorkbench] = useState<LotteryWorkbenchSummary>();
   const [health, setHealth] = useState<LotteryOperationsHealthSummary>();
   const [ledger, setLedger] = useState<LotteryLedgerSummary>();
@@ -230,6 +271,8 @@ const LotteryMonthEndReviewPage = () => {
   const [notes, setNotes] = useState<LotteryPageResponse<LotteryStrategyNote>>();
   const [reminders, setReminders] = useState<LotteryReminderSummary>();
   const [audits, setAudits] = useState<LotteryAuditEvent[]>([]);
+  const [backtests, setBacktests] = useState<LotteryBacktestReport[]>([]);
+  const [ticketPacks, setTicketPacks] = useState<LotteryTicketPack[]>([]);
   const [archiveQuery, setArchiveQuery] = useState('');
   const [archiveScopeFilter, setArchiveScopeFilter] = useState('all');
   const [archiveStatusFilter, setArchiveStatusFilter] = useState('all');
@@ -240,19 +283,43 @@ const LotteryMonthEndReviewPage = () => {
     setLoading(true);
     setError(undefined);
     try {
-      const [workbenchData, healthData, ledgerData, issueData, ticketData, decisionData, attributionData, recommendationData, noteData, reminderData, auditData] = await Promise.all([
+      const [workbenchData, healthData, ledgerData, issueData, ticketData, decisionData, attributionData, recommendationData, noteData, reminderData, auditData, backtestData, ticketPackData] = await Promise.all([
         lotteryWorkbenchApi.summary(),
         lotteryOperationsApi.health(),
         lotteryLedgerApi.summary(),
         lotteryLedgerApi.issues(),
         lotteryTicketApi.summary(),
-        lotteryDecisionSetApi.outcomes({ limit: 12 }),
+        lotteryDecisionSetApi.outcomes({ includeArchived: true, limit: 12 }),
         lotteryOutcomeApi.rollup({ window: 'month-to-date' }),
         lotteryRecommendationApi.rollup({ window: 'recent30', limit: 30 }),
         lotteryStrategyNoteApi.notes({ page: 1, pageSize: 6 }),
         lotteryReminderApi.summary(),
-        lotteryExportApi.auditEvents({ page: 1, pageSize: 8 })
+        lotteryExportApi.auditEvents({ page: 1, pageSize: 8 }),
+        lotteryBacktestApi.reports({ page: 0, pageSize: 24 }).catch(backtestError => {
+          console.error('读取 MiniGPT 回测列表失败:', backtestError);
+          return { items: [] } as LotteryPageResponse<LotteryBacktestReport>;
+        }),
+        lotteryTicketPackApi.ticketPacks({ includeArchived: true, page: 1, pageSize: 24 }).catch(ticketPackError => {
+          console.error('读取 MiniGPT 票包列表失败:', ticketPackError);
+          return { items: [] } as LotteryPageResponse<LotteryTicketPack>;
+        })
       ]);
+      const reviewedMiniGptDecision = [...(decisionData?.items || [])]
+        .filter(item => hasMiniGptProvenance(item.provenance) && item.reviewBacktestId)
+        .sort((left, right) => decisionRecency(right) - decisionRecency(left))[0];
+      let resolvedBacktests = backtestData?.items || [];
+      if (reviewedMiniGptDecision?.reviewBacktestId
+        && !resolvedBacktests.some(item => item.id === reviewedMiniGptDecision.reviewBacktestId)) {
+        try {
+          const reviewedBacktest = await lotteryBacktestApi.detail(reviewedMiniGptDecision.reviewBacktestId);
+          if (reviewedBacktest?.id === reviewedMiniGptDecision.reviewBacktestId
+            && reviewedBacktest.decisionSetId === reviewedMiniGptDecision.decisionSetId) {
+            resolvedBacktests = [reviewedBacktest, ...resolvedBacktests];
+          }
+        } catch (backtestError) {
+          console.error('读取 MiniGPT 复核回测失败:', backtestError);
+        }
+      }
       setWorkbench(workbenchData);
       setHealth(healthData);
       setLedger(ledgerData);
@@ -264,6 +331,8 @@ const LotteryMonthEndReviewPage = () => {
       setNotes(noteData);
       setReminders(reminderData);
       setAudits(auditData?.items || []);
+      setBacktests(resolvedBacktests);
+      setTicketPacks(ticketPackData?.items || []);
     } catch (requestError) {
       console.error('读取彩票月末复盘失败:', requestError);
       setError(requestError instanceof Error ? requestError.message : '读取彩票月末复盘失败');
@@ -283,6 +352,72 @@ const LotteryMonthEndReviewPage = () => {
   );
   const releaseChecks = useMemo(() => workbench?.releaseCheckSummary?.checks || [], [workbench?.releaseCheckSummary?.checks]);
   const attributionRows = useMemo(() => attributionReviewRows(attributionRollup), [attributionRollup]);
+  const miniGptDecision = useMemo<LotteryDecisionOutcomeItem | undefined>(() => (
+    [...(decisions?.items || [])]
+      .filter(item => hasMiniGptProvenance(item.provenance) && item.reviewBacktestId)
+      .sort((left, right) => decisionRecency(right) - decisionRecency(left))[0]
+  ), [decisions?.items]);
+  const miniGptBacktest = useMemo<LotteryBacktestReport | undefined>(() => {
+    if (!miniGptDecision?.reviewBacktestId) return undefined;
+    return backtests.find(item => item.id === miniGptDecision.reviewBacktestId
+      && item.decisionSetId === miniGptDecision.decisionSetId);
+  }, [backtests, miniGptDecision]);
+  const miniGptTicketPack = useMemo<LotteryTicketPack | undefined>(() => {
+    if (!miniGptDecision?.decisionSetId) return undefined;
+    return ticketPacks.find(item => item.decisionSetId === miniGptDecision.decisionSetId
+      || item.sourceId === miniGptDecision.decisionSetId);
+  }, [miniGptDecision?.decisionSetId, ticketPacks]);
+  const miniGptProvenance = miniGptDecision?.provenance || miniGptBacktest?.provenance || miniGptTicketPack?.provenance;
+  const miniGptWarnings = useMemo(() => Array.from(new Set([
+    ...(miniGptBacktest?.overfitWarnings || []),
+    ...(miniGptDecision?.backtestWarnings || [])
+  ])), [miniGptBacktest?.overfitWarnings, miniGptDecision?.backtestWarnings]);
+  const miniGptGenerationIds = useMemo(() => Array.from(new Set(
+    (miniGptDecision?.candidates || [])
+      .map(candidate => candidate.generationId || candidate.provenance?.generationId)
+      .filter((value): value is string => Boolean(value))
+  )), [miniGptDecision?.candidates]);
+  const miniGptComparisonFailed = miniGptBacktest?.sameWindow === false || miniGptBacktest?.sameBudget === false;
+  const miniGptComparisonPassed = miniGptBacktest?.sameWindow === true && miniGptBacktest?.sameBudget === true;
+  const miniGptTargetIssue = miniGptDecision?.targetIssue || miniGptTicketPack?.targetIssue;
+  const miniGptDecisionId = miniGptDecision?.decisionSetId || miniGptBacktest?.decisionSetId || miniGptTicketPack?.decisionSetId;
+  const miniGptDecisionPath = buildArchivePath('/lottery/predictions/decision', {
+    decisionSetId: miniGptDecisionId,
+    targetIssue: miniGptTargetIssue,
+    backtestId: miniGptBacktest?.id || miniGptDecision?.reviewBacktestId
+  });
+  const miniGptTicketPackPath = buildArchivePath('/lottery/ticket-packs', {
+    packId: miniGptTicketPack?.id,
+    decisionSetId: miniGptDecisionId,
+    targetIssue: miniGptTargetIssue
+  });
+  const miniGptOutcomePath = buildArchivePath('/lottery/outcomes', {
+    issue: miniGptTargetIssue,
+    decisionSetId: miniGptDecisionId
+  });
+  const miniGptLedgerPath = buildArchivePath('/lottery/ledger', miniGptProvenance?.batchId ? {
+    dimension: 'minigpt_batch',
+    value: miniGptProvenance.batchId,
+    issue: miniGptTargetIssue
+  } : {
+    dimension: 'minigpt_run',
+    value: miniGptProvenance?.runId,
+    issue: miniGptTargetIssue
+  });
+  const miniGptExportPath = buildArchivePath('/lottery/exports', {
+    preset: 'v47-minigpt-research'
+  });
+  const hasMiniGptHandoff = Boolean(miniGptProvenance || miniGptDecision || miniGptBacktest || miniGptTicketPack);
+  const miniGptHandoffStatus = !hasMiniGptHandoff
+    ? 'MANUAL'
+    : miniGptComparisonFailed
+      ? 'FAILED'
+      : !miniGptBacktest
+        || !miniGptComparisonPassed
+        || miniGptWarnings.length
+        || !miniGptDecision?.reviewAction
+        ? 'WARNING'
+        : 'PASS';
   const monthEndScore = useMemo(() => {
     const healthScore = health?.score ?? 0;
     const ticketScore = tickets?.pendingTicketCount ? Math.max(40, 100 - tickets.pendingTicketCount * 12) : 100;
@@ -701,6 +836,153 @@ const LotteryMonthEndReviewPage = () => {
               </button>
             ))}
           </div>
+        </Card>
+
+        <Card
+          className="life-panel-card lottery-clean-panel"
+          title={<Space><SafetyCertificateOutlined />MiniGPT · {researchText('研究与决策证据', 'Research and Decision Evidence')}</Space>}
+          extra={
+            <Space wrap>
+              <Tag color={statusColor(miniGptHandoffStatus)}>{translateText(lotteryStatusLabel(miniGptHandoffStatus))}</Tag>
+              {miniGptBacktest?.id ? (
+                <Button size="small" onClick={() => navigate(`/lottery/backtests/${miniGptBacktest.id}`)}>{researchText('回测证据', 'Backtest Evidence')}</Button>
+              ) : null}
+              <Button size="small" icon={<DownloadOutlined />} onClick={() => navigate(miniGptExportPath)}>{researchText('导出证据', 'Export Evidence')}</Button>
+            </Space>
+          }
+        >
+          <Alert
+            className="lottery-overview-status-alert"
+            type="info"
+            showIcon
+            message={researchText(
+              '仅作为历史窗口研究证据，不外推未来表现。',
+              'Historical-window research evidence only; do not extrapolate future performance.'
+            )}
+          />
+          {hasMiniGptHandoff ? (
+            <>
+              {!miniGptBacktest ? (
+                <Alert
+                  className="lottery-overview-status-alert"
+                  type="warning"
+                  showIcon
+                  message={researchText(
+                    '当前决策的回测证据未加载，不跨研究链拼接其他模型或随机基线结果。',
+                    'The reviewed backtest is unavailable. Results from another research chain are not substituted.'
+                  )}
+                />
+              ) : null}
+              <div className="lottery-research-report-grid lottery-research-report-summary">
+                <article>
+                  <Tag color="blue">{researchText('模型', 'Model')}</Tag>
+                  <strong>{formatPercent(miniGptBacktest?.roiPercent)}</strong>
+                  <span>{researchText('成本', 'Cost')} {formatCurrency(miniGptBacktest?.totalCost)} · {researchText('奖金', 'Prize')} {formatCurrency(miniGptBacktest?.totalPrize)}</span>
+                  <small>{researchText('候选', 'Candidates')} {miniGptBacktest?.candidateCount || miniGptDecision?.candidateCount || 0} · {miniGptBacktest?.issueStart || '-'}-{miniGptBacktest?.issueEnd || '-'}</small>
+                </article>
+                <article>
+                  <Tag>Random Baseline</Tag>
+                  <strong>{formatPercent(miniGptBacktest?.baselineRoiPercent)}</strong>
+                  <span>{researchText('成本', 'Cost')} {formatCurrency(miniGptBacktest?.baselineTotalCost)} · {researchText('奖金', 'Prize')} {formatCurrency(miniGptBacktest?.baselineTotalPrize)}</span>
+                  <small>seed={miniGptBacktest?.baselineSeed ?? '-'} · {miniGptBacktest?.baselineAlgorithm || '-'}</small>
+                </article>
+                <article>
+                  <Tag color={miniGptComparisonFailed
+                    ? 'red'
+                    : miniGptComparisonPassed && (miniGptBacktest?.roiPercentDelta || 0) > 0 ? 'green' : 'gold'}>
+                    {researchText('同窗口', 'Same Window')}
+                  </Tag>
+                  <strong>{formatPercent(miniGptBacktest?.roiPercentDelta)}</strong>
+                  <span>{researchText('同窗口随机基线 ROI 差额', 'Same-Window Random Baseline ROI Delta')}</span>
+                  <small>sameWindow={comparisonState(miniGptBacktest?.sameWindow)} · sameBudget={comparisonState(miniGptBacktest?.sameBudget)}</small>
+                </article>
+                <article>
+                  <Tag color="blue">MiniGPT</Tag>
+                  <strong>{miniGptProvenance?.corpusVersion || '-'}</strong>
+                  <span>runId={miniGptProvenance?.runId || '-'}</span>
+                  <small>
+                    batchId={miniGptProvenance?.batchId || '-'} · generationId={miniGptGenerationIds[0] || '-'}
+                    {miniGptGenerationIds.length > 1 ? ` +${miniGptGenerationIds.length - 1}` : ''}
+                  </small>
+                </article>
+                <article>
+                  <Tag color={researchReviewColor(miniGptDecision?.reviewAction)}>{researchText('当前复核', 'Current Review')}</Tag>
+                  <strong>{researchReviewLabel(miniGptDecision?.reviewAction, isEnglish)}</strong>
+                  <span>backtestId={miniGptDecision?.reviewBacktestId || miniGptBacktest?.id || '-'}</span>
+                  <small>
+                    reviewedAt={formatDateTime(miniGptDecision?.reviewedAt)} · {miniGptDecision?.reviewNote
+                      || researchText('复核只记录研究生命周期动作', 'Review records a research lifecycle action only')}
+                  </small>
+                </article>
+                <article>
+                  <Tag color={!miniGptTicketPack || miniGptTicketPack.status === 'DRAFT' ? 'gold' : 'green'}>{researchText('草稿', 'Draft')}</Tag>
+                  <strong>{miniGptTicketPack?.status || researchText('未创建草稿', 'Draft Not Created')}</strong>
+                  <span>{miniGptTicketPack?.approvalState || researchText('待审批', 'Pending Approval')}</span>
+                  <small>packId={miniGptTicketPack?.id || '-'} · {researchText('不会自动审批或生成票据', 'No automatic approval or ticket creation')}</small>
+                </article>
+              </div>
+              <div className="lottery-month-end-list">
+                <button type="button" onClick={() => navigate(miniGptDecisionPath)}>
+                  <Tag color="blue">{researchText('决策集', 'Decision Set')}</Tag>
+                  <span>{miniGptDecision?.title || miniGptDecisionId || researchText('MiniGPT 决策溯源', 'MiniGPT Decision Lineage')}</span>
+                  <strong>{researchReviewLabel(miniGptDecision?.reviewAction, isEnglish)}</strong>
+                  <small>decisionSetId={miniGptDecisionId || '-'} · targetIssue={miniGptTargetIssue || '-'}</small>
+                </button>
+                {miniGptBacktest ? (
+                  <button type="button" onClick={() => navigate(miniGptBacktest.id ? `/lottery/backtests/${miniGptBacktest.id}` : '/lottery/backtests')}>
+                    <Tag color={miniGptComparisonFailed ? 'red' : miniGptComparisonPassed && !miniGptWarnings.length ? 'green' : 'gold'}>{researchText('回测证据', 'Backtest Evidence')}</Tag>
+                    <span>{miniGptBacktest.evaluationMode || researchText('未知评估模式', 'Unknown Evaluation Mode')}</span>
+                    <strong>{formatPercent(miniGptBacktest.roiPercentDelta)}</strong>
+                    <small>{researchText('模型', 'Model')} {formatCurrency(miniGptBacktest.netResult)} · Random Baseline {formatCurrency(miniGptBacktest.baselineNetResult)}</small>
+                  </button>
+                ) : null}
+                <button type="button" onClick={() => navigate(miniGptTicketPackPath)}>
+                  <Tag color={!miniGptTicketPack || miniGptTicketPack.status === 'DRAFT' ? 'gold' : 'green'}>{researchText('票包草稿', 'Ticket-Pack Draft')}</Tag>
+                  <span>{miniGptTicketPack?.title || researchText('显式创建草稿后再进入审批', 'Create a draft explicitly before approval')}</span>
+                  <strong>{miniGptTicketPack?.status || researchText('未创建', 'Not Created')}</strong>
+                  <small>{miniGptTicketPack?.approvalState || researchText('待审批', 'Pending Approval')} · {miniGptTicketPack?.items?.length || 0} {researchText('注', 'tickets')}</small>
+                </button>
+                <button type="button" onClick={() => navigate(miniGptOutcomePath)}>
+                  <Tag color="blue">{researchText('归因', 'Attribution')}</Tag>
+                  <span>{isEnglish
+                    ? `Issue ${miniGptTargetIssue || '-'} · MiniGPT decision outcome`
+                    : `第 ${miniGptTargetIssue || '-'} 期 · MiniGPT 决策结果`}</span>
+                  <strong>{formatCurrency(miniGptDecision?.netResult)}</strong>
+                  <small>{researchText('警示', 'Warnings')} {miniGptDecision?.warningCount || 0} · ROI {formatPercent(miniGptDecision?.roiPercent)}</small>
+                </button>
+                {miniGptProvenance?.batchId || miniGptProvenance?.runId ? (
+                  <button type="button" onClick={() => navigate(miniGptLedgerPath)}>
+                    <Tag color="blue">{researchText('账本', 'Ledger')}</Tag>
+                    <span>{miniGptProvenance.batchId ? 'MiniGPT Batch' : 'MiniGPT Run'} {researchText('维度', 'dimension')}</span>
+                    <strong>{formatCurrency(miniGptDecision?.netResult)}</strong>
+                    <small>{miniGptProvenance.batchId || miniGptProvenance.runId}</small>
+                  </button>
+                ) : null}
+                {miniGptWarnings.slice(0, 4).map(warning => (
+                  <button
+                    key={`minigpt-warning-${warning}`}
+                    type="button"
+                    onClick={() => navigate(miniGptBacktest?.id ? `/lottery/backtests/${miniGptBacktest.id}` : miniGptDecisionPath)}
+                  >
+                    <Tag color="gold">{researchText('研究证据提醒', 'Evidence Warning')}</Tag>
+                    <span>{lotteryOverfitWarningsText([warning], isEnglish)}</span>
+                    <strong>{warning}</strong>
+                    <small>{researchText(
+                      '仅作为历史窗口研究证据，不外推未来表现。',
+                      'Historical-window research evidence only; do not extrapolate future performance.'
+                    )}</small>
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <Empty
+              description={researchText('暂无研究证据', 'No Research Evidence')}
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+            >
+              <Button onClick={() => navigate('/ai/minigpt')}>{researchText('打开 MiniGPT', 'Open MiniGPT')}</Button>
+            </Empty>
+          )}
         </Card>
 
         <Card

@@ -90,7 +90,7 @@ Success signals:
 
 ## Candidate Iterations
 
-Completed through Iteration 46: the platform foundation, daily and month-end workflows, outcome attribution, recommendation lifecycle, mobile operations, archive/search evidence, provider reliability, release visibility, focused retirement/archive-review handoffs, and the sync-operations/release-baseline closure are represented in the product and historical iteration plans.
+Completed through Iteration 46: the platform foundation, daily and month-end workflows, outcome attribution, recommendation lifecycle, mobile operations, archive/search evidence, provider reliability, release visibility, focused retirement/archive-review handoffs, and the sync-operations/release-baseline closure are represented in the product and historical iteration plans. Iteration 47 is the active delivery until its final release/browser handoff is complete.
 
 Only the next candidate is promoted. Later ideas remain in the long-horizon themes above until the next planning review.
 
@@ -101,14 +101,16 @@ Only the next candidate is promoted. Later ideas remain in the long-horizon them
 - Settled `/lottery` as the default overview and `/lottery/workbench` as the operation center while keeping workbench, mobile, and settings discoverable without footer-level top items.
 - Refreshed backend, i18n, smoke, lint, build, browser, and release evidence; final smoke passed 808 checks across 18 routes.
 
-### Iteration 47: MiniGPT Lottery Research Loop V1
+### Active Iteration 47: MiniGPT Lottery Research Loop V1
 
-Formal delivery plan: [Iteration 47 plan](iteration-47-plan.md). Waves 47A-47C are complete; Wave 47D month-end review and release evidence is next.
+Formal delivery plan: [Iteration 47 plan](iteration-47-plan.md). Waves 47A-47C are complete. Wave 47D implementation and documentation are complete; final release/browser/staged-delivery evidence remains open.
 
 - Completed the strategy-sample corpus, versioned export metadata, and reproducible time-based train/validation split beside raw and structural-feature corpora.
 - Completed full-sample context validation and durable run, checkpoint, prompt, sampling, parsing, repair, and candidate-batch provenance.
 - Closed the manual chain through typed-provenance decision sets, deterministic same-window/same-budget random-baseline backtests, explicit draft ticket packs, tickets, actual results, ledgers, notes, and lifecycle review. Historical static-pool replay remains explicitly distinct from walk-forward evaluation.
-- Next, carry the verified chain into month-end review and final release/export evidence while retaining restrained research language.
+- Carried the verified chain into month-end review by selecting the most recent reviewed MiniGPT outcome, requiring the reviewed report to match both `reviewBacktestId` and `decisionSetId`, and accepting ticket packs only through the same decision `decisionSetId`/`sourceId`; later replay reports and unrelated packs cannot replace the frozen evidence.
+- Extended the existing decision-set, backtest, and decision-outcome CSV exports with provenance, added `averageRedHitsDelta`, `blueHitRateDelta`, `totalPrizeDelta`, and the other model/random metrics to backtest rows, and added the `v47-minigpt-research` preset instead of a parallel report domain. UNKNOWN comparison state remains non-PASS, and release copy stays historical-only without triggering ticket-pack approval or ticket creation.
+- Finish the production release check, browser handoff, staged-scope audit, commit, and push before promoting any next candidate at the next planning review.
 
 ## Risk Register
 
@@ -120,10 +122,11 @@ Formal delivery plan: [Iteration 47 plan](iteration-47-plan.md). Waves 47A-47C a
 | Frontend pages duplicate business logic | Prefer backend DTOs and shared frontend label/helpers; add backend contracts for real gaps only. |
 | Daily pages become too dense | Keep workbench and mobile surfaces task-oriented, with specialist pages for deep review. |
 | Long-running analysis becomes expensive | Use persisted reports, bounded pages, and explicit run actions rather than hidden background work. |
+| A later replay or unrelated pack replaces reviewed evidence | Require both report id and `decisionSetId`, associate packs only by the same decision `decisionSetId`/`sourceId`, and never treat missing comparison flags as PASS. |
 
 ## Review Cadence
 
-- 2026-07-11 delivery review: work is complete through Iteration 46 and Iteration 47 Waves 47A-47C. The latest evidence passed backend service 87/87, backend web 40/40, i18n 1037, lottery smoke 1027/1027 across 18 routes, and the production build. Continue with Wave 47D month-end and release-evidence handoff.
+- 2026-07-11 delivery review: work is complete through Iteration 47, including Wave 47D month-end and release/export evidence. Final verification passed backend service 96/96, backend web 43/43, i18n 1039, lottery smoke 1065/1065 across 18 routes, fresh release evidence, the production build, exact-chain desktop QA, and English 390x844 responsive QA. No next iteration is promoted; select the next candidate at the next planning review.
 - Review this long-term plan after every five completed iterations.
 - Promote only the next one or two candidate iterations into `docs/lottery/iterations/checklist.md`.
 - Keep completed tactical plans as historical evidence, but let this file carry the long-horizon direction.

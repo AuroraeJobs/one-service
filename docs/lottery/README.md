@@ -30,7 +30,7 @@ mvn -version
 - [Long-term plan](iterations/long-term-plan.md): 0-12 month direction, candidate future iterations, risks, and review cadence.
 - [Checklist](iterations/checklist.md): durable task board.
 - [Iteration 46 plan](iterations/iteration-46-plan.md): sync operations and release baseline closure.
-- [Iteration 47 plan](iterations/iteration-47-plan.md): MiniGPT lottery research loop; Waves 47A-47C are complete from reproducible corpus through deterministic random-baseline and outcome review, with Wave 47D next.
+- [Iteration 47 plan](iterations/iteration-47-plan.md): MiniGPT lottery research loop from reproducible corpus through deterministic random-baseline, outcome review, month-end evidence, and release/export handoff; the final release/browser delivery step remains open.
 - [Quality gates](iterations/quality-gates.md): verification rules for backend, frontend, and data behavior.
 - [Frontend one-month plan](iterations/frontend-one-month-version-plan.md): next month frontend-led experience and power-tool plan.
 
@@ -43,7 +43,7 @@ mvn -version
 
 Live capabilities already present in the codebase:
 
-- Iterations 1-46 are complete; the latest completed slice closes sync-operations UX, backend deletion safety, MongoDB-backed log pagination, default-overview navigation semantics, and current release evidence.
+- Iterations 1-47 are complete; Iteration 47 carries the MiniGPT research chain through month-end review, release/export evidence, production release checks, and rendered browser verification.
 - Historical record access and update through `record/*` APIs.
 - Lottery records namespace through `lottery/records/*`, currently reusing the existing record service for compatibility.
 - `/lottery` is the unified default overview with recent draws, yearly counts, frequency cards, AI context, and entry points into specialist workflows.
@@ -55,19 +55,22 @@ Live capabilities already present in the codebase:
 - Operations pages for sync summary, provider probe history, settings, and data quality repair.
 - Astronaut naming, voyage records, and voyage counts through `lottery/astronauts/*`.
 - Statistics and analysis routes including frequency, group, distribution, pixel views, Taiji, space, and hexagram pages.
-- The current route smoke and release evidence pass 1027 checks across 18 routes with zero failures.
+- MiniGPT month-end review composes the most recent reviewed MiniGPT outcome, a backtest matching both `reviewBacktestId` and `decisionSetId`, only ticket packs owned through the same `decisionSetId`/`sourceId`, and ledger evidence without adding a second reporting contract. Unknown comparison state is never presented as PASS; existing decision-set, backtest, and outcome CSV exports carry the same research provenance and model/random deltas.
+- The current route smoke passes 1065 checks across 18 routes with zero failures.
 
-## Next Iteration
+## Current Delivery
 
-Iteration 46 is complete; its final implementation and evidence are recorded in `docs/lottery/iterations/iteration-46-plan.md` and the checked Iteration 46 section in `docs/lottery/iterations/checklist.md`.
+Iteration 47 is complete; its final implementation and evidence are recorded in `docs/lottery/iterations/iteration-47-plan.md` and the checked Iteration 47 section in `docs/lottery/iterations/checklist.md`.
 
-The active promoted slice is [Iteration 47: MiniGPT Lottery Research Loop V1](iterations/iteration-47-plan.md). Waves 47A-47C are complete: strategy samples, versioned manifests, deterministic time-based train/validation splits, full-sample context validation, fixed evaluation, traceable candidate batches, typed downstream provenance, deterministic same-window/same-budget random baselines, explicit historical-replay warnings, draft-only ticket-pack handoff, actual-result/ledger attribution, and manual lifecycle review now form the stable research boundary. Wave 47D is next and will carry this chain into month-end and release evidence:
+The latest completed slice is [Iteration 47: MiniGPT Lottery Research Loop V1](iterations/iteration-47-plan.md). Its implementation covers strategy samples, versioned manifests, deterministic time-based train/validation splits, full-sample context validation, fixed evaluation, traceable candidate batches, typed downstream provenance, deterministic same-window/same-budget random baselines, explicit historical-replay warnings, draft-only ticket-pack handoff, actual-result/ledger attribution, manual lifecycle review, month-end review, and existing CSV release/export evidence:
 
 ```text
-versioned corpus -> time-based train/validation split -> candidate generation and repair -> random-baseline backtest -> decision/ticket/result review
+versioned corpus -> time-based train/validation split -> candidate generation and repair -> random-baseline backtest -> decision/ticket/result review -> month-end and release evidence
 ```
 
-The latest Wave 47C verification passed backend service 87/87, backend web 40/40, i18n 1037, lottery smoke 1027/1027 across 18 routes, and the production build. Continue to gate conclusions on legal-number parse rate, candidate diversity, typed provenance, comparable historical windows, and random-baseline deltas rather than training loss alone.
+Final Iteration 47 verification passed backend service 96/96, backend web 43/43, i18n 1039, lottery smoke 1065/1065 across 18 routes, fresh release evidence, and the production TypeScript/Vite build. Rendered QA verified the reviewed chain against a newer unreviewed distractor and 25 later reports, followed the exact backtest deep link, checked the English V47 release preset, and passed a 390x844 no-overflow check with no console warnings. The staged scope contains only the 17 Iteration 47D implementation, test, evidence, localization, and documentation files. Continue to gate conclusions on legal-number parse rate, candidate diversity, typed provenance, comparable historical windows, and random-baseline deltas rather than training loss alone.
+
+No next iteration is promoted yet. Select the next candidate at the next planning review.
 
 For protected browser QA, use [Quality gates](iterations/quality-gates.md). Start the frontend with `npm run dev:qa` for frontend-only visual checks without a login session; this explicit Vite QA mode bypasses only the loopback-hosted local route guard and is disabled in production builds. A running backend is still required for data-backed interactions. `ECONNREFUSED` on `/lottery/records/draws?page=0&size=500` is a backend/proxy blocker, not a page-layout failure.
 
@@ -81,7 +84,7 @@ Iteration 10 is the longer platform roadmap after the workbench foundation. It s
 daily state backbone -> strategy experiments -> backtest evidence -> alerts/calendar -> budget governance -> export/audit/maintenance
 ```
 
-Iteration 10 completed the platform foundation, and later frontend/usability waves are tracked in `docs/lottery/iterations/checklist.md`. Iterations 1-46 are complete; Iteration 47 is active with Waves 47A-47C complete and Wave 47D next.
+Iteration 10 completed the platform foundation, and later frontend/usability waves are tracked in `docs/lottery/iterations/checklist.md`. Iterations 1-46 are complete; Iteration 47 has reached its month-end and release-evidence implementation boundary, with the final verified delivery handoff still open.
 
 ## Non-Negotiable Rules
 
