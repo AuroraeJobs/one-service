@@ -333,10 +333,7 @@ const LotteryOverviewPage = () => {
           <div className="lottery-card-title-row">
             <div>
               <h2>{t('年度记录占比')}</h2>
-              <p>{t('按开奖年份拆分历史样本。')}</p>
-            </div>
-            <div className="lottery-yearly-actions">
-              <span>
+              <p>
                 {statisticsGeneratedAt
                   ? t('统计生成 {{time}}', { time: statisticsGeneratedAt })
                   : t('本地临时统计')}
@@ -346,7 +343,7 @@ const LotteryOverviewPage = () => {
                     {t('· 待重算')}
                   </>
                 ) : null}
-              </span>
+              </p>
             </div>
           </div>
           <Spin spinning={yearlyCountsLoading || updating || statisticsLoading}>

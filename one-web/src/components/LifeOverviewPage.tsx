@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Card, Progress, Space, Tag } from 'antd';
+import { Card, Progress, Tag } from 'antd';
 import {
   ApiOutlined,
-  ArrowRightOutlined,
   CheckCircleFilled,
   ClockCircleOutlined,
   DatabaseOutlined
@@ -89,16 +88,6 @@ const LifeOverviewPage = () => {
       className="life-overview-page"
       eyebrow={t('个人生活数据中台')}
       title={t('把车辆、收入、投资、账单和彩票沉淀成自己的生活仪表盘。')}
-      actions={
-        <Space wrap>
-          <Button type="primary" icon={<DatabaseOutlined />} onClick={() => navigate('/connections')}>
-            {t('数据接入')}
-          </Button>
-          <Button icon={<ArrowRightOutlined />} onClick={() => navigate('/vehicle/charging')}>
-            {t('查看车辆')}
-          </Button>
-        </Space>
-      }
     >
       <MetricGrid gap={16} minColumnWidth={190}>
         <MetricCard title={t('已接入模块')} value={`${liveModules}/${lifeDataModules.length}`} prefix={<CheckCircleFilled />} accent="#34c759" />

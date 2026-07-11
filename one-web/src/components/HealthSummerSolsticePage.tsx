@@ -306,6 +306,7 @@ const HealthSummerSolsticePage: React.FC = () => {
       </div>
 
       <Drawer
+        rootClassName="finance-salary-drawer"
         title={text.addRecord}
         placement="right"
         width={500}
@@ -498,6 +499,7 @@ const HealthSummerSolsticePage: React.FC = () => {
       </Drawer>
 
       <Drawer
+        rootClassName="finance-salary-drawer"
         title={text.salaryDetails}
         placement="right"
         width={500}
@@ -723,7 +725,7 @@ const HealthSummerSolsticePage: React.FC = () => {
             </Card>
           </Form>
         ) : editingRecord ? (
-          <div>
+          <div className="finance-salary-readonly">
             <Card 
               title={text.basicInfo}
               style={{
@@ -736,14 +738,14 @@ const HealthSummerSolsticePage: React.FC = () => {
             >
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.year}</div>
-                  <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
+                  <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>{text.year}</div>
+                  <div style={{ color: 'var(--app-text)', fontSize: '14px', fontWeight: 'bold' }}>
                     {isEnglish ? editingRecord.year : `${editingRecord.year}年`}
                   </div>
                 </div>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.month}</div>
-                  <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
+                  <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>{text.month}</div>
+                  <div style={{ color: 'var(--app-text)', fontSize: '14px', fontWeight: 'bold' }}>
                     {isEnglish ? monthOptions[editingRecord.month - 1]?.label || editingRecord.month : `${editingRecord.month}月`}
                   </div>
                 </div>
@@ -762,14 +764,14 @@ const HealthSummerSolsticePage: React.FC = () => {
             >
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.monthlyIncome}</div>
-                  <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
+                  <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>{text.monthlyIncome}</div>
+                  <div style={{ color: 'var(--app-text)', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.monthlyIncome)}
                   </div>
                 </div>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.standardDeduction}</div>
-                  <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
+                  <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>{text.standardDeduction}</div>
+                  <div style={{ color: 'var(--app-text)', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.standardDeduction)}
                   </div>
                 </div>
@@ -788,31 +790,31 @@ const HealthSummerSolsticePage: React.FC = () => {
             >
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.endowmentInsurance}</div>
-                  <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
+                  <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>{text.endowmentInsurance}</div>
+                  <div style={{ color: 'var(--app-text)', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.endowmentInsurance)}
                   </div>
                 </div>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.medicalInsurance}</div>
-                  <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
+                  <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>{text.medicalInsurance}</div>
+                  <div style={{ color: 'var(--app-text)', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.medicalInsurance)}
                   </div>
                 </div>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.unemploymentInsurance}</div>
-                  <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
+                  <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>{text.unemploymentInsurance}</div>
+                  <div style={{ color: 'var(--app-text)', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.unemploymentInsurance)}
                   </div>
                 </div>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.housingFund}</div>
-                  <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
+                  <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>{text.housingFund}</div>
+                  <div style={{ color: 'var(--app-text)', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.housingFund)}
                   </div>
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.specialDeduction}</div>
+                  <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>{text.specialDeduction}</div>
                   <div style={{ color: '#FF9800', fontSize: '16px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.specialDeduction)}
                   </div>
@@ -832,37 +834,37 @@ const HealthSummerSolsticePage: React.FC = () => {
             >
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px' }}>{text.monthlyTaxableIncome}</div>
-                  <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
+                  <div style={{ color: 'var(--app-text-muted)', fontSize: '12px' }}>{text.monthlyTaxableIncome}</div>
+                  <div style={{ color: 'var(--app-text)', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.monthlyTaxableIncome)}
                   </div>
                 </div>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px' }}>{text.cumulativeTaxableIncome}</div>
-                  <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
+                  <div style={{ color: 'var(--app-text-muted)', fontSize: '12px' }}>{text.cumulativeTaxableIncome}</div>
+                  <div style={{ color: 'var(--app-text)', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.cumulativeTaxableIncome)}
                   </div>
                 </div>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px' }}>{text.cumulativeTaxPayable}</div>
+                  <div style={{ color: 'var(--app-text-muted)', fontSize: '12px' }}>{text.cumulativeTaxPayable}</div>
                   <div style={{ color: '#FF9800', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.cumulativeTaxPayable)}
                   </div>
                 </div>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px' }}>{text.currentTaxDeclaration}</div>
+                  <div style={{ color: 'var(--app-text-muted)', fontSize: '12px' }}>{text.currentTaxDeclaration}</div>
                   <div style={{ color: '#FF9800', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.currentTaxDeclaration)}
                   </div>
                 </div>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px' }}>{text.cumulativeTaxPaid}</div>
+                  <div style={{ color: 'var(--app-text-muted)', fontSize: '12px' }}>{text.cumulativeTaxPaid}</div>
                   <div style={{ color: '#9c27b0', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.cumulativeTaxPaid)}
                   </div>
                 </div>
                 <div>
-                  <div style={{ color: '#999', fontSize: '12px' }}>{text.actualIncome}</div>
+                  <div style={{ color: 'var(--app-text-muted)', fontSize: '12px' }}>{text.actualIncome}</div>
                   <div style={{ color: '#52c41a', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.actualIncome)}
                   </div>
@@ -881,7 +883,7 @@ const HealthSummerSolsticePage: React.FC = () => {
                 }}
                 headStyle={{ borderBottom: '1px solid #444', color: '#fff', fontSize: '14px' }}
               >
-                <div style={{ color: '#fff', fontSize: '14px' }}>
+                <div style={{ color: 'var(--app-text)', fontSize: '14px' }}>
                   {editingRecord.notes}
                 </div>
               </Card>

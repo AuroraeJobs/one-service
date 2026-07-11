@@ -1,15 +1,12 @@
 import {
   BarChartOutlined,
   FireOutlined,
-  LineChartOutlined,
-  PartitionOutlined
+  LineChartOutlined
 } from '@ant-design/icons';
 import { Card } from 'antd';
 import type { ReactNode } from 'react';
-import MetricCard from '../MetricCard';
 import MetricGrid from '../MetricGrid';
 import { useI18n } from '../../contexts/I18nContext';
-import { localizeLotteryCombination } from '../../i18n/formatLotteryText';
 import type { FrequencyItem, LotteryStats } from '../../utils/lotteryStats';
 
 interface LotterySummaryCardsProps {
@@ -65,10 +62,9 @@ const NumberFrequencyCard = ({
 };
 
 const LotterySummaryCards = ({ stats }: LotterySummaryCardsProps) => {
-  const { language, t, translateText } = useI18n();
+  const { t } = useI18n();
   const leastFrequentRed = getLeastFrequentNumber(stats.redFrequency);
   const leastFrequentBlue = getLeastFrequentNumber(stats.blueFrequency);
-  const dominantCombination = stats.dominantCombination;
 
   return (
     <MetricGrid gap={16} minColumnWidth={190}>
@@ -107,18 +103,6 @@ const LotterySummaryCards = ({ stats }: LotterySummaryCardsProps) => {
         ballClassName="lottery-hot-number-ball-blue"
         description={item => t('{{number}} 号是全历史出现最少的蓝球', { number: item.number })}
         emptyText={t('同步数据后显示冷门蓝球')}
-      />
-      <MetricCard
-        title={t('常见结构')}
-        value={dominantCombination
-          ? localizeLotteryCombination(dominantCombination.name, t, translateText)
-          : '--'}
-        suffix={dominantCombination
-          ? new Intl.NumberFormat(language, { style: 'percent', maximumFractionDigits: 1 })
-            .format(dominantCombination.percentage / 100)
-          : undefined}
-        prefix={<PartitionOutlined />}
-        accent="#5856d6"
       />
     </MetricGrid>
   );

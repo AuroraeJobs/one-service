@@ -87,7 +87,6 @@ const LotteryFrequencyCharts = ({ redFrequency, blueFrequency, onOpenStatistics 
         <div className="lottery-card-title-row">
           <div>
             <h2>{t('红球频次')}</h2>
-            <p>{t('按出现次数从高到低排列，帮助快速观察冷热分布。')}</p>
           </div>
           {onOpenStatistics && (
             <Button size="small" icon={<BarChartOutlined />} onClick={onOpenStatistics}>
@@ -102,7 +101,6 @@ const LotteryFrequencyCharts = ({ redFrequency, blueFrequency, onOpenStatistics 
         <div className="lottery-card-title-row">
           <div>
             <h2>{t('蓝球频次')}</h2>
-            <p>{t('蓝球样本更小，适合结合遗漏和区间一起看。')}</p>
           </div>
           {onOpenStatistics && (
             <Button size="small" icon={<BarChartOutlined />} onClick={onOpenStatistics}>

@@ -117,8 +117,7 @@ const Login = () => {
         </div>
       </div>
       
-      <Card className="login-card" bordered={false}>
-        <LanguageSwitcher className="login-language-switcher" />
+      <Card className="login-card" variant="borderless">
         <div className="login-header">
           <div className="login-logo">
             <Title level={2} className="login-title">OneAI</Title>
@@ -182,6 +181,8 @@ const Login = () => {
           {t('GitHub 认证登录')}
         </Button>
       </Card>
+
+      <LanguageSwitcher className="login-page-language-switcher" />
     </div>
   );
 };

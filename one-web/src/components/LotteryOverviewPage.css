@@ -34,25 +34,12 @@
 
 .lottery-yearly-card-compact .lottery-card-title-row {
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   align-items: flex-start;
 }
 
 .lottery-yearly-card-compact .lottery-card-title-row > div {
   min-width: 0;
-}
-
-.lottery-yearly-actions {
-  display: grid;
-  justify-items: end;
-  gap: 6px;
-  white-space: nowrap;
-}
-
-.lottery-yearly-actions span {
-  color: var(--app-text-muted);
-  font-size: 12px;
-  line-height: 1.4;
 }
 
 .lottery-yearly-content {
@@ -731,7 +718,7 @@
 
 .lottery-workbench-status-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 16px;
 }
@@ -4444,21 +4431,6 @@
 .lottery-overview-status-alert {
   margin-bottom: 16px;
   border-radius: 8px;
-}
-
-@media (max-width: 560px) {
-  .lottery-yearly-card-compact .lottery-card-title-row {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .lottery-yearly-actions {
-    justify-items: start;
-  }
-
-  .lottery-yearly-actions span {
-    white-space: normal;
-  }
-
 }
 
 .lottery-statistics-cache-row {

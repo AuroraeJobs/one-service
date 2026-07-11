@@ -80,19 +80,19 @@ body {
 }
 
 .life-module-vehicle {
-  --module-accent: #0071e3;
+  --module-accent: #e82127;
 }
 
 .life-module-finance {
-  --module-accent: #34c759;
+  --module-accent: #1677ff;
 }
 
 .life-module-investment {
-  --module-accent: #5856d6;
+  --module-accent: #ff3b30;
 }
 
 .life-module-lottery {
-  --module-accent: #ff3b30;
+  --module-accent: #ffcc00;
 }
 
 .life-module-ai {
@@ -1042,6 +1042,26 @@ body {
   border-radius: 999px;
   background: linear-gradient(90deg, transparent, var(--module-accent, #1890ff), transparent);
   box-shadow: 0 0 10px color-mix(in srgb, var(--module-accent, #1890ff) 56%, transparent);
+}
+
+.app-theme-light .nav-link.nav-link-active,
+.app-theme-light .app-footer .footer-menu-item.season-footer-item-active {
+  color: color-mix(in srgb, var(--module-accent, #0071e3) 45%, #000) !important;
+}
+
+.app-theme-light .nav-link.nav-link-active .anticon,
+.app-theme-light .app-footer .footer-menu-item.season-footer-item-active .anticon {
+  color: color-mix(in srgb, var(--module-accent, #0071e3) 45%, #000) !important;
+}
+
+.app-theme-dark .nav-link.nav-link-active,
+.app-theme-dark .app-footer .footer-menu-item.season-footer-item-active {
+  color: color-mix(in srgb, var(--module-accent, #0071e3) 70%, #fff) !important;
+}
+
+.app-theme-dark .nav-link.nav-link-active .anticon,
+.app-theme-dark .app-footer .footer-menu-item.season-footer-item-active .anticon {
+  color: color-mix(in srgb, var(--module-accent, #0071e3) 70%, #fff) !important;
 }
 
 @media (max-width: 720px) {
@@ -3085,18 +3105,103 @@ body {
   color: #fff !important;
 }
 
-.app-theme-light .finance-salary-add-button.ant-btn-primary {
-  background: #fff7ed !important;
-  border: 1px solid rgba(234, 88, 12, 0.28) !important;
-  box-shadow: 0 8px 20px rgba(234, 88, 12, 0.14) !important;
-  color: #c2410c !important;
+:root[data-theme='light'] .finance-salary-drawer .ant-drawer-content,
+:root[data-theme='light'] .finance-salary-drawer .ant-drawer-header,
+:root[data-theme='light'] .finance-salary-drawer .ant-drawer-body {
+  background: var(--app-surface) !important;
+  background-image: none !important;
+  color-scheme: light;
+  color: var(--app-text) !important;
 }
 
-.app-theme-light .finance-salary-add-button.ant-btn-primary:hover,
-.app-theme-light .finance-salary-add-button.ant-btn-primary:focus-visible {
-  background: #ffedd5 !important;
-  border-color: rgba(234, 88, 12, 0.42) !important;
-  color: #9a3412 !important;
+:root[data-theme='light'] .finance-salary-drawer .ant-drawer-header {
+  border-bottom-color: var(--app-border) !important;
+}
+
+:root[data-theme='light'] .finance-salary-drawer .ant-drawer-title,
+:root[data-theme='light'] .finance-salary-drawer .ant-drawer-close,
+:root[data-theme='light'] .finance-salary-drawer .ant-form-item-label > label {
+  color: var(--app-text) !important;
+}
+
+:root[data-theme='light'] .finance-salary-drawer .ant-card,
+:root[data-theme='light'] .finance-salary-drawer .ant-card-head,
+:root[data-theme='light'] .finance-salary-drawer .ant-card-body {
+  background: var(--app-surface-elevated) !important;
+  background-image: none !important;
+  border-color: var(--app-border) !important;
+  color: var(--app-text) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme='light'] .finance-salary-drawer .ant-card-head-title {
+  color: var(--app-text) !important;
+}
+
+:root[data-theme='light'] .finance-salary-drawer .ant-input,
+:root[data-theme='light'] .finance-salary-drawer .ant-select,
+:root[data-theme='light'] .finance-salary-drawer .ant-input-number-affix-wrapper,
+:root[data-theme='light'] .finance-salary-drawer .ant-input-number,
+:root[data-theme='light'] .finance-salary-drawer .ant-input-number-input-wrap,
+:root[data-theme='light'] .finance-salary-drawer .ant-input-number-input,
+:root[data-theme='light'] .finance-salary-drawer .ant-select-selector,
+:root[data-theme='light'] .finance-salary-drawer textarea.ant-input {
+  background: var(--app-surface) !important;
+  background-color: var(--app-surface) !important;
+  background-image: none !important;
+  border-color: var(--app-border) !important;
+  color: var(--app-text) !important;
+}
+
+:root[data-theme='light'] .finance-salary-drawer .ant-select,
+:root[data-theme='light'] .finance-salary-drawer .ant-select-outlined,
+:root[data-theme='light'] .finance-salary-drawer .ant-select-focused {
+  background: var(--app-surface) !important;
+  background-color: var(--app-surface) !important;
+  background-image: none !important;
+  border-radius: 6px !important;
+  color: var(--app-text) !important;
+}
+
+:root[data-theme='light'] .finance-salary-drawer .ant-select-arrow {
+  color: var(--app-text-muted) !important;
+}
+
+:root[data-theme='light'] .finance-salary-drawer .ant-input-number-input-wrap,
+:root[data-theme='light'] .finance-salary-drawer .ant-input-number-input {
+  border-radius: inherit !important;
+}
+
+:root[data-theme='light'] .finance-salary-drawer .ant-input::placeholder,
+:root[data-theme='light'] .finance-salary-drawer .ant-input-number-input::placeholder,
+:root[data-theme='light'] .finance-salary-drawer .ant-select-selection-placeholder {
+  color: var(--app-text-muted) !important;
+}
+
+:root[data-theme='light'] .finance-salary-drawer .ant-input-number-handler-wrap,
+:root[data-theme='light'] .finance-salary-drawer .ant-input-number-handler {
+  background: var(--app-surface-elevated) !important;
+  border-color: var(--app-border) !important;
+  color: var(--app-text-muted) !important;
+}
+
+:root[data-theme='light'] .finance-salary-drawer .ant-input-number-handler-up-inner,
+:root[data-theme='light'] .finance-salary-drawer .ant-input-number-handler-down-inner {
+  color: var(--app-text-muted) !important;
+}
+
+:root[data-theme='light'] .finance-salary-drawer .ant-input-number-prefix,
+:root[data-theme='light'] .finance-salary-drawer .ant-input-number-group-addon {
+  background: var(--app-surface) !important;
+  background-color: var(--app-surface) !important;
+  border-color: var(--app-border) !important;
+  color: var(--app-text-muted) !important;
+}
+
+:root[data-theme='light'] .finance-salary-drawer .ant-input-number-affix-wrapper:hover,
+:root[data-theme='light'] .finance-salary-drawer .ant-input-number-affix-wrapper-focused {
+  background: var(--app-surface) !important;
+  border-color: #ff9800 !important;
 }
 
 .themed-route-page .lottery-records-list-card {

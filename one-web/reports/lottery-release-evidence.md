@@ -7,7 +7,7 @@ Generated from `npm run lottery:smoke`.
 | Field | Value |
 | --- | --- |
 | Target | Lottery unified overview default smoke |
-| Generated at | 2026-07-11T15:42:46.778Z |
+| Generated at | 2026-07-11T15:59:49.689Z |
 | Status | PASSED |
 | Mode | mocked-fixture |
 | Provider network | not-required |

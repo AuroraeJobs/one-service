@@ -751,14 +751,6 @@ const LotteryWorkbenchPage = () => {
       path: dailyState?.syncState?.path || savedSyncPath
     },
     {
-      key: 'scheduled',
-      icon: <ClockCircleOutlined />,
-      label: t('定时同步'),
-      value: localizeStatus(scheduledRunbook?.healthStatus),
-      detail: translateText(scheduledRunbook?.nextRunText || scheduledRunbook?.message || '-'),
-      path: savedSyncPath
-    },
-    {
       key: 'quality',
       icon: <SafetyCertificateOutlined />,
       label: t('质量问题'),
