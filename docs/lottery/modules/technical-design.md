@@ -395,7 +395,27 @@ baseline algorithm, seed, positive window size, ticket counts, and all five delt
 
 An explicit window, budget, or ticket-count mismatch is `FAIL`; missing binding, unavailable report, unknown comparability, ownership/provenance mismatch, incomplete metadata/deltas, or unsupported evaluation mode is `UNKNOWN`. Only a comparable row shows `averageRedHitsDelta`, `blueHitRateDelta`, `totalPrizeDelta`, `netResultDelta`, and `roiPercentDelta`, alongside report warnings and identity. A positive delta remains historical per-decision evidence: it does not upgrade the purple `POST_CORPUS_OBSERVED` boundary, establish generalization, or trigger a mutation.
 
-Wave 48C will carry state, boundary source, denominator, and pending/unknown counts into the existing month-end and CSV evidence paths rather than introducing a parallel export domain. It must retain the Wave 48B bounded-scope disclosure, separate denominators, exact-chain ownership, per-decision random-baseline interpretation, sample-size warnings, and the same non-predictive language.
+Wave 48C carries the same state, boundary source, denominator, and pending/unknown counts into the existing month-end and CSV evidence paths without introducing a parallel export domain. The existing month-end score and recent-review composition retain their original bounded read. A separate MiniGPT observation read uses the latest 100 outcomes with `includeArchived=true`, the matching 100-row decision page only for `total`/`hasNext` completeness metadata, and exact backtest detail for each stable observed decision's `reviewBacktestId`. Optional observation, scope, or exact-detail failures remain explicit and cannot substitute a newer or similar report. The month-end observation panel reuses `aggregateMiniGptPostCorpusOutcomes`, is read-only, and does not feed the month-end score, review action, recommendation lifecycle, ticket-pack state, approval, or ticket creation.
+
+The month-end panel presents all five counts plus non-MiniGPT exclusions, loaded/total scope, observed decisions, distinct observed issues, scored candidates, fully settled financial coverage, and exact comparable-baseline coverage. Truncation, fewer than three distinct observed issues, duplicate issues, unstable lineage, partial financial coverage, incomplete baseline coverage, and `UNKNOWN` each remain visible. Random-baseline deltas remain on their owning decisions in the decision board and are not averaged in the month-end summary. A favorable value cannot upgrade the purple temporal state or establish generalization.
+
+The existing `decision-outcomes` CSV now contains an export-internal Java mirror of the V1 classifier. It does not add a public aggregate DTO or API. The mirror uses decision-level `LotteryResearchProvenance`, `targetIssue`, `decisionSetId`, and decision-level `scoredCandidateCount`; candidate-level provenance and candidate `resultState` remain ordinary detail columns and do not redefine the decision boundary. The fixed observation snapshot is always:
+
+```text
+boundaryClassifierVersion = MINIGPT_TEMPORAL_BOUNDARY_V1
+boundarySource            = DECISION_PROVENANCE_PLUS_EXACT_DECISION_OUTCOME
+observationSnapshotScope  = LATEST_100_DECISIONS_INCLUDE_ARCHIVED
+observationSnapshotLimit  = 100
+boundaryCountUnit         = DECISION_SET
+```
+
+The export request's `targetIssue`, `ruleName`, and `limit` continue to select or cap flattened candidate detail rows. They do not change the fixed observation snapshot. Snapshot loaded/total/truncated metadata, MiniGPT/non-MiniGPT counts, all five decision-state counts, observed-decision denominator, distinct-issue denominator, scored-candidate denominator, and settled-financial decision denominator repeat on every candidate row. `snapshotAggregationSemantics=REPEATED_SNAPSHOT_METADATA_DO_NOT_SUM` is therefore mandatory: a decision with multiple candidate rows contributes once to the snapshot, and spreadsheet consumers must not sum repeated snapshot cells. `rowCount` remains the number of emitted candidate rows, not a decision count or observation denominator.
+
+`decision-sets`, `backtests`, and `decision-outcomes` remain the existing V47 evidence chain and `v47-minigpt-research` preset. Wave 48C extends `decision-outcomes` where flattened candidate rows need an unambiguous decision boundary; it does not create a synthetic summary row, fourth MiniGPT CSV type, route, collection, or write operation.
+
+Reviewed export evidence is resolved by exact id in the existing backtest repository. `reviewBacktestOwnershipState` is `EXACT_OWNED` only when both `report.id == reviewBacktestId` and `report.decisionSetId == decisionSetId`; unbound, unavailable, id-mismatched, and wrong-owner evidence cannot populate trusted reviewed deltas. `reviewedBaselineComparabilityState` is `COMPARABLE` only when stable provenance also matches, window and budget flags are true, model and baseline ticket counts are equal, baseline algorithm/seed/window metadata and all five deltas are complete, and the mode is `STATIC_POOL_HISTORICAL_REPLAY`. Explicit window, budget, or ticket-count mismatches are `FAIL`; all other gaps are `UNKNOWN`. Only comparable evidence populates `comparableBacktestNetResultDelta` and `comparableBacktestRoiPercentDelta`; there is no latest-report fallback.
+
+All new values still flow through the shared CSV serializer described above, including formula-injection protection and CR/LF/quote handling. Each row repeats an English safety notice that fixes the interpretation to historical-window research, admits only `POST_CORPUS_OBSERVED` to the observed denominator, forbids summing repeated snapshot metadata, and states that no automatic approval or ticket creation occurs.
 
 ## Statistics Contract
 

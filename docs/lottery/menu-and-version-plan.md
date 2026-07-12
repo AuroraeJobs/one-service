@@ -280,7 +280,8 @@ Goal: make the temporal position of MiniGPT decision evidence explicit before ag
 - Reserve out-of-sample wording for settled `POST_CORPUS_OBSERVED` evidence only. The label describes temporal position, not performance PASS or future value; `UNKNOWN` is never PASS.
 - Completed Wave 48B remains inside `/lottery/predictions/decision`: it composes the latest 100 include-archived outcomes, exposes decision-page `total`/`hasNext` scope, groups stable corpus/run/hash/range lineage while retaining decision rows, isolates incomplete lineage, and keeps observed-decision, distinct-issue, scored-candidate, and settled-financial denominators separate.
 - Random-baseline evidence remains per owning decision and requires exact reviewed report id, decision ownership, matching stable provenance, same window/budget, equal ticket counts, complete metadata/deltas, and static historical-replay mode. Reports are not averaged, favorable deltas do not upgrade the boundary, and no new API/DTO/write action is introduced.
-- Wave 48C month-end/existing CSV propagation is next, followed by Wave 48D release and browser handoff evidence.
+- Completed Wave 48C keeps the existing navigation and export domains: `/lottery/month-end` adds an independent latest-100 include-archived five-state/observed-only summary, while `decision-outcomes` repeats a fixed decision-level snapshot on flattened candidate rows with explicit do-not-sum semantics and exact reviewed ownership/comparability.
+- Wave 48D release, browser, staged-scope, commit, and push evidence is next; no additional page, navigation item, public aggregate API, export type, or write operation is planned.
 - Keep exact decision/backtest ownership and all current manual recommendation, ticket-pack, approval, and ticket-creation boundaries.
 
 ## API Boundary

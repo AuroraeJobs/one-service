@@ -33,12 +33,15 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -290,6 +293,9 @@ class LotteryExportServiceTest {
                                 .build()))
                         .build()))
                 .build());
+        when(backtestReportRepository.findAllById(any())).thenReturn(List.of(
+                comparableReport("backtest-1", "decision-1", miniGptProvenance())
+        ));
 
         LotteryExportResult result = service.export("decision-outcomes", Map.of("limit", "10"));
 
@@ -301,6 +307,201 @@ class LotteryExportServiceTest {
         assertThat(result.getContent()).contains("STATIC_POOL_HISTORICAL_REPLAY");
         assertThat(result.getContent()).contains("generation-1");
         assertThat(result.getContent()).contains("batch-1,run-1,minigpt-run,corpus-v1");
+        assertThat(csvRow(result, 0)).containsEntry("reviewBacktestOwnershipState", "EXACT_OWNED");
+    }
+
+    @Test
+    void exportDecisionOutcomesCarriesFiveStateObservedOnlySnapshotWithoutCountingCandidateRows() {
+        LotteryResearchProvenance candidateProvenance = miniGptProvenance();
+        candidateProvenance.setValidationLatestIssue("2027000");
+        LotteryDecisionOutcomeItem observed = outcomeItem(
+                "decision-observed",
+                "2026080",
+                1,
+                miniGptProvenance(),
+                List.of(
+                        outcomeCandidate("candidate-observed-1", candidateProvenance),
+                        outcomeCandidate("candidate-observed-2", candidateProvenance)
+                )
+        );
+        observed.setReviewBacktestId("backtest-observed");
+        observed.setConvertedTicketCount(1);
+        observed.setCheckedConvertedTicketCount(1);
+        observed.setTotalCost(new BigDecimal("2"));
+        observed.setTotalPrize(new BigDecimal("0"));
+
+        LotteryResearchProvenance unknownProvenance = miniGptProvenance();
+        unknownProvenance.setValidationLatestIssue("26078");
+        LotteryDecisionOutcomeSummary snapshot = LotteryDecisionOutcomeSummary.builder()
+                .items(List.of(
+                        outcomeItem("decision-train", "2023001", 1, miniGptProvenance(), List.of()),
+                        outcomeItem("decision-validation", "2025002", 1, miniGptProvenance(), List.of()),
+                        outcomeItem("decision-pending", "2026079", 0, miniGptProvenance(), List.of()),
+                        observed,
+                        outcomeItem("decision-unknown", "2026081", 1, unknownProvenance, List.of()),
+                        outcomeItem("decision-other", "2026082", 1, null, List.of())
+                ))
+                .build();
+        LotteryBacktestReport exactReport = comparableReport("backtest-observed", "decision-observed", miniGptProvenance());
+        when(decisionSetService.outcomeSummary(null, 10)).thenReturn(LotteryDecisionOutcomeSummary.builder()
+                .items(List.of(observed))
+                .build());
+        when(decisionSetService.outcomeSummary(true, 100)).thenReturn(snapshot);
+        when(decisionSetRepository.countByUserId("default")).thenReturn(103L);
+        when(backtestReportRepository.findAllById(any())).thenReturn(List.of(exactReport));
+
+        LotteryExportResult result = service.export("decision-outcomes", Map.of("limit", "10"));
+
+        assertThat(result.getRowCount()).isEqualTo(2);
+        Map<String, String> first = csvRow(result, 0);
+        Map<String, String> second = csvRow(result, 1);
+        assertThat(first)
+                .containsEntry("boundaryClassifierVersion", "MINIGPT_TEMPORAL_BOUNDARY_V1")
+                .containsEntry("boundarySource", "DECISION_PROVENANCE_PLUS_EXACT_DECISION_OUTCOME")
+                .containsEntry("boundaryTrainSha256", "train-sha")
+                .containsEntry("boundaryValidationSha256", "validation-sha")
+                .containsEntry("boundaryCheckpointSha256", "checkpoint-sha")
+                .containsEntry("boundaryValidationLatestIssue", "2026078")
+                .containsEntry("decisionBoundaryState", "POST_CORPUS_OBSERVED")
+                .containsEntry("decisionBoundaryObservedEligible", "true")
+                .containsEntry("decisionIncludedInObservationSnapshot", "true")
+                .containsEntry("decisionBoundaryMatchesObservationSnapshot", "true")
+                .containsEntry("snapshotTrainWindowDecisionCount", "1")
+                .containsEntry("snapshotValidationWindowDecisionCount", "1")
+                .containsEntry("snapshotPostCorpusPendingDecisionCount", "1")
+                .containsEntry("snapshotPostCorpusObservedDecisionCount", "1")
+                .containsEntry("snapshotUnknownDecisionCount", "1")
+                .containsEntry("snapshotObservedDecisionDenominator", "1")
+                .containsEntry("snapshotObservedDistinctIssueDenominator", "1")
+                .containsEntry("snapshotObservedScoredCandidateDenominator", "1")
+                .containsEntry("snapshotObservedFinancialDecisionDenominator", "1")
+                .containsEntry("observationSnapshotLoadedDecisionCount", "6")
+                .containsEntry("observationSnapshotTotalDecisionCount", "103")
+                .containsEntry("observationSnapshotTruncated", "true")
+                .containsEntry("observationSnapshotMiniGptDecisionCount", "5")
+                .containsEntry("observationSnapshotExcludedNonMiniGptCount", "1")
+                .containsEntry("snapshotAggregationSemantics", "REPEATED_SNAPSHOT_METADATA_DO_NOT_SUM")
+                .containsEntry("reviewBacktestOwnershipState", "EXACT_OWNED")
+                .containsEntry("reviewedBaselineComparabilityState", "COMPARABLE")
+                .containsEntry("comparableBacktestRoiPercentDelta", "16.66");
+        assertThat(second.get("snapshotObservedDecisionDenominator")).isEqualTo("1");
+        assertThat(second.get("decisionBoundaryState")).isEqualTo("POST_CORPUS_OBSERVED");
+        assertThat(first.get("observationSafetyNotice"))
+                .contains("do not extrapolate future performance")
+                .contains("do not sum them")
+                .contains("No automatic approval or ticket creation");
+    }
+
+    @Test
+    void exportDecisionOutcomesReusesArchivedHundredDecisionScopeForMiniGptReviewPreset() {
+        LotteryDecisionOutcomeSummary summary = LotteryDecisionOutcomeSummary.builder()
+                .items(List.of(outcomeItem(
+                        "decision-observed",
+                        "2026080",
+                        1,
+                        miniGptProvenance(),
+                        List.of(outcomeCandidate("candidate-observed", null))
+                )))
+                .build();
+        when(decisionSetService.outcomeSummary(true, 500)).thenReturn(summary);
+
+        LotteryExportResult result = service.export("decision-outcomes", Map.of(
+                "includeArchived", "true",
+                "limit", "500"
+        ));
+
+        assertThat(result.getRowCount()).isEqualTo(1);
+        assertThat(csvRow(result, 0))
+                .containsEntry("observationSnapshotLoadedDecisionCount", "1")
+                .containsEntry("decisionBoundaryMatchesObservationSnapshot", "true")
+                .containsEntry("decisionContributesToSnapshotObservedDenominator", "true");
+        verify(decisionSetService).outcomeSummary(true, 500);
+        verify(decisionSetService, never()).outcomeSummary(true, 100);
+    }
+
+    @Test
+    void exportDecisionOutcomesDoesNotCallInvalidLimitACompleteHundredDecisionSnapshot() {
+        LotteryDecisionOutcomeItem detail = outcomeItem(
+                "decision-detail",
+                "2026080",
+                1,
+                miniGptProvenance(),
+                List.of(outcomeCandidate("candidate-detail", null))
+        );
+        LotteryDecisionOutcomeItem older = outcomeItem(
+                "decision-older",
+                "2026081",
+                0,
+                miniGptProvenance(),
+                List.of()
+        );
+        when(decisionSetService.outcomeSummary(true, null)).thenReturn(LotteryDecisionOutcomeSummary.builder()
+                .items(List.of(detail))
+                .build());
+        when(decisionSetService.outcomeSummary(true, 100)).thenReturn(LotteryDecisionOutcomeSummary.builder()
+                .items(List.of(detail, older))
+                .build());
+
+        LotteryExportResult result = service.export("decision-outcomes", Map.of(
+                "includeArchived", "true",
+                "limit", "not-a-number"
+        ));
+
+        assertThat(csvRow(result, 0))
+                .containsEntry("observationSnapshotLoadedDecisionCount", "2")
+                .containsEntry("snapshotPostCorpusObservedDecisionCount", "1")
+                .containsEntry("snapshotPostCorpusPendingDecisionCount", "1");
+        verify(decisionSetService).outcomeSummary(true, null);
+        verify(decisionSetService).outcomeSummary(true, 100);
+    }
+
+    @Test
+    void exportDecisionOutcomesDoesNotPromoteLatestOrWrongOwnerBacktestToReviewedEvidence() {
+        LotteryDecisionOutcomeItem wrongOwner = outcomeItem(
+                "decision-wrong-owner",
+                "2026080",
+                1,
+                miniGptProvenance(),
+                List.of(outcomeCandidate("candidate-wrong-owner", null))
+        );
+        wrongOwner.setReviewBacktestId("backtest-wrong-owner");
+        wrongOwner.setBacktestRoiPercentDelta(new BigDecimal("88.88"));
+        LotteryDecisionOutcomeItem unbound = outcomeItem(
+                "decision-unbound",
+                "2026081",
+                1,
+                miniGptProvenance(),
+                List.of(outcomeCandidate("candidate-unbound", null))
+        );
+        unbound.setBacktestRoiPercentDelta(new BigDecimal("99.99"));
+        LotteryDecisionOutcomeSummary summary = LotteryDecisionOutcomeSummary.builder()
+                .items(List.of(wrongOwner, unbound))
+                .build();
+        when(decisionSetService.outcomeSummary(null, 10)).thenReturn(summary);
+        when(decisionSetService.outcomeSummary(true, 100)).thenReturn(summary);
+        when(backtestReportRepository.findAllById(any())).thenReturn(List.of(
+                comparableReport("backtest-wrong-owner", "another-decision", miniGptProvenance())
+        ));
+
+        LotteryExportResult result = service.export("decision-outcomes", Map.of("limit", "10"));
+
+        Map<String, Map<String, String>> rowsByDecision = resultRows(result).stream()
+                .collect(java.util.stream.Collectors.toMap(row -> row.get("decisionSetId"), row -> row));
+        assertThat(rowsByDecision.get("decision-wrong-owner"))
+                .containsEntry("reviewBacktestOwnershipState", "OWNER_MISMATCH")
+                .containsEntry("reviewedBacktestRoiPercentDelta", "")
+                .containsEntry("reviewedBaselineComparabilityState", "UNKNOWN")
+                .containsEntry("reviewedBaselineComparabilityReasons", "DECISION_OWNER_MISMATCH")
+                .containsEntry("comparableBacktestRoiPercentDelta", "")
+                .containsEntry("decisionBoundaryState", "POST_CORPUS_OBSERVED");
+        assertThat(rowsByDecision.get("decision-unbound"))
+                .containsEntry("reviewBacktestOwnershipState", "UNBOUND")
+                .containsEntry("reviewedBacktestRoiPercentDelta", "")
+                .containsEntry("reviewedBaselineComparabilityState", "UNKNOWN")
+                .containsEntry("reviewedBaselineComparabilityReasons", "MISSING_REVIEW_BINDING")
+                .containsEntry("comparableBacktestRoiPercentDelta", "")
+                .containsEntry("backtestRoiPercentDelta", "")
+                .containsEntry("backtestWarnings", "");
     }
 
     @Test
@@ -360,5 +561,99 @@ class LotteryExportServiceTest {
                 .batchStrategies(List.of("balanced", "blue-focus"))
                 .capturedAt(100L)
                 .build();
+    }
+
+    private LotteryDecisionOutcomeItem outcomeItem(String decisionSetId,
+                                                   String targetIssue,
+                                                   Integer scoredCandidateCount,
+                                                   LotteryResearchProvenance provenance,
+                                                   List<LotteryDecisionCandidateOutcome> candidates) {
+        return LotteryDecisionOutcomeItem.builder()
+                .decisionSetId(decisionSetId)
+                .title(decisionSetId)
+                .targetIssue(targetIssue)
+                .scoredCandidateCount(scoredCandidateCount)
+                .provenance(provenance)
+                .candidates(candidates)
+                .build();
+    }
+
+    private LotteryDecisionCandidateOutcome outcomeCandidate(String key, LotteryResearchProvenance provenance) {
+        return LotteryDecisionCandidateOutcome.builder()
+                .candidateKey(key)
+                .candidateTitle(key)
+                .provenance(provenance)
+                .redNumbers(List.of("01", "02", "03", "04", "05", "06"))
+                .blueNumber("07")
+                .resultState("WON")
+                .redHits(3)
+                .build();
+    }
+
+    private LotteryBacktestReport comparableReport(String id,
+                                                   String decisionSetId,
+                                                   LotteryResearchProvenance provenance) {
+        return LotteryBacktestReport.builder()
+                .id(id)
+                .decisionSetId(decisionSetId)
+                .provenance(provenance)
+                .sameWindow(true)
+                .sameBudget(true)
+                .ticketCount(10)
+                .baselineTicketCount(10)
+                .windowIssueCount(5)
+                .baselineAlgorithm("FNV1A64_JAVA_RANDOM_V1")
+                .baselineSeed(42L)
+                .evaluationMode("STATIC_POOL_HISTORICAL_REPLAY")
+                .averageRedHitsDelta(new BigDecimal("0.20"))
+                .blueHitRateDelta(new BigDecimal("1.00"))
+                .totalPrizeDelta(new BigDecimal("4"))
+                .netResultDelta(new BigDecimal("10"))
+                .roiPercentDelta(new BigDecimal("16.66"))
+                .overfitWarnings(List.of("STATIC_POOL_HISTORICAL_REPLAY"))
+                .build();
+    }
+
+    private List<Map<String, String>> resultRows(LotteryExportResult result) {
+        String[] lines = result.getContent().split("\\n", -1);
+        List<String> headers = parseCsvLine(lines[0]);
+        List<Map<String, String>> rows = new ArrayList<>();
+        for (int index = 1; index < lines.length; index++) {
+            List<String> values = parseCsvLine(lines[index]);
+            Map<String, String> row = new LinkedHashMap<>();
+            for (int column = 0; column < headers.size(); column++) {
+                row.put(headers.get(column), column < values.size() ? values.get(column) : "");
+            }
+            rows.add(row);
+        }
+        return rows;
+    }
+
+    private Map<String, String> csvRow(LotteryExportResult result, int rowIndex) {
+        return resultRows(result).get(rowIndex);
+    }
+
+    private List<String> parseCsvLine(String line) {
+        List<String> values = new ArrayList<>();
+        StringBuilder value = new StringBuilder();
+        boolean quoted = false;
+        for (int index = 0; index < line.length(); index++) {
+            char current = line.charAt(index);
+            if (current == '"') {
+                if (quoted && index + 1 < line.length() && line.charAt(index + 1) == '"') {
+                    value.append('"');
+                    index += 1;
+                } else {
+                    quoted = !quoted;
+                }
+            } else if (current == ',' && !quoted) {
+                values.add(value.toString());
+                value.setLength(0);
+            } else {
+                value.append(current);
+            }
+        }
+        values.add(value.toString());
+        return values;
     }
 }

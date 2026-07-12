@@ -2592,6 +2592,125 @@
   white-space: nowrap;
 }
 
+.lottery-month-end-observation {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, #722ed1 24%, var(--app-border));
+  border-radius: 10px;
+  background: color-mix(in srgb, #722ed1 3%, var(--app-surface));
+}
+
+.lottery-month-end-minigpt-card {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.lottery-month-end-minigpt-card > .ant-card-body {
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+}
+
+.lottery-month-end-observation > header {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lottery-month-end-observation > header > div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.lottery-month-end-observation > header strong {
+  color: var(--app-text);
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.lottery-month-end-observation > header span,
+.lottery-month-end-observation-scope,
+.lottery-month-end-observation-state-grid span,
+.lottery-month-end-observation-metric-grid span,
+.lottery-month-end-observation-metric-grid small {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.lottery-month-end-observation-state-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.lottery-month-end-observation-state-grid article,
+.lottery-month-end-observation-metric-grid article {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-month-end-observation-state-grid article[data-boundary-state='POST_CORPUS_OBSERVED'] {
+  border-color: color-mix(in srgb, #722ed1 38%, var(--app-border));
+  background: color-mix(in srgb, #722ed1 7%, var(--app-surface-elevated));
+}
+
+.lottery-month-end-observation-state-grid article[data-boundary-state='POST_CORPUS_PENDING'] {
+  border-color: color-mix(in srgb, #d48806 34%, var(--app-border));
+  background: color-mix(in srgb, #d48806 6%, var(--app-surface-elevated));
+}
+
+.lottery-month-end-observation-state-grid strong,
+.lottery-month-end-observation-metric-grid strong {
+  color: var(--app-text);
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.lottery-month-end-observation-state-grid .ant-tag {
+  width: fit-content;
+  max-width: 100%;
+  margin-inline-end: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.lottery-month-end-observation-scope {
+  display: grid;
+  gap: 3px;
+  padding: 9px 11px;
+  border-left: 3px solid color-mix(in srgb, #722ed1 55%, var(--app-border));
+  background: color-mix(in srgb, #722ed1 4%, var(--app-surface));
+}
+
+.lottery-month-end-observation-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.lottery-month-end-observation-metric-grid small {
+  overflow-wrap: anywhere;
+}
+
+.lottery-month-end-observation-warnings {
+  display: grid;
+  gap: 8px;
+}
+
 .lottery-month-end-metric-grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -7835,6 +7954,11 @@ button.lottery-latest-vs-card:hover {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .lottery-month-end-observation-state-grid,
+  .lottery-month-end-observation-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .lottery-workbench-status-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -7892,6 +8016,18 @@ button.lottery-latest-vs-card:hover {
 }
 
 @media (max-width: 560px) {
+  .lottery-month-end-observation {
+    padding: 11px;
+  }
+
+  .lottery-month-end-observation > header {
+    flex-direction: column;
+  }
+
+  .lottery-month-end-observation > header .ant-btn {
+    width: 100%;
+  }
+
   .lottery-workbench-quick-rail,
   .lottery-workbench-action-groups,
   .lottery-workbench-health-summary,
@@ -7943,6 +8079,8 @@ button.lottery-latest-vs-card:hover {
   .lottery-workbench-closure-list,
   .lottery-archive-search,
   .lottery-month-end-note-summary,
+  .lottery-month-end-observation-state-grid,
+  .lottery-month-end-observation-metric-grid,
   .lottery-workbench-status-grid {
     grid-template-columns: minmax(0, 1fr);
   }

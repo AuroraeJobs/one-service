@@ -1,12 +1,12 @@
 {
   "target": "Lottery unified overview default smoke",
-  "generatedAt": "2026-07-12T05:00:13.391Z",
+  "generatedAt": "2026-07-12T05:40:03.938Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 18,
-  "checkCount": 1134,
+  "checkCount": 1250,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [
@@ -70,9 +70,9 @@
       "route": "/lottery/month-end",
       "label": "月末复盘",
       "component": "LotteryMonthEndReviewPage",
-      "mockApiCount": 14,
-      "emptyStateCount": 29,
-      "errorStateCount": 1
+      "mockApiCount": 15,
+      "emptyStateCount": 35,
+      "errorStateCount": 3
     },
     {
       "route": "/lottery/predictions/decision",
@@ -151,7 +151,7 @@
       "label": "导出审计",
       "component": "LotteryExportMaintenancePage",
       "mockApiCount": 4,
-      "emptyStateCount": 53,
+      "emptyStateCount": 58,
       "errorStateCount": 4
     }
   ]

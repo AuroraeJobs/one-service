@@ -7,12 +7,12 @@ Generated from `npm run lottery:smoke`.
 | Field | Value |
 | --- | --- |
 | Target | Lottery unified overview default smoke |
-| Generated at | 2026-07-12T05:00:13.391Z |
+| Generated at | 2026-07-12T05:40:03.938Z |
 | Status | PASSED |
 | Mode | mocked-fixture |
 | Provider network | not-required |
 | Routes | 18 |
-| Checks | 1134 |
+| Checks | 1250 |
 | Failures | 0 |
 
 ## Protected Browser QA
@@ -51,6 +51,13 @@ Generated from `npm run lottery:smoke`.
 | iteration 48B exact reviewed baseline comparability | `src/utils/lotteryBacktestEvidence.ts` | 8 | 0 |
 | iteration 48B read-only observation aggregate UI | `src/components/LotteryPredictionDecisionPage.tsx` | 12 | 2 |
 | iteration 48B observation aggregate responsive styles | `src/components/LotteryPredictionDecisionPage.css` | 8 | 0 |
+| iteration 48C month-end bounded five-state observation | `src/components/LotteryMonthEndReviewPage.tsx` | 17 | 7 |
+| iteration 48C month-end exact reviewed evidence | `src/components/LotteryMonthEndReviewPage.tsx` | 7 | 0 |
+| iteration 48C month-end observation responsive styles | `src/components/LotteryOverviewPage.css` | 8 | 0 |
+| iteration 48C decision-outcomes CSV boundary snapshot | `../one-record/one-record-service/src/main/java/com/one/record/service/impl/LotteryExportService.java` | 22 | 6 |
+| iteration 48C CSV exact review ownership and injection guard | `../one-record/one-record-service/src/main/java/com/one/record/service/impl/LotteryExportService.java` | 13 | 1 |
+| iteration 48C CSV focused backend coverage | `../one-record/one-record-service/src/test/java/com/one/record/service/impl/LotteryExportServiceTest.java` | 9 | 0 |
+| iteration 48C existing export preset handoff | `src/components/LotteryExportMaintenancePage.tsx` | 13 | 3 |
 | iteration 47C decision deep-link and review workflow | `src/components/LotteryPredictionDecisionPage.tsx` | 8 | 0 |
 | iteration 47C historical baseline evidence surfaces | `src/components/LotteryBacktestDetailPage.tsx` | 7 | 0 |
 | iteration 47C research baseline evidence | `src/components/LotteryResearchPage.tsx` | 6 | 0 |
@@ -59,7 +66,7 @@ Generated from `npm run lottery:smoke`.
 | iteration 47C outcome deep-link preservation | `src/components/LotteryOutcomeAttributionPage.tsx` | 6 | 0 |
 | iteration 47C ledger dimension-value deep-link restore | `src/components/LotteryLedgerPage.tsx` | 7 | 0 |
 | iteration 47C recommendation target deep-link restore | `src/components/LotteryRecommendationPage.tsx` | 5 | 0 |
-| iteration 47D month-end MiniGPT research handoff | `src/components/LotteryMonthEndReviewPage.tsx` | 19 | 0 |
+| iteration 47D month-end MiniGPT research handoff | `src/components/LotteryMonthEndReviewPage.tsx` | 20 | 0 |
 | iteration 47D MiniGPT release evidence handoff | `src/components/LotteryExportMaintenancePage.tsx` | 11 | 0 |
 | workbench closure path | `src/components/LotteryWorkbenchPage.tsx` | 49 | 0 |
 | mobile dark-mode CSS safeguards | `src/components/LotteryOverviewPage.css` | 7 | 0 |
@@ -97,7 +104,7 @@ Generated from `npm run lottery:smoke`.
 | 移动 | `/lottery/mobile` | LotteryMobileCommandPage | 11 | 4 | 5 |
 | 策略组合 | `/lottery/strategy-portfolios` | LotteryStrategyPortfolioPage | 3 | 1 | 3 |
 | 沙盘 | `/lottery/simulator` | LotterySimulatorPage | 2 | 2 | 1 |
-| 月末复盘 | `/lottery/month-end` | LotteryMonthEndReviewPage | 14 | 29 | 1 |
+| 月末复盘 | `/lottery/month-end` | LotteryMonthEndReviewPage | 15 | 35 | 3 |
 | 预测决策板 | `/lottery/predictions/decision` | LotteryPredictionDecisionPage | 12 | 3 | 3 |
 | 票据 | `/lottery/tickets` | LotteryTicketPage | 9 | 4 | 5 |
 | 票包 | `/lottery/ticket-packs` | LotteryTicketPackPage | 7 | 3 | 4 |
@@ -107,7 +114,7 @@ Generated from `npm run lottery:smoke`.
 | 研究对比 | `/lottery/research` | LotteryResearchPage | 6 | 6 | 1 |
 | 策略笔记 | `/lottery/research/notebook` | LotteryResearchNotebookPage | 4 | 27 | 4 |
 | 宇航员航行分析 | `/lottery/astronauts/:camp/:number` | LotteryAstronautVoyagePage | 2 | 6 | 1 |
-| 导出审计 | `/lottery/exports` | LotteryExportMaintenancePage | 4 | 53 | 4 |
+| 导出审计 | `/lottery/exports` | LotteryExportMaintenancePage | 4 | 58 | 4 |
 
 ## Failures
 

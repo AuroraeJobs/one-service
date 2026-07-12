@@ -4,9 +4,9 @@ Theme: MiniGPT 时间边界与样本外观察 V1
 
 ## Version Goal
 
-Make the temporal position of each MiniGPT decision explicit before interpreting any result. Wave 48A adds a frontend-only, read-only boundary classification over the existing decision outcomes, decision sets, backtests, and typed research provenance. Wave 48B composes a bounded observed-only aggregate over those same contracts. Later waves can carry the boundary and denominator into month-end and CSV evidence without turning historical observations into prediction claims.
+Make the temporal position of each MiniGPT decision explicit before interpreting any result. Wave 48A adds a frontend-only, read-only boundary classification over the existing decision outcomes, decision sets, backtests, and typed research provenance. Wave 48B composes a bounded observed-only aggregate over those same contracts. Wave 48C carries the same fixed boundary and denominators into month-end review and the existing CSV evidence chain without turning historical observations into prediction claims.
 
-Status: promoted as the only next candidate on 2026-07-12. Waves 48A and 48B are complete; Wave 48C is the next unfinished slice.
+Status: promoted as the only next candidate on 2026-07-12. Waves 48A-48C are complete; Wave 48D release and handoff is the next unfinished slice.
 
 ## Starting Point
 
@@ -19,6 +19,7 @@ Status: promoted as the only next candidate on 2026-07-12. Waves 48A and 48B are
 
 - Classify an issue by immutable corpus boundaries and attached outcome state, never by whether the result looks favorable.
 - Keep Waves 48A-48B frontend-only and read-only. Reuse existing outcomes, decision-set, and exact backtest-detail contracts; add no API, DTO, collection, route, export type, or write action.
+- Keep Wave 48C inside the existing month-end route and `decision-outcomes` CSV implementation. Its Java classifier is an export-internal deterministic mirror, not a public aggregate API or a second MiniGPT export domain.
 - Resolve evidence only inside the same decision chain. A newer or unrelated backtest must never supply missing boundaries or replace a reviewed report.
 - Only `POST_CORPUS_OBSERVED` may be called an out-of-sample observation. It is an observation category, not a performance PASS, proof of generalization, or future-performance signal.
 - `UNKNOWN` is an explicit safety state and must never receive PASS text, color, sorting priority, or fallback semantics.
@@ -80,10 +81,13 @@ Acceptance:
 
 Goal: carry the temporal boundary and observed-only denominator into existing review and archive paths.
 
-- Add the five-state counts and observed-only aggregate to the existing month-end MiniGPT research section.
-- Extend the existing decision-set, backtest, or decision-outcome CSV contracts only where needed; do not create a parallel MiniGPT export domain.
-- Export the boundary source fields, classifier state, observation denominator, pending/unknown counts, and safety warning so spreadsheet review cannot confuse validation-window rows with post-corpus observations.
-- Keep exact reviewed-backtest binding, CSV formula-injection protection, historical-research language, and no-auto-action semantics from Iteration 47.
+- The existing MiniGPT month-end section now adds an independent latest-100 `includeArchived=true` outcome snapshot plus the matching 100-row decision page for total/truncation metadata. It keeps the legacy 12-row month-end summary separate, reuses the Wave 48B aggregator, and requests each stable observed decision's exact reviewed-backtest detail without allowing a failed optional read to replace evidence from another chain.
+- Month-end shows all five state counts, non-MiniGPT exclusions, loaded/total scope, observed decisions, distinct issues, scored candidates, fully settled financial coverage, exact comparable-baseline coverage, and the same truncation, small-sample, duplicate-issue, lineage, financial, ownership, comparability, and `UNKNOWN` warnings. The panel is read-only and does not feed the month-end score or lifecycle actions.
+- The existing `decision-outcomes` CSV now owns an export-internal Java mirror of `MINIGPT_TEMPORAL_BOUNDARY_V1`. Its boundary uses decision-level provenance, target issue, exact decision ownership, and decision-level scored outcome evidence; candidate provenance and candidate `resultState` do not redefine the decision boundary.
+- CSV observation metadata always describes the fixed `LATEST_100_DECISIONS_INCLUDE_ARCHIVED` snapshot. Detail filters and the export row limit still control flattened candidate rows only; they do not change the snapshot. Five state counts, observed-decision, distinct-issue, scored-candidate, and settled-financial denominators repeat on every candidate row with `REPEATED_SNAPSHOT_METADATA_DO_NOT_SUM`, so repeated candidate rows must never be summed as independent decisions.
+- `decision-sets`, `backtests`, and `decision-outcomes` remain the same existing evidence package and export types. Wave 48C adds the temporal mirror only where candidate-row ambiguity exists, in `decision-outcomes`; it adds no route, DTO, collection, synthetic summary row, or parallel MiniGPT export domain.
+- Reviewed evidence requires the exact `reviewBacktestId` and owning `decisionSetId`. Comparable fields additionally require stable matching provenance, `sameWindow === true`, `sameBudget === true`, equal ticket counts, complete baseline metadata and all five deltas, and `STATIC_POOL_HISTORICAL_REPLAY`. Unbound, unavailable, wrong-owner, or otherwise incomplete evidence remains `UNKNOWN`; trusted comparable deltas stay blank rather than borrowing a latest report.
+- All added columns continue through the shared CSV serializer and its formula-injection protection. Every repeated row carries historical-only, no-walk-forward, do-not-sum, and no-automatic-approval/ticket-creation safety semantics.
 
 ## Wave 48D: Release And Handoff
 
@@ -100,7 +104,7 @@ Goal: verify the temporal-boundary semantics and close the release without widen
 - Treating `POST_CORPUS_OBSERVED` as proof that a model beats random selection or predicts future draws.
 - Automatic recommendation transitions, ticket-pack approval, ticket creation, purchase, or unattended betting.
 - Re-training, walk-forward evaluation, corpus mutation, or retroactively moving an issue between frozen corpus windows.
-- A new Wave 48A/48B API, DTO, MongoDB collection, route, menu item, export type, or mutation.
+- A new Wave 48A/48B API, DTO, MongoDB collection, route, menu item, export type, or mutation; or a Wave 48C public aggregate API, collection, synthetic CSV summary row, parallel export domain, or business-data write.
 
 ## Completion Evidence
 
@@ -111,4 +115,6 @@ Goal: verify the temporal-boundary semantics and close the release without widen
 - Final Wave 48B automation passed file-scoped ESLint, i18n audit with 1088 localized calls, lottery smoke/release evidence with 1134/1134 checks across 18 routes, TypeScript, and the production Vite build. The build retains only the existing large-chunk advisory.
 - Isolated rendered QA used eight MiniGPT decision fixtures to verify five-state counts `1/1/1/4/1`, observed denominator 4, two distinct issues, four scored candidates, fully settled financial coverage 1/4, and baseline coverage `COMPARABLE 1 / FAIL 1 / UNKNOWN 2`, including wrong-owner and incomplete-lineage controls. Ninety-five older non-MiniGPT controls then verified the visible 100/103 truncation boundary without changing the observed denominator.
 - Chinese/English 1280px checks plus English 390px light/dark checks showed the same semantics, no residual Chinese in the English panel, no document or panel horizontal overflow, and no new console errors after backend readiness. Spring access logs showed only GET reads for bounded outcomes, decision-page completeness, and exact reviewed backtest details. All 103 decision controls, eight snapshots, three backtests, one ticket, temporary servers, tabs, and viewport overrides were removed.
-- Waves 48C-48D remain open. Add their implementation, verification, staged-scope, commit, and push evidence only after each wave is genuinely complete.
+- Wave 48C adds the independent bounded-100 include-archived month-end aggregate without changing the legacy month-end score or lifecycle state. It also extends the existing `decision-outcomes` CSV with decision-level boundary source/state/reason, fixed snapshot scope/counts/denominators, exact reviewed ownership/comparability, explicit repeated-metadata semantics, and historical-only/no-auto-action safety copy. No new export type, route, DTO, collection, or write action was added.
+- Focused Wave 48C `LotteryExportServiceTest` coverage passed 12/12, including five-state decision counts that are not multiplied by multiple candidate rows, fixed snapshot metadata independent of detail row limits, 100/103 truncation, exact-owned comparable evidence, wrong-owner/unbound `UNKNOWN`, blank trusted deltas, and the shared safety notice. File-scoped ESLint passed and the i18n audit passed 1090 localized calls.
+- Wave 48D remains open. Smoke/release evidence, production build, rendered Chinese/English desktop/mobile QA, staged-scope audit, commit, and push evidence must be added only after those gates genuinely complete.

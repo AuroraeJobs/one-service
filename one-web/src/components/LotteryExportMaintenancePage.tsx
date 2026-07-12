@@ -239,10 +239,13 @@ const formatDateTime = (timestamp: number | undefined, language: string) => {
   }).format(new Date(timestamp));
 };
 
-const toParams = (type: string, primaryFilter: string, limit: string) => {
+const toParams = (type: string, primaryFilter: string, limit: string, includeArchivedResearch = false) => {
   const params: Record<string, string | number | undefined> = {
     limit: Number(limit) > 0 ? Number(limit) : 500
   };
+  if (includeArchivedResearch && (type === 'decision-sets' || type === 'decision-outcomes')) {
+    params.includeArchived = 'true';
+  }
   const value = primaryFilter.trim();
   if (!value) {
     return params;
@@ -342,6 +345,7 @@ const LotteryExportMaintenancePage = () => {
   const [dryRunning, setDryRunning] = useState(false);
   const [error, setError] = useState<string>();
   const releaseArchiveFocus = searchParams.get('focus') === 'release-archive';
+  const miniGptResearchPreset = searchParams.get('preset') === 'v47-minigpt-research';
   const localizedExportTypeOptions = useMemo(
     () => exportTypeOptions.map(option => ({
       label: translateText(option.label),
@@ -373,6 +377,13 @@ const LotteryExportMaintenancePage = () => {
     } else {
       next.set('type', value);
     }
+    setSearchParams(next, { replace: true });
+  };
+
+  const applyReportPreset = (key: string, sections: string[]) => {
+    setReportSections(sections);
+    const next = new URLSearchParams(searchParams);
+    next.set('preset', key);
     setSearchParams(next, { replace: true });
   };
 
@@ -411,7 +422,12 @@ const LotteryExportMaintenancePage = () => {
     setExporting(true);
     setError(undefined);
     try {
-      const data = await lotteryExportApi.export(exportType, toParams(exportType, primaryFilter, limit));
+      const data = await lotteryExportApi.export(exportType, toParams(
+        exportType,
+        primaryFilter,
+        limit,
+        miniGptResearchPreset
+      ));
       setResult(data);
       message.success(t('已生成 {{type}} {{rows}} 行', {
         type: exportTypeLabel(data.exportType, translateText),
@@ -436,7 +452,7 @@ const LotteryExportMaintenancePage = () => {
     setError(undefined);
     try {
       const results = await Promise.all(reportSections.map(type => (
-        lotteryExportApi.export(type, toParams(type, primaryFilter, limit))
+        lotteryExportApi.export(type, toParams(type, primaryFilter, limit, miniGptResearchPreset))
       )));
       setReportResults(results);
       message.success(t('已生成 {{count}} 个报表区块', { count: results.length }));
@@ -600,6 +616,20 @@ const LotteryExportMaintenancePage = () => {
       status: 'PASS',
       message: '票包需先预览再显式创建 DRAFT；生命周期复核、结果归因和 MiniGPT run/batch 账本保留溯源，不会自动审批或落票',
       path: '/lottery/ledger?dimension=minigpt_run'
+    },
+    {
+      key: 'v48-month-end-temporal-boundary',
+      label: 'V48月末五态边界',
+      status: 'PASS',
+      message: '月末 MiniGPT 研究区复用含归档的最近 100 条有界快照；五态独立计数，只有 POST_CORPUS_OBSERVED 进入观察分母',
+      path: '/lottery/month-end'
+    },
+    {
+      key: 'v48-observed-only-csv',
+      label: 'V48观察口径CSV',
+      status: 'PASS',
+      message: '既有 decision-outcomes CSV 追加决策级边界、重复快照分母、精确复核归属和历史研究安全提示，不新增导出域',
+      path: '/lottery/exports?preset=v47-minigpt-research'
     },
     {
       key: 'v33-review-runbook',
@@ -895,7 +925,13 @@ const LotteryExportMaintenancePage = () => {
         <div className="lottery-report-builder">
           <Space wrap className="lottery-report-preset-bar">
             {reportPresets.map(preset => (
-              <Button key={preset.key} size="small" icon={<FilterOutlined />} onClick={() => setReportSections(preset.sections)}>
+              <Button
+                key={preset.key}
+                size="small"
+                type={searchParams.get('preset') === preset.key ? 'primary' : 'default'}
+                icon={<FilterOutlined />}
+                onClick={() => applyReportPreset(preset.key, preset.sections)}
+              >
                 {translateText(preset.label)}
               </Button>
             ))}
@@ -911,6 +947,14 @@ const LotteryExportMaintenancePage = () => {
             <span>{t('已生成 {{sections}} 个区块 / {{rows}} 行', { sections: reportResults.length, rows: reportTotalRows })}</span>
             {archiveEvidenceContext ? <Tag color="purple">{t('归档上下文：{{context}}', { context: archiveEvidenceContext })}</Tag> : null}
           </Space>
+          {miniGptResearchPreset ? (
+            <Alert
+              type="info"
+              showIcon
+              message={t('MiniGPT 观察证据沿用现有复核包与 CSV 类型。')}
+              description={t('decision-outcomes 按决策输出五态边界，并在每个候选行重复最近 100 条含归档快照的分母；重复计数不可相加。只有精确归属的复核报告进入 reviewed 字段，所有结果仍仅是历史研究证据，不会自动审批或生成票据。')}
+            />
+          ) : null}
         </div>
       </Card>
 
@@ -925,8 +969,7 @@ const LotteryExportMaintenancePage = () => {
               key={pack.key}
               type="button"
               onClick={() => {
-                setReportSections(pack.sections);
-                window.history.replaceState(null, '', `/lottery/exports?preset=${pack.key}`);
+                applyReportPreset(pack.key, pack.sections);
               }}
             >
               <strong>{translateText(pack.title)}</strong>

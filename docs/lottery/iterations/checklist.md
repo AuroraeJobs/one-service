@@ -1262,7 +1262,7 @@ Final Iteration 47 verification: backend service tests passed 96/96, backend web
 
 Goal: distinguish training-window, validation-window, pending post-corpus, observed post-corpus, and unknown MiniGPT evidence before aggregating or exporting any outcome, without treating observation state as a performance promise.
 
-Formal plan: [Iteration 48 plan](iteration-48-plan.md). Iteration 48 is the sole promoted next candidate. Waves 48A-48B are complete; Wave 48C is the next unfinished slice.
+Formal plan: [Iteration 48 plan](iteration-48-plan.md). Iteration 48 is the sole promoted next candidate. Waves 48A-48C are complete; Wave 48D release and handoff is the next unfinished slice.
 
 ### Wave 48A: Read-Only Temporal Boundary Classification
 
@@ -1281,9 +1281,9 @@ Formal plan: [Iteration 48 plan](iteration-48-plan.md). Iteration 48 is the sole
 
 ### Wave 48C: Month-End And CSV Evidence
 
-- [ ] Add five-state counts and observed-only aggregation to the existing MiniGPT month-end research section.
-- [ ] Extend existing decision-set/backtest/decision-outcome CSV evidence with boundary source, state, observed denominator, pending/unknown counts, and safety copy; do not add a parallel export domain.
-- [ ] Preserve exact reviewed-backtest ownership, CSV injection protection, historical-only interpretation, and no automatic approval or ticket creation.
+- [x] Add five-state counts and observed-only aggregation to the existing MiniGPT month-end research section. `/lottery/month-end` now keeps its legacy 12-row review read separate from an independent latest-100 include-archived observation snapshot, reuses `aggregateMiniGptPostCorpusOutcomes`, loads exact reviewed reports for stable observed decisions, exposes loaded/total truncation state, and shows separate observed-decision, distinct-issue, scored-candidate, settled-financial, and comparable-baseline coverage without changing the month-end score or lifecycle state.
+- [x] Extend the existing decision-set/backtest/decision-outcome CSV evidence chain with boundary source, state, observed denominator, pending/unknown counts, and safety copy without adding a parallel export domain. The existing `decision-outcomes` export now uses an internal Java mirror of the V1 classifier over a fixed latest-100 include-archived snapshot; decision-level state and snapshot metadata repeat on flattened candidate rows with `REPEATED_SNAPSHOT_METADATA_DO_NOT_SUM`, while detail filters and row limits do not redefine the snapshot denominator. Existing decision-set and backtest provenance/binding columns remain in the same `v47-minigpt-research` package.
+- [x] Preserve exact reviewed-backtest ownership, CSV injection protection, historical-only interpretation, and no automatic approval or ticket creation. Reviewed evidence is accepted only for the exact report id and decision owner; trusted comparable deltas additionally require stable matching provenance, same window/budget, equal ticket counts, complete metadata/deltas, and static historical replay. Wrong-owner/unbound evidence stays `UNKNOWN` with trusted deltas blank, every field still passes through the shared CSV escaping path, and focused `LotteryExportServiceTest` coverage passed 12/12. File-scoped ESLint passed and the i18n audit passed 1090 calls; Wave 48D still owns smoke/release, production-build, rendered-browser, staged-scope, commit, and push closure.
 
 ### Wave 48D: Release And Handoff
 

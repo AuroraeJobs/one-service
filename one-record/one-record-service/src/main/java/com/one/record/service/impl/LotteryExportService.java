@@ -38,12 +38,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -57,6 +64,61 @@ public class LotteryExportService implements ILotteryExportService {
     private static final int MAX_LIMIT = 2000;
 
     private static final int MAX_PAGE_SIZE = 200;
+
+    private static final int MINI_GPT_OBSERVATION_SNAPSHOT_LIMIT = 100;
+
+    private static final String MINI_GPT_BOUNDARY_CLASSIFIER_VERSION = "MINIGPT_TEMPORAL_BOUNDARY_V1";
+
+    private static final String MINI_GPT_BOUNDARY_SOURCE = "DECISION_PROVENANCE_PLUS_EXACT_DECISION_OUTCOME";
+
+    private static final String MINI_GPT_OBSERVATION_SNAPSHOT_SCOPE = "LATEST_100_DECISIONS_INCLUDE_ARCHIVED";
+
+    private static final String MINI_GPT_OBSERVATION_AGGREGATION_SEMANTICS = "REPEATED_SNAPSHOT_METADATA_DO_NOT_SUM";
+
+    private static final String MINI_GPT_OBSERVATION_SAFETY_NOTICE = "Historical-window research evidence only; do not extrapolate future performance. "
+            + "Only POST_CORPUS_OBSERVED enters the observed decision denominator, and it is not walk-forward validation. "
+            + "Decision-level snapshot counts repeat on every candidate row; do not sum them. "
+            + "No automatic approval or ticket creation.";
+
+    private enum MiniGptObservationBoundaryState {
+        TRAIN_WINDOW,
+        VALIDATION_WINDOW,
+        POST_CORPUS_PENDING,
+        POST_CORPUS_OBSERVED,
+        UNKNOWN
+    }
+
+    private record NormalizedIssue(String value, BigInteger numeric) {
+    }
+
+    private record MiniGptObservationBoundary(
+            MiniGptObservationBoundaryState state,
+            String reason,
+            String observedEvidence,
+            String targetIssue
+    ) {
+    }
+
+    private record MiniGptObservationSnapshot(
+            int loadedDecisionCount,
+            long totalDecisionCount,
+            boolean truncated,
+            int miniGptDecisionCount,
+            int excludedNonMiniGptCount,
+            Map<MiniGptObservationBoundaryState, Integer> stateCounts,
+            int observedDistinctIssueCount,
+            int observedScoredCandidateCount,
+            int observedFinancialDecisionCount,
+            Set<String> decisionSetIds,
+            Map<String, MiniGptObservationBoundaryState> statesByDecisionSetId
+    ) {
+    }
+
+    private record ReviewedBacktestEvidence(String ownershipState, LotteryBacktestReport report) {
+    }
+
+    private record BaselineComparability(String state, List<String> reasons) {
+    }
 
     private final LotteryTicketRepository ticketRepository;
 
@@ -312,22 +374,40 @@ public class LotteryExportService implements ILotteryExportService {
     }
 
     private List<Map<String, String>> decisionOutcomeRows(Map<String, String> filters) {
-        LotteryDecisionOutcomeSummary summary = decisionSetService.outcomeSummary(bool(filters.get("includeArchived")), parseInt(filters.get("limit")));
+        Boolean includeArchived = bool(filters.get("includeArchived"));
+        Integer requestedLimit = parseInt(filters.get("limit"));
+        LotteryDecisionOutcomeSummary summary = decisionSetService.outcomeSummary(includeArchived, requestedLimit);
+        LotteryDecisionOutcomeSummary snapshotSummary = Boolean.TRUE.equals(includeArchived)
+                && requestedLimit != null
+                && requestedLimit >= MINI_GPT_OBSERVATION_SNAPSHOT_LIMIT
+                ? summary
+                : decisionSetService.outcomeSummary(true, MINI_GPT_OBSERVATION_SNAPSHOT_LIMIT);
+        List<LotteryDecisionOutcomeItem> detailItems = outcomeItems(summary);
+        List<LotteryDecisionOutcomeItem> snapshotItems = outcomeItems(snapshotSummary);
+        MiniGptObservationSnapshot observationSnapshot = miniGptObservationSnapshot(snapshotItems);
+        Map<String, LotteryBacktestReport> reviewedBacktestsById = reviewedBacktestsById(detailItems);
         String targetIssue = filters.get("targetIssue");
         String ruleName = upper(filters.get("ruleName"));
-        return limit(summary.getItems().stream()
+        return limit(detailItems.stream()
                 .filter(item -> !hasText(targetIssue) || targetIssue.equals(item.getTargetIssue()))
                 .filter(item -> !hasText(ruleName) || containsUpper(item.getRuleName(), ruleName) || containsUpper(item.getTitle(), ruleName))
-                .flatMap(item -> item.getCandidates().stream().map(candidate -> decisionOutcomeRow(item, candidate)))
+                .flatMap(item -> candidates(item).stream().map(candidate -> decisionOutcomeRow(
+                        item,
+                        candidate,
+                        observationSnapshot,
+                        reviewedBacktestsById
+                )))
                 .toList(), filters);
     }
 
     private Map<String, String> decisionOutcomeRow(LotteryDecisionOutcomeItem item,
-                                                   LotteryDecisionCandidateOutcome candidate) {
+                                                   LotteryDecisionCandidateOutcome candidate,
+                                                   MiniGptObservationSnapshot observationSnapshot,
+                                                   Map<String, LotteryBacktestReport> reviewedBacktestsById) {
         LotteryResearchProvenance provenance = candidate.getProvenance() == null
                 ? item.getProvenance()
                 : candidate.getProvenance();
-        return appendResearchProvenance(row(
+        Map<String, String> exportRow = appendResearchProvenance(row(
                 "decisionSetId", value(item.getDecisionSetId()),
                 "title", value(item.getTitle()),
                 "targetIssue", value(item.getTargetIssue()),
@@ -358,6 +438,423 @@ public class LotteryExportService implements ILotteryExportService {
                 "netResult", money(candidate.getNetResult()),
                 "warnings", String.join(" | ", candidate.getWarnings() == null ? List.of() : candidate.getWarnings())
         ), provenance);
+        return appendMiniGptObservationEvidence(
+                exportRow,
+                item,
+                observationSnapshot,
+                reviewedBacktestEvidence(item, reviewedBacktestsById)
+        );
+    }
+
+    private List<LotteryDecisionOutcomeItem> outcomeItems(LotteryDecisionOutcomeSummary summary) {
+        return summary == null || summary.getItems() == null ? List.of() : summary.getItems();
+    }
+
+    private List<LotteryDecisionCandidateOutcome> candidates(LotteryDecisionOutcomeItem item) {
+        return item == null || item.getCandidates() == null ? List.of() : item.getCandidates();
+    }
+
+    private MiniGptObservationSnapshot miniGptObservationSnapshot(List<LotteryDecisionOutcomeItem> items) {
+        Map<MiniGptObservationBoundaryState, Integer> stateCounts = new EnumMap<>(MiniGptObservationBoundaryState.class);
+        for (MiniGptObservationBoundaryState state : MiniGptObservationBoundaryState.values()) {
+            stateCounts.put(state, 0);
+        }
+        Set<String> decisionSetIds = new LinkedHashSet<>();
+        Map<String, MiniGptObservationBoundaryState> statesByDecisionSetId = new LinkedHashMap<>();
+        Set<String> observedIssues = new HashSet<>();
+        int miniGptDecisionCount = 0;
+        int observedScoredCandidateCount = 0;
+        int observedFinancialDecisionCount = 0;
+
+        for (LotteryDecisionOutcomeItem item : items) {
+            if (hasText(item.getDecisionSetId())) {
+                decisionSetIds.add(item.getDecisionSetId().trim());
+            }
+            if (!hasMiniGptResearchProvenance(item.getProvenance())) {
+                continue;
+            }
+            miniGptDecisionCount += 1;
+            MiniGptObservationBoundary boundary = classifyMiniGptObservationBoundary(item);
+            stateCounts.compute(boundary.state(), (state, count) -> count == null ? 1 : count + 1);
+            if (hasText(item.getDecisionSetId())) {
+                statesByDecisionSetId.put(item.getDecisionSetId().trim(), boundary.state());
+            }
+            if (boundary.state() != MiniGptObservationBoundaryState.POST_CORPUS_OBSERVED) {
+                continue;
+            }
+            if (hasText(boundary.targetIssue())) {
+                observedIssues.add(boundary.targetIssue());
+            }
+            observedScoredCandidateCount += nonNegativeInt(item.getScoredCandidateCount());
+            int convertedTicketCount = nonNegativeInt(item.getConvertedTicketCount());
+            int checkedConvertedTicketCount = nonNegativeInt(item.getCheckedConvertedTicketCount());
+            if (convertedTicketCount > 0
+                    && checkedConvertedTicketCount == convertedTicketCount
+                    && item.getTotalCost() != null
+                    && item.getTotalPrize() != null) {
+                observedFinancialDecisionCount += 1;
+            }
+        }
+
+        long totalDecisionCount = Math.max(
+                decisionSetRepository.countByUserId(REQUESTER_SCOPE),
+                items.size()
+        );
+        return new MiniGptObservationSnapshot(
+                items.size(),
+                totalDecisionCount,
+                totalDecisionCount > items.size(),
+                miniGptDecisionCount,
+                items.size() - miniGptDecisionCount,
+                stateCounts,
+                observedIssues.size(),
+                observedScoredCandidateCount,
+                observedFinancialDecisionCount,
+                decisionSetIds,
+                statesByDecisionSetId
+        );
+    }
+
+    private MiniGptObservationBoundary classifyMiniGptObservationBoundary(LotteryDecisionOutcomeItem item) {
+        LotteryResearchProvenance provenance = item == null ? null : item.getProvenance();
+        NormalizedIssue trainFirst = normalizeIssue(provenance == null ? null : provenance.getTrainFirstIssue());
+        NormalizedIssue trainLatest = normalizeIssue(provenance == null ? null : provenance.getTrainLatestIssue());
+        NormalizedIssue validationFirst = normalizeIssue(provenance == null ? null : provenance.getValidationFirstIssue());
+        NormalizedIssue validationLatest = normalizeIssue(provenance == null ? null : provenance.getValidationLatestIssue());
+        NormalizedIssue target = normalizeIssue(item == null ? null : item.getTargetIssue());
+        Boolean hasObservedResult = item != null
+                && hasText(item.getDecisionSetId())
+                && item.getScoredCandidateCount() != null
+                && item.getScoredCandidateCount() >= 0
+                ? item.getScoredCandidateCount() > 0
+                : null;
+        String observedEvidence = hasObservedResult == null
+                ? "MISSING_EXACT_DECISION_OUTCOME"
+                : hasObservedResult
+                ? "SCORED_EXACT_DECISION_OUTCOME"
+                : "UNSCORED_EXACT_DECISION_OUTCOME";
+        String targetIssue = target == null ? null : target.value();
+
+        if (trainFirst == null
+                || trainLatest == null
+                || validationFirst == null
+                || validationLatest == null
+                || target == null
+                || hasObservedResult == null) {
+            return new MiniGptObservationBoundary(
+                    MiniGptObservationBoundaryState.UNKNOWN,
+                    "MISSING_OR_INVALID_BOUNDARY_OR_OUTCOME_OWNERSHIP",
+                    observedEvidence,
+                    targetIssue
+            );
+        }
+
+        boolean hasLegalBoundaryOrder = trainFirst.numeric().compareTo(trainLatest.numeric()) <= 0
+                && trainLatest.numeric().compareTo(validationFirst.numeric()) < 0
+                && validationFirst.numeric().compareTo(validationLatest.numeric()) <= 0;
+        Set<Integer> widths = new HashSet<>(List.of(
+                trainFirst.value().length(),
+                trainLatest.value().length(),
+                validationFirst.value().length(),
+                validationLatest.value().length(),
+                target.value().length()
+        ));
+        if (!hasLegalBoundaryOrder || widths.size() != 1) {
+            return new MiniGptObservationBoundary(
+                    MiniGptObservationBoundaryState.UNKNOWN,
+                    hasLegalBoundaryOrder ? "ISSUE_WIDTH_MISMATCH" : "ILLEGAL_BOUNDARY_ORDER",
+                    observedEvidence,
+                    targetIssue
+            );
+        }
+
+        if (inside(target, trainFirst, trainLatest)) {
+            return new MiniGptObservationBoundary(
+                    MiniGptObservationBoundaryState.TRAIN_WINDOW,
+                    "TARGET_INSIDE_TRAIN_WINDOW",
+                    observedEvidence,
+                    targetIssue
+            );
+        }
+        if (inside(target, validationFirst, validationLatest)) {
+            return new MiniGptObservationBoundary(
+                    MiniGptObservationBoundaryState.VALIDATION_WINDOW,
+                    "TARGET_INSIDE_VALIDATION_WINDOW",
+                    observedEvidence,
+                    targetIssue
+            );
+        }
+        if (target.numeric().compareTo(validationLatest.numeric()) > 0) {
+            return new MiniGptObservationBoundary(
+                    hasObservedResult
+                            ? MiniGptObservationBoundaryState.POST_CORPUS_OBSERVED
+                            : MiniGptObservationBoundaryState.POST_CORPUS_PENDING,
+                    hasObservedResult
+                            ? "TARGET_AFTER_CORPUS_WITH_EXACT_SCORE"
+                            : "TARGET_AFTER_CORPUS_AWAITING_EXACT_SCORE",
+                    observedEvidence,
+                    targetIssue
+            );
+        }
+        return new MiniGptObservationBoundary(
+                MiniGptObservationBoundaryState.UNKNOWN,
+                "TARGET_OUTSIDE_DECLARED_WINDOWS",
+                observedEvidence,
+                targetIssue
+        );
+    }
+
+    private boolean inside(NormalizedIssue target, NormalizedIssue first, NormalizedIssue latest) {
+        return target.numeric().compareTo(first.numeric()) >= 0
+                && target.numeric().compareTo(latest.numeric()) <= 0;
+    }
+
+    private NormalizedIssue normalizeIssue(String value) {
+        if (!hasText(value)) {
+            return null;
+        }
+        String normalized = value.trim();
+        if (!normalized.matches("\\d+")) {
+            return null;
+        }
+        return new NormalizedIssue(normalized, new BigInteger(normalized));
+    }
+
+    private boolean hasMiniGptResearchProvenance(LotteryResearchProvenance provenance) {
+        if (provenance == null) {
+            return false;
+        }
+        String sourceType = upper(provenance.getSourceType());
+        return hasText(provenance.getBatchId())
+                || hasText(provenance.getGenerationId())
+                || sourceType != null && (sourceType.contains("MINIGPT") || sourceType.contains("MINI_GPT"));
+    }
+
+    private int nonNegativeInt(Integer value) {
+        return value == null || value < 0 ? 0 : value;
+    }
+
+    private Map<String, LotteryBacktestReport> reviewedBacktestsById(List<LotteryDecisionOutcomeItem> items) {
+        Set<String> ids = items.stream()
+                .map(LotteryDecisionOutcomeItem::getReviewBacktestId)
+                .filter(this::hasText)
+                .map(String::trim)
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        if (ids.isEmpty()) {
+            return Map.of();
+        }
+        Iterable<LotteryBacktestReport> reports = backtestReportRepository.findAllById(ids);
+        Map<String, LotteryBacktestReport> reportsById = new HashMap<>();
+        if (reports != null) {
+            reports.forEach(report -> {
+                if (report != null && hasText(report.getId())) {
+                    reportsById.put(report.getId().trim(), report);
+                }
+            });
+        }
+        return reportsById;
+    }
+
+    private ReviewedBacktestEvidence reviewedBacktestEvidence(LotteryDecisionOutcomeItem item,
+                                                               Map<String, LotteryBacktestReport> reportsById) {
+        String reviewBacktestId = item == null || !hasText(item.getReviewBacktestId())
+                ? null
+                : item.getReviewBacktestId().trim();
+        if (reviewBacktestId == null) {
+            return new ReviewedBacktestEvidence("UNBOUND", null);
+        }
+        LotteryBacktestReport report = reportsById.get(reviewBacktestId);
+        if (report == null) {
+            return new ReviewedBacktestEvidence("UNAVAILABLE", null);
+        }
+        if (!reviewBacktestId.equals(normalizedText(report.getId()))) {
+            return new ReviewedBacktestEvidence("REPORT_ID_MISMATCH", report);
+        }
+        if (!Objects.equals(normalizedText(item.getDecisionSetId()), normalizedText(report.getDecisionSetId()))) {
+            return new ReviewedBacktestEvidence("OWNER_MISMATCH", report);
+        }
+        return new ReviewedBacktestEvidence("EXACT_OWNED", report);
+    }
+
+    private BaselineComparability baselineComparability(LotteryDecisionOutcomeItem item,
+                                                        ReviewedBacktestEvidence reviewedEvidence) {
+        if ("UNBOUND".equals(reviewedEvidence.ownershipState())) {
+            return new BaselineComparability("UNKNOWN", List.of("MISSING_REVIEW_BINDING"));
+        }
+        String itemSignature = stableProvenanceSignature(item.getProvenance());
+        if (itemSignature == null) {
+            return new BaselineComparability("UNKNOWN", List.of("UNSTABLE_DECISION_PROVENANCE"));
+        }
+        if (!"EXACT_OWNED".equals(reviewedEvidence.ownershipState()) || reviewedEvidence.report() == null) {
+            String ownershipReason = switch (reviewedEvidence.ownershipState()) {
+                case "UNAVAILABLE" -> "REVIEW_REPORT_UNAVAILABLE";
+                case "REPORT_ID_MISMATCH" -> "REPORT_ID_MISMATCH";
+                case "OWNER_MISMATCH" -> "DECISION_OWNER_MISMATCH";
+                default -> "REVIEW_REPORT_UNAVAILABLE";
+            };
+            return new BaselineComparability("UNKNOWN", List.of(ownershipReason));
+        }
+        LotteryBacktestReport report = reviewedEvidence.report();
+        if (!itemSignature.equals(stableProvenanceSignature(report.getProvenance()))) {
+            return new BaselineComparability("UNKNOWN", List.of("BACKTEST_PROVENANCE_MISMATCH"));
+        }
+
+        List<String> failedReasons = new ArrayList<>();
+        if (Boolean.FALSE.equals(report.getSameWindow())) {
+            failedReasons.add("BASELINE_WINDOW_MISMATCH");
+        }
+        if (Boolean.FALSE.equals(report.getSameBudget())) {
+            failedReasons.add("BASELINE_BUDGET_MISMATCH");
+        }
+        if (report.getTicketCount() != null
+                && report.getBaselineTicketCount() != null
+                && !report.getTicketCount().equals(report.getBaselineTicketCount())) {
+            failedReasons.add("BASELINE_TICKET_COUNT_MISMATCH");
+        }
+        if (!failedReasons.isEmpty()) {
+            return new BaselineComparability("FAIL", failedReasons);
+        }
+        if (!Boolean.TRUE.equals(report.getSameWindow()) || !Boolean.TRUE.equals(report.getSameBudget())) {
+            return new BaselineComparability("UNKNOWN", List.of("BASELINE_COMPARABILITY_UNKNOWN"));
+        }
+        if (!"STATIC_POOL_HISTORICAL_REPLAY".equals(report.getEvaluationMode())) {
+            return new BaselineComparability("UNKNOWN", List.of("UNSUPPORTED_EVALUATION_MODE"));
+        }
+        if (!hasText(report.getBaselineAlgorithm())
+                || report.getBaselineSeed() == null
+                || report.getWindowIssueCount() == null
+                || report.getWindowIssueCount() <= 0
+                || report.getTicketCount() == null
+                || report.getBaselineTicketCount() == null) {
+            return new BaselineComparability("UNKNOWN", List.of("BASELINE_METADATA_INCOMPLETE"));
+        }
+        if (report.getAverageRedHitsDelta() == null
+                || report.getBlueHitRateDelta() == null
+                || report.getTotalPrizeDelta() == null
+                || report.getNetResultDelta() == null
+                || report.getRoiPercentDelta() == null) {
+            return new BaselineComparability("UNKNOWN", List.of("BASELINE_DELTAS_INCOMPLETE"));
+        }
+        return new BaselineComparability("COMPARABLE", List.of());
+    }
+
+    private String stableProvenanceSignature(LotteryResearchProvenance provenance) {
+        if (provenance == null) {
+            return null;
+        }
+        String[] values = {
+                normalizedText(provenance.getCorpusVersion()),
+                normalizedText(provenance.getRunId()),
+                normalizedText(provenance.getTrainSha256()),
+                normalizedText(provenance.getValidationSha256()),
+                normalizedText(provenance.getCheckpointSha256()),
+                normalizedText(provenance.getTrainFirstIssue()),
+                normalizedText(provenance.getTrainLatestIssue()),
+                normalizedText(provenance.getValidationFirstIssue()),
+                normalizedText(provenance.getValidationLatestIssue())
+        };
+        for (String value : values) {
+            if (!hasText(value)) {
+                return null;
+            }
+        }
+        return String.join("|", values);
+    }
+
+    private String normalizedText(String value) {
+        return hasText(value) ? value.trim() : null;
+    }
+
+    private Map<String, String> appendMiniGptObservationEvidence(Map<String, String> row,
+                                                                 LotteryDecisionOutcomeItem item,
+                                                                 MiniGptObservationSnapshot snapshot,
+                                                                 ReviewedBacktestEvidence reviewedEvidence) {
+        boolean miniGpt = hasMiniGptResearchProvenance(item.getProvenance());
+        MiniGptObservationBoundary boundary = miniGpt ? classifyMiniGptObservationBoundary(item) : null;
+        LotteryResearchProvenance decisionProvenance = item.getProvenance();
+        String decisionSetId = normalizedText(item.getDecisionSetId());
+        boolean includedInSnapshot = decisionSetId != null && snapshot.decisionSetIds().contains(decisionSetId);
+        boolean observedEligible = boundary != null
+                && boundary.state() == MiniGptObservationBoundaryState.POST_CORPUS_OBSERVED;
+        MiniGptObservationBoundaryState snapshotBoundaryState = decisionSetId == null
+                ? null
+                : snapshot.statesByDecisionSetId().get(decisionSetId);
+        boolean contributesToSnapshotObservedDenominator = snapshotBoundaryState
+                == MiniGptObservationBoundaryState.POST_CORPUS_OBSERVED;
+        LotteryBacktestReport reviewedReport = "EXACT_OWNED".equals(reviewedEvidence.ownershipState())
+                ? reviewedEvidence.report()
+                : null;
+        BaselineComparability comparability = baselineComparability(item, reviewedEvidence);
+        boolean comparable = "COMPARABLE".equals(comparability.state());
+
+        // These legacy columns used to expose the newest same-decision report for unreviewed rows.
+        // Keep the column names stable, but make their values exact-review-only so they cannot bypass ownership checks.
+        row.put("backtestNetResultDelta", reviewedReport == null ? "" : money(reviewedReport.getNetResultDelta()));
+        row.put("backtestRoiPercentDelta", reviewedReport == null ? "" : money(reviewedReport.getRoiPercentDelta()));
+        row.put("backtestWarnings", reviewedReport == null || reviewedReport.getOverfitWarnings() == null
+                ? ""
+                : String.join(" | ", reviewedReport.getOverfitWarnings()));
+
+        row.put("boundaryClassifierVersion", MINI_GPT_BOUNDARY_CLASSIFIER_VERSION);
+        row.put("boundarySource", MINI_GPT_BOUNDARY_SOURCE);
+        row.put("boundarySourceType", miniGpt && decisionProvenance != null ? value(decisionProvenance.getSourceType()) : "");
+        row.put("boundaryDecisionSetId", miniGpt ? value(item.getDecisionSetId()) : "");
+        row.put("boundaryTargetIssue", miniGpt ? value(item.getTargetIssue()) : "");
+        row.put("boundaryCorpusVersion", miniGpt && decisionProvenance != null ? value(decisionProvenance.getCorpusVersion()) : "");
+        row.put("boundaryRunId", miniGpt && decisionProvenance != null ? value(decisionProvenance.getRunId()) : "");
+        row.put("boundaryTrainSha256", miniGpt && decisionProvenance != null ? value(decisionProvenance.getTrainSha256()) : "");
+        row.put("boundaryValidationSha256", miniGpt && decisionProvenance != null ? value(decisionProvenance.getValidationSha256()) : "");
+        row.put("boundaryCheckpointSha256", miniGpt && decisionProvenance != null ? value(decisionProvenance.getCheckpointSha256()) : "");
+        row.put("boundaryTrainFirstIssue", miniGpt && decisionProvenance != null ? value(decisionProvenance.getTrainFirstIssue()) : "");
+        row.put("boundaryTrainLatestIssue", miniGpt && decisionProvenance != null ? value(decisionProvenance.getTrainLatestIssue()) : "");
+        row.put("boundaryValidationFirstIssue", miniGpt && decisionProvenance != null ? value(decisionProvenance.getValidationFirstIssue()) : "");
+        row.put("boundaryValidationLatestIssue", miniGpt && decisionProvenance != null ? value(decisionProvenance.getValidationLatestIssue()) : "");
+        row.put("boundaryScoredCandidateCount", miniGpt ? value(item.getScoredCandidateCount()) : "");
+        row.put("boundaryObservedEvidence", boundary == null ? "" : boundary.observedEvidence());
+        row.put("decisionBoundaryState", boundary == null ? "" : boundary.state().name());
+        row.put("decisionBoundaryReason", boundary == null ? "" : boundary.reason());
+        row.put("decisionBoundaryObservedEligible", boundary == null ? "" : value(observedEligible));
+        row.put("decisionIncludedInObservationSnapshot", value(includedInSnapshot));
+        row.put("decisionBoundaryMatchesObservationSnapshot", boundary == null || snapshotBoundaryState == null
+                ? ""
+                : value(boundary.state() == snapshotBoundaryState));
+        row.put("decisionContributesToSnapshotObservedDenominator", value(contributesToSnapshotObservedDenominator));
+        row.put("boundaryCountUnit", "DECISION_SET");
+        row.put("observationSnapshotScope", MINI_GPT_OBSERVATION_SNAPSHOT_SCOPE);
+        row.put("observationSnapshotLimit", value(MINI_GPT_OBSERVATION_SNAPSHOT_LIMIT));
+        row.put("observationSnapshotLoadedDecisionCount", value(snapshot.loadedDecisionCount()));
+        row.put("observationSnapshotTotalDecisionCount", value(snapshot.totalDecisionCount()));
+        row.put("observationSnapshotTruncated", value(snapshot.truncated()));
+        row.put("observationSnapshotMiniGptDecisionCount", value(snapshot.miniGptDecisionCount()));
+        row.put("observationSnapshotExcludedNonMiniGptCount", value(snapshot.excludedNonMiniGptCount()));
+        row.put("snapshotTrainWindowDecisionCount", value(snapshot.stateCounts().get(MiniGptObservationBoundaryState.TRAIN_WINDOW)));
+        row.put("snapshotValidationWindowDecisionCount", value(snapshot.stateCounts().get(MiniGptObservationBoundaryState.VALIDATION_WINDOW)));
+        row.put("snapshotPostCorpusPendingDecisionCount", value(snapshot.stateCounts().get(MiniGptObservationBoundaryState.POST_CORPUS_PENDING)));
+        row.put("snapshotPostCorpusObservedDecisionCount", value(snapshot.stateCounts().get(MiniGptObservationBoundaryState.POST_CORPUS_OBSERVED)));
+        row.put("snapshotUnknownDecisionCount", value(snapshot.stateCounts().get(MiniGptObservationBoundaryState.UNKNOWN)));
+        row.put("snapshotObservedDecisionDenominator", value(snapshot.stateCounts().get(MiniGptObservationBoundaryState.POST_CORPUS_OBSERVED)));
+        row.put("snapshotObservedDistinctIssueDenominator", value(snapshot.observedDistinctIssueCount()));
+        row.put("snapshotObservedScoredCandidateDenominator", value(snapshot.observedScoredCandidateCount()));
+        row.put("snapshotObservedFinancialDecisionDenominator", value(snapshot.observedFinancialDecisionCount()));
+        row.put("snapshotAggregationSemantics", MINI_GPT_OBSERVATION_AGGREGATION_SEMANTICS);
+        row.put("reviewBacktestOwnershipState", reviewedEvidence.ownershipState());
+        row.put("reviewedBacktestReportId", reviewedReport == null ? "" : value(reviewedReport.getId()));
+        row.put("reviewedBacktestDecisionSetId", reviewedReport == null ? "" : value(reviewedReport.getDecisionSetId()));
+        row.put("reviewedBacktestSameWindow", reviewedReport == null ? "" : value(reviewedReport.getSameWindow()));
+        row.put("reviewedBacktestSameBudget", reviewedReport == null ? "" : value(reviewedReport.getSameBudget()));
+        row.put("reviewedBacktestEvaluationMode", reviewedReport == null ? "" : value(reviewedReport.getEvaluationMode()));
+        row.put("reviewedBacktestNetResultDelta", reviewedReport == null ? "" : money(reviewedReport.getNetResultDelta()));
+        row.put("reviewedBacktestRoiPercentDelta", reviewedReport == null ? "" : money(reviewedReport.getRoiPercentDelta()));
+        row.put("reviewedBacktestWarnings", reviewedReport == null || reviewedReport.getOverfitWarnings() == null
+                ? ""
+                : String.join(" | ", reviewedReport.getOverfitWarnings()));
+        row.put("reviewedBaselineComparabilityState", comparability.state());
+        row.put("reviewedBaselineComparabilityReasons", String.join(" | ", comparability.reasons()));
+        row.put("comparableBacktestNetResultDelta", comparable ? money(reviewedReport.getNetResultDelta()) : "");
+        row.put("comparableBacktestRoiPercentDelta", comparable ? money(reviewedReport.getRoiPercentDelta()) : "");
+        row.put("reviewedBacktestEvidenceSemantics", "EXACT_REVIEW_BINDING_ONLY_NO_LATEST_FALLBACK");
+        row.put("observationSafetyNotice", MINI_GPT_OBSERVATION_SAFETY_NOTICE);
+        return row;
     }
 
     private List<Map<String, String>> ticketImportPreviewRows(Map<String, String> filters) {

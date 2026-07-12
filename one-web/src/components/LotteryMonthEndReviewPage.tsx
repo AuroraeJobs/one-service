@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Alert, Button, Card, Empty, Input, Progress, Select, Space, Spin, Tag } from 'antd';
 import {
   BellOutlined,
@@ -33,6 +33,7 @@ import {
   lotteryWorkbenchApi,
   type LotteryAuditEvent,
   type LotteryBacktestReport,
+  type LotteryDecisionSet,
   type LotteryDecisionOutcomeItem,
   type LotteryDecisionOutcomeSummary,
   type LotteryIssueLedger,
@@ -42,13 +43,20 @@ import {
   type LotteryPageResponse,
   type LotteryRecommendationRollup,
   type LotteryReminderSummary,
-  type LotteryResearchProvenance,
   type LotteryStrategyNote,
   type LotteryTicketPack,
   type LotteryTicketSummary,
   type LotteryWorkbenchSummary
 } from '../services/api';
-import { lotteryOverfitWarningsText } from '../utils/lotteryBacktestEvidence';
+import {
+  aggregateMiniGptPostCorpusOutcomes,
+  hasMiniGptResearchProvenance,
+  lotteryOverfitWarningsText,
+  MINI_GPT_OBSERVATION_BOUNDARY_METADATA,
+  MINI_GPT_OBSERVATION_BOUNDARY_STATES,
+  MINI_GPT_POST_CORPUS_SMALL_SAMPLE_ISSUES,
+  MINI_GPT_POST_CORPUS_SNAPSHOT_LIMIT
+} from '../utils/lotteryBacktestEvidence';
 import { lotteryMessageLabel, lotteryStatusLabel } from '../utils/lotteryStatusLabel';
 import './LotteryOverviewPage.css';
 
@@ -155,12 +163,6 @@ const archiveScopeLabel = (scope: string) => {
 };
 
 const safeCount = (value?: number) => Number(value || 0);
-
-const hasMiniGptProvenance = (provenance?: LotteryResearchProvenance) => Boolean(
-  provenance?.batchId
-  || provenance?.generationId
-  || String(provenance?.sourceType || '').toUpperCase().includes('MINIGPT')
-);
 
 const researchReviewLabel = (action?: string, isEnglish = false) => {
   const labels: Record<string, [string, string]> = {
@@ -273,17 +275,27 @@ const LotteryMonthEndReviewPage = () => {
   const [audits, setAudits] = useState<LotteryAuditEvent[]>([]);
   const [backtests, setBacktests] = useState<LotteryBacktestReport[]>([]);
   const [ticketPacks, setTicketPacks] = useState<LotteryTicketPack[]>([]);
+  const [postCorpusOutcomeSummary, setPostCorpusOutcomeSummary] = useState<LotteryDecisionOutcomeSummary>();
+  const [postCorpusDecisionPage, setPostCorpusDecisionPage] = useState<LotteryPageResponse<LotteryDecisionSet>>();
+  const [postCorpusBacktestsById, setPostCorpusBacktestsById] = useState<Record<string, LotteryBacktestReport | null>>({});
+  const [postCorpusObservationError, setPostCorpusObservationError] = useState<string>();
+  const [postCorpusScopeError, setPostCorpusScopeError] = useState<string>();
   const [archiveQuery, setArchiveQuery] = useState('');
   const [archiveScopeFilter, setArchiveScopeFilter] = useState('all');
   const [archiveStatusFilter, setArchiveStatusFilter] = useState('all');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
+  const reviewRequestIdRef = useRef(0);
 
   const loadReview = useCallback(async () => {
+    const requestId = reviewRequestIdRef.current + 1;
+    reviewRequestIdRef.current = requestId;
     setLoading(true);
     setError(undefined);
+    setPostCorpusObservationError(undefined);
+    setPostCorpusScopeError(undefined);
     try {
-      const [workbenchData, healthData, ledgerData, issueData, ticketData, decisionData, attributionData, recommendationData, noteData, reminderData, auditData, backtestData, ticketPackData] = await Promise.all([
+      const [workbenchData, healthData, ledgerData, issueData, ticketData, decisionData, attributionData, recommendationData, noteData, reminderData, auditData, backtestData, ticketPackData, postCorpusOutcomeResult, postCorpusDecisionPageResult] = await Promise.all([
         lotteryWorkbenchApi.summary(),
         lotteryOperationsApi.health(),
         lotteryLedgerApi.summary(),
@@ -302,24 +314,43 @@ const LotteryMonthEndReviewPage = () => {
         lotteryTicketPackApi.ticketPacks({ includeArchived: true, page: 1, pageSize: 24 }).catch(ticketPackError => {
           console.error('读取 MiniGPT 票包列表失败:', ticketPackError);
           return { items: [] } as LotteryPageResponse<LotteryTicketPack>;
-        })
+        }),
+        lotteryDecisionSetApi.outcomes({
+          includeArchived: true,
+          limit: MINI_GPT_POST_CORPUS_SNAPSHOT_LIMIT
+        }).then(data => ({ data })).catch(postCorpusError => ({ error: postCorpusError })),
+        lotteryDecisionSetApi.decisionSets({
+          includeArchived: true,
+          page: 1,
+          pageSize: MINI_GPT_POST_CORPUS_SNAPSHOT_LIMIT
+        }).then(data => ({ data })).catch(scopeError => ({ error: scopeError }))
       ]);
       const reviewedMiniGptDecision = [...(decisionData?.items || [])]
-        .filter(item => hasMiniGptProvenance(item.provenance) && item.reviewBacktestId)
+        .filter(item => hasMiniGptResearchProvenance(item.provenance) && item.reviewBacktestId)
         .sort((left, right) => decisionRecency(right) - decisionRecency(left))[0];
-      let resolvedBacktests = backtestData?.items || [];
-      if (reviewedMiniGptDecision?.reviewBacktestId
-        && !resolvedBacktests.some(item => item.id === reviewedMiniGptDecision.reviewBacktestId)) {
-        try {
-          const reviewedBacktest = await lotteryBacktestApi.detail(reviewedMiniGptDecision.reviewBacktestId);
-          if (reviewedBacktest?.id === reviewedMiniGptDecision.reviewBacktestId
-            && reviewedBacktest.decisionSetId === reviewedMiniGptDecision.decisionSetId) {
-            resolvedBacktests = [reviewedBacktest, ...resolvedBacktests];
-          }
-        } catch (backtestError) {
-          console.error('读取 MiniGPT 复核回测失败:', backtestError);
-        }
+      const postCorpusOutcomes = 'data' in postCorpusOutcomeResult ? postCorpusOutcomeResult.data : undefined;
+      const postCorpusPage = 'data' in postCorpusDecisionPageResult ? postCorpusDecisionPageResult.data : undefined;
+      const preview = aggregateMiniGptPostCorpusOutcomes(postCorpusOutcomes?.items || []);
+      const reviewedBacktestIds = new Set(preview.groups.flatMap(group => group.decisions)
+        .filter(decision => decision.stableProvenance)
+        .map(decision => decision.item.reviewBacktestId?.trim())
+        .filter((id): id is string => Boolean(id)));
+      if (reviewedMiniGptDecision?.reviewBacktestId) {
+        reviewedBacktestIds.add(reviewedMiniGptDecision.reviewBacktestId);
       }
+      const exactBacktestEntries = await Promise.all([...reviewedBacktestIds].map(async id => {
+        try {
+          return [id, await lotteryBacktestApi.detail(id)] as const;
+        } catch {
+          return [id, null] as const;
+        }
+      }));
+      if (requestId !== reviewRequestIdRef.current) return;
+      const exactBacktestsById = Object.fromEntries(exactBacktestEntries);
+      const resolvedBacktests = [
+        ...exactBacktestEntries.map(([, report]) => report).filter((report): report is LotteryBacktestReport => Boolean(report)),
+        ...(backtestData?.items || [])
+      ].filter((report, index, items) => items.findIndex(item => item.id === report.id) === index);
       setWorkbench(workbenchData);
       setHealth(healthData);
       setLedger(ledgerData);
@@ -333,16 +364,37 @@ const LotteryMonthEndReviewPage = () => {
       setAudits(auditData?.items || []);
       setBacktests(resolvedBacktests);
       setTicketPacks(ticketPackData?.items || []);
+      setPostCorpusOutcomeSummary(postCorpusOutcomes);
+      setPostCorpusDecisionPage(postCorpusPage);
+      setPostCorpusBacktestsById(exactBacktestsById);
+      if ('error' in postCorpusOutcomeResult) {
+        console.error('读取 MiniGPT 月末语料后观察失败:', postCorpusOutcomeResult.error);
+        setPostCorpusObservationError(postCorpusOutcomeResult.error instanceof Error
+          ? postCorpusOutcomeResult.error.message
+          : '读取 MiniGPT 月末语料后观察失败');
+      }
+      if ('error' in postCorpusDecisionPageResult) {
+        console.error('读取 MiniGPT 月末观察范围失败:', postCorpusDecisionPageResult.error);
+        setPostCorpusScopeError(postCorpusDecisionPageResult.error instanceof Error
+          ? postCorpusDecisionPageResult.error.message
+          : '读取 MiniGPT 月末观察范围失败');
+      }
     } catch (requestError) {
+      if (requestId !== reviewRequestIdRef.current) return;
       console.error('读取彩票月末复盘失败:', requestError);
       setError(requestError instanceof Error ? requestError.message : '读取彩票月末复盘失败');
     } finally {
-      setLoading(false);
+      if (requestId === reviewRequestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
     loadReview();
+    return () => {
+      reviewRequestIdRef.current += 1;
+    };
   }, [loadReview]);
 
   const recentIssues = useMemo(() => sortIssueLedgers(issues).slice(0, 5), [issues]);
@@ -354,7 +406,7 @@ const LotteryMonthEndReviewPage = () => {
   const attributionRows = useMemo(() => attributionReviewRows(attributionRollup), [attributionRollup]);
   const miniGptDecision = useMemo<LotteryDecisionOutcomeItem | undefined>(() => (
     [...(decisions?.items || [])]
-      .filter(item => hasMiniGptProvenance(item.provenance) && item.reviewBacktestId)
+      .filter(item => hasMiniGptResearchProvenance(item.provenance) && item.reviewBacktestId)
       .sort((left, right) => decisionRecency(right) - decisionRecency(left))[0]
   ), [decisions?.items]);
   const miniGptBacktest = useMemo<LotteryBacktestReport | undefined>(() => {
@@ -418,6 +470,22 @@ const LotteryMonthEndReviewPage = () => {
         || !miniGptDecision?.reviewAction
         ? 'WARNING'
         : 'PASS';
+  const postCorpusObservation = useMemo(() => aggregateMiniGptPostCorpusOutcomes(
+    postCorpusOutcomeSummary?.items || [],
+    postCorpusBacktestsById
+  ), [postCorpusBacktestsById, postCorpusOutcomeSummary?.items]);
+  const postCorpusSnapshotTotal = postCorpusDecisionPage
+    ? Math.max(Number(postCorpusDecisionPage.total || 0), postCorpusObservation.boundedInputCount)
+    : undefined;
+  const postCorpusSnapshotTruncated = postCorpusDecisionPage
+    ? Boolean(postCorpusDecisionPage.hasNext)
+      || Number(postCorpusSnapshotTotal || 0) > postCorpusObservation.boundedInputCount
+    : undefined;
+  const postCorpusHasDuplicateIssues = postCorpusObservation.observedDecisionCount > postCorpusObservation.distinctIssueCount;
+  const postCorpusHasPartialFinancialCoverage = postCorpusObservation.financial.decisionCount
+    < postCorpusObservation.observedDecisionCount;
+  const postCorpusHasIncompleteBaselineCoverage = postCorpusObservation.comparableBaselineCount
+    < postCorpusObservation.observedDecisionCount;
   const monthEndScore = useMemo(() => {
     const healthScore = health?.score ?? 0;
     const ticketScore = tickets?.pendingTicketCount ? Math.max(40, 100 - tickets.pendingTicketCount * 12) : 100;
@@ -839,7 +907,7 @@ const LotteryMonthEndReviewPage = () => {
         </Card>
 
         <Card
-          className="life-panel-card lottery-clean-panel"
+          className="life-panel-card lottery-clean-panel lottery-month-end-minigpt-card"
           title={<Space><SafetyCertificateOutlined />MiniGPT · {researchText('研究与决策证据', 'Research and Decision Evidence')}</Space>}
           extra={
             <Space wrap>
@@ -860,6 +928,191 @@ const LotteryMonthEndReviewPage = () => {
               'Historical-window research evidence only; do not extrapolate future performance.'
             )}
           />
+          <section
+            className="lottery-month-end-observation"
+            data-boundary-source="DECISION_PROVENANCE_PLUS_EXACT_DECISION_OUTCOME"
+            data-observed-denominator={postCorpusObservation.observedDecisionCount}
+            data-read-only="true"
+          >
+            <header>
+              <div>
+                <strong>{researchText('语料时间边界与样本外观察', 'Corpus Boundary and Post-Corpus Observation')}</strong>
+                <span>{researchText(
+                  '月末摘要复用最近 100 条含归档决策的只读口径，不参与月末评分或生命周期动作。',
+                  'This month-end summary reuses the latest 100 archived-inclusive decisions as a read-only scope and does not affect the month-end score or lifecycle actions.'
+                )}</span>
+              </div>
+              <Button size="small" onClick={() => navigate('/lottery/predictions/decision')}>
+                {researchText('查看逐决策证据', 'View Per-Decision Evidence')}
+              </Button>
+            </header>
+
+            <Alert
+              type="info"
+              showIcon
+              message={researchText(
+                '只有 POST_CORPUS_OBSERVED 进入已观察分母；训练、验证、待观察和未知始终分开。',
+                'Only POST_CORPUS_OBSERVED enters the observed denominator; training, validation, pending, and unknown always remain separate.'
+              )}
+              description={researchText(
+                '边界只读取决策溯源中的训练/验证期号、目标期号和同一 decisionSetId 的实际评分。随机基线差值不跨报告平均，正向结果也不证明泛化、不会自动审批票包或生成票据。',
+                'The boundary reads only the decision provenance train/validation issues, target issue, and actual score owned by the same decisionSetId. Random-baseline deltas are never averaged across reports; favorable results do not establish generalization or automatically approve a ticket pack or create tickets.'
+              )}
+            />
+
+            {postCorpusObservationError ? (
+              <Alert
+                type="warning"
+                showIcon
+                message={researchText('月末观察聚合暂不可用', 'Month-End Observation Aggregate Unavailable')}
+                description={translateText(postCorpusObservationError)}
+              />
+            ) : null}
+
+            <div className="lottery-month-end-observation-state-grid">
+              {MINI_GPT_OBSERVATION_BOUNDARY_STATES.map(state => {
+                const metadata = MINI_GPT_OBSERVATION_BOUNDARY_METADATA[state];
+                return (
+                  <article key={state} data-boundary-state={state}>
+                    <strong>{postCorpusObservation.stateCounts[state]}</strong>
+                    <span>{isEnglish ? metadata.label.en : metadata.label.zh}</span>
+                    <Tag color={metadata.tone}>{state}</Tag>
+                  </article>
+                );
+              })}
+            </div>
+
+            <div className="lottery-month-end-observation-scope">
+              <span>{researchText(
+                `有界快照：最近最多 ${MINI_GPT_POST_CORPUS_SNAPSHOT_LIMIT} 条决策（含归档），已加载 ${postCorpusObservation.boundedInputCount}${postCorpusSnapshotTotal === undefined ? '，总量未知' : ` / 总量 ${postCorpusSnapshotTotal}`}。`,
+                `Bounded snapshot: latest ${MINI_GPT_POST_CORPUS_SNAPSHOT_LIMIT} decisions at most (including archived), loaded ${postCorpusObservation.boundedInputCount}${postCorpusSnapshotTotal === undefined ? '; total unknown' : ` / total ${postCorpusSnapshotTotal}`}.`
+              )}</span>
+              <span>{researchText(
+                `MiniGPT ${postCorpusObservation.miniGptDecisionCount} 条；另有 ${postCorpusObservation.excludedNonMiniGptCount} 条非 MiniGPT 决策未进入五态统计。`,
+                `${postCorpusObservation.miniGptDecisionCount} MiniGPT decisions; ${postCorpusObservation.excludedNonMiniGptCount} non-MiniGPT decisions are excluded from the five-state counts.`
+              )}</span>
+            </div>
+
+            {postCorpusObservation.miniGptDecisionCount === 0 && !loading ? (
+              <Empty
+                description={researchText('有界快照内暂无 MiniGPT 决策观察证据', 'No MiniGPT observation evidence in the bounded snapshot')}
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+              />
+            ) : (
+              <div className="lottery-month-end-observation-metric-grid">
+                <article>
+                  <strong>{postCorpusObservation.observedDecisionCount}</strong>
+                  <span>{researchText('已观察决策分母', 'Observed Decision Denominator')}</span>
+                  <small>{researchText(
+                    `独立期号 ${postCorpusObservation.distinctIssueCount} · 范围 ${postCorpusObservation.issueRange
+                      ? `${postCorpusObservation.issueRange.firstIssue} → ${postCorpusObservation.issueRange.latestIssue}`
+                      : '-'}`,
+                    `Distinct issues ${postCorpusObservation.distinctIssueCount} · Range ${postCorpusObservation.issueRange
+                      ? `${postCorpusObservation.issueRange.firstIssue} → ${postCorpusObservation.issueRange.latestIssue}`
+                      : '-'}`
+                  )}</small>
+                </article>
+                <article>
+                  <strong>{postCorpusObservation.scoredCandidateCount}</strong>
+                  <span>{researchText('已评分候选分母', 'Scored Candidate Denominator')}</span>
+                  <small>{researchText(
+                    `候选命中 ${postCorpusObservation.winningCandidateCount} · 蓝球 ${postCorpusObservation.blueHitCount}/${postCorpusObservation.scoredCandidateCount}（${formatPercent(postCorpusObservation.blueHitRatePercent ?? undefined)}）`,
+                    `Winning candidates ${postCorpusObservation.winningCandidateCount} · Blue ${postCorpusObservation.blueHitCount}/${postCorpusObservation.scoredCandidateCount} (${formatPercent(postCorpusObservation.blueHitRatePercent ?? undefined)})`
+                  )}</small>
+                </article>
+                <article>
+                  <strong>{postCorpusObservation.financial.decisionCount}/{postCorpusObservation.observedDecisionCount}</strong>
+                  <span>{researchText('完整核奖财务覆盖', 'Complete Settled-Financial Coverage')}</span>
+                  <small>{researchText(
+                    `成本 ${formatCurrency(postCorpusObservation.financial.totalCost ?? undefined)} · 奖金 ${formatCurrency(postCorpusObservation.financial.totalPrize ?? undefined)} · 净值 ${formatCurrency(postCorpusObservation.financial.netResult ?? undefined)} · ROI ${formatPercent(postCorpusObservation.financial.roiPercent ?? undefined)}`,
+                    `Cost ${formatCurrency(postCorpusObservation.financial.totalCost ?? undefined)} · Prize ${formatCurrency(postCorpusObservation.financial.totalPrize ?? undefined)} · Net ${formatCurrency(postCorpusObservation.financial.netResult ?? undefined)} · ROI ${formatPercent(postCorpusObservation.financial.roiPercent ?? undefined)}`
+                  )}</small>
+                </article>
+                <article>
+                  <strong>{postCorpusObservation.comparableBaselineCount}/{postCorpusObservation.observedDecisionCount}</strong>
+                  <span>{researchText('精确可比随机基线', 'Exact Comparable Random Baseline')}</span>
+                  <small>{researchText(
+                    `不可比 ${postCorpusObservation.failedBaselineCount} · 未知 ${postCorpusObservation.unknownBaselineCount}`,
+                    `Failed ${postCorpusObservation.failedBaselineCount} · Unknown ${postCorpusObservation.unknownBaselineCount}`
+                  )}</small>
+                </article>
+              </div>
+            )}
+
+            <div className="lottery-month-end-observation-warnings">
+              {postCorpusScopeError ? (
+                <Alert
+                  type="warning"
+                  showIcon
+                  message={researchText('观察总量与截断状态未知', 'Observation Total and Truncation State Unknown')}
+                  description={translateText(postCorpusScopeError)}
+                />
+              ) : null}
+              {postCorpusSnapshotTruncated ? (
+                <Alert
+                  type="warning"
+                  showIcon
+                  message={researchText('有界快照已截断', 'Bounded Snapshot Is Truncated')}
+                  description={researchText(
+                    '更早决策不在本次观察分母内，不能把当前统计解释为完整历史。',
+                    'Older decisions are outside this observation denominator; do not interpret the current counts as complete history.'
+                  )}
+                />
+              ) : null}
+              {postCorpusObservation.observedDecisionCount > 0
+                && postCorpusObservation.distinctIssueCount < MINI_GPT_POST_CORPUS_SMALL_SAMPLE_ISSUES ? (
+                  <Alert
+                    type="warning"
+                    showIcon
+                    message={researchText('样本外观察期号仍然很少', 'Post-Corpus Issue Sample Is Still Small')}
+                    description={researchText(
+                      `当前只有 ${postCorpusObservation.distinctIssueCount} 个独立已观察期号，不构成稳定表现证据。`,
+                      `Only ${postCorpusObservation.distinctIssueCount} distinct observed issues are available; this does not establish stable performance.`
+                    )}
+                  />
+                ) : null}
+              {postCorpusHasDuplicateIssues ? (
+                <Alert
+                  type="warning"
+                  showIcon
+                  message={researchText('同一期号存在多条决策', 'Multiple Decisions Share an Issue')}
+                  description={researchText('决策分母与独立期号分母保持分离，不按期号自动合并。', 'Decision and distinct-issue denominators remain separate; decisions are not automatically merged by issue.')}
+                />
+              ) : null}
+              {postCorpusObservation.unstableObservedCount > 0 ? (
+                <Alert
+                  type="warning"
+                  showIcon
+                  message={researchText('部分已观察决策缺少稳定溯源', 'Some Observed Decisions Lack Stable Provenance')}
+                  description={researchText('这些决策保持隔离，其随机基线状态为 UNKNOWN。', 'These decisions remain isolated and their random-baseline state is UNKNOWN.')}
+                />
+              ) : null}
+              {postCorpusHasPartialFinancialCoverage ? (
+                <Alert
+                  type="warning"
+                  showIcon
+                  message={researchText('财务覆盖不完整', 'Financial Coverage Is Incomplete')}
+                  description={researchText('成本、奖金、净值和 ROI 只汇总已全部核奖的决策。', 'Cost, prize, net result, and ROI aggregate only decisions whose converted tickets are fully settled.')}
+                />
+              ) : null}
+              {postCorpusHasIncompleteBaselineCoverage ? (
+                <Alert
+                  type="warning"
+                  showIcon
+                  message={researchText('精确随机基线覆盖不完整', 'Exact Random-Baseline Coverage Is Incomplete')}
+                  description={researchText('只接受当前决策绑定的精确复核报告；缺失、归属错误或不可比证据不会借用其他报告。', 'Only the exact reviewed report owned by the current decision is accepted; missing, wrong-owner, or incomparable evidence never borrows another report.')}
+                />
+              ) : null}
+              {postCorpusObservation.stateCounts.UNKNOWN > 0 ? (
+                <Alert
+                  type="warning"
+                  showIcon
+                  message={researchText('存在时间边界未知决策', 'Some Decisions Have an Unknown Time Boundary')}
+                  description={researchText('UNKNOWN 永不视为 PASS，也不进入已观察分母。', 'UNKNOWN is never treated as PASS and never enters the observed denominator.')}
+                />
+              ) : null}
+            </div>
+          </section>
           {hasMiniGptHandoff ? (
             <>
               {!miniGptBacktest ? (

@@ -425,6 +425,162 @@
       ]
     },
     {
+      "scope": "iteration 48C month-end bounded five-state observation",
+      "file": "src/components/LotteryMonthEndReviewPage.tsx",
+      "includes": [
+        "lotteryDecisionSetApi.outcomes({",
+        "includeArchived: true",
+        "limit: MINI_GPT_POST_CORPUS_SNAPSHOT_LIMIT",
+        "lotteryDecisionSetApi.decisionSets({",
+        "pageSize: MINI_GPT_POST_CORPUS_SNAPSHOT_LIMIT",
+        "aggregateMiniGptPostCorpusOutcomes(postCorpusOutcomes?.items || [])",
+        "MINI_GPT_OBSERVATION_BOUNDARY_STATES.map",
+        "data-boundary-source=\"DECISION_PROVENANCE_PLUS_EXACT_DECISION_OUTCOME\"",
+        "data-observed-denominator={postCorpusObservation.observedDecisionCount}",
+        "data-read-only=\"true\"",
+        "只有 POST_CORPUS_OBSERVED 进入已观察分母",
+        "postCorpusObservation.stateCounts[state]",
+        "postCorpusSnapshotTruncated",
+        "已观察决策分母",
+        "精确可比随机基线",
+        "更早决策不在本次观察分母内，不能把当前统计解释为完整历史。",
+        "UNKNOWN 永不视为 PASS，也不进入已观察分母。"
+      ],
+      "excludes": [
+        "POST_CORPUS_OBSERVED_PASS",
+        "UNKNOWN_PASS",
+        "lotteryDecisionSetApi.reviewDecisionSet",
+        "lotteryDecisionSetApi.createMiniGptDecisionSet",
+        "lotteryTicketPackApi.create",
+        "lotteryTicketPackApi.approve",
+        "lotteryTicketPackApi.saveAsTickets"
+      ]
+    },
+    {
+      "scope": "iteration 48C month-end exact reviewed evidence",
+      "file": "src/components/LotteryMonthEndReviewPage.tsx",
+      "includes": [
+        "lotteryBacktestApi.detail(id)",
+        "postCorpusBacktestsById",
+        "requestId !== reviewRequestIdRef.current",
+        "随机基线差值不跨报告平均",
+        "只接受当前决策绑定的精确复核报告",
+        "缺失、归属错误或不可比证据不会借用其他报告。",
+        "正向结果也不证明泛化、不会自动审批票包或生成票据。"
+      ]
+    },
+    {
+      "scope": "iteration 48C month-end observation responsive styles",
+      "file": "src/components/LotteryOverviewPage.css",
+      "includes": [
+        ".lottery-month-end-observation",
+        ".lottery-month-end-observation-state-grid",
+        ".lottery-month-end-observation-metric-grid",
+        ".lottery-month-end-observation-warnings",
+        "article[data-boundary-state='POST_CORPUS_OBSERVED']",
+        "article[data-boundary-state='POST_CORPUS_PENDING']",
+        "@media (max-width: 900px)",
+        "@media (max-width: 560px)"
+      ]
+    },
+    {
+      "scope": "iteration 48C decision-outcomes CSV boundary snapshot",
+      "file": "../one-record/one-record-service/src/main/java/com/one/record/service/impl/LotteryExportService.java",
+      "includes": [
+        "case \"decision-outcomes\" -> decisionOutcomeRows(filters);",
+        "decisionSetService.outcomeSummary(true, MINI_GPT_OBSERVATION_SNAPSHOT_LIMIT)",
+        "MINIGPT_TEMPORAL_BOUNDARY_V1",
+        "DECISION_PROVENANCE_PLUS_EXACT_DECISION_OUTCOME",
+        "LATEST_100_DECISIONS_INCLUDE_ARCHIVED",
+        "REPEATED_SNAPSHOT_METADATA_DO_NOT_SUM",
+        "row.put(\"decisionBoundaryState\"",
+        "row.put(\"decisionContributesToSnapshotObservedDenominator\"",
+        "row.put(\"observationSnapshotLimit\"",
+        "row.put(\"observationSnapshotLoadedDecisionCount\"",
+        "row.put(\"observationSnapshotTotalDecisionCount\"",
+        "row.put(\"observationSnapshotTruncated\"",
+        "row.put(\"snapshotTrainWindowDecisionCount\"",
+        "row.put(\"snapshotValidationWindowDecisionCount\"",
+        "row.put(\"snapshotPostCorpusPendingDecisionCount\"",
+        "row.put(\"snapshotPostCorpusObservedDecisionCount\"",
+        "row.put(\"snapshotUnknownDecisionCount\"",
+        "row.put(\"snapshotObservedDecisionDenominator\"",
+        "row.put(\"snapshotAggregationSemantics\"",
+        "Only POST_CORPUS_OBSERVED enters the observed decision denominator",
+        "Decision-level snapshot counts repeat on every candidate row; do not sum them.",
+        "No automatic approval or ticket creation."
+      ],
+      "excludes": [
+        "case \"minigpt-observations\"",
+        "case \"minigpt-boundaries\"",
+        "case \"post-corpus-observations\"",
+        "decisionSetRepository.save(",
+        "backtestReportRepository.save(",
+        "ticketRepository.save("
+      ]
+    },
+    {
+      "scope": "iteration 48C CSV exact review ownership and injection guard",
+      "file": "../one-record/one-record-service/src/main/java/com/one/record/service/impl/LotteryExportService.java",
+      "includes": [
+        "reviewedBacktestsById",
+        "backtestReportRepository.findAllById(ids)",
+        "EXACT_OWNED",
+        "OWNER_MISMATCH",
+        "row.put(\"reviewBacktestOwnershipState\"",
+        "row.put(\"reviewedBaselineComparabilityState\"",
+        "row.put(\"comparableBacktestRoiPercentDelta\"",
+        "EXACT_REVIEW_BINDING_ONLY_NO_LATEST_FALLBACK",
+        "escape(row.get(header))",
+        "protectSpreadsheetFormula",
+        "first == '=' || first == '@'",
+        "signedFormula",
+        "controlPrefix"
+      ],
+      "excludes": [
+        "findFirstByDecisionSetIdOrderByCreatedAtDesc"
+      ]
+    },
+    {
+      "scope": "iteration 48C CSV focused backend coverage",
+      "file": "../one-record/one-record-service/src/test/java/com/one/record/service/impl/LotteryExportServiceTest.java",
+      "includes": [
+        "exportDecisionOutcomesCarriesFiveStateObservedOnlySnapshotWithoutCountingCandidateRows",
+        "exportDecisionOutcomesDoesNotPromoteLatestOrWrongOwnerBacktestToReviewedEvidence",
+        "containsEntry(\"snapshotObservedDecisionDenominator\", \"1\")",
+        "containsEntry(\"observationSnapshotTotalDecisionCount\", \"103\")",
+        "containsEntry(\"reviewBacktestOwnershipState\", \"EXACT_OWNED\")",
+        "containsEntry(\"reviewBacktestOwnershipState\", \"OWNER_MISMATCH\")",
+        "containsEntry(\"reviewBacktestOwnershipState\", \"UNBOUND\")",
+        "contains(\"do not sum them\")",
+        "contains(\"No automatic approval or ticket creation\")"
+      ]
+    },
+    {
+      "scope": "iteration 48C existing export preset handoff",
+      "file": "src/components/LotteryExportMaintenancePage.tsx",
+      "includes": [
+        "key: 'v47-minigpt-research'",
+        "miniGptResearchPreset = searchParams.get('preset') === 'v47-minigpt-research'",
+        "params.includeArchived = 'true'",
+        "toParams(type, primaryFilter, limit, miniGptResearchPreset)",
+        "key: 'v48-month-end-temporal-boundary'",
+        "key: 'v48-observed-only-csv'",
+        "V48月末五态边界",
+        "V48观察口径CSV",
+        "MiniGPT 观察证据沿用现有复核包与 CSV 类型。",
+        "重复快照分母",
+        "重复计数不可相加",
+        "只有精确归属的复核报告进入 reviewed 字段",
+        "不新增导出域"
+      ],
+      "excludes": [
+        "key: 'v48-minigpt-research'",
+        "value: 'minigpt-observations'",
+        "value: 'post-corpus-observations'"
+      ]
+    },
+    {
       "scope": "iteration 47C decision deep-link and review workflow",
       "file": "src/components/LotteryPredictionDecisionPage.tsx",
       "includes": [
@@ -531,12 +687,13 @@
       "includes": [
         "lotteryDecisionSetApi.outcomes({ includeArchived: true, limit: 12 })",
         "lotteryBacktestApi.reports({ page: 0, pageSize: 24 })",
-        "lotteryBacktestApi.detail(reviewedMiniGptDecision.reviewBacktestId)",
+        "lotteryBacktestApi.detail(id)",
         "lotteryTicketPackApi.ticketPacks({ includeArchived: true, page: 1, pageSize: 24 })",
-        "hasMiniGptProvenance",
-        ".filter(item => hasMiniGptProvenance(item.provenance) && item.reviewBacktestId)",
-        "reviewedBacktest?.id === reviewedMiniGptDecision.reviewBacktestId",
-        "reviewedBacktest.decisionSetId === reviewedMiniGptDecision.decisionSetId",
+        "hasMiniGptResearchProvenance",
+        ".filter(item => hasMiniGptResearchProvenance(item.provenance) && item.reviewBacktestId)",
+        "reviewedBacktestIds.add(reviewedMiniGptDecision.reviewBacktestId)",
+        "const exactBacktestsById = Object.fromEntries(exactBacktestEntries)",
+        "item.id === miniGptDecision.reviewBacktestId",
         "item.decisionSetId === miniGptDecision.decisionSetId",
         "miniGptGenerationIds",
         "miniGptComparisonPassed",
@@ -1263,6 +1420,7 @@
         "lotteryLedgerApi.issues",
         "lotteryTicketApi.summary",
         "lotteryDecisionSetApi.outcomes",
+        "lotteryDecisionSetApi.decisionSets",
         "lotteryOutcomeApi.rollup",
         "lotteryRecommendationApi.rollup",
         "lotteryStrategyNoteApi.notes",
@@ -1272,8 +1430,8 @@
         "lotteryBacktestApi.detail",
         "lotteryTicketPackApi.ticketPacks"
       ],
-      "emptyStates": ["暂无期号复盘", "暂无研究证据", "暂无归因质量摘要", "暂无推荐生命周期摘要", "异常复核闭环", "长期计划复盘", "35-39 复盘窗口", "长期研究包", "复核笔记", "下轮执行", "长期计划检查点", "nextPhaseCandidateItems", "证据质量趋势", "focus=evidence-quality", "Provider可靠性", "focus=provider-reliability", "归档复核压力", "ARCHIVE_REVIEW", "发布证据归档", "focus=release-archive", "全部范围", "全部状态", "暂无研究归档", "暂无月末导出证据", "MiniGPT", "Random Baseline", "同窗口随机基线 ROI 差额", "仅作为历史窗口研究证据，不外推未来表现。", "不会自动审批或生成票据"],
-      "errorStates": ["读取彩票月末复盘失败"],
+      "emptyStates": ["暂无期号复盘", "暂无研究证据", "暂无归因质量摘要", "暂无推荐生命周期摘要", "异常复核闭环", "长期计划复盘", "35-39 复盘窗口", "长期研究包", "复核笔记", "下轮执行", "长期计划检查点", "nextPhaseCandidateItems", "证据质量趋势", "focus=evidence-quality", "Provider可靠性", "focus=provider-reliability", "归档复核压力", "ARCHIVE_REVIEW", "发布证据归档", "focus=release-archive", "全部范围", "全部状态", "暂无研究归档", "暂无月末导出证据", "MiniGPT", "Random Baseline", "同窗口随机基线 ROI 差额", "仅作为历史窗口研究证据，不外推未来表现。", "不会自动审批或生成票据", "语料时间边界与样本外观察", "只有 POST_CORPUS_OBSERVED 进入已观察分母", "有界快照内暂无 MiniGPT 决策观察证据", "已观察决策分母", "精确可比随机基线", "UNKNOWN 永不视为 PASS"],
+      "errorStates": ["读取彩票月末复盘失败", "读取 MiniGPT 月末语料后观察失败", "读取 MiniGPT 月末观察范围失败"],
       "fixtureData": {
         "review": {
           "score": 88,
@@ -1593,12 +1751,13 @@
         "lotteryExportApi.maintenanceSummary",
         "lotteryExportApi.cleanupDryRun"
       ],
-      "emptyStates": ["本次导出没有数据", "暂无数据", "暂无审计事件", "暂无集合状态", "暂无缓存状态", "复盘运营", "月末复盘", "长期研究包", "年度复盘包", "异常复盘包", "Provider可靠性包", "复核Runbook包", "归因闭环包", "归因质量包", "推荐生命周期包", "推荐跟进包", "移动指挥包", "V15治理证据包", "异常观察证据", "Provider可靠性证据", "复核Runbook证据", "长期研究证据", "闭环证据包", "V33复核Runbook", "V39复核笔记质量", "V40长期计划复盘", "V41证据质量趋势", "V32Provider可靠性", "V44策略退休复盘", "V45归档复核压力", "MiniGPT研究链复核包", "V47可复现生成链", "V47同窗同预算基线", "V47草稿与人工复核链", "仅作为历史窗口研究证据，不外推未来表现。", "复核只记录研究生命周期动作，不会自动审批票包或生成票据。", "发布证据归档焦点", "reports/lottery-release-evidence.md", "reports/lottery-release-history/README.md", "npm run lottery:release-archive", "V31异常复盘", "V30长期复盘导出", "V29推荐跟进", "V28归因质量", "V16导航易用性", "V16操作体验", "V16筛选可读性", "V16响应式打磨", "V18今日优先事项", "V18航行记录分析", "V18号码综合可能性", "V18深度规律分析", "前端发布就绪"],
+      "emptyStates": ["本次导出没有数据", "暂无数据", "暂无审计事件", "暂无集合状态", "暂无缓存状态", "复盘运营", "月末复盘", "长期研究包", "年度复盘包", "异常复盘包", "Provider可靠性包", "复核Runbook包", "归因闭环包", "归因质量包", "推荐生命周期包", "推荐跟进包", "移动指挥包", "V15治理证据包", "异常观察证据", "Provider可靠性证据", "复核Runbook证据", "长期研究证据", "闭环证据包", "V33复核Runbook", "V39复核笔记质量", "V40长期计划复盘", "V41证据质量趋势", "V32Provider可靠性", "V44策略退休复盘", "V45归档复核压力", "MiniGPT研究链复核包", "V47可复现生成链", "V47同窗同预算基线", "V47草稿与人工复核链", "V48月末五态边界", "V48观察口径CSV", "MiniGPT 观察证据沿用现有复核包与 CSV 类型。", "重复计数不可相加", "只有精确归属的复核报告进入 reviewed 字段", "仅作为历史窗口研究证据，不外推未来表现。", "复核只记录研究生命周期动作，不会自动审批票包或生成票据。", "发布证据归档焦点", "reports/lottery-release-evidence.md", "reports/lottery-release-history/README.md", "npm run lottery:release-archive", "V31异常复盘", "V30长期复盘导出", "V29推荐跟进", "V28归因质量", "V16导航易用性", "V16操作体验", "V16筛选可读性", "V16响应式打磨", "V18今日优先事项", "V18航行记录分析", "V18号码综合可能性", "V18深度规律分析", "前端发布就绪"],
       "errorStates": ["读取彩票导出审计失败", "导出彩票数据失败", "生成彩票报表失败", "执行彩票维护 dry-run 失败"],
       "fixtureData": {
         "releaseEvidence": {
           "smokeCommand": "npm run lottery:smoke",
           "v16Checks": ["navigation usability", "operation ergonomics", "filter readability", "responsive polish", "release readiness", "single-row lottery nav", "all top-level groups visible", "no more menu", "no second-row child nav", "workbench priority actions", "astronaut voyage analysis", "blue planet-only analysis", "number probability pressure", "number probability drilldown", "deep pattern analysis", "report-style deep analysis"],
+          "v48Checks": ["month-end bounded 100 include-archived scope", "five-state separation", "observed-only denominator", "exact reviewed ownership", "repeated CSV snapshot metadata", "CSV formula injection protection", "historical-only safety copy", "no new export type", "no mutation"],
           "report": "reports/lottery-route-smoke-summary.json"
         }
       }
