@@ -1,4 +1,8 @@
-import type { LotteryResearchProvenance } from '../services/api';
+import type {
+  LotteryBacktestReport,
+  LotteryDecisionOutcomeItem,
+  LotteryResearchProvenance
+} from '../services/api';
 
 const warningLabels: Record<string, { zh: string; en: string }> = {
   STATIC_POOL_HISTORICAL_REPLAY: {
@@ -254,4 +258,418 @@ export const classifyMiniGptObservationBoundary = ({
   }
 
   return buildBoundaryResult('UNKNOWN', trainRange, validationRange, target.value);
+};
+
+export const MINI_GPT_POST_CORPUS_SNAPSHOT_LIMIT = 100;
+export const MINI_GPT_POST_CORPUS_SMALL_SAMPLE_ISSUES = 3;
+
+export type MiniGptBaselineComparabilityState = 'COMPARABLE' | 'FAIL' | 'UNKNOWN';
+
+export type MiniGptBaselineComparabilityReason =
+  | 'MISSING_REVIEW_BINDING'
+  | 'REVIEW_REPORT_UNAVAILABLE'
+  | 'REPORT_ID_MISMATCH'
+  | 'DECISION_OWNER_MISMATCH'
+  | 'UNSTABLE_DECISION_PROVENANCE'
+  | 'BACKTEST_PROVENANCE_MISMATCH'
+  | 'BASELINE_WINDOW_MISMATCH'
+  | 'BASELINE_BUDGET_MISMATCH'
+  | 'BASELINE_COMPARABILITY_UNKNOWN'
+  | 'BASELINE_TICKET_COUNT_MISMATCH'
+  | 'BASELINE_METADATA_INCOMPLETE'
+  | 'BASELINE_DELTAS_INCOMPLETE'
+  | 'UNSUPPORTED_EVALUATION_MODE';
+
+export interface MiniGptPostCorpusBaselineEvidence {
+  state: MiniGptBaselineComparabilityState;
+  reasons: MiniGptBaselineComparabilityReason[];
+  reviewBacktestId?: string;
+  reportId?: string;
+  evaluationMode?: string;
+  baselineAlgorithm?: string;
+  baselineSeed?: number;
+  windowIssueCount?: number;
+  ticketCount?: number;
+  baselineTicketCount?: number;
+  averageRedHitsDelta?: number;
+  blueHitRateDelta?: number;
+  totalPrizeDelta?: number;
+  netResultDelta?: number;
+  roiPercentDelta?: number;
+  warnings: string[];
+}
+
+export interface MiniGptPostCorpusObservedDecision {
+  item: LotteryDecisionOutcomeItem;
+  issue: string;
+  stableProvenance: boolean;
+  financialEvidenceComplete: boolean;
+  baseline: MiniGptPostCorpusBaselineEvidence;
+}
+
+export interface MiniGptPostCorpusObservationGroup {
+  key: string;
+  stableProvenance: boolean;
+  sourceType?: string;
+  corpusVersion?: string;
+  runId?: string;
+  trainSha256?: string;
+  validationSha256?: string;
+  checkpointSha256?: string;
+  trainFirstIssue?: string;
+  trainLatestIssue?: string;
+  validationFirstIssue?: string;
+  validationLatestIssue?: string;
+  decisionSetIds: string[];
+  batchIds: string[];
+  distinctIssueCount: number;
+  issueRange: MiniGptObservationIssueRange | null;
+  decisions: MiniGptPostCorpusObservedDecision[];
+}
+
+export interface MiniGptPostCorpusFinancialAggregate {
+  decisionCount: number;
+  totalCost: number | null;
+  totalPrize: number | null;
+  netResult: number | null;
+  roiPercent: number | null;
+}
+
+export interface MiniGptPostCorpusOutcomeAggregate {
+  boundedInputCount: number;
+  miniGptDecisionCount: number;
+  excludedNonMiniGptCount: number;
+  stateCounts: Record<MiniGptObservationBoundaryState, number>;
+  observedDecisionCount: number;
+  distinctIssueCount: number;
+  issueRange: MiniGptObservationIssueRange | null;
+  scoredCandidateCount: number;
+  winningCandidateCount: number;
+  blueHitCount: number;
+  blueHitRatePercent: number | null;
+  hitDistribution: Record<string, number>;
+  prizeDistribution: Record<string, number>;
+  financial: MiniGptPostCorpusFinancialAggregate;
+  comparableBaselineCount: number;
+  failedBaselineCount: number;
+  unknownBaselineCount: number;
+  unstableObservedCount: number;
+  groups: MiniGptPostCorpusObservationGroup[];
+}
+
+type BacktestLookup = Readonly<Record<string, LotteryBacktestReport | null | undefined>>;
+
+const STABLE_PROVENANCE_FIELDS = [
+  'corpusVersion',
+  'runId',
+  'trainSha256',
+  'validationSha256',
+  'checkpointSha256',
+  'trainFirstIssue',
+  'trainLatestIssue',
+  'validationFirstIssue',
+  'validationLatestIssue'
+] as const satisfies ReadonlyArray<keyof LotteryResearchProvenance>;
+
+const normalizedText = (value: unknown) => typeof value === 'string' && value.trim() ? value.trim() : undefined;
+
+export const hasMiniGptResearchProvenance = (provenance?: LotteryResearchProvenance | null) => {
+  const sourceType = normalizedText(provenance?.sourceType)?.toUpperCase();
+  return Boolean(
+    normalizedText(provenance?.batchId)
+    || normalizedText(provenance?.generationId)
+    || sourceType?.includes('MINIGPT')
+    || sourceType?.includes('MINI_GPT')
+  );
+};
+
+const stableProvenanceSignature = (provenance?: LotteryResearchProvenance | null) => {
+  const values = STABLE_PROVENANCE_FIELDS.map(field => normalizedText(provenance?.[field]));
+  return values.every(Boolean) ? values.join('|') : null;
+};
+
+const safeCount = (value: unknown) => (
+  typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : 0
+);
+
+const finiteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
+
+const mergeDistribution = (target: Record<string, number>, source?: Record<string, number>) => {
+  Object.entries(source || {}).forEach(([label, value]) => {
+    if (finiteNumber(value) && value >= 0) {
+      target[label] = (target[label] || 0) + value;
+    }
+  });
+};
+
+const issueRange = (issues: string[]): MiniGptObservationIssueRange | null => {
+  const normalized = issues.map(normalizeIssue).filter((value): value is NormalizedIssue => Boolean(value));
+  if (!normalized.length) return null;
+  normalized.sort((left, right) => left.numeric < right.numeric ? -1 : left.numeric > right.numeric ? 1 : 0);
+  return {
+    firstIssue: normalized[0].value,
+    latestIssue: normalized[normalized.length - 1].value
+  };
+};
+
+const comparableBaselineEvidence = (
+  item: LotteryDecisionOutcomeItem,
+  stableSignature: string | null,
+  backtestsById: BacktestLookup
+): MiniGptPostCorpusBaselineEvidence => {
+  const reviewBacktestId = normalizedText(item.reviewBacktestId);
+  const unknown = (
+    reasons: MiniGptBaselineComparabilityReason[],
+    report?: LotteryBacktestReport
+  ): MiniGptPostCorpusBaselineEvidence => ({
+    state: 'UNKNOWN',
+    reasons,
+    reviewBacktestId,
+    reportId: report?.id,
+    evaluationMode: report?.evaluationMode,
+    baselineAlgorithm: report?.baselineAlgorithm,
+    baselineSeed: report?.baselineSeed,
+    windowIssueCount: report?.windowIssueCount,
+    ticketCount: report?.ticketCount,
+    baselineTicketCount: report?.baselineTicketCount,
+    warnings: report?.overfitWarnings || []
+  });
+
+  if (!reviewBacktestId) {
+    return unknown(['MISSING_REVIEW_BINDING']);
+  }
+  if (!stableSignature) {
+    return unknown(['UNSTABLE_DECISION_PROVENANCE']);
+  }
+  const report = backtestsById[reviewBacktestId] || undefined;
+  if (!report) {
+    return unknown(['REVIEW_REPORT_UNAVAILABLE']);
+  }
+  if (normalizedText(report.id) !== reviewBacktestId) {
+    return unknown(['REPORT_ID_MISMATCH'], report);
+  }
+  if (!normalizedText(item.decisionSetId) || normalizedText(report.decisionSetId) !== normalizedText(item.decisionSetId)) {
+    return unknown(['DECISION_OWNER_MISMATCH'], report);
+  }
+  if (stableProvenanceSignature(report.provenance) !== stableSignature) {
+    return unknown(['BACKTEST_PROVENANCE_MISMATCH'], report);
+  }
+
+  const failedReasons: MiniGptBaselineComparabilityReason[] = [];
+  if (report.sameWindow === false) failedReasons.push('BASELINE_WINDOW_MISMATCH');
+  if (report.sameBudget === false) failedReasons.push('BASELINE_BUDGET_MISMATCH');
+  if (finiteNumber(report.ticketCount)
+    && finiteNumber(report.baselineTicketCount)
+    && report.ticketCount !== report.baselineTicketCount) {
+    failedReasons.push('BASELINE_TICKET_COUNT_MISMATCH');
+  }
+  if (failedReasons.length) {
+    return {
+      ...unknown(failedReasons, report),
+      state: 'FAIL'
+    };
+  }
+  if (report.sameWindow !== true || report.sameBudget !== true) {
+    return unknown(['BASELINE_COMPARABILITY_UNKNOWN'], report);
+  }
+  if (report.evaluationMode !== 'STATIC_POOL_HISTORICAL_REPLAY') {
+    return unknown(['UNSUPPORTED_EVALUATION_MODE'], report);
+  }
+  if (!normalizedText(report.baselineAlgorithm)
+    || !finiteNumber(report.baselineSeed)
+    || !finiteNumber(report.windowIssueCount)
+    || report.windowIssueCount <= 0
+    || !finiteNumber(report.ticketCount)
+    || !finiteNumber(report.baselineTicketCount)) {
+    return unknown(['BASELINE_METADATA_INCOMPLETE'], report);
+  }
+  if (![report.averageRedHitsDelta, report.blueHitRateDelta, report.totalPrizeDelta, report.netResultDelta, report.roiPercentDelta]
+    .every(finiteNumber)) {
+    return unknown(['BASELINE_DELTAS_INCOMPLETE'], report);
+  }
+
+  return {
+    state: 'COMPARABLE',
+    reasons: [],
+    reviewBacktestId,
+    reportId: report.id,
+    evaluationMode: report.evaluationMode,
+    baselineAlgorithm: report.baselineAlgorithm,
+    baselineSeed: report.baselineSeed,
+    windowIssueCount: report.windowIssueCount,
+    ticketCount: report.ticketCount,
+    baselineTicketCount: report.baselineTicketCount,
+    averageRedHitsDelta: report.averageRedHitsDelta,
+    blueHitRateDelta: report.blueHitRateDelta,
+    totalPrizeDelta: report.totalPrizeDelta,
+    netResultDelta: report.netResultDelta,
+    roiPercentDelta: report.roiPercentDelta,
+    warnings: report.overfitWarnings || []
+  };
+};
+
+interface MutableObservationGroup extends Omit<MiniGptPostCorpusObservationGroup, 'decisionSetIds' | 'batchIds' | 'distinctIssueCount' | 'issueRange'> {
+  decisionSetIdSet: Set<string>;
+  batchIdSet: Set<string>;
+}
+
+export const aggregateMiniGptPostCorpusOutcomes = (
+  items: LotteryDecisionOutcomeItem[] = [],
+  backtestsById: BacktestLookup = {}
+): MiniGptPostCorpusOutcomeAggregate => {
+  const stateCounts = Object.fromEntries(
+    MINI_GPT_OBSERVATION_BOUNDARY_STATES.map(state => [state, 0])
+  ) as Record<MiniGptObservationBoundaryState, number>;
+  const groups = new Map<string, MutableObservationGroup>();
+  const observedItems: LotteryDecisionOutcomeItem[] = [];
+  const observedIssues: string[] = [];
+  const hitDistribution: Record<string, number> = {};
+  const prizeDistribution: Record<string, number> = {};
+  let miniGptDecisionCount = 0;
+  let scoredCandidateCount = 0;
+  let winningCandidateCount = 0;
+  let blueHitCount = 0;
+  let unstableObservedCount = 0;
+  let comparableBaselineCount = 0;
+  let failedBaselineCount = 0;
+  let unknownBaselineCount = 0;
+  let financialDecisionCount = 0;
+  let financialCost = 0;
+  let financialPrize = 0;
+
+  items.forEach((item, index) => {
+    if (!hasMiniGptResearchProvenance(item.provenance)) return;
+    miniGptDecisionCount += 1;
+    const scoredCount = item.scoredCandidateCount;
+    const hasOwnedObservedResult = normalizedText(item.decisionSetId) && finiteNumber(scoredCount) && scoredCount >= 0
+      ? scoredCount > 0
+      : undefined;
+    const boundary = classifyMiniGptObservationBoundary({
+      provenance: item.provenance,
+      targetIssue: item.targetIssue,
+      hasObservedResult: hasOwnedObservedResult
+    });
+    stateCounts[boundary.state] += 1;
+    if (boundary.state !== 'POST_CORPUS_OBSERVED' || !boundary.targetIssue) return;
+
+    observedItems.push(item);
+    observedIssues.push(boundary.targetIssue);
+    scoredCandidateCount += safeCount(item.scoredCandidateCount);
+    winningCandidateCount += safeCount(item.winningCandidateCount);
+    blueHitCount += safeCount(item.blueHitCount);
+    mergeDistribution(hitDistribution, item.hitDistribution);
+    mergeDistribution(prizeDistribution, item.prizeDistribution);
+
+    const convertedTicketCount = safeCount(item.convertedTicketCount);
+    const checkedConvertedTicketCount = safeCount(item.checkedConvertedTicketCount);
+    const financialEvidenceComplete = convertedTicketCount > 0
+      && checkedConvertedTicketCount === convertedTicketCount
+      && finiteNumber(item.totalCost)
+      && finiteNumber(item.totalPrize);
+    if (financialEvidenceComplete) {
+      financialDecisionCount += 1;
+      financialCost += item.totalCost || 0;
+      financialPrize += item.totalPrize || 0;
+    }
+
+    const stableSignature = stableProvenanceSignature(item.provenance);
+    const stableProvenance = Boolean(stableSignature && normalizedText(item.decisionSetId));
+    if (!stableProvenance) unstableObservedCount += 1;
+    const groupKey = stableProvenance
+      ? stableSignature as string
+      : `UNSTABLE|${normalizedText(item.decisionSetId) || index}`;
+    const baseline = comparableBaselineEvidence(item, stableSignature, backtestsById);
+    if (baseline.state === 'COMPARABLE') comparableBaselineCount += 1;
+    else if (baseline.state === 'FAIL') failedBaselineCount += 1;
+    else unknownBaselineCount += 1;
+
+    const existing = groups.get(groupKey);
+    const decision: MiniGptPostCorpusObservedDecision = {
+      item,
+      issue: boundary.targetIssue,
+      stableProvenance,
+      financialEvidenceComplete,
+      baseline
+    };
+    if (existing) {
+      existing.decisions.push(decision);
+      if (item.decisionSetId) existing.decisionSetIdSet.add(item.decisionSetId);
+      if (item.provenance?.batchId) existing.batchIdSet.add(item.provenance.batchId);
+      return;
+    }
+    groups.set(groupKey, {
+      key: groupKey,
+      stableProvenance,
+      sourceType: item.provenance?.sourceType,
+      corpusVersion: item.provenance?.corpusVersion,
+      runId: item.provenance?.runId,
+      trainSha256: item.provenance?.trainSha256,
+      validationSha256: item.provenance?.validationSha256,
+      checkpointSha256: item.provenance?.checkpointSha256,
+      trainFirstIssue: item.provenance?.trainFirstIssue,
+      trainLatestIssue: item.provenance?.trainLatestIssue,
+      validationFirstIssue: item.provenance?.validationFirstIssue,
+      validationLatestIssue: item.provenance?.validationLatestIssue,
+      decisions: [decision],
+      decisionSetIdSet: new Set(item.decisionSetId ? [item.decisionSetId] : []),
+      batchIdSet: new Set(item.provenance?.batchId ? [item.provenance.batchId] : [])
+    });
+  });
+
+  const finalizedGroups = [...groups.values()].map(group => {
+    group.decisions.sort((left, right) => left.issue.localeCompare(right.issue));
+    const issues = [...new Set(group.decisions.map(decision => decision.issue))];
+    return {
+      key: group.key,
+      stableProvenance: group.stableProvenance,
+      sourceType: group.sourceType,
+      corpusVersion: group.corpusVersion,
+      runId: group.runId,
+      trainSha256: group.trainSha256,
+      validationSha256: group.validationSha256,
+      checkpointSha256: group.checkpointSha256,
+      trainFirstIssue: group.trainFirstIssue,
+      trainLatestIssue: group.trainLatestIssue,
+      validationFirstIssue: group.validationFirstIssue,
+      validationLatestIssue: group.validationLatestIssue,
+      decisionSetIds: [...group.decisionSetIdSet],
+      batchIds: [...group.batchIdSet],
+      distinctIssueCount: issues.length,
+      issueRange: issueRange(issues),
+      decisions: group.decisions
+    };
+  }).sort((left, right) => {
+    if (left.stableProvenance !== right.stableProvenance) return left.stableProvenance ? -1 : 1;
+    return left.key.localeCompare(right.key);
+  });
+  const distinctIssues = [...new Set(observedIssues)];
+  const netResult = financialPrize - financialCost;
+
+  return {
+    boundedInputCount: items.length,
+    miniGptDecisionCount,
+    excludedNonMiniGptCount: items.length - miniGptDecisionCount,
+    stateCounts,
+    observedDecisionCount: observedItems.length,
+    distinctIssueCount: distinctIssues.length,
+    issueRange: issueRange(distinctIssues),
+    scoredCandidateCount,
+    winningCandidateCount,
+    blueHitCount,
+    blueHitRatePercent: scoredCandidateCount > 0 ? (blueHitCount / scoredCandidateCount) * 100 : null,
+    hitDistribution,
+    prizeDistribution,
+    financial: {
+      decisionCount: financialDecisionCount,
+      totalCost: financialDecisionCount > 0 ? financialCost : null,
+      totalPrize: financialDecisionCount > 0 ? financialPrize : null,
+      netResult: financialDecisionCount > 0 ? netResult : null,
+      roiPercent: financialCost > 0 ? (netResult / financialCost) * 100 : null
+    },
+    comparableBaselineCount,
+    failedBaselineCount,
+    unknownBaselineCount,
+    unstableObservedCount,
+    groups: finalizedGroups
+  };
 };

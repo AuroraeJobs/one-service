@@ -113,12 +113,15 @@ Formal delivery plan: [Iteration 47 plan](iteration-47-plan.md). Waves 47A-47D, 
 
 ### Promoted Candidate Iteration 48: MiniGPT Temporal Boundary And Out-Of-Sample Observation V1
 
-Formal delivery plan: [Iteration 48 plan](iteration-48-plan.md). Iteration 48 is the only promoted candidate; Wave 48A is complete and Waves 48B-48D remain open.
+Formal delivery plan: [Iteration 48 plan](iteration-48-plan.md). Iteration 48 is the only promoted candidate; Waves 48A-48B are complete, Wave 48C is next, and Wave 48D remains open.
 
 - Wave 48A now adds a frontend-only, read-only determination to the existing MiniGPT decision-provenance panel on `/lottery/predictions/decision`, using exact decision outcomes, decision sets, and MiniGPT provenance. It adds no API, collection, route, export type, or write action.
 - The fixed classifier states are `TRAIN_WINDOW`, `VALIDATION_WINDOW`, `POST_CORPUS_PENDING`, `POST_CORPUS_OBSERVED`, and `UNKNOWN`.
 - Only `POST_CORPUS_OBSERVED` may be described as an out-of-sample observation. It is not a performance PASS, proof of generalization, or future guarantee; `UNKNOWN` is never PASS.
-- Wave 48B aggregates only observed post-corpus outcomes and keeps pending/unknown rows outside that denominator. Wave 48C carries the boundary into month-end and existing CSV evidence. Wave 48D closes release and handoff evidence.
+- Wave 48B now composes the latest 100 include-archived outcomes in the existing decision page, uses decision-page `total`/`hasNext` to disclose bounded-snapshot truncation, keeps all five states separate, and admits only `POST_CORPUS_OBSERVED` to the observed denominator.
+- Stable corpus/run/hash/range provenance forms lineage groups while every owning decision remains visible; incomplete provenance is isolated. Decision count, distinct issues, scored candidates, and fully settled financial coverage stay separate, and small-sample/coverage warnings remain explicit.
+- Random-baseline deltas resolve per decision from exact `reviewBacktestId` detail only after decision ownership, stable provenance, same window/budget, equal ticket counts, complete metadata/deltas, and static historical-replay mode pass. No reports are averaged together, no favorable value changes the temporal state, and no backend contract or write path was added.
+- Wave 48C carries the boundary into month-end and existing CSV evidence. Wave 48D closes release and handoff evidence.
 
 ## Risk Register
 
@@ -132,11 +135,14 @@ Formal delivery plan: [Iteration 48 plan](iteration-48-plan.md). Iteration 48 is
 | Long-running analysis becomes expensive | Use persisted reports, bounded pages, and explicit run actions rather than hidden background work. |
 | A later replay or unrelated pack replaces reviewed evidence | Require both report id and `decisionSetId`, associate packs only by the same decision `decisionSetId`/`sourceId`, and never treat missing comparison flags as PASS. |
 | Validation-window or unknown rows are presented as out-of-sample evidence | Use the fixed five-state Iteration 48 classifier, reserve out-of-sample wording for settled `POST_CORPUS_OBSERVED` rows, and keep `UNKNOWN` non-PASS. |
+| A bounded observation panel is read as full history | Cap the read at 100 include-archived outcomes, display loaded/total scope, and warn when decision-page `hasNext` or `total` shows that earlier records are outside the denominator. |
+| Baseline deltas from different reports are blended into a stronger claim | Keep exact reviewed-report checks and deltas on each owning decision row; never average reports or use a favorable delta to upgrade the temporal state. |
 
 ## Review Cadence
 
 - 2026-07-11 delivery review: work is complete through Iteration 47, including Wave 47D month-end and release/export evidence. Final verification passed backend service 96/96, backend web 43/43, i18n 1039, lottery smoke 1065/1065 across 18 routes, fresh release evidence, the production build, exact-chain desktop QA, and English 390x844 responsive QA.
-- 2026-07-12 planning and Wave 48A review: Iteration 47's final handoff is confirmed complete, Iteration 48 is the sole next candidate, and its read-only five-state temporal classifier is verified through focused cases, i18n/smoke/release checks, and Chinese/English desktop/mobile light/dark browser QA. Wave 48B is next.
+- 2026-07-12 planning and Wave 48A review: Iteration 47's final handoff is confirmed complete, Iteration 48 is the sole next candidate, and its read-only five-state temporal classifier is verified through focused cases, i18n/smoke/release checks, and Chinese/English desktop/mobile light/dark browser QA. That review handed off to Wave 48B; the following entry records its completion.
+- 2026-07-12 Wave 48B implementation review: observed-only bounded composition, separate denominators, stable-lineage isolation, and exact per-decision baseline comparison are complete without a backend contract change. Final gates pass file-scoped ESLint, i18n 1088, smoke/release 1134/1134 across 18 routes, and the production build. Isolated five-state plus 100/103 truncation fixtures passed Chinese/English desktop and English 390px light/dark QA with no horizontal overflow, no new post-readiness console errors, GET-only reads, and full fixture/runtime cleanup. Wave 48C is next.
 - Review this long-term plan after every five completed iterations.
 - Promote only the next one or two candidate iterations into `docs/lottery/iterations/checklist.md`.
 - Keep completed tactical plans as historical evidence, but let this file carry the long-horizon direction.

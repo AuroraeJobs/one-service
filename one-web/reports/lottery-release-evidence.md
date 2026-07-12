@@ -7,12 +7,12 @@ Generated from `npm run lottery:smoke`.
 | Field | Value |
 | --- | --- |
 | Target | Lottery unified overview default smoke |
-| Generated at | 2026-07-12T04:16:25.448Z |
+| Generated at | 2026-07-12T05:00:13.391Z |
 | Status | PASSED |
 | Mode | mocked-fixture |
 | Provider network | not-required |
 | Routes | 18 |
-| Checks | 1091 |
+| Checks | 1134 |
 | Failures | 0 |
 
 ## Protected Browser QA
@@ -47,6 +47,10 @@ Generated from `npm run lottery:smoke`.
 | iteration 48A MiniGPT observation boundary classifier | `src/utils/lotteryBacktestEvidence.ts` | 9 | 1 |
 | iteration 48A MiniGPT observation boundary decision UI | `src/components/LotteryPredictionDecisionPage.tsx` | 9 | 1 |
 | iteration 48A MiniGPT observation boundary responsive styles | `src/components/LotteryPredictionDecisionPage.css` | 3 | 0 |
+| iteration 48B observed-only bounded aggregation | `src/utils/lotteryBacktestEvidence.ts` | 9 | 0 |
+| iteration 48B exact reviewed baseline comparability | `src/utils/lotteryBacktestEvidence.ts` | 8 | 0 |
+| iteration 48B read-only observation aggregate UI | `src/components/LotteryPredictionDecisionPage.tsx` | 12 | 2 |
+| iteration 48B observation aggregate responsive styles | `src/components/LotteryPredictionDecisionPage.css` | 8 | 0 |
 | iteration 47C decision deep-link and review workflow | `src/components/LotteryPredictionDecisionPage.tsx` | 8 | 0 |
 | iteration 47C historical baseline evidence surfaces | `src/components/LotteryBacktestDetailPage.tsx` | 7 | 0 |
 | iteration 47C research baseline evidence | `src/components/LotteryResearchPage.tsx` | 6 | 0 |

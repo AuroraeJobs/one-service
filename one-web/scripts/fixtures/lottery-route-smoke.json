@@ -360,6 +360,71 @@
       ]
     },
     {
+      "scope": "iteration 48B observed-only bounded aggregation",
+      "file": "src/utils/lotteryBacktestEvidence.ts",
+      "includes": [
+        "aggregateMiniGptPostCorpusOutcomes",
+        "MINI_GPT_POST_CORPUS_SNAPSHOT_LIMIT = 100",
+        "boundary.state !== 'POST_CORPUS_OBSERVED'",
+        "stateCounts[boundary.state] += 1",
+        "distinctIssueCount",
+        "financialEvidenceComplete",
+        "financialDecisionCount > 0 ? financialCost : null",
+        "blueHitRatePercent",
+        "stableProvenanceSignature"
+      ]
+    },
+    {
+      "scope": "iteration 48B exact reviewed baseline comparability",
+      "file": "src/utils/lotteryBacktestEvidence.ts",
+      "includes": [
+        "normalizedText(report.id) !== reviewBacktestId",
+        "normalizedText(report.decisionSetId) !== normalizedText(item.decisionSetId)",
+        "stableProvenanceSignature(report.provenance) !== stableSignature",
+        "report.sameWindow !== true || report.sameBudget !== true",
+        "STATIC_POOL_HISTORICAL_REPLAY",
+        "UNSTABLE_DECISION_PROVENANCE",
+        "BASELINE_DELTAS_INCOMPLETE",
+        "state: 'COMPARABLE'"
+      ]
+    },
+    {
+      "scope": "iteration 48B read-only observation aggregate UI",
+      "file": "src/components/LotteryPredictionDecisionPage.tsx",
+      "includes": [
+        "lotteryDecisionSetApi.outcomes({",
+        "includeArchived: true",
+        "limit: MINI_GPT_POST_CORPUS_SNAPSHOT_LIMIT",
+        "lotteryBacktestApi.detail(id)",
+        "postCorpusRequestIdRef",
+        "requestId !== postCorpusRequestIdRef.current",
+        "data-observed-denominator",
+        "data-read-only=\"true\"",
+        "只有 POST_CORPUS_OBSERVED 进入观察分母",
+        "任何正差值都不会升级时间边界",
+        "BASELINE_{baseline.state}",
+        "postCorpusSnapshotTruncated"
+      ],
+      "excludes": [
+        "POST_CORPUS_OBSERVED_PASS",
+        "BASELINE_SUCCESS"
+      ]
+    },
+    {
+      "scope": "iteration 48B observation aggregate responsive styles",
+      "file": "src/components/LotteryPredictionDecisionPage.css",
+      "includes": [
+        ".lottery-decision-observation-state-grid",
+        ".lottery-decision-observation-metric-grid",
+        ".lottery-decision-observation-groups",
+        ".lottery-decision-observation-baseline",
+        "grid-template-columns: repeat(5, minmax(0, 1fr))",
+        "@media (max-width: 820px)",
+        "@media (max-width: 560px)",
+        "overflow-wrap: anywhere"
+      ]
+    },
+    {
       "scope": "iteration 47C decision deep-link and review workflow",
       "file": "src/components/LotteryPredictionDecisionPage.tsx",
       "includes": [

@@ -24,9 +24,11 @@ import LotteryBalls from './lottery/LotteryBalls';
 import { useI18n } from '../contexts/I18nContext';
 import type { TranslationParams } from '../i18n/types';
 import {
+  lotteryBacktestApi,
   lotteryDecisionSetApi,
   lotteryPredictionApi,
   lotteryTicketApi,
+  type LotteryBacktestReport,
   type LotteryDecisionCandidateSelection,
   type LotteryDecisionOutcomeItem,
   type LotteryDecisionOutcomeSummary,
@@ -42,7 +44,16 @@ import {
   type LotteryTicket
 } from '../services/api';
 import { lotteryDriftLabel, lotteryEvidenceColor, lotteryEvidenceLabel, lotteryReplayText } from '../utils/lotteryEvidence';
-import { classifyMiniGptObservationBoundary, lotteryOverfitWarningsText } from '../utils/lotteryBacktestEvidence';
+import {
+  aggregateMiniGptPostCorpusOutcomes,
+  classifyMiniGptObservationBoundary,
+  MINI_GPT_OBSERVATION_BOUNDARY_METADATA,
+  MINI_GPT_OBSERVATION_BOUNDARY_STATES,
+  MINI_GPT_POST_CORPUS_SMALL_SAMPLE_ISSUES,
+  MINI_GPT_POST_CORPUS_SNAPSHOT_LIMIT,
+  lotteryOverfitWarningsText,
+  type MiniGptBaselineComparabilityReason
+} from '../utils/lotteryBacktestEvidence';
 import './LotteryOverviewPage.css';
 import './LotteryPredictionDecisionPage.css';
 
@@ -179,6 +190,25 @@ const deltaText = (value: number | undefined, t: Translate) => {
   return `${sign}${Number(value).toFixed(2)}`;
 };
 
+const baselineComparabilityReasonText = (reason: MiniGptBaselineComparabilityReason, t: Translate) => {
+  const labels: Record<MiniGptBaselineComparabilityReason, string> = {
+    MISSING_REVIEW_BINDING: '未绑定人工复核回测',
+    REVIEW_REPORT_UNAVAILABLE: '精确复核回测不可用',
+    REPORT_ID_MISMATCH: '复核回测 ID 不匹配',
+    DECISION_OWNER_MISMATCH: '回测不属于当前决策',
+    UNSTABLE_DECISION_PROVENANCE: '决策溯源不完整',
+    BACKTEST_PROVENANCE_MISMATCH: '回测与决策溯源不一致',
+    BASELINE_WINDOW_MISMATCH: '随机基线窗口不一致',
+    BASELINE_BUDGET_MISMATCH: '随机基线预算不一致',
+    BASELINE_COMPARABILITY_UNKNOWN: '随机基线可比性未知',
+    BASELINE_TICKET_COUNT_MISMATCH: '模型与基线票数不一致',
+    BASELINE_METADATA_INCOMPLETE: '随机基线元数据不完整',
+    BASELINE_DELTAS_INCOMPLETE: '随机基线差值不完整',
+    UNSUPPORTED_EVALUATION_MODE: '评估模式不是固定候选池历史回放'
+  };
+  return t(labels[reason]);
+};
+
 const localizeSnapshotTitle = (value: string, translateText: Translate, t: Translate) => {
   const match = value.match(/^第 (.+) 期预测$/);
   return match ? t('第 {{issue}} 期预测', { issue: match[1] }) : translateText(value);
@@ -207,6 +237,11 @@ const localizeTicketState = (value: string, translateText: Translate, t: Transla
 const localizeDecisionSetTitle = (value: string, translateText: Translate, t: Translate) => {
   const match = value.match(/^第 (.+) 期决策集$/);
   return match ? t('第 {{issue}} 期决策集', { issue: match[1] }) : translateText(value);
+};
+
+const localizeHitDistributionLabel = (value: string, translateText: Translate, t: Translate) => {
+  const match = value.match(/^(\d+)红$/);
+  return match ? t('{{count}} 红球', { count: match[1] }) : translateText(value);
 };
 
 const localizeReplayText = (value: string, translateText: Translate) => translateText(value);
@@ -459,6 +494,7 @@ const LotteryPredictionDecisionPage = () => {
   const isEnglish = language.toLowerCase().startsWith('en');
   const translateTextRef = useRef(translateText);
   const appliedDecisionSetQueryRef = useRef('');
+  const postCorpusRequestIdRef = useRef(0);
   translateTextRef.current = translateText;
   const [predictions, setPredictions] = useState<LotteryPredictionSnapshot[]>([]);
   const [pageResponse, setPageResponse] = useState<LotteryPageResponse<LotteryPredictionSnapshot>>();
@@ -467,6 +503,9 @@ const LotteryPredictionDecisionPage = () => {
   const [predictionTickets, setPredictionTickets] = useState<LotteryTicket[]>([]);
   const [decisionSets, setDecisionSets] = useState<LotteryDecisionSet[]>([]);
   const [decisionOutcomeSummary, setDecisionOutcomeSummary] = useState<LotteryDecisionOutcomeSummary>();
+  const [postCorpusOutcomeSummary, setPostCorpusOutcomeSummary] = useState<LotteryDecisionOutcomeSummary>();
+  const [postCorpusDecisionPage, setPostCorpusDecisionPage] = useState<LotteryPageResponse<LotteryDecisionSet>>();
+  const [postCorpusBacktestsById, setPostCorpusBacktestsById] = useState<Record<string, LotteryBacktestReport | null>>({});
   const [activeDecisionSetId, setActiveDecisionSetId] = useState<string>();
   const [decisionSetTitle, setDecisionSetTitle] = useState('');
   const [decisionSetNote, setDecisionSetNote] = useState('');
@@ -474,12 +513,14 @@ const LotteryPredictionDecisionPage = () => {
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingDecisionSets, setLoadingDecisionSets] = useState(false);
+  const [loadingPostCorpusObservation, setLoadingPostCorpusObservation] = useState(false);
   const [savingDecisionSet, setSavingDecisionSet] = useState(false);
   const [archivingDecisionSet, setArchivingDecisionSet] = useState(false);
   const [savingTickets, setSavingTickets] = useState(false);
   const [reviewingDecisionSet, setReviewingDecisionSet] = useState<string>();
   const [decisionDirty, setDecisionDirty] = useState(false);
   const [error, setError] = useState<string>();
+  const [postCorpusObservationError, setPostCorpusObservationError] = useState<string>();
 
   const targetIssue = searchParams.get('targetIssue') || '';
   const requestedDecisionSetId = searchParams.get('decisionSetId') || '';
@@ -539,6 +580,52 @@ const LotteryPredictionDecisionPage = () => {
     }
   }, []);
 
+  const loadPostCorpusObservation = useCallback(async () => {
+    const requestId = postCorpusRequestIdRef.current + 1;
+    postCorpusRequestIdRef.current = requestId;
+    setLoadingPostCorpusObservation(true);
+    setPostCorpusObservationError(undefined);
+    try {
+      const [outcomes, decisionPage] = await Promise.all([
+        lotteryDecisionSetApi.outcomes({
+          includeArchived: true,
+          limit: MINI_GPT_POST_CORPUS_SNAPSHOT_LIMIT
+        }),
+        lotteryDecisionSetApi.decisionSets({
+          includeArchived: true,
+          page: 1,
+          pageSize: MINI_GPT_POST_CORPUS_SNAPSHOT_LIMIT
+        })
+      ]);
+      const preview = aggregateMiniGptPostCorpusOutcomes(outcomes.items || []);
+      const reviewedBacktestIds = [...new Set(preview.groups.flatMap(group => group.decisions)
+        .filter(decision => decision.stableProvenance)
+        .map(decision => decision.item.reviewBacktestId?.trim())
+        .filter((id): id is string => Boolean(id)))];
+      const resolvedBacktests = await Promise.all(reviewedBacktestIds.map(async id => {
+        try {
+          return [id, await lotteryBacktestApi.detail(id)] as const;
+        } catch {
+          return [id, null] as const;
+        }
+      }));
+      if (requestId !== postCorpusRequestIdRef.current) return;
+      setPostCorpusOutcomeSummary(outcomes);
+      setPostCorpusDecisionPage(decisionPage);
+      setPostCorpusBacktestsById(Object.fromEntries(resolvedBacktests));
+    } catch (requestError) {
+      if (requestId !== postCorpusRequestIdRef.current) return;
+      console.error('读取 MiniGPT 语料后观察聚合失败:', requestError);
+      setPostCorpusObservationError(requestError instanceof Error
+        ? requestError.message
+        : translateTextRef.current('读取 MiniGPT 语料后观察聚合失败'));
+    } finally {
+      if (requestId === postCorpusRequestIdRef.current) {
+        setLoadingPostCorpusObservation(false);
+      }
+    }
+  }, []);
+
   const loadDecision = useCallback(async () => {
     setLoading(true);
     setError(undefined);
@@ -578,6 +665,13 @@ const LotteryPredictionDecisionPage = () => {
   useEffect(() => {
     loadDecisionSets();
   }, [loadDecisionSets]);
+
+  useEffect(() => {
+    loadPostCorpusObservation();
+    return () => {
+      postCorpusRequestIdRef.current += 1;
+    };
+  }, [loadPostCorpusObservation]);
 
   const activeDecisionSet = useMemo(
     () => decisionSets.find(item => item.id === activeDecisionSetId),
@@ -704,6 +798,17 @@ const LotteryPredictionDecisionPage = () => {
     };
   }, [filteredDecisionOutcomes]);
 
+  const postCorpusObservation = useMemo(() => aggregateMiniGptPostCorpusOutcomes(
+    postCorpusOutcomeSummary?.items || [],
+    postCorpusBacktestsById
+  ), [postCorpusBacktestsById, postCorpusOutcomeSummary?.items]);
+  const postCorpusSnapshotTotal = Math.max(
+    Number(postCorpusDecisionPage?.total || 0),
+    postCorpusObservation.boundedInputCount
+  );
+  const postCorpusSnapshotTruncated = Boolean(postCorpusDecisionPage?.hasNext)
+    || postCorpusSnapshotTotal > postCorpusObservation.boundedInputCount;
+
   const budgetWarningText = useMemo(
     () => budgetPrecheckMessages(ticketBudgetPrecheck, language, translateText, t),
     [language, t, ticketBudgetPrecheck, translateText]
@@ -801,7 +906,7 @@ const LotteryPredictionDecisionPage = () => {
       setDecisionSetTitle(saved.title || payload.title || '');
       setDecisionSetNote(saved.note || '');
       setDecisionDirty(false);
-      await loadDecisionSets();
+      await Promise.all([loadDecisionSets(), loadPostCorpusObservation()]);
       message.success(activeDecisionSetId
         ? t('决策集已更新')
         : t('决策集已保存'));
@@ -862,7 +967,7 @@ const LotteryPredictionDecisionPage = () => {
       setDecisionSetTitle('');
       setDecisionSetNote('');
       setDecisionDirty(false);
-      await loadDecisionSets();
+      await Promise.all([loadDecisionSets(), loadPostCorpusObservation()]);
       message.success(t('决策集已归档'));
     } catch (requestError) {
       console.error('归档决策集失败:', requestError);
@@ -894,7 +999,7 @@ const LotteryPredictionDecisionPage = () => {
       });
       setDecisionSets(current => current.map(item => item.id === reviewed.id ? reviewed : item));
       setDecisionSetNote(reviewed.reviewNote || reviewed.note || '');
-      await loadDecisionSets();
+      await Promise.all([loadDecisionSets(), loadPostCorpusObservation()]);
       message.success(t('复核动作已保存：{{action}}', { action: reviewActionLabel(reviewAction, t) }));
     } catch (requestError) {
       console.error('保存决策集复核动作失败:', requestError);
@@ -991,7 +1096,15 @@ const LotteryPredictionDecisionPage = () => {
           <Button type="primary" icon={<FileAddOutlined />} loading={savingTickets} disabled={isMiniGptDecisionSet} onClick={saveSelectedTickets}>
             {t('转为票据')}
           </Button>
-          <Button icon={<ReloadOutlined />} loading={loading} onClick={loadDecision}>
+          <Button
+            icon={<ReloadOutlined />}
+            loading={loading || loadingPostCorpusObservation}
+            onClick={() => {
+              loadDecision();
+              loadDecisionSets();
+              loadPostCorpusObservation();
+            }}
+          >
             {t('刷新')}
           </Button>
           <Button icon={<ThunderboltOutlined />} onClick={() => navigate('/lottery/prediction')}>
@@ -1147,6 +1260,308 @@ const LotteryPredictionDecisionPage = () => {
           />
         </section>
       ) : null}
+
+      <section
+        className="lottery-decision-observation-aggregate"
+        data-boundary-state="POST_CORPUS_OBSERVED"
+        data-observed-denominator={postCorpusObservation.observedDecisionCount}
+        data-read-only="true"
+      >
+        <Card
+          className="life-panel-card lottery-clean-panel"
+          title={<Space><SafetyCertificateOutlined />{t('语料后观察聚合')}</Space>}
+          extra={(
+            <Space wrap size={6}>
+              <Tag color="purple">{t('只读研究证据')}</Tag>
+              <Tag>{t('最近 {{loaded}}/{{total}} 条', {
+                loaded: postCorpusObservation.boundedInputCount,
+                total: postCorpusSnapshotTotal
+              })}</Tag>
+            </Space>
+          )}
+        >
+          <Alert
+            type="info"
+            showIcon
+            message={t('只有 POST_CORPUS_OBSERVED 进入观察分母；训练、验证、待观察和未知状态始终分开计数。')}
+            description={t('随机基线只读取当前决策绑定的精确复核回测，并同时校验溯源、同窗口和同预算。任何正差值都不会升级时间边界或构成未来表现结论。')}
+          />
+          {postCorpusObservationError ? (
+            <Alert
+              type="warning"
+              showIcon
+              message={t('语料后观察聚合暂不可用')}
+              description={translateText(postCorpusObservationError)}
+            />
+          ) : null}
+          <Spin spinning={loadingPostCorpusObservation}>
+            <div className="lottery-decision-observation-state-grid">
+              {MINI_GPT_OBSERVATION_BOUNDARY_STATES.map(state => {
+                const metadata = MINI_GPT_OBSERVATION_BOUNDARY_METADATA[state];
+                return (
+                  <article key={state} data-observation-state={state}>
+                    <strong>{postCorpusObservation.stateCounts[state]}</strong>
+                    <span>{isEnglish ? metadata.label.en : metadata.label.zh}</span>
+                    <Tag color={metadata.tone}>{state}</Tag>
+                  </article>
+                );
+              })}
+            </div>
+
+            <div className="lottery-decision-observation-scope-note">
+              <span>{t('有界快照：读取最近最多 {{limit}} 条（含归档）决策；其中 MiniGPT 决策 {{count}} 条。', {
+                limit: MINI_GPT_POST_CORPUS_SNAPSHOT_LIMIT,
+                count: postCorpusObservation.miniGptDecisionCount
+              })}</span>
+              {postCorpusObservation.excludedNonMiniGptCount > 0 ? (
+                <span>{t('另有 {{count}} 条非 MiniGPT 决策未进入本面板五态统计。', {
+                  count: postCorpusObservation.excludedNonMiniGptCount
+                })}</span>
+              ) : null}
+            </div>
+
+            {postCorpusObservation.miniGptDecisionCount === 0 && !loadingPostCorpusObservation ? (
+              <Empty description={t('有界快照内暂无 MiniGPT 决策观察证据')} />
+            ) : (
+              <>
+                <div className="lottery-decision-observation-metric-grid">
+                  <article>
+                    <strong>{postCorpusObservation.observedDecisionCount}</strong>
+                    <span>{t('已观察决策分母')}</span>
+                    <small>{t('独立期号 {{count}} · 范围 {{range}}', {
+                      count: postCorpusObservation.distinctIssueCount,
+                      range: postCorpusObservation.issueRange
+                        ? `${postCorpusObservation.issueRange.firstIssue} → ${postCorpusObservation.issueRange.latestIssue}`
+                        : '-'
+                    })}</small>
+                  </article>
+                  <article>
+                    <strong>{postCorpusObservation.scoredCandidateCount}</strong>
+                    <span>{t('已评分候选分母')}</span>
+                    <small>{t('候选命中 {{winning}} · 蓝球 {{blue}}/{{scored}}（{{rate}}）', {
+                      winning: postCorpusObservation.winningCandidateCount,
+                      blue: postCorpusObservation.blueHitCount,
+                      scored: postCorpusObservation.scoredCandidateCount,
+                      rate: postCorpusObservation.blueHitRatePercent === null
+                        ? '-'
+                        : formatPercent(postCorpusObservation.blueHitRatePercent)
+                    })}</small>
+                  </article>
+                  <article>
+                    <strong>{postCorpusObservation.financial.decisionCount}/{postCorpusObservation.observedDecisionCount}</strong>
+                    <span>{t('完整核奖财务覆盖')}</span>
+                    <small>
+                      {t('成本 {{cost}} · 奖金 {{prize}} · 净值 {{net}} · ROI {{roi}}', {
+                        cost: postCorpusObservation.financial.totalCost === null
+                          ? '-'
+                          : formatMoney(postCorpusObservation.financial.totalCost),
+                        prize: postCorpusObservation.financial.totalPrize === null
+                          ? '-'
+                          : formatMoney(postCorpusObservation.financial.totalPrize),
+                        net: postCorpusObservation.financial.netResult === null
+                          ? '-'
+                          : formatMoney(postCorpusObservation.financial.netResult),
+                        roi: postCorpusObservation.financial.roiPercent === null
+                          ? '-'
+                          : formatPercent(postCorpusObservation.financial.roiPercent)
+                      })}
+                    </small>
+                  </article>
+                  <article>
+                    <strong>{postCorpusObservation.comparableBaselineCount}/{postCorpusObservation.observedDecisionCount}</strong>
+                    <span>{t('精确可比随机基线')}</span>
+                    <small>{t('不可比 {{failed}} · 未知 {{unknown}}', {
+                      failed: postCorpusObservation.failedBaselineCount,
+                      unknown: postCorpusObservation.unknownBaselineCount
+                    })}</small>
+                  </article>
+                </div>
+
+                <div className="lottery-decision-observation-distributions">
+                  <article>
+                    <strong>{t('红球命中分布')}</strong>
+                    <div>
+                      {Object.entries(postCorpusObservation.hitDistribution).length ? (
+                        Object.entries(postCorpusObservation.hitDistribution).map(([label, count]) => (
+                          <Tag key={label}>{localizeHitDistributionLabel(label, translateText, t)} {count}</Tag>
+                        ))
+                      ) : <span>{t('暂无已观察分布')}</span>}
+                    </div>
+                  </article>
+                  <article>
+                    <strong>{t('奖级分布')}</strong>
+                    <div>
+                      {Object.entries(postCorpusObservation.prizeDistribution).length ? (
+                        Object.entries(postCorpusObservation.prizeDistribution).map(([label, count]) => (
+                          <Tag key={label}>{translateText(label)} {count}</Tag>
+                        ))
+                      ) : <span>{t('暂无已观察分布')}</span>}
+                    </div>
+                  </article>
+                </div>
+
+                <div className="lottery-decision-observation-warnings" role="note">
+                  {postCorpusSnapshotTruncated ? (
+                    <Alert
+                      type="warning"
+                      showIcon
+                      message={t('当前只展示最近 {{loaded}}/{{total}} 条有界快照，更早记录未进入本次分母。', {
+                        loaded: postCorpusObservation.boundedInputCount,
+                        total: postCorpusSnapshotTotal
+                      })}
+                    />
+                  ) : null}
+                  {postCorpusObservation.observedDecisionCount > 0
+                    && postCorpusObservation.distinctIssueCount < MINI_GPT_POST_CORPUS_SMALL_SAMPLE_ISSUES ? (
+                      <Alert
+                        type="warning"
+                        showIcon
+                        message={t('样本提醒：已观察独立期号少于 {{count}} 期，不能据此判断稳定表现。', {
+                          count: MINI_GPT_POST_CORPUS_SMALL_SAMPLE_ISSUES
+                        })}
+                      />
+                    ) : null}
+                  {postCorpusObservation.observedDecisionCount > postCorpusObservation.distinctIssueCount ? (
+                    <Alert
+                      type="warning"
+                      showIcon
+                      message={t('同一期可能包含多个决策；决策分母与独立开奖期号已分开展示。')}
+                    />
+                  ) : null}
+                  {postCorpusObservation.unstableObservedCount > 0 ? (
+                    <Alert
+                      type="warning"
+                      showIcon
+                      message={t('{{count}} 条已观察决策缺少稳定 corpus/run/hash 溯源，已隔离成单独分组且基线保持 UNKNOWN。', {
+                        count: postCorpusObservation.unstableObservedCount
+                      })}
+                    />
+                  ) : null}
+                  {postCorpusObservation.financial.decisionCount < postCorpusObservation.observedDecisionCount ? (
+                    <Alert
+                      type="warning"
+                      showIcon
+                      message={t('财务指标只汇总已转票且全部核奖的决策，覆盖 {{covered}}/{{observed}}。', {
+                        covered: postCorpusObservation.financial.decisionCount,
+                        observed: postCorpusObservation.observedDecisionCount
+                      })}
+                    />
+                  ) : null}
+                  {postCorpusObservation.comparableBaselineCount < postCorpusObservation.observedDecisionCount ? (
+                    <Alert
+                      type="warning"
+                      showIcon
+                      message={t('随机基线只展示精确复核、同决策、同溯源、同窗口且同预算的报告，覆盖 {{covered}}/{{observed}}。', {
+                        covered: postCorpusObservation.comparableBaselineCount,
+                        observed: postCorpusObservation.observedDecisionCount
+                      })}
+                    />
+                  ) : null}
+                </div>
+
+                <div className="lottery-decision-observation-groups">
+                  {postCorpusObservation.groups.map((group, groupIndex) => (
+                    <article key={group.key} className="lottery-decision-observation-group">
+                      <header>
+                        <div>
+                          <strong>{t('语料链 {{index}}', { index: groupIndex + 1 })}</strong>
+                          <span>corpusVersion={group.corpusVersion || 'UNKNOWN'} · runId={group.runId || 'UNKNOWN'}</span>
+                        </div>
+                        <Space wrap size={4}>
+                          <Tag color={group.stableProvenance ? 'cyan' : 'default'}>
+                            {t(group.stableProvenance ? '稳定溯源' : '隔离溯源')}
+                          </Tag>
+                          <Tag>{t('{{decisions}} 个决策 · {{issues}} 个期号', {
+                            decisions: group.decisions.length,
+                            issues: group.distinctIssueCount
+                          })}</Tag>
+                        </Space>
+                      </header>
+                      <div className="lottery-decision-observation-group-lineage">
+                        <span>train={group.trainFirstIssue || 'UNKNOWN'} → {group.trainLatestIssue || 'UNKNOWN'}</span>
+                        <span>validation={group.validationFirstIssue || 'UNKNOWN'} → {group.validationLatestIssue || 'UNKNOWN'}</span>
+                        <span>trainSha256={group.trainSha256 || 'UNKNOWN'}</span>
+                        <span>validationSha256={group.validationSha256 || 'UNKNOWN'}</span>
+                        <span>checkpointSha256={group.checkpointSha256 || 'UNKNOWN'}</span>
+                      </div>
+                      <div className="lottery-decision-observation-decisions">
+                        {group.decisions.map(decision => {
+                          const baseline = decision.baseline;
+                          return (
+                            <div
+                              key={decision.item.decisionSetId || `${decision.issue}-${decision.item.title}`}
+                              className="lottery-decision-observation-decision"
+                              data-exact-review-ownership={baseline.state === 'COMPARABLE'}
+                            >
+                              <div className="lottery-decision-observation-decision-heading">
+                                <div>
+                                  <strong>{decision.item.title
+                                    ? localizeDecisionSetTitle(decision.item.title, translateText, t)
+                                    : t('第 {{issue}} 期决策集', { issue: decision.issue })}</strong>
+                                  <span>decisionSetId={decision.item.decisionSetId || 'UNKNOWN'} · batchId={decision.item.provenance?.batchId || '-'}</span>
+                                </div>
+                                <Space wrap size={4}>
+                                  <Tag color="purple">POST_CORPUS_OBSERVED</Tag>
+                                  <Tag color={baseline.state === 'COMPARABLE' ? 'cyan' : baseline.state === 'FAIL' ? 'red' : 'default'}>
+                                    BASELINE_{baseline.state}
+                                  </Tag>
+                                </Space>
+                              </div>
+                              <div className="lottery-decision-observation-decision-metrics">
+                                <span>{t('目标期')} {decision.issue}</span>
+                                <span>{t('评分')} {decision.item.scoredCandidateCount || 0}</span>
+                                <span>{t('蓝球命中')} {decision.item.blueHitCount || 0}</span>
+                                <span>{t('财务证据')} {t(decision.financialEvidenceComplete ? '完整核奖' : '未完整核奖')}</span>
+                              </div>
+                              {baseline.state === 'COMPARABLE' ? (
+                                <div className="lottery-decision-observation-baseline">
+                                  <div>
+                                    <span>{t('红球均值差')}</span>
+                                    <strong>{deltaText(baseline.averageRedHitsDelta, t)}</strong>
+                                  </div>
+                                  <div>
+                                    <span>{t('蓝球命中率差')}</span>
+                                    <strong>{deltaText(baseline.blueHitRateDelta, t)}%</strong>
+                                  </div>
+                                  <div>
+                                    <span>{t('奖金差')}</span>
+                                    <strong>{deltaText(baseline.totalPrizeDelta, t)}</strong>
+                                  </div>
+                                  <div>
+                                    <span>{t('净结果差')}</span>
+                                    <strong>{deltaText(baseline.netResultDelta, t)}</strong>
+                                  </div>
+                                  <div>
+                                    <span>{t('ROI 差')}</span>
+                                    <strong>{deltaText(baseline.roiPercentDelta, t)}%</strong>
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="lottery-decision-observation-baseline-reason">
+                                  {baseline.reasons.map(reason => baselineComparabilityReasonText(reason, t)).join(' · ')}
+                                </p>
+                              )}
+                              <div className="lottery-decision-observation-backtest-lineage">
+                                <span>reviewBacktestId={decision.item.reviewBacktestId || 'UNKNOWN'}</span>
+                                <span>resolvedReportId={baseline.reportId || 'UNKNOWN'}</span>
+                                <span>{baseline.evaluationMode || 'UNKNOWN'} · {baseline.baselineAlgorithm || 'UNKNOWN'} · seed={baseline.baselineSeed ?? 'UNKNOWN'}</span>
+                                <span>{t('回测期数')} {baseline.windowIssueCount ?? 'UNKNOWN'} · {t('票数')} {baseline.ticketCount ?? 'UNKNOWN'}/{baseline.baselineTicketCount ?? 'UNKNOWN'}</span>
+                              </div>
+                              {baseline.warnings.length ? (
+                                <small>{lotteryOverfitWarningsText(baseline.warnings, isEnglish)}</small>
+                              ) : null}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </>
+            )}
+          </Spin>
+        </Card>
+      </section>
 
       <section className="lottery-decision-filter-bar">
         <Input

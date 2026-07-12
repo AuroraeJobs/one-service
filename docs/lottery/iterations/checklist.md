@@ -1262,7 +1262,7 @@ Final Iteration 47 verification: backend service tests passed 96/96, backend web
 
 Goal: distinguish training-window, validation-window, pending post-corpus, observed post-corpus, and unknown MiniGPT evidence before aggregating or exporting any outcome, without treating observation state as a performance promise.
 
-Formal plan: [Iteration 48 plan](iteration-48-plan.md). Iteration 48 is the sole promoted next candidate. Wave 48A is complete; Wave 48B is the next unfinished slice.
+Formal plan: [Iteration 48 plan](iteration-48-plan.md). Iteration 48 is the sole promoted next candidate. Waves 48A-48B are complete; Wave 48C is the next unfinished slice.
 
 ### Wave 48A: Read-Only Temporal Boundary Classification
 
@@ -1275,9 +1275,9 @@ Formal plan: [Iteration 48 plan](iteration-48-plan.md). Iteration 48 is the sole
 
 ### Wave 48B: Post-Corpus Outcome Aggregation
 
-- [ ] Aggregate only `POST_CORPUS_OBSERVED` rows by stable corpus/run/decision provenance and keep pending, training, validation, and unknown counts outside the observed denominator.
-- [ ] Report bounded outcome metrics and comparable random-baseline deltas with sample-size, ownership, and comparability warnings; favorable values must not upgrade the boundary state.
-- [ ] Prefer existing outcome/backtest contracts and add a narrow backend aggregate only if bounded deterministic composition cannot be preserved.
+- [x] Aggregate only `POST_CORPUS_OBSERVED` rows from the latest bounded 100-row include-archived outcome snapshot, keep all five states separately counted, and use decision-page `total`/`hasNext` to disclose truncation. Stable corpus/run/hash/range provenance forms groups, each decision row is retained, and incomplete lineage is isolated instead of merged.
+- [x] Report independent observed-decision, distinct-issue, scored-candidate, and fully settled financial denominators; show hit/prize distributions, blue-hit rate, cost/prize/net/ROI only where their denominator is complete; and keep bounded-window, small-sample, duplicate-issue, lineage, financial-coverage, ownership, and comparability warnings visible. Favorable values never upgrade the temporal state.
+- [x] Reuse existing outcome and decision-page contracts plus exact `GET /lottery/backtests/{reviewBacktestId}`. A baseline is comparable only for the exact report id and decision owner with matching stable provenance, same window/budget, equal ticket counts, complete metadata/deltas, and static historical-replay mode; deltas remain per-decision and are not averaged across reports. No backend API/DTO/collection or write path was added. Final verification: file-scoped ESLint, i18n 1088, smoke/release 1134/1134 across 18 routes, production build, and isolated Chinese/English 1280px plus English 390px light/dark QA. Fixtures covered five-state counts `1/1/1/4/1`, observed denominator 4 with 2 distinct issues, financial/comparable coverage 1/4, explicit FAIL/owner-mismatch/unstable UNKNOWN cases, and a 100/103 truncation control; document/panel widths showed no horizontal overflow, recent console errors were empty after backend readiness, access logs showed GET-only outcome/page/exact-detail reads, and all fixtures/runtimes were removed.
 
 ### Wave 48C: Month-End And CSV Evidence
 

@@ -1,6 +1,6 @@
 # Lottery Quality Gates
 
-Last updated: 2026-07-11
+Last updated: 2026-07-12
 
 Use these gates when finishing a lottery milestone.
 
@@ -35,6 +35,10 @@ Use these gates when finishing a lottery milestone.
 - Experiment, backtest, alert, export, and audit pages keep research language restrained and evidence-oriented.
 - MiniGPT closed-loop controls enforce `saved decision -> comparable backtest -> preview -> explicit DRAFT`; no UI action in this chain automatically approves a pack or creates tickets.
 - Backtest comparisons show `sameWindow`, `sameBudget`, baseline seed/evaluation mode, model and random metrics/deltas, and warnings. PASS requires `sameWindow === true && sameBudget === true`; false is FAIL and missing/null is UNKNOWN, which must never receive PASS or passing-color treatment. Static-pool historical replay must not be labelled walk-forward.
+- MiniGPT temporal evidence uses exactly `TRAIN_WINDOW`, `VALIDATION_WINDOW`, `POST_CORPUS_PENDING`, `POST_CORPUS_OBSERVED`, and `UNKNOWN`. Only observed post-corpus rows enter the observation denominator; favorable outcomes or baseline deltas cannot change the state, and `UNKNOWN` is never PASS.
+- A frontend-composed observation aggregate must declare its bound. The Wave 48B panel reads at most 100 include-archived outcomes, uses decision-page `total`/`hasNext` to disclose truncation, keeps non-MiniGPT and all five temporal counts explicit, and must not present the bounded snapshot as full history.
+- Wave 48B keeps observed-decision, distinct-issue, scored-candidate, and fully settled financial denominators separate. Financial totals require converted tickets, complete prize checking, and finite cost/prize values; fewer than three distinct observed issues, duplicate decision issues, unstable lineage, partial financial coverage, and truncated scope require visible warnings.
+- Post-corpus baseline deltas remain per decision and require exact `reviewBacktestId`, matching `decisionSetId`, identical stable corpus/run/hash/range provenance, `sameWindow === true`, `sameBudget === true`, equal model/baseline ticket counts, complete baseline metadata/deltas, and `STATIC_POOL_HISTORICAL_REPLAY`. Failed/unknown checks show their reason, never borrow another report, and are never averaged into an aggregate delta.
 - Lifecycle UI shows the current manual review action and keeps promote/watch/pause/retire separate from recommendation lifecycle states such as applied, snoozed, and archived.
 - MiniGPT month-end evidence must start from the most recent reviewed provenance-backed decision outcome and show a backtest matching both `reviewBacktestId` and `decisionSetId` beside model/random values. Ticket-pack evidence may match only when `pack.decisionSetId` or `pack.sourceId` equals that selected decision id. If either owned artifact is unavailable, show missing evidence instead of falling back by provenance, batch, recency, or another MiniGPT chain.
 - The `v47-minigpt-research` export preset and `MiniGPT研究链复核证据` pack expose reproducible generation, same-window/same-budget baseline, draft, and manual-review handoffs with historical-only/no-future-guarantee copy. They must not approve a pack or create tickets.
@@ -68,6 +72,7 @@ Use this gate when a lottery milestone needs screenshots or manual browser inspe
 - Generation, decision, backtest, ticket-pack, ticket, note, outcome, ledger, and recommendation evidence keep typed provenance and lineage ids without relying on free-text reconstruction.
 - A random baseline has one paired row per evaluated model row; its ticket count, issue coverage, and total cost must remain directly comparable before downstream preview is allowed.
 - Reviewed evidence is stable by identity and ownership: `reviewBacktestId` plus `decisionSetId` freeze the report used for outcome and month-end interpretation even when later backtests exist, while ticket packs must resolve through that same decision id.
+- Post-corpus aggregation groups only on a complete corpus version, run id, train/validation/checkpoint hashes, and train/validation ranges while retaining the owning decision rows. Incomplete extended provenance is isolated as its own group and its baseline comparison remains UNKNOWN rather than being inferred from partial lineage.
 
 ## Documentation
 
