@@ -7,12 +7,12 @@ Generated from `npm run lottery:smoke`.
 | Field | Value |
 | --- | --- |
 | Target | Lottery unified overview default smoke |
-| Generated at | 2026-07-11T15:59:49.689Z |
+| Generated at | 2026-07-12T04:16:25.448Z |
 | Status | PASSED |
 | Mode | mocked-fixture |
 | Provider network | not-required |
 | Routes | 18 |
-| Checks | 1065 |
+| Checks | 1091 |
 | Failures | 0 |
 
 ## Protected Browser QA
@@ -44,6 +44,9 @@ Generated from `npm run lottery:smoke`.
 | iteration 47C MiniGPT outcome chain workflow | `src/components/MiniGptLearningPage.tsx` | 27 | 2 |
 | iteration 47C lineage and baseline API contract | `src/services/api.ts` | 16 | 0 |
 | iteration 47C overfit warning localization | `src/utils/lotteryBacktestEvidence.ts` | 10 | 0 |
+| iteration 48A MiniGPT observation boundary classifier | `src/utils/lotteryBacktestEvidence.ts` | 9 | 1 |
+| iteration 48A MiniGPT observation boundary decision UI | `src/components/LotteryPredictionDecisionPage.tsx` | 9 | 1 |
+| iteration 48A MiniGPT observation boundary responsive styles | `src/components/LotteryPredictionDecisionPage.css` | 3 | 0 |
 | iteration 47C decision deep-link and review workflow | `src/components/LotteryPredictionDecisionPage.tsx` | 8 | 0 |
 | iteration 47C historical baseline evidence surfaces | `src/components/LotteryBacktestDetailPage.tsx` | 7 | 0 |
 | iteration 47C research baseline evidence | `src/components/LotteryResearchPage.tsx` | 6 | 0 |

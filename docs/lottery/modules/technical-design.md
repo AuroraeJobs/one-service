@@ -1,6 +1,6 @@
 # Lottery Technical Design
 
-Last updated: 2026-07-11
+Last updated: 2026-07-12
 
 ## Module Shape
 
@@ -298,6 +298,59 @@ The shared CSV serializer treats CR as a quoting boundary alongside comma, quote
 The shared provenance columns retain source type, generation/batch/run identity, corpus/train/validation/checkpoint hashes, prompt/sampling/seed/strategy, model configuration, train/validation issue ranges, batch policy/composition, and capture time. The report preset `v47-minigpt-research`, evidence pack `MiniGPT研究链复核证据`, and release rows `V47可复现生成链`, `V47同窗同预算基线`, and `V47草稿与人工复核链` point back to the owning pages.
 
 All 47D output is static historical-window research evidence. It must not be described as walk-forward validation or a future-performance guarantee. English rendering keeps the exact strings `Historical-window research evidence only; do not extrapolate future performance.`, `The reviewed backtest is unavailable. Results from another research chain are not substituted.`, and `No automatic approval or ticket creation` so safety semantics do not weaken after language switching. Month-end and export actions do not approve ticket packs and do not create tickets; approval and save-as-tickets remain separate manual commands.
+
+## MiniGPT Temporal Boundary And Out-Of-Sample Observation Contract
+
+Iteration 48 is the sole promoted candidate after the verified Iteration 47 handoff. Implemented Wave 48A is a frontend-only, read-only composition over existing project-owned contracts:
+
+```text
+GET /lottery/decision-sets/outcomes
+GET /lottery/decision-sets
+GET /lottery/backtests
+GET /lottery/backtests/{id}  # only for an exact owned report when needed
+```
+
+It adds no API, DTO, MongoDB collection, route, menu item, export type, or mutation. `LotteryResearchProvenance` already supplies `trainFirstIssue`, `trainLatestIssue`, `validationFirstIssue`, and `validationLatestIssue`; decision/outcome records supply `targetIssue` and settled/pending result evidence. Backtests are evidence only when they belong to the same decision. For a reviewed decision, both `report.id == reviewBacktestId` and `report.decisionSetId == decisionSetId` must hold. A newer report, a report from another decision, or matching-looking generation provenance cannot fill a gap.
+
+The classifier has exactly five states:
+
+```text
+TRAIN_WINDOW
+VALIDATION_WINDOW
+POST_CORPUS_PENDING
+POST_CORPUS_OBSERVED
+UNKNOWN
+```
+
+Classification is independent of prize, ROI, random-baseline delta, and manual review action:
+
+```text
+missing/malformed issue or boundaries
+  or invalid boundary ordering
+  or ownership mismatch                         -> UNKNOWN
+
+trainFirstIssue <= targetIssue <= trainLatestIssue
+                                                    -> TRAIN_WINDOW
+
+validationFirstIssue <= targetIssue <= validationLatestIssue
+                                                    -> VALIDATION_WINDOW
+
+targetIssue > validationLatestIssue
+  and no settled target outcome                     -> POST_CORPUS_PENDING
+
+targetIssue > validationLatestIssue
+  and existing outcome evidence is settled/scored   -> POST_CORPUS_OBSERVED
+
+all other positions, including a range gap           -> UNKNOWN
+```
+
+Range membership is inclusive. A settled/scored outcome means existing target-scoped outcome evidence marks a candidate as `WON` or `MISSED`, or otherwise exposes an attached actual-result score; a merely created decision, pending candidate, or unscored ticket does not qualify. The target must be strictly later than `validationLatestIssue` to enter either post-corpus state. Because Iteration 47's frozen validation range ends at the corpus boundary, `validationLatestIssue` remains the authoritative post-corpus cutoff for this V1 classifier.
+
+Only `POST_CORPUS_OBSERVED` may render the phrase out-of-sample observation. This state means that an actual result later than the frozen corpus has been observed; it uses a non-success research color and is not a performance PASS, proof of generalization, evidence of future advantage, or permission to act. `TRAIN_WINDOW` and `VALIDATION_WINDOW` remain corpus-contained evidence, `POST_CORPUS_PENDING` has no observed denominator, and `UNKNOWN` must never receive PASS text, PASS color, favorable sorting, or fallback classification.
+
+The Wave 48A MiniGPT decision-provenance panel on `/lottery/predictions/decision` shows state, target issue, train/validation ranges, corpus/run identity, decision id, reviewed backtest id when present, and pending/unknown reason. It has no write controls and cannot change recommendation lifecycle, decision review, ticket-pack state, approval state, or tickets.
+
+Wave 48B will aggregate only `POST_CORPUS_OBSERVED` rows and keep training, validation, pending, and unknown counts outside the observed denominator. Wave 48C will carry state, boundary source, denominator, and pending/unknown counts into the existing month-end and CSV evidence paths rather than introducing a parallel export domain. Both later waves must retain exact-chain ownership, random-baseline comparability, sample-size warnings, and the same non-predictive interpretation.
 
 ## Statistics Contract
 

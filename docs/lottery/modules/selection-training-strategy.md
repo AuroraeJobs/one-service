@@ -1,6 +1,6 @@
 # 双色球选号策略与模型训练方向
 
-Last updated: 2026-07-11
+Last updated: 2026-07-12
 
 ## 目标边界
 
@@ -219,6 +219,32 @@ sameBudget = 模型总成本与随机总成本相等
 
 `v47-minigpt-research` 预设和 `MiniGPT研究链复核证据` 只负责把可复现生成、同窗同预算基线、草稿和人工复核路径集中展示。它们不增加新的导出事实源，不自动审批票包，也不自动创建票据。英文状态必须和中文边界一致，明确显示 `Historical-window research evidence only; do not extrapolate future performance.`、跨链不替换提示和 `No automatic approval or ticket creation`。
 
+## Iteration 48 时间边界与样本外观察
+
+Iteration 48 是 Iteration 47 完整发布闭环后的唯一晋升候选。已完成的第一波只解决“这条结果位于语料时间边界的哪里”，不重新训练、不重新回测，也不根据命中、奖金、ROI 或人工复核动作改变分类。
+
+Wave 48A 在现有 `/lottery/predictions/decision` 的 MiniGPT 决策溯源面板中复用 decision outcomes、decision sets、backtests 和 `LotteryResearchProvenance`，做前端只读判定。它不新增 API、集合、路由、菜单、导出类型或写操作。证据只能来自同一决策链；若使用人工复核回测，必须同时满足回测 id 等于 `reviewBacktestId` 且 `decisionSetId` 属于当前决策，不能用更新的回测或相似批次补位。
+
+固定五态及含义如下：
+
+| 状态 | 判定 | 研究语义 |
+| --- | --- | --- |
+| `TRAIN_WINDOW` | 目标期号落在训练首末期号内。 | 训练窗口内证据，不是样本外。 |
+| `VALIDATION_WINDOW` | 目标期号落在验证首末期号内。 | 冻结语料内的验证窗口证据，也不是语料后的样本外观察。 |
+| `POST_CORPUS_PENDING` | 目标期号严格晚于验证/语料末期，但尚未附着实际结果。 | 语料后待开奖或待结算，不能形成表现结论。 |
+| `POST_CORPUS_OBSERVED` | 目标期号严格晚于验证/语料末期，且已有实际结果和评分证据。 | 唯一可以称为“样本外观察”的状态，但不等于表现 PASS、泛化证明或未来优势。 |
+| `UNKNOWN` | 目标期号、边界、顺序或归属证据缺失/冲突。 | 边界未知，永不显示为 PASS，也不能静默降级到其他状态。 |
+
+范围判定包含首末期号。落在训练与验证范围之外、但又没有严格晚于验证末期的空档或异常期号，一律是 `UNKNOWN`。语料后是否“已观察”只能读取现有 outcome 中的实际结果：候选已标记 `WON`/`MISSED` 或已有实际评分才算观察；仅有决策、票包、待结算票据或待开奖状态仍是 `POST_CORPUS_PENDING`。
+
+Wave 48A 页面只能展示状态、目标期号、训练/验证范围、corpus/run/decision/backtest 标识和待定/未知原因，不提供推荐切换、人工复核、票包审批或票据创建动作。即使命中、ROI 或随机基线差额为正，时间状态也不改变。
+
+后续边界：
+
+- Wave 48B 只聚合 `POST_CORPUS_OBSERVED`，把训练、验证、待观察和未知数量独立展示，不混入样本外观察分母。
+- Wave 48C 把五态、边界来源、观察分母和 pending/unknown 数量带入既有月末复盘与 CSV；优先扩展既有导出，不建立平行 MiniGPT 报告域。
+- Wave 48D 完成五态、同链归属、样本外分母、安全文案和无自动动作边界的自动化/浏览器发布证据。
+
 ## 选号策略方向
 
 后续候选策略可以分为四类，每类都要能独立回测。
@@ -420,4 +446,4 @@ red=04,10,16,21,26,32 blue=09 reason=sum_mid;odd_even_3_3;zone_2_2_2
 
 ## 下一步
 
-Iteration 47A-47D 已把 strategy 语料、版本化时间切分、训练/生成 provenance、随机基线、人工复核、月末复盘和发布导出连接成第一版研究闭环。完成最终 production release、浏览器、暂存范围、提交和推送证据后，再在下一次规划复核中选择后续候选；不提前把历史静态回放扩张成新的预测承诺。
+Iteration 47A-47D 及其 production release、浏览器、暂存范围、提交和推送证据已经完成。Iteration 48 是唯一晋升候选，Wave 48A 的前端只读五态时间边界也已验证；下一步推进 Wave 48B 样本外观察聚合，再进入月末/CSV 和发布闭环。在任何波次都不得把 `POST_CORPUS_OBSERVED` 写成表现 PASS 或未来预测承诺，`UNKNOWN` 永不 PASS。

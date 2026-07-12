@@ -315,6 +315,51 @@
       ]
     },
     {
+      "scope": "iteration 48A MiniGPT observation boundary classifier",
+      "file": "src/utils/lotteryBacktestEvidence.ts",
+      "includes": [
+        "classifyMiniGptObservationBoundary",
+        "TRAIN_WINDOW",
+        "VALIDATION_WINDOW",
+        "POST_CORPUS_PENDING",
+        "POST_CORPUS_OBSERVED",
+        "UNKNOWN",
+        "isOutOfSampleObservation",
+        "hasConsistentIssueWidth",
+        "tone: 'purple'"
+      ],
+      "excludes": [
+        "tone: 'success'"
+      ]
+    },
+    {
+      "scope": "iteration 48A MiniGPT observation boundary decision UI",
+      "file": "src/components/LotteryPredictionDecisionPage.tsx",
+      "includes": [
+        "activeDecisionBoundaryOutcome",
+        "item.decisionSetId === activeDecisionSetId",
+        "hasObservedResult: activeDecisionBoundaryOutcome",
+        ": undefined",
+        "classifyMiniGptObservationBoundary",
+        "data-boundary-state",
+        "data-out-of-sample-observation",
+        "只有目标期晚于训练与验证语料范围且已有实际评分，才称为样本外观察。",
+        "单期样本外观察不是 walk-forward，也不构成未来表现证据；不可外推未来。"
+      ],
+      "excludes": [
+        ">PASS<"
+      ]
+    },
+    {
+      "scope": "iteration 48A MiniGPT observation boundary responsive styles",
+      "file": "src/components/LotteryPredictionDecisionPage.css",
+      "includes": [
+        ".lottery-decision-lineage-boundary",
+        ".lottery-decision-lineage-boundary-grid",
+        "@media (max-width: 560px)"
+      ]
+    },
+    {
       "scope": "iteration 47C decision deep-link and review workflow",
       "file": "src/components/LotteryPredictionDecisionPage.tsx",
       "includes": [

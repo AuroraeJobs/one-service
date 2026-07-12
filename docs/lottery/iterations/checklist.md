@@ -1,6 +1,6 @@
 # Lottery Module Checklist
 
-Last updated: 2026-07-11
+Last updated: 2026-07-12
 
 Use this file as the durable task board for the lottery module. When a task is finished, change `[ ]` to `[x]` and add a short note if there is useful context for the next thread.
 
@@ -1257,3 +1257,36 @@ Final Iteration 47 verification: backend service tests passed 96/96, backend web
 - [x] Add the MiniGPT research chain to month-end review and export evidence with restrained research language. `/lottery/month-end` now selects the most recent reviewed provenance-backed outcome, accepts a report only when both `reviewBacktestId` and `decisionSetId` match, associates ticket-pack drafts only through the same decision `decisionSetId`/`sourceId`, treats unknown comparability as non-PASS, and preserves exact Chinese/English historical-only and no-auto-action copy. `/lottery/exports?preset=v47-minigpt-research` exposes the existing CSV evidence chain and `MiniGPT研究链复核证据`.
 - [x] Update final module/iteration docs and quality gates after the complete chain is verified. Documented exact reviewed-backtest binding, no cross-chain fallback, strict ticket-pack ownership, unknown comparison handling, the backtests CSV fields `averageRedHitsDelta`/`blueHitRateDelta`/`totalPrizeDelta`, static historical replay, no future guarantee, and no automatic approval or ticket creation. Current verification: service 96/96, web 43/43, i18n 1039, and smoke 1065/1065 across 18 routes.
 - [x] Run the full release evidence and browser handoff, audit staged scope, commit, and push only verified Iteration 47 work. Browser QA used a newer unreviewed decision and 25 later reports as negative controls, kept the reviewed `reviewBacktestId` chain authoritative, followed the exact detail route, verified the English release preset, and removed its isolated database/server/config fixtures afterward; the final staged allowlist contains only 17 Iteration 47D files.
+
+## Iteration 48: MiniGPT Temporal Boundary And Out-Of-Sample Observation V1
+
+Goal: distinguish training-window, validation-window, pending post-corpus, observed post-corpus, and unknown MiniGPT evidence before aggregating or exporting any outcome, without treating observation state as a performance promise.
+
+Formal plan: [Iteration 48 plan](iteration-48-plan.md). Iteration 48 is the sole promoted next candidate. Wave 48A is complete; Wave 48B is the next unfinished slice.
+
+### Wave 48A: Read-Only Temporal Boundary Classification
+
+- [x] Reuse the existing decision outcomes, decision sets, and typed MiniGPT provenance in the MiniGPT decision-provenance panel on `/lottery/predictions/decision`; the implementation adds no API, collection, route, export type, or write action.
+- [x] Implement the fixed five-state classifier: `TRAIN_WINDOW`, `VALIDATION_WINDOW`, `POST_CORPUS_PENDING`, `POST_CORPUS_OBSERVED`, and `UNKNOWN`.
+- [x] Resolve ranges from the selected decision provenance and observed state only from the exact `decisionSetId` outcome; missing, malformed, width-mismatched, invalid-order, or gapped boundary evidence becomes `UNKNOWN`, while an unscored valid post-corpus target remains `POST_CORPUS_PENDING`.
+- [x] Reserve out-of-sample wording for settled `POST_CORPUS_OBSERVED` rows only; it uses a purple non-success research color, stays distinct from performance PASS/generalization/approval/future claims, and `UNKNOWN` remains non-PASS.
+- [x] Show target issue, train/validation ranges, corpus/run/decision/backtest identity, pending/observed state, and restrained Chinese/English reason and guardrail copy in the read-only lineage panel.
+- [x] Add focused classifier/render coverage and complete Chinese/English desktop plus 390px light/dark QA. Final evidence: 13 classifier cases including missing exact-outcome ownership, i18n 1046, smoke 1091/1091 across 18 routes, fresh release evidence, production build, no new contract or mutation, no horizontal overflow, and no console warnings; six isolated QA records were removed afterward.
+
+### Wave 48B: Post-Corpus Outcome Aggregation
+
+- [ ] Aggregate only `POST_CORPUS_OBSERVED` rows by stable corpus/run/decision provenance and keep pending, training, validation, and unknown counts outside the observed denominator.
+- [ ] Report bounded outcome metrics and comparable random-baseline deltas with sample-size, ownership, and comparability warnings; favorable values must not upgrade the boundary state.
+- [ ] Prefer existing outcome/backtest contracts and add a narrow backend aggregate only if bounded deterministic composition cannot be preserved.
+
+### Wave 48C: Month-End And CSV Evidence
+
+- [ ] Add five-state counts and observed-only aggregation to the existing MiniGPT month-end research section.
+- [ ] Extend existing decision-set/backtest/decision-outcome CSV evidence with boundary source, state, observed denominator, pending/unknown counts, and safety copy; do not add a parallel export domain.
+- [ ] Preserve exact reviewed-backtest ownership, CSV injection protection, historical-only interpretation, and no automatic approval or ticket creation.
+
+### Wave 48D: Release And Handoff
+
+- [ ] Align iteration/module docs and quality gates after the complete behavior is verified.
+- [ ] Add smoke/release evidence for all five states, exact-chain ownership, observed-only aggregation, month-end/CSV propagation, `UNKNOWN` non-PASS rendering, and no mutation/new-route regressions.
+- [ ] Run focused tests, i18n audit, lottery smoke/release check, file-scoped ESLint, TypeScript/production build, rendered desktop/mobile QA, staged-scope audit, commit, and push.

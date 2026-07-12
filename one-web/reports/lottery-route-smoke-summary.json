@@ -1,12 +1,12 @@
 {
   "target": "Lottery unified overview default smoke",
-  "generatedAt": "2026-07-11T15:59:49.689Z",
+  "generatedAt": "2026-07-12T04:16:25.448Z",
   "status": "PASSED",
   "mode": "mocked-fixture",
   "authentication": "Static smoke is login-aware by checking protected route registration; browser QA still requires a valid local login session.",
   "providerNetwork": "not-required",
   "routeCount": 18,
-  "checkCount": 1065,
+  "checkCount": 1091,
   "failureCount": 0,
   "failures": [],
   "checkedRoutes": [

@@ -6,7 +6,7 @@ Theme: 可复现彩票语料、模型候选与研究闭环
 
 Build a reproducible MiniGPT lottery research chain on top of the existing corpus export, candidate validation, decision-set, and random-baseline backtest capabilities. The iteration starts by making corpus inputs and the train/validation boundary durable and auditable before extending generation or outcome-review behavior.
 
-Status: Waves 47A-47C are complete. Wave 47D month-end and release/export implementation plus documentation are complete on 2026-07-11; the final production release check, browser handoff, staged-scope audit, commit, and push remain open.
+Status: complete on 2026-07-11. Waves 47A-47D, the production release check, rendered browser handoff, staged-scope audit, commit, and push are closed.
 
 ## Starting Point
 

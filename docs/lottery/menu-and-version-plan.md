@@ -1,6 +1,6 @@
 # Lottery Menu And Version Plan
 
-Last updated: 2026-07-11
+Last updated: 2026-07-12
 
 ## Target Menu Tree
 
@@ -270,6 +270,16 @@ Goal: make the workbench the practical current-issue closure console while verif
 - Add a default-visible `本期闭环` widget to `/lottery/workbench` so users can move through sync, prediction review, ticket handling, prize check, ledger review, and report/archive without hunting through separate pages.
 - Keep the widget as frontend composition over existing workbench summary, daily state, release checks, and export evidence; do not add another navigation row or new browser-side data provider call.
 - Follow with status consistency, mobile, and dark-mode QA across high-use pages before adding more domain surfaces.
+
+### V18: MiniGPT Temporal Boundary And Out-Of-Sample Observation
+
+Goal: make the temporal position of MiniGPT decision evidence explicit before aggregating or exporting outcomes.
+
+- Iteration 48 is the sole promoted next candidate. Verified Wave 48A stays in the existing MiniGPT decision-provenance panel on `/lottery/predictions/decision` and adds no navigation item, page, API, collection, export type, or write action.
+- Reuse existing decision outcomes, decision sets, backtests, and typed provenance to derive exactly five read-only states: `TRAIN_WINDOW`, `VALIDATION_WINDOW`, `POST_CORPUS_PENDING`, `POST_CORPUS_OBSERVED`, and `UNKNOWN`.
+- Reserve out-of-sample wording for settled `POST_CORPUS_OBSERVED` evidence only. The label describes temporal position, not performance PASS or future value; `UNKNOWN` is never PASS.
+- Follow with observed-only outcome aggregation, then month-end/existing CSV propagation, then release and browser handoff evidence.
+- Keep exact decision/backtest ownership and all current manual recommendation, ticket-pack, approval, and ticket-creation boundaries.
 
 ## API Boundary
 

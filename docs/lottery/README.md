@@ -1,6 +1,6 @@
 # Lottery Documentation Index
 
-Last updated: 2026-07-11
+Last updated: 2026-07-12
 
 This folder is the durable planning home for the lottery module. It follows the same working style as `docs/stock`: keep roadmap, iteration checklist, module design, and menu/version planning together so future work can continue from a clear task board.
 
@@ -30,7 +30,8 @@ mvn -version
 - [Long-term plan](iterations/long-term-plan.md): 0-12 month direction, candidate future iterations, risks, and review cadence.
 - [Checklist](iterations/checklist.md): durable task board.
 - [Iteration 46 plan](iterations/iteration-46-plan.md): sync operations and release baseline closure.
-- [Iteration 47 plan](iterations/iteration-47-plan.md): MiniGPT lottery research loop from reproducible corpus through deterministic random-baseline, outcome review, month-end evidence, and release/export handoff; the final release/browser delivery step remains open.
+- [Iteration 47 plan](iterations/iteration-47-plan.md): completed MiniGPT lottery research loop from reproducible corpus through deterministic random-baseline, outcome review, month-end evidence, release/export handoff, and final verified delivery.
+- [Iteration 48 plan](iterations/iteration-48-plan.md): the sole promoted candidate, adding MiniGPT temporal-boundary classification and post-corpus observation evidence in four waves; Wave 48A is verified and Wave 48B is next.
 - [Quality gates](iterations/quality-gates.md): verification rules for backend, frontend, and data behavior.
 - [Frontend one-month plan](iterations/frontend-one-month-version-plan.md): next month frontend-led experience and power-tool plan.
 
@@ -43,7 +44,7 @@ mvn -version
 
 Live capabilities already present in the codebase:
 
-- Iterations 1-47 are complete; Iteration 47 carries the MiniGPT research chain through month-end review, release/export evidence, production release checks, and rendered browser verification.
+- Iterations 1-47 are complete; Iteration 48 is the sole promoted next candidate, with its frontend-only read-only Wave 48A temporal-boundary classifier now complete.
 - Historical record access and update through `record/*` APIs.
 - Lottery records namespace through `lottery/records/*`, currently reusing the existing record service for compatibility.
 - `/lottery` is the unified default overview with recent draws, yearly counts, frequency cards, AI context, and entry points into specialist workflows.
@@ -70,7 +71,7 @@ versioned corpus -> time-based train/validation split -> candidate generation an
 
 Final Iteration 47 verification passed backend service 96/96, backend web 43/43, i18n 1039, lottery smoke 1065/1065 across 18 routes, fresh release evidence, and the production TypeScript/Vite build. Rendered QA verified the reviewed chain against a newer unreviewed distractor and 25 later reports, followed the exact backtest deep link, checked the English V47 release preset, and passed a 390x844 no-overflow check with no console warnings. The staged scope contains only the 17 Iteration 47D implementation, test, evidence, localization, and documentation files. Continue to gate conclusions on legal-number parse rate, candidate diversity, typed provenance, comparable historical windows, and random-baseline deltas rather than training loss alone.
 
-No next iteration is promoted yet. Select the next candidate at the next planning review.
+The sole promoted next candidate is [Iteration 48: MiniGPT Temporal Boundary And Out-Of-Sample Observation V1](iterations/iteration-48-plan.md). Verified Wave 48A reuses existing decision outcomes, decision sets, and typed provenance in the MiniGPT decision-provenance panel on `/lottery/predictions/decision`; it adds no API, collection, route, export type, or write action. Its fixed states are `TRAIN_WINDOW`, `VALIDATION_WINDOW`, `POST_CORPUS_PENDING`, `POST_CORPUS_OBSERVED`, and `UNKNOWN`. Only `POST_CORPUS_OBSERVED` may be called an out-of-sample observation, but it uses a non-success research color and is not a performance PASS or future guarantee; `UNKNOWN` is never PASS. Final Wave 48A verification passed 13 focused classifier cases, i18n audit 1046, lottery smoke 1091/1091 across 18 routes, the production release check, and rendered Chinese/English desktop plus 390px light/dark QA without horizontal overflow or console warnings. Wave 48B observed-only aggregation is next.
 
 For protected browser QA, use [Quality gates](iterations/quality-gates.md). Start the frontend with `npm run dev:qa` for frontend-only visual checks without a login session; this explicit Vite QA mode bypasses only the loopback-hosted local route guard and is disabled in production builds. A running backend is still required for data-backed interactions. `ECONNREFUSED` on `/lottery/records/draws?page=0&size=500` is a backend/proxy blocker, not a page-layout failure.
 
@@ -84,7 +85,7 @@ Iteration 10 is the longer platform roadmap after the workbench foundation. It s
 daily state backbone -> strategy experiments -> backtest evidence -> alerts/calendar -> budget governance -> export/audit/maintenance
 ```
 
-Iteration 10 completed the platform foundation, and later frontend/usability waves are tracked in `docs/lottery/iterations/checklist.md`. Iterations 1-46 are complete; Iteration 47 has reached its month-end and release-evidence implementation boundary, with the final verified delivery handoff still open.
+Iteration 10 completed the platform foundation, and later frontend/usability waves are tracked in `docs/lottery/iterations/checklist.md`. Iterations 1-47 and the Iteration 47 verified delivery handoff are complete; Iteration 48 is the only promoted candidate.
 
 ## Non-Negotiable Rules
 

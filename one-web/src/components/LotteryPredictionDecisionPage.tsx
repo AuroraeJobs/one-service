@@ -42,7 +42,7 @@ import {
   type LotteryTicket
 } from '../services/api';
 import { lotteryDriftLabel, lotteryEvidenceColor, lotteryEvidenceLabel, lotteryReplayText } from '../utils/lotteryEvidence';
-import { lotteryOverfitWarningsText } from '../utils/lotteryBacktestEvidence';
+import { classifyMiniGptObservationBoundary, lotteryOverfitWarningsText } from '../utils/lotteryBacktestEvidence';
 import './LotteryOverviewPage.css';
 import './LotteryPredictionDecisionPage.css';
 
@@ -623,6 +623,21 @@ const LotteryPredictionDecisionPage = () => {
       || (targetIssue ? filteredDecisionOutcomes.find(item => item.targetIssue === targetIssue) : undefined)
       || filteredDecisionOutcomes[0];
   }, [activeDecisionSetId, filteredDecisionOutcomes, targetIssue]);
+  const activeDecisionBoundaryOutcome = useMemo<LotteryDecisionOutcomeItem | undefined>(() => {
+    if (!activeDecisionSetId) return undefined;
+    return (decisionOutcomeSummary?.items || []).find(item => item.decisionSetId === activeDecisionSetId);
+  }, [activeDecisionSetId, decisionOutcomeSummary?.items]);
+  const miniGptObservationBoundary = useMemo(() => classifyMiniGptObservationBoundary({
+    provenance: activeDecisionSet?.provenance,
+    targetIssue: activeDecisionSet?.targetIssue || (activeDecisionSet?.targetPeriod ? String(activeDecisionSet.targetPeriod) : undefined),
+    hasObservedResult: activeDecisionBoundaryOutcome
+      ? Number(activeDecisionBoundaryOutcome.scoredCandidateCount || 0) > 0
+      : undefined
+  }), [activeDecisionBoundaryOutcome, activeDecisionSet]);
+  const miniGptObservationBoundaryCopy = {
+    label: isEnglish ? miniGptObservationBoundary.metadata.label.en : miniGptObservationBoundary.metadata.label.zh,
+    detail: isEnglish ? miniGptObservationBoundary.metadata.detail.en : miniGptObservationBoundary.metadata.detail.zh
+  };
   const decisionReviewBacktestId = requestedBacktestId || activeDecisionSet?.reviewBacktestId || activeDecisionOutcome?.reviewBacktestId || '';
 
   const defaultDecisionSetTitle = useMemo(() => {
@@ -1089,6 +1104,42 @@ const LotteryPredictionDecisionPage = () => {
               {t('当前复核')} {activeDecisionSet.reviewAction ? reviewActionLabel(activeDecisionSet.reviewAction, t) : t('未复核')}
             </Tag>
           </Space>
+          <div
+            className="lottery-decision-lineage-boundary"
+            data-boundary-state={miniGptObservationBoundary.state}
+            data-out-of-sample-observation={miniGptObservationBoundary.isOutOfSampleObservation}
+          >
+            <div className="lottery-decision-lineage-boundary-heading">
+              <strong>{t('时间边界')}</strong>
+              <span className="lottery-decision-lineage-boundary-state">
+                <small>{t('边界状态')}</small>
+                <Tag color={miniGptObservationBoundary.tone}>{miniGptObservationBoundaryCopy.label}</Tag>
+              </span>
+            </div>
+            <dl className="lottery-decision-lineage-boundary-grid">
+              <div>
+                <dt>{t('训练范围')}</dt>
+                <dd>{miniGptObservationBoundary.trainRange
+                  ? `${miniGptObservationBoundary.trainRange.firstIssue} → ${miniGptObservationBoundary.trainRange.latestIssue}`
+                  : 'UNKNOWN'}</dd>
+              </div>
+              <div>
+                <dt>{t('验证范围')}</dt>
+                <dd>{miniGptObservationBoundary.validationRange
+                  ? `${miniGptObservationBoundary.validationRange.firstIssue} → ${miniGptObservationBoundary.validationRange.latestIssue}`
+                  : 'UNKNOWN'}</dd>
+              </div>
+              <div>
+                <dt>{t('目标期')}</dt>
+                <dd>{miniGptObservationBoundary.targetIssue || 'UNKNOWN'}</dd>
+              </div>
+            </dl>
+            <p className="lottery-decision-lineage-boundary-detail">{miniGptObservationBoundaryCopy.detail}</p>
+            <div className="lottery-decision-lineage-guardrails" role="note">
+              <span>{t('只有目标期晚于训练与验证语料范围且已有实际评分，才称为样本外观察。')}</span>
+              <span>{t('单期样本外观察不是 walk-forward，也不构成未来表现证据；不可外推未来。')}</span>
+            </div>
+          </div>
           <Alert
             type="info"
             showIcon
