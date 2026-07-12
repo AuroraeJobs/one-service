@@ -581,6 +581,123 @@
       ]
     },
     {
+      "scope": "iteration 48D five-state observed-only contract",
+      "file": "src/utils/lotteryBacktestEvidence.ts",
+      "includes": [
+        "export const MINI_GPT_OBSERVATION_BOUNDARY_STATES = [",
+        "'TRAIN_WINDOW'",
+        "'VALIDATION_WINDOW'",
+        "'POST_CORPUS_PENDING'",
+        "'POST_CORPUS_OBSERVED'",
+        "'UNKNOWN'",
+        "stateCounts[boundary.state] += 1",
+        "boundary.state !== 'POST_CORPUS_OBSERVED'",
+        "observedDecisionCount: observedItems.length",
+        "distinctIssueCount: distinctIssues.length",
+        "scoredCandidateCount",
+        "financialDecisionCount",
+        "comparableBaselineCount"
+      ],
+      "excludes": [
+        "UNKNOWN_PASS",
+        "POST_CORPUS_OBSERVED_PASS",
+        "UNKNOWN: {\n    tone: 'success'",
+        "POST_CORPUS_OBSERVED: {\n    tone: 'success'"
+      ]
+    },
+    {
+      "scope": "iteration 48D month-end exact-chain observed-only handoff",
+      "file": "src/components/LotteryMonthEndReviewPage.tsx",
+      "includes": [
+        "lotteryBacktestApi.detail(id)",
+        "const exactBacktestsById = Object.fromEntries(exactBacktestEntries)",
+        "setPostCorpusBacktestsById(exactBacktestsById)",
+        "aggregateMiniGptPostCorpusOutcomes(\n    postCorpusOutcomeSummary?.items || [],\n    postCorpusBacktestsById",
+        "data-observed-denominator={postCorpusObservation.observedDecisionCount}",
+        "data-read-only=\"true\"",
+        "UNKNOWN 永不视为 PASS，也不进入已观察分母。",
+        "UNKNOWN is never treated as PASS and never enters the observed denominator."
+      ],
+      "excludes": [
+        "lotteryDecisionSetApi.reviewDecisionSet",
+        "lotteryDecisionSetApi.createMiniGptDecisionSet",
+        "lotteryTicketPackApi.create",
+        "lotteryTicketPackApi.approve",
+        "lotteryTicketPackApi.saveAsTickets",
+        "POST_CORPUS_OBSERVED_PASS",
+        "UNKNOWN_PASS"
+      ]
+    },
+    {
+      "scope": "iteration 48D CSV five-state and exact-owner assertions",
+      "file": "../one-record/one-record-service/src/test/java/com/one/record/service/impl/LotteryExportServiceTest.java",
+      "includes": [
+        "containsEntry(\"snapshotTrainWindowDecisionCount\", \"1\")",
+        "containsEntry(\"snapshotValidationWindowDecisionCount\", \"1\")",
+        "containsEntry(\"snapshotPostCorpusPendingDecisionCount\", \"1\")",
+        "containsEntry(\"snapshotPostCorpusObservedDecisionCount\", \"1\")",
+        "containsEntry(\"snapshotUnknownDecisionCount\", \"1\")",
+        "containsEntry(\"snapshotObservedDecisionDenominator\", \"1\")",
+        "containsEntry(\"snapshotObservedDistinctIssueDenominator\", \"1\")",
+        "containsEntry(\"snapshotObservedScoredCandidateDenominator\", \"1\")",
+        "containsEntry(\"snapshotObservedFinancialDecisionDenominator\", \"1\")",
+        "assertThat(second.get(\"snapshotObservedDecisionDenominator\")).isEqualTo(\"1\")",
+        "containsEntry(\"reviewBacktestOwnershipState\", \"OWNER_MISMATCH\")",
+        "containsEntry(\"reviewedBaselineComparabilityState\", \"UNKNOWN\")",
+        "containsEntry(\"reviewedBacktestRoiPercentDelta\", \"\")",
+        "containsEntry(\"comparableBacktestRoiPercentDelta\", \"\")",
+        "containsEntry(\"backtestRoiPercentDelta\", \"\")"
+      ]
+    },
+    {
+      "scope": "iteration 48D no parallel lottery route",
+      "file": "src/routes/lifeRoutes.tsx",
+      "includes": [
+        "path: '/lottery/predictions/decision'",
+        "path: '/lottery/month-end'",
+        "path: '/lottery/exports'"
+      ],
+      "excludes": [
+        "/lottery/minigpt-observations",
+        "/lottery/post-corpus-observations",
+        "/lottery/temporal-boundaries"
+      ]
+    },
+    {
+      "scope": "iteration 48D no parallel lottery navigation",
+      "file": "src/constants/lifeDataModules.tsx",
+      "excludes": [
+        "/lottery/minigpt-observations",
+        "/lottery/post-corpus-observations",
+        "/lottery/temporal-boundaries"
+      ]
+    },
+    {
+      "scope": "iteration 48D release localization",
+      "file": "src/i18n/locales/en-US/lotteryText.ts",
+      "includes": [
+        "V48 Month-End Five-State Boundary",
+        "V48 Observation-Scope CSV",
+        "MiniGPT Observation Evidence Reuses the Existing Review Pack and CSV Types.",
+        "Only exactly owned reviewed reports enter reviewed fields",
+        "no automatic approval or ticket creation"
+      ]
+    },
+    {
+      "scope": "iteration 48D quality-gate handoff",
+      "file": "../docs/lottery/iterations/quality-gates.md",
+      "includes": [
+        "LATEST_100_DECISIONS_INCLUDE_ARCHIVED",
+        "REPEATED_SNAPSHOT_METADATA_DO_NOT_SUM",
+        "export `rowCount` remains a candidate-row count rather than an observation denominator",
+        "must not replace the legacy 12-row month-end review read",
+        "Chinese and English, light and dark themes",
+        "1280px and 390px viewports",
+        "delete every isolated decision/snapshot/backtest/ticket fixture",
+        "no new business-data mutation"
+      ]
+    },
+    {
       "scope": "iteration 47C decision deep-link and review workflow",
       "file": "src/components/LotteryPredictionDecisionPage.tsx",
       "includes": [
@@ -1757,7 +1874,7 @@
         "releaseEvidence": {
           "smokeCommand": "npm run lottery:smoke",
           "v16Checks": ["navigation usability", "operation ergonomics", "filter readability", "responsive polish", "release readiness", "single-row lottery nav", "all top-level groups visible", "no more menu", "no second-row child nav", "workbench priority actions", "astronaut voyage analysis", "blue planet-only analysis", "number probability pressure", "number probability drilldown", "deep pattern analysis", "report-style deep analysis"],
-          "v48Checks": ["month-end bounded 100 include-archived scope", "five-state separation", "observed-only denominator", "exact reviewed ownership", "repeated CSV snapshot metadata", "CSV formula injection protection", "historical-only safety copy", "no new export type", "no mutation"],
+          "v48Checks": ["month-end bounded 100 include-archived scope", "five-state separation", "observed-only denominator", "exact reviewed ownership", "repeated CSV snapshot metadata", "CSV formula injection protection", "historical-only safety copy", "UNKNOWN non-PASS rendering", "no new export type", "no new route/navigation item", "no new business-data mutation"],
           "report": "reports/lottery-route-smoke-summary.json"
         }
       }

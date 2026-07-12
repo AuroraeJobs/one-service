@@ -221,7 +221,7 @@ sameBudget = 模型总成本与随机总成本相等
 
 ## Iteration 48 时间边界与样本外观察
 
-Iteration 48 是 Iteration 47 完整发布闭环后的唯一晋升候选。已完成的 Wave 48A 解决“这条结果位于语料时间边界的哪里”，Wave 48B 在同一页面对真实语料后观察做有界只读汇总，Wave 48C 再把同一口径带入既有月末复盘和 CSV 证据链。三者都不重新训练、不重新回测，也不根据命中、奖金、ROI 或人工复核动作改变分类。
+Iteration 48 已在 Iteration 47 完整发布闭环后完成。Wave 48A 解决“这条结果位于语料时间边界的哪里”，Wave 48B 在同一页面对真实语料后观察做有界只读汇总，Wave 48C 再把同一口径带入既有月末复盘和 CSV 证据链，Wave 48D 完成发布、浏览器与交接验证。四个波次都不重新训练、不重新回测，也不根据命中、奖金、ROI 或人工复核动作改变分类。
 
 Wave 48A 在现有 `/lottery/predictions/decision` 的 MiniGPT 决策溯源面板中复用 decision outcomes、decision sets、backtests 和 `LotteryResearchProvenance`，做前端只读判定。它不新增 API、集合、路由、菜单、导出类型或写操作。证据只能来自同一决策链；若使用人工复核回测，必须同时满足回测 id 等于 `reviewBacktestId` 且 `decisionSetId` 属于当前决策，不能用更新的回测或相似批次补位。
 
@@ -257,7 +257,7 @@ Wave 48C 已完成：
 - 复核报告必须精确匹配 `reviewBacktestId` 与 `decisionSetId`；可信可比差值还要求稳定溯源、同窗口、同预算、相同票数、完整元数据/五项差值和静态历史回放。缺失、未绑定或归属错误保持 `UNKNOWN`，不借用最新报告。
 - 继续复用 `decision-sets`、`backtests`、`decision-outcomes` 与 `v47-minigpt-research`，不新增导出域、API、DTO、集合或业务写操作；统一 CSV 公式注入保护和历史研究/不自动审批落票文案继续生效。
 
-后续边界：Wave 48D 完成五态、同链归属、样本外分母、安全文案和无自动动作边界的 smoke/release、生产构建、自动化/浏览器、暂存范围、提交和推送证据。
+Wave 48D 已完成：Maven 12/12、file-scoped ESLint、i18n 1090、smoke/release 1326/1326（18 routes）、production build，以及中英文、明暗主题、1280px/390px 浏览器验证均通过；真实 CSV 保持五态 `1/1/1/4/1`、观察分母 4、100/103 截断、精确归属与重复元数据不可求和语义。隔离夹具已清理，`b0c3e3ee` 已推送，既有导出审计写入保持不变且未新增业务数据写路径。
 
 ## 选号策略方向
 
@@ -460,4 +460,4 @@ red=04,10,16,21,26,32 blue=09 reason=sum_mid;odd_even_3_3;zone_2_2_2
 
 ## 下一步
 
-Iteration 47A-47D 及其 production release、浏览器、暂存范围、提交和推送证据已经完成。Iteration 48 是唯一晋升候选，Waves 48A-48C 已完成；下一步是 Wave 48D 发布闭环。Wave 48B 最终校验已通过 file-scoped ESLint、i18n 1088、smoke/release 1134/1134（18 routes）和 production build；隔离夹具覆盖五态 `1/1/1/4/1`、100/103 截断、精确可比/FAIL/归属错/不完整溯源，并通过中英文 1280px 及英文 390px 明暗主题、无横向溢出、后端就绪后无新增控制台错误、GET-only 读取及完整清理。Wave 48C 已确认 focused `LotteryExportServiceTest` 12/12、file-scoped ESLint 和 i18n 1090 通过；smoke/release、production build、浏览器、暂存范围、提交和推送由 Wave 48D 完成。在任何波次都不得把 `POST_CORPUS_OBSERVED` 写成表现 PASS 或未来预测承诺，`UNKNOWN` 永不 PASS。
+Iterations 47 和 48 的 production release、浏览器、暂存范围、实现提交与推送证据已经完成。Iteration 48 最终门禁为 focused `LotteryExportServiceTest` 12/12、file-scoped ESLint、i18n 1090、smoke/release 1326/1326（18 routes）和 production build；隔离夹具覆盖五态 `1/1/1/4/1`、100/103 截断、精确可比/FAIL/归属错/不完整溯源，并通过中英文、明暗主题、1280px/390px、无横向溢出、现有导出预设与完整清理。当前没有已晋升的下一候选，下一步先进行长期规划复核。在任何后续迭代都不得把 `POST_CORPUS_OBSERVED` 写成表现 PASS 或未来预测承诺，`UNKNOWN` 永不 PASS。

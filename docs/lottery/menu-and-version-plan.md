@@ -275,13 +275,13 @@ Goal: make the workbench the practical current-issue closure console while verif
 
 Goal: make the temporal position of MiniGPT decision evidence explicit before aggregating or exporting outcomes.
 
-- Iteration 48 is the sole promoted next candidate. Verified Wave 48A stays in the existing MiniGPT decision-provenance panel on `/lottery/predictions/decision` and adds no navigation item, page, API, collection, export type, or write action.
+- Iteration 48 is complete. Verified Wave 48A stays in the existing MiniGPT decision-provenance panel on `/lottery/predictions/decision` and adds no navigation item, page, API, collection, export type, or write action.
 - Reuse existing decision outcomes, decision sets, backtests, and typed provenance to derive exactly five read-only states: `TRAIN_WINDOW`, `VALIDATION_WINDOW`, `POST_CORPUS_PENDING`, `POST_CORPUS_OBSERVED`, and `UNKNOWN`.
 - Reserve out-of-sample wording for settled `POST_CORPUS_OBSERVED` evidence only. The label describes temporal position, not performance PASS or future value; `UNKNOWN` is never PASS.
 - Completed Wave 48B remains inside `/lottery/predictions/decision`: it composes the latest 100 include-archived outcomes, exposes decision-page `total`/`hasNext` scope, groups stable corpus/run/hash/range lineage while retaining decision rows, isolates incomplete lineage, and keeps observed-decision, distinct-issue, scored-candidate, and settled-financial denominators separate.
 - Random-baseline evidence remains per owning decision and requires exact reviewed report id, decision ownership, matching stable provenance, same window/budget, equal ticket counts, complete metadata/deltas, and static historical-replay mode. Reports are not averaged, favorable deltas do not upgrade the boundary, and no new API/DTO/write action is introduced.
 - Completed Wave 48C keeps the existing navigation and export domains: `/lottery/month-end` adds an independent latest-100 include-archived five-state/observed-only summary, while `decision-outcomes` repeats a fixed decision-level snapshot on flattened candidate rows with explicit do-not-sum semantics and exact reviewed ownership/comparability.
-- Wave 48D release, browser, staged-scope, commit, and push evidence is next; no additional page, navigation item, public aggregate API, export type, or write operation is planned.
+- Wave 48D release, browser, staged-scope, implementation commit, and push evidence is complete. It adds no page, navigation item, public aggregate API, export type, or business-data write path; the existing export audit record remains the only export-side write. No next candidate is currently promoted, so the next step is a planning review.
 - Keep exact decision/backtest ownership and all current manual recommendation, ticket-pack, approval, and ticket-creation boundaries.
 
 ## API Boundary

@@ -301,7 +301,7 @@ All 47D output is static historical-window research evidence. It must not be des
 
 ## MiniGPT Temporal Boundary And Out-Of-Sample Observation Contract
 
-Iteration 48 is the sole promoted candidate after the verified Iteration 47 handoff. Implemented Waves 48A-48B are frontend-only, read-only compositions over existing project-owned contracts:
+Iteration 48 is complete after the verified Iteration 47 handoff. Waves 48A-48B are frontend-only, read-only compositions over existing project-owned contracts:
 
 ```text
 GET /lottery/decision-sets/outcomes?includeArchived=true&limit=100
@@ -309,7 +309,7 @@ GET /lottery/decision-sets?includeArchived=true&page=1&pageSize=100
 GET /lottery/backtests/{reviewBacktestId}  # exact owned report only
 ```
 
-They add no API, DTO, MongoDB collection, route, menu item, export type, or mutation. `LotteryResearchProvenance` already supplies `trainFirstIssue`, `trainLatestIssue`, `validationFirstIssue`, and `validationLatestIssue`; decision/outcome records supply `targetIssue` and settled/pending result evidence. Backtests are evidence only when they belong to the same decision. For a reviewed decision, both `report.id == reviewBacktestId` and `report.decisionSetId == decisionSetId` must hold. A newer report, a report from another decision, or matching-looking generation provenance cannot fill a gap.
+They add no API, DTO, MongoDB collection, route, menu item, export type, or mutation. Wave 48C adds a separate read-only aggregate inside the existing month-end page and an export-internal Java mirror inside the existing `decision-outcomes` type; it adds no public aggregate contract, parallel export domain, collection, or new business-data write. `LotteryResearchProvenance` already supplies `trainFirstIssue`, `trainLatestIssue`, `validationFirstIssue`, and `validationLatestIssue`; decision/outcome records supply `targetIssue` and settled/pending result evidence. Backtests are evidence only when they belong to the same decision. For a reviewed decision, both `report.id == reviewBacktestId` and `report.decisionSetId == decisionSetId` must hold. A newer report, a report from another decision, or matching-looking generation provenance cannot fill a gap.
 
 The classifier has exactly five states:
 
@@ -416,6 +416,8 @@ The export request's `targetIssue`, `ruleName`, and `limit` continue to select o
 Reviewed export evidence is resolved by exact id in the existing backtest repository. `reviewBacktestOwnershipState` is `EXACT_OWNED` only when both `report.id == reviewBacktestId` and `report.decisionSetId == decisionSetId`; unbound, unavailable, id-mismatched, and wrong-owner evidence cannot populate trusted reviewed deltas. `reviewedBaselineComparabilityState` is `COMPARABLE` only when stable provenance also matches, window and budget flags are true, model and baseline ticket counts are equal, baseline algorithm/seed/window metadata and all five deltas are complete, and the mode is `STATIC_POOL_HISTORICAL_REPLAY`. Explicit window, budget, or ticket-count mismatches are `FAIL`; all other gaps are `UNKNOWN`. Only comparable evidence populates `comparableBacktestNetResultDelta` and `comparableBacktestRoiPercentDelta`; there is no latest-report fallback.
 
 All new values still flow through the shared CSV serializer described above, including formula-injection protection and CR/LF/quote handling. Each row repeats an English safety notice that fixes the interpretation to historical-window research, admits only `POST_CORPUS_OBSERVED` to the observed denominator, forbids summing repeated snapshot metadata, and states that no automatic approval or ticket creation occurs.
+
+Wave 48D closes this contract with focused Maven 12/12, file-scoped ESLint, i18n 1090, dedicated smoke/release guards passing 1326/1326 across 18 routes, production TypeScript/Vite build, and rendered Chinese/English light/dark 1280px/390px QA. Isolated data verifies state counts `1/1/1/4/1`, observed denominator 4, fixed 100/103 truncation, independent financial/baseline coverage, exact-owner/FAIL/UNKNOWN cases, active reuse of `v47-minigpt-research`, and no horizontal overflow. A real CSV verifies the same fixed snapshot, do-not-sum marker, hashes, and trusted-delta rules; it retains the existing export audit event but creates no new business-data mutation. All tagged fixtures and temporary runtimes are removed, implementation commit `b0c3e3ee` is pushed, and no next iteration candidate is currently promoted.
 
 ## Statistics Contract
 

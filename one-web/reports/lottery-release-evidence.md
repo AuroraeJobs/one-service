@@ -7,12 +7,12 @@ Generated from `npm run lottery:smoke`.
 | Field | Value |
 | --- | --- |
 | Target | Lottery unified overview default smoke |
-| Generated at | 2026-07-12T05:40:03.938Z |
+| Generated at | 2026-07-12T05:53:23.628Z |
 | Status | PASSED |
 | Mode | mocked-fixture |
 | Provider network | not-required |
 | Routes | 18 |
-| Checks | 1250 |
+| Checks | 1326 |
 | Failures | 0 |
 
 ## Protected Browser QA
@@ -58,6 +58,13 @@ Generated from `npm run lottery:smoke`.
 | iteration 48C CSV exact review ownership and injection guard | `../one-record/one-record-service/src/main/java/com/one/record/service/impl/LotteryExportService.java` | 13 | 1 |
 | iteration 48C CSV focused backend coverage | `../one-record/one-record-service/src/test/java/com/one/record/service/impl/LotteryExportServiceTest.java` | 9 | 0 |
 | iteration 48C existing export preset handoff | `src/components/LotteryExportMaintenancePage.tsx` | 13 | 3 |
+| iteration 48D five-state observed-only contract | `src/utils/lotteryBacktestEvidence.ts` | 13 | 4 |
+| iteration 48D month-end exact-chain observed-only handoff | `src/components/LotteryMonthEndReviewPage.tsx` | 8 | 7 |
+| iteration 48D CSV five-state and exact-owner assertions | `../one-record/one-record-service/src/test/java/com/one/record/service/impl/LotteryExportServiceTest.java` | 15 | 0 |
+| iteration 48D no parallel lottery route | `src/routes/lifeRoutes.tsx` | 3 | 3 |
+| iteration 48D no parallel lottery navigation | `src/constants/lifeDataModules.tsx` | 0 | 3 |
+| iteration 48D release localization | `src/i18n/locales/en-US/lotteryText.ts` | 5 | 0 |
+| iteration 48D quality-gate handoff | `../docs/lottery/iterations/quality-gates.md` | 8 | 0 |
 | iteration 47C decision deep-link and review workflow | `src/components/LotteryPredictionDecisionPage.tsx` | 8 | 0 |
 | iteration 47C historical baseline evidence surfaces | `src/components/LotteryBacktestDetailPage.tsx` | 7 | 0 |
 | iteration 47C research baseline evidence | `src/components/LotteryResearchPage.tsx` | 6 | 0 |
