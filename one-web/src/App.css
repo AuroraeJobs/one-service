@@ -578,6 +578,7 @@ body {
 /* 导航链接样式 */
 .nav-link {
   position: relative;
+  flex: 0 0 auto;
   display: flex !important;
   align-items: center !important;
   gap: 6px !important;
@@ -588,7 +589,12 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease !important;
   font-size: 13px !important;
   font-weight: normal !important;
+  white-space: nowrap;
   overflow: hidden;
+}
+
+.nav-link .anticon {
+  flex: 0 0 auto;
 }
 
 .nav-link:hover {
@@ -852,6 +858,7 @@ body {
 }
 
 .app-header-left {
+  flex: 1 1 auto;
   min-width: 0;
   gap: 16px;
 }
@@ -864,8 +871,17 @@ body {
 }
 
 .app-header-nav {
+  flex: 1 1 auto;
+  min-width: 0;
   gap: 4px;
   overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  white-space: nowrap;
+}
+
+.app-header-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .app-theme-light .app-header .anticon,
@@ -962,8 +978,12 @@ body {
   min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
-  scrollbar-width: thin;
+  scrollbar-width: none;
   white-space: nowrap;
+}
+
+.season-footer-items::-webkit-scrollbar {
+  display: none;
 }
 
 .season-footer-item {
@@ -981,6 +1001,7 @@ body {
   padding: 7px 10px;
   font: inherit;
   font-size: 13px;
+  white-space: nowrap;
   user-select: none;
   transition: background-color 0.2s ease, color 0.2s ease;
   overflow: hidden;
@@ -996,6 +1017,7 @@ body {
 }
 
 .season-footer-icon {
+  flex: 0 0 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
