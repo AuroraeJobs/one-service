@@ -7,4 +7,6 @@ public interface IOpenAIModelService {
     Map<String, Object> getOpenAIModels();
 
     Map<String, Object> getDeepSeekModels();
+
+    Map<String, Object> getOpenRouterModels();
 }

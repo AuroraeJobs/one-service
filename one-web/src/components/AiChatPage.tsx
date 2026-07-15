@@ -56,19 +56,21 @@ type MarkdownBlock =
 const providerLabels: Record<string, string> = {
   local: 'LocalAI',
   deepseek: 'DeepSeek',
-  openai: 'OpenAI'
+  openai: 'OpenAI',
+  openrouter: 'OpenRouter'
 };
 
 const providerOptions = [
   { value: 'local', label: providerLabels.local },
   { value: 'deepseek', label: providerLabels.deepseek },
-  { value: 'openai', label: providerLabels.openai }
+  { value: 'openai', label: providerLabels.openai },
+  { value: 'openrouter', label: providerLabels.openrouter }
 ] satisfies { value: AiProvider; label: string }[];
 
 const MODEL_VALUE_SEPARATOR = '::model::';
 
 const getModelDisplayName = (model: AiModel) => {
-  const providerPattern = /^(localai|local|deepseek|openai)[\s:/_-]+/i;
+  const providerPattern = /^(localai|local|deepseek|openai|openrouter)[\s:/_-]+/i;
   const displayName = (model.name || model.model || model.id).replace(providerPattern, '').trim();
   return displayName || model.name || model.model || model.id;
 };

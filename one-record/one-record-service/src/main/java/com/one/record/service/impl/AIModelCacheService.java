@@ -28,7 +28,7 @@ public class AIModelCacheService implements IAIModelCacheService {
 
     private static final String MODELS_PROVIDER_KEY_PREFIX = "ai:models:provider:";
 
-    private static final List<String> PROVIDERS = Arrays.asList("local", "deepseek", "openai");
+    private static final List<String> PROVIDERS = Arrays.asList("local", "deepseek", "openai", "openrouter");
 
     private final ILocalAIService localAIService;
 
@@ -44,6 +44,9 @@ public class AIModelCacheService implements IAIModelCacheService {
 
     @Value("${spring.ai.openai.chat.options.model}")
     private String defaultOpenAIModel;
+
+    @Value("${spring.ai.openrouter.chat.options.model}")
+    private String defaultOpenRouterModel;
 
     public AIModelCacheService(ILocalAIService localAIService,
                                IOpenAIModelService openAIModelService,
@@ -129,6 +132,9 @@ public class AIModelCacheService implements IAIModelCacheService {
         if ("openai".equals(provider)) {
             return getRemoteModels("openai", defaultOpenAIModel, openAIModelService.getOpenAIModels());
         }
+        if ("openrouter".equals(provider)) {
+            return getRemoteModels("openrouter", defaultOpenRouterModel, openAIModelService.getOpenRouterModels());
+        }
         return getLocalModels();
     }
 
@@ -201,8 +207,10 @@ public class AIModelCacheService implements IAIModelCacheService {
         String model = defaultLocalModel;
         if ("deepseek".equals(normalizedProvider)) {
             model = defaultDeepSeekModel;
-        } else if ("openai".equals(normalizedProvider)) {
+        } else         if ("openai".equals(normalizedProvider)) {
             model = defaultOpenAIModel;
+        } else if ("openrouter".equals(normalizedProvider)) {
+            model = defaultOpenRouterModel;
         }
 
         return new AiModelOption(

@@ -317,13 +317,13 @@ interface ChatResponse {
 export interface AiModel {
   id: string;
   name: string;
-  provider: 'local' | 'deepseek' | 'openai' | string;
+  provider: 'local' | 'deepseek' | 'openai' | 'openrouter' | string;
   model: string;
   available?: boolean;
   details?: Record<string, unknown>;
 }
 
-export type AiProvider = 'local' | 'deepseek' | 'openai';
+export type AiProvider = 'local' | 'deepseek' | 'openai' | 'openrouter';
 export const DEFAULT_LOCAL_AI_MODEL_KEYWORD = 'llama';
 
 export interface AuthUserProfile {

@@ -21,6 +21,14 @@ spring:
           model: ${OPENAI_MODEL:gpt-4o-mini}
           temperature: ${OPENAI_TEMPERATURE:0.7}
           max-tokens: ${OPENAI_MAX_TOKENS:1000}
+    openrouter:
+      api-key: ${OPENROUTER_API_KEY:your-api-key}
+      base-url: ${OPENROUTER_BASE_URL:https://openrouter.ai/api/v1}
+      chat:
+        options:
+          model: ${OPENROUTER_MODEL:openai/gpt-4o-mini}
+          temperature: ${OPENROUTER_TEMPERATURE:0.7}
+          max-tokens: ${OPENROUTER_MAX_TOKENS:1000}
 
   data:
     mongodb:

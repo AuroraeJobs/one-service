@@ -39,6 +39,10 @@ public class AIChatController {
     private IChatService openAIChatService;
 
     @Autowired
+    @Qualifier("openRouterChatService")
+    private IChatService openRouterChatService;
+
+    @Autowired
     private IOpenAIModelService openAIModelService;
 
     @Autowired
@@ -52,6 +56,9 @@ public class AIChatController {
 
     @Value("${spring.ai.openai.chat.options.model}")
     private String defaultOpenAIModel;
+
+    @Value("${spring.ai.openrouter.chat.options.model}")
+    private String defaultOpenRouterModel;
 
     @PostMapping("/completions")
     public ChatResponse chat(@RequestBody ChatRequest request) {
@@ -72,6 +79,7 @@ public class AIChatController {
         localAIService.clearHistory(sessionId);
         deepSeekChatService.clearHistory(sessionId);
         openAIChatService.clearHistory(sessionId);
+        openRouterChatService.clearHistory(sessionId);
     }
 
     @GetMapping("/models")
@@ -107,6 +115,9 @@ public class AIChatController {
         if ("openai".equals(selection.getProvider())) {
             return openAIChatService.chat(prompt, selection.getModel());
         }
+        if ("openrouter".equals(selection.getProvider())) {
+            return openRouterChatService.chat(prompt, selection.getModel());
+        }
         return localAIService.chat(prompt, selection.getModel());
     }
 
@@ -117,6 +128,9 @@ public class AIChatController {
         }
         if ("openai".equals(selection.getProvider())) {
             return openAIChatService.chatWithHistory(sessionId, prompt, selection.getModel());
+        }
+        if ("openrouter".equals(selection.getProvider())) {
+            return openRouterChatService.chatWithHistory(sessionId, prompt, selection.getModel());
         }
         return localAIService.chatWithHistory(sessionId, prompt, selection.getModel());
     }
@@ -162,6 +176,9 @@ public class AIChatController {
                     }
                     if ("openai".equals(normalizedProvider)) {
                         return defaultOpenAIModel;
+                    }
+                    if ("openrouter".equals(normalizedProvider)) {
+                        return defaultOpenRouterModel;
                     }
                     return defaultLocalModel;
                 });

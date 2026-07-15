@@ -21,17 +21,23 @@ public class OpenAIModelService implements IOpenAIModelService {
     private final String openAIBaseUrl;
     private final String deepSeekApiKey;
     private final String deepSeekBaseUrl;
+    private final String openRouterApiKey;
+    private final String openRouterBaseUrl;
 
     public OpenAIModelService(
             @Value("${spring.ai.openai.api-key:}") String openAIApiKey,
             @Value("${spring.ai.openai.base-url:https://api.openai.com/v1}") String openAIBaseUrl,
             @Value("${spring.ai.deepseek.api-key:}") String deepSeekApiKey,
-            @Value("${spring.ai.deepseek.base-url:https://api.deepseek.com}") String deepSeekBaseUrl) {
+            @Value("${spring.ai.deepseek.base-url:https://api.deepseek.com}") String deepSeekBaseUrl,
+            @Value("${spring.ai.openrouter.api-key:}") String openRouterApiKey,
+            @Value("${spring.ai.openrouter.base-url:https://openrouter.ai/api/v1}") String openRouterBaseUrl) {
         this.restClient = RestClient.builder().build();
         this.openAIApiKey = openAIApiKey;
         this.openAIBaseUrl = openAIBaseUrl;
         this.deepSeekApiKey = deepSeekApiKey;
         this.deepSeekBaseUrl = deepSeekBaseUrl;
+        this.openRouterApiKey = openRouterApiKey;
+        this.openRouterBaseUrl = openRouterBaseUrl;
     }
 
     @Override
@@ -42,6 +48,11 @@ public class OpenAIModelService implements IOpenAIModelService {
     @Override
     public Map<String, Object> getDeepSeekModels() {
         return getModels("deepseek", deepSeekApiKey, deepSeekBaseUrl, "DEEPSEEK_API_KEY 未配置，无法获取 DeepSeek 模型列表");
+    }
+
+    @Override
+    public Map<String, Object> getOpenRouterModels() {
+        return getModels("openrouter", openRouterApiKey, openRouterBaseUrl, "OPENROUTER_API_KEY 未配置，无法获取 OpenRouter 模型列表");
     }
 
     @SuppressWarnings("unchecked")
