@@ -359,6 +359,9 @@ const LotteryPredictionPage = () => {
           <Button icon={<HistoryOutlined />} onClick={() => navigate('/lottery/predictions/history')}>
             历史
           </Button>
+          <Button icon={<ExperimentOutlined />} onClick={() => navigate('/lottery/prediction/training')}>
+            训练台
+          </Button>
           <Button icon={<BarChartOutlined />} onClick={() => navigate('/lottery/research')}>
             研究
           </Button>

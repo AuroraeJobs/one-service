@@ -1,0 +1,398 @@
+.lottery-prediction-training-page .lottery-training-workspace {
+  display: grid;
+  gap: 18px;
+}
+
+.lottery-training-config-card,
+.lottery-training-progress-card,
+.lottery-training-timeline-card,
+.lottery-training-result-card,
+.lottery-training-candidates-card {
+  margin-bottom: 0 !important;
+}
+
+.lottery-training-config-head {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.lottery-training-config-head strong {
+  color: var(--app-text);
+  font-size: 15px;
+}
+
+.lottery-training-config-head span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.lottery-training-config-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(160px, 220px)) minmax(0, 1fr);
+  gap: 14px;
+  align-items: end;
+}
+
+.lottery-training-config-grid > div {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.lottery-training-config-grid span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lottery-training-config-select {
+  width: 100%;
+}
+
+.lottery-training-config-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.lottery-training-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.lottery-training-section-head strong {
+  color: var(--app-text);
+  font-size: 15px;
+}
+
+.lottery-training-section-head span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.lottery-training-progress {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(22, 119, 255, 0.28);
+  border-radius: 12px;
+  background: rgba(22, 119, 255, 0.06);
+  margin-bottom: 14px;
+}
+
+.lottery-training-status-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--app-text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.lottery-training-status-line strong {
+  flex: 0 0 auto;
+  color: var(--app-text);
+  font-size: 13px;
+}
+
+.lottery-training-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.lottery-training-kpi {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-training-kpi span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.lottery-training-kpi strong {
+  color: var(--app-text);
+  font-size: 22px;
+  line-height: 1.1;
+}
+
+.lottery-training-kpi strong em {
+  font-style: normal;
+  font-size: 13px;
+  color: var(--app-text-muted);
+  margin-left: 4px;
+}
+
+.lottery-training-process-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.lottery-training-chart-card .lottery-chart {
+  width: 100%;
+  height: 300px !important;
+}
+
+.lottery-training-timeline-controls {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.lottery-training-timeline-select {
+  min-width: 200px;
+  max-width: 260px;
+}
+
+.lottery-training-timeline {
+  display: grid;
+  gap: 10px;
+}
+
+.lottery-training-timeline-row {
+  min-width: 0;
+  text-align: left;
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr) minmax(160px, auto);
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface-elevated);
+  color: var(--app-text);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.lottery-training-timeline-row:hover {
+  border-color: rgba(22, 119, 255, 0.4);
+}
+
+.lottery-training-timeline-row.is-active {
+  border-color: var(--module-accent, #ff9500);
+}
+
+.lottery-training-timeline-period {
+  color: var(--app-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.lottery-training-timeline-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.lottery-training-timeline-meta span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.lottery-training-timeline-detail {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: rgba(127, 127, 127, 0.08);
+}
+
+.lottery-training-detail-col {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.lottery-training-detail-label {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.lottery-training-detail-note {
+  color: var(--app-text);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.lottery-training-detail-strategy {
+  gap: 6px;
+}
+
+.lottery-training-result-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.lottery-trained-rule-card {
+  display: grid;
+  gap: 12px;
+}
+
+.lottery-trained-rule-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lottery-trained-rule-head > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.lottery-trained-rule-head strong {
+  color: var(--app-text);
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.lottery-trained-rule-head span,
+.lottery-trained-rule-metrics span,
+.lottery-trained-rule-params span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lottery-trained-rule-metrics,
+.lottery-trained-rule-params {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lottery-trained-rule-metrics span,
+.lottery-trained-rule-params span {
+  min-height: 26px;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(127, 127, 127, 0.14);
+}
+
+.lottery-trained-latest {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(218, 165, 32, 0.35);
+  border-radius: 10px;
+  background: rgba(218, 165, 32, 0.08);
+  color: var(--app-text);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.lottery-training-prediction-balls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.lottery-training-prediction-reason {
+  margin: 0 0 12px;
+  color: var(--app-text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.lottery-training-actual-alert {
+  margin-top: 4px;
+}
+
+.lottery-training-candidates {
+  display: grid;
+  gap: 10px;
+}
+
+.lottery-training-candidate-row {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-training-candidate-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(127, 127, 127, 0.14);
+  color: var(--app-text);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.lottery-training-candidate-body {
+  display: grid;
+  gap: 8px;
+}
+
+.lottery-training-candidate-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.lottery-training-candidate-title strong {
+  color: var(--app-text);
+  font-size: 14px;
+}
+
+.lottery-training-candidate-title span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+@media (max-width: 980px) {
+  .lottery-training-config-grid,
+  .lottery-training-process-grid,
+  .lottery-training-result-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lottery-training-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lottery-training-timeline-detail {
+    grid-template-columns: 1fr;
+  }
+
+  .lottery-training-timeline-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
