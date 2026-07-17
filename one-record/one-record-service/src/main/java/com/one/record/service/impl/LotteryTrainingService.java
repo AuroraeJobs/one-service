@@ -164,7 +164,10 @@ public class LotteryTrainingService implements ILotteryTrainingService {
         updateStatus(true, false, false, 1, "准备训练", 0, 0, "训练任务已启动", null);
         CompletableFuture.runAsync(() -> {
             try {
-                LotteryTrainingReport report = trainInternal(replayCount, scale, trainingStatus::set);
+                LotteryTrainingReport report = trainInternal(replayCount, scale, status -> {
+                    trainingStatus.set(status);
+                    notifyStatus(status);
+                });
                 pushLog("训练完成，已生成最新预测");
                 updateStatus(false, false, false, 100, "训练完成", report.getReplayCount(), report.getReplayCount(),
                         "训练完成，已生成最新预测", report);
@@ -554,6 +557,7 @@ public class LotteryTrainingService implements ILotteryTrainingService {
             return null;
         }
         long now = System.currentTimeMillis();
+        LotteryTrainingStatus current = trainingStatus.get();
         LotteryTrainingReportRecord record = LotteryTrainingReportRecord.builder()
                 .replayCount(report.getReplayCount())
                 .generation(report.getGeneration())
@@ -565,6 +569,15 @@ public class LotteryTrainingService implements ILotteryTrainingService {
                 .timeline(new ArrayList<>(report.getTimeline()))
                 .createdAt(now)
                 .updatedAt(now)
+                .scale(lastScale.get())
+                .startedAt(current != null ? current.getStartedAt() : now)
+                .finishedAt(current != null ? current.getFinishedAt() : now)
+                .stage(current != null ? current.getStage() : "完成")
+                .percent(current != null ? current.getPercent() : 100)
+                .processed(current != null ? current.getProcessed() : 0)
+                .total(current != null ? current.getTotal() : 0)
+                .taskDetail(current != null ? current.getTaskDetail() : null)
+                .logs(current != null ? new ArrayList<>(current.getLogs()) : new ArrayList<>())
                 .build();
         return trainingReportRepository.save(record);
     }

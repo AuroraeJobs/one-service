@@ -45,4 +45,22 @@ public class LotteryTrainingReportRecord {
     private Long createdAt;
 
     private Long updatedAt;
+
+    private String scale;
+
+    private Long startedAt;
+
+    private Long finishedAt;
+
+    private String stage;
+
+    private Integer percent;
+
+    private Integer processed;
+
+    private Integer total;
+
+    private String taskDetail;
+
+    private List<String> logs;
 }
