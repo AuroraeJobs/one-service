@@ -10,6 +10,7 @@ import com.one.record.training.LotteryTrainingReport;
 import com.one.record.training.LotteryLatestPrediction;
 import com.one.record.training.LotteryTrainingStatus;
 import com.one.record.training.PredictionRuleConfig;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
 
@@ -20,6 +21,8 @@ public interface ILotteryTrainingService {
     LotteryTrainingStatus startTraining(int replayCount, String scale);
 
     LotteryTrainingStatus trainingStatus();
+
+    SseEmitter streamStatus();
 
     LotteryTrainingStatus cancelTraining();
 

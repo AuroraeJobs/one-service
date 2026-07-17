@@ -3,6 +3,7 @@ package com.one.record.training;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.List;
 
 @Data
 public class LotteryTrainingStatus implements Serializable {
@@ -30,6 +31,14 @@ public class LotteryTrainingStatus implements Serializable {
     private Long startedAt;
 
     private Long updatedAt;
+
+    private Long finishedAt;
+
+    private String taskDetail;
+
+    private List<String> logs;
+
+    private Long logSequence;
 
     private LotteryTrainingReport report;
 }

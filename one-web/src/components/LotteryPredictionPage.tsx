@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Progress, Space, Tag, message } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
+import { Alert, Button, Card, Progress, Space, Tag } from 'antd';
 import {
   BarChartOutlined,
   CheckCircleOutlined,
@@ -20,18 +20,14 @@ import LifePageShell from './LifePageShell';
 import LotteryBalls from './lottery/LotteryBalls';
 import LotteryPredictionInsights from './lottery/LotteryPredictionInsights';
 import LotteryPredictionReplay from './lottery/LotteryPredictionReplay';
-import LotteryRuleTrainer from './lottery/LotteryRuleTrainer';
 import { useRecordContext } from '../contexts/RecordContext';
 import { buildLotteryStats } from '../utils/lotteryStats';
 import {
   lotteryPreferenceApi,
-  lotteryTicketApi,
   lotteryTrainingApi,
   type LotteryActualRecord,
   type LotteryLatestPrediction,
-  type LotteryPreference,
-  type LotteryTrainingReport,
-  type LotteryTrainingStatus
+  type LotteryPreference
 } from '../services/api';
 import './LotteryOverviewPage.css';
 
@@ -49,128 +45,19 @@ const clampPercent = (value?: number) => {
   return Math.max(0, Math.min(100, Math.round(value)));
 };
 
-const getTrainingStatusLabel = (status?: LotteryTrainingStatus) => {
-  if (!status) {
-    return '待训练';
-  }
-  if (status.running) {
-    return status.stage || '训练中';
-  }
-  if (status.failed) {
-    return status.message || '训练失败';
-  }
-  return status.message || '训练完成';
-};
-
 const LotteryPredictionPage = () => {
   const navigate = useNavigate();
   const { allRecords, loading, refreshRecords } = useRecordContext();
   const stats = useMemo(() => buildLotteryStats(allRecords), [allRecords]);
   const [trainedPrediction, setTrainedPrediction] = useState<LotteryLatestPrediction | undefined>();
   const [actualRecord, setActualRecord] = useState<LotteryActualRecord | undefined>();
-  const [training, setTraining] = useState(false);
-  const [trainingStatus, setTrainingStatus] = useState<LotteryTrainingStatus | undefined>();
-  const [trainingReport, setTrainingReport] = useState<LotteryTrainingReport | undefined>();
   const [preference, setPreference] = useState<LotteryPreference>();
-
-  const savePredictionTicket = useCallback(async (prediction?: LotteryLatestPrediction) => {
-    if (!preference?.autoSavePredictions || !prediction?.targetPeriod || !prediction.redNumbers?.length) {
-      return;
-    }
-    try {
-      await lotteryTicketApi.saveTicket({
-        issue: String(prediction.targetPeriod),
-        redNumbers: prediction.redNumbers,
-        blueNumber: prediction.blueNumber,
-        quantity: 1,
-        cost: 2,
-        source: preference.defaultTicketSource || 'PREDICTION',
-        status: 'DRAFT',
-        note: `${prediction.title || '自动保存预测'} · 预测评分 ${prediction.score ?? '-'}`
-      });
-      message.success('已按偏好自动保存预测票据');
-    } catch (error) {
-      console.error('自动保存预测票据失败:', error);
-      message.error('自动保存预测票据失败');
-    }
-  }, [preference]);
-
-  const runTraining = async () => {
-    setTraining(true);
-    setTrainingReport(undefined);
-    try {
-      const status = await lotteryTrainingApi.start({
-        replayCount: preference?.defaultReplayCount ?? 0,
-        scale: (preference?.defaultTrainingScale as 'fast' | 'standard' | 'deep' | undefined) || 'standard'
-      });
-      setTrainingStatus(status);
-      if (!status.running && status.report) {
-        setTrainingReport(status.report);
-        setTrainedPrediction(status.report.latestPrediction);
-        await savePredictionTicket(status.report.latestPrediction);
-        message.success('训练完成，已重新预测');
-      }
-    } catch (error) {
-      console.error('规则训练失败:', error);
-      message.error('规则训练失败，请检查后端服务');
-      setTraining(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!training) {
-      return undefined;
-    }
-    const timer = window.setInterval(() => {
-      lotteryTrainingApi.status()
-        .then(status => {
-          setTrainingStatus(status);
-          if (!status.running) {
-            window.clearInterval(timer);
-            setTraining(false);
-            if (status.failed) {
-              message.error(status.message || '规则训练失败');
-              return;
-            }
-            if (status.report) {
-              setTrainingReport(status.report);
-              setTrainedPrediction(status.report.latestPrediction);
-              savePredictionTicket(status.report.latestPrediction);
-              message.success('训练完成，已重新预测');
-            }
-          }
-        })
-        .catch(error => {
-          console.error('读取训练状态失败:', error);
-          window.clearInterval(timer);
-          setTraining(false);
-          message.error('读取训练状态失败，请检查后端服务');
-        });
-    }, 1000);
-    return () => window.clearInterval(timer);
-  }, [savePredictionTicket, training]);
 
   useEffect(() => {
     lotteryPreferenceApi.preference()
       .then(setPreference)
       .catch(error => {
         console.warn('读取彩票偏好失败:', error);
-      });
-  }, []);
-
-  useEffect(() => {
-    lotteryTrainingApi.status()
-      .then(status => {
-        setTrainingStatus(status);
-        if (status.running) {
-          setTraining(true);
-        }
-        if (status.report) {
-          setTrainingReport(status.report);
-        }
-      })
-      .catch(error => {
-        console.warn('读取训练状态失败:', error);
       });
   }, []);
 
@@ -293,8 +180,8 @@ const LotteryPredictionPage = () => {
     },
     {
       label: '回测训练',
-      value: clampPercent(trainingStatus?.percent ?? (trainingReport ? 100 : 72)),
-      detail: getTrainingStatusLabel(trainingStatus),
+      value: 88,
+      detail: '前往训练台查看',
       tone: 'violet'
     },
     {
@@ -303,7 +190,7 @@ const LotteryPredictionPage = () => {
       detail: preference?.autoSavePredictions ? '自动保存已开启' : '手动保存预测',
       tone: 'amber'
     }
-  ], [loading, preference?.autoSavePredictions, stats.blueCoverage, stats.redCoverage, trainingReport, trainingStatus]);
+  ], [loading, preference?.autoSavePredictions, stats.blueCoverage, stats.redCoverage]);
 
   const actionQueue = useMemo(() => [
     {
@@ -347,9 +234,6 @@ const LotteryPredictionPage = () => {
       title="双色球号码预测"
       actions={
         <Space wrap>
-          <Button type="primary" icon={<ExperimentOutlined />} loading={training} onClick={runTraining}>
-            开始训练
-          </Button>
           <Button icon={<HeartOutlined />} onClick={() => navigate('/lottery/analysis?tab=prediction')}>
             摇奖
           </Button>
@@ -541,7 +425,6 @@ const LotteryPredictionPage = () => {
       />
       <section className="lottery-simple-support-grid">
         <LotteryPredictionReplay allRecords={allRecords} />
-        <LotteryRuleTrainer report={trainingReport} training={training} status={trainingStatus} />
       </section>
     </LifePageShell>
   );

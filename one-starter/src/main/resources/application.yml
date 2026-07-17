@@ -90,10 +90,10 @@ one:
       bind-failure-redirect-uri: ${OAUTH2_GITHUB_BIND_FAILURE_REDIRECT_URI:http://localhost:5173/settings?githubBind=error}
       bind-login-redirect-uri: ${OAUTH2_GITHUB_BIND_LOGIN_REDIRECT_URI:http://localhost:5173/login?oauthBind=github}
 
-logging:
-  level:
-    org.springframework.security: DEBUG
-    org.springframework.data.mongodb: INFO
+  logging:
+    level:
+      org.springframework.security: INFO
+      org.springframework.data.mongodb: INFO
 
 hello:
   record:

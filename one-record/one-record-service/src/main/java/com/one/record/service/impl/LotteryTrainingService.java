@@ -33,6 +33,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -49,7 +50,9 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -117,6 +120,16 @@ public class LotteryTrainingService implements ILotteryTrainingService {
 
     private final AtomicReference<String> lastScale = new AtomicReference<>("standard");
 
+    private final AtomicReference<List<String>> trainingLogs = new AtomicReference<>(new ArrayList<>());
+
+    private final AtomicLong trainingLogSequence = new AtomicLong(0);
+
+    private final CopyOnWriteArrayList<SseEmitter> statusEmitters = new CopyOnWriteArrayList<>();
+
+    private String lastEmittedSignature = "";
+
+    private static final int MAX_TRAINING_LOG_LINES = 120;
+
     public LotteryTrainingService(StringRedisTemplate redisTemplate,
                                   LotteryPredictionSnapshotRepository predictionSnapshotRepository,
                                   LotteryTrainingReportRepository trainingReportRepository,
@@ -146,18 +159,23 @@ public class LotteryTrainingService implements ILotteryTrainingService {
         }
         trainingCancelRequested.set(false);
         rememberTrainingRequest(replayCount, scale);
+        resetLogs();
+        pushLog("训练任务已启动，规模=" + safeScale(scale) + "，回放期数=" + replayCount);
         updateStatus(true, false, false, 1, "准备训练", 0, 0, "训练任务已启动", null);
         CompletableFuture.runAsync(() -> {
             try {
                 LotteryTrainingReport report = trainInternal(replayCount, scale, trainingStatus::set);
+                pushLog("训练完成，已生成最新预测");
                 updateStatus(false, false, false, 100, "训练完成", report.getReplayCount(), report.getReplayCount(),
                         "训练完成，已生成最新预测", report);
             } catch (CancellationException exception) {
+                pushLog("训练已取消");
                 updateStatus(false, false, true, trainingStatus.get().getPercent(), "训练已取消",
                         trainingStatus.get().getProcessed(), trainingStatus.get().getTotal(),
                         "训练任务已取消，可重试上一次训练参数", null);
             } catch (RuntimeException exception) {
                 log.error("彩票训练失败", exception);
+                pushLog("训练失败：" + exception.getMessage());
                 updateStatus(false, true, false, 100, "训练失败", 0, 0, exception.getMessage(), null);
             } finally {
                 trainingRunning.set(false);
@@ -170,6 +188,53 @@ public class LotteryTrainingService implements ILotteryTrainingService {
     @Override
     public LotteryTrainingStatus trainingStatus() {
         return trainingStatus.get();
+    }
+
+    @Override
+    public SseEmitter streamStatus() {
+        SseEmitter emitter = new SseEmitter(30L * 60 * 1000);
+        statusEmitters.add(emitter);
+        emitter.onCompletion(() -> statusEmitters.remove(emitter));
+        emitter.onTimeout(() -> statusEmitters.remove(emitter));
+        emitter.onError(error -> statusEmitters.remove(emitter));
+        try {
+            emitter.send(SseEmitter.event().name("status").data(trainingStatus.get()));
+            lastEmittedSignature = statusSignature(trainingStatus.get());
+        } catch (RuntimeException | java.io.IOException exception) {
+            statusEmitters.remove(emitter);
+        }
+        return emitter;
+    }
+
+    private String statusSignature(LotteryTrainingStatus status) {
+        if (status == null) {
+            return "null";
+        }
+        return String.join("|",
+                String.valueOf(status.isRunning()),
+                String.valueOf(status.isFailed()),
+                String.valueOf(status.isCancelled()),
+                String.valueOf(status.getPercent()),
+                String.valueOf(status.getStage()),
+                String.valueOf(status.getProcessed()),
+                String.valueOf(status.getTotal()),
+                String.valueOf(status.getTaskDetail()),
+                String.valueOf(status.getLogSequence()));
+    }
+
+    private void notifyStatus(LotteryTrainingStatus status) {
+        String signature = statusSignature(status);
+        if (signature.equals(lastEmittedSignature)) {
+            return;
+        }
+        lastEmittedSignature = signature;
+        for (SseEmitter emitter : statusEmitters) {
+            try {
+                emitter.send(SseEmitter.event().name("status").data(status));
+            } catch (RuntimeException | java.io.IOException exception) {
+                statusEmitters.remove(emitter);
+            }
+        }
     }
 
     @Override
@@ -200,14 +265,22 @@ public class LotteryTrainingService implements ILotteryTrainingService {
         PredictionRuleConfig previousBest = bestRule();
         configs.addAll(buildExplorationConfigs(previousBest, generation, safeScale));
         List<LotteryTrainingReport.TrainingResult> candidateResults = new ArrayList<>();
+        pushLog("开始回放评分，候选规则数=" + configs.size() + "，回放窗口=" + safeReplayCount + " 期");
         for (int index = 0; index < configs.size(); index++) {
             assertNotCancelled();
             PredictionRuleConfig config = configs.get(index);
-            progressUpdater.accept(buildStatus(true, false, false,
+            String taskDetail = "第 " + generation + " 代正在回放 " + config.getName();
+            pushLog("[" + (index + 1) + "/" + configs.size() + "] " + taskDetail);
+            LotteryTrainingStatus candidateStatus = buildStatus(true, false, false,
                     percent(index, configs.size(), 8, 58),
                     "候选规则回放评分", index, configs.size(),
-                    "第 " + generation + " 代正在回放 " + config.getName(), null));
-            candidateResults.add(trainConfig(draws, config, safeReplayCount));
+                    taskDetail, null);
+            candidateStatus.setTaskDetail(taskDetail);
+            progressUpdater.accept(candidateStatus);
+            
+            int candidateStartPct = percent(index, configs.size(), 8, 58);
+            int candidateEndPct = percent(index + 1, configs.size(), 8, 58);
+            candidateResults.add(trainConfig(draws, config, safeReplayCount, candidateStartPct, candidateEndPct, progressUpdater));
         }
         List<LotteryTrainingReport.TrainingResult> candidates = candidateResults.stream()
                 .sorted(Comparator
@@ -229,17 +302,24 @@ public class LotteryTrainingService implements ILotteryTrainingService {
             PredictionRuleConfig learnedRule = rolling.getFinalConfig();
             report.setActualRecord(actualRecord);
             if (actualRecord != null) {
-                progressUpdater.accept(buildStatus(true, false, false, 95, "目标记录反馈",
-                        safeReplayCount, safeReplayCount, "正在根据最新中奖记录微调规则", null));
+                pushLog("根据最新中奖记录（第 " + actualRecord.getPeriod() + " 期）微调规则");
+                LotteryTrainingStatus feedbackStatus = buildStatus(true, false, false, 95, "目标记录反馈",
+                        safeReplayCount, safeReplayCount, "正在根据最新中奖记录微调规则", null);
+                feedbackStatus.setTaskDetail("正在根据最新中奖记录微调规则");
+                progressUpdater.accept(feedbackStatus);
                 learnedRule = refineRuleWithActual(draws, learnedRule, actualRecord);
+                pushLog("规则微调完成：" + learnedRule.getName());
             }
             report.setLearnedRule(learnedRule);
             report.setTimeline(rolling.getTimeline());
             saveJson(BEST_RULE_KEY, learnedRule);
             savePredictionRuleRecord(learnedRule, best, generation, safeReplayCount, true);
             saveJson(TRAINING_TIMELINE_KEY, rolling.getTimeline());
-            progressUpdater.accept(buildStatus(true, false, false, 96, "生成最新预测",
-                    safeReplayCount, safeReplayCount, "正在生成下一期预测", null));
+            LotteryTrainingStatus predictStatus = buildStatus(true, false, false, 96, "生成最新预测",
+                    safeReplayCount, safeReplayCount, "正在生成下一期预测", null);
+            predictStatus.setTaskDetail("正在生成下一期预测");
+            progressUpdater.accept(predictStatus);
+            pushLog("正在生成下一期预测");
             LotteryLatestPrediction latestPrediction = buildLatestPrediction(draws, learnedRule);
             report.setLatestPrediction(latestPrediction);
             saveJson(LATEST_PREDICTION_KEY, latestPrediction);
@@ -1091,12 +1171,28 @@ public class LotteryTrainingService implements ILotteryTrainingService {
         return null;
     }
 
-    private LotteryTrainingReport.TrainingResult trainConfig(List<Draw> draws, PredictionRuleConfig config, int replayCount) {
+    private LotteryTrainingReport.TrainingResult trainConfig(List<Draw> draws, PredictionRuleConfig config, int replayCount,
+                                                          int candidateStartPct, int candidateEndPct,
+                                                          Consumer<LotteryTrainingStatus> progressUpdater) {
         int start = Math.max(20, draws.size() - replayCount);
         List<ScoredPrediction> bestPredictions = new ArrayList<>();
+        int totalPeriods = draws.size() - start;
         for (int index = start; index < draws.size(); index++) {
             assertNotCancelled();
             Draw target = draws.get(index);
+            int periodIndex = index - start + 1;
+            String taskDetail = "第 " + (index + 1) + " 期正在回放 " + config.getName() + " (" + periodIndex + "/" + totalPeriods + ")";
+            if (periodIndex % 5 == 0 || periodIndex == 1) {
+                pushLog("[" + periodIndex + "/" + totalPeriods + "] " + taskDetail);
+            }
+            int pct = percent(periodIndex, totalPeriods, candidateStartPct, candidateEndPct);
+            LotteryTrainingStatus status = buildStatus(true, false, false,
+                    pct,
+                    "候选规则回放评分", periodIndex, totalPeriods,
+                    taskDetail, null);
+            status.setTaskDetail("候选规则 " + config.getName() + " 回放中 (" + periodIndex + "/" + totalPeriods + ")");
+            progressUpdater.accept(status);
+            
             List<Draw> trainingDraws = draws.subList(0, target.getPeriod() - 1);
             Prediction selected = predict(trainingDraws, config).stream()
                     .max(Comparator.comparingInt(Prediction::getScore))
@@ -1120,16 +1216,22 @@ public class LotteryTrainingService implements ILotteryTrainingService {
         currentConfig.setId(baseConfig.getId() + "-learned");
         currentConfig.setName(baseConfig.getName() + " 滚动学习");
         List<LotteryTrainingReport.TrainingTimelineItem> timeline = new ArrayList<>();
+        pushLog("开始逐期滚动调参，目标期数=" + replayCount);
 
         for (int index = start; index < draws.size(); index++) {
             assertNotCancelled();
             Draw target = draws.get(index);
             int processed = index - start + 1;
-            progressUpdater.accept(buildStatus(true, false, false,
+            String taskDetail = "正在基于前 " + (target.getPeriod() - 1) + " 期预测第 " + target.getPeriod() + " 期";
+            if (processed % 10 == 0 || processed == 1) {
+                pushLog("[" + processed + "/" + replayCount + "] " + taskDetail);
+            }
+            LotteryTrainingStatus timelineStatus = buildStatus(true, false, false,
                     percent(processed, replayCount, 58, 95),
                     "逐期滚动调参", processed, replayCount,
-                    "正在基于前 " + (target.getPeriod() - 1) + " 期预测第 " + target.getPeriod() + " 期",
-                    null));
+                    taskDetail, null);
+            timelineStatus.setTaskDetail(taskDetail);
+            progressUpdater.accept(timelineStatus);
             List<Draw> trainingDraws = draws.subList(0, target.getPeriod() - 1);
             Prediction prediction = predict(trainingDraws, currentConfig).stream()
                     .max(Comparator.comparingInt(Prediction::getScore))
@@ -1248,6 +1350,22 @@ public class LotteryTrainingService implements ILotteryTrainingService {
         trainingStatus.set(buildStatus(running, failed, cancelled, percent, stage, processed, total, message, report));
     }
 
+    private void pushLog(String line) {
+        String timestamped = String.format("[%tT] %s", System.currentTimeMillis(), line);
+        List<String> next = new ArrayList<>(trainingLogs.get());
+        next.add(timestamped);
+        if (next.size() > MAX_TRAINING_LOG_LINES) {
+            next = new ArrayList<>(next.subList(next.size() - MAX_TRAINING_LOG_LINES, next.size()));
+        }
+        trainingLogs.set(next);
+        trainingLogSequence.incrementAndGet();
+    }
+
+    private void resetLogs() {
+        trainingLogs.set(new ArrayList<>());
+        trainingLogSequence.set(0);
+    }
+
     private LotteryTrainingStatus buildStatus(boolean running, boolean failed, boolean cancelled, int percent, String stage,
                                               int processed, int total, String message, LotteryTrainingReport report) {
         LotteryTrainingStatus previous = trainingStatus.get();
@@ -1265,7 +1383,12 @@ public class LotteryTrainingService implements ILotteryTrainingService {
         Long startedAt = running ? Long.valueOf(startedAt(previous)) : previous.getStartedAt();
         status.setStartedAt(startedAt);
         status.setUpdatedAt(System.currentTimeMillis());
+        status.setFinishedAt(running ? null : status.getUpdatedAt());
+        status.setTaskDetail(previous.getTaskDetail());
+        status.setLogs(new ArrayList<>(trainingLogs.get()));
+        status.setLogSequence(trainingLogSequence.get());
         status.setReport(report);
+        notifyStatus(status);
         return status;
     }
 

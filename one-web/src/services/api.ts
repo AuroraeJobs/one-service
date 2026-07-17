@@ -3789,6 +3789,10 @@ export interface LotteryTrainingStatus {
   scale?: 'fast' | 'standard' | 'deep' | string;
   startedAt?: number;
   updatedAt?: number;
+  finishedAt?: number;
+  taskDetail?: string;
+  logs?: string[];
+  logSequence?: number;
   report?: LotteryTrainingReport;
 }
 
