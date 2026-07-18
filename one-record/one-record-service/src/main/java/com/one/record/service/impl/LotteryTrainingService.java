@@ -614,7 +614,7 @@ public class LotteryTrainingService implements ILotteryTrainingService {
                 .updatedAt(now)
                 .scale(lastScale.get())
                 .startedAt(current != null ? current.getStartedAt() : now)
-                .finishedAt(current != null ? current.getFinishedAt() : now)
+                .finishedAt(current != null && !current.isRunning() ? current.getFinishedAt() : null)
                 .stage(current != null ? current.getStage() : "完成")
                 .percent(current != null ? current.getPercent() : 100)
                 .processed(current != null ? current.getProcessed() : 0)
