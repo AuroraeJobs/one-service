@@ -1,6 +1,8 @@
 package com.one.record.service.impl;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.one.common.util.JsonUtil;
 import com.one.record.file.RecordFile;
@@ -33,6 +35,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.math.BigDecimal;
@@ -52,6 +56,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -59,6 +64,8 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 public class LotteryTrainingService implements ILotteryTrainingService {
+
+    private static final Logger log = LoggerFactory.getLogger(LotteryTrainingService.class);
 
     private static final int SEARCH_RED_POOL_SIZE = 12;
 
@@ -122,6 +129,8 @@ public class LotteryTrainingService implements ILotteryTrainingService {
 
     private final AtomicReference<List<String>> trainingLogs = new AtomicReference<>(new ArrayList<>());
 
+    private final ThreadLocal<List<String>> threadLocalLogs = ThreadLocal.withInitial(ArrayList::new);
+
     private final AtomicLong trainingLogSequence = new AtomicLong(0);
 
     private final CopyOnWriteArrayList<SseEmitter> statusEmitters = new CopyOnWriteArrayList<>();
@@ -129,6 +138,9 @@ public class LotteryTrainingService implements ILotteryTrainingService {
     private String lastEmittedSignature = "";
 
     private static final int MAX_TRAINING_LOG_LINES = 120;
+
+    // Pool cache: key -> Pools
+    private final Map<String, Pools> poolCache = new ConcurrentHashMap<>();
 
     public LotteryTrainingService(StringRedisTemplate redisTemplate,
                                   LotteryPredictionSnapshotRepository predictionSnapshotRepository,
@@ -260,6 +272,8 @@ public class LotteryTrainingService implements ILotteryTrainingService {
     }
 
     private LotteryTrainingReport trainInternal(int replayCount, String scale, Consumer<LotteryTrainingStatus> progressUpdater) {
+        // Clear pool cache at start (data might have changed)
+        poolCache.clear();
         String safeScale = safeScale(scale);
         int generation = nextGeneration();
         List<Draw> draws = parseRecords();
@@ -276,6 +290,14 @@ public class LotteryTrainingService implements ILotteryTrainingService {
         
         List<LotteryTrainingReport.TrainingResult> candidateResults = Collections.synchronizedList(new ArrayList<>());
         pushLog("开始回放评分，候选规则数=" + configs.size() + "，回放窗口=" + safeReplayCount + " 期");
+        
+        // Pre-compute pools for each period to reuse across candidates
+        int periodStart = Math.max(20, draws.size() - safeReplayCount);
+        List<Pools> periodPools = new ArrayList<>(draws.size() - periodStart);
+        for (int i = periodStart; i < draws.size(); i++) {
+            List<Draw> trainingDraws = draws.subList(0, i);
+            periodPools.add(buildPools(trainingDraws, configs.get(0))); // use first config for pool structure
+        }
         
         // Parallel evaluation of candidates
         AtomicInteger completed = new AtomicInteger(0);
@@ -321,7 +343,7 @@ public class LotteryTrainingService implements ILotteryTrainingService {
         if (!candidates.isEmpty()) {
             LotteryTrainingReport.TrainingResult best = candidates.get(0);
             report.setBest(best);
-            RollingTrainingResult rolling = buildTrainingTimeline(draws, best.getConfig(), safeReplayCount, progressUpdater);
+            RollingTrainingResult rolling = buildTrainingTimeline(draws, best.getConfig(), safeReplayCount, progressUpdater, periodPools, periodStart);
             LotteryActualRecord actualRecord = latestActualRecord();
             PredictionRuleConfig learnedRule = rolling.getFinalConfig();
             report.setActualRecord(actualRecord);
@@ -1221,6 +1243,9 @@ private LotteryTrainingReport.TrainingResult trainConfig(List<Draw> draws, Predi
         List<ScoredPrediction> bestPredictions = new ArrayList<>();
         int totalPeriods = draws.size() - start;
         
+        // Track best rankScore seen so far for dynamic early stopping
+        AtomicReference<Integer> bestRankScoreSoFar = new AtomicReference<>(-1);
+        
         for (int index = start; index < draws.size(); index++) {
             assertNotCancelled();
             Draw target = draws.get(index);
@@ -1245,17 +1270,34 @@ private LotteryTrainingReport.TrainingResult trainConfig(List<Draw> draws, Predi
                     .orElse(null);
             if (selected != null) {
                 bestPredictions.add(score(selected, target));
+                
+                // Update best rankScore so far
+                int currentRankScore = bestPredictions.stream()
+                        .mapToInt(p -> p.getResult().getScore())
+                        .sum(); // This is rankScore approximation
+                // Actually rankScore is computed from summary, use current avg * total
+                int currentAvgScore = (int) bestPredictions.stream()
+                        .mapToInt(p -> p.getResult().getScore())
+                        .average()
+                        .orElse(0);
+                int projectedRankScore = currentAvgScore * totalPeriods;
+                if (projectedRankScore > bestRankScoreSoFar.get()) {
+                    bestRankScoreSoFar.set(projectedRankScore);
+                }
             }
             
-            // Early stopping: if after 5+ periods the average score is too low, skip remaining periods
+            // Early stopping: if after 5+ periods the projected rankScore can't beat best so far, stop
             if (periodIndex >= 5) {
                 double avgScore = bestPredictions.stream()
                         .mapToInt(p -> p.getResult().getScore())
                         .average()
                         .orElse(0);
-                // If average score < 15 (very poor), projected final score will be uncompetitive
-                if (avgScore < 15 && totalPeriods - periodIndex > 3) {
-                    pushLog("提前终止：评分过低 " + config.getName() + " (" + periodIndex + "/" + totalPeriods + ") 平均分=" + String.format("%.1f", avgScore));
+                int projectedFinalScore = (int) Math.round(avgScore * totalPeriods);
+                int bestSoFar = bestRankScoreSoFar.get();
+                // If even with perfect remaining periods we can't beat best, stop
+                int maxPossibleScore = projectedFinalScore + (totalPeriods - periodIndex) * 20; // generous upper bound
+                if (maxPossibleScore < bestSoFar && totalPeriods - periodIndex > 3) {
+                    pushLog("提前终止：预计最高分 " + maxPossibleScore + " 无法超越当前最佳 " + bestSoFar + " - " + config.getName() + " (" + periodIndex + "/" + totalPeriods + ")");
                     break;
                 }
             }
@@ -1268,8 +1310,9 @@ private LotteryTrainingReport.TrainingResult trainConfig(List<Draw> draws, Predi
         return result;
     }
 
-    private RollingTrainingResult buildTrainingTimeline(List<Draw> draws, PredictionRuleConfig baseConfig, int replayCount,
-                                                        Consumer<LotteryTrainingStatus> progressUpdater) {
+private RollingTrainingResult buildTrainingTimeline(List<Draw> draws, PredictionRuleConfig baseConfig, int replayCount,
+                                                          Consumer<LotteryTrainingStatus> progressUpdater,
+                                                          List<Pools> periodPools, int periodStart) {
         int start = Math.max(20, draws.size() - replayCount);
         PredictionRuleConfig currentConfig = copyConfig(baseConfig);
         currentConfig.setId(baseConfig.getId() + "-learned");
@@ -1291,8 +1334,10 @@ private LotteryTrainingReport.TrainingResult trainConfig(List<Draw> draws, Predi
                     taskDetail, null);
             timelineStatus.setTaskDetail(taskDetail);
             progressUpdater.accept(timelineStatus);
-            List<Draw> trainingDraws = draws.subList(0, target.getPeriod() - 1);
-            Prediction prediction = predict(trainingDraws, currentConfig).stream()
+            // Use precomputed pools
+            Pools pools = periodPools.get(index - periodStart);
+            List<Prediction> predictions = predictWithPools(draws, currentConfig, pools, target);
+            Prediction prediction = predictions.stream()
                     .max(Comparator.comparingInt(Prediction::getScore))
                     .orElse(null);
             if (prediction == null) {
@@ -1411,16 +1456,33 @@ private LotteryTrainingReport.TrainingResult trainConfig(List<Draw> draws, Predi
 
     private void pushLog(String line) {
         String timestamped = String.format("[%tT] %s", System.currentTimeMillis(), line);
-        List<String> next = new ArrayList<>(trainingLogs.get());
-        next.add(timestamped);
-        if (next.size() > MAX_TRAINING_LOG_LINES) {
-            next = new ArrayList<>(next.subList(next.size() - MAX_TRAINING_LOG_LINES, next.size()));
+        List<String> local = threadLocalLogs.get();
+        local.add(timestamped);
+        if (local.size() > MAX_TRAINING_LOG_LINES) {
+            local.subList(0, local.size() - MAX_TRAINING_LOG_LINES).clear();
         }
-        trainingLogs.set(next);
+        // Merge periodically or at checkpoints
+        if (local.size() % 20 == 0) {
+            flushThreadLogs();
+        }
+    }
+
+    private void flushThreadLogs() {
+        List<String> local = threadLocalLogs.get();
+        if (!local.isEmpty()) {
+            List<String> next = new ArrayList<>(trainingLogs.get());
+            next.addAll(local);
+            if (next.size() > MAX_TRAINING_LOG_LINES) {
+                next = new ArrayList<>(next.subList(next.size() - MAX_TRAINING_LOG_LINES, next.size()));
+            }
+            trainingLogs.set(next);
+            local.clear();
+        }
         trainingLogSequence.incrementAndGet();
     }
 
     private void resetLogs() {
+        flushThreadLogs();
         trainingLogs.set(new ArrayList<>());
         trainingLogSequence.set(0);
     }
@@ -1667,9 +1729,9 @@ private LotteryTrainingReport.TrainingResult trainConfig(List<Draw> draws, Predi
         return prediction;
     }
 
-    private List<Prediction> buildSearchPredictions(List<String> activeRed, List<String> overdueRed, List<String> balancedRed,
-                                                    List<String> fallback, Pools pools, double targetAverage,
-                                                    PredictionRuleConfig config, List<Draw> draws) {
+private List<Prediction> buildSearchPredictions(List<String> activeRed, List<String> overdueRed, List<String> balancedRed,
+                                                     List<String> fallback, Pools pools, double targetAverage,
+                                                     PredictionRuleConfig config, List<Draw> draws) {
         List<String> searchPool = unique(activeRed, balancedRed, overdueRed, fallback, createNumbers(33)).stream()
                 .filter(number -> !config.isAvoidLastDraw() || !draws.get(draws.size() - 1).getRedNumbers().contains(number))
                 .sorted(Comparator
@@ -1679,9 +1741,32 @@ private LotteryTrainingReport.TrainingResult trainConfig(List<Draw> draws, Predi
                 .limit(SEARCH_RED_POOL_SIZE)
                 .collect(Collectors.toList());
 
-        List<List<String>> combinations = new ArrayList<>();
-        collectCombinations(searchPool, 0, new ArrayList<>(), combinations);
-        List<List<String>> selected = combinations.stream()
+        // Beam search instead of exhaustive combination generation
+        // Keep top K partial combinations at each step
+        final int BEAM_WIDTH = 50;
+        List<List<String>> beam = new ArrayList<>();
+        beam.add(new ArrayList<>());
+        
+        for (int pos = 0; pos < 6; pos++) {
+            List<List<String>> candidates = new ArrayList<>();
+            for (List<String> partial : beam) {
+                int startIdx = partial.isEmpty() ? 0 : searchPool.indexOf(partial.get(partial.size() - 1)) + 1;
+                int remaining = 6 - partial.size();
+                int endIdx = Math.min(searchPool.size(), startIdx + BEAM_WIDTH / Math.max(1, beam.size()));
+                
+                for (int i = startIdx; i < endIdx && i < searchPool.size(); i++) {
+                    List<String> next = new ArrayList<>(partial);
+                    next.add(searchPool.get(i));
+                    candidates.add(next);
+                }
+            }
+            // Score and keep top BEAM_WIDTH
+            candidates.sort(Comparator.comparingDouble((List<String> p) -> 
+                partialScore(p, pools, targetAverage, config)).reversed());
+            beam = candidates.subList(0, Math.min(BEAM_WIDTH, candidates.size()));
+        }
+        
+        List<List<String>> selected = beam.stream()
                 .filter(numbers -> validPredictionProfile(numbers, config))
                 .sorted(Comparator
                         .comparingDouble((List<String> numbers) -> combinationSearchScore(numbers, pools, targetAverage, config, draws)).reversed()
@@ -1713,6 +1798,16 @@ private LotteryTrainingReport.TrainingResult trainConfig(List<Draw> draws, Predi
             predictions.add(prediction);
         }
         return predictions;
+    }
+
+    private double partialScore(List<String> partial, Pools pools, double targetAverage, PredictionRuleConfig config) {
+        // Estimate score of partial combination
+        int pos = partial.size();
+        if (pos == 0) return 0;
+        // Quick heuristic based on scores of numbers in partial
+        return partial.stream()
+                .mapToDouble(n -> numberScore(n, pools.getRedFrequency(), pools.getRedOmissions(), targetAverage, config))
+                .sum() / partial.size();
     }
 
     private void collectCombinations(List<String> pool, int start, List<String> current, List<List<String>> result) {
@@ -1895,6 +1990,11 @@ private LotteryTrainingReport.TrainingResult trainConfig(List<Draw> draws, Predi
     }
 
     private Pools buildPools(List<Draw> draws, PredictionRuleConfig config) {
+        String cacheKey = poolCacheKey(draws, config);
+        return poolCache.computeIfAbsent(cacheKey, k -> buildPoolsInternal(draws, config, k));
+    }
+
+    private Pools buildPoolsInternal(List<Draw> draws, PredictionRuleConfig config, String cacheKey) {
         List<Draw> recent = draws.subList(Math.max(0, draws.size() - config.getRecentWindow()), draws.size());
         List<FrequencyItem> recentRedFrequency = buildFrequency(recent, true);
         List<FrequencyItem> redFrequency = buildFrequency(draws, true);
@@ -1921,7 +2021,19 @@ private LotteryTrainingReport.TrainingResult trainConfig(List<Draw> draws, Predi
                 .sorted(Comparator.comparingDouble((NumberOmission item) -> item.getOmissionRatio() * config.getBlueOmissionWeight()).reversed()
                         .thenComparing(NumberOmission::getCurrentOmission, Comparator.reverseOrder()))
                 .limit(4).map(NumberOmission::getNumber).collect(Collectors.toList()));
+        poolCache.put(cacheKey, pools);
         return pools;
+    }
+
+    private String poolCacheKey(List<Draw> draws, PredictionRuleConfig config) {
+        // Hash: last draw raw + config hash
+        String lastRaw = draws.isEmpty() ? "" : draws.get(draws.size() - 1).getRaw();
+        return lastRaw + "|" + config.getRecentWindow() + "|" + config.getActiveWeight() + "|"
+                + config.getOmissionWeight() + "|" + config.getBalancedWeight() + "|"
+                + config.getBlueOmissionWeight() + "|" + config.getAverageDiffWeight() + "|"
+                + config.getSquaredDiffWeight() + "|" + config.getOddEvenProbabilityWeight() + "|"
+                + config.getTargetOddCount() + "|" + config.getTargetBigCount() + "|"
+                + config.isRequireZoneCoverage() + "|" + config.isAvoidLastDraw();
     }
 
     private List<String> completeRedNumbers(List<String> seeds, List<String> fallback, List<FrequencyItem> redFrequency,
