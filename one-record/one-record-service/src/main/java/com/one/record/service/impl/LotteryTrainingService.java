@@ -267,24 +267,45 @@ public class LotteryTrainingService implements ILotteryTrainingService {
         List<PredictionRuleConfig> configs = buildTrainingConfigs(safeScale);
         PredictionRuleConfig previousBest = bestRule();
         configs.addAll(buildExplorationConfigs(previousBest, generation, safeScale));
-        List<LotteryTrainingReport.TrainingResult> candidateResults = new ArrayList<>();
+        
+        // Limit total candidates to avoid excessive time
+        int maxCandidates = "deep".equals(safeScale) ? 20 : "standard".equals(safeScale) ? 16 : 12;
+        if (configs.size() > maxCandidates) {
+            configs = configs.subList(0, maxCandidates);
+        }
+        
+        List<LotteryTrainingReport.TrainingResult> candidateResults = Collections.synchronizedList(new ArrayList<>());
         pushLog("开始回放评分，候选规则数=" + configs.size() + "，回放窗口=" + safeReplayCount + " 期");
-        for (int index = 0; index < configs.size(); index++) {
+        
+        // Parallel evaluation of candidates
+        AtomicInteger completed = new AtomicInteger(0);
+        List<PredictionRuleConfig> finalConfigs = configs;
+        int finalGeneration = generation;
+        List<Draw> finalDraws = draws;
+        int finalSafeReplayCount = safeReplayCount;
+        Consumer<LotteryTrainingStatus> finalProgressUpdater = progressUpdater;
+        finalConfigs.parallelStream().forEach(config -> {
             assertNotCancelled();
-            PredictionRuleConfig config = configs.get(index);
-            String taskDetail = "第 " + generation + " 代正在回放 " + config.getName();
-            pushLog("[" + (index + 1) + "/" + configs.size() + "] " + taskDetail);
+            String taskDetail = "第 " + finalGeneration + " 代正在回放 " + config.getName();
+            int currentIdx = completed.incrementAndGet();
+            pushLog("[" + currentIdx + "/" + finalConfigs.size() + "] " + taskDetail);
+            
+            int candidateIndex = finalConfigs.indexOf(config);
+            int candidateStartPct = percent(candidateIndex, finalConfigs.size(), 8, 58);
+            int candidateEndPct = percent(candidateIndex + 1, finalConfigs.size(), 8, 58);
+            
             LotteryTrainingStatus candidateStatus = buildStatus(true, false, false,
-                    percent(index, configs.size(), 8, 58),
-                    "候选规则回放评分", index, configs.size(),
+                    percent(candidateIndex, finalConfigs.size(), 8, 58),
+                    "候选规则回放评分", candidateIndex, finalConfigs.size(),
                     taskDetail, null);
             candidateStatus.setTaskDetail(taskDetail);
-            progressUpdater.accept(candidateStatus);
+            finalProgressUpdater.accept(candidateStatus);
             
-            int candidateStartPct = percent(index, configs.size(), 8, 58);
-            int candidateEndPct = percent(index + 1, configs.size(), 8, 58);
-            candidateResults.add(trainConfig(draws, config, safeReplayCount, candidateStartPct, candidateEndPct, progressUpdater));
-        }
+            int candidateStartPct2 = percent(candidateIndex, finalConfigs.size(), 8, 58);
+            int candidateEndPct2 = percent(candidateIndex + 1, finalConfigs.size(), 8, 58);
+            candidateResults.add(trainConfig(finalDraws, config, finalSafeReplayCount, candidateStartPct2, candidateEndPct2, finalProgressUpdater));
+        });
+        
         List<LotteryTrainingReport.TrainingResult> candidates = candidateResults.stream()
                 .sorted(Comparator
                         .comparingInt(LotteryTrainingReport.TrainingResult::getRankScore).reversed()
@@ -1213,6 +1234,19 @@ public class LotteryTrainingService implements ILotteryTrainingService {
             if (selected != null) {
                 bestPredictions.add(score(selected, target));
             }
+            
+            // Early stopping: if after 5+ periods the average score is too low, skip remaining periods
+            if (periodIndex >= 5) {
+                double avgScore = bestPredictions.stream()
+                        .mapToInt(p -> p.getResult().getScore())
+                        .average()
+                        .orElse(0);
+                // If average score < 15 (very poor), projected final score will be uncompetitive
+                if (avgScore < 15 && totalPeriods - periodIndex > 3) {
+                    pushLog("提前终止：评分过低 " + config.getName() + " (" + periodIndex + "/" + totalPeriods + ") 平均分=" + String.format("%.1f", avgScore));
+                    break;
+                }
+            }
         }
 
         LotteryTrainingReport.TrainingResult result = new LotteryTrainingReport.TrainingResult();
@@ -1915,7 +1949,7 @@ public class LotteryTrainingService implements ILotteryTrainingService {
     }
 
     private List<PredictionRuleConfig> buildTrainingConfigs(String scale) {
-        int[] windows = "deep".equals(scale) ? new int[]{10, 20, 30} : "standard".equals(scale) ? new int[]{20, 30} : new int[]{20};
+        int[] windows = "deep".equals(scale) ? new int[]{20, 30} : "standard".equals(scale) ? new int[]{20, 30} : new int[]{20};
         double[] activeWeights = "fast".equals(scale) ? new double[]{1.0} : new double[]{0.8, 1.2};
         double[] omissionWeights = "fast".equals(scale) ? new double[]{1.2, 1.6} : new double[]{1.0, 1.4, 1.8};
         double[] blueWeights = "deep".equals(scale) ? new double[]{0.8, 1.2} : new double[]{1.0};
@@ -1946,7 +1980,7 @@ public class LotteryTrainingService implements ILotteryTrainingService {
 
     private List<PredictionRuleConfig> buildExplorationConfigs(PredictionRuleConfig baseConfig, int generation, String scale) {
         PredictionRuleConfig normalizedBase = normalizeConfig(copyConfig(baseConfig));
-        int count = "deep".equals(scale) ? 16 : "standard".equals(scale) ? 10 : 6;
+        int count = "deep".equals(scale) ? 10 : "standard".equals(scale) ? 6 : 4;
         Random random = new Random(generation * 7919L + normalizedBase.getId().hashCode());
         List<PredictionRuleConfig> configs = new ArrayList<>();
         configs.add(namedExplorationConfig(normalizedBase, generation, 0));
