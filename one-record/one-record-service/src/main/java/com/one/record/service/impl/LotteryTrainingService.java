@@ -2021,7 +2021,6 @@ private List<Prediction> buildSearchPredictions(List<String> activeRed, List<Str
                 .sorted(Comparator.comparingDouble((NumberOmission item) -> item.getOmissionRatio() * config.getBlueOmissionWeight()).reversed()
                         .thenComparing(NumberOmission::getCurrentOmission, Comparator.reverseOrder()))
                 .limit(4).map(NumberOmission::getNumber).collect(Collectors.toList()));
-        poolCache.put(cacheKey, pools);
         return pools;
     }
 
