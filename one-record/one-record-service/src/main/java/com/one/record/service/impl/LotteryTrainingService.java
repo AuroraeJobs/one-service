@@ -60,9 +60,9 @@ import java.util.stream.Collectors;
 @Component
 public class LotteryTrainingService implements ILotteryTrainingService {
 
-    private static final int SEARCH_RED_POOL_SIZE = 16;
+    private static final int SEARCH_RED_POOL_SIZE = 12;
 
-    private static final int SEARCH_PREDICTION_LIMIT = 8;
+    private static final int SEARCH_PREDICTION_LIMIT = 5;
 
     private static final String BEST_RULE_KEY = "lottery:rule:best";
 
@@ -1205,12 +1205,22 @@ public class LotteryTrainingService implements ILotteryTrainingService {
         return null;
     }
 
-    private LotteryTrainingReport.TrainingResult trainConfig(List<Draw> draws, PredictionRuleConfig config, int replayCount,
-                                                          int candidateStartPct, int candidateEndPct,
-                                                          Consumer<LotteryTrainingStatus> progressUpdater) {
+private LotteryTrainingReport.TrainingResult trainConfig(List<Draw> draws, PredictionRuleConfig config, int replayCount,
+                                                           int candidateStartPct, int candidateEndPct,
+                                                           Consumer<LotteryTrainingStatus> progressUpdater) {
         int start = Math.max(20, draws.size() - replayCount);
+        int periodStart = start;
+        
+        // Pre-compute pools for each period to avoid rebuilding
+        List<Pools> periodPools = new ArrayList<>();
+        for (int i = start; i < draws.size(); i++) {
+            List<Draw> trainingDraws = draws.subList(0, i);
+            periodPools.add(buildPools(trainingDraws, config));
+        }
+        
         List<ScoredPrediction> bestPredictions = new ArrayList<>();
         int totalPeriods = draws.size() - start;
+        
         for (int index = start; index < draws.size(); index++) {
             assertNotCancelled();
             Draw target = draws.get(index);
@@ -1227,8 +1237,10 @@ public class LotteryTrainingService implements ILotteryTrainingService {
             status.setTaskDetail("候选规则 " + config.getName() + " 回放中 (" + periodIndex + "/" + totalPeriods + ")");
             progressUpdater.accept(status);
             
-            List<Draw> trainingDraws = draws.subList(0, target.getPeriod() - 1);
-            Prediction selected = predict(trainingDraws, config).stream()
+            // Use pre-computed pools
+            Pools pools = periodPools.get(index - periodStart);
+            List<Prediction> predictions = predictWithPools(draws, config, periodPools.get(index - periodStart), target);
+            Prediction selected = predictions.stream()
                     .max(Comparator.comparingInt(Prediction::getScore))
                     .orElse(null);
             if (selected != null) {
@@ -1566,8 +1578,47 @@ public class LotteryTrainingService implements ILotteryTrainingService {
                 + summary.getAverageScore() * 6 + summary.getAverageRedHits() * 30 + summary.getBlueHitRate() * 2);
     }
 
+    private List<Prediction> predictWithPools(List<Draw> draws, PredictionRuleConfig config, Pools pools, Draw target) {
+        int recentWindow = Math.min(config.getRecentWindow(), draws.size());
+        double targetAverage = draws.subList(draws.size() - recentWindow, draws.size()).stream()
+                .mapToInt(Draw::getRedSum)
+                .average()
+                .orElse(100);
+
+        List<String> activeRed = pools.getActiveRed();
+        List<String> overdueRed = pools.getOverdueRed();
+        List<String> balancedRed = pools.getBalancedRed();
+        List<String> fallback = pools.getRedFrequency().stream()
+                .filter(item -> item.getCount() > 0)
+                .map(FrequencyItem::getNumber)
+                .collect(Collectors.toList());
+        List<String> blueFocus = pools.getBlueFocus();
+
+        List<Prediction> predictions = new ArrayList<>();
+        predictions.add(buildPrediction("综合推荐", concat(activeRed, 2, overdueRed, 2, balancedRed, 4),
+                0, activeRed, overdueRed, balancedRed, fallback, blueFocus, pools, targetAverage, config, draws));
+        predictions.add(buildPrediction("回补优先", concat(overdueRed, 4, balancedRed, 3, activeRed, 1),
+                1, activeRed, overdueRed, balancedRed, fallback, blueFocus, pools, targetAverage, config, draws));
+        predictions.add(buildPrediction("稳态结构", concat(balancedRed, 4, activeRed, 3, overdueRed, 2),
+                2, activeRed, overdueRed, balancedRed, fallback, blueFocus, pools, targetAverage, config, draws));
+        
+        // Only run expensive search for deep scale
+        if ("deep".equals(config.getName()) || "deep".equals(config.getId())) {
+            predictions.addAll(buildSearchPredictions(activeRed, overdueRed, balancedRed, fallback, pools,
+                    targetAverage, config, draws));
+        }
+        return diversePredictions(predictions).stream()
+                .sorted(Comparator.comparingInt(Prediction::getScore).reversed()
+                        .thenComparing(Prediction::getTitle))
+                .limit(SEARCH_PREDICTION_LIMIT)
+                .collect(Collectors.toList());
+    }
+
     private List<Prediction> predict(List<Draw> draws, PredictionRuleConfig config) {
-        Pools pools = buildPools(draws, config);
+        return predictWithPools(draws, config, buildPools(draws, config));
+    }
+
+    private List<Prediction> predictWithPools(List<Draw> draws, PredictionRuleConfig config, Pools pools) {
         List<String> activeRed = pools.getActiveRed();
         List<String> overdueRed = pools.getOverdueRed();
         List<String> balancedRed = pools.getBalancedRed();
@@ -1589,8 +1640,12 @@ public class LotteryTrainingService implements ILotteryTrainingService {
                 1, activeRed, overdueRed, balancedRed, fallback, blueFocus, pools, targetAverage, config, draws));
         predictions.add(buildPrediction("稳态结构", concat(balancedRed, 4, activeRed, 3, overdueRed, 2),
                 2, activeRed, overdueRed, balancedRed, fallback, blueFocus, pools, targetAverage, config, draws));
-        predictions.addAll(buildSearchPredictions(activeRed, overdueRed, balancedRed, fallback, pools,
-                targetAverage, config, draws));
+        
+        // Only run expensive search for deep scale
+        if ("deep".equals(config.getName()) || "deep".equals(config.getId())) {
+            predictions.addAll(buildSearchPredictions(activeRed, overdueRed, balancedRed, fallback, pools,
+                    targetAverage, config, draws));
+        }
         return diversePredictions(predictions).stream()
                 .sorted(Comparator.comparingInt(Prediction::getScore).reversed()
                         .thenComparing(Prediction::getTitle))
