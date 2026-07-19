@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Progress, Space, Tag } from 'antd';
 import {
-  BarChartOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   DatabaseOutlined,
@@ -10,7 +9,6 @@ import {
   HeartOutlined,
   HistoryOutlined,
   LineChartOutlined,
-  PieChartOutlined,
   ReloadOutlined,
   SafetyCertificateOutlined,
   ThunderboltOutlined
@@ -245,15 +243,6 @@ const LotteryPredictionPage = () => {
           </Button>
           <Button icon={<ExperimentOutlined />} onClick={() => navigate('/lottery/prediction/training')}>
             训练台
-          </Button>
-          <Button icon={<BarChartOutlined />} onClick={() => navigate('/lottery/research')}>
-            研究
-          </Button>
-          <Button icon={<FileTextOutlined />} onClick={() => navigate('/lottery/tickets')}>
-            票据
-          </Button>
-          <Button icon={<PieChartOutlined />} onClick={() => navigate('/lottery/ledger')}>
-            账本
           </Button>
           <Button icon={<ReloadOutlined />} loading={loading} onClick={refreshRecords}>
             更新数据
