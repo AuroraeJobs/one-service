@@ -258,9 +258,6 @@ const LotteryPredictionPage = () => {
           <Button icon={<ReloadOutlined />} loading={loading} onClick={refreshRecords}>
             更新数据
           </Button>
-          <Button icon={<DatabaseOutlined />} onClick={() => navigate('/lottery/records')}>
-            开奖记录
-          </Button>
         </Space>
       }
     >
