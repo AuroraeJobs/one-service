@@ -7,8 +7,6 @@ import {
   ExperimentOutlined,
   FileTextOutlined,
   HeartOutlined,
-  HistoryOutlined,
-  LineChartOutlined,
   ReloadOutlined,
   SafetyCertificateOutlined,
   ThunderboltOutlined
@@ -234,12 +232,6 @@ const LotteryPredictionPage = () => {
         <Space wrap>
           <Button icon={<HeartOutlined />} onClick={() => navigate('/lottery/analysis?tab=prediction')}>
             摇奖
-          </Button>
-          <Button icon={<LineChartOutlined />} onClick={() => navigate('/lottery/deep-analysis')}>
-            深度
-          </Button>
-          <Button icon={<HistoryOutlined />} onClick={() => navigate('/lottery/predictions/history')}>
-            历史
           </Button>
           <Button icon={<ExperimentOutlined />} onClick={() => navigate('/lottery/prediction/training')}>
             训练台
