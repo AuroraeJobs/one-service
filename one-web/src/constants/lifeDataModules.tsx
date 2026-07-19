@@ -363,7 +363,7 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
       accent: '#ff9500',
       children: [
         { id: 'lottery-prediction-current', moduleKey: 'lottery', path: '/lottery/prediction', label: '当前', icon: <ThunderboltOutlined />, accent: '#ff9500' },
-        { id: 'lottery-prediction-training', moduleKey: 'lottery', path: '/lottery/prediction/training', label: '训练台', icon: <ExperimentOutlined />, accent: '#ff3b30' },
+        { id: 'lottery-prediction-training', moduleKey: 'lottery', path: '/lottery/prediction/training', label: '训练', icon: <ExperimentOutlined />, accent: '#ff3b30' },
         { id: 'lottery-deep-analysis', moduleKey: 'lottery', path: '/lottery/deep-analysis', label: '深度', icon: <LineChartOutlined />, accent: '#ff3b30' },
         { id: 'lottery-prediction-decision', moduleKey: 'lottery', path: '/lottery/predictions/decision', label: '决策', icon: <SafetyCertificateOutlined />, accent: '#34c759' },
         { id: 'lottery-experiments', moduleKey: 'lottery', path: '/lottery/experiments', label: '实验', icon: <ExperimentOutlined />, accent: '#00c7be' },
@@ -451,7 +451,7 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
   ai: [
     { id: 'ai-chat', moduleKey: 'ai', path: '/ai/chat', label: 'ChatGPT', icon: <MessageOutlined />, accent: '#00c7be' },
     { id: 'ai-minigpt', moduleKey: 'ai', path: '/ai/minigpt', label: 'MiniGPT', icon: <ExperimentOutlined />, accent: '#5856d6' },
-    { id: 'ai-training', moduleKey: 'ai', path: '/ai/training', label: '训练台', icon: <BranchesOutlined />, accent: '#0071e3' }
+    { id: 'ai-training', moduleKey: 'ai', path: '/ai/training', label: '训练', icon: <BranchesOutlined />, accent: '#0071e3' }
   ],
   wechat: [
     { id: 'wechat-write', moduleKey: 'wechat', path: '/wechat', label: '写稿', icon: <FileTextOutlined />, accent: '#0071e3' },

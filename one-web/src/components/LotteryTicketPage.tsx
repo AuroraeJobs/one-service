@@ -3,7 +3,6 @@ import type { Key } from 'react';
 import { Alert, Button, Card, Checkbox, Empty, Form, Input, InputNumber, Modal, Popconfirm, Select, Space, Table, Tag, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
-  BranchesOutlined,
   CheckCircleOutlined,
   DeleteOutlined,
   EditOutlined,
@@ -12,7 +11,6 @@ import {
   LinkOutlined,
   PlusOutlined,
   PrinterOutlined,
-  ReloadOutlined,
   SearchOutlined,
   TrophyOutlined
 } from '@ant-design/icons';
@@ -1074,76 +1072,6 @@ const LotteryTicketPage = () => {
           </Button>
           <Button icon={<TrophyOutlined />} loading={checkingLatest} onClick={checkLatestPrizes}>
             最新核奖
-          </Button>
-          <Button icon={<BranchesOutlined />} onClick={() => navigate(`/lottery/outcomes${issue ? `?issue=${issue}` : ''}`)}>
-            归因
-          </Button>
-          <div className="lottery-filter-preset-bar">
-            <Button size="small" onClick={() => updateQuery({ status: 'BOUGHT', prizeGrade: undefined })}>待核</Button>
-            <Button size="small" onClick={() => updateQuery({ status: 'CHECKED', prizeGrade: undefined })}>已核</Button>
-            <Button size="small" onClick={() => updateQuery({ status: 'CHECKED', prizeGrade: 'NONE' })}>未中</Button>
-            <Button size="small" onClick={() => updateQuery({ source: 'TICKET_PACK' })}>票包</Button>
-            <Button size="small" onClick={() => updateQuery({ status: undefined, source: undefined, prizeGrade: undefined, predictionSnapshotId: undefined })}>清除</Button>
-          </div>
-          <Input
-            allowClear
-            prefix={<SearchOutlined />}
-            placeholder="按期号筛选"
-            value={issue}
-            onChange={event => updateQuery({ issue: event.target.value })}
-            style={{ width: 180 }}
-          />
-          <Input
-            allowClear
-            prefix={<HistoryOutlined />}
-            placeholder="预测快照"
-            value={predictionSnapshotId}
-            onChange={event => updateQuery({ predictionSnapshotId: event.target.value })}
-            style={{ width: 190 }}
-          />
-          <Select
-            allowClear
-            placeholder="状态"
-            value={statusFilter}
-            onChange={value => updateQuery({ status: value })}
-            style={{ width: 120 }}
-            options={[
-              { label: '草稿', value: 'DRAFT' },
-              { label: '已购买', value: 'BOUGHT' },
-              { label: '已兑奖', value: 'CHECKED' },
-              { label: '作废', value: 'VOID' }
-            ]}
-          />
-          <Select
-            allowClear
-            placeholder="来源"
-            value={sourceFilter}
-            onChange={value => updateQuery({ source: value })}
-            style={{ width: 120 }}
-            options={[
-              { label: '手动', value: 'MANUAL' },
-              { label: '预测', value: 'PREDICTION' },
-              { label: '票包', value: 'TICKET_PACK' }
-            ]}
-          />
-          <Select
-            allowClear
-            placeholder="奖级"
-            value={prizeGradeFilter}
-            onChange={value => updateQuery({ prizeGrade: value })}
-            style={{ width: 130 }}
-            options={[
-              { label: '一等奖', value: 'FIRST' },
-              { label: '二等奖', value: 'SECOND' },
-              { label: '三等奖', value: 'THIRD' },
-              { label: '四等奖', value: 'FOURTH' },
-              { label: '五等奖', value: 'FIFTH' },
-              { label: '六等奖', value: 'SIXTH' },
-              { label: '未中奖', value: 'NONE' }
-            ]}
-          />
-          <Button icon={<ReloadOutlined />} loading={loading} onClick={loadTickets}>
-            刷新
           </Button>
         </Space>
       }

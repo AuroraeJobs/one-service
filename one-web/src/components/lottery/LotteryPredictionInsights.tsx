@@ -310,7 +310,7 @@ const PredictionConsensusPanel = ({
         <div className="lottery-prediction-consensus-ticket">
           <div>
             <strong>{t('共识组合')}</strong>
-            <span>{t('红球累计 {{redVotes}} 票 · 蓝球 {{blueVotes}} 票', {
+            <span>{t('红球 {{redVotes}} · 蓝球 {{blueVotes}}', {
               redVotes: consensusRedTotal,
               blueVotes: consensusBlueCount
             })}</span>
@@ -329,7 +329,7 @@ const PredictionConsensusPanel = ({
           return (
             <span key={item.number} className={isHit ? 'lottery-prediction-consensus-hit' : undefined}>
               <strong>{item.number}</strong>
-              <small>{t('{{count}} 票', { count: item.count })}</small>
+              <small>{item.count}</small>
             </span>
           );
         })}
@@ -340,7 +340,7 @@ const PredictionConsensusPanel = ({
           return (
             <span key={item.number} className={isHit ? 'lottery-prediction-consensus-hit' : undefined}>
               <strong>{item.number}</strong>
-              <small>{t('{{count}} 票', { count: item.count })}</small>
+              <small>{item.count}</small>
             </span>
           );
         })}
@@ -704,7 +704,7 @@ const LotteryPredictionInsights = ({
   const [savingActualRecord, setSavingActualRecord] = useState(false);
   const probability = stats.probabilityAnalysis;
   const topRed = probability.red.slice(0, 6);
-  const topBlue = probability.blue.slice(0, 4);
+  const topBlue = probability.blue.slice(0, 6);
   const [selectedProbability, setSelectedProbability] = useState<LotteryNumberProbability | undefined>(
     probability.red[0] || probability.blue[0]
   );

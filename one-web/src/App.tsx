@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ConfigProvider, theme } from 'antd';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import Login from './components/Login';
 import Register from './components/Register';
 import ProtectedPage from './components/ProtectedPage';
@@ -17,6 +17,12 @@ import {
 } from './i18n/registry';
 import type { AppLanguage, ColorMode } from './types/appPreferences';
 import './App.css';
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+}
 
 function App() {
   // Tab显示/隐藏状态，提升到App组件中，以便页脚图标可以控制
@@ -73,6 +79,7 @@ function App() {
                 onToggleColorMode={toggleColorMode}
               >
                 <div className={`app-container app-theme-${colorMode}`}>
+                  <ScrollToTop />
                   <AppTextLocalizer />
                   <Routes>
                     <Route path="/login" element={<Login />} />

@@ -1369,13 +1369,11 @@
 }
 
 .lottery-filter-preset-bar {
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  max-width: 100%;
-  overflow-x: auto;
   padding: 2px 0;
-  scrollbar-width: thin;
 }
 
 .lottery-filter-preset-bar .ant-btn {
@@ -3539,7 +3537,6 @@
 
 .lottery-outcome-layout {
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
   gap: 16px;
 }
 
@@ -3551,19 +3548,48 @@
   gap: 12px;
 }
 
+.lottery-outcome-issue-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .lottery-outcome-issue-list button,
 .lottery-outcome-table button,
 .lottery-outcome-timeline button {
   display: grid;
   gap: 6px;
   width: 100%;
-  padding: 12px;
+  padding: 10px 12px;
   border: 1px solid var(--app-border);
   border-radius: 8px;
   background: var(--app-surface-elevated);
   color: var(--app-text);
   text-align: left;
   cursor: pointer;
+}
+
+.lottery-outcome-issue-list button {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 220px;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+
+.lottery-outcome-issue-list button strong {
+  grid-column: 1;
+}
+
+.lottery-outcome-issue-list button > span {
+  grid-column: 1 / -1;
+}
+
+.lottery-outcome-issue-list button .ant-tag {
+  grid-column: 2;
+  grid-row: 1;
+  margin: 0;
+  justify-self: end;
 }
 
 .lottery-outcome-issue-list button.active,
@@ -7128,18 +7154,18 @@ button.lottery-latest-vs-card:hover {
 
 .lottery-replay-toolbar {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
-  gap: 16px;
-  align-items: start;
+  grid-template-columns: 1fr;
+  gap: 12px;
   margin-bottom: 18px;
 }
 
 .lottery-replay-controls {
-  display: grid;
-  gap: 10px;
+  display: flex;
+  gap: 16px;
 }
 
 .lottery-replay-controls > div {
+  flex: 1;
   min-width: 0;
   display: grid;
   gap: 5px;

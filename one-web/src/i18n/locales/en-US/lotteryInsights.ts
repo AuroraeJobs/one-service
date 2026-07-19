@@ -3,7 +3,7 @@ import type { MessageTemplate } from '../../types';
 export const lotteryInsightsMessages: Record<string, MessageTemplate> = {
   '参考评分 {{score}}': 'Reference score: {{score}}',
   '来自 {{count}} 组候选': 'From {{count}} candidate sets',
-  '红球累计 {{redVotes}} 票 · 蓝球 {{blueVotes}} 票': 'Red balls: {{redVotes}} votes · Blue ball: {{blueVotes}} votes',
+  '红球 {{redVotes}} · 蓝球 {{blueVotes}}': 'Red {{redVotes}} · Blue {{blueVotes}}',
   '{{count}} 票': '{{count}} votes',
   '录入最新开奖号后自动对照预测结果。': 'Enter the latest winning numbers to compare prediction results automatically.',
   '对照第 {{period}} 期最新开奖号': 'Compared with the latest winning numbers for issue {{period}}',

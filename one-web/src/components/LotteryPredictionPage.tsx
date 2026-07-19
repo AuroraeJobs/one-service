@@ -8,8 +8,7 @@ import {
   FileTextOutlined,
   HeartOutlined,
   ReloadOutlined,
-  SafetyCertificateOutlined,
-  ThunderboltOutlined
+  SafetyCertificateOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
@@ -113,7 +112,7 @@ const LotteryPredictionPage = () => {
   const probabilityRows = useMemo(
     () => [
       ...stats.probabilityAnalysis.red.slice(0, 4),
-      ...stats.probabilityAnalysis.blue.slice(0, 2)
+      ...stats.probabilityAnalysis.blue.slice(0, 4)
     ].sort((a, b) => b.probability - a.probability),
     [stats.probabilityAnalysis.blue, stats.probabilityAnalysis.red]
   );
@@ -122,33 +121,6 @@ const LotteryPredictionPage = () => {
     () => stats.draws.slice(-4).reverse(),
     [stats.draws]
   );
-
-  const healthItems = useMemo(() => [
-    {
-      label: '数据同步',
-      value: loading ? 68 : 96,
-      detail: loading ? '正在更新开奖记录' : '开奖记录可用',
-      tone: 'green'
-    },
-    {
-      label: '质量校验',
-      value: Math.round((stats.redCoverage + stats.blueCoverage) / 2),
-      detail: '红蓝球覆盖率',
-      tone: 'blue'
-    },
-    {
-      label: '回测训练',
-      value: 88,
-      detail: '前往训练台查看',
-      tone: 'violet'
-    },
-    {
-      label: '票据偏好',
-      value: preference?.autoSavePredictions ? 92 : 58,
-      detail: preference?.autoSavePredictions ? '自动保存已开启' : '手动保存预测',
-      tone: 'amber'
-    }
-  ], [loading, preference?.autoSavePredictions, stats.blueCoverage, stats.redCoverage]);
 
   const actionQueue = useMemo(() => [
     {
@@ -196,10 +168,10 @@ const LotteryPredictionPage = () => {
             摇奖
           </Button>
           <Button icon={<ExperimentOutlined />} onClick={() => navigate('/lottery/prediction/training')}>
-            训练台
+            训练
           </Button>
           <Button icon={<ReloadOutlined />} loading={loading} onClick={refreshRecords}>
-            更新数据
+            更新
           </Button>
         </Space>
       }
@@ -238,33 +210,6 @@ const LotteryPredictionPage = () => {
             )}
           </Card>
 
-          <Card className="life-panel-card lottery-admin-card lottery-admin-rank-card">
-            <div className="lottery-admin-card-head">
-              <div>
-                <span>号码概率排行</span>
-                <h2>红蓝球候选池</h2>
-              </div>
-              <Space size={6}>
-                <Tag color="red">红球</Tag>
-                <Tag color="blue">蓝球</Tag>
-              </Space>
-            </div>
-            <div className="lottery-admin-probability-list">
-              {probabilityRows.map(item => (
-                <div key={`${item.type}-${item.number}`} className="lottery-admin-probability-row">
-                  <span className={`lottery-admin-number-badge lottery-admin-number-${item.type}`}>{item.number}</span>
-                  <div>
-                    <strong>{item.type === 'blue' ? '蓝球回归概率' : '红球候选概率'}</strong>
-                    <Progress percent={clampPercent(item.probability)} showInfo={false} strokeColor={item.type === 'blue' ? '#0071e3' : '#ff3b30'} />
-                  </div>
-                  <b>{item.probability.toFixed(2)}%</b>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </section>
-
-        <section className="lottery-admin-secondary-grid">
           <Card className="life-panel-card lottery-admin-card">
             <div className="lottery-admin-card-head">
               <div>
@@ -281,23 +226,47 @@ const LotteryPredictionPage = () => {
               ))}
             </div>
           </Card>
+        </section>
 
+        <section className="lottery-admin-secondary-grid">
+          <Card className="life-panel-card lottery-admin-card lottery-admin-rank-card">
+            <div className="lottery-admin-card-head">
+              <div>
+                <span>号码概率排行</span>
+                <h2>红球候选池</h2>
+              </div>
+              <Tag color="red">红球</Tag>
+            </div>
+            <div className="lottery-admin-probability-list">
+              {probabilityRows.filter(item => item.type === 'red').map(item => (
+                <div key={`${item.type}-${item.number}`} className="lottery-admin-probability-row">
+                  <span className={`lottery-admin-number-badge lottery-admin-number-${item.type}`}>{item.number}</span>
+                  <div>
+                    <strong>红球候选概率</strong>
+                    <Progress percent={clampPercent(item.probability)} showInfo={false} strokeColor="#ff3b30" />
+                  </div>
+                  <b>{item.probability.toFixed(2)}%</b>
+                </div>
+              ))}
+            </div>
+          </Card>
           <Card className="life-panel-card lottery-admin-card">
             <div className="lottery-admin-card-head">
               <div>
-                <span>策略健康</span>
-                <h2>模型状态</h2>
+                <span>号码概率排行</span>
+                <h2>蓝球候选池</h2>
               </div>
-              <ThunderboltOutlined />
+              <Tag color="blue">蓝球</Tag>
             </div>
-            <div className="lottery-admin-health-list">
-              {healthItems.map(item => (
-                <div key={item.label} className={`lottery-admin-health-row lottery-admin-tone-${item.tone}`}>
+            <div className="lottery-admin-probability-list">
+              {probabilityRows.filter(item => item.type === 'blue').map(item => (
+                <div key={`${item.type}-${item.number}`} className="lottery-admin-probability-row">
+                  <span className={`lottery-admin-number-badge lottery-admin-number-${item.type}`}>{item.number}</span>
                   <div>
-                    <strong>{item.label}</strong>
-                    <span>{item.detail}</span>
+                    <strong>蓝球回归概率</strong>
+                    <Progress percent={clampPercent(item.probability)} showInfo={false} strokeColor="#0071e3" />
                   </div>
-                  <Progress percent={item.value} size="small" strokeColor="currentColor" />
+                  <b>{item.probability.toFixed(2)}%</b>
                 </div>
               ))}
             </div>
@@ -326,23 +295,6 @@ const LotteryPredictionPage = () => {
         </section>
       </section>
 
-      {preference ? (
-        <Alert
-          className="lottery-overview-status-alert"
-          type={preference.autoSavePredictions ? 'success' : 'info'}
-          showIcon
-          message={
-            <Space wrap>
-              <span>训练偏好</span>
-              <Tag>{preference.defaultTrainingScale || 'standard'}</Tag>
-              <Tag>回放 {preference.defaultReplayCount ?? 0}</Tag>
-              <Tag color={preference.autoSavePredictions ? 'green' : 'default'}>
-                {preference.autoSavePredictions ? '自动保存票据' : '不自动保存'}
-              </Tag>
-            </Space>
-          }
-        />
-      ) : null}
       <LotteryPredictionInsights
         stats={stats}
         trainedPrediction={trainedPrediction}

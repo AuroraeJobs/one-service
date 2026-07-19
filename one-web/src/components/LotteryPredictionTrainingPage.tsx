@@ -413,6 +413,15 @@ const LotteryPredictionTrainingPage = () => {
             <strong>{t('训练配置')}</strong>
             <span>{t('训练会回放历史开奖，寻找更稳的预测规则。')}</span>
           </div>
+          {preference && (
+            <div className="lottery-training-config-summary" style={{ marginBottom: 12 }}>
+              <Tag color="blue">{scaleLabel((preference.defaultTrainingScale as 'fast' | 'standard' | 'deep') || 'standard')}</Tag>
+              <Tag>回放 {preference.defaultReplayCount ?? 0}</Tag>
+              <Tag color={preference.autoSavePredictions ? 'green' : 'default'}>
+                {preference.autoSavePredictions ? t('自动保存票据') : t('不自动保存')}
+              </Tag>
+            </div>
+          )}
           <div className="lottery-training-config-grid">
             <div>
               <span>{t('训练规模')}</span>
@@ -434,15 +443,6 @@ const LotteryPredictionTrainingPage = () => {
                 className="lottery-training-config-select"
               />
             </div>
-            {preference && (
-              <div className="lottery-training-config-summary">
-                <Tag color="blue">{scaleLabel((preference.defaultTrainingScale as 'fast' | 'standard' | 'deep') || 'standard')}</Tag>
-                <Tag>回放 {preference.defaultReplayCount ?? 0}</Tag>
-                <Tag color={preference.autoSavePredictions ? 'green' : 'default'}>
-                  {preference.autoSavePredictions ? t('自动保存票据') : t('不自动保存')}
-                </Tag>
-              </div>
-            )}
           </div>
         </Card>
 
