@@ -1,16 +1,12 @@
 package com.one.record.service.impl;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import com.one.common.util.JsonUtil;
 import com.one.record.file.RecordFile;
 import com.one.record.lottery.LotteryAuditMetadata;
 import com.one.record.lottery.LotteryBacktestSummary;
 import com.one.record.lottery.LotteryPageResponse;
-import com.one.record.model.LotteryPredictionSnapshot;
 import com.one.record.model.LotteryPredictionRuleRecord;
+import com.one.record.model.LotteryPredictionSnapshot;
 import com.one.record.model.LotteryTrainingReportRecord;
 import com.one.record.repository.LotteryBacktestReportRepository;
 import com.one.record.repository.LotteryPredictionRuleRepository;
@@ -18,46 +14,29 @@ import com.one.record.repository.LotteryPredictionSnapshotRepository;
 import com.one.record.repository.LotteryTrainingReportRepository;
 import com.one.record.service.ILotteryTrainingService;
 import com.one.record.service.IRecordService;
-import com.one.record.training.LotteryActualRecord;
-import com.one.record.training.LotteryLatestPrediction;
-import com.one.record.training.LotteryPredictionCandidate;
-import com.one.record.training.LotteryPredictionResult;
-import com.one.record.training.LotteryReplayMetrics;
-import com.one.record.training.LotteryReplaySummary;
-import com.one.record.training.LotteryRuleEvidence;
-import com.one.record.training.LotteryRuleComparison;
-import com.one.record.training.LotteryTrainingReport;
-import com.one.record.training.LotteryTrainingStatus;
-import com.one.record.training.PredictionRuleConfig;
+import com.one.record.training.*;
 import com.one.record.util.LotteryDrawUtil;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -516,6 +495,25 @@ public class LotteryTrainingService implements ILotteryTrainingService {
     }
 
     @Override
+    public LotteryPageResponse<LotteryTrainingReportRecord> trainingReportsPage(Integer page, Integer pageSize) {
+        int safePage = normalizePage(page);
+        int safePageSize = normalizePageSize(pageSize);
+        List<LotteryTrainingReportRecord> items = trainingReportRepository.findByOrderByCreatedAtDesc(PageRequest.of(safePage, safePageSize));
+        long total = trainingReportRepository.count();
+        return LotteryPageResponse.<LotteryTrainingReportRecord>builder()
+                .items(items)
+                .page(safePage)
+                .pageSize(safePageSize)
+                .total(total)
+                .hasNext((long) (safePage + 1) * safePageSize < total)
+                .build();
+    }
+
+    @Override
+    public LotteryTrainingReportRecord trainingReportDetail(String id) {
+        return trainingReportRepository.findById(id).orElse(null);
+    }
+
     public LotteryReplayMetrics replayMetrics(Integer window) {
         int safeWindow = normalizeReplayMetricsWindow(window);
         LotteryTrainingReportRecord report = latestTrainingReport();

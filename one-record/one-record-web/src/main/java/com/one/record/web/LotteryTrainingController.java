@@ -1,18 +1,11 @@
 package com.one.record.web;
 
-import lombok.AllArgsConstructor;
+import com.one.record.lottery.LotteryPageResponse;
+import com.one.record.model.LotteryTrainingReportRecord;
 import com.one.record.service.ILotteryTrainingService;
-import com.one.record.training.LotteryActualRecord;
-import com.one.record.training.LotteryLatestPrediction;
-import com.one.record.training.LotteryTrainingRequest;
-import com.one.record.training.LotteryTrainingReport;
-import com.one.record.training.LotteryTrainingStatus;
-import com.one.record.training.PredictionRuleConfig;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.one.record.training.*;
+import lombok.AllArgsConstructor;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
@@ -70,5 +63,17 @@ public class LotteryTrainingController {
     @PostMapping("actual/latest")
     public LotteryActualRecord saveLatestActualRecord(@RequestBody LotteryActualRecord record) {
         return service.saveLatestActualRecord(record);
+    }
+
+    @GetMapping("reports")
+    public LotteryPageResponse<LotteryTrainingReportRecord> reports(
+            @RequestParam(name = "page", defaultValue = "0") Integer page,
+            @RequestParam(name = "pageSize", defaultValue = "20") Integer pageSize) {
+        return service.trainingReportsPage(page, pageSize);
+    }
+
+    @GetMapping("reports/{id}")
+    public LotteryTrainingReportRecord reportDetail(@PathVariable("id") String id) {
+        return service.trainingReportDetail(id);
     }
 }

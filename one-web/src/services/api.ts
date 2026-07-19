@@ -3796,6 +3796,29 @@ export interface LotteryTrainingStatus {
   report?: LotteryTrainingReport;
 }
 
+export interface LotteryTrainingReportRecord {
+  id?: string;
+  replayCount?: number;
+  generation?: number;
+  best?: LotteryTrainingResult;
+  learnedRule?: PredictionRuleConfig;
+  latestPrediction?: LotteryLatestPrediction;
+  actualRecord?: LotteryActualRecord;
+  candidates?: LotteryTrainingResult[];
+  timeline?: LotteryTrainingTimelineItem[];
+  createdAt?: number;
+  updatedAt?: number;
+  scale?: string;
+  startedAt?: number;
+  finishedAt?: number;
+  stage?: string;
+  percent?: number;
+  processed?: number;
+  total?: number;
+  taskDetail?: string;
+  logs?: string[];
+}
+
 export const lotteryTrainingApi = {
   run: (params: { replayCount?: number; scale?: 'fast' | 'standard' | 'deep' }): Promise<LotteryTrainingReport> => {
     return apiClient.post('/lottery/training/run', params);
@@ -3823,6 +3846,12 @@ export const lotteryTrainingApi = {
   },
   saveLatestActualRecord: (record: LotteryActualRecord): Promise<LotteryActualRecord> => {
     return apiClient.post('/lottery/training/actual/latest', record);
+  },
+  reports: (params?: { page?: number; pageSize?: number }): Promise<LotteryPageResponse<LotteryTrainingReportRecord>> => {
+    return apiClient.get('/lottery/training/reports', { params });
+  },
+  reportDetail: (id: string): Promise<LotteryTrainingReportRecord> => {
+    return apiClient.get(`/lottery/training/reports/${id}`);
   }
 };
 

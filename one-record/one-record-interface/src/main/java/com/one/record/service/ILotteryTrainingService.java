@@ -2,6 +2,7 @@ package com.one.record.service;
 
 import com.one.record.model.LotteryPredictionSnapshot;
 import com.one.record.model.LotteryPredictionRuleRecord;
+import com.one.record.model.LotteryTrainingReportRecord;
 import com.one.record.lottery.LotteryPageResponse;
 import com.one.record.training.LotteryActualRecord;
 import com.one.record.training.LotteryReplayMetrics;
@@ -56,4 +57,8 @@ public interface ILotteryTrainingService {
     LotteryRuleComparison comparePredictionRules(Integer limit);
 
     LotteryReplayMetrics replayMetrics(Integer window);
+
+    LotteryPageResponse<LotteryTrainingReportRecord> trainingReportsPage(Integer page, Integer pageSize);
+
+    LotteryTrainingReportRecord trainingReportDetail(String id);
 }

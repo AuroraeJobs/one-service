@@ -7,17 +7,19 @@ import {
   Progress,
   Select,
   Space,
+  Spin,
   Tag,
   message
 } from 'antd';
 import {
   CheckCircleOutlined,
   ExperimentOutlined,
+  HistoryOutlined,
   LineChartOutlined,
   ReloadOutlined,
   ThunderboltOutlined
 } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import LotteryBalls from './lottery/LotteryBalls';
 import LotteryLocalizedECharts from './LotteryLocalizedECharts';
@@ -30,6 +32,7 @@ import {
   type LotteryLatestPrediction,
   type LotteryPreference,
   type LotteryTrainingReport,
+  type LotteryTrainingReportRecord,
   type LotteryTrainingStatus
 } from '../services/api';
 import './LotteryPredictionTrainingPage.css';
@@ -92,6 +95,8 @@ const getTrainingStageLabel = (status?: LotteryTrainingStatus) => {
 
 const LotteryPredictionTrainingPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const reportId = searchParams.get('reportId');
   const { t, translateText } = useI18n();
   const { loading: recordsLoading } = useRecordContext();
   const [scale, setScale] = useState<'fast' | 'standard' | 'deep' | undefined>('standard');
@@ -104,6 +109,7 @@ const LotteryPredictionTrainingPage = () => {
   const [logs, setLogs] = useState<string[]>([]);
   const [logSequence, setLogSequence] = useState<number>(0);
   const [tick, setTick] = useState<number>(() => Date.now());
+  const [historicalReport, setHistoricalReport] = useState<LotteryTrainingReportRecord | undefined | null>(undefined);
   const logEndRef = useRef<HTMLDivElement | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
 
@@ -178,6 +184,20 @@ const LotteryPredictionTrainingPage = () => {
   useEffect(() => {
     loadPreference();
   }, [loadPreference]);
+
+  useEffect(() => {
+    if (reportId) {
+      setHistoricalReport(undefined);
+      lotteryTrainingApi.reportDetail(reportId)
+        .then(setHistoricalReport)
+        .catch(err => {
+          console.error('读取历史训练报告失败:', err);
+          setHistoricalReport(null);
+        });
+    } else {
+      setHistoricalReport(undefined);
+    }
+  }, [reportId]);
 
   useEffect(() => {
     const source = new EventSource('/api/lottery/training/status/stream', { withCredentials: true });
@@ -404,9 +424,63 @@ const LotteryPredictionTrainingPage = () => {
           <Button icon={<LineChartOutlined />} onClick={() => navigate('/lottery/prediction')}>
             {t('预测总览')}
           </Button>
+          <Button icon={<HistoryOutlined />} onClick={() => navigate('/lottery/prediction/training/history')}>
+            {t('历史记录')}
+          </Button>
         </Space>
       }
     >
+      {historicalReport !== undefined ? (
+        <Card className="life-panel-card" style={{ marginBottom: 16 }}>
+          <div className="lottery-card-title-row">
+            <HistoryOutlined />
+            <div>
+              <h2>{t('历史训练报告')}</h2>
+              <p>
+                {t('训练 #{{generation}} · {{scale}} · {{replayCount}} 期', {
+                  generation: historicalReport?.generation ?? '-',
+                  scale: historicalReport?.scale ?? '-',
+                  replayCount: historicalReport?.replayCount ?? '-'
+                })}
+              </p>
+            </div>
+          </div>
+          {historicalReport ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginTop: 12 }}>
+              <div>
+                <span style={{ fontSize: 12, color: 'var(--app-text-muted)' }}>{t('最佳规则')}</span>
+                <div style={{ fontWeight: 600 }}>{historicalReport.best?.config?.name || historicalReport.best?.config?.id || '-'}</div>
+              </div>
+              <div>
+                <span style={{ fontSize: 12, color: 'var(--app-text-muted)' }}>{t('最佳评分')}</span>
+                <div style={{ fontWeight: 600 }}>{historicalReport.best?.rankScore?.toFixed(1) ?? '-'}</div>
+              </div>
+              <div>
+                <span style={{ fontSize: 12, color: 'var(--app-text-muted)' }}>{t('候选规则')}</span>
+                <div style={{ fontWeight: 600 }}>{historicalReport.candidates?.length ?? 0} {t('组')}</div>
+              </div>
+              <div>
+                <span style={{ fontSize: 12, color: 'var(--app-text-muted)' }}>{t('平均红球')}</span>
+                <div style={{ fontWeight: 600 }}>{historicalReport.best?.summary?.averageRedHits?.toFixed(1) ?? '-'}/6</div>
+              </div>
+              <div>
+                <span style={{ fontSize: 12, color: 'var(--app-text-muted)' }}>{t('蓝球命中率')}</span>
+                <div style={{ fontWeight: 600 }}>{historicalReport.best?.summary?.blueHitRate?.toFixed(1) ?? '-'}%</div>
+              </div>
+              <div>
+                <span style={{ fontSize: 12, color: 'var(--app-text-muted)' }}>{t('训练时间')}</span>
+                <div style={{ fontWeight: 600 }}>{historicalReport.createdAt ? new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(historicalReport.createdAt)) : '-'}</div>
+              </div>
+            </div>
+          ) : (
+            <Spin style={{ display: 'block', margin: '24px auto' }} />
+          )}
+          <div style={{ marginTop: 12, textAlign: 'right' }}>
+            <Button size="small" onClick={() => navigate('/lottery/prediction/training/history')}>{t('返回历史列表')}</Button>
+            <Button size="small" style={{ marginLeft: 8 }} onClick={() => navigate('/lottery/prediction/training')}>{t('返回当前训练')}</Button>
+          </div>
+        </Card>
+      ) : null}
       <section className="lottery-training-workspace">
         <Card className="life-panel-card lottery-training-config-card">
           <div className="lottery-training-config-head">
