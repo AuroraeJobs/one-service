@@ -1097,7 +1097,7 @@ const LotteryAnalysisEnergyPage: React.FC<{ isTabVisible: boolean }> = ({ isTabV
   };
 
   return (
-    <AnalysisLayout isTabVisible={isTabVisible}>
+    <AnalysisLayout isTabVisible={isTabVisible} showHemisphereToggle>
       <div style={{ 
         padding: '16px', 
         width: '100%',

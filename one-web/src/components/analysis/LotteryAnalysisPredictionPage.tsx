@@ -48,7 +48,7 @@ const LotteryAnalysisPredictionPage: React.FC<{ isTabVisible: boolean }> = ({ is
   };
 
   return (
-    <AnalysisLayout isTabVisible={isTabVisible}>
+    <AnalysisLayout isTabVisible={isTabVisible} hideToggle>
       <div style={{ 
         padding: '48px 16px 16px',
         width: '100%',

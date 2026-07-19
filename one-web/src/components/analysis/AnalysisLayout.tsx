@@ -20,73 +20,69 @@ const NorthernSouthernToggle: React.FC = () => {
   const data = useAnalysisData();
 
   return (
-    <>
-      {data.activeTabKey === '3' && (
+    <div style={{
+      position: 'fixed',
+      left: `${data.sumButtonPosition.x}px`,
+      top: `${data.sumButtonPosition.y}px`,
+      zIndex: 1000,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'transparent',
+      borderRadius: '4px',
+      width: '80px',
+      height: '50px',
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
+      cursor: data.isSumButtonDragging ? 'grabbing' : 'grab',
+      userSelect: 'none',
+      touchAction: 'none'
+    }}
+    onMouseDown={(e) => {
+      data.setIsSumButtonDragging(true);
+      data.setSumButtonDragOffset({
+        x: e.clientX - data.sumButtonPosition.x,
+        y: e.clientY - data.sumButtonPosition.y
+      });
+    }}
+    >
+      <div style={{
+        display: 'flex', 
+        alignItems: 'center',
+        backgroundColor: data.sumMode === 'northern' ? '#1890ff' : '#2fc25b',
+        borderRadius: '15px',
+        cursor: 'pointer',
+        transition: 'background-color 0.3s',
+        width: '45px',
+        height: '24px',
+        position: 'relative',
+        overflow: 'hidden'
+      }}
+      onClick={() => {
+        const newMode = data.sumMode === 'northern' ? 'southern' : 'northern';
+        data.setSumMode(newMode);
+      }}
+      >
         <div style={{
-          position: 'fixed',
-          left: `${data.sumButtonPosition.x}px`,
-          top: `${data.sumButtonPosition.y}px`,
-          zIndex: 1000,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          backgroundColor: 'transparent',
-          borderRadius: '4px',
-          width: '80px',
-          height: '50px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
-          cursor: data.isSumButtonDragging ? 'grabbing' : 'grab',
-          userSelect: 'none',
-          touchAction: 'none'
-        }}
-        onMouseDown={(e) => {
-          data.setIsSumButtonDragging(true);
-          data.setSumButtonDragOffset({
-            x: e.clientX - data.sumButtonPosition.x,
-            y: e.clientY - data.sumButtonPosition.y
-          });
-        }}
-        >
-          <div style={{
-            display: 'flex', 
-            alignItems: 'center',
-            backgroundColor: data.sumMode === 'northern' ? '#1890ff' : '#2fc25b',
-            borderRadius: '15px',
-            cursor: 'pointer',
-            transition: 'background-color 0.3s',
-            width: '45px',
-            height: '24px',
-            position: 'relative',
-            overflow: 'hidden'
-          }}
-          onClick={() => {
-            const newMode = data.sumMode === 'northern' ? 'southern' : 'northern';
-            data.setSumMode(newMode);
-          }}
-          >
-            <div style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              position: 'absolute',
-              top: '2px',
-              left: data.sumMode === 'northern' ? '2px' : '23px',
-              width: '20px',
-              height: '20px',
-              borderRadius: '50%',
-              backgroundColor: '#fff',
-              color: data.sumMode === 'northern' ? '#1890ff' : '#2fc25b',
-              fontWeight: 'bold',
-              transition: 'left 0.3s',
-              fontSize: '12px',
-              zIndex: 1
-            }}>
-              {data.sumMode === 'northern' ? '北' : '南'}
-            </div>
-          </div>
+          position: 'absolute',
+          top: '2px',
+          left: data.sumMode === 'northern' ? '2px' : '23px',
+          width: '20px',
+          height: '20px',
+          borderRadius: '50%',
+          backgroundColor: '#fff',
+          color: data.sumMode === 'northern' ? '#1890ff' : '#2fc25b',
+          fontWeight: 'bold',
+          transition: 'left 0.3s',
+          fontSize: '12px',
+          zIndex: 1
+        }}>
+          {data.sumMode === 'northern' ? '北' : '南'}
         </div>
-      )}
-    </>
+      </div>
+    </div>
   );
 };
 
@@ -159,7 +155,7 @@ const SliderArea: React.FC = () => {
 
   return (
     <>
-      {data.allRecords.length > 0 && data.activeTabKey !== '5' && (
+      {data.allRecords.length > 0 && (
         <>
           {data.isSliderHidden ? (
             <div style={{ 
@@ -515,66 +511,62 @@ const SecondToggleButton: React.FC = () => {
   const data = useAnalysisData();
 
   return (
-    <>
-      {data.activeTabKey !== '5' && (
-        <div style={{
-        position: 'fixed',
-        left: `${data.buttonPosition.x}px`,
-        top: `${data.buttonPosition.y}px`,
-        zIndex: 1000,
+    <div style={{
+    position: 'fixed',
+    left: `${data.buttonPosition.x}px`,
+    top: `${data.buttonPosition.y}px`,
+    zIndex: 1000,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+    borderRadius: '4px',
+    width: '80px',
+    height: '50px',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
+    cursor: data.isDragging ? 'grabbing' : 'grab',
+    userSelect: 'none',
+    touchAction: 'none'
+  }}
+  onMouseDown={data.handleMouseDown}
+  >
+    <div style={{
+      display: 'flex', 
+      alignItems: 'center',
+      backgroundColor: data.statisticType === 'red' ? '#f5222d' : '#1890ff',
+      borderRadius: '15px',
+      cursor: 'pointer',
+      transition: 'background-color 0.3s',
+      width: '45px',
+      height: '24px',
+      position: 'relative',
+      overflow: 'hidden'
+    }}
+    onClick={() => {
+      data.setStatisticType(data.statisticType === 'red' ? 'blue' : 'red');
+    }}
+    >
+      <div style={{
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'transparent',
-        borderRadius: '4px',
-        width: '80px',
-        height: '50px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
-        cursor: data.isDragging ? 'grabbing' : 'grab',
-        userSelect: 'none',
-        touchAction: 'none'
-      }}
-      onMouseDown={data.handleMouseDown}
-      >
-        <div style={{
-          display: 'flex', 
-          alignItems: 'center',
-          backgroundColor: data.statisticType === 'red' ? '#f5222d' : '#1890ff',
-          borderRadius: '15px',
-          cursor: 'pointer',
-          transition: 'background-color 0.3s',
-          width: '45px',
-          height: '24px',
-          position: 'relative',
-          overflow: 'hidden'
-        }}
-        onClick={() => {
-          data.setStatisticType(data.statisticType === 'red' ? 'blue' : 'red');
-        }}
-        >
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            position: 'absolute',
-            top: '2px',
-            left: data.statisticType === 'red' ? '2px' : '23px',
-            width: '20px',
-            height: '20px',
-            borderRadius: '50%',
-            backgroundColor: '#fff',
-            color: data.statisticType === 'red' ? '#f5222d' : '#1890ff',
-            fontWeight: 'bold',
-            transition: 'left 0.3s',
-            fontSize: '12px',
-            zIndex: 1
-          }}>
-            {data.statisticType === 'red' ? <WomanOutlined /> : <ManOutlined />}
-          </div>
-        </div>
+        position: 'absolute',
+        top: '2px',
+        left: data.statisticType === 'red' ? '2px' : '23px',
+        width: '20px',
+        height: '20px',
+        borderRadius: '50%',
+        backgroundColor: '#fff',
+        color: data.statisticType === 'red' ? '#f5222d' : '#1890ff',
+        fontWeight: 'bold',
+        transition: 'left 0.3s',
+        fontSize: '12px',
+        zIndex: 1
+      }}>
+        {data.statisticType === 'red' ? <WomanOutlined /> : <ManOutlined />}
       </div>
-      )}
-    </>
+    </div>
+  </div>
   );
 };
 
@@ -994,20 +986,22 @@ const Footer: React.FC = () => {
 interface AnalysisLayoutProps {
   isTabVisible: boolean;
   children: React.ReactNode;
+  hideToggle?: boolean;
+  showHemisphereToggle?: boolean;
 }
 
-const AnalysisLayout: React.FC<AnalysisLayoutProps> = ({ isTabVisible, children }) => {
+const AnalysisLayout: React.FC<AnalysisLayoutProps> = ({ isTabVisible, children, hideToggle, showHemisphereToggle }) => {
   return (
     <>
-      <NorthernSouthernToggle />
-      <RedBlueToggle />
-      <SliderArea />
+      {showHemisphereToggle && <NorthernSouthernToggle />}
+      {!hideToggle && <RedBlueToggle />}
+      {!hideToggle && <SliderArea />}
       <div className="themed-route-page legacy-page-shell lottery-analysis-page">
         <div style={{ marginBottom: '60px', paddingTop: 0 }}>
           {children}
         </div>
       </div>
-      {isTabVisible && <SecondToggleButton />}
+      {isTabVisible && !hideToggle && <SecondToggleButton />}
       <BottomFloatingTabs isTabVisible={isTabVisible} />
       <Footer />
     </>

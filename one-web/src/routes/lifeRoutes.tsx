@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
-import Analysis from '../components/Analysis';
 import { AnalysisDataProvider } from '../components/analysis/AnalysisDataProvider';
 import LotteryAnalysisAccumulatePage from '../components/analysis/LotteryAnalysisAccumulatePage';
 import LotteryAnalysisPlanetPage from '../components/analysis/LotteryAnalysisPlanetPage';
@@ -164,8 +163,7 @@ export const createProtectedRoutes = (isTabVisible: boolean): ProtectedRouteConf
   { path: '/lottery/analysis/prediction', element: <AnalysisDataProvider><LotteryAnalysisPredictionPage isTabVisible={isTabVisible} /></AnalysisDataProvider> },
   { path: '/lottery/analysis/position', element: <AnalysisDataProvider><LotteryAnalysisPositionPage isTabVisible={isTabVisible} /></AnalysisDataProvider> },
   { path: '/lottery/analysis/collect', element: <AnalysisDataProvider><LotteryAnalysisCollectPage isTabVisible={isTabVisible} /></AnalysisDataProvider> },
-  // Legacy: keep the old component for backward compatibility (supports ?tab= query param)
-  { path: '/lottery/analysis/legacy', element: <Analysis isTabVisible={isTabVisible} /> },
+
   { path: '/lottery/pixel-universe', element: <LotteryPixelUniversePage /> },
   { path: '/lottery/pixel-card', element: <LotteryPixelCardPage /> },
   { path: '/lottery/pixel-stats', element: <LotteryPixelStatsPage /> },
