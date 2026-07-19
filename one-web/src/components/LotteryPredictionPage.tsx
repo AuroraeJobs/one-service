@@ -192,7 +192,7 @@ const LotteryPredictionPage = () => {
       title="双色球号码预测"
       actions={
         <Space wrap>
-          <Button icon={<HeartOutlined />} onClick={() => navigate('/lottery/analysis?tab=prediction')}>
+          <Button icon={<HeartOutlined />} onClick={() => navigate('/lottery/analysis/prediction')}>
             摇奖
           </Button>
           <Button icon={<ExperimentOutlined />} onClick={() => navigate('/lottery/prediction/training')}>

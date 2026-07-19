@@ -1,5 +1,14 @@
 import type { ReactNode } from 'react';
+import { Navigate } from 'react-router-dom';
 import Analysis from '../components/Analysis';
+import { AnalysisDataProvider } from '../components/analysis/AnalysisDataProvider';
+import LotteryAnalysisAccumulatePage from '../components/analysis/LotteryAnalysisAccumulatePage';
+import LotteryAnalysisPlanetPage from '../components/analysis/LotteryAnalysisPlanetPage';
+import LotteryAnalysisEnergyPage from '../components/analysis/LotteryAnalysisEnergyPage';
+import LotteryAnalysisIllusionPage from '../components/analysis/LotteryAnalysisIllusionPage';
+import LotteryAnalysisPredictionPage from '../components/analysis/LotteryAnalysisPredictionPage';
+import LotteryAnalysisPositionPage from '../components/analysis/LotteryAnalysisPositionPage';
+import LotteryAnalysisCollectPage from '../components/analysis/LotteryAnalysisCollectPage';
 import AiChatPage from '../components/AiChatPage';
 import HealthAutumnEquinoxPage from '../components/HealthAutumnEquinoxPage';
 import HealthChargeStationPage from '../components/HealthChargeStationPage';
@@ -146,7 +155,17 @@ export const createProtectedRoutes = (isTabVisible: boolean): ProtectedRouteConf
   { path: '/lottery/autumn-beginning', element: <HealthAutumnEquinoxPage /> },
   { path: '/lottery/winter-beginning', element: <HealthWinterSolsticePage /> },
   { path: '/lottery/statistics', element: <Statistics isTabVisible={isTabVisible} /> },
-  { path: '/lottery/analysis', element: <Analysis isTabVisible={isTabVisible} /> },
+  // Analysis sub-pages (individual URLs for each tab)
+  { path: '/lottery/analysis', element: <Navigate to="/lottery/analysis/illusion" replace /> },
+  { path: '/lottery/analysis/illusion', element: <AnalysisDataProvider><LotteryAnalysisIllusionPage isTabVisible={isTabVisible} /></AnalysisDataProvider> },
+  { path: '/lottery/analysis/planet', element: <AnalysisDataProvider><LotteryAnalysisPlanetPage isTabVisible={isTabVisible} /></AnalysisDataProvider> },
+  { path: '/lottery/analysis/energy', element: <AnalysisDataProvider><LotteryAnalysisEnergyPage isTabVisible={isTabVisible} /></AnalysisDataProvider> },
+  { path: '/lottery/analysis/accumulate', element: <AnalysisDataProvider><LotteryAnalysisAccumulatePage isTabVisible={isTabVisible} /></AnalysisDataProvider> },
+  { path: '/lottery/analysis/prediction', element: <AnalysisDataProvider><LotteryAnalysisPredictionPage isTabVisible={isTabVisible} /></AnalysisDataProvider> },
+  { path: '/lottery/analysis/position', element: <AnalysisDataProvider><LotteryAnalysisPositionPage isTabVisible={isTabVisible} /></AnalysisDataProvider> },
+  { path: '/lottery/analysis/collect', element: <AnalysisDataProvider><LotteryAnalysisCollectPage isTabVisible={isTabVisible} /></AnalysisDataProvider> },
+  // Legacy: keep the old component for backward compatibility (supports ?tab= query param)
+  { path: '/lottery/analysis/legacy', element: <Analysis isTabVisible={isTabVisible} /> },
   { path: '/lottery/pixel-universe', element: <LotteryPixelUniversePage /> },
   { path: '/lottery/pixel-card', element: <LotteryPixelCardPage /> },
   { path: '/lottery/pixel-stats', element: <LotteryPixelStatsPage /> },
@@ -156,7 +175,7 @@ export const createProtectedRoutes = (isTabVisible: boolean): ProtectedRouteConf
 
   // Legacy routes retained while the product moves to the life-data module map.
   { path: '/statistics', element: <Statistics isTabVisible={isTabVisible} /> },
-  { path: '/analysis', element: <Analysis isTabVisible={isTabVisible} /> },
+  { path: '/analysis', element: <Navigate to="/lottery/analysis/illusion" replace /> },
   { path: '/taiji', element: <TaijiPage /> },
   { path: '/record', element: <RecordList /> },
   { path: '/health', element: <LotteryOverviewPage /> },

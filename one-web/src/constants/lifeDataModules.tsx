@@ -424,17 +424,17 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
     {
       id: 'lottery-insights',
       moduleKey: 'lottery',
-      path: '/lottery/analysis?tab=illusion',
+      path: '/lottery/analysis/illusion',
       label: '图谱',
       icon: <ExperimentOutlined />,
       accent: '#5856d6',
       children: [
-        { id: 'lottery-analysis-illusion', moduleKey: 'lottery', path: '/lottery/analysis?tab=illusion', label: '幻境', icon: <ExperimentOutlined />, accent: '#5856d6' },
-        { id: 'lottery-analysis-planet', moduleKey: 'lottery', path: '/lottery/analysis?tab=planet', label: '星球', icon: <DotChartOutlined />, accent: '#722ed1' },
-        { id: 'lottery-analysis-energy', moduleKey: 'lottery', path: '/lottery/analysis?tab=energy', label: '能量', icon: <ThunderboltOutlined />, accent: '#ff9500' },
-        { id: 'lottery-analysis-accumulate', moduleKey: 'lottery', path: '/lottery/analysis?tab=accumulate', label: '累计', icon: <LineChartOutlined />, accent: '#34c759' },
-        { id: 'lottery-analysis-collect', moduleKey: 'lottery', path: '/lottery/analysis?tab=collect', label: '集齐', icon: <DatabaseOutlined />, accent: '#00c7be' },
-        { id: 'lottery-analysis-position', moduleKey: 'lottery', path: '/lottery/analysis?tab=position', label: '位置', icon: <BarChartOutlined />, accent: '#af52de' },
+        { id: 'lottery-analysis-illusion', moduleKey: 'lottery', path: '/lottery/analysis/illusion', label: '幻境', icon: <ExperimentOutlined />, accent: '#5856d6' },
+        { id: 'lottery-analysis-planet', moduleKey: 'lottery', path: '/lottery/analysis/planet', label: '星球', icon: <DotChartOutlined />, accent: '#722ed1' },
+        { id: 'lottery-analysis-energy', moduleKey: 'lottery', path: '/lottery/analysis/energy', label: '能量', icon: <ThunderboltOutlined />, accent: '#ff9500' },
+        { id: 'lottery-analysis-accumulate', moduleKey: 'lottery', path: '/lottery/analysis/accumulate', label: '累计', icon: <LineChartOutlined />, accent: '#34c759' },
+        { id: 'lottery-analysis-collect', moduleKey: 'lottery', path: '/lottery/analysis/collect', label: '集齐', icon: <DatabaseOutlined />, accent: '#00c7be' },
+        { id: 'lottery-analysis-position', moduleKey: 'lottery', path: '/lottery/analysis/position', label: '位置', icon: <BarChartOutlined />, accent: '#af52de' },
         { id: 'lottery-pixel-universe', moduleKey: 'lottery', path: '/lottery/pixel-universe', label: '宇宙', icon: <DotChartOutlined />, accent: '#ff3b30' },
         { id: 'lottery-pixel-card', moduleKey: 'lottery', path: '/lottery/pixel-card', label: '像素', icon: <DotChartOutlined />, accent: '#00c7be' },
         { id: 'lottery-pixel-stats', moduleKey: 'lottery', path: '/lottery/pixel-stats', label: '行列', icon: <BarChartOutlined />, accent: '#34c759' },
@@ -623,7 +623,7 @@ export const getLifeActiveSubNavPath = (pathname: string) => {
   if (canonicalPath === '/') return '/lottery';
   if (lotteryOverviewOwnedPaths.has(basePath)) return '/lottery';
   if (canonicalPath === '/lottery/statistics') return '/lottery/statistics?tab=frequency';
-  if (canonicalPath === '/lottery/analysis') return '/lottery/analysis?tab=illusion';
+  if (canonicalPath === '/lottery/analysis') return '/lottery/analysis/illusion';
   return canonicalPath;
 };
 
