@@ -371,7 +371,7 @@ const LotteryOverviewPage = () => {
           <LotteryFrequencyCharts
             redFrequency={redFrequency}
             blueFrequency={blueFrequency}
-            onOpenStatistics={() => navigate('/lottery/statistics?tab=frequency')}
+            onOpenStatistics={() => navigate('/lottery/statistics/frequency')}
           />
         </>
       )}

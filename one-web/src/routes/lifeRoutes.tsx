@@ -68,7 +68,11 @@ import LotteryPixelUniversePage from '../components/LotteryPixelUniversePage';
 import PersonalSettingsPage from '../components/PersonalSettingsPage';
 import RecordList from '../components/RecordList';
 import SpacePage from '../components/SpacePage';
-import Statistics from '../components/Statistics';
+import { StatisticsDataProvider } from '../components/statistics/StatisticsDataProvider';
+import StatisticsLayout from '../components/statistics/StatisticsLayout';
+import LotteryStatisticsFrequencyPage from '../components/statistics/LotteryStatisticsFrequencyPage';
+import LotteryStatisticsDistributionPage from '../components/statistics/LotteryStatisticsDistributionPage';
+import LotteryStatisticsGroupPage from '../components/statistics/LotteryStatisticsGroupPage';
 import TaijiPage from '../components/TaijiPage';
 import TeslaFleetManagerPage from '../components/TeslaFleetManagerPage';
 import UserManagementPage from '../components/UserManagementPage';
@@ -153,7 +157,10 @@ export const createProtectedRoutes = (isTabVisible: boolean): ProtectedRouteConf
   { path: '/lottery/dingfengbo', element: <HealthFourthPage /> },
   { path: '/lottery/autumn-beginning', element: <HealthAutumnEquinoxPage /> },
   { path: '/lottery/winter-beginning', element: <HealthWinterSolsticePage /> },
-  { path: '/lottery/statistics', element: <Statistics isTabVisible={isTabVisible} /> },
+  { path: '/lottery/statistics', element: <Navigate to="/lottery/statistics/frequency" replace /> },
+  { path: '/lottery/statistics/frequency', element: <StatisticsDataProvider><StatisticsLayout isTabVisible={isTabVisible}><LotteryStatisticsFrequencyPage /></StatisticsLayout></StatisticsDataProvider> },
+  { path: '/lottery/statistics/distribution', element: <StatisticsDataProvider><StatisticsLayout isTabVisible={isTabVisible}><LotteryStatisticsDistributionPage /></StatisticsLayout></StatisticsDataProvider> },
+  { path: '/lottery/statistics/group', element: <StatisticsDataProvider><StatisticsLayout isTabVisible={isTabVisible}><LotteryStatisticsGroupPage /></StatisticsLayout></StatisticsDataProvider> },
   // Analysis sub-pages (individual URLs for each tab)
   { path: '/lottery/analysis', element: <Navigate to="/lottery/analysis/illusion" replace /> },
   { path: '/lottery/analysis/illusion', element: <AnalysisDataProvider><LotteryAnalysisIllusionPage isTabVisible={isTabVisible} /></AnalysisDataProvider> },
@@ -172,7 +179,7 @@ export const createProtectedRoutes = (isTabVisible: boolean): ProtectedRouteConf
   { path: '/lottery/hexagram', element: <HexagramPage /> },
 
   // Legacy routes retained while the product moves to the life-data module map.
-  { path: '/statistics', element: <Statistics isTabVisible={isTabVisible} /> },
+  { path: '/statistics', element: <Navigate to="/lottery/statistics/frequency" replace /> },
   { path: '/analysis', element: <Navigate to="/lottery/analysis/illusion" replace /> },
   { path: '/taiji', element: <TaijiPage /> },
   { path: '/record', element: <RecordList /> },

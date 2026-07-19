@@ -415,9 +415,9 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
         { id: 'lottery-records', moduleKey: 'lottery', path: '/lottery/records', label: '开奖', icon: <DatabaseOutlined />, accent: '#00c7be' },
         { id: 'lottery-sync', moduleKey: 'lottery', path: '/lottery/sync', label: '同步', icon: <SyncOutlined />, accent: '#00c7be' },
         { id: 'lottery-data-quality', moduleKey: 'lottery', path: '/lottery/data-quality', label: '质检', icon: <SafetyCertificateOutlined />, accent: '#34c759' },
-        { id: 'lottery-statistics-frequency', moduleKey: 'lottery', path: '/lottery/statistics?tab=frequency', label: '频率', icon: <BarChartOutlined />, accent: '#0071e3' },
-        { id: 'lottery-statistics-group', moduleKey: 'lottery', path: '/lottery/statistics?tab=group', label: '分组', icon: <DotChartOutlined />, accent: '#34c759' },
-        { id: 'lottery-statistics-distribution', moduleKey: 'lottery', path: '/lottery/statistics?tab=distribution', label: '分布', icon: <LineChartOutlined />, accent: '#5856d6' },
+        { id: 'lottery-statistics-frequency', moduleKey: 'lottery', path: '/lottery/statistics/frequency', label: '频率', icon: <BarChartOutlined />, accent: '#0071e3' },
+        { id: 'lottery-statistics-group', moduleKey: 'lottery', path: '/lottery/statistics/group', label: '分组', icon: <DotChartOutlined />, accent: '#34c759' },
+        { id: 'lottery-statistics-distribution', moduleKey: 'lottery', path: '/lottery/statistics/distribution', label: '分布', icon: <LineChartOutlined />, accent: '#5856d6' },
         { id: 'lottery-astronauts', moduleKey: 'lottery', path: '/lottery/astronauts', label: '宇航员', icon: <UserOutlined />, accent: '#00c7be' }
       ]
     },
@@ -622,7 +622,7 @@ export const getLifeActiveSubNavPath = (pathname: string) => {
   const { basePath } = splitLifePath(canonicalPath);
   if (canonicalPath === '/') return '/lottery';
   if (lotteryOverviewOwnedPaths.has(basePath)) return '/lottery';
-  if (canonicalPath === '/lottery/statistics') return '/lottery/statistics?tab=frequency';
+  if (canonicalPath === '/lottery/statistics') return '/lottery/statistics/frequency';
   if (canonicalPath === '/lottery/analysis') return '/lottery/analysis/illusion';
   return canonicalPath;
 };
