@@ -27,13 +27,6 @@ import {
 } from '../services/api';
 import './LotteryOverviewPage.css';
 
-const formatDashboardNumber = (value?: number) => {
-  if (typeof value !== 'number' || Number.isNaN(value)) {
-    return '-';
-  }
-  return value.toLocaleString('zh-CN');
-};
-
 const clampPercent = (value?: number) => {
   if (typeof value !== 'number' || Number.isNaN(value)) {
     return 0;
@@ -130,37 +123,6 @@ const LotteryPredictionPage = () => {
     [stats.draws]
   );
 
-  const dashboardKpis = useMemo(() => [
-    {
-      key: 'target',
-      label: '当前期号',
-      value: dashboardPrediction?.targetPeriod ? String(dashboardPrediction.targetPeriod) : '-',
-      detail: stats.latestDraw ? `上期开奖 ${stats.latestDraw.period}` : '等待开奖数据',
-      tone: 'blue'
-    },
-    {
-      key: 'samples',
-      label: '训练样本',
-      value: formatDashboardNumber(stats.draws.length),
-      detail: `最近 ${stats.recentDrawCount} 期参与分析`,
-      tone: 'violet'
-    },
-    {
-      key: 'score',
-      label: '预测评分',
-      value: typeof dashboardPrediction?.score === 'number' ? dashboardPrediction.score.toFixed(1) : '-',
-      detail: trainedPrediction ? '训练后预测' : '规则预测',
-      tone: 'green'
-    },
-    {
-      key: 'health',
-      label: '数据健康',
-      value: `${Math.round((stats.redCoverage + stats.blueCoverage) / 2)}%`,
-      detail: `红球覆盖 ${stats.redCoverage}% / 蓝球 ${stats.blueCoverage}%`,
-      tone: 'amber'
-    }
-  ], [dashboardPrediction, stats.blueCoverage, stats.draws.length, stats.latestDraw, stats.recentDrawCount, stats.redCoverage, trainedPrediction]);
-
   const healthItems = useMemo(() => [
     {
       label: '数据同步',
@@ -243,19 +205,6 @@ const LotteryPredictionPage = () => {
       }
     >
       <section className="lottery-admin-dashboard">
-        <section className="lottery-admin-kpi-grid">
-          {dashboardKpis.map(item => (
-            <Card key={item.key} className={`life-panel-card lottery-admin-kpi-card lottery-admin-tone-${item.tone}`}>
-              <span className="lottery-admin-kpi-accent" />
-              <div>
-                <span>{item.label}</span>
-                <strong>{item.value}</strong>
-                <em>{item.detail}</em>
-              </div>
-            </Card>
-          ))}
-        </section>
-
         <section className="lottery-admin-main-grid">
           <Card className="life-panel-card lottery-admin-card lottery-admin-primary-card">
             <div className="lottery-admin-card-head">
