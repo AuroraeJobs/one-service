@@ -5694,7 +5694,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       </div>
       
       {/* 滑块区域 - 与Statistics组件保持一致 */}
-      {allRecords.length > 0 && (
+      {allRecords.length > 0 && activeTabKey !== '5' && (
         <>
           {/* 滑块隐藏时，在页面右侧下角显示圆形图标，位于切换按钮下方 */}
           {isSliderHidden ? (
@@ -6077,8 +6077,9 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
       {activeTabKey === '7' && renderRuler()}
       </div>
       
-      {/* 可拖拽的切换按钮 */}
-      <div style={{
+      {/* 可拖拽的切换按钮 - 摇奖页面(预测页)隐藏 */}
+      {activeTabKey !== '5' && (
+        <div style={{
         position: 'fixed',
         left: `${buttonPosition.x}px`,
         top: `${buttonPosition.y}px`,
@@ -6134,6 +6135,7 @@ const Analysis: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
           </div>
         </div>
       </div>
+      )}
       
       {/* 底部悬浮可拖动Tab */}
       {isTabVisible && (
