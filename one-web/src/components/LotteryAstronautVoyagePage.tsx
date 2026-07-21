@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Button, Card, Empty, Select, Space, Spin, Tag, message } from 'antd';
+import { Badge, Button, Calendar, Card, Empty, Select, Space, Spin, Tag, Tooltip, message, type CalendarProps } from 'antd';
 import { ArrowLeftOutlined, RocketOutlined } from '@ant-design/icons';
+import dayjs, { type Dayjs } from 'dayjs';
 import LifePageShell from './LifePageShell';
 import { useI18n } from '../contexts/I18nContext';
+import { useRecordContext } from '../contexts/RecordContext';
 import { lotteryAstronautApi } from '../services/api';
-import type { LotteryAstronaut, LotteryAstronautVoyage } from '../services/api';
+import type { LotteryAstronaut, LotteryAstronautVoyage, LotteryAstronautVoyageRecord } from '../services/api';
 
 const planetColors: Record<string, string> = {
   太阳: '#fadb14',
@@ -29,9 +31,15 @@ const topDistribution = (values: string[]) => {
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'zh-Hans-CN'));
 };
 
+interface VoyageCalendarRecord extends LotteryAstronautVoyageRecord {
+  drawDate: string;
+  dateKey: string;
+}
+
 const LotteryAstronautVoyagePage = () => {
   const navigate = useNavigate();
   const { t, translateText } = useI18n();
+  const { lotteryDraws, loading: recordsLoading } = useRecordContext();
   const params = useParams<{ camp: string; number: string }>();
   const camp = params.camp?.toUpperCase() === 'BLUE' ? 'BLUE' : 'RED';
   const number = String(params.number || '').padStart(2, '0');
@@ -65,6 +73,44 @@ const LotteryAstronautVoyagePage = () => {
   ), [astronauts, camp, number, voyage]);
 
   const voyageRecords = useMemo(() => voyage?.records || [], [voyage?.records]);
+  const voyageCalendarRecords = useMemo<VoyageCalendarRecord[]>(() => {
+    const drawDateByPeriod = new Map<number, string>();
+    lotteryDraws.forEach(draw => {
+      if (typeof draw.period === 'number' && draw.drawDate) {
+        drawDateByPeriod.set(draw.period, draw.drawDate);
+      }
+    });
+
+    return voyageRecords
+      .map(record => {
+        const drawDate = drawDateByPeriod.get(record.period);
+        if (!drawDate) {
+          return null;
+        }
+        return {
+          ...record,
+          drawDate,
+          dateKey: dayjs(drawDate).format('YYYY-MM-DD')
+        };
+      })
+      .filter((record): record is VoyageCalendarRecord => Boolean(record));
+  }, [lotteryDraws, voyageRecords]);
+  const voyageCalendarByDate = useMemo(() => {
+    const grouped = new Map<string, VoyageCalendarRecord[]>();
+    voyageCalendarRecords.forEach(record => {
+      const current = grouped.get(record.dateKey) || [];
+      current.push(record);
+      grouped.set(record.dateKey, current);
+    });
+    return grouped;
+  }, [voyageCalendarRecords]);
+  const calendarValue = useMemo(() => {
+    const latestRecord = [...voyageCalendarRecords].sort((left, right) => (
+      right.drawDate.localeCompare(left.drawDate) || right.period - left.period
+    ))[0];
+    return latestRecord ? dayjs(latestRecord.drawDate) : dayjs();
+  }, [voyageCalendarRecords]);
+  const calendarSpinning = loading || recordsLoading;
 
   const availableAstronauts = useMemo(() => (
     astronauts
@@ -84,6 +130,47 @@ const LotteryAstronautVoyagePage = () => {
   const isBlueVoyage = camp === 'BLUE';
   const localizePlanetName = (name?: string) => name ? translateText(name) : '-';
   const localizeHexagramName = (name?: string) => name ? translateText(name) : '-';
+  const renderCalendarCell: CalendarProps<Dayjs>['cellRender'] = (current, info) => {
+    if (info.type !== 'date') {
+      return info.originNode;
+    }
+
+    const dayKey = current.format('YYYY-MM-DD');
+    const dayRecords = voyageCalendarByDate.get(dayKey) || [];
+
+    if (!dayRecords.length) {
+      return info.originNode;
+    }
+
+    const previewRecord = dayRecords[0];
+    const overflowCount = Math.max(0, dayRecords.length - 1);
+    const countColor = isBlueVoyage ? '#1677ff' : '#cf1322';
+
+    return (
+      <div className="lottery-voyage-calendar-cell">
+        {info.originNode}
+        <Tooltip
+          title={(
+            <div className="lottery-voyage-calendar-tooltip">
+              {dayRecords.map(record => (
+                <div key={record.id}>
+                  <strong>{t('第 {{period}} 期', { period: record.period })}</strong>
+                  <span>{localizePlanetName(record.planetName)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        >
+          <div className="lottery-voyage-calendar-markers">
+            <Badge count={dayRecords.length} style={{ backgroundColor: countColor }} />
+            <span>{localizePlanetName(previewRecord.planetName)}</span>
+            {overflowCount > 0 ? <em>+{overflowCount}</em> : null}
+          </div>
+        </Tooltip>
+      </div>
+    );
+  };
+
   const voyageAnalysis = useMemo(() => {
     const sortedRecords = [...voyageRecords].sort((a, b) => b.period - a.period);
     const ascendingRecords = [...voyageRecords].sort((a, b) => a.period - b.period);
@@ -142,9 +229,45 @@ const LotteryAstronautVoyagePage = () => {
         </Space>
       )}
     >
-      <Spin spinning={loading}>
+      <Spin spinning={calendarSpinning}>
         {voyageRecords.length > 0 ? (
           <>
+            <section
+              className="lottery-voyage-calendar-panel"
+              aria-label={t('航行日历')}
+            >
+              <Card
+                className="life-panel-card lottery-clean-panel"
+                title={t('航行日历')}
+                extra={(
+                  <span className="lottery-voyage-calendar-hint">
+                    {t('按开奖日期展示航行记录。')}
+                  </span>
+                )}
+              >
+                <div className="lottery-voyage-calendar-summary">
+                  <div>
+                    <strong>{voyageCalendarByDate.size}</strong>
+                    <span>{t('航行日期')}</span>
+                  </div>
+                  <div>
+                    <strong>{voyageCalendarRecords.length}</strong>
+                    <span>{t('已匹配记录')}</span>
+                  </div>
+                  <div>
+                    <strong>{voyageCalendarRecords.length ? calendarValue.format('YYYY-MM-DD') : '-'}</strong>
+                    <span>{t('最近日期')}</span>
+                  </div>
+                </div>
+                <Calendar
+                  className="lottery-voyage-calendar"
+                  fullscreen={false}
+                  value={calendarValue}
+                  cellRender={renderCalendarCell}
+                />
+              </Card>
+            </section>
+
             <section
               className="lottery-voyage-summary"
               aria-label={t('航行分析摘要')}

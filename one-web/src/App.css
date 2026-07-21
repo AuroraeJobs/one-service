@@ -278,6 +278,108 @@ body {
   line-height: 1;
 }
 
+.lottery-voyage-calendar-panel {
+  margin-bottom: 18px;
+}
+
+.lottery-voyage-calendar-hint {
+  color: var(--app-text-muted);
+  font-size: 13px;
+}
+
+.lottery-voyage-calendar-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.lottery-voyage-calendar-summary div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-voyage-calendar-summary strong {
+  color: var(--app-text);
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.lottery-voyage-calendar-summary span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.lottery-voyage-calendar .ant-picker-calendar {
+  background: transparent;
+}
+
+.lottery-voyage-calendar .ant-picker-calendar-header {
+  margin-bottom: 12px;
+}
+
+.lottery-voyage-calendar .ant-picker-cell-inner {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.lottery-voyage-calendar-cell {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lottery-voyage-calendar-cell .ant-picker-calendar-date-value {
+  margin-bottom: 2px;
+}
+
+.lottery-voyage-calendar-markers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  color: var(--app-text-muted);
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.lottery-voyage-calendar-markers span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-voyage-calendar-markers em {
+  font-style: normal;
+}
+
+.lottery-voyage-calendar-tooltip {
+  display: grid;
+  gap: 6px;
+  min-width: 160px;
+}
+
+.lottery-voyage-calendar-tooltip div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lottery-voyage-calendar-tooltip strong {
+  font-size: 13px;
+}
+
+.lottery-voyage-calendar-tooltip span {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+}
+
 .lottery-voyage-hexagram-summary {
   display: flex;
   min-width: 0;
@@ -454,6 +556,10 @@ body {
 
   .lottery-voyage-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lottery-voyage-calendar-summary {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .lottery-voyage-analysis-grid {

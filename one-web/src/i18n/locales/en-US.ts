@@ -62,6 +62,11 @@ const messages: Record<string, MessageTemplate> = {
   '出行次数统计失败': 'Failed to update voyage statistics',
   '暂无宇航员名单': 'No astronauts',
   '中奖期数': 'Winning Issues',
+  '航行日历': 'Voyage Calendar',
+  '按开奖日期展示航行记录。': 'Shows voyage records by draw date.',
+  '航行日期': 'Voyage Dates',
+  '已匹配记录': 'Matched Records',
+  '最近日期': 'Latest Date',
 };
 
 export default defineLocale({
