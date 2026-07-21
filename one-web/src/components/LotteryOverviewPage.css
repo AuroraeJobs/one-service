@@ -4673,6 +4673,129 @@
   opacity: 0.52;
 }
 
+.lottery-number-selector {
+  display: grid;
+  gap: 16px;
+}
+
+.lottery-number-selector-section {
+  display: grid;
+  gap: 8px;
+}
+
+.lottery-number-selector-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+}
+
+.lottery-number-selector-section-head strong {
+  color: var(--app-text);
+  font-size: 14px;
+}
+
+.lottery-number-selector-section-head span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.lottery-number-selector-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lottery-number-selector-ball {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lottery-number-selector-ball-red {
+  background: #ff3b30;
+}
+
+.lottery-number-selector-ball-blue {
+  background: #0071e3;
+}
+
+.lottery-number-selector-ball:hover:not(:disabled) {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.lottery-number-selector-ball:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.lottery-number-selector-ball-selected {
+  border-color: #ffd666;
+  box-shadow: 0 0 0 3px rgba(255, 214, 102, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: scale(1.08);
+}
+
+.lottery-number-selector-summary {
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-number-selector-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.lottery-number-selector-summary-row:last-child {
+  margin-bottom: 0;
+}
+
+.lottery-number-selector-summary-row span:first-child {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.lottery-number-selector-summary-balls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lottery-number-selector-summary-ball {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.lottery-number-selector-summary-ball-red {
+  background: #ff3b30;
+}
+
+.lottery-number-selector-summary-ball-blue {
+  background: #0071e3;
+}
+
 .lottery-universe-page {
   --universe-bg: #080b10;
   --universe-panel: rgba(18, 24, 33, 0.92);

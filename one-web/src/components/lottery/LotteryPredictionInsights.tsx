@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Empty, Form, Input, InputNumber, Modal, Tag, message } from 'antd';
+import { Button, Empty, Form, InputNumber, Modal, Tag, message } from 'antd';
 import { EditOutlined, FieldTimeOutlined, TrophyOutlined } from '@ant-design/icons';
 import LotteryBalls from './LotteryBalls';
+import LotteryNumberSelector from './LotteryNumberSelector';
 import type { LotteryNumberProbability, LotteryPrediction, LotteryStats } from '../../utils/lotteryStats';
 import {
   lotteryTrainingApi,
@@ -524,18 +525,6 @@ const PredictionHitReviewPanel = ({
   );
 };
 
-const splitNumbers = (value?: string) =>
-  (value || '')
-    .split(/[\s,，]+/)
-    .map(item => item.trim())
-    .filter(Boolean)
-    .map(item => item.padStart(2, '0'));
-
-const isNumberInRange = (value: string, min: number, max: number) => {
-  const numberValue = Number(value);
-  return Number.isInteger(numberValue) && numberValue >= min && numberValue <= max;
-};
-
 const LatestRecordCard = ({
   record,
   onEdit
@@ -702,6 +691,8 @@ const LotteryPredictionInsights = ({
   const [form] = Form.useForm();
   const [editingActualRecord, setEditingActualRecord] = useState(false);
   const [savingActualRecord, setSavingActualRecord] = useState(false);
+  const [selectedRedNumbers, setSelectedRedNumbers] = useState<string[]>([]);
+  const [selectedBlueNumber, setSelectedBlueNumber] = useState<string>('');
   const probability = stats.probabilityAnalysis;
   const topRed = probability.red.slice(0, 6);
   const topBlue = probability.blue.slice(0, 6);
@@ -810,39 +801,48 @@ const LotteryPredictionInsights = ({
     if (!editingActualRecord) {
       return;
     }
+    const latestPeriod = stats.latestDraw?.period;
+    const nextPeriod = latestPeriod ? latestPeriod + 1 : undefined;
+    const shouldClearRecord = typeof latestPeriod === 'number' && typeof actualRecord?.period === 'number' && latestPeriod >= actualRecord.period;
     form.setFieldsValue({
-      period: actualRecord?.period || trainedPrediction?.targetPeriod,
-      redNumbers: actualRecord?.redNumbers?.join(' ') || '',
-      blueNumber: actualRecord?.blueNumber || ''
+      period: shouldClearRecord ? nextPeriod || trainedPrediction?.targetPeriod : actualRecord?.period || nextPeriod || trainedPrediction?.targetPeriod
     });
-  }, [actualRecord, editingActualRecord, form, trainedPrediction?.targetPeriod]);
+    setSelectedRedNumbers(shouldClearRecord ? [] : (actualRecord?.redNumbers || []));
+    setSelectedBlueNumber(shouldClearRecord ? '' : (actualRecord?.blueNumber || ''));
+  }, [actualRecord, editingActualRecord, form, stats.latestDraw?.period, trainedPrediction?.targetPeriod]);
+
+  const handleRedNumberClick = (number: string) => {
+    setSelectedRedNumbers(prev => {
+      if (prev.includes(number)) {
+        return prev.filter(n => n !== number).sort((a, b) => Number(a) - Number(b));
+      }
+      if (prev.length < 6) {
+        return [...prev, number].sort((a, b) => Number(a) - Number(b));
+      }
+      return prev;
+    });
+  };
+
+  const handleBlueNumberClick = (number: string) => {
+    setSelectedBlueNumber(prev => prev === number ? '' : number);
+  };
 
   const saveActualRecord = async () => {
     const values = await form.validateFields();
-    const redNumbers = splitNumbers(values.redNumbers);
-    if (redNumbers.length !== 6) {
-      message.error(t('请输入 6 个红球号码'));
+    if (selectedRedNumbers.length !== 6) {
+      message.error(t('请选择 6 个红球号码'));
       return;
     }
-    if (new Set(redNumbers).size !== 6) {
-      message.error(t('红球号码不能重复'));
-      return;
-    }
-    if (redNumbers.some(number => !isNumberInRange(number, 1, 33))) {
-      message.error(t('红球号码范围是 01-33'));
-      return;
-    }
-    const blueNumber = String(values.blueNumber).padStart(2, '0');
-    if (!isNumberInRange(blueNumber, 1, 16)) {
-      message.error(t('蓝球号码范围是 01-16'));
+    if (!selectedBlueNumber) {
+      message.error(t('请选择蓝球号码'));
       return;
     }
     setSavingActualRecord(true);
     try {
       const saved = await lotteryTrainingApi.saveLatestActualRecord({
         period: values.period || trainedPrediction?.targetPeriod || 0,
-        redNumbers,
-        blueNumber
+        redNumbers: selectedRedNumbers,
+        blueNumber: selectedBlueNumber
       });
       onActualRecordUpdated?.(saved);
       const latestPrediction = await lotteryTrainingApi.latestPrediction();
@@ -951,25 +951,18 @@ const LotteryPredictionInsights = ({
         confirmLoading={savingActualRecord}
         onOk={saveActualRecord}
         onCancel={() => setEditingActualRecord(false)}
+        width={560}
       >
         <Form form={form} layout="vertical" className="lottery-actual-modal-form">
           <Form.Item name="period" label={t('期号')}>
             <InputNumber min={1} placeholder={t('例如 2026')} />
           </Form.Item>
-          <Form.Item
-            name="redNumbers"
-            label={t('红球')}
-            rules={[{ required: true, message: t('请输入 6 个红球号码') }]}
-          >
-            <Input placeholder={t('例如 03 05 16 18 29 32')} />
-          </Form.Item>
-          <Form.Item
-            name="blueNumber"
-            label={t('蓝球')}
-            rules={[{ required: true, message: t('请输入蓝球号码') }]}
-          >
-            <Input placeholder={t('例如 04')} />
-          </Form.Item>
+          <LotteryNumberSelector
+            selectedRedNumbers={selectedRedNumbers}
+            selectedBlueNumber={selectedBlueNumber}
+            onRedNumberClick={handleRedNumberClick}
+            onBlueNumberClick={handleBlueNumberClick}
+          />
         </Form>
       </Modal>
 
