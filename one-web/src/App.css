@@ -253,6 +253,96 @@ body {
   white-space: nowrap;
 }
 
+.lottery-voyage-calendar-panel {
+  margin-bottom: 18px;
+}
+
+.lottery-voyage-calendar-hint {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.lottery-voyage-calendar-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.lottery-voyage-calendar-summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface-elevated);
+}
+
+.lottery-voyage-calendar-summary strong {
+  color: var(--app-text);
+  font-size: 18px;
+  line-height: 1.1;
+}
+
+.lottery-voyage-calendar-summary span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.lottery-voyage-calendar .ant-picker-cell-inner {
+  min-height: 70px !important;
+}
+
+.lottery-voyage-calendar .ant-picker-content th {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.lottery-voyage-calendar-markers {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border: 1px solid color-mix(in srgb, var(--module-accent, #0071e3) 24%, var(--app-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--module-accent, #0071e3) 10%, transparent);
+}
+
+.lottery-voyage-calendar-markers > span {
+  max-width: 80px;
+  overflow: hidden;
+  color: var(--app-text);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lottery-voyage-calendar-markers em {
+  color: var(--app-text-muted);
+  font-size: 11px;
+  font-style: normal;
+}
+
+.lottery-voyage-calendar-tooltip {
+  display: grid;
+  gap: 6px;
+  min-width: 180px;
+}
+
+.lottery-voyage-calendar-tooltip > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.lottery-voyage-calendar-tooltip span {
+  color: rgba(255, 255, 255, 0.78);
+}
+
 .lottery-voyage-summary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -552,6 +642,10 @@ body {
 @media (max-width: 720px) {
   .lottery-astronaut-card-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .lottery-voyage-calendar-summary {
+    grid-template-columns: 1fr;
   }
 
   .lottery-voyage-summary {

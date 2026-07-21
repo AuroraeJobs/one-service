@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Badge, Button, Calendar, Card, Empty, Select, Space, Spin, Tag, Tooltip, message, type CalendarProps } from 'antd';
+import { Badge, Button, Calendar, Card, Empty, Select, Space, Spin, Tag, Tooltip, message } from 'antd';
+import type { CalendarProps } from 'antd';
 import { ArrowLeftOutlined, RocketOutlined } from '@ant-design/icons';
 import dayjs, { type Dayjs } from 'dayjs';
 import LifePageShell from './LifePageShell';
@@ -139,7 +140,7 @@ const LotteryAstronautVoyagePage = () => {
     const dayRecords = voyageCalendarByDate.get(dayKey) || [];
 
     if (!dayRecords.length) {
-      return info.originNode;
+      return null;
     }
 
     const previewRecord = dayRecords[0];
@@ -147,30 +148,26 @@ const LotteryAstronautVoyagePage = () => {
     const countColor = isBlueVoyage ? '#1677ff' : '#cf1322';
 
     return (
-      <div className="lottery-voyage-calendar-cell">
-        {info.originNode}
-        <Tooltip
-          title={(
-            <div className="lottery-voyage-calendar-tooltip">
-              {dayRecords.map(record => (
-                <div key={record.id}>
-                  <strong>{t('第 {{period}} 期', { period: record.period })}</strong>
-                  <span>{localizePlanetName(record.planetName)}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        >
-          <div className="lottery-voyage-calendar-markers">
-            <Badge count={dayRecords.length} style={{ backgroundColor: countColor }} />
-            <span>{localizePlanetName(previewRecord.planetName)}</span>
-            {overflowCount > 0 ? <em>+{overflowCount}</em> : null}
+      <Tooltip
+        title={(
+          <div className="lottery-voyage-calendar-tooltip">
+            {dayRecords.map(record => (
+              <div key={record.id}>
+                <strong>{t('第 {{period}} 期', { period: record.period })}</strong>
+                <span>{localizePlanetName(record.planetName)}</span>
+              </div>
+            ))}
           </div>
-        </Tooltip>
-      </div>
+        )}
+      >
+        <div className="lottery-voyage-calendar-markers">
+          <Badge count={dayRecords.length} style={{ backgroundColor: countColor }} />
+          <span>{localizePlanetName(previewRecord.planetName)}</span>
+          {overflowCount > 0 ? <em>+{overflowCount}</em> : null}
+        </div>
+      </Tooltip>
     );
   };
-
   const voyageAnalysis = useMemo(() => {
     const sortedRecords = [...voyageRecords].sort((a, b) => b.period - a.period);
     const ascendingRecords = [...voyageRecords].sort((a, b) => a.period - b.period);
