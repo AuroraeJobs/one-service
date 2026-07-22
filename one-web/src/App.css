@@ -253,94 +253,136 @@ body {
   white-space: nowrap;
 }
 
-.lottery-voyage-calendar-panel {
+.lottery-voyage-heatmap-panel {
   margin-bottom: 18px;
 }
 
-.lottery-voyage-calendar-hint {
+.lottery-voyage-monthly-chart-panel {
+  margin-bottom: 18px;
+}
+
+.lottery-voyage-heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 14px;
+  justify-items: center;
+}
+
+.lottery-voyage-heatmap-month {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lottery-voyage-heatmap-label {
+  color: var(--app-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1;
+}
+
+.lottery-voyage-heatmap-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 22px);
+  gap: 3px;
+  margin-bottom: 2px;
+}
+
+.lottery-voyage-heatmap-weekdays span {
+  color: var(--app-text-muted);
+  font-size: 9px;
+  text-align: center;
+  line-height: 1;
+}
+
+.lottery-voyage-heatmap-cell-inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+}
+
+.lottery-voyage-heatmap-days {
+  display: grid;
+  grid-template-columns: repeat(7, 22px);
+  gap: 3px;
+}
+
+.lottery-voyage-heatmap-cell {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: var(--app-surface-elevated);
+  border: 1px solid var(--app-border);
+}
+
+.lottery-voyage-heatmap-cell.is-voyage {
+  background: var(--cell-color, #1677ff);
+  border-color: var(--cell-color, #1677ff);
+}
+
+.lottery-voyage-heatmap-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--app-border);
+}
+
+.lottery-voyage-heatmap-stats {
+  display: flex;
+  gap: 16px;
   color: var(--app-text-muted);
   font-size: 12px;
 }
 
-.lottery-voyage-calendar-summary {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin-bottom: 14px;
+.lottery-voyage-heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-.lottery-voyage-calendar-summary > div {
+.lottery-voyage-heatmap-legend .lottery-voyage-heatmap-cell {
+  width: 16px;
+  height: 16px;
+}
+
+.lottery-voyage-detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 200px;
+}
+
+.lottery-voyage-detail-item {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 10px 12px;
-  border: 1px solid var(--app-border);
-  border-radius: 8px;
-  background: var(--app-surface-elevated);
 }
 
-.lottery-voyage-calendar-summary strong {
-  color: var(--app-text);
-  font-size: 18px;
-  line-height: 1.1;
+.lottery-voyage-detail-item + .lottery-voyage-detail-item {
+  padding-top: 8px;
+  border-top: 1px solid var(--app-border);
 }
 
-.lottery-voyage-calendar-summary span {
-  color: var(--app-text-muted);
-  font-size: 12px;
-}
-
-.lottery-voyage-calendar .ant-picker-cell-inner {
-  min-height: 70px !important;
-}
-
-.lottery-voyage-calendar .ant-picker-content th {
-  color: var(--app-text-muted);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.lottery-voyage-calendar-markers {
-  display: inline-flex;
-  max-width: 100%;
-  align-items: center;
-  gap: 6px;
-  margin-top: 6px;
-  padding: 2px 8px;
-  border: 1px solid color-mix(in srgb, var(--module-accent, #0071e3) 24%, var(--app-border));
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--module-accent, #0071e3) 10%, transparent);
-}
-
-.lottery-voyage-calendar-markers > span {
-  max-width: 80px;
-  overflow: hidden;
-  color: var(--app-text);
-  font-size: 12px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.lottery-voyage-calendar-markers em {
-  color: var(--app-text-muted);
-  font-size: 11px;
-  font-style: normal;
-}
-
-.lottery-voyage-calendar-tooltip {
-  display: grid;
-  gap: 6px;
-  min-width: 180px;
-}
-
-.lottery-voyage-calendar-tooltip > div {
+.lottery-voyage-detail-item-header {
   display: flex;
   justify-content: space-between;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
 }
 
-.lottery-voyage-calendar-tooltip span {
-  color: rgba(255, 255, 255, 0.78);
+.lottery-voyage-detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .lottery-voyage-summary {
@@ -366,108 +408,6 @@ body {
   color: var(--app-text);
   font-size: 26px;
   line-height: 1;
-}
-
-.lottery-voyage-calendar-panel {
-  margin-bottom: 18px;
-}
-
-.lottery-voyage-calendar-hint {
-  color: var(--app-text-muted);
-  font-size: 13px;
-}
-
-.lottery-voyage-calendar-summary {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.lottery-voyage-calendar-summary div {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: var(--app-surface-elevated);
-}
-
-.lottery-voyage-calendar-summary strong {
-  color: var(--app-text);
-  font-size: 18px;
-  line-height: 1.2;
-}
-
-.lottery-voyage-calendar-summary span {
-  color: var(--app-text-muted);
-  font-size: 12px;
-}
-
-.lottery-voyage-calendar .ant-picker-calendar {
-  background: transparent;
-}
-
-.lottery-voyage-calendar .ant-picker-calendar-header {
-  margin-bottom: 12px;
-}
-
-.lottery-voyage-calendar .ant-picker-cell-inner {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-}
-
-.lottery-voyage-calendar-cell {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.lottery-voyage-calendar-cell .ant-picker-calendar-date-value {
-  margin-bottom: 2px;
-}
-
-.lottery-voyage-calendar-markers {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  color: var(--app-text-muted);
-  font-size: 11px;
-  line-height: 1.2;
-}
-
-.lottery-voyage-calendar-markers span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.lottery-voyage-calendar-markers em {
-  font-style: normal;
-}
-
-.lottery-voyage-calendar-tooltip {
-  display: grid;
-  gap: 6px;
-  min-width: 160px;
-}
-
-.lottery-voyage-calendar-tooltip div {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.lottery-voyage-calendar-tooltip strong {
-  font-size: 13px;
-}
-
-.lottery-voyage-calendar-tooltip span {
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 12px;
 }
 
 .lottery-voyage-hexagram-summary {
@@ -644,16 +584,8 @@ body {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .lottery-voyage-calendar-summary {
-    grid-template-columns: 1fr;
-  }
-
   .lottery-voyage-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .lottery-voyage-calendar-summary {
-    grid-template-columns: minmax(0, 1fr);
   }
 
   .lottery-voyage-analysis-grid {
