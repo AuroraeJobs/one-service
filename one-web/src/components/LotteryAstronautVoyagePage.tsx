@@ -446,6 +446,7 @@ const LotteryAstronautVoyagePage = () => {
                   </Space>
                 )}
               >
+                <ReactECharts option={monthlyChartOption} style={{ height: 180, width: '100%' }} notMerge lazyUpdate />
                 {filteredMonthBlocks.length > 0 ? (
                   <div className="lottery-voyage-heatmap-grid">
                     {filteredMonthBlocks.map(month => (
@@ -517,18 +518,6 @@ const LotteryAstronautVoyagePage = () => {
                     <div className="lottery-voyage-heatmap-cell is-voyage" style={{ '--cell-color': isBlueVoyage ? '#1677ff' : '#cf1322' } as React.CSSProperties} />
                   </div>
                 </div>
-              </Card>
-            </section>
-
-            <section
-              className="lottery-voyage-monthly-chart-panel"
-              aria-label={t('月度航行趋势')}
-            >
-              <Card
-                className="life-panel-card lottery-clean-panel"
-                title={t('月度航行趋势')}
-              >
-                <ReactECharts option={monthlyChartOption} style={{ height: 240, width: '100%' }} notMerge lazyUpdate />
               </Card>
             </section>
 

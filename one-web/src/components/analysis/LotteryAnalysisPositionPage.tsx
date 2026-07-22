@@ -162,10 +162,7 @@ const LotteryAnalysisPositionPage: React.FC<{ isTabVisible: boolean }> = ({ isTa
                     }
                   },
                   label: {
-                    show: true,
-                    position: 'top',
-                    color: '#fff',
-                    fontSize: 12
+                    show: false
                   }
                 }
               ]

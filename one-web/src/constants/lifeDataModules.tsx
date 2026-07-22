@@ -418,7 +418,7 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
         { id: 'lottery-statistics-frequency', moduleKey: 'lottery', path: '/lottery/statistics/frequency', label: '频率', icon: <BarChartOutlined />, accent: '#0071e3' },
         { id: 'lottery-statistics-group', moduleKey: 'lottery', path: '/lottery/statistics/group', label: '分组', icon: <DotChartOutlined />, accent: '#34c759' },
         { id: 'lottery-statistics-distribution', moduleKey: 'lottery', path: '/lottery/statistics/distribution', label: '分布', icon: <LineChartOutlined />, accent: '#5856d6' },
-        { id: 'lottery-astronauts', moduleKey: 'lottery', path: '/lottery/astronauts', label: '宇航员', icon: <UserOutlined />, accent: '#00c7be' }
+        { id: 'lottery-astronauts', moduleKey: 'lottery', path: '/lottery/astronauts', label: '航行', icon: <UserOutlined />, accent: '#00c7be' }
       ]
     },
     {
@@ -441,8 +441,8 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
         { id: 'lottery-taiji', moduleKey: 'lottery', path: '/lottery/taiji', label: '太极', icon: <DotChartOutlined />, accent: '#722ed1' },
         { id: 'lottery-hexagram', moduleKey: 'lottery', path: '/lottery/hexagram', label: '卦象', icon: <ExperimentOutlined />, accent: '#ff9500' },
         { id: 'lottery-space', moduleKey: 'lottery', path: '/lottery/space', label: '太空', icon: <ExperimentOutlined />, accent: '#5856d6' },
-        { id: 'lottery-parasite', moduleKey: 'lottery', path: '/lottery/parasite', label: '寄生草', icon: <GlobalOutlined />, accent: '#4caf50' },
-        { id: 'lottery-dingfengbo', moduleKey: 'lottery', path: '/lottery/dingfengbo', label: '定风波', icon: <CompassOutlined />, accent: '#1890ff' },
+        { id: 'lottery-parasite', moduleKey: 'lottery', path: '/lottery/parasite', label: '立春', icon: <GlobalOutlined />, accent: '#4caf50' },
+        { id: 'lottery-dingfengbo', moduleKey: 'lottery', path: '/lottery/dingfengbo', label: '立夏', icon: <CompassOutlined />, accent: '#1890ff' },
         { id: 'lottery-autumn-beginning', moduleKey: 'lottery', path: '/lottery/autumn-beginning', label: '立秋', icon: <CalendarOutlined />, accent: '#ff9500' },
         { id: 'lottery-winter-beginning', moduleKey: 'lottery', path: '/lottery/winter-beginning', label: '立冬', icon: <ClockCircleOutlined />, accent: '#0071e3' }
       ]

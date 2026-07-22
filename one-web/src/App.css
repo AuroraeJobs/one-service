@@ -147,9 +147,8 @@ body {
   min-width: 0;
   min-height: 132px;
   padding: 18px 10px 16px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.86);
+  background: var(--app-surface-elevated);
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
   cursor: pointer;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
@@ -184,12 +183,10 @@ body {
 }
 
 .lottery-astronaut-card-section-red .lottery-astronaut-card {
-  border-color: rgba(245, 34, 45, 0.2);
   background: linear-gradient(180deg, rgba(255, 241, 240, 0.92), rgba(255, 255, 255, 0.9));
 }
 
 .lottery-astronaut-card-section-blue .lottery-astronaut-card {
-  border-color: rgba(22, 119, 255, 0.22);
   background: linear-gradient(180deg, rgba(230, 244, 255, 0.92), rgba(255, 255, 255, 0.9));
 }
 
@@ -255,6 +252,10 @@ body {
 
 .lottery-voyage-heatmap-panel {
   margin-bottom: 18px;
+}
+
+.lottery-voyage-heatmap-panel .echarts-for-react {
+  margin-bottom: 36px;
 }
 
 .lottery-voyage-monthly-chart-panel {
@@ -496,10 +497,14 @@ body {
   justify-content: space-between;
   gap: 14px;
   padding: 18px;
-  border: 1px solid color-mix(in srgb, var(--voyage-planet-color) 42%, var(--app-border));
-  border-radius: 8px;
-  background: var(--app-surface);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--voyage-planet-color) 10%, transparent);
+  border-radius: 14px;
+  background: var(--app-surface-elevated);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.lottery-voyage-item:hover {
+  background: color-mix(in srgb, var(--voyage-planet-color) 6%, var(--app-surface-elevated));
 }
 
 .lottery-voyage-planet {
@@ -517,7 +522,7 @@ body {
 
 .lottery-voyage-planet strong {
   min-width: 0;
-  font-size: 30px;
+  font-size: 22px;
   line-height: 1.1;
   text-align: right;
   text-shadow: 0 0 14px color-mix(in srgb, var(--voyage-planet-color) 36%, transparent);
@@ -554,18 +559,11 @@ body {
   box-shadow: none;
 }
 
-.app-theme-dark .lottery-astronaut-card:hover,
-.app-theme-dark .lottery-astronaut-card:focus-visible {
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
-}
-
 .app-theme-dark .lottery-astronaut-card-section-red .lottery-astronaut-card {
-  border-color: rgba(255, 120, 117, 0.28);
   background: linear-gradient(180deg, rgba(74, 18, 22, 0.72), rgba(29, 29, 31, 0.92));
 }
 
 .app-theme-dark .lottery-astronaut-card-section-blue .lottery-astronaut-card {
-  border-color: rgba(105, 177, 255, 0.28);
   background: linear-gradient(180deg, rgba(15, 45, 82, 0.74), rgba(29, 29, 31, 0.92));
 }
 
@@ -597,7 +595,7 @@ body {
   }
 
   .lottery-voyage-planet strong {
-    font-size: 26px;
+    font-size: 20px;
   }
 }
 
