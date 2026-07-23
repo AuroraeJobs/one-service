@@ -55,7 +55,7 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
   const [selectedYear, setSelectedYear] = useState(dayjs().year());
 
   const availableYears = useMemo(() => {
-    const years = new Set<number>();
+    const years = new Set<number>([dayjs().year()]);
     planetCalendarData.forEach(r => years.add(dayjs(r.date).year()));
     return [...years].sort((a, b) => b - a);
   }, [planetCalendarData]);
@@ -65,27 +65,22 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
   ), [planetCalendarData, selectedYear]);
 
   const calendarMonthBlocks = useMemo(() => {
-    if (!filteredCalendarData.length) return [];
-    const sorted = [...filteredCalendarData].sort((a, b) => a.date.localeCompare(b.date));
-    const firstDate = dayjs(sorted[0].date);
-    const lastDate = dayjs(sorted[sorted.length - 1].date);
-    const months: { key: string; label: string; days: { dateKey: string; day: number; weekday: number; hasRecord: boolean; records: typeof sorted }[] }[] = [];
-    let cursor = firstDate.startOf('month');
-    while (!cursor.isAfter(lastDate, 'month')) {
+    const months: { key: string; label: string; days: { dateKey: string; day: number; weekday: number; hasRecord: boolean; records: typeof planetCalendarData }[] }[] = [];
+    for (let m = 0; m < 12; m++) {
+      const cursor = dayjs().year(selectedYear).month(m);
       const monthKey = cursor.format('YYYY-MM');
       const daysInMonth = cursor.daysInMonth();
       const days = [];
       for (let d = 1; d <= daysInMonth; d++) {
         const dt = cursor.date(d);
         const dateKey = dt.format('YYYY-MM-DD');
-        const recs = sorted.filter(r => r.dateKey === dateKey);
+        const recs = planetCalendarData.filter(r => r.dateKey === dateKey);
         days.push({ dateKey, day: d, weekday: dt.day(), hasRecord: recs.length > 0, records: recs });
       }
       months.push({ key: monthKey, label: cursor.format('MMM'), days });
-      cursor = cursor.add(1, 'month');
     }
     return months;
-  }, [filteredCalendarData]);
+  }, [selectedYear, planetCalendarData]);
 
   const yearStats = useMemo(() => {
     let recordDays = 0;
