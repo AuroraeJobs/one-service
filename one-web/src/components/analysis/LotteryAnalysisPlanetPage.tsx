@@ -120,7 +120,7 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
   const isBlueMode = data.statisticType === 'blue';
   const planetPanelStyle: React.CSSProperties = {
     borderRadius: 12,
-    border: '1px solid var(--app-border)',
+    border: 'none',
     background: 'var(--app-surface)',
     padding: '20px',
     width: '100%',

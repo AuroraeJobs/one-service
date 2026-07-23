@@ -724,7 +724,7 @@ const LotteryAnalysisEnergyPage: React.FC<{ isTabVisible: boolean }> = ({ isTabV
           transition: 'transform 0.3s ease, box-shadow 0.3s ease',
           transform: 'perspective(1000px) translateZ(0)',
           boxShadow: '0 4px 8px rgba(255, 255, 255, 0.08), 0 12px 24px rgba(255, 255, 255, 0.12), 0 16px 32px rgba(255, 255, 255, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.05)',
-          border: '1px solid rgba(255, 255, 255, 0.1)'
+          border: 'none'
         }}>
           暂无总和分析数据
         </div>

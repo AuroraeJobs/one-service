@@ -94,7 +94,7 @@ const LotteryAnalysisPredictionPage: React.FC<{ isTabVisible: boolean }> = ({ is
                 boxShadow: '0 6px 16px rgba(245, 34, 45, 0.4), 0 2px 8px rgba(245, 34, 45, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.3), inset 0 -2px 4px rgba(193, 53, 53, 0.5)',
                 animation: isShaking ? 'shake 0.5s infinite' : 'none',
                 transition: 'all 0.3s ease',
-                border: '1px solid rgba(255, 255, 255, 0.2)'
+                border: 'none'
               }}
             >
               {num}
@@ -116,10 +116,10 @@ const LotteryAnalysisPredictionPage: React.FC<{ isTabVisible: boolean }> = ({ is
               boxShadow: '0 6px 20px rgba(24, 144, 255, 0.4), 0 2px 10px rgba(24, 144, 255, 0.2), inset 0 2px 6px rgba(255, 255, 255, 0.3), inset 0 -2px 6px rgba(0, 72, 186, 0.5)',
               animation: isShaking ? 'shake 0.5s infinite' : 'none',
               transition: 'all 0.3s ease',
-              border: '1px solid rgba(255, 255, 255, 0.2)'
-            }}
-          >
-            {predictionBlueNumber}
+                border: 'none'
+              }}
+            >
+              {predictionBlueNumber}
           </div>
         </div>
 

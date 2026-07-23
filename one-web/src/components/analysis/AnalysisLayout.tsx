@@ -787,8 +787,8 @@ const Footer: React.FC = () => {
       boxSizing: 'border-box',
       borderRadius: '12px',
       boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)',
-      border: '1px solid rgba(255, 255, 255, 0.05)',
-      borderBottom: '1px solid rgba(0, 0, 0, 0.3)'
+      border: 'none',
+      borderBottom: 'none'
     }}>
       <CloudFilled 
         style={{ fontSize: '24px', color: '#fff', cursor: 'pointer', marginRight: '20px' }} 
@@ -836,14 +836,14 @@ const Footer: React.FC = () => {
               borderRadius: '8px',
               background: 'rgba(0, 0, 0, 0.88)',
               boxShadow: '0 8px 24px rgba(0, 0, 0, 0.36)',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
-              opacity: 0,
-              pointerEvents: 'none',
-              transition: 'opacity 0.2s ease',
-              zIndex: 1001
-            }}
-          >
-            {[
+               border: 'none',
+               opacity: 0,
+               pointerEvents: 'none',
+               transition: 'opacity 0.2s ease',
+               zIndex: 1001
+             }}
+           >
+             {[
               { key: 'illusion', label: '幻境', icon: HarmonyOSOutlined, onClick: () => navigate('/lottery/analysis/illusion'), active: data.activeTabKey === '4' },
               { key: 'taiji', label: '太极', icon: ExperimentOutlined, onClick: () => navigate('/lottery/taiji?view=taiji'), active: false },
               { key: 'hexagram', label: '卦象', icon: ExperimentOutlined, onClick: () => navigate('/lottery/hexagram'), active: false }
@@ -916,7 +916,7 @@ const Footer: React.FC = () => {
               borderRadius: '8px',
               background: 'rgba(0, 0, 0, 0.88)',
               boxShadow: '0 8px 24px rgba(0, 0, 0, 0.36)',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
+              border: 'none',
               opacity: 0,
               pointerEvents: 'none',
               transition: 'opacity 0.2s ease',
