@@ -769,7 +769,8 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
           boxSizing: 'border-box'
         }}>
           {planets.length > 0 && <Card
-              className="life-panel-card lottery-clean-panel lottery-planet-calendar-card"
+              className="life-panel-card lottery-planet-calendar-card"
+              style={{ border: '1px solid var(--app-border)', borderRadius: 'var(--lottery-clean-radius)', background: 'var(--app-surface)' }}
               title={(
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
                   {planets.map(name => {
