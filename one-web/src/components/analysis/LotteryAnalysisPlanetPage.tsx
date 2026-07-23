@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Button, Card, Space } from 'antd';
+import { Button, Card, Popover, Space } from 'antd';
 import { FastBackwardOutlined, FastForwardOutlined, StepBackwardOutlined, StepForwardOutlined } from '@ant-design/icons';
 import type { EChartsOption } from 'echarts';
 import ReactECharts from '../LotteryLocalizedECharts';
@@ -843,7 +843,19 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
                             } as React.CSSProperties}
                           >
                             {day.hasRecord ? (
-                              <div className="lottery-voyage-heatmap-cell-inner">{day.day}</div>
+                              <Popover
+                                placement="top"
+                                trigger="hover"
+                                content={(
+                                  <div style={{ fontSize: 12, lineHeight: 1.8 }}>
+                                    {day.records.map(r => (
+                                      <div key={r.period}>第{r.period}期</div>
+                                    ))}
+                                  </div>
+                                )}
+                              >
+                                <div className="lottery-voyage-heatmap-cell-inner">{day.day}</div>
+                              </Popover>
                             ) : null}
                           </div>
                         );
