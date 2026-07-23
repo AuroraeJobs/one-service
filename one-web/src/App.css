@@ -3467,6 +3467,9 @@ body {
   flex: 0 0 auto;
 }
 
+.lottery-planet-calendar-card.ant-card {
+  border: none !important;
+}
 .lottery-planet-calendar-card.ant-card > .ant-card-head,
 .lottery-planet-calendar-card.ant-card > .ant-card-body {
   padding-right: 32px !important;
