@@ -523,7 +523,7 @@ const SecondToggleButton: React.FC = () => {
     borderRadius: '4px',
     width: '80px',
     height: '50px',
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
     cursor: data.isDragging ? 'grabbing' : 'grab',
     userSelect: 'none',
     touchAction: 'none'
