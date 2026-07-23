@@ -477,7 +477,7 @@ const SliderArea: React.FC = () => {
                         height: '2px',
                         transform: 'translateY(-50%)',
                         zIndex: -1,
-                        background: isLight ? '#ccc' : '#333',
+                        background: data.statisticType === 'red' ? (isLight ? '#ffccc7' : '#5c1a1a') : (isLight ? '#bae7ff' : '#1a3a5c'),
                         borderRadius: '1px'
                       }} />
                       
@@ -487,6 +487,9 @@ const SliderArea: React.FC = () => {
                         max={data.allRecords.length - 1}
                         value={data.sliderRange}
                         onChange={data.handleSliderChange}
+                        trackStyle={[{ backgroundColor: data.statisticType === 'red' ? '#f5222d' : '#1890ff' }]}
+                        railStyle={{ backgroundColor: isLight ? '#ccc' : '#444' }}
+                        handleStyle={[{ borderColor: data.statisticType === 'red' ? '#f5222d' : '#1890ff' }, { borderColor: data.statisticType === 'red' ? '#f5222d' : '#1890ff' }]}
                         style={{ 
                           width: '100%',
                           margin: 0,
