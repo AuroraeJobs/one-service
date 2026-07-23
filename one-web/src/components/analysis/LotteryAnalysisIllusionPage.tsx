@@ -155,7 +155,7 @@ const LotteryAnalysisIllusionPage = ({ isTabVisible }: Props) => {
   return (
     <AnalysisLayout isTabVisible={isTabVisible}>
       <div style={{
-        padding: '16px',
+        padding: '8px 16px 16px',
         width: '100%',
         maxWidth: '100%',
         boxSizing: 'border-box'
