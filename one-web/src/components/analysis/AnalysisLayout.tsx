@@ -166,7 +166,7 @@ const SliderArea: React.FC = () => {
               height: '50px',
               borderRadius: '50%',
               backgroundColor: 'transparent',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
+              boxShadow: 'none',
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
@@ -209,7 +209,7 @@ const SliderArea: React.FC = () => {
               backgroundColor: '#1A1A1A',
               backgroundImage: 'linear-gradient(145deg, #252525, #101010)',
               borderRadius: 20,
-              boxShadow: `0 0 20px ${data.statisticType === 'red' ? '#f5222d' : '#1890ff'}60, 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px ${data.statisticType === 'red' ? '#f5222d' : '#1890ff'}20, inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)`,
+              boxShadow: 'none',
               padding: '16px',
               zIndex: 999,
               cursor: data.isSliderDragging ? 'grabbing' : 'grab',
@@ -219,8 +219,7 @@ const SliderArea: React.FC = () => {
               boxSizing: 'border-box',
               transformStyle: 'preserve-3d',
               perspective: '1000px',
-              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-              border: '1px solid rgba(255, 255, 255, 0.1)'
+              transition: 'transform 0.3s ease, box-shadow 0.3s ease'
             }}
             onMouseDown={data.handleSliderMouseDown}
             onDoubleClick={data.handleSliderDoubleClick}
