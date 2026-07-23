@@ -797,7 +797,7 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
                 </div>
               )}
               extra={availableYears.length > 0 && (
-                <Space size={4} style={{ marginRight: 8 }}>
+                <Space size={4}>
                   <Button size="small" shape="circle" icon={<FastBackwardOutlined />} onClick={() => setSelectedYear(availableYears[0])} />
                   <Button size="small" shape="circle" icon={<StepBackwardOutlined />} disabled={selectedYearIdx <= 0} onClick={() => setSelectedYear(availableYears[selectedYearIdx - 1])} />
                   <Button size="small" shape="round" type="primary">{selectedYear}</Button>
@@ -853,7 +853,7 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
                   <span>记录日期: {yearStats.recordDays}</span>
                   <span>总记录: {yearStats.total}</span>
                 </div>
-                <div className="lottery-voyage-heatmap-legend" style={{ marginRight: 4 }}>
+                <div className="lottery-voyage-heatmap-legend">
                   <div className="lottery-voyage-heatmap-cell" />
                   <div className="lottery-voyage-heatmap-cell is-voyage" style={{ '--cell-color': planetColors[effectivePlanet] || '#1677ff' } as React.CSSProperties} />
                 </div>

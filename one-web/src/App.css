@@ -3466,3 +3466,8 @@ body {
 .lottery-statistics-page .ant-card-body div[style*="justify-content: space-between"] > span:last-child {
   flex: 0 0 auto;
 }
+
+.lottery-planet-calendar-card.ant-card > .ant-card-head,
+.lottery-planet-calendar-card.ant-card > .ant-card-body {
+  padding-right: 28px;
+}
