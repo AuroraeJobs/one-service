@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Tabs, Slider } from 'antd';
+import { Tabs, Slider, theme } from 'antd';
 import {
   FastBackwardOutlined,
   FastForwardOutlined,
@@ -32,7 +32,7 @@ const NorthernSouthernToggle: React.FC = () => {
       borderRadius: '4px',
       width: '80px',
       height: '50px',
-      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
+      boxShadow: 'none',
       cursor: data.isSumButtonDragging ? 'grabbing' : 'grab',
       userSelect: 'none',
       touchAction: 'none'
@@ -102,7 +102,7 @@ const RedBlueToggle: React.FC = () => {
       borderRadius: '4px',
       width: '80px',
       height: '50px',
-      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
+      boxShadow: 'none',
       cursor: data.isDragging ? 'grabbing' : 'grab',
       userSelect: 'none',
       touchAction: 'none'
@@ -152,6 +152,15 @@ const RedBlueToggle: React.FC = () => {
 
 const SliderArea: React.FC = () => {
   const data = useAnalysisData();
+  const [isLight, setIsLight] = useState(() => document.documentElement.dataset.theme === 'light');
+
+  useEffect(() => {
+    const el = document.documentElement;
+    setIsLight(el.dataset.theme === 'light');
+    const observer = new MutationObserver(() => setIsLight(el.dataset.theme === 'light'));
+    observer.observe(el, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <>
@@ -206,8 +215,8 @@ const SliderArea: React.FC = () => {
               top: `${data.sliderPosition.y}px`,
               width: `${data.sliderSize.width}px`,
               height: `${data.sliderSize.height}px`,
-              backgroundColor: '#1A1A1A',
-              backgroundImage: 'linear-gradient(145deg, #252525, #101010)',
+              backgroundColor: isLight ? '#f2f2f2' : '#1A1A1A',
+              backgroundImage: isLight ? 'none' : 'linear-gradient(145deg, #252525, #101010)',
               borderRadius: 20,
               boxShadow: 'none',
               padding: '16px',
@@ -252,8 +261,8 @@ const SliderArea: React.FC = () => {
                         padding: 0,
                         margin: 0,
                         opacity: data.sliderRange[0] <= 0 ? 0.6 : 1,
-                        backgroundColor: data.sliderRange[0] <= 0 ? '#222222' : '#1A1A1A',
-                        backgroundImage: data.sliderRange[0] <= 0 ? 'linear-gradient(145deg, #333333, #111111)' : 'linear-gradient(145deg, #252525, #101010)',
+                        backgroundColor: data.sliderRange[0] <= 0 ? (isLight ? '#e0e0e0' : '#222222') : (isLight ? '#ffffff' : '#1A1A1A'),
+                        backgroundImage: data.sliderRange[0] <= 0 ? (isLight ? 'none' : 'linear-gradient(145deg, #333333, #111111)') : (isLight ? 'none' : 'linear-gradient(145deg, #252525, #101010)'),
                         boxShadow: 'none',
                         transformStyle: 'preserve-3d',
                         perspective: '1000px',
@@ -286,8 +295,8 @@ const SliderArea: React.FC = () => {
                             height: '36px',
                             borderRadius: '50%',
                             border: 0,
-                            backgroundColor: data.sliderRange[0] <= 0 ? '#222222' : '#1A1A1A',
-                            backgroundImage: data.sliderRange[0] <= 0 ? 'linear-gradient(145deg, #333333, #111111)' : 'linear-gradient(145deg, #252525, #101010)',
+                            backgroundColor: data.sliderRange[0] <= 0 ? (isLight ? '#e0e0e0' : '#222222') : (isLight ? '#ffffff' : '#1A1A1A'),
+                            backgroundImage: data.sliderRange[0] <= 0 ? (isLight ? 'none' : 'linear-gradient(145deg, #333333, #111111)') : (isLight ? 'none' : 'linear-gradient(145deg, #252525, #101010)'),
                             color: data.sliderRange[0] <= 0 ? '#999999' : (data.statisticType === 'red' ? '#f5222d' : '#1890ff'),
                             cursor: data.sliderRange[0] <= 0 ? 'not-allowed' : 'pointer',
                             display: 'flex',
@@ -322,8 +331,8 @@ const SliderArea: React.FC = () => {
                             height: '36px',
                             borderRadius: '50%',
                             border: 0,
-                            backgroundColor: data.sliderRange[0] >= data.sliderRange[1] ? '#222222' : '#1A1A1A',
-                            backgroundImage: data.sliderRange[0] >= data.sliderRange[1] ? 'linear-gradient(145deg, #333333, #111111)' : 'linear-gradient(145deg, #252525, #101010)',
+                            backgroundColor: data.sliderRange[0] >= data.sliderRange[1] ? (isLight ? '#e0e0e0' : '#222222') : (isLight ? '#ffffff' : '#1A1A1A'),
+                            backgroundImage: data.sliderRange[0] >= data.sliderRange[1] ? (isLight ? 'none' : 'linear-gradient(145deg, #333333, #111111)') : (isLight ? 'none' : 'linear-gradient(145deg, #252525, #101010)'),
                             color: data.sliderRange[0] >= data.sliderRange[1] ? '#999999' : (data.statisticType === 'red' ? '#f5222d' : '#1890ff'),
                             cursor: data.sliderRange[0] >= data.sliderRange[1] ? 'not-allowed' : 'pointer',
                             display: 'flex',
@@ -360,8 +369,8 @@ const SliderArea: React.FC = () => {
                             height: '36px',
                             borderRadius: '50%',
                             border: 0,
-                            backgroundColor: data.sliderRange[1] <= data.sliderRange[0] ? '#222222' : '#1A1A1A',
-                            backgroundImage: data.sliderRange[1] <= data.sliderRange[0] ? 'linear-gradient(145deg, #333333, #111111)' : 'linear-gradient(145deg, #252525, #101010)',
+                            backgroundColor: data.sliderRange[1] <= data.sliderRange[0] ? (isLight ? '#e0e0e0' : '#222222') : (isLight ? '#ffffff' : '#1A1A1A'),
+                            backgroundImage: data.sliderRange[1] <= data.sliderRange[0] ? (isLight ? 'none' : 'linear-gradient(145deg, #333333, #111111)') : (isLight ? 'none' : 'linear-gradient(145deg, #252525, #101010)'),
                             color: data.sliderRange[1] <= data.sliderRange[0] ? '#999999' : (data.statisticType === 'red' ? '#f5222d' : '#1890ff'),
                             cursor: data.sliderRange[1] <= data.sliderRange[0] ? 'not-allowed' : 'pointer',
                             display: 'flex',
@@ -396,8 +405,8 @@ const SliderArea: React.FC = () => {
                             height: '36px',
                             borderRadius: '50%',
                             border: 0,
-                            backgroundColor: data.sliderRange[1] >= data.allRecords.length - 1 ? '#222222' : '#1A1A1A',
-                            backgroundImage: data.sliderRange[1] >= data.allRecords.length - 1 ? 'linear-gradient(145deg, #333333, #111111)' : 'linear-gradient(145deg, #252525, #101010)',
+                            backgroundColor: data.sliderRange[1] >= data.allRecords.length - 1 ? (isLight ? '#e0e0e0' : '#222222') : (isLight ? '#ffffff' : '#1A1A1A'),
+                            backgroundImage: data.sliderRange[1] >= data.allRecords.length - 1 ? (isLight ? 'none' : 'linear-gradient(145deg, #333333, #111111)') : (isLight ? 'none' : 'linear-gradient(145deg, #252525, #101010)'),
                             color: data.sliderRange[1] >= data.allRecords.length - 1 ? '#999999' : (data.statisticType === 'red' ? '#f5222d' : '#1890ff'),
                             cursor: data.sliderRange[1] >= data.allRecords.length - 1 ? 'not-allowed' : 'pointer',
                             display: 'flex',
@@ -434,8 +443,8 @@ const SliderArea: React.FC = () => {
                         padding: 0,
                         margin: 0,
                         opacity: data.sliderRange[1] >= data.allRecords.length - 1 ? 0.6 : 1,
-                        backgroundColor: data.sliderRange[1] >= data.allRecords.length - 1 ? '#222222' : '#1A1A1A',
-                        backgroundImage: data.sliderRange[1] >= data.allRecords.length - 1 ? 'linear-gradient(145deg, #333333, #111111)' : 'linear-gradient(145deg, #252525, #101010)',
+                        backgroundColor: data.sliderRange[1] >= data.allRecords.length - 1 ? (isLight ? '#e0e0e0' : '#222222') : (isLight ? '#ffffff' : '#1A1A1A'),
+                        backgroundImage: data.sliderRange[1] >= data.allRecords.length - 1 ? (isLight ? 'none' : 'linear-gradient(145deg, #333333, #111111)') : (isLight ? 'none' : 'linear-gradient(145deg, #252525, #101010)'),
                         boxShadow: 'none',
                         transformStyle: 'preserve-3d',
                         perspective: '1000px',
@@ -468,7 +477,7 @@ const SliderArea: React.FC = () => {
                         height: '2px',
                         transform: 'translateY(-50%)',
                         zIndex: -1,
-                        background: '#333',
+                        background: isLight ? '#ccc' : '#333',
                         borderRadius: '1px'
                       }} />
                       
