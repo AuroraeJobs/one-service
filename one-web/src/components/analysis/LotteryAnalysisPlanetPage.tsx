@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Button, Card, Popover, Space } from 'antd';
 import { FastBackwardOutlined, FastForwardOutlined, StepBackwardOutlined, StepForwardOutlined } from '@ant-design/icons';
 import type { EChartsOption } from 'echarts';
@@ -33,23 +33,35 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
 
   const effectivePlanet = selectedPlanet && planets.includes(selectedPlanet) ? selectedPlanet : planets[0] || '';
 
+  const computePlanetFromCompact = useCallback((compactRecord: string) => {
+    const isBlue = data.statisticType === 'blue';
+    const numbers: string[] = isBlue
+      ? [compactRecord.substring(12, 14)]
+      : Array.from({ length: 6 }, (_, i) => compactRecord.substring(i * 2, i * 2 + 2));
+    let oddCount = 0, evenCount = 0;
+    numbers.forEach(n => { const v = parseInt(n); if (v % 2 === 0) evenCount++; else oddCount++; });
+    if (isBlue) {
+      return oddCount === 1 && evenCount === 0 ? '太阳' : '月亮';
+    }
+    const combo = `${oddCount}奇${evenCount}偶`;
+    return combinationToNameMap[combo] || '';
+  }, [data.statisticType, combinationToNameMap]);
+
+  const makeCompactRecord = useCallback((draw: LotteryDraw): string | null => {
+    if (draw.raw && /^\d{14}$/.test(draw.raw)) return draw.raw;
+    if (draw.redNumbers?.length === 6 && draw.blueNumber) return draw.redNumbers.join('') + draw.blueNumber;
+    return null;
+  }, []);
+
   const planetCalendarData = useMemo(() => {
     if (!effectivePlanet) return [];
-    const isBlue = data.statisticType === 'blue';
+    if (!lotteryDraws || lotteryDraws.length === 0) return [];
     const records: { period: number; date: string; dateKey: string }[] = [];
     lotteryDraws.forEach(draw => {
       if (!draw.drawDate || !draw.period) return;
-      let planet = draw.planetName;
-      if (!planet) {
-        if (isBlue) {
-          planet = parseInt(draw.blueNumber) % 2 === 1 ? '太阳' : '月亮';
-        } else {
-          const oddCount = draw.oddCount ?? draw.redNumbers?.filter(n => parseInt(n) % 2 === 1).length ?? 0;
-          const evenCount = draw.evenCount ?? draw.redNumbers?.filter(n => parseInt(n) % 2 === 0).length ?? 0;
-          const combo = `${oddCount}奇${evenCount}偶`;
-          planet = combinationToNameMap[combo];
-        }
-      }
+      const compact = makeCompactRecord(draw);
+      if (!compact) return;
+      const planet = computePlanetFromCompact(compact);
       if (planet === effectivePlanet) {
         records.push({
           period: draw.period,
@@ -59,7 +71,7 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
       }
     });
     return records.sort((a, b) => a.date.localeCompare(b.date));
-  }, [effectivePlanet, lotteryDraws, combinationToNameMap, data.statisticType]);
+  }, [effectivePlanet, lotteryDraws, makeCompactRecord, computePlanetFromCompact]);
 
   const [selectedYear, setSelectedYear] = useState(dayjs().year());
 
