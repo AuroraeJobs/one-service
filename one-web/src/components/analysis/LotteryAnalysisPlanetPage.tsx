@@ -772,7 +772,7 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
               className="life-panel-card lottery-planet-calendar-card"
               style={{ border: '1px solid var(--app-border)', borderRadius: 'var(--lottery-clean-radius)', background: 'var(--app-surface)' }}
               title={(
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   {planets.map(name => {
                     const color = planetColors[name] || '#1677ff';
                     const isActive = effectivePlanet === name;
