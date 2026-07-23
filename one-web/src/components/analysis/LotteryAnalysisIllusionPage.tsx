@@ -1,15 +1,47 @@
-import React from 'react';
+import { useMemo, useState } from 'react';
 import { Pagination } from 'antd';
 import { useAnalysisData } from './AnalysisDataProvider';
 import AnalysisLayout from './AnalysisLayout';
 import { GLOBAL_COMBINATION_COLORS, GLOBAL_CHARACTER_MAPS } from '../../constants/colors';
 import { HEXAGRAMS, YIN_YANG_LABELS } from '../../constants/hexagrams';
 
+const planetColors: Record<string, string> = {
+  地球: '#1890ff', 水星: '#52c41a', 金星: '#faad14',
+  火星: '#f5222d', 木星: '#13c2c2', 土星: '#fa8c16', 天王星: '#722ed1',
+  太阳: '#f5222d', 月亮: '#722ed1',
+};
+
 const globalCombinationColors = GLOBAL_COMBINATION_COLORS;
 
-const LotteryAnalysisIllusionPage: React.FC<{ isTabVisible: boolean }> = ({ isTabVisible }) => {
+interface Props { isTabVisible: boolean }
+const LotteryAnalysisIllusionPage = ({ isTabVisible }: Props) => {
   const data = useAnalysisData();
   const { statisticType, allRecords, sliderRange, currentPage, pageSize, setCurrentPage, setPageSize } = data;
+
+  const [filterPlanet, setFilterPlanet] = useState('');
+
+  const combinationToNameMap = useMemo(() => statisticType === 'blue'
+    ? { '1奇0偶': '太阳', '0奇1偶': '月亮' }
+    : { '0奇6偶': '地球', '1奇5偶': '水星', '2奇4偶': '金星', '3奇3偶': '火星', '4奇2偶': '木星', '5奇1偶': '土星', '6奇0偶': '天王星' },
+  [statisticType]);
+
+  const availablePlanets = useMemo(() => {
+    const planets = new Set<string>();
+    allRecords.forEach(record => {
+      if (typeof record !== 'string') return;
+      const redNumbers = [];
+      for (let i = 0; i < 12; i += 2) redNumbers.push(record.substring(i, i + 2));
+      let oddCount = 0, evenCount = 0;
+      const numbers = statisticType === 'red' ? redNumbers : [record.substring(12, 14)];
+      numbers.forEach(n => { if (parseInt(n, 10) % 2 === 0) evenCount++; else oddCount++; });
+      const combo = `${oddCount}奇${evenCount}偶`;
+      const planet = combinationToNameMap[combo];
+      if (planet) planets.add(planet);
+    });
+    return [...planets];
+  }, [allRecords, statisticType, combinationToNameMap]);
+
+  const effectiveFilter = filterPlanet && availablePlanets.includes(filterPlanet) ? filterPlanet : '';
 
   const blueBallCharacterMap = GLOBAL_CHARACTER_MAPS.blue;
   const redBallCharacterMap = GLOBAL_CHARACTER_MAPS.red;
@@ -109,7 +141,16 @@ const LotteryAnalysisIllusionPage: React.FC<{ isTabVisible: boolean }> = ({ isTa
 
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
-  const records = allProcessedRecords.slice(startIndex, endIndex);
+  const filteredProcessedRecords = useMemo(() => {
+    if (!effectiveFilter) return allProcessedRecords;
+    return allProcessedRecords.filter(r => {
+      const combo = `${r.redNumbers.reduce((odd, n) => parseInt(n, 10) % 2 === 1 ? odd + 1 : odd, 0)}奇${r.redNumbers.reduce((even, n) => parseInt(n, 10) % 2 === 0 ? even + 1 : even, 0)}偶`;
+      const planet = combinationToNameMap[combo];
+      return planet === effectiveFilter;
+    });
+  }, [allProcessedRecords, effectiveFilter, combinationToNameMap]);
+
+  const records = filteredProcessedRecords.slice(startIndex, endIndex);
 
   return (
     <AnalysisLayout isTabVisible={isTabVisible}>
@@ -119,6 +160,32 @@ const LotteryAnalysisIllusionPage: React.FC<{ isTabVisible: boolean }> = ({ isTa
         maxWidth: '100%',
         boxSizing: 'border-box'
       }}>
+        {availablePlanets.length > 0 && (
+          <div style={{
+            marginBottom: 24, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center',
+            maxWidth: 1400, marginLeft: 'auto', marginRight: 'auto', padding: '0 16px'
+          }}>
+            {availablePlanets.map(name => {
+              const color = planetColors[name] || '#1677ff';
+              const isActive = effectiveFilter === name;
+              return (
+                <button
+                  key={name}
+                  onClick={() => setFilterPlanet(isActive ? '' : name)}
+                  style={{
+                    padding: '8px 16px', borderRadius: 20,
+                    border: `1px solid ${color}`,
+                    background: isActive ? color : 'transparent',
+                    color: isActive ? '#fff' : color,
+                    cursor: 'pointer', fontSize: 14, transition: 'all 0.3s ease',
+                  }}
+                >
+                  {name}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         <div style={{
           display: 'grid',
