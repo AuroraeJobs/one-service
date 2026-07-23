@@ -155,14 +155,14 @@ const LotteryAnalysisIllusionPage = ({ isTabVisible }: Props) => {
   return (
     <AnalysisLayout isTabVisible={isTabVisible}>
       <div style={{
-        padding: '48px 16px 16px',
+        padding: '16px',
         width: '100%',
         maxWidth: '100%',
         boxSizing: 'border-box'
       }}>
         {availablePlanets.length > 0 && (
           <div style={{
-            marginBottom: 24, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center',
+            marginBottom: 24, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center',
             maxWidth: 1400, marginLeft: 'auto', marginRight: 'auto', padding: '0 16px'
           }}>
             {availablePlanets.map(name => {
