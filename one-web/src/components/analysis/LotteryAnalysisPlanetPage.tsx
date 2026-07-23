@@ -27,8 +27,9 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
 
   const planets = useMemo(() => {
     if (!data.oddEvenCombinationAccumulatedData.length) return [];
-    return Object.keys(data.oddEvenCombinationAccumulatedData[0].combinations);
-  }, [data.oddEvenCombinationAccumulatedData]);
+    const keys = Object.keys(data.oddEvenCombinationAccumulatedData[0].combinations);
+    return keys.map(k => combinationToNameMap[k] || k);
+  }, [data.oddEvenCombinationAccumulatedData, combinationToNameMap]);
 
   const effectivePlanet = selectedPlanet && planets.includes(selectedPlanet) ? selectedPlanet : planets[0] || '';
 
