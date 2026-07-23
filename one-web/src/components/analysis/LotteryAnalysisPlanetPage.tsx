@@ -1,4 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Button, Card, Space } from 'antd';
+import { FastBackwardOutlined, FastForwardOutlined, StepBackwardOutlined, StepForwardOutlined } from '@ant-design/icons';
+import type { EChartsOption } from 'echarts';
 import ReactECharts from '../LotteryLocalizedECharts';
 import { useAnalysisData } from './AnalysisDataProvider';
 import AnalysisLayout from './AnalysisLayout';
@@ -42,6 +45,103 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
     });
     return records.sort((a, b) => a.date.localeCompare(b.date));
   }, [effectivePlanet, data.oddEvenData, lotteryDraws, combinationToNameMap]);
+
+  const [selectedYear, setSelectedYear] = useState(dayjs().year());
+
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    planetCalendarData.forEach(r => years.add(dayjs(r.date).year()));
+    return [...years].sort((a, b) => b - a);
+  }, [planetCalendarData]);
+
+  const filteredCalendarData = useMemo(() => (
+    planetCalendarData.filter(r => dayjs(r.date).year() === selectedYear)
+  ), [planetCalendarData, selectedYear]);
+
+  const calendarMonthBlocks = useMemo(() => {
+    if (!filteredCalendarData.length) return [];
+    const sorted = [...filteredCalendarData].sort((a, b) => a.date.localeCompare(b.date));
+    const firstDate = dayjs(sorted[0].date);
+    const lastDate = dayjs(sorted[sorted.length - 1].date);
+    const months: { key: string; label: string; days: { dateKey: string; day: number; weekday: number; hasRecord: boolean; records: typeof sorted }[] }[] = [];
+    let cursor = firstDate.startOf('month');
+    while (!cursor.isAfter(lastDate, 'month')) {
+      const monthKey = cursor.format('YYYY-MM');
+      const daysInMonth = cursor.daysInMonth();
+      const days = [];
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dt = cursor.date(d);
+        const dateKey = dt.format('YYYY-MM-DD');
+        const recs = sorted.filter(r => r.dateKey === dateKey);
+        days.push({ dateKey, day: d, weekday: dt.day(), hasRecord: recs.length > 0, records: recs });
+      }
+      months.push({ key: monthKey, label: cursor.format('MMM'), days });
+      cursor = cursor.add(1, 'month');
+    }
+    return months;
+  }, [filteredCalendarData]);
+
+  const yearStats = useMemo(() => {
+    let recordDays = 0;
+    let total = 0;
+    calendarMonthBlocks.forEach(m => {
+      m.days.forEach(d => {
+        if (d.hasRecord) {
+          recordDays++;
+          total += d.records.length;
+        }
+      });
+    });
+    return { recordDays, total };
+  }, [calendarMonthBlocks]);
+
+  const isBlueMode = data.statisticType === 'blue';
+
+  const monthlyChartOption = useMemo<EChartsOption>(() => {
+    const monthData = Array(12).fill(0);
+    filteredCalendarData.forEach(r => {
+      const d = dayjs(r.date);
+      monthData[d.month()]++;
+    });
+    return {
+      tooltip: { trigger: 'axis' as const },
+      xAxis: {
+        type: 'category' as const,
+        data: ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
+        splitLine: { show: false },
+        axisTick: { show: false },
+      },
+      yAxis: { type: 'value' as const, minInterval: 1, splitLine: { show: false } },
+      grid: { left: 36, right: 16, top: 28, bottom: 24 },
+      series: [{
+        type: 'line' as const,
+        smooth: true,
+        data: monthData,
+        lineStyle: { width: 2, color: isBlueMode ? '#1677ff' : '#cf1322' },
+        itemStyle: { color: isBlueMode ? '#1677ff' : '#cf1322' },
+        symbol: 'circle' as const,
+        symbolSize: 5,
+        areaStyle: {
+          color: {
+            type: 'linear' as const,
+            x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [
+              { offset: 0, color: isBlueMode ? 'rgba(22,119,255,0.25)' : 'rgba(207,19,34,0.25)' },
+              { offset: 1, color: 'rgba(0,0,0,0)' },
+            ],
+          },
+        },
+      }],
+    };
+  }, [filteredCalendarData, isBlueMode]);
+
+  const selectedYearIdx = availableYears.indexOf(selectedYear);
+
+  useEffect(() => {
+    if (availableYears.length > 0 && !availableYears.includes(selectedYear)) {
+      setSelectedYear(availableYears[0]);
+    }
+  }, [availableYears, selectedYear]);
 
   const renderOddEvenChart = () => {
     if (data.oddEvenCombinationAccumulatedData.length === 0) {
@@ -708,56 +808,61 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
               })}
             </div>
           )}
-          {effectivePlanet && planetCalendarData.length > 0 && (
-            <div style={{
-              background: 'var(--app-surface-elevated)', borderRadius: 14, padding: 20,
-            }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', marginBottom: 16 }}>
-                {effectivePlanet} · 共 {planetCalendarData.length} 期
-              </div>
-              <div style={{
-                display: 'grid', gridTemplateColumns: 'repeat(7, 22px)',
-                gap: 4, justifyContent: 'center'
-              }}>
-                {['日','一','二','三','四','五','六'].map(w => (
-                  <div key={w} style={{ textAlign: 'center', fontSize: 10, color: '#666' }}>{w}</div>
+          {effectivePlanet && calendarMonthBlocks.length > 0 && (
+            <Card
+              className="life-panel-card lottery-clean-panel"
+              title={effectivePlanet}
+              extra={availableYears.length > 0 && (
+                <Space size={4}>
+                  <Button size="small" shape="circle" icon={<FastBackwardOutlined />} onClick={() => setSelectedYear(availableYears[0])} />
+                  <Button size="small" shape="circle" icon={<StepBackwardOutlined />} disabled={selectedYearIdx <= 0} onClick={() => setSelectedYear(availableYears[selectedYearIdx - 1])} />
+                  <Button size="small" shape="round" type="primary">{selectedYear}</Button>
+                  <Button size="small" shape="circle" icon={<StepForwardOutlined />} disabled={selectedYearIdx >= availableYears.length - 1} onClick={() => setSelectedYear(availableYears[selectedYearIdx + 1])} />
+                  <Button size="small" shape="circle" icon={<FastForwardOutlined />} onClick={() => setSelectedYear(availableYears[availableYears.length - 1])} />
+                </Space>
+              )}
+            >
+              <ReactECharts option={monthlyChartOption} style={{ height: 180, width: '100%' }} notMerge lazyUpdate />
+              <div className="lottery-voyage-heatmap-grid">
+                {calendarMonthBlocks.map(month => (
+                  <div key={month.key} className="lottery-voyage-heatmap-month">
+                    <div className="lottery-voyage-heatmap-label">{month.label}</div>
+                    <div className="lottery-voyage-heatmap-weekdays">
+                      <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+                    </div>
+                    <div className="lottery-voyage-heatmap-days">
+                      {month.days.map(day => {
+                        const cellColor = planetColors[effectivePlanet] || '#1677ff';
+                        return (
+                          <div
+                            key={day.dateKey}
+                            className={'lottery-voyage-heatmap-cell' + (day.hasRecord ? ' is-voyage' : '')}
+                            style={{
+                              ...(day.hasRecord ? { '--cell-color': cellColor } : {}),
+                              ...(day.day === 1 ? { gridColumn: day.weekday + 1 } : {}),
+                            } as React.CSSProperties}
+                          >
+                            {day.hasRecord ? (
+                              <div className="lottery-voyage-heatmap-cell-inner">{day.day}</div>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 ))}
-                {(() => {
-                  const cells: React.ReactNode[] = [];
-                  const sorted = [...planetCalendarData].sort((a, b) => a.date.localeCompare(b.date));
-                  const firstDate = dayjs(sorted[0].date);
-                  const lastDate = dayjs(sorted[sorted.length - 1].date);
-                  let cursor = firstDate.startOf('month');
-                  while (!cursor.isAfter(lastDate, 'month')) {
-                    const daysInMonth = cursor.daysInMonth();
-                    for (let d = 1; d <= daysInMonth; d++) {
-                      const dt = cursor.date(d);
-                      const dateKey = dt.format('YYYY-MM-DD');
-                      const hasRecord = sorted.some(r => r.dateKey === dateKey);
-                      const period = sorted.find(r => r.dateKey === dateKey)?.period;
-                      cells.push(
-                        <div
-                          key={dateKey}
-                          style={{
-                            width: 22, height: 22, borderRadius: 4, fontSize: 10,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            cursor: hasRecord ? 'pointer' : 'default',
-                            background: hasRecord ? planetColors[effectivePlanet] || '#1677ff' : 'transparent',
-                            color: hasRecord ? '#fff' : '#555',
-                            ...(d === 1 ? { gridColumn: dt.day() + 1 } : {}),
-                          }}
-                          title={hasRecord && period ? `第${period}期` : ''}
-                        >
-                          {hasRecord ? d : ''}
-                        </div>
-                      );
-                    }
-                    cursor = cursor.add(1, 'month');
-                  }
-                  return cells;
-                })()}
               </div>
-            </div>
+              <div className="lottery-voyage-heatmap-footer">
+                <div className="lottery-voyage-heatmap-stats">
+                  <span>记录日期: {yearStats.recordDays}</span>
+                  <span>总记录: {yearStats.total}</span>
+                </div>
+                <div className="lottery-voyage-heatmap-legend">
+                  <div className="lottery-voyage-heatmap-cell" />
+                  <div className="lottery-voyage-heatmap-cell is-voyage" style={{ '--cell-color': planetColors[effectivePlanet] || '#1677ff' } as React.CSSProperties} />
+                </div>
+              </div>
+            </Card>
           )}
         </div>
       </div>
