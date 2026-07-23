@@ -25,6 +25,10 @@ const LotteryAnalysisIllusionPage = ({ isTabVisible }: Props) => {
     : { '0奇6偶': '地球', '1奇5偶': '水星', '2奇4偶': '金星', '3奇3偶': '火星', '4奇2偶': '木星', '5奇1偶': '土星', '6奇0偶': '天王星' },
   [statisticType]);
 
+  const planetOrder = statisticType === 'red'
+    ? ['地球', '水星', '金星', '火星', '木星', '土星', '天王星']
+    : ['太阳', '月亮'];
+
   const availablePlanets = useMemo(() => {
     const planets = new Set<string>();
     allRecords.forEach(record => {
@@ -38,8 +42,8 @@ const LotteryAnalysisIllusionPage = ({ isTabVisible }: Props) => {
       const planet = combinationToNameMap[combo];
       if (planet) planets.add(planet);
     });
-    return [...planets];
-  }, [allRecords, statisticType, combinationToNameMap]);
+    return planetOrder.filter(name => planets.has(name));
+  }, [allRecords, statisticType, combinationToNameMap, planetOrder]);
 
   const effectiveFilter = filterPlanet && availablePlanets.includes(filterPlanet) ? filterPlanet : '';
 

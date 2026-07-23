@@ -25,11 +25,16 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
     : { '0奇6偶': '地球', '1奇5偶': '水星', '2奇4偶': '金星', '3奇3偶': '火星', '4奇2偶': '木星', '5奇1偶': '土星', '6奇0偶': '天王星' },
   [data.statisticType]);
 
+  const planetOrder = data.statisticType === 'red'
+    ? ['地球', '水星', '金星', '火星', '木星', '土星', '天王星']
+    : ['太阳', '月亮'];
+
   const planets = useMemo(() => {
     if (!data.oddEvenCombinationAccumulatedData.length) return [];
     const keys = Object.keys(data.oddEvenCombinationAccumulatedData[0].combinations);
-    return keys.map(k => combinationToNameMap[k] || k);
-  }, [data.oddEvenCombinationAccumulatedData, combinationToNameMap]);
+    const names = keys.map(k => combinationToNameMap[k] || k);
+    return planetOrder.filter(n => names.includes(n));
+  }, [data.oddEvenCombinationAccumulatedData, combinationToNameMap, planetOrder]);
 
   const effectivePlanet = selectedPlanet && planets.includes(selectedPlanet) ? selectedPlanet : planets[0] || '';
 
