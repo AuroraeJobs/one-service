@@ -119,7 +119,7 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
 
   const isBlueMode = data.statisticType === 'blue';
   const planetPanelStyle: React.CSSProperties = {
-    borderRadius: 'var(--lottery-clean-radius)',
+    borderRadius: 12,
     border: '1px solid var(--app-border)',
     background: 'var(--app-surface)',
     padding: '20px',
@@ -699,7 +699,7 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
         }}>
           {planets.length > 0 && <Card
               className="life-panel-card lottery-planet-calendar-card"
-              style={{ border: '1px solid var(--app-border)', borderRadius: 'var(--lottery-clean-radius)', background: 'var(--app-surface)' }}
+              style={{ border: '1px solid var(--app-border)', borderRadius: 12, background: 'var(--app-surface)' }}
               title={(
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   {planets.map(name => {
