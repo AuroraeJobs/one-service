@@ -118,6 +118,15 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
   }, [calendarMonthBlocks]);
 
   const isBlueMode = data.statisticType === 'blue';
+  const planetPanelStyle: React.CSSProperties = {
+    borderRadius: 'var(--lottery-clean-radius)',
+    border: '1px solid var(--app-border)',
+    background: 'var(--app-surface)',
+    padding: '20px',
+    width: '100%',
+    maxWidth: '100%',
+    boxSizing: 'border-box',
+  };
 
   const monthlyChartOption = useMemo<EChartsOption>(() => {
     const monthData = Array(12).fill(0);
@@ -162,14 +171,7 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
   const renderOddEvenChart = () => {
     if (data.oddEvenCombinationAccumulatedData.length === 0) {
       return (
-        <div style={{ 
-          padding: '40px', 
-          textAlign: 'center', 
-          color: '#999',
-          backgroundColor: 'transparent',
-          borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)' 
-        }}>
+        <div style={{ ...planetPanelStyle, padding: '40px', textAlign: 'center', color: '#999' }}>
           暂无宁荣两府数据
         </div>
       );
@@ -181,14 +183,7 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
 
     if (data.statisticType === 'blue' && isRedModeData) {
       return (
-        <div style={{ 
-          padding: '40px', 
-          textAlign: 'center', 
-          color: '#999',
-          backgroundColor: 'transparent',
-          borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)' 
-        }}>
+        <div style={{ ...planetPanelStyle, padding: '40px', textAlign: 'center', color: '#999' }}>
           暂无宁荣两府数据
         </div>
       );
@@ -196,14 +191,7 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
 
     if (data.statisticType === 'red' && isBlueModeData) {
       return (
-        <div style={{ 
-          padding: '40px', 
-          textAlign: 'center', 
-          color: '#999',
-          backgroundColor: 'transparent',
-          borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)' 
-        }}>
+        <div style={{ ...planetPanelStyle, padding: '40px', textAlign: 'center', color: '#999' }}>
           暂无宁荣两府数据
         </div>
       );
@@ -392,30 +380,7 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
     };
 
     return (
-      <div 
-        style={{ 
-          backgroundColor: 'transparent',
-          borderRadius: '16px',
-          transformStyle: 'preserve-3d',
-          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-          transform: 'perspective(1000px) translateZ(0)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
-          padding: '20px',
-          width: '100%',
-          maxWidth: '100%',
-          boxSizing: 'border-box',
-          backdropFilter: 'blur(5px)',
-          cursor: 'pointer'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'perspective(1000px) translateZ(10px)';
-          e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.6), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'perspective(1000px) translateZ(0)';
-          e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
-        }}
-      >
+      <div style={planetPanelStyle}>
         <div 
           style={{ 
             height: '500px',
@@ -433,18 +398,7 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
   const renderOddEvenPieChart = () => {
     if (data.oddEvenCombinationData.length === 0) {
       return (
-        <div style={{ 
-          padding: '40px', 
-          textAlign: 'center', 
-          color: '#999',
-          backgroundColor: 'transparent',
-          borderRadius: '12px',
-          transformStyle: 'preserve-3d',
-          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-          transform: 'perspective(1000px) translateZ(0)',
-          boxShadow: '0 4px 8px rgba(255, 255, 255, 0.08), 0 12px 24px rgba(255, 255, 255, 0.12), 0 16px 32px rgba(255, 255, 255, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.05)',
-          border: '1px solid rgba(255, 255, 255, 0.1)'
-        }}>
+        <div style={{ ...planetPanelStyle, padding: '40px', textAlign: 'center', color: '#999' }}>
           暂无奇偶组合统计数据
         </div>
       );
@@ -551,30 +505,7 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
     };
 
     return (
-      <div 
-        style={{
-          backgroundColor: 'transparent',
-          borderRadius: '16px',
-          transformStyle: 'preserve-3d',
-          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-          transform: 'perspective(1000px) translateZ(0)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
-          padding: '20px',
-          width: '100%',
-          maxWidth: '100%',
-          boxSizing: 'border-box',
-          backdropFilter: 'blur(5px)',
-          cursor: 'pointer'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'perspective(1000px) translateZ(10px)';
-          e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.6), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'perspective(1000px) translateZ(0)';
-          e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
-        }}
-      >
+      <div style={planetPanelStyle}>
         <div 
           style={{ 
             height: '500px',
@@ -689,30 +620,7 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
     };
 
     return (
-      <div 
-        style={{
-          backgroundColor: 'transparent',
-          borderRadius: '16px',
-          transformStyle: 'preserve-3d',
-          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-          transform: 'perspective(1000px) translateZ(0)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)',
-          padding: '20px',
-          width: '100%',
-          maxWidth: '100%',
-          boxSizing: 'border-box',
-          backdropFilter: 'blur(5px)',
-          cursor: 'pointer'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'perspective(1000px) translateZ(10px)';
-          e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.6), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 16px rgba(0, 0, 0, 0.1), 0 24px 48px rgba(0, 0, 0, 0.15), 0 32px 64px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'perspective(1000px) translateZ(0)';
-          e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 60px rgba(100, 100, 255, 0.4), inset 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 8px rgba(0, 0, 0, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12), 0 16px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)';
-        }}
-      >
+      <div style={planetPanelStyle}>
         <div 
           style={{ 
             height: '500px',
