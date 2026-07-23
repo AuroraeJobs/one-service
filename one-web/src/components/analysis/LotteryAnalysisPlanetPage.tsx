@@ -728,11 +728,11 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
               )}
               extra={availableYears.length > 0 && (
                 <Space size={4}>
-                  <Button size="small" shape="circle" icon={<FastBackwardOutlined />} onClick={() => setSelectedYear(availableYears[0])} />
-                  <Button size="small" shape="circle" icon={<StepBackwardOutlined />} disabled={selectedYearIdx <= 0} onClick={() => setSelectedYear(availableYears[selectedYearIdx - 1])} />
-                  <Button size="small" shape="round" type="primary">{selectedYear}</Button>
-                  <Button size="small" shape="circle" icon={<StepForwardOutlined />} disabled={selectedYearIdx >= availableYears.length - 1} onClick={() => setSelectedYear(availableYears[selectedYearIdx + 1])} />
-                  <Button size="small" shape="circle" icon={<FastForwardOutlined />} onClick={() => setSelectedYear(availableYears[availableYears.length - 1])} />
+                  <Button size="small" shape="circle" style={{ border: 'none' }} icon={<FastBackwardOutlined />} onClick={() => setSelectedYear(availableYears[0])} />
+                  <Button size="small" shape="circle" style={{ border: 'none' }} icon={<StepBackwardOutlined />} disabled={selectedYearIdx <= 0} onClick={() => setSelectedYear(availableYears[selectedYearIdx - 1])} />
+                  <Button size="small" shape="round" type="primary" style={{ border: 'none' }}>{selectedYear}</Button>
+                  <Button size="small" shape="circle" style={{ border: 'none' }} icon={<StepForwardOutlined />} disabled={selectedYearIdx >= availableYears.length - 1} onClick={() => setSelectedYear(availableYears[selectedYearIdx + 1])} />
+                  <Button size="small" shape="circle" style={{ border: 'none' }} icon={<FastForwardOutlined />} onClick={() => setSelectedYear(availableYears[availableYears.length - 1])} />
                 </Space>
               )}
             >
