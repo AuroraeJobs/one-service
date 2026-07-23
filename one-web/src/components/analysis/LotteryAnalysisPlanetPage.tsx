@@ -35,13 +35,21 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
 
   const planetCalendarData = useMemo(() => {
     if (!effectivePlanet) return [];
+    const isBlue = data.statisticType === 'blue';
     const records: { period: number; date: string; dateKey: string }[] = [];
     lotteryDraws.forEach(draw => {
       if (!draw.drawDate || !draw.period) return;
-      const oddCount = draw.oddCount ?? 0;
-      const evenCount = draw.evenCount ?? 0;
-      const combo = `${oddCount}奇${evenCount}偶`;
-      const planet = draw.planetName || combinationToNameMap[combo];
+      let planet = draw.planetName;
+      if (!planet) {
+        if (isBlue) {
+          planet = parseInt(draw.blueNumber) % 2 === 1 ? '太阳' : '月亮';
+        } else {
+          const oddCount = draw.oddCount ?? draw.redNumbers?.filter(n => parseInt(n) % 2 === 1).length ?? 0;
+          const evenCount = draw.evenCount ?? draw.redNumbers?.filter(n => parseInt(n) % 2 === 0).length ?? 0;
+          const combo = `${oddCount}奇${evenCount}偶`;
+          planet = combinationToNameMap[combo];
+        }
+      }
       if (planet === effectivePlanet) {
         records.push({
           period: draw.period,
@@ -51,7 +59,7 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
       }
     });
     return records.sort((a, b) => a.date.localeCompare(b.date));
-  }, [effectivePlanet, lotteryDraws, combinationToNameMap]);
+  }, [effectivePlanet, lotteryDraws, combinationToNameMap, data.statisticType]);
 
   const [selectedYear, setSelectedYear] = useState(dayjs().year());
 
