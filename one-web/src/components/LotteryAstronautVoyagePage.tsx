@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button, Card, Empty, Popover, Select, Space, Spin, Tag, message } from 'antd';
-import { ArrowLeftOutlined, RocketOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, FastBackwardOutlined, FastForwardOutlined, RocketOutlined, StepBackwardOutlined, StepForwardOutlined } from '@ant-design/icons';
 import type { EChartsOption } from 'echarts';
 import dayjs from 'dayjs';
 import ReactECharts from './LotteryLocalizedECharts';
@@ -149,6 +149,8 @@ const LotteryAstronautVoyagePage = () => {
       setSelectedYear(availableYears[0]);
     }
   }, [availableYears, selectedYear]);
+
+  const selectedYearIdx = availableYears.indexOf(selectedYear);
 
   const filteredMonthBlocks = useMemo(() => (
     voyageMonthBlocks.filter(m => dayjs(m.key + '-01').year() === selectedYear)
@@ -435,14 +437,11 @@ const LotteryAstronautVoyagePage = () => {
                 title={t('航行热力图')}
                 extra={availableYears.length > 0 && (
                   <Space size={4}>
-                    {availableYears.map(year => (
-                      <Button
-                        key={year}
-                        size="small"
-                        type={year === selectedYear ? 'primary' : 'default'}
-                        onClick={() => setSelectedYear(year)}
-                      >{year}</Button>
-                    ))}
+                    <Button size="small" shape="circle" icon={<FastBackwardOutlined />} onClick={() => setSelectedYear(availableYears[0])} />
+                    <Button size="small" shape="circle" icon={<StepBackwardOutlined />} disabled={selectedYearIdx <= 0} onClick={() => setSelectedYear(availableYears[selectedYearIdx - 1])} />
+                    <Button size="small" shape="round" type="primary">{selectedYear}</Button>
+                    <Button size="small" shape="circle" icon={<StepForwardOutlined />} disabled={selectedYearIdx >= availableYears.length - 1} onClick={() => setSelectedYear(availableYears[selectedYearIdx + 1])} />
+                    <Button size="small" shape="circle" icon={<FastForwardOutlined />} onClick={() => setSelectedYear(availableYears[availableYears.length - 1])} />
                   </Space>
                 )}
               >
@@ -462,7 +461,10 @@ const LotteryAstronautVoyagePage = () => {
                               <div
                                 key={day.dateKey}
                                 className={'lottery-voyage-heatmap-cell' + (day.hasVoyage ? ' is-voyage' : '')}
-                                style={day.hasVoyage ? { '--cell-color': isBlueVoyage ? '#1677ff' : '#cf1322' } as React.CSSProperties : undefined}
+                                style={{
+                                  ...(day.hasVoyage ? { '--cell-color': isBlueVoyage ? '#1677ff' : '#cf1322' } : {}),
+                                  ...(day.day === 1 ? { gridColumn: day.weekday + 1 } : {}),
+                                } as React.CSSProperties}
                               >
                                 {recs ? (
                                   <Popover
