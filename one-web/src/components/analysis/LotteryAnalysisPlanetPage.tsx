@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button, Card, Space } from 'antd';
 import { FastBackwardOutlined, FastForwardOutlined, StepBackwardOutlined, StepForwardOutlined } from '@ant-design/icons';
 import type { EChartsOption } from 'echarts';
@@ -136,12 +136,6 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
   }, [filteredCalendarData, isBlueMode]);
 
   const selectedYearIdx = availableYears.indexOf(selectedYear);
-
-  useEffect(() => {
-    if (availableYears.length > 0) {
-      setSelectedYear(availableYears[0]);
-    }
-  }, [effectivePlanet, availableYears]);
 
   const renderOddEvenChart = () => {
     if (data.oddEvenCombinationAccumulatedData.length === 0) {
