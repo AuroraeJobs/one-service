@@ -768,45 +768,34 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
           width: '100%',
           boxSizing: 'border-box'
         }}>
-          {planets.length > 0 && (
-            <div style={{
-              marginBottom: '16px',
-              display: 'flex',
-              gap: '8px',
-              flexWrap: 'wrap',
-              alignItems: 'center'
-            }}>
-              <span style={{ color: '#999', fontSize: 13 }}>星球记录日历</span>
-              {planets.map(name => {
-                const color = planetColors[name] || '#1677ff';
-                const isActive = effectivePlanet === name;
-                return (
-                  <button
-                    key={name}
-                    onClick={() => setSelectedPlanet(name)}
-                    style={{
-                      padding: '8px 16px',
-                      borderRadius: 20,
-                      border: `1px solid ${color}`,
-                      background: isActive ? color : 'transparent',
-                      color: isActive ? '#fff' : color,
-                      cursor: 'pointer',
-                      fontSize: 14,
-                      transition: 'all 0.3s ease',
-                      boxShadow: isActive ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
-                      opacity: 1,
-                    }}
-                  >
-                    {name}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-          {effectivePlanet && calendarMonthBlocks.length > 0 && (
-            <Card
+          {planets.length > 0 && <Card
               className="life-panel-card lottery-clean-panel"
-              title={effectivePlanet}
+              title={(
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+                  {planets.map(name => {
+                    const color = planetColors[name] || '#1677ff';
+                    const isActive = effectivePlanet === name;
+                    return (
+                      <button
+                        key={name}
+                        onClick={() => setSelectedPlanet(name)}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: 20,
+                          border: `1px solid ${color}`,
+                          background: isActive ? color : 'transparent',
+                          color: isActive ? '#fff' : color,
+                          cursor: 'pointer',
+                          fontSize: 14,
+                          transition: 'all 0.3s ease',
+                        }}
+                      >
+                        {name}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
               extra={availableYears.length > 0 && (
                 <Space size={4}>
                   <Button size="small" shape="circle" icon={<FastBackwardOutlined />} onClick={() => setSelectedYear(availableYears[0])} />
@@ -870,7 +859,7 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
                 </div>
               </div>
             </Card>
-          )}
+          }
         </div>
       </div>
     </AnalysisLayout>
