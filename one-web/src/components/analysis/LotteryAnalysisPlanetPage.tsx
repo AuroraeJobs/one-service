@@ -138,10 +138,10 @@ const LotteryAnalysisPlanetPage = ({ isTabVisible }: Props) => {
   const selectedYearIdx = availableYears.indexOf(selectedYear);
 
   useEffect(() => {
-    if (availableYears.length > 0 && !availableYears.includes(selectedYear)) {
+    if (availableYears.length > 0) {
       setSelectedYear(availableYears[0]);
     }
-  }, [availableYears, selectedYear]);
+  }, [effectivePlanet, availableYears]);
 
   const renderOddEvenChart = () => {
     if (data.oddEvenCombinationAccumulatedData.length === 0) {
