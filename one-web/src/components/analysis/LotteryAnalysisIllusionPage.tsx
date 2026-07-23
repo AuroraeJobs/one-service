@@ -171,7 +171,7 @@ const LotteryAnalysisIllusionPage = ({ isTabVisible }: Props) => {
               return (
                 <button
                   key={name}
-                  onClick={() => setFilterPlanet(isActive ? '' : name)}
+                  onClick={() => { setFilterPlanet(isActive ? '' : name); setCurrentPage(1); }}
                   style={{
                     padding: '8px 16px', borderRadius: 20,
                     border: `1px solid ${color}`,
@@ -399,7 +399,7 @@ const LotteryAnalysisIllusionPage = ({ isTabVisible }: Props) => {
           <Pagination
             current={currentPage}
             pageSize={pageSize}
-            total={allProcessedRecords.length}
+            total={filteredProcessedRecords.length}
             onChange={(page, size) => {
               setCurrentPage(page);
               setPageSize(size);
