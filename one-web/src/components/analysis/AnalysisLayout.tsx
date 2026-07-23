@@ -255,9 +255,7 @@ const SliderArea: React.FC = () => {
                         opacity: data.sliderRange[0] <= 0 ? 0.6 : 1,
                         backgroundColor: data.sliderRange[0] <= 0 ? '#222222' : '#1A1A1A',
                         backgroundImage: data.sliderRange[0] <= 0 ? 'linear-gradient(145deg, #333333, #111111)' : 'linear-gradient(145deg, #252525, #101010)',
-                        boxShadow: data.sliderRange[0] <= 0 ? 
-                          `0 0 8px rgba(102, 102, 102, 0.3), 0 3px 8px rgba(0, 0, 0, 0.3), inset 0 0 3px rgba(102, 102, 102, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.05), inset 0 -2px 4px rgba(0, 0, 0, 0.3)` : 
-                          `0 0 20px ${data.statisticType === 'red' ? '#f5222d' : '#1890ff'}60, 0 6px 20px rgba(0, 0, 0, 0.5), inset 0 0 8px ${data.statisticType === 'red' ? '#f5222d' : '#1890ff'}20, inset 0 4px 8px rgba(255, 255, 255, 0.15), inset 0 -4px 8px rgba(0, 0, 0, 0.4)`,
+                        boxShadow: 'none',
                         transformStyle: 'preserve-3d',
                         perspective: '1000px',
                         transform: data.sliderRange[0] <= 0 ? 'translateZ(0) scale(0.95)' : 'translateZ(0) scale(1)'
@@ -301,9 +299,7 @@ const SliderArea: React.FC = () => {
                             margin: 0,
                             opacity: data.sliderRange[0] <= 0 ? 0.6 : 1,
                             transition: 'all 0.3s ease',
-                            boxShadow: data.sliderRange[0] <= 0 ? 
-                              `0 0 6px rgba(102, 102, 102, 0.3), 0 2px 6px rgba(0, 0, 0, 0.3), inset 0 0 2px rgba(102, 102, 102, 0.2), inset 0 1px 3px rgba(255, 255, 255, 0.05), inset 0 -1px 3px rgba(0, 0, 0, 0.3)` : 
-                              `0 0 15px ${data.statisticType === 'red' ? '#f5222d' : '#1890ff'}60, 0 4px 15px rgba(0, 0, 0, 0.5), inset 0 0 5px ${data.statisticType === 'red' ? '#f5222d' : '#1890ff'}20, inset 0 2px 5px rgba(255, 255, 255, 0.15), inset 0 -2px 5px rgba(0, 0, 0, 0.4)`,
+                            boxShadow: 'none',
                             transformStyle: 'preserve-3d',
                             perspective: '1000px',
                             transform: data.sliderRange[0] <= 0 ? 'translateZ(0) scale(0.9)' : 'translateZ(0) scale(1)'
@@ -339,9 +335,7 @@ const SliderArea: React.FC = () => {
                             margin: 0,
                             opacity: data.sliderRange[0] >= data.sliderRange[1] ? 0.6 : 1,
                             transition: 'all 0.3s ease',
-                            boxShadow: data.sliderRange[0] >= data.sliderRange[1] ? 
-                              `0 0 6px rgba(102, 102, 102, 0.3), 0 2px 6px rgba(0, 0, 0, 0.3), inset 0 0 2px rgba(102, 102, 102, 0.2), inset 0 1px 3px rgba(255, 255, 255, 0.05), inset 0 -1px 3px rgba(0, 0, 0, 0.3)` : 
-                              `0 0 15px ${data.statisticType === 'red' ? '#f5222d' : '#1890ff'}60, 0 4px 15px rgba(0, 0, 0, 0.5), inset 0 0 5px ${data.statisticType === 'red' ? '#f5222d' : '#1890ff'}20, inset 0 2px 5px rgba(255, 255, 255, 0.15), inset 0 -2px 5px rgba(0, 0, 0, 0.4)`,
+                            boxShadow: 'none',
                             transformStyle: 'preserve-3d',
                             perspective: '1000px',
                             transform: data.sliderRange[0] >= data.sliderRange[1] ? 'translateZ(0) scale(0.9)' : 'translateZ(0) scale(1)'
@@ -379,9 +373,7 @@ const SliderArea: React.FC = () => {
                             margin: 0,
                             opacity: data.sliderRange[1] <= data.sliderRange[0] ? 0.6 : 1,
                             transition: 'all 0.3s ease',
-                            boxShadow: data.sliderRange[1] <= data.sliderRange[0] ? 
-                              `0 0 6px rgba(102, 102, 102, 0.3), 0 2px 6px rgba(0, 0, 0, 0.3), inset 0 0 2px rgba(102, 102, 102, 0.2), inset 0 1px 3px rgba(255, 255, 255, 0.05), inset 0 -1px 3px rgba(0, 0, 0, 0.3)` : 
-                              `0 0 15px ${data.statisticType === 'red' ? '#f5222d' : '#1890ff'}60, 0 4px 15px rgba(0, 0, 0, 0.5), inset 0 0 5px ${data.statisticType === 'red' ? '#f5222d' : '#1890ff'}20, inset 0 2px 5px rgba(255, 255, 255, 0.15), inset 0 -2px 5px rgba(0, 0, 0, 0.4)`,
+                            boxShadow: 'none',
                             transformStyle: 'preserve-3d',
                             perspective: '1000px',
                             transform: data.sliderRange[1] <= data.sliderRange[0] ? 'translateZ(0) scale(0.9)' : 'translateZ(0) scale(1)'
@@ -417,9 +409,7 @@ const SliderArea: React.FC = () => {
                             margin: 0,
                             opacity: data.sliderRange[1] >= data.allRecords.length - 1 ? 0.6 : 1,
                             transition: 'all 0.3s ease',
-                            boxShadow: data.sliderRange[1] >= data.allRecords.length - 1 ? 
-                              `0 0 6px rgba(102, 102, 102, 0.3), 0 2px 6px rgba(0, 0, 0, 0.3), inset 0 0 2px rgba(102, 102, 102, 0.2), inset 0 1px 3px rgba(255, 255, 255, 0.05), inset 0 -1px 3px rgba(0, 0, 0, 0.3)` : 
-                              `0 0 15px ${data.statisticType === 'red' ? '#f5222d' : '#1890ff'}60, 0 4px 15px rgba(0, 0, 0, 0.5), inset 0 0 5px ${data.statisticType === 'red' ? '#f5222d' : '#1890ff'}20, inset 0 2px 5px rgba(255, 255, 255, 0.15), inset 0 -2px 5px rgba(0, 0, 0, 0.4)`,
+                            boxShadow: 'none',
                             transformStyle: 'preserve-3d',
                             perspective: '1000px',
                             transform: data.sliderRange[1] >= data.allRecords.length - 1 ? 'translateZ(0) scale(0.9)' : 'translateZ(0) scale(1)'
@@ -447,9 +437,7 @@ const SliderArea: React.FC = () => {
                         opacity: data.sliderRange[1] >= data.allRecords.length - 1 ? 0.6 : 1,
                         backgroundColor: data.sliderRange[1] >= data.allRecords.length - 1 ? '#222222' : '#1A1A1A',
                         backgroundImage: data.sliderRange[1] >= data.allRecords.length - 1 ? 'linear-gradient(145deg, #333333, #111111)' : 'linear-gradient(145deg, #252525, #101010)',
-                        boxShadow: data.sliderRange[1] >= data.allRecords.length - 1 ? 
-                          `0 0 8px rgba(102, 102, 102, 0.3), 0 3px 8px rgba(0, 0, 0, 0.3), inset 0 0 3px rgba(102, 102, 102, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.05), inset 0 -2px 4px rgba(0, 0, 0, 0.3)` : 
-                          `0 0 20px ${data.statisticType === 'red' ? '#f5222d' : '#1890ff'}60, 0 6px 20px rgba(0, 0, 0, 0.5), inset 0 0 8px ${data.statisticType === 'red' ? '#f5222d' : '#1890ff'}20, inset 0 4px 8px rgba(255, 255, 255, 0.15), inset 0 -4px 8px rgba(0, 0, 0, 0.4)`,
+                        boxShadow: 'none',
                         transformStyle: 'preserve-3d',
                         perspective: '1000px',
                         transform: data.sliderRange[1] >= data.allRecords.length - 1 ? 'translateZ(0) scale(0.95)' : 'translateZ(0) scale(1)'
