@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Space, Spin, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { AlertOutlined, ArrowLeftOutlined, BarChartOutlined, LineChartOutlined, ReloadOutlined, SyncOutlined } from '@ant-design/icons';
-import type { EChartsOption } from 'echarts';
 import ReactECharts from 'echarts-for-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
@@ -10,13 +9,17 @@ import MetricCard from './MetricCard';
 import MetricGrid from './MetricGrid';
 import { useAppPreferences } from '../contexts/AppPreferencesContext';
 import { stockApi, type StockAlertRule, type StockHoldingSummary, type StockKLine, type StockQuote, type StockTrade } from '../services/api';
-
-const MA_WINDOWS = [5, 10, 20];
+import { QuoteChange } from './StockText';
+import { formatAmount, formatChangePercent, formatMoney, formatPrice, formatQuantity, formatTime, pnlAccent, quoteAccent } from '../utils/stockFormat';
+import { directionColor, directionLabel, ruleTypeLabel, tradeTypeColor, tradeTypeLabel } from '../utils/stockLabels';
+import { buildKLineChartOption, type SubChart } from '../utils/stockChart';
 
 const LifeStockDetailPage = () => {
   const navigate = useNavigate();
   const { symbol = '' } = useParams();
   const { isEnglish } = useAppPreferences();
+  const [period] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [subCharts] = useState<SubChart[]>(['volume']);
   const text = useMemo(() => ({
     missingSymbol: isEnglish ? 'Missing stock symbol' : '缺少股票代码',
     loadFailed: isEnglish ? 'Failed to load stock details' : '获取股票详情失败',
@@ -57,7 +60,11 @@ const LifeStockDetailPage = () => {
     emptyAlerts: isEnglish ? 'No enabled alerts for this symbol yet.' : '暂无该标的启用告警。',
     dailyK: isEnglish ? 'Daily K' : '日K',
     volume: isEnglish ? 'Volume' : '成交量',
-    amountUnit: isEnglish ? 'B' : '亿'
+    amountUnit: isEnglish ? 'B' : '亿',
+    dailyPeriod: isEnglish ? 'Daily' : '日K',
+    weeklyPeriod: isEnglish ? 'Weekly' : '周K',
+    monthlyPeriod: isEnglish ? 'Monthly' : '月K',
+    subChartTitle: isEnglish ? 'Sub Indicators' : '副图指标'
   }), [isEnglish]);
   const [quote, setQuote] = useState<StockQuote>();
   const [kLines, setKLines] = useState<StockKLine[]>([]);
@@ -100,8 +107,15 @@ const LifeStockDetailPage = () => {
     loadStockDetail();
   }, [loadStockDetail]);
 
-  const chartOption = useMemo(() => buildKLineChartOption(kLines, text), [kLines, text]);
+  const chartOption = useMemo(() => buildKLineChartOption(kLines, { periodLabel: text.dailyK, volumeLabel: text.volume }, subCharts), [kLines, text.dailyK, text.volume, subCharts]);
   const fetchedAt = quote?.fetchedAt ? new Date(quote.fetchedAt).toLocaleString() : text.notRefreshed;
+  useEffect(() => {
+    if (!symbol.trim() || period === 'daily') {
+      return;
+    }
+    stockApi.klines(symbol.trim(), { period }).then(setKLines).catch(() => undefined);
+  }, [symbol, period]);
+
   const tradeColumns = useMemo<ColumnsType<StockTrade>>(() => [
     {
       title: text.type,
@@ -207,7 +221,7 @@ const LifeStockDetailPage = () => {
                 {quote?.stale ? <Tag color="orange">{quote.staleReason || text.cachedQuote}</Tag> : null}
               </Space>
             </div>
-            <QuoteChange quote={quote} />
+            <QuoteChange quote={quote} className="stock-detail-change" />
           </div>
         </Card>
 
@@ -276,255 +290,6 @@ const LifeStockDetailPage = () => {
         </Card>
       </Spin>
     </LifePageShell>
-  );
-};
-
-type StockDetailText = {
-  dailyK: string;
-  volume: string;
-};
-
-const buildKLineChartOption = (kLines: StockKLine[], text: StockDetailText): EChartsOption => {
-  const sortedKLines = [...kLines].sort((left, right) => left.tradeDate.localeCompare(right.tradeDate));
-  const dates = sortedKLines.map(item => item.tradeDate);
-  const candleData = sortedKLines.map(item => [
-    Number(item.open || 0),
-    Number(item.close || 0),
-    Number(item.low || 0),
-    Number(item.high || 0)
-  ]);
-  const volumeData = sortedKLines.map((item, index) => {
-    const rising = Number(item.close || 0) >= Number(item.open || 0);
-    return {
-      value: [index, Number(item.volume || 0)],
-      itemStyle: {
-        color: rising ? '#f5222d' : '#16a34a'
-      }
-    };
-  });
-
-  return {
-    color: ['#f5222d', '#16a34a', '#0071e3', '#ff9500', '#5856d6'],
-    animation: false,
-    legend: {
-      top: 0,
-      textStyle: { color: 'var(--app-text-muted)' }
-    },
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: { type: 'cross' }
-    },
-    axisPointer: {
-      link: [{ xAxisIndex: [0, 1] }]
-    },
-    grid: [
-      { left: 48, right: 20, top: 36, height: 260 },
-      { left: 48, right: 20, top: 326, height: 92 }
-    ],
-    xAxis: [
-      {
-        type: 'category',
-        data: dates,
-        boundaryGap: false,
-        axisLine: { lineStyle: { color: 'var(--app-border)' } },
-        axisLabel: { color: 'var(--app-text-muted)' },
-        min: 'dataMin',
-        max: 'dataMax'
-      },
-      {
-        type: 'category',
-        gridIndex: 1,
-        data: dates,
-        boundaryGap: false,
-        axisLine: { lineStyle: { color: 'var(--app-border)' } },
-        axisLabel: { color: 'var(--app-text-muted)' },
-        min: 'dataMin',
-        max: 'dataMax'
-      }
-    ],
-    yAxis: [
-      {
-        scale: true,
-        splitLine: { lineStyle: { color: 'var(--app-border)' } },
-        axisLabel: { color: 'var(--app-text-muted)' }
-      },
-      {
-        scale: true,
-        gridIndex: 1,
-        splitNumber: 2,
-        splitLine: { lineStyle: { color: 'var(--app-border)' } },
-        axisLabel: { color: 'var(--app-text-muted)' }
-      }
-    ],
-    dataZoom: [
-      { type: 'inside', xAxisIndex: [0, 1], start: 55, end: 100 },
-      { show: true, xAxisIndex: [0, 1], type: 'slider', bottom: 0, start: 55, end: 100 }
-    ],
-    series: [
-      {
-        name: text.dailyK,
-        type: 'candlestick',
-        data: candleData,
-        itemStyle: {
-          color: '#f5222d',
-          color0: '#16a34a',
-          borderColor: '#f5222d',
-          borderColor0: '#16a34a'
-        }
-      },
-      ...MA_WINDOWS.map(windowSize => ({
-        name: `MA${windowSize}`,
-        type: 'line' as const,
-        data: calculateMovingAverage(sortedKLines, windowSize),
-        smooth: true,
-        symbol: 'none',
-        lineStyle: { width: 1.4 }
-      })),
-      {
-        name: text.volume,
-        type: 'bar',
-        xAxisIndex: 1,
-        yAxisIndex: 1,
-        data: volumeData
-      }
-    ]
-  };
-};
-
-const calculateMovingAverage = (kLines: StockKLine[], windowSize: number) => {
-  return kLines.map((_, index) => {
-    if (index < windowSize - 1) {
-      return '-';
-    }
-    const values = kLines.slice(index - windowSize + 1, index + 1).map(item => Number(item.close || 0));
-    const total = values.reduce((sum, value) => sum + value, 0);
-    return Number((total / windowSize).toFixed(2));
-  });
-};
-
-const formatPrice = (value?: number) => typeof value === 'number' ? value.toFixed(2) : '-';
-
-const formatMoney = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '-';
-  }
-  return value.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
-};
-
-const formatQuantity = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '-';
-  }
-  return value.toLocaleString(undefined, {
-    maximumFractionDigits: 4
-  });
-};
-
-const formatTime = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '-';
-  }
-  return new Date(value).toLocaleString();
-};
-
-const formatAmount = (value?: number, unit = '亿') => {
-  if (typeof value !== 'number' || value <= 0) {
-    return '-';
-  }
-  return `${(value / 100000000).toFixed(2)}${unit}`;
-};
-
-const formatChangePercent = (quote?: StockQuote) => {
-  if (!quote?.available || typeof quote.changePercent !== 'number') {
-    return '-';
-  }
-  const sign = quote.changePercent > 0 ? '+' : '';
-  return `${sign}${quote.changePercent.toFixed(2)}%`;
-};
-
-const quoteAccent = (quote?: StockQuote) => {
-  if (!quote?.available || typeof quote.changeAmount !== 'number') {
-    return '#0071e3';
-  }
-  if (quote.changeAmount > 0) {
-    return '#f5222d';
-  }
-  if (quote.changeAmount < 0) {
-    return '#16a34a';
-  }
-  return '#0071e3';
-};
-
-const pnlAccent = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '#0071e3';
-  }
-  return value >= 0 ? '#f5222d' : '#16a34a';
-};
-
-const tradeTypeLabel = (value?: string, isEnglish = false) => {
-  const labels: Record<string, string> = {
-    BUY: isEnglish ? 'Buy' : '买入',
-    SELL: isEnglish ? 'Sell' : '卖出',
-    DIVIDEND: isEnglish ? 'Dividend' : '分红',
-    FEE: isEnglish ? 'Fee' : '费用',
-    BONUS_SHARE: isEnglish ? 'Bonus Share' : '送股',
-    SPLIT: isEnglish ? 'Split' : '拆股'
-  };
-  return value ? labels[value] || value : '-';
-};
-
-const tradeTypeColor = (value?: string) => {
-  if (value === 'BUY' || value === 'BONUS_SHARE') {
-    return 'red';
-  }
-  if (value === 'SELL' || value === 'FEE') {
-    return 'green';
-  }
-  return 'blue';
-};
-
-const ruleTypeLabel = (value?: string, isEnglish = false) => {
-  const labels: Record<string, string> = {
-    PRICE: isEnglish ? 'Price' : '价格',
-    PERCENT_CHANGE: isEnglish ? 'Percent Change' : '涨跌幅',
-    VOLUME_ABNORMAL: isEnglish ? 'Volume Anomaly' : '成交量异常'
-  };
-  return value ? labels[value] || value : '-';
-};
-
-const directionLabel = (value?: string, isEnglish = false) => {
-  const labels: Record<string, string> = {
-    ABOVE: isEnglish ? 'Above/Upward' : '高于/向上',
-    BELOW: isEnglish ? 'Below/Downward' : '低于/向下',
-    UP: isEnglish ? 'Trigger on Rise' : '上涨触发',
-    DOWN: isEnglish ? 'Trigger on Drop' : '下跌触发'
-  };
-  return value ? labels[value] || value : '-';
-};
-
-const directionColor = (value?: string) => {
-  if (value === 'ABOVE' || value === 'UP') {
-    return 'red';
-  }
-  if (value === 'BELOW' || value === 'DOWN') {
-    return 'green';
-  }
-  return 'blue';
-};
-
-const QuoteChange = ({ quote }: { quote?: StockQuote }) => {
-  if (!quote?.available || typeof quote.changeAmount !== 'number' || typeof quote.changePercent !== 'number') {
-    return <span className="stock-detail-change stock-detail-change-flat">-</span>;
-  }
-  const sign = quote.changeAmount > 0 ? '+' : '';
-  return (
-    <span className="stock-detail-change" style={{ color: quoteAccent(quote) }}>
-      {sign}{quote.changeAmount.toFixed(2)} / {sign}{quote.changePercent.toFixed(2)}%
-    </span>
   );
 };
 
