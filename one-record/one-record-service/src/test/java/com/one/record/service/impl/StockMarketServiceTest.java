@@ -11,6 +11,8 @@ import com.one.record.stock.StockQuote;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.data.redis.connection.StringRedisConnection;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.MediaType;
@@ -21,10 +23,13 @@ import org.springframework.web.client.RestTemplate;
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -106,7 +111,13 @@ class StockMarketServiceTest {
         properties.setCacheEnabled(true);
         properties.setQuoteCacheTtlSeconds(10);
         properties.setFallbackCacheTtlSeconds(604800);
-        when(valueOperations.get(anyString())).thenReturn(null);
+        when(valueOperations.multiGet(anyList())).thenReturn(Collections.singletonList(null));
+        StringRedisConnection connection = mock(StringRedisConnection.class);
+        when(redisTemplate.executePipelined(any(RedisCallback.class))).thenAnswer(invocation -> {
+            RedisCallback<Object> callback = invocation.getArgument(0);
+            callback.doInRedis(connection);
+            return List.of();
+        });
 
         MockRestServiceServer server = bindMockServer();
         server.expect(requestTo("https://hq.sinajs.cn/list=sh600519"))
@@ -117,7 +128,7 @@ class StockMarketServiceTest {
         assertThat(quotes).hasSize(1);
         assertThat(quotes.get(0).getFetchedAt()).isNotNull();
         ArgumentCaptor<String> cacheValueCaptor = ArgumentCaptor.forClass(String.class);
-        verify(valueOperations, times(2)).set(anyString(), cacheValueCaptor.capture(), any(Duration.class));
+        verify(connection, times(2)).setEx(anyString(), anyLong(), cacheValueCaptor.capture());
         cacheValueCaptor.getAllValues().forEach(cacheValue ->
                 assertThat(JsonUtil.toJsonNode(cacheValue).get("fetchedAt").isNumber()).isTrue());
         server.verify();
@@ -139,8 +150,11 @@ class StockMarketServiceTest {
                 .stale(false)
                 .message("OK")
                 .build();
-        when(valueOperations.get("stock:quote:sh600519")).thenReturn(null);
-        when(valueOperations.get("stock:quote:last-success:sh600519")).thenReturn(JsonUtil.toJson(cachedQuote));
+        String cachedJson = JsonUtil.toJson(cachedQuote);
+        when(valueOperations.multiGet(anyList())).thenAnswer(invocation -> {
+            List<String> keys = invocation.getArgument(0);
+            return keys.stream().map(key -> key != null && key.contains("last-success") ? cachedJson : null).toList();
+        });
 
         MockRestServiceServer server = bindMockServer();
         server.expect(requestTo("https://hq.sinajs.cn/list=sh600519")).andRespond(withServerError());

@@ -288,6 +288,116 @@ class StockKLineServiceTest {
         assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(100);
     }
 
+    @Test
+    void findAggregatesDailyKLinesIntoWeeklyPeriods() {
+        when(repository.findBySymbolAndPeriodAndTradeDateBetweenOrderByTradeDateAsc("sh600519", "daily", "0000-00-00", "9999-99-99"))
+                .thenReturn(List.of(
+                        dailyKLine("2026-06-29", "10.00", "11.00", "9.50", "10.50", 100L, "1000"),
+                        dailyKLine("2026-07-01", "10.50", "11.50", "10.00", "11.00", 200L, "2200"),
+                        dailyKLine("2026-07-06", "11.00", "12.50", "10.50", "12.00", 300L, "3600")
+                ));
+        StockKLineProviderRouter router = new StockKLineProviderRouter(properties, List.of(new StubKLineProvider()));
+        StockKLineService service = new StockKLineService(repository, syncLogRepository, stockMarketService, redisTemplate, properties, router);
+
+        List<StockKLine> weekly = service.find("600519", "weekly", null, null);
+
+        assertThat(weekly).hasSize(2);
+        StockKLine first = weekly.get(0);
+        assertThat(first.getPeriod()).isEqualTo("weekly");
+        assertThat(first.getTradeDate()).isEqualTo("2026-07-01");
+        assertThat(first.getOpen()).isEqualByComparingTo("10.00");
+        assertThat(first.getClose()).isEqualByComparingTo("11.00");
+        assertThat(first.getHigh()).isEqualByComparingTo("11.50");
+        assertThat(first.getLow()).isEqualByComparingTo("9.50");
+        assertThat(first.getVolume()).isEqualTo(300L);
+        assertThat(first.getAmount()).isEqualByComparingTo("3200");
+        assertThat(first.getChangeAmount()).isEqualByComparingTo("1.00");
+        assertThat(first.getChangePercent()).isEqualByComparingTo("10.00");
+        StockKLine second = weekly.get(1);
+        assertThat(second.getTradeDate()).isEqualTo("2026-07-06");
+        assertThat(second.getOpen()).isEqualByComparingTo("11.00");
+        assertThat(second.getClose()).isEqualByComparingTo("12.00");
+        assertThat(second.getVolume()).isEqualTo(300L);
+        assertThat(second.getChangeAmount()).isEqualByComparingTo("1.00");
+        assertThat(second.getChangePercent()).isEqualByComparingTo("9.09");
+    }
+
+    @Test
+    void findAggregatesDailyKLinesIntoMonthlyPeriods() {
+        when(repository.findBySymbolAndPeriodAndTradeDateBetweenOrderByTradeDateAsc("sh600519", "daily", "0000-00-00", "9999-99-99"))
+                .thenReturn(List.of(
+                        dailyKLine("2026-06-29", "10.00", "11.00", "9.50", "10.50", 100L, "1000"),
+                        dailyKLine("2026-06-30", "10.50", "11.00", "10.00", "10.80", 150L, "1600"),
+                        dailyKLine("2026-07-01", "10.80", "11.50", "10.50", "11.00", 200L, "2200")
+                ));
+        StockKLineProviderRouter router = new StockKLineProviderRouter(properties, List.of(new StubKLineProvider()));
+        StockKLineService service = new StockKLineService(repository, syncLogRepository, stockMarketService, redisTemplate, properties, router);
+
+        List<StockKLine> monthly = service.find("600519", "monthly", null, null);
+
+        assertThat(monthly).hasSize(2);
+        StockKLine june = monthly.get(0);
+        assertThat(june.getPeriod()).isEqualTo("monthly");
+        assertThat(june.getTradeDate()).isEqualTo("2026-06-30");
+        assertThat(june.getOpen()).isEqualByComparingTo("10.00");
+        assertThat(june.getClose()).isEqualByComparingTo("10.80");
+        assertThat(june.getHigh()).isEqualByComparingTo("11.00");
+        assertThat(june.getLow()).isEqualByComparingTo("9.50");
+        assertThat(june.getVolume()).isEqualTo(250L);
+        assertThat(june.getAmount()).isEqualByComparingTo("2600");
+        assertThat(june.getChangeAmount()).isEqualByComparingTo("0.80");
+        assertThat(june.getChangePercent()).isEqualByComparingTo("8.00");
+        StockKLine july = monthly.get(1);
+        assertThat(july.getTradeDate()).isEqualTo("2026-07-01");
+        assertThat(july.getChangeAmount()).isEqualByComparingTo("0.20");
+        assertThat(july.getChangePercent()).isEqualByComparingTo("1.85");
+    }
+
+    @Test
+    void findWeeklyHonorsStartDateFilter() {
+        when(repository.findBySymbolAndPeriodAndTradeDateBetweenOrderByTradeDateAsc("sh600519", "daily", "0000-00-00", "9999-99-99"))
+                .thenReturn(List.of(
+                        dailyKLine("2026-06-29", "10.00", "11.00", "9.50", "10.50", 100L, "1000"),
+                        dailyKLine("2026-07-06", "11.00", "12.50", "10.50", "12.00", 300L, "3600")
+                ));
+        StockKLineProviderRouter router = new StockKLineProviderRouter(properties, List.of(new StubKLineProvider()));
+        StockKLineService service = new StockKLineService(repository, syncLogRepository, stockMarketService, redisTemplate, properties, router);
+
+        List<StockKLine> weekly = service.find("600519", "weekly", "2026-07-06", null);
+
+        assertThat(weekly).hasSize(1);
+        assertThat(weekly.get(0).getTradeDate()).isEqualTo("2026-07-06");
+        assertThat(weekly.get(0).getChangeAmount()).isEqualByComparingTo("1.50");
+    }
+
+    @Test
+    void findWeeklyReturnsEmptyWhenNoDailyData() {
+        when(repository.findBySymbolAndPeriodAndTradeDateBetweenOrderByTradeDateAsc("sh600519", "daily", "0000-00-00", "9999-99-99"))
+                .thenReturn(List.of());
+        StockKLineProviderRouter router = new StockKLineProviderRouter(properties, List.of(new StubKLineProvider()));
+        StockKLineService service = new StockKLineService(repository, syncLogRepository, stockMarketService, redisTemplate, properties, router);
+
+        assertThat(service.find("600519", "weekly", null, null)).isEmpty();
+        assertThat(service.find("600519", "monthly", null, null)).isEmpty();
+    }
+
+    private StockKLine dailyKLine(String tradeDate, String open, String high, String low, String close, Long volume, String amount) {
+        return StockKLine.builder()
+                .symbol("sh600519")
+                .market("sh")
+                .code("600519")
+                .period("daily")
+                .tradeDate(tradeDate)
+                .open(new BigDecimal(open))
+                .high(new BigDecimal(high))
+                .low(new BigDecimal(low))
+                .close(new BigDecimal(close))
+                .volume(volume)
+                .amount(new BigDecimal(amount))
+                .source("sina")
+                .build();
+    }
+
     private static class StubKLineProvider implements StockKLineProvider {
 
         @Override

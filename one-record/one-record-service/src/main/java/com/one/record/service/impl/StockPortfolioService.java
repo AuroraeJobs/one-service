@@ -7,6 +7,7 @@ import com.one.record.repository.StockPositionRepository;
 import com.one.record.repository.StockTradeRepository;
 import com.one.record.service.IStockMarketService;
 import com.one.record.service.IStockPortfolioService;
+import com.one.record.service.IStockUserContext;
 import com.one.record.stock.StockAccount;
 import com.one.record.stock.StockHoldingSummary;
 import com.one.record.stock.StockPosition;
@@ -32,8 +33,6 @@ import java.util.Set;
 @AllArgsConstructor
 public class StockPortfolioService implements IStockPortfolioService {
 
-    private static final String DEFAULT_USER_ID = "default";
-
     private static final String DEFAULT_CURRENCY = "CNY";
 
     private static final String DEFAULT_STATUS = "ACTIVE";
@@ -50,9 +49,11 @@ public class StockPortfolioService implements IStockPortfolioService {
 
     private final IStockMarketService stockMarketService;
 
+    private final IStockUserContext userContext;
+
     @Override
     public List<StockAccount> accounts() {
-        return accountRepository.findByUserIdOrderByCreatedAtAsc(DEFAULT_USER_ID);
+        return accountRepository.findByUserIdOrderByCreatedAtAsc(currentUserId());
     }
 
     @Override
@@ -62,7 +63,7 @@ public class StockPortfolioService implements IStockPortfolioService {
         }
         Long now = System.currentTimeMillis();
         StockAccount target = StockAccount.builder()
-                .userId(DEFAULT_USER_ID)
+                .userId(currentUserId())
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
@@ -75,7 +76,7 @@ public class StockPortfolioService implements IStockPortfolioService {
         if (account == null) {
             throw new ServiceException("股票账户不能为空");
         }
-        StockAccount target = accountRepository.findByIdAndUserId(id, DEFAULT_USER_ID)
+        StockAccount target = accountRepository.findByIdAndUserId(id, currentUserId())
                 .orElseThrow(() -> new NotFoundException("股票账户不存在: {}", id));
         copyAccount(account, target);
         target.setUpdatedAt(System.currentTimeMillis());
@@ -84,7 +85,7 @@ public class StockPortfolioService implements IStockPortfolioService {
 
     @Override
     public void deleteAccount(String id) {
-        StockAccount existing = accountRepository.findByIdAndUserId(id, DEFAULT_USER_ID)
+        StockAccount existing = accountRepository.findByIdAndUserId(id, currentUserId())
                 .orElseThrow(() -> new NotFoundException("股票账户不存在: {}", id));
         accountRepository.deleteById(existing.getId());
     }
@@ -92,9 +93,9 @@ public class StockPortfolioService implements IStockPortfolioService {
     @Override
     public List<StockPosition> positions(String accountId) {
         if (StringUtils.hasText(accountId)) {
-            return positionRepository.findByUserIdAndAccountIdOrderBySymbolAscCreatedAtAsc(DEFAULT_USER_ID, accountId.trim());
+            return positionRepository.findByUserIdAndAccountIdOrderBySymbolAscCreatedAtAsc(currentUserId(), accountId.trim());
         }
-        return positionRepository.findByUserIdOrderBySymbolAscCreatedAtAsc(DEFAULT_USER_ID);
+        return positionRepository.findByUserIdOrderBySymbolAscCreatedAtAsc(currentUserId());
     }
 
     @Override
@@ -104,7 +105,7 @@ public class StockPortfolioService implements IStockPortfolioService {
         }
         Long now = System.currentTimeMillis();
         StockPosition target = StockPosition.builder()
-                .userId(DEFAULT_USER_ID)
+                .userId(currentUserId())
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
@@ -117,7 +118,7 @@ public class StockPortfolioService implements IStockPortfolioService {
         if (position == null) {
             throw new ServiceException("股票持仓不能为空");
         }
-        StockPosition target = positionRepository.findByIdAndUserId(id, DEFAULT_USER_ID)
+        StockPosition target = positionRepository.findByIdAndUserId(id, currentUserId())
                 .orElseThrow(() -> new NotFoundException("股票持仓不存在: {}", id));
         copyPosition(position, target);
         target.setUpdatedAt(System.currentTimeMillis());
@@ -126,7 +127,7 @@ public class StockPortfolioService implements IStockPortfolioService {
 
     @Override
     public void deletePosition(String id) {
-        StockPosition existing = positionRepository.findByIdAndUserId(id, DEFAULT_USER_ID)
+        StockPosition existing = positionRepository.findByIdAndUserId(id, currentUserId())
                 .orElseThrow(() -> new NotFoundException("股票持仓不存在: {}", id));
         positionRepository.deleteById(existing.getId());
     }
@@ -134,8 +135,8 @@ public class StockPortfolioService implements IStockPortfolioService {
     @Override
     public List<StockPosition> recalculatePositions(String accountId) {
         List<StockTrade> trades = StringUtils.hasText(accountId)
-                ? tradeRepository.findByUserIdAndAccountIdOrderByTradedAtDescCreatedAtDesc(DEFAULT_USER_ID, accountId.trim())
-                : tradeRepository.findByUserIdOrderByTradedAtDescCreatedAtDesc(DEFAULT_USER_ID);
+                ? tradeRepository.findByUserIdAndAccountIdOrderByTradedAtDescCreatedAtDesc(currentUserId(), accountId.trim())
+                : tradeRepository.findByUserIdOrderByTradedAtDescCreatedAtDesc(currentUserId());
         List<PositionKey> keys = trades.stream()
                 .filter(trade -> StringUtils.hasText(trade.getSymbol()))
                 .map(trade -> new PositionKey(trimToNull(trade.getAccountId()), trade.getSymbol()))
@@ -157,12 +158,12 @@ public class StockPortfolioService implements IStockPortfolioService {
     public List<StockTrade> trades(String accountId, String symbol) {
         if (StringUtils.hasText(symbol)) {
             return tradeRepository.findByUserIdAndSymbolOrderByTradedAtDescCreatedAtDesc(
-                    DEFAULT_USER_ID, stockMarketService.normalizeSymbol(symbol));
+                    currentUserId(), stockMarketService.normalizeSymbol(symbol));
         }
         if (StringUtils.hasText(accountId)) {
-            return tradeRepository.findByUserIdAndAccountIdOrderByTradedAtDescCreatedAtDesc(DEFAULT_USER_ID, accountId.trim());
+            return tradeRepository.findByUserIdAndAccountIdOrderByTradedAtDescCreatedAtDesc(currentUserId(), accountId.trim());
         }
-        return tradeRepository.findByUserIdOrderByTradedAtDescCreatedAtDesc(DEFAULT_USER_ID);
+        return tradeRepository.findByUserIdOrderByTradedAtDescCreatedAtDesc(currentUserId());
     }
 
     @Override
@@ -172,7 +173,7 @@ public class StockPortfolioService implements IStockPortfolioService {
         }
         Long now = System.currentTimeMillis();
         StockTrade target = StockTrade.builder()
-                .userId(DEFAULT_USER_ID)
+                .userId(currentUserId())
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
@@ -187,7 +188,7 @@ public class StockPortfolioService implements IStockPortfolioService {
         if (trade == null) {
             throw new ServiceException("股票交易不能为空");
         }
-        StockTrade target = tradeRepository.findByIdAndUserId(id, DEFAULT_USER_ID)
+        StockTrade target = tradeRepository.findByIdAndUserId(id, currentUserId())
                 .orElseThrow(() -> new NotFoundException("股票交易不存在: {}", id));
         String oldAccountId = trimToNull(target.getAccountId());
         String oldSymbol = target.getSymbol();
@@ -203,7 +204,7 @@ public class StockPortfolioService implements IStockPortfolioService {
 
     @Override
     public void deleteTrade(String id) {
-        StockTrade existing = tradeRepository.findByIdAndUserId(id, DEFAULT_USER_ID)
+        StockTrade existing = tradeRepository.findByIdAndUserId(id, currentUserId())
                 .orElseThrow(() -> new NotFoundException("股票交易不存在: {}", id));
         tradeRepository.deleteById(existing.getId());
         recalculatePositionForTrade(existing);
@@ -211,7 +212,7 @@ public class StockPortfolioService implements IStockPortfolioService {
 
     @Override
     public StockPortfolioSummary summary() {
-        List<StockPosition> positions = positionRepository.findByUserIdOrderBySymbolAscCreatedAtAsc(DEFAULT_USER_ID);
+        List<StockPosition> positions = positionRepository.findByUserIdOrderBySymbolAscCreatedAtAsc(currentUserId());
         if (positions.isEmpty()) {
             return StockPortfolioSummary.builder()
                     .totalMarketValue(BigDecimal.ZERO)
@@ -273,8 +274,8 @@ public class StockPortfolioService implements IStockPortfolioService {
         String symbol = normalizeRequiredSymbol(source.getSymbol());
         target.setAccountId(trimToNull(source.getAccountId()));
         target.setSymbol(symbol);
-        target.setMarket(market(symbol));
-        target.setCode(code(symbol));
+        target.setMarket(stockMarketService.market(symbol));
+        target.setCode(stockMarketService.code(symbol));
         target.setName(trimToNull(source.getName()));
         target.setQuantity(defaultAmount(source.getQuantity()));
         target.setAvailableQuantity(defaultAmount(source.getAvailableQuantity()));
@@ -291,8 +292,8 @@ public class StockPortfolioService implements IStockPortfolioService {
         String symbol = normalizeRequiredSymbol(source.getSymbol());
         target.setAccountId(trimToNull(source.getAccountId()));
         target.setSymbol(symbol);
-        target.setMarket(market(symbol));
-        target.setCode(code(symbol));
+        target.setMarket(stockMarketService.market(symbol));
+        target.setCode(stockMarketService.code(symbol));
         target.setName(trimToNull(source.getName()));
         target.setTradeType(tradeType);
         target.setQuantity(defaultAmount(source.getQuantity()));
@@ -317,17 +318,17 @@ public class StockPortfolioService implements IStockPortfolioService {
         }
         String normalizedAccountId = trimToNull(accountId);
         List<StockTrade> trades = normalizedAccountId == null
-                ? tradeRepository.findByUserIdAndAccountIdIsNullAndSymbolOrderByTradedAtAscCreatedAtAsc(DEFAULT_USER_ID, symbol)
-                : tradeRepository.findByUserIdAndAccountIdAndSymbolOrderByTradedAtAscCreatedAtAsc(DEFAULT_USER_ID, normalizedAccountId, symbol);
+                ? tradeRepository.findByUserIdAndAccountIdIsNullAndSymbolOrderByTradedAtAscCreatedAtAsc(currentUserId(), symbol)
+                : tradeRepository.findByUserIdAndAccountIdAndSymbolOrderByTradedAtAscCreatedAtAsc(currentUserId(), normalizedAccountId, symbol);
         StockPosition existing = findPosition(normalizedAccountId, symbol).orElse(null);
         Long now = System.currentTimeMillis();
         StockPosition target = existing == null
                 ? StockPosition.builder()
-                .userId(DEFAULT_USER_ID)
+                .userId(currentUserId())
                 .accountId(normalizedAccountId)
                 .symbol(symbol)
-                .market(market(symbol))
-                .code(code(symbol))
+                .market(stockMarketService.market(symbol))
+                .code(stockMarketService.code(symbol))
                 .createdAt(now)
                 .openedAt(firstTradeTime(trades, now))
                 .build()
@@ -339,11 +340,11 @@ public class StockPortfolioService implements IStockPortfolioService {
                 .filter(StringUtils::hasText)
                 .reduce((first, second) -> second)
                 .orElse(target.getName());
-        target.setUserId(DEFAULT_USER_ID);
+        target.setUserId(currentUserId());
         target.setAccountId(normalizedAccountId);
         target.setSymbol(symbol);
-        target.setMarket(market(symbol));
-        target.setCode(code(symbol));
+        target.setMarket(stockMarketService.market(symbol));
+        target.setCode(stockMarketService.code(symbol));
         target.setName(trimToNull(positionName));
         target.setQuantity(scaleQuantity(amounts.quantity()));
         target.setAvailableQuantity(scaleQuantity(amounts.quantity()));
@@ -397,8 +398,8 @@ public class StockPortfolioService implements IStockPortfolioService {
 
     private java.util.Optional<StockPosition> findPosition(String accountId, String symbol) {
         return accountId == null
-                ? positionRepository.findByUserIdAndAccountIdIsNullAndSymbol(DEFAULT_USER_ID, symbol)
-                : positionRepository.findByUserIdAndAccountIdAndSymbol(DEFAULT_USER_ID, accountId, symbol);
+                ? positionRepository.findByUserIdAndAccountIdIsNullAndSymbol(currentUserId(), symbol)
+                : positionRepository.findByUserIdAndAccountIdAndSymbol(currentUserId(), accountId, symbol);
     }
 
     private Long firstTradeTime(List<StockTrade> trades, Long fallback) {
@@ -425,8 +426,8 @@ public class StockPortfolioService implements IStockPortfolioService {
     private List<StockTrade> findPositionTrades(String accountId, String symbol) {
         String normalizedAccountId = trimToNull(accountId);
         return normalizedAccountId == null
-                ? tradeRepository.findByUserIdAndAccountIdIsNullAndSymbolOrderByTradedAtAscCreatedAtAsc(DEFAULT_USER_ID, symbol)
-                : tradeRepository.findByUserIdAndAccountIdAndSymbolOrderByTradedAtAscCreatedAtAsc(DEFAULT_USER_ID, normalizedAccountId, symbol);
+                ? tradeRepository.findByUserIdAndAccountIdIsNullAndSymbolOrderByTradedAtAscCreatedAtAsc(currentUserId(), symbol)
+                : tradeRepository.findByUserIdAndAccountIdAndSymbolOrderByTradedAtAscCreatedAtAsc(currentUserId(), normalizedAccountId, symbol);
     }
 
     private BigDecimal averageCost(BigDecimal costAmount, BigDecimal quantity) {
@@ -529,12 +530,8 @@ public class StockPortfolioService implements IStockPortfolioService {
         return StringUtils.hasText(value) ? value.trim() : null;
     }
 
-    private String market(String symbol) {
-        return symbol.length() > 2 ? symbol.substring(0, 2) : "";
-    }
-
-    private String code(String symbol) {
-        return symbol.length() > 2 ? symbol.substring(2) : symbol;
+    private String currentUserId() {
+        return userContext.currentUserId();
     }
 
     private record PositionKey(String accountId, String symbol) {

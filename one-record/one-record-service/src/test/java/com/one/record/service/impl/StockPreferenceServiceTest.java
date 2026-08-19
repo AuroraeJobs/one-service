@@ -2,6 +2,7 @@ package com.one.record.service.impl;
 
 import com.one.common.exception.ServiceException;
 import com.one.record.repository.StockPreferenceRepository;
+import com.one.record.service.IStockUserContext;
 import com.one.record.stock.StockPreference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,12 +19,16 @@ class StockPreferenceServiceTest {
 
     private StockPreferenceRepository repository;
 
+    private IStockUserContext userContext;
+
     private StockPreferenceService service;
 
     @BeforeEach
     void setUp() {
         repository = mock(StockPreferenceRepository.class);
-        service = new StockPreferenceService(repository);
+        userContext = mock(IStockUserContext.class);
+        when(userContext.currentUserId()).thenReturn("default");
+        service = new StockPreferenceService(repository, userContext);
     }
 
     @Test
@@ -75,6 +80,17 @@ class StockPreferenceServiceTest {
                 .build()))
                 .isInstanceOf(ServiceException.class)
                 .hasMessageContaining("不支持的默认K线周期");
+    }
+
+    @Test
+    void getScopesToCurrentUserFromContext() {
+        when(userContext.currentUserId()).thenReturn("alice");
+        when(repository.findByUserId("alice")).thenReturn(Optional.empty());
+
+        StockPreference preference = service.get();
+
+        assertThat(preference.getUserId()).isEqualTo("alice");
+        org.mockito.Mockito.verify(repository).findByUserId("alice");
     }
 
     @Test

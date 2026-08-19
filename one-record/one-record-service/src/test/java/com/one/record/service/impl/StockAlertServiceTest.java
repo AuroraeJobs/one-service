@@ -4,6 +4,7 @@ import com.one.common.exception.ServiceException;
 import com.one.record.repository.StockAlertHistoryRepository;
 import com.one.record.repository.StockAlertRuleRepository;
 import com.one.record.service.IStockMarketService;
+import com.one.record.service.IStockUserContext;
 import com.one.record.stock.StockAlertHistory;
 import com.one.record.stock.StockAlertRule;
 import com.one.record.stock.StockQuote;
@@ -21,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -38,6 +40,8 @@ class StockAlertServiceTest {
 
     private ValueOperations<String, String> valueOperations;
 
+    private IStockUserContext userContext;
+
     private StockAlertService service;
 
     @BeforeEach
@@ -47,8 +51,18 @@ class StockAlertServiceTest {
         stockMarketService = mock(IStockMarketService.class);
         redisTemplate = mock(StringRedisTemplate.class);
         valueOperations = mockValueOperations();
+        userContext = mock(IStockUserContext.class);
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        service = new StockAlertService(ruleRepository, historyRepository, stockMarketService, redisTemplate);
+        when(userContext.currentUserId()).thenReturn("default");
+        lenient().when(stockMarketService.market(anyString())).thenAnswer(invocation -> {
+            String symbol = invocation.getArgument(0);
+            return symbol != null && symbol.length() > 2 ? symbol.substring(0, 2) : "";
+        });
+        lenient().when(stockMarketService.code(anyString())).thenAnswer(invocation -> {
+            String symbol = invocation.getArgument(0);
+            return symbol != null && symbol.length() > 2 ? symbol.substring(2) : symbol;
+        });
+        service = new StockAlertService(ruleRepository, historyRepository, stockMarketService, redisTemplate, userContext);
     }
 
     @SuppressWarnings("unchecked")
@@ -158,10 +172,37 @@ class StockAlertServiceTest {
         verify(valueOperations).set(anyString(), anyString());
     }
 
+    @Test
+    void evaluateAllUsersEvaluatesEnabledRulesAcrossUsers() {
+        when(ruleRepository.findByEnabledTrueOrderByCreatedAtDesc()).thenReturn(List.of(
+                alertRule("r1", "alice", "PRICE", "ABOVE", "1800"),
+                alertRule("r2", "bob", "PRICE", "ABOVE", "1800")
+        ));
+        when(stockMarketService.quotes(List.of("sh600519"))).thenReturn(List.of(StockQuote.builder()
+                .symbol("sh600519")
+                .price(new BigDecimal("1810"))
+                .available(true)
+                .build()));
+        when(valueOperations.setIfAbsent(anyString(), anyString(), any(Duration.class))).thenReturn(true);
+        when(historyRepository.save(any(StockAlertHistory.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(ruleRepository.save(any(StockAlertRule.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        List<StockAlertHistory> histories = service.evaluateAllUsers();
+
+        assertThat(histories).hasSize(2);
+        assertThat(histories).extracting(StockAlertHistory::getUserId).containsExactly("alice", "bob");
+        verify(valueOperations, times(2)).setIfAbsent(anyString(), anyString(), any(Duration.class));
+        verify(valueOperations, times(2)).set(anyString(), anyString());
+    }
+
     private StockAlertRule alertRule(String id, String ruleType, String direction, String targetValue) {
+        return alertRule(id, "default", ruleType, direction, targetValue);
+    }
+
+    private StockAlertRule alertRule(String id, String userId, String ruleType, String direction, String targetValue) {
         return StockAlertRule.builder()
                 .id(id)
-                .userId("default")
+                .userId(userId)
                 .symbol("sh600519")
                 .ruleType(ruleType)
                 .direction(direction)

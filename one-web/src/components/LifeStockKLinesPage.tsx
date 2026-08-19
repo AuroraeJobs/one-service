@@ -6,6 +6,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import { stockApi, type StockKLine } from '../services/api';
 import { useAppPreferences } from '../contexts/AppPreferencesContext';
+import { formatPrice, formatSignedPercent } from '../utils/stockFormat';
 
 const LifeStockKLinesPage = () => {
   const { isEnglish } = useAppPreferences();
@@ -103,35 +104,35 @@ const LifeStockKLinesPage = () => {
       dataIndex: 'open',
       key: 'open',
       align: 'right',
-      render: value => formatNumber(value)
+      render: value => formatPrice(value)
     },
     {
       title: text.close,
       dataIndex: 'close',
       key: 'close',
       align: 'right',
-      render: value => formatNumber(value)
+      render: value => formatPrice(value)
     },
     {
       title: text.high,
       dataIndex: 'high',
       key: 'high',
       align: 'right',
-      render: value => formatNumber(value)
+      render: value => formatPrice(value)
     },
     {
       title: text.low,
       dataIndex: 'low',
       key: 'low',
       align: 'right',
-      render: value => formatNumber(value)
+      render: value => formatPrice(value)
     },
     {
       title: text.changePercent,
       dataIndex: 'changePercent',
       key: 'changePercent',
       align: 'right',
-      render: value => formatPercent(value)
+      render: value => formatSignedPercent(value)
     },
     {
       title: text.volume,
@@ -199,21 +200,6 @@ const LifeStockKLinesPage = () => {
       </Card>
     </LifePageShell>
   );
-};
-
-const formatNumber = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '-';
-  }
-  return value.toFixed(2);
-};
-
-const formatPercent = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '-';
-  }
-  const sign = value > 0 ? '+' : '';
-  return `${sign}${value.toFixed(2)}%`;
 };
 
 const formatLargeNumber = (value?: number) => {

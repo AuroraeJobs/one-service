@@ -22,7 +22,7 @@ public class StockAlertScheduledEvaluation {
             return;
         }
         try {
-            stockAlertService.evaluate();
+            stockAlertService.evaluateAllUsers();
         } catch (RuntimeException ex) {
             log.warn("Stock alert scheduled evaluation failed: {}", ex.getMessage(), ex);
         }

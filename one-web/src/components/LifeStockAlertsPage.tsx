@@ -6,6 +6,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import { useAppPreferences } from '../contexts/AppPreferencesContext';
 import { stockApi, type StockAlertHistory, type StockAlertRule } from '../services/api';
+import { formatQuantity, formatTime } from '../utils/stockFormat';
+import { directionColor, directionLabel, ruleTypeLabel } from '../utils/stockLabels';
 
 interface StockAlertRuleFormValues {
   symbol: string;
@@ -256,7 +258,7 @@ const LifeStockAlertsPage = () => {
       dataIndex: 'targetValue',
       key: 'targetValue',
       align: 'right',
-      render: value => formatNumber(value)
+      render: value => formatQuantity(value)
     },
     {
       title: text.status,
@@ -319,7 +321,7 @@ const LifeStockAlertsPage = () => {
       title: text.targetTriggered,
       key: 'values',
       align: 'right',
-      render: (_, record) => `${formatNumber(record.targetValue)} / ${formatNumber(record.triggerValue)}`
+      render: (_, record) => `${formatQuantity(record.targetValue)} / ${formatQuantity(record.triggerValue)}`
     },
     {
       title: text.message,
@@ -475,35 +477,5 @@ const buildEnabledOptions = (isEnglish: boolean) => [
   { label: isEnglish ? 'Enabled' : '启用', value: 'true' },
   { label: isEnglish ? 'Disabled' : '停用', value: 'false' }
 ];
-
-const ruleTypeLabel = (value?: string, isEnglish = false) => buildRuleTypeOptions(isEnglish).find(item => item.value === value)?.label || value || '-';
-
-const directionLabel = (value?: string, isEnglish = false) => buildDirectionOptions(isEnglish).find(item => item.value === value)?.label || value || '-';
-
-const directionColor = (value?: string) => {
-  if (value === 'ABOVE' || value === 'UP') {
-    return 'red';
-  }
-  if (value === 'BELOW' || value === 'DOWN') {
-    return 'green';
-  }
-  return 'blue';
-};
-
-const formatNumber = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '-';
-  }
-  return value.toLocaleString(undefined, {
-    maximumFractionDigits: 4
-  });
-};
-
-const formatTime = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '-';
-  }
-  return new Date(value).toLocaleString();
-};
 
 export default LifeStockAlertsPage;

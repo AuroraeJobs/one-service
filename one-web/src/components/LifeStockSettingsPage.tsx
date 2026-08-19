@@ -5,6 +5,7 @@ import { ReloadOutlined, SaveOutlined, SettingOutlined } from '@ant-design/icons
 import LifePageShell from './LifePageShell';
 import { stockApi, type StockPreference, type StockProviderConfig } from '../services/api';
 import { useAppPreferences } from '../contexts/AppPreferencesContext';
+import { formatTime } from '../utils/stockFormat';
 
 interface SettingRow {
   key: string;
@@ -350,13 +351,6 @@ const formatValue = (value?: number) => {
     return '-';
   }
   return String(value);
-};
-
-const formatTime = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '-';
-  }
-  return new Date(value).toLocaleString();
 };
 
 export default LifeStockSettingsPage;

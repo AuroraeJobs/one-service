@@ -8,6 +8,9 @@ import MetricGrid from './MetricGrid';
 import LifePageShell from './LifePageShell';
 import { useAppPreferences } from '../contexts/AppPreferencesContext';
 import { stockApi, type StockAlertHistory, type StockAnalysisItem, type StockAnalysisSummary, type StockHoldingSummary, type StockPortfolioSummary, type StockProviderHealth, type StockQuote, type StockWatchlistItem } from '../services/api';
+import { PnlText, QuoteChange } from './StockText';
+import { formatAmount, formatMoney, formatPercentSuffix, formatPercentValue, formatPrice, formatQuantity, formatSignedMoney, formatTime, pnlAccent } from '../utils/stockFormat';
+import { providerCategoryLabel, ruleTypeLabel } from '../utils/stockLabels';
 
 const LifeInvestmentPage = () => {
   const navigate = useNavigate();
@@ -628,112 +631,6 @@ const stockViewMeta: Record<StockInvestmentView, (text: StockViewText) => { eyeb
   })
 };
 
-const formatPrice = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '-';
-  }
-  return value.toFixed(2);
-};
-
-const formatAmount = (value?: number, unit = '亿') => {
-  if (typeof value !== 'number' || value <= 0) {
-    return '-';
-  }
-  return `${(value / 100000000).toFixed(2)} ${unit}`;
-};
-
-const formatMoney = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '-';
-  }
-  return value.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
-};
-
-const formatSignedMoney = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '-';
-  }
-  const sign = value > 0 ? '+' : '';
-  return `${sign}${formatMoney(value)}`;
-};
-
-const formatQuantity = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '-';
-  }
-  return value.toLocaleString(undefined, {
-    maximumFractionDigits: 4
-  });
-};
-
-const formatPercentSuffix = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '';
-  }
-  const sign = value > 0 ? '+' : '';
-  return ` / ${sign}${value.toFixed(2)}%`;
-};
-
-const formatPercentValue = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '-';
-  }
-  return `${value.toFixed(2)}%`;
-};
-
-const formatTime = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '-';
-  }
-  return new Date(value).toLocaleString();
-};
-
-const pnlAccent = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '#0071e3';
-  }
-  if (value > 0) {
-    return '#f5222d';
-  }
-  if (value < 0) {
-    return '#16a34a';
-  }
-  return '#0071e3';
-};
-
-const PnlText = ({ value, percent }: { value?: number; percent?: number }) => {
-  if (typeof value !== 'number') {
-    return <span>-</span>;
-  }
-  return (
-    <span style={{ color: pnlAccent(value), fontWeight: 700 }}>
-      {formatSignedMoney(value)}{formatPercentSuffix(percent)}
-    </span>
-  );
-};
-
-const ruleTypeLabel = (value?: string, isEnglish = false) => {
-  const labels: Record<string, string> = {
-    PRICE: isEnglish ? 'Price' : '价格',
-    PERCENT_CHANGE: isEnglish ? 'Percent Change' : '涨跌幅',
-    VOLUME_ABNORMAL: isEnglish ? 'Volume Anomaly' : '成交量异常'
-  };
-  return value ? labels[value] || value : '-';
-};
-
-const providerCategoryLabel = (value?: string, isEnglish = false) => {
-  if (value === 'kline') {
-    return isEnglish ? 'K-Line' : 'K线';
-  }
-  if (value === 'quote') {
-    return isEnglish ? 'Quote' : '行情';
-  }
-  return value || '-';
-};
-
 const AnalysisList = ({ title, items, navigate, emptyText }: { title: string; items?: StockAnalysisItem[]; navigate: (path: string) => void; emptyText: string }) => (
   <div className="stock-analysis-mini-list">
     <h3>{title}</h3>
@@ -758,21 +655,6 @@ const formatAnalysisValue = (item: StockAnalysisItem) => {
     return item.value.toFixed(2);
   }
   return item.message || '-';
-};
-
-const QuoteChange = ({ quote }: { quote: StockQuote }) => {
-  if (!quote.available || typeof quote.changeAmount !== 'number' || typeof quote.changePercent !== 'number') {
-    return <span>-</span>;
-  }
-  const up = quote.changeAmount > 0;
-  const down = quote.changeAmount < 0;
-  const color = up ? '#f5222d' : down ? '#16a34a' : 'var(--app-text-muted)';
-  const sign = up ? '+' : '';
-  return (
-    <span style={{ color, fontWeight: 700 }}>
-      {sign}{quote.changeAmount.toFixed(2)} / {sign}{quote.changePercent.toFixed(2)}%
-    </span>
-  );
 };
 
 export default LifeInvestmentPage;

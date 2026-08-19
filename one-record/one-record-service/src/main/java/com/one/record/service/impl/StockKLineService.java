@@ -18,6 +18,9 @@ import org.springframework.util.StringUtils;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.IsoFields;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,6 +29,10 @@ import java.util.List;
 public class StockKLineService implements IStockKLineService {
 
     private static final String DEFAULT_PERIOD = "daily";
+
+    private static final String WEEKLY_PERIOD = "weekly";
+
+    private static final String MONTHLY_PERIOD = "monthly";
 
     private static final String MIN_DATE = "0000-00-00";
 
@@ -55,8 +62,92 @@ public class StockKLineService implements IStockKLineService {
         String normalizedPeriod = normalizePeriod(period);
         String safeStartDate = StringUtils.hasText(startDate) ? startDate.trim() : MIN_DATE;
         String safeEndDate = StringUtils.hasText(endDate) ? endDate.trim() : MAX_DATE;
+        if (WEEKLY_PERIOD.equals(normalizedPeriod) || MONTHLY_PERIOD.equals(normalizedPeriod)) {
+            List<StockKLine> dailyKLines = repository.findBySymbolAndPeriodAndTradeDateBetweenOrderByTradeDateAsc(
+                    normalizedSymbol, DEFAULT_PERIOD, MIN_DATE, MAX_DATE);
+            return aggregateKLines(dailyKLines, normalizedPeriod, safeStartDate, safeEndDate);
+        }
         return repository.findBySymbolAndPeriodAndTradeDateBetweenOrderByTradeDateAsc(
                 normalizedSymbol, normalizedPeriod, safeStartDate, safeEndDate);
+    }
+
+    private List<StockKLine> aggregateKLines(List<StockKLine> dailyKLines, String period, String startDate, String endDate) {
+        List<StockKLine> aggregated = new ArrayList<>();
+        List<StockKLine> bucket = new ArrayList<>();
+        String bucketKey = null;
+        for (StockKLine daily : dailyKLines) {
+            String key = periodKey(daily == null ? null : daily.getTradeDate(), period);
+            if (key == null) {
+                continue;
+            }
+            if (bucketKey != null && !bucketKey.equals(key)) {
+                aggregated.add(buildAggregatedKLine(bucket, period));
+                bucket = new ArrayList<>();
+            }
+            bucketKey = key;
+            bucket.add(daily);
+        }
+        if (!bucket.isEmpty()) {
+            aggregated.add(buildAggregatedKLine(bucket, period));
+        }
+
+        BigDecimal previousClose = null;
+        List<StockKLine> result = new ArrayList<>();
+        for (StockKLine item : aggregated) {
+            BigDecimal base = previousClose == null ? defaultAmount(item.getOpen()) : previousClose;
+            BigDecimal close = defaultAmount(item.getClose());
+            item.setChangeAmount(close.subtract(base));
+            item.setChangePercent(base.compareTo(BigDecimal.ZERO) == 0
+                    ? BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP)
+                    : item.getChangeAmount().multiply(BigDecimal.valueOf(100)).divide(base, 2, RoundingMode.HALF_UP));
+            previousClose = close;
+            if (item.getTradeDate().compareTo(startDate) >= 0 && item.getTradeDate().compareTo(endDate) <= 0) {
+                result.add(item);
+            }
+        }
+        return result;
+    }
+
+    private StockKLine buildAggregatedKLine(List<StockKLine> bucket, String period) {
+        StockKLine first = bucket.get(0);
+        StockKLine last = bucket.get(bucket.size() - 1);
+        StockKLine aggregated = new StockKLine();
+        aggregated.setSymbol(first.getSymbol());
+        aggregated.setMarket(first.getMarket());
+        aggregated.setCode(first.getCode());
+        aggregated.setPeriod(period);
+        aggregated.setTradeDate(last.getTradeDate());
+        aggregated.setOpen(first.getOpen());
+        aggregated.setClose(last.getClose());
+        aggregated.setHigh(bucket.stream().map(StockKLine::getHigh).filter(item -> item != null)
+                .max(BigDecimal::compareTo).orElse(null));
+        aggregated.setLow(bucket.stream().map(StockKLine::getLow).filter(item -> item != null)
+                .min(BigDecimal::compareTo).orElse(null));
+        aggregated.setVolume(bucket.stream().map(StockKLine::getVolume).filter(item -> item != null)
+                .mapToLong(Long::longValue).sum());
+        aggregated.setAmount(bucket.stream().map(StockKLine::getAmount).filter(item -> item != null)
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
+        aggregated.setSource(first.getSource());
+        return aggregated;
+    }
+
+    private String periodKey(String tradeDate, String period) {
+        if (!StringUtils.hasText(tradeDate)) {
+            return null;
+        }
+        try {
+            LocalDate date = LocalDate.parse(tradeDate.trim());
+            if (WEEKLY_PERIOD.equals(period)) {
+                return date.get(IsoFields.WEEK_BASED_YEAR) + "-W" + date.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+            }
+            return date.getYear() + "-" + date.getMonthValue();
+        } catch (DateTimeParseException ex) {
+            return null;
+        }
+    }
+
+    private BigDecimal defaultAmount(BigDecimal value) {
+        return value == null ? BigDecimal.ZERO : value;
     }
 
     @Override
@@ -300,8 +391,8 @@ public class StockKLineService implements IStockKLineService {
                 });
 
         target.setSymbol(symbol);
-        target.setMarket(market(symbol));
-        target.setCode(code(symbol));
+        target.setMarket(stockMarketService.market(symbol));
+        target.setCode(stockMarketService.code(symbol));
         target.setPeriod(period);
         target.setTradeDate(kLine.getTradeDate().trim());
         target.setOpen(kLine.getOpen());
@@ -405,14 +496,6 @@ public class StockKLineService implements IStockKLineService {
 
     private String valueOrDefault(String value, String fallback) {
         return StringUtils.hasText(value) ? value : fallback;
-    }
-
-    private String market(String symbol) {
-        return symbol.length() > 2 ? symbol.substring(0, 2) : "";
-    }
-
-    private String code(String symbol) {
-        return symbol.length() > 2 ? symbol.substring(2) : symbol;
     }
 
     private interface SyncAction {

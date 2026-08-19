@@ -5,6 +5,7 @@ import com.one.record.repository.StockAccountRepository;
 import com.one.record.repository.StockPositionRepository;
 import com.one.record.repository.StockTradeRepository;
 import com.one.record.service.IStockMarketService;
+import com.one.record.service.IStockUserContext;
 import com.one.record.stock.StockAccount;
 import com.one.record.stock.StockPortfolioSummary;
 import com.one.record.stock.StockPosition;
@@ -20,6 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -35,6 +37,8 @@ class StockPortfolioServiceTest {
 
     private IStockMarketService stockMarketService;
 
+    private IStockUserContext userContext;
+
     private StockPortfolioService service;
 
     @BeforeEach
@@ -43,7 +47,17 @@ class StockPortfolioServiceTest {
         positionRepository = mock(StockPositionRepository.class);
         tradeRepository = mock(StockTradeRepository.class);
         stockMarketService = mock(IStockMarketService.class);
-        service = new StockPortfolioService(accountRepository, positionRepository, tradeRepository, stockMarketService);
+        userContext = mock(IStockUserContext.class);
+        service = new StockPortfolioService(accountRepository, positionRepository, tradeRepository, stockMarketService, userContext);
+        lenient().when(userContext.currentUserId()).thenReturn("default");
+        lenient().when(stockMarketService.market(anyString())).thenAnswer(invocation -> {
+            String symbol = invocation.getArgument(0);
+            return symbol != null && symbol.length() > 2 ? symbol.substring(0, 2) : "";
+        });
+        lenient().when(stockMarketService.code(anyString())).thenAnswer(invocation -> {
+            String symbol = invocation.getArgument(0);
+            return symbol != null && symbol.length() > 2 ? symbol.substring(2) : symbol;
+        });
         lenient().when(positionRepository.findByUserIdAndAccountIdIsNullAndSymbol(any(), any())).thenReturn(java.util.Optional.empty());
         lenient().when(positionRepository.findByUserIdAndAccountIdAndSymbol(any(), any(), any())).thenReturn(java.util.Optional.empty());
         lenient().when(positionRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));

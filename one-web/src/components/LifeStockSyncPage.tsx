@@ -8,6 +8,7 @@ import MetricCard from './MetricCard';
 import MetricGrid from './MetricGrid';
 import { useAppPreferences } from '../contexts/AppPreferencesContext';
 import { stockApi, type StockKLine, type StockKLineSyncLog, type StockKLineSyncSummary } from '../services/api';
+import { formatTime } from '../utils/stockFormat';
 
 const sampleKLines = JSON.stringify([
   {
@@ -472,13 +473,6 @@ const statusColor = (value?: string) => {
     return 'orange';
   }
   return 'blue';
-};
-
-const formatTime = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '-';
-  }
-  return new Date(value).toLocaleString();
 };
 
 const formatRate = (value?: number) => {

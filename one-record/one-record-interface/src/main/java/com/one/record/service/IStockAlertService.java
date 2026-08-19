@@ -18,4 +18,6 @@ public interface IStockAlertService {
     List<StockAlertHistory> history(String symbol);
 
     List<StockAlertHistory> evaluate();
+
+    List<StockAlertHistory> evaluateAllUsers();
 }

@@ -15,6 +15,20 @@ public interface IStockMarketService {
 
     String normalizeSymbol(String symbol);
 
+    default String market(String symbol) {
+        if (symbol == null) {
+            return "";
+        }
+        return symbol.length() > 2 ? symbol.substring(0, 2) : "";
+    }
+
+    default String code(String symbol) {
+        if (symbol == null) {
+            return "";
+        }
+        return symbol.length() > 2 ? symbol.substring(2) : symbol;
+    }
+
     List<StockProviderHealth> providerHealth();
 
     StockProviderConfig providerConfig();

@@ -7,6 +7,8 @@ import MetricCard from './MetricCard';
 import MetricGrid from './MetricGrid';
 import { stockApi, type StockProviderHealth, type StockProviderProbeResult } from '../services/api';
 import { useAppPreferences } from '../contexts/AppPreferencesContext';
+import { formatTime } from '../utils/stockFormat';
+import { providerCategoryLabel } from '../utils/stockLabels';
 
 const LifeStockProvidersPage = () => {
   const { isEnglish } = useAppPreferences();
@@ -348,22 +350,5 @@ const buildProbeColumns = (text: ProviderPageText, isEnglish: boolean): ColumnsT
     render: value => value || '-'
   }
 ];
-
-const providerCategoryLabel = (value?: string, isEnglish = false) => {
-  if (value === 'kline') {
-    return isEnglish ? 'K-Line' : 'K线';
-  }
-  if (value === 'quote') {
-    return isEnglish ? 'Quote' : '行情';
-  }
-  return value || '-';
-};
-
-const formatTime = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '-';
-  }
-  return new Date(value).toLocaleString();
-};
 
 export default LifeStockProvidersPage;

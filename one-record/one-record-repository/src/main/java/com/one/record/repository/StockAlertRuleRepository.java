@@ -13,4 +13,6 @@ public interface StockAlertRuleRepository extends MongoRepository<StockAlertRule
     List<StockAlertRule> findByUserIdAndEnabledOrderByCreatedAtDesc(String userId, Boolean enabled);
 
     Optional<StockAlertRule> findByIdAndUserId(String id, String userId);
+
+    List<StockAlertRule> findByEnabledTrueOrderByCreatedAtDesc();
 }

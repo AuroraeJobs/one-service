@@ -6,6 +6,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import { useAppPreferences } from '../contexts/AppPreferencesContext';
 import { stockApi, type StockAccount, type StockTrade } from '../services/api';
+import { formatMoney, formatQuantity, formatTime } from '../utils/stockFormat';
+import { tradeTypeColor, tradeTypeLabel } from '../utils/stockLabels';
 
 interface StockTradeFormValues {
   accountId?: string;
@@ -408,45 +410,5 @@ const buildTradeTypeOptions = (isEnglish: boolean) => [
   { label: isEnglish ? 'Bonus Share' : '送股', value: 'BONUS_SHARE' },
   { label: isEnglish ? 'Split' : '拆股', value: 'SPLIT' }
 ];
-
-const tradeTypeLabel = (value?: string, isEnglish = false) => {
-  return buildTradeTypeOptions(isEnglish).find(item => item.value === value)?.label || value || '-';
-};
-
-const tradeTypeColor = (value?: string) => {
-  if (value === 'BUY' || value === 'BONUS_SHARE') {
-    return 'red';
-  }
-  if (value === 'SELL' || value === 'FEE') {
-    return 'green';
-  }
-  return 'blue';
-};
-
-const formatMoney = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '-';
-  }
-  return value.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
-};
-
-const formatQuantity = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '-';
-  }
-  return value.toLocaleString(undefined, {
-    maximumFractionDigits: 4
-  });
-};
-
-const formatTime = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '-';
-  }
-  return new Date(value).toLocaleString();
-};
 
 export default LifeStockTradesPage;

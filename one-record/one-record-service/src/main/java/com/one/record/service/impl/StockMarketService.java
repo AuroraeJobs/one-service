@@ -9,6 +9,8 @@ import com.one.record.stock.StockProviderHealth;
 import com.one.record.stock.StockProviderProbeResult;
 import com.one.record.stock.StockQuote;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.connection.StringRedisConnection;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -21,6 +23,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 @Slf4j
 @Service
@@ -60,10 +63,11 @@ public class StockMarketService implements IStockMarketService {
             return List.of();
         }
 
+        Map<String, StockQuote> cachedQuotes = readCachedQuotes(sourceSymbols, this::quoteKey);
         List<StockQuote> result = new ArrayList<>();
         List<String> missingSymbols = new ArrayList<>();
         for (String sourceSymbol : sourceSymbols) {
-            StockQuote cachedQuote = readCachedQuote(sourceSymbol, quoteKey(sourceSymbol));
+            StockQuote cachedQuote = cachedQuotes.get(sourceSymbol);
             if (cachedQuote != null) {
                 result.add(cachedQuote);
             } else {
@@ -119,12 +123,10 @@ public class StockMarketService implements IStockMarketService {
     }
 
     private StockQuote unavailableQuote(String sourceSymbol, Long fetchedAt, String message) {
-        String market = sourceSymbol.length() > 2 ? sourceSymbol.substring(0, 2) : "";
-        String code = sourceSymbol.length() > 2 ? sourceSymbol.substring(2) : sourceSymbol;
         return StockQuote.builder()
                 .symbol(sourceSymbol)
-                .market(market)
-                .code(code)
+                .market(market(sourceSymbol))
+                .code(code(sourceSymbol))
                 .source(properties.getProvider())
                 .sourceSymbol(sourceSymbol)
                 .fetchedAt(fetchedAt)
@@ -138,20 +140,41 @@ public class StockMarketService implements IStockMarketService {
         if (!isCacheEnabled()) {
             return;
         }
-        for (StockQuote quote : quotes) {
-            if (!Boolean.TRUE.equals(quote.getAvailable())) {
-                continue;
-            }
-            writeCache(quoteKey(quote.getSymbol()), quote, properties.getQuoteCacheTtlSeconds());
-            writeCache(lastSuccessQuoteKey(quote.getSymbol()), quote, properties.getFallbackCacheTtlSeconds());
+        List<StockQuote> successfulQuotes = quotes.stream()
+                .filter(quote -> Boolean.TRUE.equals(quote.getAvailable()))
+                .toList();
+        if (successfulQuotes.isEmpty()) {
+            return;
+        }
+        try {
+            redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
+                StringRedisConnection stringConnection = (StringRedisConnection) connection;
+                for (StockQuote quote : successfulQuotes) {
+                    String value = JsonUtil.toJson(quote);
+                    setWithTtl(stringConnection, quoteKey(quote.getSymbol()), value, properties.getQuoteCacheTtlSeconds());
+                    setWithTtl(stringConnection, lastSuccessQuoteKey(quote.getSymbol()), value, properties.getFallbackCacheTtlSeconds());
+                }
+                return null;
+            });
+        } catch (RuntimeException ex) {
+            log.warn("Failed to write stock quote cache in pipeline", ex);
+        }
+    }
+
+    private void setWithTtl(StringRedisConnection connection, String key, String value, Integer ttlSeconds) {
+        if (ttlSeconds == null || ttlSeconds <= 0) {
+            connection.set(key, value);
+        } else {
+            connection.setEx(key, ttlSeconds, value);
         }
     }
 
     private List<StockQuote> fallbackQuotes(List<String> sourceSymbols, String reason) {
         Long fallbackAt = System.currentTimeMillis();
+        Map<String, StockQuote> fallbackMap = readCachedQuotes(sourceSymbols, this::lastSuccessQuoteKey);
         List<StockQuote> quotes = new ArrayList<>();
         for (String sourceSymbol : sourceSymbols) {
-            StockQuote fallbackQuote = readCachedQuote(sourceSymbol, lastSuccessQuoteKey(sourceSymbol));
+            StockQuote fallbackQuote = fallbackMap.get(sourceSymbol);
             if (fallbackQuote != null) {
                 fallbackQuote.setStale(true);
                 fallbackQuote.setStaleReason("第三方行情接口异常，返回最近一次成功缓存: " + reason);
@@ -165,6 +188,11 @@ public class StockMarketService implements IStockMarketService {
     }
 
     private List<StockQuote> applyFallbackForUnavailableQuotes(List<StockQuote> quotes) {
+        List<String> unavailableSymbols = quotes.stream()
+                .filter(quote -> !Boolean.TRUE.equals(quote.getAvailable()))
+                .map(StockQuote::getSymbol)
+                .toList();
+        Map<String, StockQuote> fallbackMap = readCachedQuotes(unavailableSymbols, this::lastSuccessQuoteKey);
         List<StockQuote> resolvedQuotes = new ArrayList<>();
         for (StockQuote quote : quotes) {
             if (Boolean.TRUE.equals(quote.getAvailable())) {
@@ -172,7 +200,7 @@ public class StockMarketService implements IStockMarketService {
                 continue;
             }
 
-            StockQuote fallbackQuote = readCachedQuote(quote.getSymbol(), lastSuccessQuoteKey(quote.getSymbol()));
+            StockQuote fallbackQuote = fallbackMap.get(quote.getSymbol());
             if (fallbackQuote != null) {
                 fallbackQuote.setStale(true);
                 fallbackQuote.setStaleReason("第三方行情未返回有效数据，返回最近一次成功缓存: " + quote.getMessage());
@@ -185,37 +213,38 @@ public class StockMarketService implements IStockMarketService {
         return resolvedQuotes;
     }
 
-    private StockQuote readCachedQuote(String sourceSymbol, String key) {
-        if (!isCacheEnabled()) {
-            return null;
+    private Map<String, StockQuote> readCachedQuotes(List<String> sourceSymbols, Function<String, String> keyFunction) {
+        Map<String, StockQuote> cachedQuotes = new LinkedHashMap<>();
+        if (!isCacheEnabled() || sourceSymbols.isEmpty()) {
+            return cachedQuotes;
         }
+        List<String> keys = sourceSymbols.stream().map(keyFunction).toList();
+        List<String> values;
         try {
-            String value = redisTemplate.opsForValue().get(key);
-            if (value == null || value.isBlank()) {
-                return null;
-            }
-            StockQuote quote = JsonUtil.toObject(value, StockQuote.class);
-            if (quote.getSymbol() == null || quote.getSymbol().isBlank()) {
-                quote.setSymbol(sourceSymbol);
-            }
-            return quote;
-        } catch (Exception ex) {
-            log.warn("Failed to read stock quote cache, key={}", key, ex);
-            return null;
-        }
-    }
-
-    private void writeCache(String key, StockQuote quote, Integer ttlSeconds) {
-        try {
-            String value = JsonUtil.toJson(quote);
-            if (ttlSeconds == null || ttlSeconds <= 0) {
-                redisTemplate.opsForValue().set(key, value);
-            } else {
-                redisTemplate.opsForValue().set(key, value, Duration.ofSeconds(ttlSeconds));
-            }
+            values = redisTemplate.opsForValue().multiGet(keys);
         } catch (RuntimeException ex) {
-            log.warn("Failed to write stock quote cache, key={}", key, ex);
+            log.warn("Failed to batch read stock quote cache, keys={}", keys, ex);
+            return cachedQuotes;
         }
+        if (values == null) {
+            return cachedQuotes;
+        }
+        for (int index = 0; index < sourceSymbols.size(); index++) {
+            String value = values.get(index);
+            if (value == null || value.isBlank()) {
+                continue;
+            }
+            try {
+                StockQuote quote = JsonUtil.toObject(value, StockQuote.class);
+                if (quote.getSymbol() == null || quote.getSymbol().isBlank()) {
+                    quote.setSymbol(sourceSymbols.get(index));
+                }
+                cachedQuotes.put(sourceSymbols.get(index), quote);
+            } catch (Exception ex) {
+                log.warn("Failed to parse stock quote cache, key={}", keys.get(index), ex);
+            }
+        }
+        return cachedQuotes;
     }
 
     private List<StockQuote> orderQuotes(List<StockQuote> quotes, List<String> sourceSymbols) {

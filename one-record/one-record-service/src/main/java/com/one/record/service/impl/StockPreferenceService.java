@@ -3,6 +3,7 @@ package com.one.record.service.impl;
 import com.one.common.exception.ServiceException;
 import com.one.record.repository.StockPreferenceRepository;
 import com.one.record.service.IStockPreferenceService;
+import com.one.record.service.IStockUserContext;
 import com.one.record.stock.StockPreference;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,7 +15,6 @@ import java.util.Set;
 @AllArgsConstructor
 public class StockPreferenceService implements IStockPreferenceService {
 
-    private static final String DEFAULT_USER_ID = "default";
     private static final String DEFAULT_CURRENCY = "CNY";
     private static final String DEFAULT_KLINE_PERIOD = "daily";
     private static final int DEFAULT_REFRESH_INTERVAL_SECONDS = 30;
@@ -24,18 +24,22 @@ public class StockPreferenceService implements IStockPreferenceService {
 
     private final StockPreferenceRepository repository;
 
+    private final IStockUserContext userContext;
+
     @Override
     public StockPreference get() {
-        return repository.findByUserId(DEFAULT_USER_ID).orElseGet(this::defaultPreference);
+        String userId = userContext.currentUserId();
+        return repository.findByUserId(userId).orElseGet(() -> defaultPreference(userId));
     }
 
     @Override
     public StockPreference save(StockPreference preference) {
-        StockPreference existing = repository.findByUserId(DEFAULT_USER_ID).orElse(null);
+        String userId = userContext.currentUserId();
+        StockPreference existing = repository.findByUserId(userId).orElse(null);
         Long now = System.currentTimeMillis();
         StockPreference next = StockPreference.builder()
                 .id(existing == null ? null : existing.getId())
-                .userId(DEFAULT_USER_ID)
+                .userId(userId)
                 .defaultAccountId(trimToNull(preference == null ? null : preference.getDefaultAccountId()))
                 .defaultCurrency(normalizeCurrency(preference == null ? null : preference.getDefaultCurrency()))
                 .defaultKLinePeriod(normalizeKLinePeriod(preference == null ? null : preference.getDefaultKLinePeriod()))
@@ -46,10 +50,10 @@ public class StockPreferenceService implements IStockPreferenceService {
         return repository.save(next);
     }
 
-    private StockPreference defaultPreference() {
+    private StockPreference defaultPreference(String userId) {
         Long now = System.currentTimeMillis();
         return StockPreference.builder()
-                .userId(DEFAULT_USER_ID)
+                .userId(userId)
                 .defaultCurrency(DEFAULT_CURRENCY)
                 .defaultKLinePeriod(DEFAULT_KLINE_PERIOD)
                 .quoteRefreshIntervalSeconds(DEFAULT_REFRESH_INTERVAL_SECONDS)

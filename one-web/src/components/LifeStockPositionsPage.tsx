@@ -6,6 +6,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import LifePageShell from './LifePageShell';
 import { stockApi, type StockAccount, type StockPosition } from '../services/api';
 import { useAppPreferences } from '../contexts/AppPreferencesContext';
+import { formatMoney, formatQuantity, formatTime } from '../utils/stockFormat';
 
 const LifeStockPositionsPage = () => {
   const { isEnglish } = useAppPreferences();
@@ -210,32 +211,6 @@ const LifeStockPositionsPage = () => {
       </Card>
     </LifePageShell>
   );
-};
-
-const formatMoney = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '-';
-  }
-  return value.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
-};
-
-const formatQuantity = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '-';
-  }
-  return value.toLocaleString(undefined, {
-    maximumFractionDigits: 4
-  });
-};
-
-const formatTime = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '-';
-  }
-  return new Date(value).toLocaleString();
 };
 
 export default LifeStockPositionsPage;

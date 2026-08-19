@@ -5,6 +5,7 @@ import com.one.common.exception.NotFoundException;
 import com.one.common.exception.ServiceException;
 import com.one.record.repository.StockWatchlistRepository;
 import com.one.record.service.IStockMarketService;
+import com.one.record.service.IStockUserContext;
 import com.one.record.service.IStockWatchlistService;
 import com.one.record.stock.StockQuote;
 import com.one.record.stock.StockWatchlist;
@@ -20,11 +21,11 @@ import java.util.List;
 @AllArgsConstructor
 public class StockWatchlistService implements IStockWatchlistService {
 
-    private static final String DEFAULT_USER_ID = "default";
-
     private final StockWatchlistRepository repository;
 
     private final IStockMarketService stockMarketService;
+
+    private final IStockUserContext userContext;
 
     @Override
     public StockWatchlist save(StockWatchlist watchlist) {
@@ -35,16 +36,17 @@ public class StockWatchlistService implements IStockWatchlistService {
         if (symbol == null || symbol.isBlank()) {
             throw new ServiceException("股票代码不能为空");
         }
-        if (repository.existsByUserIdAndSymbol(DEFAULT_USER_ID, symbol)) {
+        String userId = userContext.currentUserId();
+        if (repository.existsByUserIdAndSymbol(userId, symbol)) {
             throw new DuplicateException("自选股已存在: {}", symbol);
         }
 
         Long now = System.currentTimeMillis();
         StockWatchlist item = StockWatchlist.builder()
-                .userId(DEFAULT_USER_ID)
+                .userId(userId)
                 .symbol(symbol)
-                .market(market(symbol))
-                .code(code(symbol))
+                .market(stockMarketService.market(symbol))
+                .code(stockMarketService.code(symbol))
                 .name(resolveName(symbol, watchlist.getName()))
                 .sortOrder(nextSortOrder())
                 .createdAt(now)
@@ -56,14 +58,14 @@ public class StockWatchlistService implements IStockWatchlistService {
     @Override
     public void delete(String symbol) {
         String normalizedSymbol = stockMarketService.normalizeSymbol(symbol);
-        StockWatchlist existing = repository.findByUserIdAndSymbol(DEFAULT_USER_ID, normalizedSymbol)
+        StockWatchlist existing = repository.findByUserIdAndSymbol(userContext.currentUserId(), normalizedSymbol)
                 .orElseThrow(() -> new NotFoundException("自选股不存在: {}", normalizedSymbol));
         repository.deleteById(existing.getId());
     }
 
     @Override
     public List<StockWatchlist> findAll() {
-        return repository.findByUserIdOrderBySortOrderAscCreatedAtAsc(DEFAULT_USER_ID);
+        return repository.findByUserIdOrderBySortOrderAscCreatedAtAsc(userContext.currentUserId());
     }
 
     @Override
@@ -73,10 +75,11 @@ public class StockWatchlistService implements IStockWatchlistService {
         }
 
         List<StockWatchlist> updated = new ArrayList<>();
+        String userId = userContext.currentUserId();
         int sortOrder = 0;
         for (String symbol : symbols) {
             String normalizedSymbol = stockMarketService.normalizeSymbol(symbol);
-            StockWatchlist existing = repository.findByUserIdAndSymbol(DEFAULT_USER_ID, normalizedSymbol)
+            StockWatchlist existing = repository.findByUserIdAndSymbol(userId, normalizedSymbol)
                     .orElseThrow(() -> new NotFoundException("自选股不存在: {}", normalizedSymbol));
             existing.setSortOrder(sortOrder++);
             existing.setUpdatedAt(System.currentTimeMillis());
@@ -86,7 +89,7 @@ public class StockWatchlistService implements IStockWatchlistService {
     }
 
     private Integer nextSortOrder() {
-        return Math.toIntExact(repository.countByUserId(DEFAULT_USER_ID));
+        return Math.toIntExact(repository.countByUserId(userContext.currentUserId()));
     }
 
     private String resolveName(String symbol, String fallbackName) {
@@ -102,13 +105,5 @@ public class StockWatchlistService implements IStockWatchlistService {
             log.warn("Failed to resolve stock name for watchlist symbol: {}", symbol, ex);
         }
         return symbol;
-    }
-
-    private String market(String symbol) {
-        return symbol.length() > 2 ? symbol.substring(0, 2) : "";
-    }
-
-    private String code(String symbol) {
-        return symbol.length() > 2 ? symbol.substring(2) : symbol;
     }
 }

@@ -8,6 +8,7 @@ import LifePageShell from './LifePageShell';
 import MetricCard from './MetricCard';
 import MetricGrid from './MetricGrid';
 import { stockApi, type StockAnalysisItem, type StockAnalysisSummary } from '../services/api';
+import { formatMoney, formatPercentValue } from '../utils/stockFormat';
 import { useAppPreferences } from '../contexts/AppPreferencesContext';
 
 const LifeStockAnalysisPage = () => {
@@ -94,7 +95,7 @@ const LifeStockAnalysisPage = () => {
       dataIndex: 'percent',
       key: 'percent',
       align: 'right',
-      render: value => formatPercent(value)
+      render: value => formatPercentValue(value)
     },
     {
       title: text.message,
@@ -128,7 +129,7 @@ const LifeStockAnalysisPage = () => {
       {error ? <Alert type="error" showIcon message={error} className="stock-market-alert" /> : null}
 
       <MetricGrid gap={16} minColumnWidth={200}>
-        <MetricCard title={text.maxConcentration} value={formatPercent(summary?.concentrationPercent)} suffix={summary?.concentrationSymbol || ''} accent="#5856d6" />
+        <MetricCard title={text.maxConcentration} value={formatPercentValue(summary?.concentrationPercent)} suffix={summary?.concentrationSymbol || ''} accent="#5856d6" />
         <MetricCard title={text.gainersCount} value={summary?.topGainers?.length || 0} suffix={text.stockUnit} accent="#f5222d" />
         <MetricCard title={text.losersCount} value={summary?.topLosers?.length || 0} suffix={text.stockUnit} accent="#16a34a" />
         <MetricCard title={text.calculatedAt} value={calculatedAt} accent="#0071e3" valueStyle={{ fontSize: 18 }} />
@@ -188,22 +189,5 @@ const AnalysisTable = ({ title, description, emptyText, data, columns, loading }
     />
   </Card>
 );
-
-const formatMoney = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '-';
-  }
-  return value.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
-};
-
-const formatPercent = (value?: number) => {
-  if (typeof value !== 'number') {
-    return '-';
-  }
-  return `${value.toFixed(2)}%`;
-};
 
 export default LifeStockAnalysisPage;
