@@ -5,6 +5,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, ArrowLeftOu
 import { chargeStationApi, chargeRecordApi } from '../services/api';
 import type { ChargeRecord } from '../services/api';
 import { useAppPreferences } from '../contexts/AppPreferencesContext';
+import dayjs from 'dayjs';
 
 interface ChargeProviderOption {
   label: string;
@@ -84,6 +85,8 @@ const HealthChargeStationPage: React.FC = () => {
     codeRequired: isEnglish ? 'Please enter a station code' : '请输入站点编码',
     codeExists: isEnglish ? 'Station code already exists' : '站点编码已存在',
     stationNamePlaceholder: isEnglish ? 'Enter station name (optional)' : '请输入站点名称（可选）',
+    lastChargeAt: isEnglish ? 'Last Charge Time' : '最近一次充电时间',
+    neverCharged: isEnglish ? 'Never' : '从未充电',
     addSuccess: isEnglish ? 'Charging station added' : '添加充电站成功',
     addFailed: isEnglish ? 'Failed to add charging station' : '添加充电站失败',
     updateSuccess: isEnglish ? 'Charging station updated' : '更新充电站成功',
@@ -460,6 +463,12 @@ const HealthChargeStationPage: React.FC = () => {
                     <div style={{ color: '#999', fontSize: '12px' }}>{text.location}</div>
                     <div style={{ color: '#52c41a', fontSize: '14px', fontWeight: 'bold' }}>
                       {station.location}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ color: '#999', fontSize: '12px' }}>{text.lastChargeAt}</div>
+                    <div style={{ color: '#ffc53d', fontSize: '12px' }}>
+                      {station.lastChargeAt ? dayjs(station.lastChargeAt).format('YYYY-MM-DD HH:mm') : text.neverCharged}
                     </div>
                   </div>
                 </div>

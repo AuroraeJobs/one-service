@@ -3,10 +3,15 @@ package com.one.record.service.impl;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.one.record.model.ChargeRecord;
+import com.one.record.model.ChargeStation;
 import com.one.record.repository.ChargeRecordRepository;
+import com.one.record.repository.ChargeStationRepository;
 import com.one.record.service.IChargeRecordService;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +23,8 @@ public class ChargeRecordService implements IChargeRecordService {
     
     private final ChargeRecordRepository repository;
     
+    private final ChargeStationRepository chargeStationRepository;
+    
     @Override
     public ChargeRecord save(ChargeRecord record) {
         long currentTime = System.currentTimeMillis();
@@ -25,7 +32,37 @@ public class ChargeRecordService implements IChargeRecordService {
             record.setCreatedAt(currentTime);
         }
         record.setUpdatedAt(currentTime);
-        return repository.save(record);
+        ChargeRecord saved = repository.save(record);
+        touchLastChargeAt(saved);
+        return saved;
+    }
+    
+    private void touchLastChargeAt(ChargeRecord record) {
+        String stationCode = record.getLocation();
+        if (stationCode == null) {
+            return;
+        }
+        Long startTimestamp = toStartTimestamp(record.getDate(), record.getStartTime());
+        if (startTimestamp == null) {
+            return;
+        }
+        chargeStationRepository.findByStationCode(stationCode).ifPresent(station -> {
+            station.setLastChargeAt(startTimestamp);
+            chargeStationRepository.save(station);
+        });
+    }
+    
+    private Long toStartTimestamp(String date, String startTime) {
+        if (date == null || startTime == null || startTime.isEmpty()) {
+            return null;
+        }
+        try {
+            LocalDateTime dateTime = LocalDateTime.parse(date + "T" + startTime, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"));
+            return dateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        } catch (Exception e) {
+            log.warn("Failed to parse charge start time: {} {}", date, startTime);
+            return null;
+        }
     }
     
     @Override

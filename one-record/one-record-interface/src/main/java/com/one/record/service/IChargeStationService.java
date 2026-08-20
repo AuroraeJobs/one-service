@@ -16,6 +16,11 @@ public interface IChargeStationService {
     
     ChargeStation findByStationCode(String stationCode);
     
+    /**
+     * 更新充电站的最近一次充电时间（新增充电记录选择该站点时调用）
+     */
+    ChargeStation markLastChargeAt(String stationCode);
+    
     List<ChargeStation> findAll();
     
     List<ChargeStation> findByProvider(String provider);

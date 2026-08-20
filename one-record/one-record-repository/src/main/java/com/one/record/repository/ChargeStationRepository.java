@@ -20,5 +20,7 @@ public interface ChargeStationRepository extends MongoRepository<ChargeStation, 
     
     boolean existsByStationCode(String stationCode);
     
+    List<ChargeStation> findAllByOrderByLastChargeAtDesc();
+    
     List<ChargeStation> findAllByOrderByCreatedAtDesc();
 }

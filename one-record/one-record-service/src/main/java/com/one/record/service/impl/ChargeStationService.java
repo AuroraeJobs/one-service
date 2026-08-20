@@ -28,7 +28,15 @@ public class ChargeStationService implements IChargeStationService {
         
         long now = System.currentTimeMillis();
         station.setCreatedAt(now);
+        station.setLastChargeAt(now);
         station.setUpdatedAt(now);
+        return repository.save(station);
+    }
+    
+    @Override
+    public ChargeStation markLastChargeAt(String stationCode) {
+        ChargeStation station = findByStationCode(stationCode);
+        station.setLastChargeAt(System.currentTimeMillis());
         return repository.save(station);
     }
     
@@ -78,7 +86,7 @@ public class ChargeStationService implements IChargeStationService {
     
     @Override
     public List<ChargeStation> findAll() {
-        return repository.findAllByOrderByCreatedAtDesc();
+        return repository.findAllByOrderByLastChargeAtDesc();
     }
     
     @Override

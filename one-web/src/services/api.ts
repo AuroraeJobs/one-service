@@ -2036,6 +2036,7 @@ export interface ChargeStation {
   location: string;
   stationCode: string;
   stationName?: string;
+  lastChargeAt?: number;
   createdAt?: number;
   updatedAt?: number;
 }
