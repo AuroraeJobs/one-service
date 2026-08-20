@@ -488,32 +488,6 @@ const HealthSummerSolsticePage: React.FC = () => {
               {text.basicInfo}
             </div>
             <Row gutter={16}>
-              <Col span={16}>
-                <Form.Item
-                  name="company"
-                  label={text.company}
-                  rules={[{ required: true, message: text.selectCompany }]}
-                >
-                  <Select
-                    placeholder={text.selectCompany}
-                    style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
-                    options={companyOptions}
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item
-                  name="resetCumulative"
-                  label={text.resetCumulativeShort}
-                  valuePropName="checked"
-                  tooltip={text.resetCumulativeTip}
-                  style={{ marginBottom: 0 }}
-                >
-                  <Switch />
-                </Form.Item>
-              </Col>
-            </Row>
-            <Row gutter={16}>
               <Col span={12}>
                 <Form.Item
                   name="year"
@@ -537,6 +511,32 @@ const HealthSummerSolsticePage: React.FC = () => {
                     style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
                     options={monthOptions}
                   />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={16}>
+                <Form.Item
+                  name="company"
+                  label={text.company}
+                  rules={[{ required: true, message: text.selectCompany }]}
+                >
+                  <Select
+                    placeholder={text.selectCompany}
+                    style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+                    options={companyOptions}
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={8}>
+                <Form.Item
+                  name="resetCumulative"
+                  label={text.resetCumulativeShort}
+                  valuePropName="checked"
+                  tooltip={text.resetCumulativeTip}
+                  style={{ marginBottom: 0 }}
+                >
+                  <Switch />
                 </Form.Item>
               </Col>
             </Row>
@@ -616,13 +616,10 @@ const HealthSummerSolsticePage: React.FC = () => {
                 <InsuranceOutlined />
                 {text.specialDeduction}
               </div>
-              <div style={{ width: '40%' }}>
-                <InputNumber 
-                  disabled
-                  prefix="¥"
-                  value={addSpecialDeduction}
-                  style={{ width: '100%', backgroundColor: '#3D3D3D', borderColor: '#444', color: '#fff' }}
-                />
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ color: '#FF9800', fontSize: '16px', fontWeight: 'bold' }}>
+                  {formatCurrency(addSpecialDeduction)}
+                </div>
               </div>
             </div>
             <Row gutter={16}>
@@ -832,32 +829,6 @@ const HealthSummerSolsticePage: React.FC = () => {
                 {text.basicInfo}
               </div>
 <Row gutter={16}>
-              <Col span={16}>
-                <Form.Item
-                  name="company"
-                  label={text.company}
-                  rules={[{ required: true, message: text.selectCompany }]}
-                >
-                  <Select
-                    placeholder={text.selectCompany}
-                    style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
-                    options={companyOptions}
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item
-                  name="resetCumulative"
-                  label={text.resetCumulativeShort}
-                  valuePropName="checked"
-                  tooltip={text.resetCumulativeTip}
-                  style={{ marginBottom: 0 }}
-                >
-                  <Switch />
-                </Form.Item>
-              </Col>
-            </Row>
-<Row gutter={16}>
               <Col span={12}>
                 <Form.Item
                   name="year"
@@ -881,6 +852,32 @@ const HealthSummerSolsticePage: React.FC = () => {
                     style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
                     options={monthOptions}
                   />
+                </Form.Item>
+              </Col>
+            </Row>
+<Row gutter={16}>
+              <Col span={16}>
+                <Form.Item
+                  name="company"
+                  label={text.company}
+                  rules={[{ required: true, message: text.selectCompany }]}
+                >
+                  <Select
+                    placeholder={text.selectCompany}
+                    style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+                    options={companyOptions}
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={8}>
+                <Form.Item
+                  name="resetCumulative"
+                  label={text.resetCumulativeShort}
+                  valuePropName="checked"
+                  tooltip={text.resetCumulativeTip}
+                  style={{ marginBottom: 0 }}
+                >
+                  <Switch />
                 </Form.Item>
               </Col>
             </Row>
@@ -960,13 +957,10 @@ const HealthSummerSolsticePage: React.FC = () => {
                   <InsuranceOutlined />
                   {text.specialDeduction}
                 </div>
-                <div style={{ width: '40%' }}>
-                  <InputNumber 
-                    disabled
-                    prefix="¥"
-                    value={editSpecialDeduction}
-                    style={{ width: '100%', backgroundColor: '#3D3D3D', borderColor: '#444', color: '#fff' }}
-                  />
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ color: '#FF9800', fontSize: '16px', fontWeight: 'bold' }}>
+                    {formatCurrency(editSpecialDeduction)}
+                  </div>
                 </div>
               </div>
               <Row gutter={16}>
@@ -1072,7 +1066,21 @@ const HealthSummerSolsticePage: React.FC = () => {
                 <CalendarOutlined />
                 {text.basicInfo}
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>{text.year}</div>
+                  <div style={{ color: 'var(--app-text)', fontSize: '14px', fontWeight: 'bold' }}>
+                    {isEnglish ? editingRecord.year : `${editingRecord.year}年`}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>{text.month}</div>
+                  <div style={{ color: 'var(--app-text)', fontSize: '14px', fontWeight: 'bold' }}>
+                    {isEnglish ? monthOptions[editingRecord.month - 1]?.label || editingRecord.month : `${editingRecord.month}月`}
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginTop: '12px' }}>
                 <div>
                   <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>{text.company}</div>
                   <div style={{ color: 'var(--app-text)', fontSize: '14px', fontWeight: 'bold' }}>
@@ -1092,20 +1100,6 @@ const HealthSummerSolsticePage: React.FC = () => {
                     {isEnglish ? 'Restart' : '重新累计'}
                   </span>
                 )}
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
-                <div>
-                  <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>{text.year}</div>
-                  <div style={{ color: 'var(--app-text)', fontSize: '14px', fontWeight: 'bold' }}>
-                    {isEnglish ? editingRecord.year : `${editingRecord.year}年`}
-                  </div>
-                </div>
-                <div>
-                  <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>{text.month}</div>
-                  <div style={{ color: 'var(--app-text)', fontSize: '14px', fontWeight: 'bold' }}>
-                    {isEnglish ? monthOptions[editingRecord.month - 1]?.label || editingRecord.month : `${editingRecord.month}月`}
-                  </div>
-                </div>
               </div>
             </div>
 
