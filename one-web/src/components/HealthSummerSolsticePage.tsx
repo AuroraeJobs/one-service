@@ -17,6 +17,8 @@ const HealthSummerSolsticePage: React.FC = () => {
     avgActualIncome: isEnglish ? 'Average Salary' : '平均工资',
     totalTaxPaid: isEnglish ? 'Total Tax Paid' : '累计已纳税',
     noRecords: isEnglish ? 'No salary records' : '暂无工资记录',
+    company: isEnglish ? 'Company' : '公司',
+    selectCompany: isEnglish ? 'Please select company' : '请选择公司',
     monthlyIncome: isEnglish ? 'Monthly Income' : '当月收入',
     currentTaxDeclaration: isEnglish ? 'Current Tax Declaration' : '本期申报税额',
     actualIncome: isEnglish ? 'Net Income' : '实际所得额',
@@ -64,6 +66,11 @@ const HealthSummerSolsticePage: React.FC = () => {
       label: isEnglish ? new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date(2026, index, 1)) : `${month}月`
     };
   });
+  const companyOptions = [
+    { value: 'QUELLINK', zh: '移为', en: 'Queclink' },
+    { value: 'PROUDSMART', zh: '普奥', en: 'Proudsmart' },
+    { value: 'MOXI', zh: '摩羲', en: 'MOXI' },
+  ].map(company => ({ value: company.value, label: isEnglish ? company.en : company.zh }));
   const formatYearMonth = (record: SalaryRecord) => (
     isEnglish ? `${monthOptions[record.month - 1]?.label || record.month} ${record.year}` : `${record.year}年${record.month}月`
   );
@@ -125,6 +132,7 @@ const HealthSummerSolsticePage: React.FC = () => {
     let medicalInsurance = 0;
     let unemploymentInsurance = 0;
     let housingFund = 0;
+    let company: string | undefined;
     
     if (salaryRecords.length > 0) {
       const latestRecord = salaryRecords[0];
@@ -142,11 +150,13 @@ const HealthSummerSolsticePage: React.FC = () => {
       medicalInsurance = latestRecord.medicalInsurance || 0;
       unemploymentInsurance = latestRecord.unemploymentInsurance || 0;
       housingFund = latestRecord.housingFund || 0;
+      company = latestRecord.company;
     }
     
     addForm.setFieldsValue({
       year,
       month,
+      company,
       standardDeduction,
       endowmentInsurance,
       medicalInsurance,
@@ -279,6 +289,18 @@ const HealthSummerSolsticePage: React.FC = () => {
                 >
                   <div style={{ color: '#FF9800', fontSize: '16px', fontWeight: 'bold', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {formatYearMonth(record)}
+                    {record.company && (
+                      <span style={{
+                        fontSize: '11px',
+                        fontWeight: 'normal',
+                        color: '#1890ff',
+                        background: 'rgba(24, 144, 255, 0.15)',
+                        borderRadius: '4px',
+                        padding: '1px 6px'
+                      }}>
+                        {companyOptions.find(c => c.value === record.company)?.label || record.company}
+                      </span>
+                    )}
                     {record.resetCumulative && (
                       <span style={{
                         fontSize: '11px',
@@ -292,23 +314,29 @@ const HealthSummerSolsticePage: React.FC = () => {
                       </span>
                     )}
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                     <div>
                       <div style={{ color: '#999', fontSize: '12px' }}>{text.monthlyIncome}</div>
                       <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
                         {formatCurrency(record.monthlyIncome)}
                       </div>
                     </div>
-                    <div>
-                      <div style={{ color: '#999', fontSize: '12px' }}>{text.currentTaxDeclaration}</div>
-                      <div style={{ color: '#FF9800', fontSize: '14px', fontWeight: 'bold' }}>
-                        {formatCurrency(record.currentTaxDeclaration)}
-                      </div>
-                    </div>
-                    <div>
+                    <div style={{ textAlign: 'right' }}>
                       <div style={{ color: '#999', fontSize: '12px' }}>{text.actualIncome}</div>
                       <div style={{ color: '#52c41a', fontSize: '14px', fontWeight: 'bold' }}>
                         {formatCurrency(record.actualIncome)}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ color: '#999', fontSize: '12px' }}>{text.specialDeduction}</div>
+                      <div style={{ color: '#faad14', fontSize: '14px', fontWeight: 'bold' }}>
+                        {formatCurrency(record.specialDeduction)}
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ color: '#999', fontSize: '12px' }}>{text.currentTaxDeclaration}</div>
+                      <div style={{ color: '#FF9800', fontSize: '14px', fontWeight: 'bold' }}>
+                        {formatCurrency(record.currentTaxDeclaration)}
                       </div>
                     </div>
                   </div>
@@ -364,6 +392,17 @@ const HealthSummerSolsticePage: React.FC = () => {
             }}
             headStyle={{ borderBottom: '1px solid #444', color: '#fff', fontSize: '14px' }}
           >
+            <Form.Item
+              name="company"
+              label={text.company}
+              rules={[{ required: true, message: text.selectCompany }]}
+            >
+              <Select
+                placeholder={text.selectCompany}
+                style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+                options={companyOptions}
+              />
+            </Form.Item>
             <Row gutter={16}>
               <Col span={12}>
                 <Form.Item
@@ -601,6 +640,17 @@ const HealthSummerSolsticePage: React.FC = () => {
               }}
               headStyle={{ borderBottom: '1px solid #444', color: '#fff', fontSize: '14px' }}
             >
+<Form.Item
+              name="company"
+              label={text.company}
+              rules={[{ required: true, message: text.selectCompany }]}
+            >
+              <Select
+                placeholder={text.selectCompany}
+                style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+                options={companyOptions}
+              />
+            </Form.Item>
 <Row gutter={16}>
               <Col span={12}>
                 <Form.Item

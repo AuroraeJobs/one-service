@@ -2472,6 +2472,7 @@ export const teslaFleetApi = {
 
 export interface SalaryRecord {
   id?: string;
+  company?: string;
   year: number;
   month: number;
   monthlyIncome: number;

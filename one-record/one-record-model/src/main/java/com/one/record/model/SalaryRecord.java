@@ -1,5 +1,6 @@
 package com.one.record.model;
 
+import com.one.record.enums.SalaryCompany;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,6 +17,8 @@ public class SalaryRecord {
     
     @Id
     private String id;
+    
+    private SalaryCompany company;
     
     private Integer year;
     
