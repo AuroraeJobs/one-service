@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import MetricCard from './MetricCard';
 import MetricGrid from './MetricGrid';
 import { useNavigate } from 'react-router-dom';
-import { Card, Form, Input, InputNumber, Select, Button, DatePicker, Row, Col, message, Drawer } from 'antd';
-import { ThunderboltOutlined, PlusOutlined, DeleteOutlined, CalendarOutlined, ClockCircleOutlined, CarOutlined, DollarOutlined, MessageOutlined, GiftOutlined, EditOutlined, CheckOutlined } from '@ant-design/icons';
+import { Card, Form, Input, InputNumber, Select, Button, DatePicker, Row, Col, message, Drawer, Popconfirm } from 'antd';
+import { ThunderboltOutlined, PlusOutlined, CalendarOutlined, ClockCircleOutlined, CarOutlined, DollarOutlined, MessageOutlined, GiftOutlined, EditOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { chargeRecordApi, chargeStationApi, type ChargeLocationOption } from '../services/api';
 import ReactECharts from 'echarts-for-react';
@@ -122,6 +122,12 @@ const HealthSpringEquinoxPage: React.FC = () => {
     noRecords: isEnglish ? 'No charging records' : '暂无充电记录',
     editRecord: isEnglish ? 'Edit Charging Record' : '编辑充电记录',
     addRecord: isEnglish ? 'Add Charging Record' : '添加充电记录',
+    save: isEnglish ? 'Save' : '保存',
+    edit: isEnglish ? 'Edit' : '编辑',
+    delete: isEnglish ? 'Delete' : '删除',
+    cancel: isEnglish ? 'Cancel' : '取消',
+    ok: isEnglish ? 'OK' : '确定',
+    deleteConfirm: isEnglish ? 'Delete this charging record?' : '确定要删除这条充电记录吗？',
     chargingTime: isEnglish ? 'Charging Time' : '充电时间',
     date: isEnglish ? 'Date' : '日期',
     startTime: isEnglish ? 'Start Time' : '开始时间',
@@ -471,24 +477,7 @@ const HealthSpringEquinoxPage: React.FC = () => {
               width: '100%',
               gap: '24px'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Button
-                  type="text"
-                  icon={<ThunderboltOutlined style={{ fontSize: '20px' }} />}
-                  onClick={() => navigate('/vehicle/charging-stations')}
-                  style={{
-                    color: '#1890ff',
-                    height: '32px',
-                    width: '32px',
-                    borderRadius: '50%',
-                    padding: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer'
-                  }}
-                />
-              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} />
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <Select
                   placeholder={text.selectYear}
@@ -994,10 +983,32 @@ const HealthSpringEquinoxPage: React.FC = () => {
                 {text.detail}
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
+                <Popconfirm
+                  title={text.deleteConfirm}
+                  onConfirm={() => {
+                    if (selectedRecord) {
+                      handleDelete(selectedRecord.id);
+                      setDetailModalVisible(false);
+                    }
+                  }}
+                  okText={text.ok}
+                  cancelText={text.cancel}
+                >
+                  <Button
+                    type="primary"
+                    danger
+                    style={{
+                      background: 'linear-gradient(135deg, #ff4d4f, #cf1322)',
+                      border: 'none',
+                      color: '#fff',
+                      borderRadius: '8px'
+                    }}
+                  >
+                    {text.delete}
+                  </Button>
+                </Popconfirm>
                 <Button
                   type="primary"
-                  size="small"
-                  icon={<EditOutlined />}
                   onClick={() => {
                     if (selectedRecord) {
                       // 将时间字符串拆分为小时和分钟
@@ -1027,32 +1038,14 @@ const HealthSpringEquinoxPage: React.FC = () => {
                     }
                   }}
                   style={{
-                    backgroundColor: 'rgba(24, 144, 255, 0.1)',
-                    borderColor: '#1890ff',
-                    color: '#1890ff',
-                    borderRadius: '50%',
-                    width: '32px',
-                    height: '32px',
-                    padding: 0
+                    background: 'linear-gradient(135deg, #1890ff, #096dd9)',
+                    border: 'none',
+                    color: '#fff',
+                    borderRadius: '8px'
                   }}
-                />
-                <Button
-                  danger
-                  size="small"
-                  icon={<DeleteOutlined />}
-                  onClick={() => {
-                    if (selectedRecord) {
-                      handleDelete(selectedRecord.id);
-                      setDetailModalVisible(false);
-                    }
-                  }}
-                  style={{
-                    borderRadius: '50%',
-                    width: '32px',
-                    height: '32px',
-                    padding: 0
-                  }}
-                />
+                >
+                  {text.edit}
+                </Button>
               </div>
             </div>
           }
@@ -1277,23 +1270,38 @@ const HealthSpringEquinoxPage: React.FC = () => {
                   </>
                 )}
               </div>
-              <Button
-                type="primary"
-                htmlType="submit"
-                onClick={() => form.submit()}
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                  padding: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'linear-gradient(135deg, #1890ff, #096dd9)'
-                }}
-              >
-                <CheckOutlined style={{ fontSize: '16px' }} />
-              </Button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {isEditing && (
+                  <Button
+                    onClick={() => {
+                      setAddDrawerVisible(false);
+                      setEditingId(null);
+                      setIsEditing(false);
+                      form.resetFields();
+                      setDetailModalVisible(true);
+                    }}
+                    style={{
+                      color: '#fff',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      border: '1px solid #444',
+                      borderRadius: '8px'
+                    }}
+                  >
+                    {text.cancel}
+                  </Button>
+                )}
+                <Button
+                  type="primary"
+                  onClick={() => form.submit()}
+                  style={{
+                    background: 'linear-gradient(135deg, #52c41a, #389e0d)',
+                    border: 'none',
+                    borderRadius: '8px'
+                  }}
+                >
+                  {text.save}
+                </Button>
+              </div>
             </div>
           }
           placement="right"

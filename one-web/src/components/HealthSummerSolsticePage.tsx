@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import MetricCard from './MetricCard';
-import MetricGrid from './MetricGrid';
-import { Card, Button, Drawer, Form, Input, InputNumber, message, Row, Col, Select, Switch } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SaveOutlined, CalendarOutlined } from '@ant-design/icons';
+import { Card, Button, Drawer, Form, Input, InputNumber, message, Row, Col, Select, Switch, Popconfirm } from 'antd';
+import { PlusOutlined, CalendarOutlined, WalletOutlined, InsuranceOutlined, CalculatorOutlined, FileTextOutlined } from '@ant-design/icons';
 import { salaryRecordApi } from '../services/api';
 import type { SalaryRecord, SalaryStatistics } from '../services/api';
 import { useAppPreferences } from '../contexts/AppPreferencesContext';
@@ -14,6 +13,7 @@ const HealthSummerSolsticePage: React.FC = () => {
   const text = {
     totalRecords: isEnglish ? 'Records' : '记录总数',
     totalActualIncome: isEnglish ? 'Total Net Income' : '累计实发',
+    totalMonthlyIncome: isEnglish ? 'Total Income' : '累计收入',
     avgActualIncome: isEnglish ? 'Average Salary' : '平均工资',
     totalTaxPaid: isEnglish ? 'Total Tax Paid' : '累计已纳税',
     noRecords: isEnglish ? 'No salary records' : '暂无工资记录',
@@ -25,6 +25,8 @@ const HealthSummerSolsticePage: React.FC = () => {
     addRecord: isEnglish ? 'Add Salary Record' : '添加工资记录',
     salaryDetails: isEnglish ? 'Salary Details' : '工资详情',
     save: isEnglish ? 'Save' : '保存',
+    edit: isEnglish ? 'Edit' : '编辑',
+    delete: isEnglish ? 'Delete' : '删除',
     basicInfo: isEnglish ? 'Basic Info' : '基本信息',
     year: isEnglish ? 'Year' : '年份',
     month: isEnglish ? 'Month' : '月份',
@@ -42,6 +44,7 @@ const HealthSummerSolsticePage: React.FC = () => {
     housingFund: isEnglish ? 'Housing Fund' : '住房公积金',
     specialDeduction: isEnglish ? 'Special Deduction' : '专项扣除',
     resetCumulative: isEnglish ? 'Restart Cumulative Tax (first month at new job)' : '重新累计（跳槽后新公司首月）',
+    resetCumulativeShort: isEnglish ? 'Restart' : '重新累计',
     resetCumulativeTip: isEnglish ? 'Turn on to restart cumulative taxable income from this month' : '开启后，累计应纳税所得额从本月重新开始计算',
     notes: isEnglish ? 'Notes' : '备注',
     notesPlaceholder: isEnglish ? 'Notes' : '备注信息',
@@ -57,7 +60,10 @@ const HealthSummerSolsticePage: React.FC = () => {
     updateSuccess: isEnglish ? 'Salary record updated' : '工资记录更新成功',
     updateFailed: isEnglish ? 'Failed to update salary record' : '更新失败',
     deleteSuccess: isEnglish ? 'Salary record deleted' : '删除成功',
-    deleteFailed: isEnglish ? 'Failed to delete salary record' : '删除失败'
+    deleteFailed: isEnglish ? 'Failed to delete salary record' : '删除失败',
+    deleteConfirm: isEnglish ? 'Delete this salary record?' : '确定要删除这条工资记录吗？',
+    ok: isEnglish ? 'OK' : '确定',
+    cancel: isEnglish ? 'Cancel' : '取消'
   };
   const monthOptions = Array.from({ length: 12 }, (_, index) => {
     const month = index + 1;
@@ -83,6 +89,8 @@ const HealthSummerSolsticePage: React.FC = () => {
   const [addForm] = Form.useForm();
   const [editForm] = Form.useForm();
   const [isEditing, setIsEditing] = useState(false);
+  const [selectedYear, setSelectedYear] = useState<number | null>(new Date().getFullYear());
+  const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
 
   // 监听编辑表单的五险一金字段变化
   const editEndowmentInsurance = Form.useWatch('endowmentInsurance', editForm);
@@ -123,6 +131,18 @@ const HealthSummerSolsticePage: React.FC = () => {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const yearOptions = Array.from(
+    new Set(salaryRecords.map(r => r.year).filter((y): y is number => typeof y === 'number'))
+  ).sort((a, b) => b - a).map(year => ({
+    label: isEnglish ? String(year) : `${year}年`,
+    value: year
+  }));
+
+  const filteredSalaryRecords = salaryRecords.filter(record =>
+    (!selectedYear || record.year === selectedYear) &&
+    (!selectedCompany || record.company === selectedCompany)
+  );
 
   const showAddDrawer = () => {
     let year = new Date().getFullYear();
@@ -228,19 +248,26 @@ const HealthSummerSolsticePage: React.FC = () => {
       paddingBottom: '100px'
     }}>
       <div style={{
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center',
-        maxWidth: '100%',
-        margin: '0 auto'
+        display: 'flex',
+        flexDirection: 'column',
+        maxWidth: '1400px',
+        width: '100%',
+        margin: '0 auto',
+        position: 'relative'
       }}>
         {statistics && (
-          <MetricGrid gap={20} minColumnWidth={200} style={{ marginBottom: '32px' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+            gap: '16px',
+            marginBottom: '24px'
+          }}>
             <MetricCard title={text.totalRecords} value={statistics.totalRecords} prefix={<CalendarOutlined />} accent="#FF9800" minWidth={200} />
+            <MetricCard title={text.totalMonthlyIncome} value={statistics.totalMonthlyIncome} prefix="¥" accent="#faad14" minWidth={200} />
             <MetricCard title={text.totalActualIncome} value={statistics.totalActualIncome} prefix="¥" accent="#52c41a" minWidth={200} />
             <MetricCard title={text.avgActualIncome} value={statistics.avgActualIncome} prefix="¥" accent="#1890ff" minWidth={200} />
             <MetricCard title={text.totalTaxPaid} value={statistics.totalTaxPaid} prefix="¥" accent="#9c27b0" minWidth={200} />
-          </MetricGrid>
+          </div>
         )}
 
         <Card
@@ -255,22 +282,66 @@ const HealthSummerSolsticePage: React.FC = () => {
             padding: 0,
             borderTop: 'none'
           }}
-          extra={
-            <Button 
-              type="primary" 
-              className="finance-salary-add-button"
-              icon={<PlusOutlined />} 
-              onClick={showAddDrawer}
-              style={{
-                borderRadius: '50%',
-                width: '40px',
-                height: '40px',
-                padding: '0'
-              }}
-            />
+          headStyle={{ border: 'none', padding: '0 0 16px 0' }}
+          title={
+            <div style={{
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              width: '100%',
+              gap: '24px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <Select
+                  placeholder={text.selectYear}
+                  allowClear
+                  value={selectedYear}
+                  onChange={(value) => setSelectedYear(value ?? null)}
+                  style={{
+                    minWidth: '120px',
+                    width: 'auto',
+                    backgroundColor: '#1D1D1D',
+                    borderColor: '#444',
+                    color: '#fff'
+                  }}
+                  options={yearOptions}
+                />
+                <Select
+                  placeholder={text.selectCompany}
+                  allowClear
+                  value={selectedCompany}
+                  onChange={(value) => setSelectedCompany(value ?? null)}
+                  style={{
+                    minWidth: '200px',
+                    width: 'auto',
+                    backgroundColor: '#1D1D1D',
+                    borderColor: '#444',
+                    color: '#fff'
+                  }}
+                  options={companyOptions}
+                />
+              </div>
+              <Button
+                type="primary"
+                className="finance-salary-add-button"
+                icon={<PlusOutlined />}
+                onClick={showAddDrawer}
+                size="small"
+                style={{
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  padding: '0',
+                  background: 'linear-gradient(135deg, #FF9800, #e65100)',
+                  boxShadow: '0 2px 8px rgba(255, 152, 0, 0.4)'
+                }}
+              />
+            </div>
           }
         >
-          {salaryRecords.length === 0 ? (
+          {filteredSalaryRecords.length === 0 ? (
             <div style={{
               textAlign: 'center', 
               padding: '60px 20px',
@@ -280,7 +351,7 @@ const HealthSummerSolsticePage: React.FC = () => {
             </div>
           ) : (
             <div className="record-grid">
-              {salaryRecords.map((record) => (
+              {filteredSalaryRecords.map((record) => (
                 <Card
                   key={record.id}
                   className="record-tile salary-record-tile"
@@ -296,7 +367,8 @@ const HealthSummerSolsticePage: React.FC = () => {
                         color: '#1890ff',
                         background: 'rgba(24, 144, 255, 0.15)',
                         borderRadius: '4px',
-                        padding: '1px 6px'
+                        padding: '1px 6px',
+                        marginLeft: 'auto'
                       }}>
                         {companyOptions.find(c => c.value === record.company)?.label || record.company}
                       </span>
@@ -349,9 +421,24 @@ const HealthSummerSolsticePage: React.FC = () => {
 
       <Drawer
         rootClassName="finance-salary-drawer"
-        title={text.addRecord}
+        title={
+          <div style={{
+            color: '#fff',
+            fontSize: '18px',
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            width: '100%'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <PlusOutlined style={{ color: '#FF9800' }} />
+              {text.addRecord}
+            </div>
+          </div>
+        }
         placement="right"
-        width={500}
+        width={520}
         open={isAddDrawerVisible}
         onClose={() => {
           setIsAddDrawerVisible(false);
@@ -362,7 +449,7 @@ const HealthSummerSolsticePage: React.FC = () => {
             type="primary"
             onClick={() => addForm.submit()}
             style={{
-              background: 'linear-gradient(135deg, #FF9800, #FF5722)',
+              background: 'linear-gradient(135deg, #52c41a, #389e0d)',
               border: 'none',
               borderRadius: '8px',
               marginRight: '8px'
@@ -372,9 +459,8 @@ const HealthSummerSolsticePage: React.FC = () => {
           </Button>
         }
         styles={{
-          body: { backgroundColor: '#1D1D1D' },
-          header: { backgroundColor: '#1D1D1D', borderBottom: '1px solid rgba(255, 152, 0, 0.2)' },
-          mask: { backgroundColor: 'rgba(0, 0, 0, 0.7)' }
+          body: { backgroundColor: '#000', padding: '24px' },
+          header: { backgroundColor: '#000', borderBottom: '1px solid rgba(255, 152, 0, 0.2)' }
         }}
       >
         <Form
@@ -382,27 +468,51 @@ const HealthSummerSolsticePage: React.FC = () => {
           layout="vertical"
           onFinish={handleAdd}
         >
-          <Card 
-            title={text.basicInfo}
-            style={{
-              marginBottom: '16px', 
-              backgroundColor: '#2D2D2D', 
-              borderColor: '#444',
-              borderRadius: '8px'
-            }}
-            headStyle={{ borderBottom: '1px solid #444', color: '#fff', fontSize: '14px' }}
-          >
-            <Form.Item
-              name="company"
-              label={text.company}
-              rules={[{ required: true, message: text.selectCompany }]}
-            >
-              <Select
-                placeholder={text.selectCompany}
-                style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
-                options={companyOptions}
-              />
-            </Form.Item>
+          <div style={{
+            marginBottom: '20px',
+            padding: '16px',
+            backgroundColor: 'rgba(255, 152, 0, 0.08)',
+            borderRadius: '12px',
+            border: '1px solid rgba(255, 152, 0, 0.2)'
+          }}>
+            <div style={{
+              fontSize: '16px',
+              fontWeight: 'bold',
+              color: '#FF9800',
+              marginBottom: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <CalendarOutlined />
+              {text.basicInfo}
+            </div>
+            <Row gutter={16}>
+              <Col span={16}>
+                <Form.Item
+                  name="company"
+                  label={text.company}
+                  rules={[{ required: true, message: text.selectCompany }]}
+                >
+                  <Select
+                    placeholder={text.selectCompany}
+                    style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+                    options={companyOptions}
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={8}>
+                <Form.Item
+                  name="resetCumulative"
+                  label={text.resetCumulativeShort}
+                  valuePropName="checked"
+                  tooltip={text.resetCumulativeTip}
+                  style={{ marginBottom: 0 }}
+                >
+                  <Switch />
+                </Form.Item>
+              </Col>
+            </Row>
             <Row gutter={16}>
               <Col span={12}>
                 <Form.Item
@@ -430,123 +540,162 @@ const HealthSummerSolsticePage: React.FC = () => {
                 </Form.Item>
               </Col>
             </Row>
-            <Form.Item
-              name="resetCumulative"
-              label={text.resetCumulative}
-              valuePropName="checked"
-              tooltip={text.resetCumulativeTip}
-              style={{ marginBottom: 0 }}
-            >
-              <Switch />
-            </Form.Item>
-          </Card>
+          </div>
 
-          <Card 
-            title={text.incomeInfo}
-            style={{
-              marginBottom: '16px', 
-              backgroundColor: '#2D2D2D', 
-              borderColor: '#444',
-              borderRadius: '8px'
-            }}
-            headStyle={{ borderBottom: '1px solid #444', color: '#fff', fontSize: '14px' }}
-          >
-            <Form.Item
-              name="monthlyIncome"
-              label={text.monthlyIncome}
-              rules={[{ required: true, message: text.enterMonthlyIncome }]}
-            >
-              <InputNumber 
-                placeholder={text.monthlyIncome}
-                prefix="¥"
-                style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
-              />
-            </Form.Item>
-            <Form.Item
-              name="standardDeduction"
-              label={text.standardDeduction}
-              rules={[{ required: true, message: text.enterStandardDeduction }]}
-            >
-              <InputNumber 
-                placeholder={text.standardDeduction}
-                prefix="¥"
-                style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
-              />
-            </Form.Item>
-          </Card>
+          <div style={{
+            marginBottom: '20px',
+            padding: '16px',
+            backgroundColor: 'rgba(24, 144, 255, 0.08)',
+            borderRadius: '12px',
+            border: '1px solid rgba(24, 144, 255, 0.2)'
+          }}>
+            <div style={{
+              fontSize: '16px',
+              fontWeight: 'bold',
+              color: '#1890ff',
+              marginBottom: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <WalletOutlined />
+              {text.incomeInfo}
+            </div>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="monthlyIncome"
+                  label={text.monthlyIncome}
+                  rules={[{ required: true, message: text.enterMonthlyIncome }]}
+                >
+                  <InputNumber 
+                    placeholder={text.monthlyIncome}
+                    prefix="¥"
+                    style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="standardDeduction"
+                  label={text.standardDeduction}
+                  rules={[{ required: true, message: text.enterStandardDeduction }]}
+                >
+                  <InputNumber 
+                    placeholder={text.standardDeduction}
+                    prefix="¥"
+                    style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+          </div>
 
-          <Card 
-            title={text.socialInsurance}
-            style={{
-              marginBottom: '16px', 
-              backgroundColor: '#2D2D2D', 
-              borderColor: '#444',
-              borderRadius: '8px'
-            }}
-            headStyle={{ borderBottom: '1px solid #444', color: '#fff', fontSize: '14px' }}
-          >
-            <Form.Item
-              name="endowmentInsurance"
-              label={text.endowmentInsurance}
-            >
-              <InputNumber 
-                placeholder={text.endowmentInsurance}
-                prefix="¥"
-                style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
-              />
-            </Form.Item>
-            <Form.Item
-              name="medicalInsurance"
-              label={text.medicalInsurance}
-            >
-              <InputNumber 
-                placeholder={text.medicalInsurance}
-                prefix="¥"
-                style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
-              />
-            </Form.Item>
-            <Form.Item
-              name="unemploymentInsurance"
-              label={text.unemploymentInsurance}
-            >
-              <InputNumber 
-                placeholder={text.unemploymentInsurance}
-                prefix="¥"
-                style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
-              />
-            </Form.Item>
-            <Form.Item
-              name="housingFund"
-              label={text.housingFund}
-            >
-              <InputNumber 
-                placeholder={text.housingFund}
-                prefix="¥"
-                style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
-              />
-            </Form.Item>
-            <Form.Item
-              label={text.specialDeduction}
-            >
-              <InputNumber 
-                disabled
-                prefix="¥"
-                value={addSpecialDeduction}
-                style={{ width: '100%', backgroundColor: '#3D3D3D', borderColor: '#444', color: '#fff' }}
-              />
-            </Form.Item>
-          </Card>
+          <div style={{
+            marginBottom: '20px',
+            padding: '16px',
+            backgroundColor: 'rgba(114, 46, 209, 0.08)',
+            borderRadius: '12px',
+            border: '1px solid rgba(114, 46, 209, 0.2)'
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: '12px',
+              marginBottom: '12px'
+            }}>
+              <div style={{
+                fontSize: '16px',
+                fontWeight: 'bold',
+                color: '#722ed1',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <InsuranceOutlined />
+                {text.specialDeduction}
+              </div>
+              <div style={{ width: '40%' }}>
+                <InputNumber 
+                  disabled
+                  prefix="¥"
+                  value={addSpecialDeduction}
+                  style={{ width: '100%', backgroundColor: '#3D3D3D', borderColor: '#444', color: '#fff' }}
+                />
+              </div>
+            </div>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="endowmentInsurance"
+                  label={text.endowmentInsurance}
+                >
+                  <InputNumber 
+                    placeholder={text.endowmentInsurance}
+                    prefix="¥"
+                    style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="medicalInsurance"
+                  label={text.medicalInsurance}
+                >
+                  <InputNumber 
+                    placeholder={text.medicalInsurance}
+                    prefix="¥"
+                    style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="unemploymentInsurance"
+                  label={text.unemploymentInsurance}
+                >
+                  <InputNumber 
+                    placeholder={text.unemploymentInsurance}
+                    prefix="¥"
+                    style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="housingFund"
+                  label={text.housingFund}
+                >
+                  <InputNumber 
+                    placeholder={text.housingFund}
+                    prefix="¥"
+                    style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+          </div>
 
-          <Card 
-            title={text.notes}
-            style={{
-              marginBottom: '16px', 
-              backgroundColor: '#2D2D2D', 
-              borderColor: '#444',
-              borderRadius: '8px'
-            }}
-            headStyle={{ borderBottom: '1px solid #444', color: '#fff', fontSize: '14px' }}
-          >
+          <div style={{
+            marginBottom: '20px',
+            padding: '16px',
+            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: '12px',
+            border: '1px solid rgba(255, 255, 255, 0.15)'
+          }}>
+            <div style={{
+              fontSize: '16px',
+              fontWeight: 'bold',
+              color: '#fff',
+              marginBottom: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <FileTextOutlined />
+              {text.notes}
+            </div>
             <Form.Item
               name="notes"
               label=""
@@ -556,15 +705,30 @@ const HealthSummerSolsticePage: React.FC = () => {
                 style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
               />
             </Form.Item>
-          </Card>
+          </div>
         </Form>
       </Drawer>
 
       <Drawer
         rootClassName="finance-salary-drawer"
-        title={text.salaryDetails}
+        title={
+          <div style={{
+            color: '#fff',
+            fontSize: '18px',
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            width: '100%'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <WalletOutlined style={{ color: '#FF9800' }} />
+              {text.salaryDetails}
+            </div>
+          </div>
+        }
         placement="right"
-        width={500}
+        width={520}
         open={isEditDrawerVisible}
         onClose={() => {
           setIsEditDrawerVisible(false);
@@ -574,54 +738,72 @@ const HealthSummerSolsticePage: React.FC = () => {
         }}
         extra={
           <div style={{ display: 'flex', gap: '8px' }}>
-            <Button
-              type="primary"
-              icon={<EditOutlined />}
-              onClick={() => setIsEditing(!isEditing)}
-              style={{
-                color: '#fff',
-                background: isEditing ? 'linear-gradient(135deg, #FF9800, #FF5722)' : 'linear-gradient(135deg, #1890ff, #096dd9)',
-                border: 'none',
-                borderRadius: '50%',
-                width: '36px',
-                height: '36px',
-                padding: '0'
-              }}
-            />
-            <Button
-              type="primary"
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => editingRecord?.id && handleDelete(editingRecord.id)}
-              style={{
-                border: 'none',
-                borderRadius: '50%',
-                width: '36px',
-                height: '36px',
-                padding: '0'
-              }}
-            />
+            {!isEditing && (
+              <>
+                <Popconfirm
+                  title={text.deleteConfirm}
+                  onConfirm={() => editingRecord?.id && handleDelete(editingRecord.id)}
+                  okText={text.ok}
+                  cancelText={text.cancel}
+                >
+                  <Button
+                    type="primary"
+                    danger
+                    style={{
+                      color: '#fff',
+                      background: 'linear-gradient(135deg, #ff4d4f, #cf1322)',
+                      border: 'none',
+                      borderRadius: '8px'
+                    }}
+                  >
+                    {text.delete}
+                  </Button>
+                </Popconfirm>
+                <Button
+                  type="primary"
+                  onClick={() => setIsEditing(true)}
+                  style={{
+                    color: '#fff',
+                    background: 'linear-gradient(135deg, #1890ff, #096dd9)',
+                    border: 'none',
+                    borderRadius: '8px'
+                  }}
+                >
+                  {text.edit}
+                </Button>
+              </>
+            )}
             {isEditing && (
-              <Button
-                type="primary"
-                icon={<SaveOutlined />}
-                onClick={() => editForm.submit()}
-                style={{
-                  background: 'linear-gradient(135deg, #52c41a, #389e0d)',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '36px',
-                  height: '36px',
-                  padding: '0'
-                }}
-              />
+              <>
+                <Button
+                  onClick={() => setIsEditing(false)}
+                  style={{
+                    color: '#fff',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    border: '1px solid #444',
+                    borderRadius: '8px'
+                  }}
+                >
+                  {text.cancel}
+                </Button>
+                <Button
+                  type="primary"
+                  onClick={() => editForm.submit()}
+                  style={{
+                    background: 'linear-gradient(135deg, #52c41a, #389e0d)',
+                    border: 'none',
+                    borderRadius: '8px'
+                  }}
+                >
+                  {text.save}
+                </Button>
+              </>
             )}
           </div>
         }
         styles={{
-          body: { backgroundColor: '#1D1D1D' },
-          header: { backgroundColor: '#1D1D1D', borderBottom: '1px solid rgba(255, 152, 0, 0.2)' },
-          mask: { backgroundColor: 'rgba(0, 0, 0, 0.7)' }
+          body: { backgroundColor: '#000', padding: '24px' },
+          header: { backgroundColor: '#000', borderBottom: '1px solid rgba(255, 152, 0, 0.2)' }
         }}
       >
         {isEditing ? (
@@ -630,27 +812,51 @@ const HealthSummerSolsticePage: React.FC = () => {
             layout="vertical"
             onFinish={handleEdit}
           >
-            <Card 
-              title={text.basicInfo}
-              style={{
-                marginBottom: '16px', 
-                backgroundColor: '#2D2D2D', 
-                borderColor: '#444',
-                borderRadius: '8px'
-              }}
-              headStyle={{ borderBottom: '1px solid #444', color: '#fff', fontSize: '14px' }}
-            >
-<Form.Item
-              name="company"
-              label={text.company}
-              rules={[{ required: true, message: text.selectCompany }]}
-            >
-              <Select
-                placeholder={text.selectCompany}
-                style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
-                options={companyOptions}
-              />
-            </Form.Item>
+            <div style={{
+              marginBottom: '20px',
+              padding: '16px',
+              backgroundColor: 'rgba(255, 152, 0, 0.08)',
+              borderRadius: '12px',
+              border: '1px solid rgba(255, 152, 0, 0.2)'
+            }}>
+              <div style={{
+                fontSize: '16px',
+                fontWeight: 'bold',
+                color: '#FF9800',
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <CalendarOutlined />
+                {text.basicInfo}
+              </div>
+<Row gutter={16}>
+              <Col span={16}>
+                <Form.Item
+                  name="company"
+                  label={text.company}
+                  rules={[{ required: true, message: text.selectCompany }]}
+                >
+                  <Select
+                    placeholder={text.selectCompany}
+                    style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+                    options={companyOptions}
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={8}>
+                <Form.Item
+                  name="resetCumulative"
+                  label={text.resetCumulativeShort}
+                  valuePropName="checked"
+                  tooltip={text.resetCumulativeTip}
+                  style={{ marginBottom: 0 }}
+                >
+                  <Switch />
+                </Form.Item>
+              </Col>
+            </Row>
 <Row gutter={16}>
               <Col span={12}>
                 <Form.Item
@@ -678,123 +884,162 @@ const HealthSummerSolsticePage: React.FC = () => {
                 </Form.Item>
               </Col>
             </Row>
-            <Form.Item
-              name="resetCumulative"
-              label={text.resetCumulative}
-              valuePropName="checked"
-              tooltip={text.resetCumulativeTip}
-              style={{ marginBottom: 0 }}
-            >
-              <Switch />
-            </Form.Item>
-          </Card>
+          </div>
 
-          <Card 
-            title={text.incomeInfo}
-              style={{
-                marginBottom: '16px', 
-                backgroundColor: '#2D2D2D', 
-                borderColor: '#444',
-                borderRadius: '8px'
-              }}
-              headStyle={{ borderBottom: '1px solid #444', color: '#fff', fontSize: '14px' }}
-            >
-              <Form.Item
-                name="monthlyIncome"
-                label={text.monthlyIncome}
-                rules={[{ required: true, message: text.enterMonthlyIncome }]}
-              >
-                <InputNumber 
-                  placeholder={text.monthlyIncome}
-                  prefix="¥"
-                  style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
-                />
-              </Form.Item>
-              <Form.Item
-                name="standardDeduction"
-                label={text.standardDeduction}
-                rules={[{ required: true, message: text.enterStandardDeduction }]}
-              >
-                <InputNumber 
-                  placeholder={text.standardDeduction}
-                  prefix="¥"
-                  style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
-                />
-              </Form.Item>
-            </Card>
+          <div style={{
+            marginBottom: '20px',
+            padding: '16px',
+            backgroundColor: 'rgba(24, 144, 255, 0.08)',
+            borderRadius: '12px',
+            border: '1px solid rgba(24, 144, 255, 0.2)'
+          }}>
+            <div style={{
+              fontSize: '16px',
+              fontWeight: 'bold',
+              color: '#1890ff',
+              marginBottom: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <WalletOutlined />
+              {text.incomeInfo}
+            </div>
+              <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="monthlyIncome"
+                  label={text.monthlyIncome}
+                  rules={[{ required: true, message: text.enterMonthlyIncome }]}
+                >
+                  <InputNumber 
+                    placeholder={text.monthlyIncome}
+                    prefix="¥"
+                    style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="standardDeduction"
+                  label={text.standardDeduction}
+                  rules={[{ required: true, message: text.enterStandardDeduction }]}
+                >
+                  <InputNumber 
+                    placeholder={text.standardDeduction}
+                    prefix="¥"
+                    style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+            </div>
 
-            <Card 
-              title={text.socialInsurance}
-              style={{
-                marginBottom: '16px', 
-                backgroundColor: '#2D2D2D', 
-                borderColor: '#444',
-                borderRadius: '8px'
-              }}
-              headStyle={{ borderBottom: '1px solid #444', color: '#fff', fontSize: '14px' }}
-            >
-              <Form.Item
-                name="endowmentInsurance"
-                label={text.endowmentInsurance}
-              >
-                <InputNumber 
-                  placeholder={text.endowmentInsurance}
-                  prefix="¥"
-                  style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
-                />
-              </Form.Item>
-              <Form.Item
-                name="medicalInsurance"
-                label={text.medicalInsurance}
-              >
-                <InputNumber 
-                  placeholder={text.medicalInsurance}
-                  prefix="¥"
-                  style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
-                />
-              </Form.Item>
-              <Form.Item
-                name="unemploymentInsurance"
-                label={text.unemploymentInsurance}
-              >
-                <InputNumber 
-                  placeholder={text.unemploymentInsurance}
-                  prefix="¥"
-                  style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
-                />
-              </Form.Item>
-              <Form.Item
-                name="housingFund"
-                label={text.housingFund}
-              >
-                <InputNumber 
-                  placeholder={text.housingFund}
-                  prefix="¥"
-                  style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
-                />
-              </Form.Item>
-              <Form.Item
-                label={text.specialDeduction}
-              >
-                <InputNumber 
-                  disabled
-                  prefix="¥"
-                  value={editSpecialDeduction}
-                  style={{ width: '100%', backgroundColor: '#3D3D3D', borderColor: '#444', color: '#fff' }}
-                />
-              </Form.Item>
-            </Card>
+            <div style={{
+              marginBottom: '20px',
+              padding: '16px',
+              backgroundColor: 'rgba(114, 46, 209, 0.08)',
+              borderRadius: '12px',
+              border: '1px solid rgba(114, 46, 209, 0.2)'
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '12px',
+                marginBottom: '12px'
+              }}>
+                <div style={{
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  color: '#722ed1',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <InsuranceOutlined />
+                  {text.specialDeduction}
+                </div>
+                <div style={{ width: '40%' }}>
+                  <InputNumber 
+                    disabled
+                    prefix="¥"
+                    value={editSpecialDeduction}
+                    style={{ width: '100%', backgroundColor: '#3D3D3D', borderColor: '#444', color: '#fff' }}
+                  />
+                </div>
+              </div>
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Form.Item
+                    name="endowmentInsurance"
+                    label={text.endowmentInsurance}
+                  >
+                    <InputNumber 
+                      placeholder={text.endowmentInsurance}
+                      prefix="¥"
+                      style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    name="medicalInsurance"
+                    label={text.medicalInsurance}
+                  >
+                    <InputNumber 
+                      placeholder={text.medicalInsurance}
+                      prefix="¥"
+                      style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    name="unemploymentInsurance"
+                    label={text.unemploymentInsurance}
+                  >
+                    <InputNumber 
+                      placeholder={text.unemploymentInsurance}
+                      prefix="¥"
+                      style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    name="housingFund"
+                    label={text.housingFund}
+                  >
+                    <InputNumber 
+                      placeholder={text.housingFund}
+                      prefix="¥"
+                      style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+            </div>
 
-            <Card 
-              title={text.notes}
-              style={{
-                marginBottom: '16px', 
-                backgroundColor: '#2D2D2D', 
-                borderColor: '#444',
-                borderRadius: '8px'
-              }}
-              headStyle={{ borderBottom: '1px solid #444', color: '#fff', fontSize: '14px' }}
-            >
+            <div style={{
+              marginBottom: '20px',
+              padding: '16px',
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '12px',
+              border: '1px solid rgba(255, 255, 255, 0.15)'
+            }}>
+              <div style={{
+                fontSize: '16px',
+                fontWeight: 'bold',
+                color: '#fff',
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <FileTextOutlined />
+                {text.notes}
+              </div>
               <Form.Item
                 name="notes"
                 label=""
@@ -804,21 +1049,51 @@ const HealthSummerSolsticePage: React.FC = () => {
                   style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
                 />
               </Form.Item>
-            </Card>
+            </div>
           </Form>
         ) : editingRecord ? (
           <div className="finance-salary-readonly">
-            <Card 
-              title={text.basicInfo}
-              style={{
-                marginBottom: '16px', 
-                backgroundColor: '#2D2D2D', 
-                borderColor: '#444',
-                borderRadius: '8px'
-              }}
-              headStyle={{ borderBottom: '1px solid #444', color: '#fff', fontSize: '14px' }}
-            >
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div style={{
+              marginBottom: '20px',
+              padding: '16px',
+              backgroundColor: 'rgba(255, 152, 0, 0.08)',
+              borderRadius: '12px',
+              border: '1px solid rgba(255, 152, 0, 0.2)'
+            }}>
+              <div style={{
+                fontSize: '16px',
+                fontWeight: 'bold',
+                color: '#FF9800',
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <CalendarOutlined />
+                {text.basicInfo}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+                <div>
+                  <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>{text.company}</div>
+                  <div style={{ color: 'var(--app-text)', fontSize: '14px', fontWeight: 'bold' }}>
+                    {editingRecord.company ? (companyOptions.find(c => c.value === editingRecord.company)?.label || editingRecord.company) : '-'}
+                  </div>
+                </div>
+                {editingRecord.resetCumulative && (
+                  <span style={{
+                    color: '#FF9800',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    background: 'rgba(255, 152, 0, 0.15)',
+                    borderRadius: '4px',
+                    padding: '4px 8px',
+                    flexShrink: 0
+                  }}>
+                    {isEnglish ? 'Restart' : '重新累计'}
+                  </span>
+                )}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
                 <div>
                   <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>{text.year}</div>
                   <div style={{ color: 'var(--app-text)', fontSize: '14px', fontWeight: 'bold' }}>
@@ -832,32 +1107,28 @@ const HealthSummerSolsticePage: React.FC = () => {
                   </div>
                 </div>
               </div>
-              {editingRecord.resetCumulative && (
-                <div style={{
-                  marginTop: '12px',
-                  color: '#FF9800',
-                  fontSize: '13px',
-                  fontWeight: 'bold',
-                  background: 'rgba(255, 152, 0, 0.1)',
-                  borderRadius: '4px',
-                  padding: '6px 10px'
-                }}>
-                  {isEnglish ? 'Restart cumulative tax from this month' : '该月重新累计（跳槽后新公司首月）'}
-                </div>
-              )}
-            </Card>
+            </div>
 
-            <Card 
-              title={text.incomeInfo}
-              style={{
-                marginBottom: '16px', 
-                backgroundColor: '#2D2D2D', 
-                borderColor: '#444',
-                borderRadius: '8px'
-              }}
-              headStyle={{ borderBottom: '1px solid #444', color: '#fff', fontSize: '14px' }}
-            >
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
+            <div style={{
+              marginBottom: '20px',
+              padding: '16px',
+              backgroundColor: 'rgba(24, 144, 255, 0.08)',
+              borderRadius: '12px',
+              border: '1px solid rgba(24, 144, 255, 0.2)'
+            }}>
+              <div style={{
+                fontSize: '16px',
+                fontWeight: 'bold',
+                color: '#1890ff',
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <WalletOutlined />
+                {text.incomeInfo}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
                   <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>{text.monthlyIncome}</div>
                   <div style={{ color: 'var(--app-text)', fontSize: '14px', fontWeight: 'bold' }}>
@@ -871,18 +1142,38 @@ const HealthSummerSolsticePage: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </Card>
+            </div>
 
-            <Card 
-              title={text.socialInsurance}
-              style={{
-                marginBottom: '16px', 
-                backgroundColor: '#2D2D2D', 
-                borderColor: '#444',
-                borderRadius: '8px'
-              }}
-              headStyle={{ borderBottom: '1px solid #444', color: '#fff', fontSize: '14px' }}
-            >
+            <div style={{
+              marginBottom: '20px',
+              padding: '16px',
+              backgroundColor: 'rgba(114, 46, 209, 0.08)',
+              borderRadius: '12px',
+              border: '1px solid rgba(114, 46, 209, 0.2)'
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '12px'
+              }}>
+                <div style={{
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  color: '#722ed1',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <InsuranceOutlined />
+                  {text.specialDeduction}
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ color: '#FF9800', fontSize: '16px', fontWeight: 'bold' }}>
+                    {formatCurrency(editingRecord.specialDeduction)}
+                  </div>
+                </div>
+              </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
                   <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>{text.endowmentInsurance}</div>
@@ -908,25 +1199,28 @@ const HealthSummerSolsticePage: React.FC = () => {
                     {formatCurrency(editingRecord.housingFund)}
                   </div>
                 </div>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>{text.specialDeduction}</div>
-                  <div style={{ color: '#FF9800', fontSize: '16px', fontWeight: 'bold' }}>
-                    {formatCurrency(editingRecord.specialDeduction)}
-                  </div>
-                </div>
               </div>
-            </Card>
+            </div>
 
-            <Card 
-              title={text.calculationResults}
-              style={{
-                marginBottom: '16px', 
-                backgroundColor: '#2D2D2D', 
-                borderColor: '#444',
-                borderRadius: '8px'
-              }}
-              headStyle={{ borderBottom: '1px solid #444', color: '#fff', fontSize: '14px' }}
-            >
+            <div style={{
+              marginBottom: '20px',
+              padding: '16px',
+              backgroundColor: 'rgba(82, 196, 26, 0.08)',
+              borderRadius: '12px',
+              border: '1px solid rgba(82, 196, 26, 0.2)'
+            }}>
+              <div style={{
+                fontSize: '16px',
+                fontWeight: 'bold',
+                color: '#52c41a',
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <CalculatorOutlined />
+                {text.calculationResults}
+              </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
                   <div style={{ color: 'var(--app-text-muted)', fontSize: '12px' }}>{text.monthlyTaxableIncome}</div>
@@ -965,23 +1259,32 @@ const HealthSummerSolsticePage: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </Card>
+            </div>
 
             {editingRecord.notes && (
-              <Card 
-                title={text.notes}
-                style={{
-                  marginBottom: '16px', 
-                  backgroundColor: '#2D2D2D', 
-                  borderColor: '#444',
-                  borderRadius: '8px'
-                }}
-                headStyle={{ borderBottom: '1px solid #444', color: '#fff', fontSize: '14px' }}
-              >
+              <div style={{
+                marginBottom: '20px',
+                padding: '16px',
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                borderRadius: '12px',
+                border: '1px solid rgba(255, 255, 255, 0.15)'
+              }}>
+                <div style={{
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  color: '#fff',
+                  marginBottom: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <FileTextOutlined />
+                  {text.notes}
+                </div>
                 <div style={{ color: 'var(--app-text)', fontSize: '14px' }}>
                   {editingRecord.notes}
                 </div>
-              </Card>
+              </div>
             )}
           </div>
         ) : null}
