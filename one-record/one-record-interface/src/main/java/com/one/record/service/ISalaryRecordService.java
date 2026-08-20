@@ -9,6 +9,11 @@ public interface ISalaryRecordService {
     
     SalaryRecord save(SalaryRecord record);
     
+    /**
+     * 将指定记录标记为重新累计起始点（跳槽后新公司首月），并重算该年份累计数据
+     */
+    SalaryRecord resetCumulation(String id);
+    
     void delete(String id);
     
     SalaryRecord findById(String id);

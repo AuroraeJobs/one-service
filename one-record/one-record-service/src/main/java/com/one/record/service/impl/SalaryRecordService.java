@@ -104,6 +104,16 @@ public class SalaryRecordService implements ISalaryRecordService {
         return stats;
     }
     
+    @Override
+    public SalaryRecord resetCumulation(String id) {
+        SalaryRecord record = findById(id);
+        if (record == null) {
+            return null;
+        }
+        record.setResetCumulative(true);
+        return save(record);
+    }
+    
     private void calculateAndSetDerivedFields(SalaryRecord record) {
         if (record.getStandardDeduction() == null || record.getStandardDeduction() <= 0) {
             record.setStandardDeduction(taxConfig.getStandardDeductionPerMonth());
@@ -136,6 +146,10 @@ public class SalaryRecordService implements ISalaryRecordService {
         double cumulativeTaxPaid = 0.0;
         
         for (SalaryRecord record : records) {
+            if (Boolean.TRUE.equals(record.getResetCumulative())) {
+                cumulativeTaxableIncome = 0.0;
+                cumulativeTaxPaid = 0.0;
+            }
             double monthlyTaxableIncome = record.getMonthlyTaxableIncome() != null ? record.getMonthlyTaxableIncome() : 0.0;
             cumulativeTaxableIncome += monthlyTaxableIncome;
             record.setCumulativeTaxableIncome(cumulativeTaxableIncome);

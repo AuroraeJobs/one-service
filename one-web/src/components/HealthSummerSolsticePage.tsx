@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import MetricCard from './MetricCard';
 import MetricGrid from './MetricGrid';
-import { Card, Button, Drawer, Form, Input, InputNumber, message, Row, Col, Select } from 'antd';
+import { Card, Button, Drawer, Form, Input, InputNumber, message, Row, Col, Select, Switch } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SaveOutlined, CalendarOutlined } from '@ant-design/icons';
 import { salaryRecordApi } from '../services/api';
 import type { SalaryRecord, SalaryStatistics } from '../services/api';
@@ -39,6 +39,8 @@ const HealthSummerSolsticePage: React.FC = () => {
     unemploymentInsurance: isEnglish ? 'Unemployment Insurance' : '失业保险',
     housingFund: isEnglish ? 'Housing Fund' : '住房公积金',
     specialDeduction: isEnglish ? 'Special Deduction' : '专项扣除',
+    resetCumulative: isEnglish ? 'Restart Cumulative Tax (first month at new job)' : '重新累计（跳槽后新公司首月）',
+    resetCumulativeTip: isEnglish ? 'Turn on to restart cumulative taxable income from this month' : '开启后，累计应纳税所得额从本月重新开始计算',
     notes: isEnglish ? 'Notes' : '备注',
     notesPlaceholder: isEnglish ? 'Notes' : '备注信息',
     calculationResults: isEnglish ? 'Calculation Results' : '计算结果',
@@ -275,8 +277,20 @@ const HealthSummerSolsticePage: React.FC = () => {
                   hoverable
                   onClick={() => showEditDrawer(record)}
                 >
-                  <div style={{ color: '#FF9800', fontSize: '16px', fontWeight: 'bold', marginBottom: '12px' }}>
+                  <div style={{ color: '#FF9800', fontSize: '16px', fontWeight: 'bold', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {formatYearMonth(record)}
+                    {record.resetCumulative && (
+                      <span style={{
+                        fontSize: '11px',
+                        fontWeight: 'normal',
+                        color: '#fff',
+                        background: 'linear-gradient(135deg, #FF9800, #FF5722)',
+                        borderRadius: '4px',
+                        padding: '1px 6px'
+                      }}>
+                        {isEnglish ? 'Restart' : '重新累计'}
+                      </span>
+                    )}
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
                     <div>
@@ -377,6 +391,15 @@ const HealthSummerSolsticePage: React.FC = () => {
                 </Form.Item>
               </Col>
             </Row>
+            <Form.Item
+              name="resetCumulative"
+              label={text.resetCumulative}
+              valuePropName="checked"
+              tooltip={text.resetCumulativeTip}
+              style={{ marginBottom: 0 }}
+            >
+              <Switch />
+            </Form.Item>
           </Card>
 
           <Card 
@@ -578,37 +601,46 @@ const HealthSummerSolsticePage: React.FC = () => {
               }}
               headStyle={{ borderBottom: '1px solid #444', color: '#fff', fontSize: '14px' }}
             >
-              <Row gutter={16}>
-                <Col span={12}>
-                  <Form.Item
-                    name="year"
-                    label={text.year}
-                    rules={[{ required: true, message: text.selectYear }]}
-                  >
-                    <InputNumber 
-                      placeholder={text.enterYear}
-                      style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
-                    />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item
-                    name="month"
-                    label={text.month}
-                    rules={[{ required: true, message: text.selectMonth }]}
-                  >
-                    <Select 
-                      placeholder={text.selectMonth}
-                      style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
-                      options={monthOptions}
-                    />
-                  </Form.Item>
-                </Col>
-              </Row>
-            </Card>
+<Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="year"
+                  label={text.year}
+                  rules={[{ required: true, message: text.selectYear }]}
+                >
+                  <InputNumber 
+                    placeholder={text.enterYear}
+                    style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="month"
+                  label={text.month}
+                  rules={[{ required: true, message: text.selectMonth }]}
+                >
+                  <Select 
+                    placeholder={text.selectMonth}
+                    style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+                    options={monthOptions}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Form.Item
+              name="resetCumulative"
+              label={text.resetCumulative}
+              valuePropName="checked"
+              tooltip={text.resetCumulativeTip}
+              style={{ marginBottom: 0 }}
+            >
+              <Switch />
+            </Form.Item>
+          </Card>
 
-            <Card 
-              title={text.incomeInfo}
+          <Card 
+            title={text.incomeInfo}
               style={{
                 marginBottom: '16px', 
                 backgroundColor: '#2D2D2D', 
@@ -750,6 +782,19 @@ const HealthSummerSolsticePage: React.FC = () => {
                   </div>
                 </div>
               </div>
+              {editingRecord.resetCumulative && (
+                <div style={{
+                  marginTop: '12px',
+                  color: '#FF9800',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  background: 'rgba(255, 152, 0, 0.1)',
+                  borderRadius: '4px',
+                  padding: '6px 10px'
+                }}>
+                  {isEnglish ? 'Restart cumulative tax from this month' : '该月重新累计（跳槽后新公司首月）'}
+                </div>
+              )}
             </Card>
 
             <Card 

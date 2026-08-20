@@ -2486,6 +2486,7 @@ export interface SalaryRecord {
   currentTaxDeclaration?: number;
   cumulativeTaxPaid?: number;
   actualIncome?: number;
+  resetCumulative?: boolean;
   notes?: string;
   createdAt?: number;
   updatedAt?: number;
@@ -2510,6 +2511,10 @@ export const salaryRecordApi = {
 
   delete: (id: string): Promise<void> => {
     return apiClient.delete(`/salary-record/${id}`);
+  },
+
+  resetCumulation: (id: string): Promise<SalaryRecord> => {
+    return apiClient.post(`/salary-record/reset-cumulation/${id}`);
   },
 
   findById: (id: string): Promise<SalaryRecord> => {

@@ -47,6 +47,11 @@ public class SalaryRecord {
     
     private Double actualIncome;
     
+    /**
+     * 是否重新累计（跳槽后新公司首月开启，累计应纳税所得额从该月重新开始）
+     */
+    private Boolean resetCumulative;
+    
     private String notes;
     
     private Long createdAt;

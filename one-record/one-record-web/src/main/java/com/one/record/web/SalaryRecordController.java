@@ -33,6 +33,13 @@ public class SalaryRecordController {
         return service.save(record);
     }
     
+    @PostMapping("reset-cumulation/{id}")
+    @Operation(summary = "标记为重新累计", description = "将指定记录标记为重新累计起始点（跳槽后新公司首月），并重算该年份累计数据")
+    public SalaryRecord resetCumulation(@PathVariable("id") String id) {
+        log.info("Resetting cumulation for salary record id: {}", id);
+        return service.resetCumulation(id);
+    }
+    
     @DeleteMapping("{id}")
     @Operation(summary = "删除工资记录", description = "根据ID删除工资记录")
     public void delete(@PathVariable("id") String id) {
