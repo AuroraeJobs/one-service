@@ -2,6 +2,7 @@ package com.one.record.service.impl;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.one.common.exception.DuplicateException;
 import com.one.record.config.TaxConfig;
 import com.one.record.model.SalaryRecord;
 import com.one.record.repository.SalaryRecordRepository;
@@ -21,6 +22,19 @@ public class SalaryRecordService implements ISalaryRecordService {
     
     @Override
     public SalaryRecord save(SalaryRecord record) {
+        // 检查年月是否已存在（同一年月只能有一条记录）
+        if (record.getYear() != null && record.getMonth() != null) {
+            Optional<SalaryRecord> existing = repository.findByYearAndMonth(record.getYear(), record.getMonth());
+            if (existing.isPresent()) {
+                String existingId = existing.get().getId();
+                String currentId = record.getId();
+                // 新增时 id 为 null，编辑时 id 不为 null
+                if (currentId == null || !existingId.equals(currentId)) {
+                    throw new DuplicateException("该年月已存在工资记录，请修改年月或编辑现有记录");
+                }
+            }
+        }
+        
         calculateAndSetDerivedFields(record);
         
         long currentTime = System.currentTimeMillis();
