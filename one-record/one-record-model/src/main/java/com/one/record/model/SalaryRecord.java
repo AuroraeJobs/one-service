@@ -26,6 +26,8 @@ public class SalaryRecord {
     
     private Double monthlyIncome;
     
+    private Double otherIncome;
+    
     private Double standardDeduction;
     
     private Double endowmentInsurance;

@@ -142,6 +142,7 @@ public class SalaryRecordService implements ISalaryRecordService {
         record.setSpecialDeduction(specialDeduction);
         
         double monthlyIncome = record.getMonthlyIncome() != null ? record.getMonthlyIncome() : 0.0;
+        double otherIncome = record.getOtherIncome() != null ? record.getOtherIncome() : 0.0;
         double monthlyTaxableIncome = monthlyIncome - record.getStandardDeduction() - specialDeduction;
         record.setMonthlyTaxableIncome(Math.max(0, monthlyTaxableIncome));
     }
@@ -177,8 +178,9 @@ public class SalaryRecordService implements ISalaryRecordService {
             record.setCumulativeTaxPaid(cumulativeTaxPaid);
             
             double monthlyIncome = record.getMonthlyIncome() != null ? record.getMonthlyIncome() : 0.0;
+            double otherIncome = record.getOtherIncome() != null ? record.getOtherIncome() : 0.0;
             double specialDeduction = record.getSpecialDeduction() != null ? record.getSpecialDeduction() : 0.0;
-            double actualIncome = monthlyIncome - specialDeduction - record.getCurrentTaxDeclaration();
+            double actualIncome = monthlyIncome + otherIncome - specialDeduction - record.getCurrentTaxDeclaration();
             record.setActualIncome(actualIncome);
             
             repository.save(record);

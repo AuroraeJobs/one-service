@@ -2476,6 +2476,7 @@ export interface SalaryRecord {
   year: number;
   month: number;
   monthlyIncome: number;
+  otherIncome?: number;
   standardDeduction: number;
   endowmentInsurance: number;
   medicalInsurance: number;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import MetricCard from './MetricCard';
 import { Card, Button, Drawer, Form, Input, InputNumber, message, Row, Col, Select, Switch, Popconfirm } from 'antd';
-import { PlusOutlined, CalendarOutlined, WalletOutlined, InsuranceOutlined, CalculatorOutlined, FileTextOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
+import { PlusOutlined, CalendarOutlined, WalletOutlined, InsuranceOutlined, CalculatorOutlined, FileTextOutlined, LeftOutlined, RightOutlined, MinusSquareOutlined } from '@ant-design/icons';
 import { salaryRecordApi } from '../services/api';
 import type { SalaryRecord, SalaryStatistics } from '../services/api';
 import { useAppPreferences } from '../contexts/AppPreferencesContext';
@@ -20,6 +20,7 @@ const HealthSummerSolsticePage: React.FC = () => {
     company: isEnglish ? 'Company' : '公司',
     selectCompany: isEnglish ? 'Please select company' : '请选择公司',
     monthlyIncome: isEnglish ? 'Monthly Income' : '当月收入',
+    totalIncome: isEnglish ? 'Total Income' : '总收入',
     currentTaxDeclaration: isEnglish ? 'Current Tax Declaration' : '本期申报税额',
     actualIncome: isEnglish ? 'Net Income' : '实际所得额',
     addRecord: isEnglish ? 'Add Salary Record' : '添加工资记录',
@@ -35,6 +36,8 @@ const HealthSummerSolsticePage: React.FC = () => {
     enterYear: isEnglish ? 'Enter year' : '请输入年份',
     incomeInfo: isEnglish ? 'Income Info' : '收入信息',
     enterMonthlyIncome: isEnglish ? 'Please enter monthly income' : '请输入当月收入',
+    otherIncome: isEnglish ? 'Other Income' : '其他收入',
+    enterOtherIncome: isEnglish ? 'Please enter other income' : '请输入其他收入',
     standardDeduction: isEnglish ? 'Standard Deduction' : '减除费用',
     enterStandardDeduction: isEnglish ? 'Please enter standard deduction' : '请输入减除费用',
     socialInsurance: isEnglish ? 'Social Insurance and Housing Fund' : '五险一金',
@@ -64,11 +67,11 @@ const HealthSummerSolsticePage: React.FC = () => {
     deleteConfirm: isEnglish ? 'Delete this salary record?' : '确定要删除这条工资记录吗？',
     ok: isEnglish ? 'OK' : '确定',
     cancel: isEnglish ? 'Cancel' : '取消',
+    duplicateRecord: isEnglish ? 'A record for this year and month already exists' : '该年月已存在工资记录',
     previousPeriod: isEnglish ? 'Previous' : '上个月',
     nextPeriod: isEnglish ? 'Next' : '下个月',
     addPrevious: isEnglish ? 'Add Previous' : '新增上个月',
-    addNext: isEnglish ? 'Add Next' : '新增下个月',
-    duplicateRecord: isEnglish ? 'A record for this year and month already exists' : '该年月已存在工资记录'
+    addNext: isEnglish ? 'Add Next' : '新增下个月'
   };
   const monthOptions = Array.from({ length: 12 }, (_, index) => {
     const month = index + 1;
@@ -104,12 +107,20 @@ const HealthSummerSolsticePage: React.FC = () => {
   const editHousingFund = Form.useWatch('housingFund', editForm);
   const editSpecialDeduction = Number(((editEndowmentInsurance || 0) + (editMedicalInsurance || 0) + (editUnemploymentInsurance || 0) + (editHousingFund || 0)).toFixed(2));
 
+  const editMonthlyIncome = Form.useWatch('monthlyIncome', editForm);
+  const editOtherIncome = Form.useWatch('otherIncome', editForm);
+  const editTotalIncome = (editMonthlyIncome || 0) + (editOtherIncome || 0);
+
   // 监听添加表单的五险一金字段变化
   const addEndowmentInsurance = Form.useWatch('endowmentInsurance', addForm);
   const addMedicalInsurance = Form.useWatch('medicalInsurance', addForm);
   const addUnemploymentInsurance = Form.useWatch('unemploymentInsurance', addForm);
   const addHousingFund = Form.useWatch('housingFund', addForm);
   const addSpecialDeduction = Number(((addEndowmentInsurance || 0) + (addMedicalInsurance || 0) + (addUnemploymentInsurance || 0) + (addHousingFund || 0)).toFixed(2));
+
+  const addMonthlyIncome = Form.useWatch('monthlyIncome', addForm);
+  const addOtherIncome = Form.useWatch('otherIncome', addForm);
+  const addTotalIncome = (addMonthlyIncome || 0) + (addOtherIncome || 0);
 
   const fetchSalaryRecords = async () => {
     try {
@@ -455,9 +466,9 @@ const HealthSummerSolsticePage: React.FC = () => {
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                     <div>
-                      <div style={{ color: '#999', fontSize: '12px' }}>{text.monthlyIncome}</div>
+                      <div style={{ color: '#999', fontSize: '12px' }}>{text.totalIncome}</div>
                       <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
-                        {formatCurrency(record.monthlyIncome)}
+                        {formatCurrency((record.monthlyIncome || 0) + (record.otherIncome || 0))}
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
@@ -609,26 +620,37 @@ const HealthSummerSolsticePage: React.FC = () => {
             </Row>
           </div>
 
-          <div style={{
-            marginBottom: '20px',
-            padding: '16px',
-            backgroundColor: 'rgba(24, 144, 255, 0.08)',
-            borderRadius: '12px',
-            border: '1px solid rgba(24, 144, 255, 0.2)'
-          }}>
-            <div style={{
-              fontSize: '16px',
-              fontWeight: 'bold',
-              color: '#1890ff',
-              marginBottom: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
+<div style={{
+              marginBottom: '20px',
+              padding: '16px',
+              backgroundColor: 'rgba(24, 144, 255, 0.08)',
+              borderRadius: '12px',
+              border: '1px solid rgba(24, 144, 255, 0.2)'
             }}>
-              <WalletOutlined />
-              {text.incomeInfo}
-            </div>
-            <Row gutter={16}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '12px'
+              }}>
+                <div style={{
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  color: '#1890ff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <WalletOutlined />
+                  {text.incomeInfo}
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ color: '#FF9800', fontSize: '16px', fontWeight: 'bold' }}>
+                    {formatCurrency(addTotalIncome)}
+                  </div>
+                </div>
+              </div>
+              <Row gutter={16}>
               <Col span={12}>
                 <Form.Item
                   name="monthlyIncome"
@@ -950,7 +972,7 @@ const HealthSummerSolsticePage: React.FC = () => {
             </Row>
           </div>
 
-          <div style={{
+<div style={{
             marginBottom: '20px',
             padding: '16px',
             backgroundColor: 'rgba(24, 144, 255, 0.08)',
@@ -969,7 +991,7 @@ const HealthSummerSolsticePage: React.FC = () => {
               <WalletOutlined />
               {text.incomeInfo}
             </div>
-              <Row gutter={16}>
+            <Row gutter={16}>
               <Col span={12}>
                 <Form.Item
                   name="monthlyIncome"
@@ -985,19 +1007,50 @@ const HealthSummerSolsticePage: React.FC = () => {
               </Col>
               <Col span={12}>
                 <Form.Item
-                  name="standardDeduction"
-                  label={text.standardDeduction}
-                  rules={[{ required: true, message: text.enterStandardDeduction }]}
+                  name="otherIncome"
+                  label={text.otherIncome}
                 >
                   <InputNumber 
-                    placeholder={text.standardDeduction}
+                    placeholder={text.enterOtherIncome}
                     prefix="¥"
                     style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
                   />
                 </Form.Item>
               </Col>
             </Row>
+          </div>
+
+          <div style={{
+            marginBottom: '20px',
+            padding: '16px',
+            backgroundColor: 'rgba(245, 158, 11, 0.08)',
+            borderRadius: '12px',
+            border: '1px solid rgba(245, 158, 11, 0.2)'
+          }}>
+            <div style={{
+              fontSize: '16px',
+              fontWeight: 'bold',
+              color: '#faad14',
+              marginBottom: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <MinusSquareOutlined />
+              {text.standardDeduction}
             </div>
+            <Form.Item
+              name="standardDeduction"
+              label={text.standardDeduction}
+              rules={[{ required: true, message: text.enterStandardDeduction }]}
+            >
+              <InputNumber 
+                placeholder={text.standardDeduction}
+                prefix="¥"
+                style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+              />
+            </Form.Item>
+          </div>
 
             <div style={{
               marginBottom: '20px',
@@ -1178,16 +1231,27 @@ const HealthSummerSolsticePage: React.FC = () => {
               border: '1px solid rgba(24, 144, 255, 0.2)'
             }}>
               <div style={{
-                fontSize: '16px',
-                fontWeight: 'bold',
-                color: '#1890ff',
-                marginBottom: '12px',
                 display: 'flex',
+                justifyContent: 'space-between',
                 alignItems: 'center',
-                gap: '8px'
+                marginBottom: '12px'
               }}>
-                <WalletOutlined />
-                {text.incomeInfo}
+                <div style={{
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  color: '#1890ff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <WalletOutlined />
+                  {text.incomeInfo}
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ color: '#FF9800', fontSize: '16px', fontWeight: 'bold' }}>
+                    {formatCurrency((editingRecord.monthlyIncome || 0) + (editingRecord.otherIncome || 0))}
+                  </div>
+                </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
@@ -1197,10 +1261,36 @@ const HealthSummerSolsticePage: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>{text.standardDeduction}</div>
+                  <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>{text.otherIncome}</div>
                   <div style={{ color: 'var(--app-text)', fontSize: '14px', fontWeight: 'bold' }}>
-                    {formatCurrency(editingRecord.standardDeduction)}
+                    {formatCurrency(editingRecord.otherIncome)}
                   </div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{
+              marginBottom: '20px',
+              padding: '16px',
+              backgroundColor: 'rgba(245, 158, 11, 0.08)',
+              borderRadius: '12px',
+              border: '1px solid rgba(245, 158, 11, 0.2)'
+            }}>
+              <div style={{
+                fontSize: '16px',
+                fontWeight: 'bold',
+                color: '#faad14',
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <MinusSquareOutlined />
+                {text.standardDeduction}
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ color: 'var(--app-text)', fontSize: '18px', fontWeight: 'bold', color: '#faad14' }}>
+                  {formatCurrency(editingRecord.standardDeduction)}
                 </div>
               </div>
             </div>
@@ -1347,74 +1437,76 @@ const HealthSummerSolsticePage: React.FC = () => {
                 </div>
               </div>
             )}
+            {!isEditing && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '16px',
+                padding: '16px 0 0',
+                borderTop: '1px solid rgba(255, 152, 0, 0.2)',
+                marginTop: '8px'
+              }}>
+                {hasPrevious ? (
+                  <Button
+                    onClick={() => navigateRecord('prev')}
+                    style={{
+                      color: '#FF9800',
+                      background: 'rgba(255, 152, 0, 0.1)',
+                      border: '1px solid rgba(255, 152, 0, 0.3)',
+                      borderRadius: '8px'
+                    }}
+                  >
+                    <LeftOutlined />
+                    {text.previousPeriod}
+                  </Button>
+                ) : (
+                  <Button
+                    type="dashed"
+                    onClick={() => addAdjacentRecord('prev')}
+                    style={{
+                      color: '#52c41a',
+                      borderColor: '#52c41a',
+                      background: 'rgba(82, 196, 26, 0.1)',
+                      borderRadius: '8px'
+                    }}
+                  >
+                    <PlusOutlined />
+                    {text.addPrevious}
+                  </Button>
+                )}
+                {hasNext ? (
+                  <Button
+                    onClick={() => navigateRecord('next')}
+                    style={{
+                      color: '#FF9800',
+                      background: 'rgba(255, 152, 0, 0.1)',
+                      border: '1px solid rgba(255, 152, 0, 0.3)',
+                      borderRadius: '8px'
+                    }}
+                  >
+                    {text.nextPeriod}
+                    <RightOutlined />
+                  </Button>
+                ) : (
+                  <Button
+                    type="dashed"
+                    onClick={() => addAdjacentRecord('next')}
+                    style={{
+                      color: '#52c41a',
+                      borderColor: '#52c41a',
+                      background: 'rgba(82, 196, 26, 0.1)',
+                      borderRadius: '8px'
+                    }}
+                  >
+                    <PlusOutlined />
+                    {text.addNext}
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         ) : null}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: '16px',
-          padding: '16px 0 0',
-          borderTop: '1px solid rgba(255, 152, 0, 0.2)',
-          marginTop: '8px'
-        }}>
-          {hasPrevious ? (
-            <Button
-              onClick={() => navigateRecord('prev')}
-              style={{
-                color: '#FF9800',
-                background: 'rgba(255, 152, 0, 0.1)',
-                border: '1px solid rgba(255, 152, 0, 0.3)',
-                borderRadius: '8px'
-              }}
-            >
-              <LeftOutlined />
-              {text.previousPeriod}
-            </Button>
-          ) : (
-            <Button
-              type="dashed"
-              onClick={() => addAdjacentRecord('prev')}
-              style={{
-                color: '#52c41a',
-                borderColor: '#52c41a',
-                background: 'rgba(82, 196, 26, 0.1)',
-                borderRadius: '8px'
-              }}
-            >
-              <PlusOutlined />
-              {text.addPrevious}
-            </Button>
-          )}
-          {hasNext ? (
-            <Button
-              onClick={() => navigateRecord('next')}
-              style={{
-                color: '#FF9800',
-                background: 'rgba(255, 152, 0, 0.1)',
-                border: '1px solid rgba(255, 152, 0, 0.3)',
-                borderRadius: '8px'
-              }}
-            >
-              {text.nextPeriod}
-              <RightOutlined />
-            </Button>
-          ) : (
-            <Button
-              type="dashed"
-              onClick={() => addAdjacentRecord('next')}
-              style={{
-                color: '#52c41a',
-                borderColor: '#52c41a',
-                background: 'rgba(82, 196, 26, 0.1)',
-                borderRadius: '8px'
-              }}
-            >
-              <PlusOutlined />
-              {text.addNext}
-            </Button>
-          )}
-        </div>
       </Drawer>
     </div>
   );
