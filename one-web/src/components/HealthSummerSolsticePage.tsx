@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import MetricCard from './MetricCard';
 import { Card, Button, Drawer, Form, Input, InputNumber, message, Row, Col, Select, Switch, Popconfirm } from 'antd';
-import { PlusOutlined, CalendarOutlined, WalletOutlined, InsuranceOutlined, CalculatorOutlined, FileTextOutlined } from '@ant-design/icons';
+import { PlusOutlined, CalendarOutlined, WalletOutlined, InsuranceOutlined, CalculatorOutlined, FileTextOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { salaryRecordApi } from '../services/api';
 import type { SalaryRecord, SalaryStatistics } from '../services/api';
 import { useAppPreferences } from '../contexts/AppPreferencesContext';
@@ -63,7 +63,12 @@ const HealthSummerSolsticePage: React.FC = () => {
     deleteFailed: isEnglish ? 'Failed to delete salary record' : '删除失败',
     deleteConfirm: isEnglish ? 'Delete this salary record?' : '确定要删除这条工资记录吗？',
     ok: isEnglish ? 'OK' : '确定',
-    cancel: isEnglish ? 'Cancel' : '取消'
+    cancel: isEnglish ? 'Cancel' : '取消',
+    previousPeriod: isEnglish ? 'Previous' : '上个月',
+    nextPeriod: isEnglish ? 'Next' : '下个月',
+    addPrevious: isEnglish ? 'Add Previous' : '新增上个月',
+    addNext: isEnglish ? 'Add Next' : '新增下个月',
+    duplicateRecord: isEnglish ? 'A record for this year and month already exists' : '该年月已存在工资记录'
   };
   const monthOptions = Array.from({ length: 12 }, (_, index) => {
     const month = index + 1;
@@ -193,7 +198,64 @@ const HealthSummerSolsticePage: React.FC = () => {
     setIsEditDrawerVisible(true);
   };
 
+  const getAdjacentDate = (year: number, month: number, direction: 'prev' | 'next') => {
+    let y = year;
+    let m = month;
+    if (direction === 'prev') {
+      m -= 1;
+      if (m < 1) {
+        m = 12;
+        y -= 1;
+      }
+    } else {
+      m += 1;
+      if (m > 12) {
+        m = 1;
+        y += 1;
+      }
+    }
+    return { year: y, month: m };
+  };
+
+  const navigateRecord = (direction: 'prev' | 'next') => {
+    if (!editingRecord) return;
+    const { year, month } = getAdjacentDate(editingRecord.year, editingRecord.month, direction);
+    const target = salaryRecords.find(r => r.year === year && r.month === month);
+    if (target) {
+      setEditingRecord(target);
+      editForm.setFieldsValue(target);
+      setIsEditing(false);
+    }
+  };
+
+  const addAdjacentRecord = (direction: 'prev' | 'next') => {
+    if (!editingRecord) return;
+    const { year, month } = getAdjacentDate(editingRecord.year, editingRecord.month, direction);
+    addForm.setFieldsValue({
+      year,
+      month,
+      company: editingRecord.company,
+      standardDeduction: editingRecord.standardDeduction,
+      endowmentInsurance: editingRecord.endowmentInsurance,
+      medicalInsurance: editingRecord.medicalInsurance,
+      unemploymentInsurance: editingRecord.unemploymentInsurance,
+      housingFund: editingRecord.housingFund,
+    });
+    setIsEditDrawerVisible(false);
+    setIsAddDrawerVisible(true);
+  };
+
+  const prevDate = editingRecord ? getAdjacentDate(editingRecord.year, editingRecord.month, 'prev') : null;
+  const nextDate = editingRecord ? getAdjacentDate(editingRecord.year, editingRecord.month, 'next') : null;
+  const hasPrevious = !!prevDate && salaryRecords.some(r => r.year === prevDate.year && r.month === prevDate.month);
+  const hasNext = !!nextDate && salaryRecords.some(r => r.year === nextDate.year && r.month === nextDate.month);
+
   const handleAdd = async (values: SalaryRecordFormValues) => {
+    const duplicate = salaryRecords.some(r => r.year === values.year && r.month === values.month);
+    if (duplicate) {
+      message.error(text.duplicateRecord);
+      return;
+    }
     try {
       await salaryRecordApi.save(values);
       message.success(text.addSuccess);
@@ -208,6 +270,11 @@ const HealthSummerSolsticePage: React.FC = () => {
 
   const handleEdit = async (values: SalaryRecordFormValues) => {
     if (!editingRecord) return;
+    const duplicate = salaryRecords.some(r => r.id !== editingRecord.id && r.year === values.year && r.month === values.month);
+    if (duplicate) {
+      message.error(text.duplicateRecord);
+      return;
+    }
     try {
       await salaryRecordApi.update({ ...values, id: editingRecord.id });
       message.success(text.updateSuccess);
@@ -1282,6 +1349,72 @@ const HealthSummerSolsticePage: React.FC = () => {
             )}
           </div>
         ) : null}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '16px',
+          padding: '16px 0 0',
+          borderTop: '1px solid rgba(255, 152, 0, 0.2)',
+          marginTop: '8px'
+        }}>
+          {hasPrevious ? (
+            <Button
+              onClick={() => navigateRecord('prev')}
+              style={{
+                color: '#FF9800',
+                background: 'rgba(255, 152, 0, 0.1)',
+                border: '1px solid rgba(255, 152, 0, 0.3)',
+                borderRadius: '8px'
+              }}
+            >
+              <LeftOutlined />
+              {text.previousPeriod}
+            </Button>
+          ) : (
+            <Button
+              type="dashed"
+              onClick={() => addAdjacentRecord('prev')}
+              style={{
+                color: '#52c41a',
+                borderColor: '#52c41a',
+                background: 'rgba(82, 196, 26, 0.1)',
+                borderRadius: '8px'
+              }}
+            >
+              <PlusOutlined />
+              {text.addPrevious}
+            </Button>
+          )}
+          {hasNext ? (
+            <Button
+              onClick={() => navigateRecord('next')}
+              style={{
+                color: '#FF9800',
+                background: 'rgba(255, 152, 0, 0.1)',
+                border: '1px solid rgba(255, 152, 0, 0.3)',
+                borderRadius: '8px'
+              }}
+            >
+              {text.nextPeriod}
+              <RightOutlined />
+            </Button>
+          ) : (
+            <Button
+              type="dashed"
+              onClick={() => addAdjacentRecord('next')}
+              style={{
+                color: '#52c41a',
+                borderColor: '#52c41a',
+                background: 'rgba(82, 196, 26, 0.1)',
+                borderRadius: '8px'
+              }}
+            >
+              <PlusOutlined />
+              {text.addNext}
+            </Button>
+          )}
+        </div>
       </Drawer>
     </div>
   );
