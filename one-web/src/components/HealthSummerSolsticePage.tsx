@@ -666,18 +666,49 @@ const HealthSummerSolsticePage: React.FC = () => {
               </Col>
               <Col span={12}>
                 <Form.Item
-                  name="standardDeduction"
-                  label={text.standardDeduction}
-                  rules={[{ required: true, message: text.enterStandardDeduction }]}
+                  name="otherIncome"
+                  label={text.otherIncome}
                 >
                   <InputNumber 
-                    placeholder={text.standardDeduction}
+                    placeholder={text.enterOtherIncome}
                     prefix="¥"
                     style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
                   />
                 </Form.Item>
               </Col>
             </Row>
+          </div>
+
+          <div style={{
+            marginBottom: '20px',
+            padding: '16px',
+            backgroundColor: 'rgba(245, 158, 11, 0.08)',
+            borderRadius: '12px',
+            border: '1px solid rgba(245, 158, 11, 0.2)'
+          }}>
+            <div style={{
+              fontSize: '16px',
+              fontWeight: 'bold',
+              color: '#faad14',
+              marginBottom: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <MinusSquareOutlined />
+              {text.standardDeduction}
+            </div>
+            <Form.Item
+              name="standardDeduction"
+              label={text.standardDeduction}
+              rules={[{ required: true, message: text.enterStandardDeduction }]}
+            >
+              <InputNumber 
+                placeholder={text.standardDeduction}
+                prefix="¥"
+                style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+              />
+            </Form.Item>
           </div>
 
           <div style={{
@@ -980,16 +1011,27 @@ const HealthSummerSolsticePage: React.FC = () => {
             border: '1px solid rgba(24, 144, 255, 0.2)'
           }}>
             <div style={{
-              fontSize: '16px',
-              fontWeight: 'bold',
-              color: '#1890ff',
-              marginBottom: '12px',
               display: 'flex',
+              justifyContent: 'space-between',
               alignItems: 'center',
-              gap: '8px'
+              marginBottom: '12px'
             }}>
-              <WalletOutlined />
-              {text.incomeInfo}
+              <div style={{
+                fontSize: '16px',
+                fontWeight: 'bold',
+                color: '#1890ff',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <WalletOutlined />
+                {text.incomeInfo}
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ color: '#FF9800', fontSize: '16px', fontWeight: 'bold' }}>
+                  {formatCurrency(editTotalIncome)}
+                </div>
+              </div>
             </div>
             <Row gutter={16}>
               <Col span={12}>
