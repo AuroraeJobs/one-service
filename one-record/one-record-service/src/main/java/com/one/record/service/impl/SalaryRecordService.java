@@ -99,7 +99,7 @@ public class SalaryRecordService implements ISalaryRecordService {
         
         int totalRecords = records.size();
         double totalMonthlyIncome = records.stream()
-                .mapToDouble(r -> r.getMonthlyIncome() != null ? r.getMonthlyIncome() : 0.0)
+                .mapToDouble(r -> (r.getMonthlyIncome() != null ? r.getMonthlyIncome() : 0.0) + (r.getOtherIncome() != null ? r.getOtherIncome() : 0.0))
                 .sum();
         double totalActualIncome = records.stream()
                 .mapToDouble(r -> r.getActualIncome() != null ? r.getActualIncome() : 0.0)
