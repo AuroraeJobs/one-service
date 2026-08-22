@@ -2923,10 +2923,11 @@ body {
 }
 
 .record-tile {
-  --record-soft: rgba(24, 144, 255, 0.08);
-  --record-soft-hover: rgba(24, 144, 255, 0.12);
+  --record-soft: #171b21;
+  --record-soft-hover: #1c222a;
   --record-border: rgba(24, 144, 255, 0.2);
   --record-border-hover: rgba(24, 144, 255, 0.4);
+  height: 180px;
   background: var(--record-soft) !important;
   border: 1px solid var(--record-border) !important;
   border-radius: var(--app-card-radius) !important;
@@ -2946,22 +2947,28 @@ body {
 }
 
 .record-tile.ant-card .ant-card-body {
+  height: 100%;
+  padding: 20px !important;
+  box-sizing: border-box;
   background: transparent !important;
   box-shadow: none !important;
 }
 
 .charge-record-tile {
-  --record-soft: rgba(24, 144, 255, 0.08);
-  --record-soft-hover: rgba(24, 144, 255, 0.12);
   --record-border: rgba(24, 144, 255, 0.2);
   --record-border-hover: rgba(24, 144, 255, 0.4);
 }
 
 .salary-record-tile {
-  --record-soft: rgba(255, 152, 0, 0.08);
-  --record-soft-hover: rgba(255, 152, 0, 0.12);
   --record-border: rgba(255, 152, 0, 0.2);
   --record-border-hover: rgba(255, 152, 0, 0.4);
+}
+
+@media (max-width: 640px) {
+  .record-tile {
+    height: auto;
+    min-height: 180px;
+  }
 }
 
 .app-theme-light .record-tile {

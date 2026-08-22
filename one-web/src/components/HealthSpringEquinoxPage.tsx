@@ -507,7 +507,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
           addButtonBackground="linear-gradient(135deg, #1890ff, #096dd9)"
           addButtonShadow="0 2px 8px rgba(24, 144, 255, 0.4)"
           recordClassName="charge-record-tile"
-          recordBodyStyle={{ padding: 16 }}
           currentPage={currentPage}
           pageSize={pageSize}
           onPageChange={setCurrentPage}

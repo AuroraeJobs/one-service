@@ -24,7 +24,6 @@ interface RecordCardListProps<T> {
   addButtonBackground: string;
   addButtonShadow: string;
   recordClassName?: string;
-  recordBodyStyle?: CSSProperties;
   currentPage?: number;
   pageSize?: number;
   onPageChange?: (page: number) => void;
@@ -45,7 +44,6 @@ const RecordCardList = <T,>({
   addButtonBackground,
   addButtonShadow,
   recordClassName = '',
-  recordBodyStyle,
   currentPage = 1,
   pageSize,
   onPageChange,
@@ -100,7 +98,6 @@ const RecordCardList = <T,>({
                 className={`record-tile ${recordClassName}`.trim()}
                 hoverable
                 onClick={() => onRecordClick(record)}
-                styles={{ body: recordBodyStyle }}
               >
                 {renderRecord(record)}
               </Card>
