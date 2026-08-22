@@ -59,35 +59,33 @@ const RecordCardList = <T,>({
   const showPagination = Boolean(pageSize && paginationText && onPageChange && records.length > pageSize);
 
   return (
-    <Card
+    <section
       className="record-list-panel"
       style={{ '--record-list-accent': accent } as CSSProperties}
-      headStyle={{ border: 'none', padding: '0 0 16px' }}
-      title={(
-        <div className="record-list-toolbar">
-          <div className="record-list-toolbar-spacer" />
-          <div className="record-list-filters">{filters}</div>
-          <Button
-            type="primary"
-            className="record-list-add-button"
-            icon={<PlusOutlined />}
-            onClick={onAdd}
-            size="small"
-            aria-label={addLabel}
-            title={addLabel}
-            style={{
-              width: 32,
-              height: 32,
-              padding: 0,
-              border: 0,
-              borderRadius: '50%',
-              background: addButtonBackground,
-              boxShadow: addButtonShadow
-            }}
-          />
-        </div>
-      )}
     >
+      <div className="record-list-toolbar">
+        <div className="record-list-toolbar-spacer" />
+        <div className="record-list-filters">{filters}</div>
+        <Button
+          type="primary"
+          className="record-list-add-button"
+          icon={<PlusOutlined />}
+          onClick={onAdd}
+          size="small"
+          aria-label={addLabel}
+          title={addLabel}
+          style={{
+            width: 32,
+            height: 32,
+            padding: 0,
+            border: 0,
+            borderRadius: '50%',
+            background: addButtonBackground,
+            boxShadow: addButtonShadow
+          }}
+        />
+      </div>
+
       {records.length === 0 ? (
         <div className="record-list-empty">
           {emptyIcon && <div className="record-list-empty-icon">{emptyIcon}</div>}
@@ -128,7 +126,7 @@ const RecordCardList = <T,>({
           )}
         </>
       )}
-    </Card>
+    </section>
   );
 };
 

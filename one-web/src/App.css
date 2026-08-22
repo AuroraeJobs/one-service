@@ -2760,30 +2760,12 @@ body {
   gap: 16px;
 }
 
-.record-list-panel.ant-card {
+.record-list-panel {
   width: 100%;
   margin-bottom: 0;
-  overflow: visible !important;
-}
-
-.record-list-panel.ant-card,
-.record-list-panel.ant-card > .ant-card-head,
-.record-list-panel.ant-card > .ant-card-body {
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
-  border-color: transparent !important;
-  box-shadow: none !important;
-}
-
-.record-list-panel.ant-card > .ant-card-head {
-  min-height: 0;
-  border-bottom: 0 !important;
-}
-
-.record-list-panel.ant-card > .ant-card-body {
-  padding-right: 0 !important;
-  padding-left: 0 !important;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
 .record-list-toolbar {
@@ -2792,6 +2774,7 @@ body {
   align-items: center;
   width: 100%;
   gap: 24px;
+  margin-bottom: 40px;
   color: var(--app-text);
 }
 
