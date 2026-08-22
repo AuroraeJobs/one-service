@@ -1287,10 +1287,10 @@ const HealthSpringEquinoxPage: React.FC = () => {
                     rules={[{ required: true, message: text.selectType }]}
                   >
                     <Select placeholder={text.selectType}>
-                      <Select.Option value="家充">🏠 {text.homeCharge}</Select.Option>
-                      <Select.Option value="超充">⚡ {text.superCharge}</Select.Option>
-                      <Select.Option value="快充">🔋 {text.fastCharge}</Select.Option>
-                      <Select.Option value="慢充">🔌 {text.slowCharge}</Select.Option>
+                      <Select.Option value="家充">{text.homeCharge}</Select.Option>
+                      <Select.Option value="超充">{text.superCharge}</Select.Option>
+                      <Select.Option value="快充">{text.fastCharge}</Select.Option>
+                      <Select.Option value="慢充">{text.slowCharge}</Select.Option>
                     </Select>
                   </Form.Item>
                 </Col>
