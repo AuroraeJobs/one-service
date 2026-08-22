@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import MetricCard from './MetricCard';
 import RecordCardList from './RecordCardList';
 import { Button, Drawer, Form, Input, InputNumber, message, Row, Col, Select, Switch, Popconfirm } from 'antd';
-import { CalendarOutlined } from '@ant-design/icons';
 import { salaryRecordApi } from '../services/api';
 import type { SalaryRecord, SalaryStatistics } from '../services/api';
 import { useAppPreferences } from '../contexts/AppPreferencesContext';
@@ -341,7 +340,7 @@ const HealthSummerSolsticePage: React.FC = () => {
             gap: '16px',
             marginBottom: '24px'
           }}>
-            <MetricCard title={text.totalRecords} value={statistics.totalRecords} prefix={<CalendarOutlined />} accent="#FF9800" minWidth={200} />
+            <MetricCard title={text.totalRecords} value={statistics.totalRecords} accent="#FF9800" minWidth={200} />
             <MetricCard title={text.totalMonthlyIncome} value={statistics.totalMonthlyIncome} prefix="¥" accent="#faad14" minWidth={200} />
             <MetricCard title={text.totalActualIncome} value={statistics.totalActualIncome} prefix="¥" accent="#52c41a" minWidth={200} />
             <MetricCard title={text.avgActualIncome} value={statistics.avgActualIncome} prefix="¥" accent="#1890ff" minWidth={200} />

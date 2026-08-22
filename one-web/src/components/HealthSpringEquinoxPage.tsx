@@ -3,7 +3,7 @@ import MetricCard from './MetricCard';
 import MetricGrid from './MetricGrid';
 import RecordCardList from './RecordCardList';
 import { Card, Form, Input, InputNumber, Select, Button, DatePicker, Row, Col, message, Drawer, Popconfirm } from 'antd';
-import { ThunderboltOutlined, CalendarOutlined, DollarOutlined, GiftOutlined } from '@ant-design/icons';
+import { ThunderboltOutlined, CalendarOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { chargeRecordApi, chargeStationApi, type ChargeLocationOption } from '../services/api';
 import ReactECharts from 'echarts-for-react';
@@ -455,11 +455,11 @@ const HealthSpringEquinoxPage: React.FC = () => {
       }}>
         {/* 统计卡片 */}
         <MetricGrid gap={12} minColumnWidth={160}>
-          <MetricCard title={text.totalSessions} value={stats.totalCharges} prefix={<CalendarOutlined />} accent="#1890ff" />
-          <MetricCard title={text.totalDiscount} value={stats.totalDiscountAmount ?? 0} prefix={<GiftOutlined />} suffix={text.yuan} accent="#722ed1" />
-          <MetricCard title={text.totalSpend} value={stats.totalCost} prefix={<DollarOutlined />} suffix={text.yuan} accent="#ff4d4f" valueStyle={{ fontSize: '24px' }} />
-          <MetricCard title={text.totalEnergy} value={stats.totalEnergy} prefix={<ThunderboltOutlined />} suffix="kWh" accent="#52c41a" />
-          <MetricCard title={text.avgPrice} value={stats.totalEnergy > 0 ? (stats.totalCost / stats.totalEnergy).toFixed(2) : '0.00'} prefix={<DollarOutlined />} suffix={text.yuanPerKwh} accent="#faad14" />
+          <MetricCard title={text.totalSessions} value={stats.totalCharges} accent="#1890ff" />
+          <MetricCard title={text.totalDiscount} value={stats.totalDiscountAmount ?? 0} suffix={text.yuan} accent="#722ed1" />
+          <MetricCard title={text.totalSpend} value={stats.totalCost} suffix={text.yuan} accent="#ff4d4f" valueStyle={{ fontSize: '24px' }} />
+          <MetricCard title={text.totalEnergy} value={stats.totalEnergy} suffix="kWh" accent="#52c41a" />
+          <MetricCard title={text.avgPrice} value={stats.totalEnergy > 0 ? (stats.totalCost / stats.totalEnergy).toFixed(2) : '0.00'} suffix={text.yuanPerKwh} accent="#faad14" />
         </MetricGrid>
 
         <RecordCardList
