@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import MetricCard from './MetricCard';
-import { Card, Button, Drawer, Form, Input, InputNumber, message, Row, Col, Select, Switch, Popconfirm } from 'antd';
+import RecordCardList from './RecordCardList';
+import { Button, Drawer, Form, Input, InputNumber, message, Row, Col, Select, Switch, Popconfirm } from 'antd';
 import { PlusOutlined, CalendarOutlined, WalletOutlined, InsuranceOutlined, CalculatorOutlined, FileTextOutlined, LeftOutlined, RightOutlined, MinusSquareOutlined } from '@ant-design/icons';
 import { salaryRecordApi } from '../services/api';
 import type { SalaryRecord, SalaryStatistics } from '../services/api';
@@ -348,153 +349,71 @@ const HealthSummerSolsticePage: React.FC = () => {
           </div>
         )}
 
-        <Card
-          className="finance-salary-container-card"
-          style={{
-            width: '100%', 
-            borderRadius: '20px', 
-            boxShadow: '0 0 20px rgba(255, 152, 0, 0.3), 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(255, 152, 0, 0.1), inset 0 6px 12px rgba(255, 255, 255, 0.15), inset 0 -6px 12px rgba(0, 0, 0, 0.4)',
-            border: '1px solid rgba(255, 152, 0, 0.4)',
-            backgroundColor: '#2D2D2D',
-            backgroundImage: 'linear-gradient(145deg, #2A2A2A, #1D1D1D)',
-            padding: 0,
-            borderTop: 'none'
-          }}
-          headStyle={{ border: 'none', padding: '0 0 16px 0' }}
-          title={
-            <div style={{
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              width: '100%',
-              gap: '24px'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} />
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <Select
-                  placeholder={text.selectYear}
-                  allowClear
-                  value={selectedYear}
-                  onChange={(value) => setSelectedYear(value ?? null)}
-                  style={{
-                    minWidth: '120px',
-                    width: 'auto',
-                    backgroundColor: '#1D1D1D',
-                    borderColor: '#444',
-                    color: '#fff'
-                  }}
-                  options={yearOptions}
-                />
-                <Select
-                  placeholder={text.selectCompany}
-                  allowClear
-                  value={selectedCompany}
-                  onChange={(value) => setSelectedCompany(value ?? null)}
-                  style={{
-                    minWidth: '200px',
-                    width: 'auto',
-                    backgroundColor: '#1D1D1D',
-                    borderColor: '#444',
-                    color: '#fff'
-                  }}
-                  options={companyOptions}
-                />
-              </div>
-              <Button
-                type="primary"
-                className="finance-salary-add-button"
-                icon={<PlusOutlined />}
-                onClick={showAddDrawer}
-                size="small"
-                style={{
-                  borderRadius: '50%',
-                  width: '32px',
-                  height: '32px',
-                  padding: '0',
-                  background: 'linear-gradient(135deg, #FF9800, #e65100)',
-                  boxShadow: '0 2px 8px rgba(255, 152, 0, 0.4)'
-                }}
+        <RecordCardList
+          records={filteredSalaryRecords}
+          getRecordKey={record => record.id || `${record.year}-${record.month}`}
+          onRecordClick={showEditDrawer}
+          filters={(
+            <>
+              <Select
+                placeholder={text.selectYear}
+                allowClear
+                value={selectedYear}
+                onChange={(value) => setSelectedYear(value ?? null)}
+                options={yearOptions}
               />
-            </div>
-          }
-        >
-          {filteredSalaryRecords.length === 0 ? (
-            <div style={{
-              textAlign: 'center', 
-              padding: '60px 20px',
-              color: '#666'
-            }}>
-              {text.noRecords}
-            </div>
-          ) : (
-            <div className="record-grid">
-              {filteredSalaryRecords.map((record) => (
-                <Card
-                  key={record.id}
-                  className="record-tile salary-record-tile"
-                  hoverable
-                  onClick={() => showEditDrawer(record)}
-                >
-                  <div style={{ color: '#FF9800', fontSize: '16px', fontWeight: 'bold', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {formatYearMonth(record)}
-                    {record.company && (
-                      <span style={{
-                        fontSize: '11px',
-                        fontWeight: 'normal',
-                        color: '#1890ff',
-                        background: 'rgba(24, 144, 255, 0.15)',
-                        borderRadius: '4px',
-                        padding: '1px 6px',
-                        marginLeft: 'auto'
-                      }}>
-                        {companyOptions.find(c => c.value === record.company)?.label || record.company}
-                      </span>
-                    )}
-                    {record.resetCumulative && (
-                      <span style={{
-                        fontSize: '11px',
-                        fontWeight: 'normal',
-                        color: '#fff',
-                        background: 'linear-gradient(135deg, #FF9800, #FF5722)',
-                        borderRadius: '4px',
-                        padding: '1px 6px'
-                      }}>
-                        {isEnglish ? 'Restart' : '重新累计'}
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                    <div>
-                      <div style={{ color: '#999', fontSize: '12px' }}>{text.totalIncome}</div>
-                      <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
-                        {formatCurrency((record.monthlyIncome || 0) + (record.otherIncome || 0))}
-                      </div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ color: '#999', fontSize: '12px' }}>{text.actualIncome}</div>
-                      <div style={{ color: '#52c41a', fontSize: '14px', fontWeight: 'bold' }}>
-                        {formatCurrency(record.actualIncome)}
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ color: '#999', fontSize: '12px' }}>{text.specialDeduction}</div>
-                      <div style={{ color: '#faad14', fontSize: '14px', fontWeight: 'bold' }}>
-                        {formatCurrency(record.specialDeduction)}
-                      </div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ color: '#999', fontSize: '12px' }}>{text.currentTaxDeclaration}</div>
-                      <div style={{ color: '#FF9800', fontSize: '14px', fontWeight: 'bold' }}>
-                        {formatCurrency(record.currentTaxDeclaration)}
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
+              <Select
+                placeholder={text.selectCompany}
+                allowClear
+                value={selectedCompany}
+                onChange={(value) => setSelectedCompany(value ?? null)}
+                options={companyOptions}
+              />
+            </>
           )}
-        </Card>
+          onAdd={showAddDrawer}
+          addLabel={text.addRecord}
+          emptyText={text.noRecords}
+          accent="#FF9800"
+          addButtonBackground="linear-gradient(135deg, #FF9800, #e65100)"
+          addButtonShadow="0 2px 8px rgba(255, 152, 0, 0.4)"
+          recordClassName="salary-record-tile"
+          renderRecord={(record) => (
+            <>
+              <div style={{ color: '#FF9800', fontSize: 16, fontWeight: 'bold', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                {formatYearMonth(record)}
+                {record.company && (
+                  <span style={{ fontSize: 11, fontWeight: 'normal', color: '#1890ff', background: 'rgba(24, 144, 255, 0.15)', borderRadius: 4, padding: '1px 6px', marginLeft: 'auto' }}>
+                    {companyOptions.find(company => company.value === record.company)?.label || record.company}
+                  </span>
+                )}
+                {record.resetCumulative && (
+                  <span style={{ fontSize: 11, fontWeight: 'normal', color: '#fff', background: 'linear-gradient(135deg, #FF9800, #FF5722)', borderRadius: 4, padding: '1px 6px' }}>
+                    {text.resetCumulativeShort}
+                  </span>
+                )}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <div>
+                  <div style={{ color: '#999', fontSize: 12 }}>{text.totalIncome}</div>
+                  <div style={{ color: '#fff', fontSize: 14, fontWeight: 'bold' }}>{formatCurrency((record.monthlyIncome || 0) + (record.otherIncome || 0))}</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ color: '#999', fontSize: 12 }}>{text.actualIncome}</div>
+                  <div style={{ color: '#52c41a', fontSize: 14, fontWeight: 'bold' }}>{formatCurrency(record.actualIncome)}</div>
+                </div>
+                <div>
+                  <div style={{ color: '#999', fontSize: 12 }}>{text.specialDeduction}</div>
+                  <div style={{ color: '#faad14', fontSize: 14, fontWeight: 'bold' }}>{formatCurrency(record.specialDeduction)}</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ color: '#999', fontSize: 12 }}>{text.currentTaxDeclaration}</div>
+                  <div style={{ color: '#FF9800', fontSize: 14, fontWeight: 'bold' }}>{formatCurrency(record.currentTaxDeclaration)}</div>
+                </div>
+              </div>
+            </>
+          )}
+        />
       </div>
 
       <Drawer

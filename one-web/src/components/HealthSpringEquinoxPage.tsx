@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import MetricCard from './MetricCard';
 import MetricGrid from './MetricGrid';
-import { useNavigate } from 'react-router-dom';
+import RecordCardList from './RecordCardList';
 import { Card, Form, Input, InputNumber, Select, Button, DatePicker, Row, Col, message, Drawer, Popconfirm } from 'antd';
 import { ThunderboltOutlined, PlusOutlined, CalendarOutlined, ClockCircleOutlined, CarOutlined, DollarOutlined, MessageOutlined, GiftOutlined, EditOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -107,7 +107,6 @@ const minuteOptions = Array.from({ length: 60 }, (_, i) => ({
 }));
 
 const HealthSpringEquinoxPage: React.FC = () => {
-  const navigate = useNavigate();
   const { isEnglish } = useAppPreferences();
   const text = {
     totalSessions: isEnglish ? 'Total Sessions' : '总充电次数',
@@ -434,6 +433,12 @@ const HealthSpringEquinoxPage: React.FC = () => {
     setDetailModalVisible(true);
   };
 
+  const filteredRecords = records.filter(record => {
+    const providerMatch = !selectedProvider || record.provider === selectedProvider;
+    const yearMatch = !selectedYear || record.date.startsWith(selectedYear);
+    return providerMatch && yearMatch;
+  });
+
   return (
     <div className="themed-route-page health-fitness-page" style={{
       padding: '20px',
@@ -457,257 +462,99 @@ const HealthSpringEquinoxPage: React.FC = () => {
           <MetricCard title={text.avgPrice} value={stats.totalEnergy > 0 ? (stats.totalCost / stats.totalEnergy).toFixed(2) : '0.00'} prefix={<DollarOutlined />} suffix={text.yuanPerKwh} accent="#faad14" />
         </MetricGrid>
 
-        {/* 充电记录列表 */}
-        <Card
-          className="vehicle-charge-container-card"
-          style={{
-            borderRadius: '16px',
-            backgroundColor: 'transparent',
-            boxShadow: 'none',
-            border: 'none',
-            width: '100%'
-          }}
-          headStyle={{ border: 'none', padding: '0 0 16px 0' }}
-          title={
-            <div style={{
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              width: '100%',
-              gap: '24px'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} />
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <Select
-                  placeholder={text.selectYear}
-                  allowClear
-                  value={selectedYear}
-                  onChange={(value) => {
-                    setSelectedYear(value);
-                    setCurrentPage(1);
-                  }}
-                  style={{
-                    minWidth: '120px',
-                    width: 'auto'
-                  }}
-                  options={yearOptions}
-                />
-                <Select
-                  placeholder={text.selectProvider}
-                  allowClear
-                  value={selectedProvider}
-                  onChange={(value) => {
-                    setSelectedProvider(value);
-                    setCurrentPage(1);
-                  }}
-                  style={{
-                    minWidth: '200px',
-                    width: 'auto'
-                  }}
-                  options={providers.map(p => ({
-                    label: p.label,
-                    value: p.value
-                  }))}
-                />
-              </div>
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => {
-                  if (locations.length > 0) {
-                    const firstLocation = locations[0];
-                    form.setFieldsValue({
-                      location: firstLocation.value,
-                      provider: firstLocation.provider || null
-                    });
-                  }
-                  setAddDrawerVisible(true);
-                }}
-                size="small"
-                style={{
-                  height: '32px',
-                  width: '32px',
-                  borderRadius: '50%',
-                  padding: 0,
-                  background: 'linear-gradient(135deg, #1890ff, #096dd9)',
-                  boxShadow: '0 2px 8px rgba(24, 144, 255, 0.4)'
-                }}
-              />
-            </div>
-          }
-        >
-          {records.length === 0 ? (
-            <div style={{
-              textAlign: 'center',
-              padding: '40px 20px',
-              color: '#666'
-            }}>
-              <ThunderboltOutlined style={{ fontSize: '48px', marginBottom: '16px' }} />
-              <div>{text.noRecords}</div>
-            </div>
-          ) : (
+        <RecordCardList
+          records={filteredRecords}
+          getRecordKey={record => record.id}
+          onRecordClick={handleViewDetail}
+          filters={(
             <>
-              <div className="record-grid">
-                {(() => {
-                  const filteredRecords = records.filter(r => {
-                    const providerMatch = !selectedProvider || r.provider === selectedProvider;
-                    const yearMatch = !selectedYear || r.date.startsWith(selectedYear);
-                    return providerMatch && yearMatch;
-                  });
-
-                  if (filteredRecords.length === 0) {
-                    return (
-                      <div style={{ textAlign: 'center', padding: '40px 20px', color: '#666', gridColumn: '1 / -1' }}>
-                        {text.noRecords}
-                      </div>
-                    );
-                  }
-
-                  const paginatedRecords = filteredRecords.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-                  return paginatedRecords.map((record) => {
-                    const finalCost = (record.electricityCost + record.serviceCost - (record.discountAmount || 0)).toFixed(2);
-                    const avgPrice = record.chargeAmount > 0
-                      ? ((record.electricityCost + record.serviceCost - (record.discountAmount || 0)) / record.chargeAmount).toFixed(2)
-                      : '0.00';
-
-                    return (
-                      <div
-                        key={record.id}
-                        className="record-tile charge-record-tile"
-                        onClick={() => handleViewDetail(record)}
-                        style={{
-                          padding: '16px'
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                          <div style={{ color: '#1890ff', fontSize: '16px', fontWeight: 'bold' }}>
-                            {record.date}
-                          </div>
-                          <div style={{
-                            backgroundColor: 'rgba(82, 196, 26, 0.2)',
-                            color: '#52c41a',
-                            fontSize: '12px',
-                            fontWeight: 'bold',
-                            padding: '2px 8px',
-                            borderRadius: '10px',
-                            border: '1px solid rgba(82, 196, 26, 0.3)'
-                          }}>
-                            {providers.find(p => p.value === record.provider)?.label || record.provider}
-                          </div>
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: record.batteryCapacity ? 'auto auto' : 'auto', gap: '8px' }}>
-                          <div>
-                            <div style={{ color: '#999', fontSize: '12px' }}>{text.energy}</div>
-                            <div style={{ color: '#52c41a', fontSize: '14px', fontWeight: 'bold' }}>
-                              {record.chargeAmount} kWh
-                            </div>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ color: '#999', fontSize: '12px' }}>{text.amount}</div>
-                            <div style={{ color: '#ff4d4f', fontSize: '14px', fontWeight: 'bold' }}>
-                              ¥{finalCost}
-                            </div>
-                          </div>
-                          {record.batteryCapacity ? (
-                            <div>
-                              <div style={{ color: '#999', fontSize: '12px' }}>{text.batteryCapacity}</div>
-                              <div style={{ color: '#faad14', fontSize: '14px', fontWeight: 'bold' }}>
-                                {record.batteryCapacity} kWh
-                              </div>
-                            </div>
-                          ) : (
-                            <div></div>
-                          )}
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ color: '#999', fontSize: '12px' }}>{text.avgPrice}</div>
-                            <div style={{ color: '#faad14', fontSize: '14px', fontWeight: 'bold' }}>
-                              ¥{avgPrice}/kWh
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  });
-                })()}
-              </div>
-              {(() => {
-                const filteredRecords = records.filter(r => {
-                  const providerMatch = !selectedProvider || r.provider === selectedProvider;
-                  const yearMatch = !selectedYear || r.date.startsWith(selectedYear);
-                  return providerMatch && yearMatch;
-                });
-                return filteredRecords.length > pageSize && (
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: '12px',
-                    marginTop: '24px',
-                    padding: '16px'
-                  }}>
-                    <Button
-                      size="small"
-                      disabled={currentPage === 1}
-                      onClick={() => setCurrentPage(1)}
-                      style={{
-                        borderRadius: '6px',
-                        backgroundColor: 'rgba(24, 144, 255, 0.1)',
-                        borderColor: 'rgba(24, 144, 255, 0.3)',
-                        color: '#1890ff'
-                      }}
-                    >
-                      {text.firstPage}
-                    </Button>
-                    <Button
-                      size="small"
-                      disabled={currentPage === 1}
-                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                      style={{
-                        borderRadius: '6px',
-                        backgroundColor: 'rgba(24, 144, 255, 0.1)',
-                        borderColor: 'rgba(24, 144, 255, 0.3)',
-                        color: '#1890ff'
-                      }}
-                    >
-                      {text.prevPage}
-                    </Button>
-                    <span style={{ color: '#fff', fontSize: '14px' }}>
-                      {isEnglish ? `${text.pageOf} ${currentPage} / ${Math.ceil(filteredRecords.length / pageSize)}` : `${text.pageOf} ${currentPage} / ${Math.ceil(filteredRecords.length / pageSize)} ${text.pageSuffix}`}
-                    </span>
-                    <Button
-                      size="small"
-                      disabled={currentPage >= Math.ceil(filteredRecords.length / pageSize)}
-                      onClick={() => setCurrentPage(prev => Math.min(Math.ceil(filteredRecords.length / pageSize), prev + 1))}
-                      style={{
-                        borderRadius: '6px',
-                        backgroundColor: 'rgba(24, 144, 255, 0.1)',
-                        borderColor: 'rgba(24, 144, 255, 0.3)',
-                        color: '#1890ff'
-                      }}
-                    >
-                      {text.nextPage}
-                    </Button>
-                    <Button
-                      size="small"
-                      disabled={currentPage >= Math.ceil(filteredRecords.length / pageSize)}
-                      onClick={() => setCurrentPage(Math.ceil(filteredRecords.length / pageSize))}
-                      style={{
-                        borderRadius: '6px',
-                        backgroundColor: 'rgba(24, 144, 255, 0.1)',
-                        borderColor: 'rgba(24, 144, 255, 0.3)',
-                        color: '#1890ff'
-                      }}
-                    >
-                      {text.lastPage}
-                    </Button>
-                  </div>
-                );
-              })()}
+              <Select
+                placeholder={text.selectYear}
+                allowClear
+                value={selectedYear}
+                onChange={(value) => {
+                  setSelectedYear(value);
+                  setCurrentPage(1);
+                }}
+                options={yearOptions}
+              />
+              <Select
+                placeholder={text.selectProvider}
+                allowClear
+                value={selectedProvider}
+                onChange={(value) => {
+                  setSelectedProvider(value);
+                  setCurrentPage(1);
+                }}
+                options={providers}
+              />
             </>
           )}
-        </Card>
+          onAdd={() => {
+            if (locations.length > 0) {
+              const firstLocation = locations[0];
+              form.setFieldsValue({
+                location: firstLocation.value,
+                provider: firstLocation.provider || null
+              });
+            }
+            setAddDrawerVisible(true);
+          }}
+          addLabel={text.addRecord}
+          emptyText={text.noRecords}
+          emptyIcon={<ThunderboltOutlined />}
+          accent="#1890ff"
+          addButtonBackground="linear-gradient(135deg, #1890ff, #096dd9)"
+          addButtonShadow="0 2px 8px rgba(24, 144, 255, 0.4)"
+          recordClassName="charge-record-tile"
+          recordBodyStyle={{ padding: 16 }}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          paginationText={{
+            first: text.firstPage,
+            previous: text.prevPage,
+            next: text.nextPage,
+            last: text.lastPage,
+            summary: (page, total) => isEnglish
+              ? `${text.pageOf} ${page} / ${total}`
+              : `${text.pageOf} ${page} / ${total} ${text.pageSuffix}`
+          }}
+          renderRecord={(record) => {
+            const paidAmount = record.electricityCost + record.serviceCost - (record.discountAmount || 0);
+            const avgPrice = record.chargeAmount > 0 ? paidAmount / record.chargeAmount : 0;
+            return (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                  <div style={{ color: '#1890ff', fontSize: 16, fontWeight: 'bold' }}>{record.date}</div>
+                  <div style={{ backgroundColor: 'rgba(82, 196, 26, 0.2)', color: '#52c41a', fontSize: 12, fontWeight: 'bold', padding: '2px 8px', borderRadius: 10, border: '1px solid rgba(82, 196, 26, 0.3)' }}>
+                    {providers.find(provider => provider.value === record.provider)?.label || record.provider}
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <div>
+                    <div style={{ color: '#999', fontSize: 12 }}>{text.energy}</div>
+                    <div style={{ color: '#52c41a', fontSize: 14, fontWeight: 'bold' }}>{record.chargeAmount} kWh</div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ color: '#999', fontSize: 12 }}>{text.amount}</div>
+                    <div style={{ color: '#ff4d4f', fontSize: 14, fontWeight: 'bold' }}>¥{paidAmount.toFixed(2)}</div>
+                  </div>
+                  {record.batteryCapacity ? (
+                    <div>
+                      <div style={{ color: '#999', fontSize: 12 }}>{text.batteryCapacity}</div>
+                      <div style={{ color: '#faad14', fontSize: 14, fontWeight: 'bold' }}>{record.batteryCapacity} kWh</div>
+                    </div>
+                  ) : <div />}
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ color: '#999', fontSize: 12 }}>{text.avgPrice}</div>
+                    <div style={{ color: '#faad14', fontSize: 14, fontWeight: 'bold' }}>¥{avgPrice.toFixed(2)}/kWh</div>
+                  </div>
+                </div>
+              </>
+            );
+          }}
+        />
 
         {/* 日历热力图 - 每日充电电量 */}
         <Card
