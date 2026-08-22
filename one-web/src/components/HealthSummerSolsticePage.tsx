@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import MetricCard from './MetricCard';
 import RecordCardList from './RecordCardList';
 import { Button, Drawer, Form, Input, InputNumber, message, Row, Col, Select, Switch, Popconfirm } from 'antd';
-import { PlusOutlined, CalendarOutlined, WalletOutlined, InsuranceOutlined, CalculatorOutlined, FileTextOutlined, LeftOutlined, RightOutlined, MinusSquareOutlined } from '@ant-design/icons';
+import { PlusOutlined, CalendarOutlined, WalletOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { salaryRecordApi } from '../services/api';
 import type { SalaryRecord, SalaryStatistics } from '../services/api';
 import { useAppPreferences } from '../contexts/AppPreferencesContext';
@@ -481,7 +481,6 @@ const HealthSummerSolsticePage: React.FC = () => {
               alignItems: 'center',
               gap: '8px'
             }}>
-              <CalendarOutlined />
               {text.basicInfo}
             </div>
             <Row gutter={16}>
@@ -560,7 +559,6 @@ const HealthSummerSolsticePage: React.FC = () => {
                   alignItems: 'center',
                   gap: '8px'
                 }}>
-                  <WalletOutlined />
                   {text.incomeInfo}
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -614,7 +612,6 @@ const HealthSummerSolsticePage: React.FC = () => {
               alignItems: 'center',
               gap: '8px'
             }}>
-              <MinusSquareOutlined />
               {text.standardDeduction}
             </div>
             <Form.Item
@@ -652,7 +649,6 @@ const HealthSummerSolsticePage: React.FC = () => {
                 alignItems: 'center',
                 gap: '8px'
               }}>
-                <InsuranceOutlined />
                 {text.specialDeduction}
               </div>
               <div style={{ textAlign: 'right' }}>
@@ -729,7 +725,6 @@ const HealthSummerSolsticePage: React.FC = () => {
               alignItems: 'center',
               gap: '8px'
             }}>
-              <FileTextOutlined />
               {text.notes}
             </div>
             <Form.Item
@@ -864,7 +859,6 @@ const HealthSummerSolsticePage: React.FC = () => {
                 alignItems: 'center',
                 gap: '8px'
               }}>
-                <CalendarOutlined />
                 {text.basicInfo}
               </div>
 <Row gutter={16}>
@@ -943,7 +937,6 @@ const HealthSummerSolsticePage: React.FC = () => {
                 alignItems: 'center',
                 gap: '8px'
               }}>
-                <WalletOutlined />
                 {text.incomeInfo}
               </div>
               <div style={{ textAlign: 'right' }}>
@@ -997,7 +990,6 @@ const HealthSummerSolsticePage: React.FC = () => {
               alignItems: 'center',
               gap: '8px'
             }}>
-              <MinusSquareOutlined />
               {text.standardDeduction}
             </div>
             <Form.Item
@@ -1035,7 +1027,6 @@ const HealthSummerSolsticePage: React.FC = () => {
                   alignItems: 'center',
                   gap: '8px'
                 }}>
-                  <InsuranceOutlined />
                   {text.specialDeduction}
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -1112,7 +1103,6 @@ const HealthSummerSolsticePage: React.FC = () => {
                 alignItems: 'center',
                 gap: '8px'
               }}>
-                <FileTextOutlined />
                 {text.notes}
               </div>
               <Form.Item
@@ -1144,7 +1134,6 @@ const HealthSummerSolsticePage: React.FC = () => {
                 alignItems: 'center',
                 gap: '8px'
               }}>
-                <CalendarOutlined />
                 {text.basicInfo}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -1205,7 +1194,6 @@ const HealthSummerSolsticePage: React.FC = () => {
                   alignItems: 'center',
                   gap: '8px'
                 }}>
-                  <WalletOutlined />
                   {text.incomeInfo}
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -1246,7 +1234,6 @@ const HealthSummerSolsticePage: React.FC = () => {
                 alignItems: 'center',
                 gap: '8px'
               }}>
-                <MinusSquareOutlined />
                 {text.standardDeduction}
               </div>
               <div style={{ textAlign: 'center' }}>
@@ -1277,7 +1264,6 @@ const HealthSummerSolsticePage: React.FC = () => {
                   alignItems: 'center',
                   gap: '8px'
                 }}>
-                  <InsuranceOutlined />
                   {text.specialDeduction}
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -1330,7 +1316,6 @@ const HealthSummerSolsticePage: React.FC = () => {
                 alignItems: 'center',
                 gap: '8px'
               }}>
-                <CalculatorOutlined />
                 {text.calculationResults}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -1390,7 +1375,6 @@ const HealthSummerSolsticePage: React.FC = () => {
                   alignItems: 'center',
                   gap: '8px'
                 }}>
-                  <FileTextOutlined />
                   {text.notes}
                 </div>
                 <div style={{ color: 'var(--app-text)', fontSize: '14px' }}>

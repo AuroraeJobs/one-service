@@ -3,7 +3,7 @@ import MetricCard from './MetricCard';
 import MetricGrid from './MetricGrid';
 import RecordCardList from './RecordCardList';
 import { Card, Form, Input, InputNumber, Select, Button, DatePicker, Row, Col, message, Drawer, Popconfirm } from 'antd';
-import { ThunderboltOutlined, PlusOutlined, CalendarOutlined, ClockCircleOutlined, CarOutlined, DollarOutlined, MessageOutlined, GiftOutlined, EditOutlined } from '@ant-design/icons';
+import { ThunderboltOutlined, PlusOutlined, CalendarOutlined, CarOutlined, DollarOutlined, GiftOutlined, EditOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { chargeRecordApi, chargeStationApi, type ChargeLocationOption } from '../services/api';
 import ReactECharts from 'echarts-for-react';
@@ -923,7 +923,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
                   alignItems: 'center',
                   gap: '8px'
                 }}>
-                  <CalendarOutlined />
                   {text.chargingTime}
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -965,7 +964,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
                   alignItems: 'center',
                   gap: '8px'
                 }}>
-                  <CarOutlined />
                   {text.chargingInfo}
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -1017,7 +1015,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
                   alignItems: 'center',
                   gap: '8px'
                 }}>
-                  <DollarOutlined />
                   {text.costDetails}
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
@@ -1079,7 +1076,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
                     alignItems: 'center',
                     gap: '8px'
                   }}>
-                    <MessageOutlined />
                     {text.notes}
                   </div>
                   <div style={{ color: '#fff', fontSize: '14px', lineHeight: '1.6' }}>
@@ -1189,7 +1185,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
                 alignItems: 'center',
                 gap: '8px'
               }}>
-                <ClockCircleOutlined />
                 {text.chargingTime}
               </div>
               <Row gutter={12}>
@@ -1285,7 +1280,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
                 alignItems: 'center',
                 gap: '8px'
               }}>
-                <CarOutlined />
                 {text.chargingInfo}
               </div>
               <Row gutter={12}>
@@ -1368,7 +1362,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
                 alignItems: 'center',
                 gap: '8px'
               }}>
-                <DollarOutlined />
                 {text.costDetails}
               </div>
               <Row gutter={12}>
