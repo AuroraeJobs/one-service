@@ -3,7 +3,7 @@ import MetricCard from './MetricCard';
 import MetricGrid from './MetricGrid';
 import RecordCardList from './RecordCardList';
 import { Card, Form, Input, InputNumber, Select, Button, DatePicker, Row, Col, message, Drawer, Popconfirm } from 'antd';
-import { ThunderboltOutlined, PlusOutlined, CalendarOutlined, CarOutlined, DollarOutlined, GiftOutlined, EditOutlined } from '@ant-design/icons';
+import { ThunderboltOutlined, CalendarOutlined, DollarOutlined, GiftOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { chargeRecordApi, chargeStationApi, type ChargeLocationOption } from '../services/api';
 import ReactECharts from 'echarts-for-react';
@@ -825,7 +825,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
                 alignItems: 'center',
                 gap: '10px'
               }}>
-                <CarOutlined style={{ color: '#1890ff' }} />
                 {text.detail}
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
@@ -1102,12 +1101,10 @@ const HealthSpringEquinoxPage: React.FC = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 {isEditing ? (
                   <>
-                    <EditOutlined style={{ color: '#1890ff' }} />
                     {text.editRecord}
                   </>
                 ) : (
                   <>
-                    <PlusOutlined style={{ color: '#1890ff' }} />
                     {text.addRecord}
                   </>
                 )}

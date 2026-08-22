@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import MetricCard from './MetricCard';
 import RecordCardList from './RecordCardList';
 import { Button, Drawer, Form, Input, InputNumber, message, Row, Col, Select, Switch, Popconfirm } from 'antd';
-import { PlusOutlined, CalendarOutlined, WalletOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
+import { CalendarOutlined } from '@ant-design/icons';
 import { salaryRecordApi } from '../services/api';
 import type { SalaryRecord, SalaryStatistics } from '../services/api';
 import { useAppPreferences } from '../contexts/AppPreferencesContext';
@@ -429,7 +429,6 @@ const HealthSummerSolsticePage: React.FC = () => {
             width: '100%'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <PlusOutlined style={{ color: '#FF9800' }} />
               {text.addRecord}
             </div>
           </div>
@@ -753,7 +752,6 @@ const HealthSummerSolsticePage: React.FC = () => {
             width: '100%'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <WalletOutlined style={{ color: '#FF9800' }} />
               {text.salaryDetails}
             </div>
           </div>
@@ -1402,7 +1400,6 @@ const HealthSummerSolsticePage: React.FC = () => {
                       borderRadius: '8px'
                     }}
                   >
-                    <LeftOutlined />
                     {text.previousPeriod}
                   </Button>
                 ) : (
@@ -1416,7 +1413,6 @@ const HealthSummerSolsticePage: React.FC = () => {
                       borderRadius: '8px'
                     }}
                   >
-                    <PlusOutlined />
                     {text.addPrevious}
                   </Button>
                 )}
@@ -1431,7 +1427,6 @@ const HealthSummerSolsticePage: React.FC = () => {
                     }}
                   >
                     {text.nextPeriod}
-                    <RightOutlined />
                   </Button>
                 ) : (
                   <Button
@@ -1444,7 +1439,6 @@ const HealthSummerSolsticePage: React.FC = () => {
                       borderRadius: '8px'
                     }}
                   >
-                    <PlusOutlined />
                     {text.addNext}
                   </Button>
                 )}
