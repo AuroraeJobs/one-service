@@ -2473,6 +2473,7 @@ export const teslaFleetApi = {
 export interface SalaryRecord {
   id?: string;
   company?: string;
+  recordType?: 'SALARY' | 'BONUS';
   year: number;
   month: number;
   monthlyIncome: number;
@@ -2483,6 +2484,7 @@ export interface SalaryRecord {
   unemploymentInsurance: number;
   housingFund: number;
   specialDeduction?: number;
+  taxRate?: number;
   monthlyTaxableIncome?: number;
   cumulativeTaxableIncome?: number;
   cumulativeTaxPayable?: number;

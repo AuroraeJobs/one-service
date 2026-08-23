@@ -19,12 +19,18 @@ const HealthSummerSolsticePage: React.FC = () => {
     noRecords: isEnglish ? 'No salary records' : '暂无工资记录',
     company: isEnglish ? 'Company' : '公司',
     selectCompany: isEnglish ? 'Please select company' : '请选择公司',
+    recordType: isEnglish ? 'Record Type' : '记录类型',
+    salaryType: isEnglish ? 'Salary' : '工资',
+    bonusType: isEnglish ? 'Bonus' : '奖金',
+    selectRecordType: isEnglish ? 'Please select record type' : '请选择记录类型',
     monthlyIncome: isEnglish ? 'Monthly Income' : '当月收入',
+    bonusAmount: isEnglish ? 'Bonus Amount' : '奖金金额',
     totalIncome: isEnglish ? 'Total Income' : '总收入',
     currentTaxDeclaration: isEnglish ? 'Current Tax Declaration' : '本期申报税额',
     actualIncome: isEnglish ? 'Net Income' : '实际所得额',
-    addRecord: isEnglish ? 'Add Salary Record' : '添加工资记录',
+    addRecord: isEnglish ? 'Add Income Record' : '添加收入记录',
     salaryDetails: isEnglish ? 'Salary Details' : '工资详情',
+    bonusDetails: isEnglish ? 'Bonus Details' : '奖金详情',
     save: isEnglish ? 'Save' : '保存',
     edit: isEnglish ? 'Edit' : '编辑',
     delete: isEnglish ? 'Delete' : '删除',
@@ -46,6 +52,8 @@ const HealthSummerSolsticePage: React.FC = () => {
     unemploymentInsurance: isEnglish ? 'Unemployment Insurance' : '失业保险',
     housingFund: isEnglish ? 'Housing Fund' : '住房公积金',
     specialDeduction: isEnglish ? 'Special Deduction' : '专项扣除',
+    taxRate: isEnglish ? 'Tax Rate' : '税率',
+    enterTaxRate: isEnglish ? 'Please enter a tax rate from 0 to 100' : '请输入 0 到 100 的税率',
     resetCumulative: isEnglish ? 'Restart Cumulative Tax (first month at new job)' : '重新累计（跳槽后新公司首月）',
     resetCumulativeShort: isEnglish ? 'Restart' : '重新累计',
     resetCumulativeTip: isEnglish ? 'Turn on to restart cumulative taxable income from this month' : '开启后，累计应纳税所得额从本月重新开始计算',
@@ -58,16 +66,16 @@ const HealthSummerSolsticePage: React.FC = () => {
     cumulativeTaxPaid: isEnglish ? 'Cumulative Tax Paid' : '累计已缴纳税',
     fetchRecordsFailed: isEnglish ? 'Failed to load salary records' : '获取工资记录失败',
     fetchStatsFailed: isEnglish ? 'Failed to load statistics' : '获取统计数据失败',
-    addSuccess: isEnglish ? 'Salary record added' : '工资记录添加成功',
+    addSuccess: isEnglish ? 'Income record added' : '收入记录添加成功',
     addFailed: isEnglish ? 'Failed to add salary record' : '添加失败',
-    updateSuccess: isEnglish ? 'Salary record updated' : '工资记录更新成功',
+    updateSuccess: isEnglish ? 'Income record updated' : '收入记录更新成功',
     updateFailed: isEnglish ? 'Failed to update salary record' : '更新失败',
-    deleteSuccess: isEnglish ? 'Salary record deleted' : '删除成功',
+    deleteSuccess: isEnglish ? 'Income record deleted' : '删除成功',
     deleteFailed: isEnglish ? 'Failed to delete salary record' : '删除失败',
     deleteConfirm: isEnglish ? 'Delete this salary record?' : '确定要删除这条工资记录吗？',
     ok: isEnglish ? 'OK' : '确定',
     cancel: isEnglish ? 'Cancel' : '取消',
-    duplicateRecord: isEnglish ? 'A record for this year and month already exists' : '该年月已存在工资记录',
+    duplicateRecord: isEnglish ? 'A record of this type already exists for the selected month' : '该年月已存在同类型记录',
     previousPeriod: isEnglish ? 'Previous' : '上个月',
     nextPeriod: isEnglish ? 'Next' : '下个月',
     addPrevious: isEnglish ? 'Add Previous' : '新增上个月',
@@ -85,6 +93,11 @@ const HealthSummerSolsticePage: React.FC = () => {
     { value: 'PROUDSMART', zh: '普奥', en: 'Proudsmart' },
     { value: 'MOXI', zh: '摩羲', en: 'MOXI' },
   ].map(company => ({ value: company.value, label: isEnglish ? company.en : company.zh }));
+  const recordTypeOptions = [
+    { value: 'SALARY', label: text.salaryType },
+    { value: 'BONUS', label: text.bonusType }
+  ];
+  const getRecordType = (record: Pick<SalaryRecord, 'recordType'>) => record.recordType || 'SALARY';
   const formatYearMonth = (record: SalaryRecord) => (
     isEnglish ? `${monthOptions[record.month - 1]?.label || record.month} ${record.year}` : `${record.year}年${record.month}月`
   );
@@ -99,6 +112,9 @@ const HealthSummerSolsticePage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedYear, setSelectedYear] = useState<number | null>(new Date().getFullYear());
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
+
+  const addRecordType = Form.useWatch('recordType', addForm) || 'SALARY';
+  const editRecordType = Form.useWatch('recordType', editForm) || 'SALARY';
 
   // 监听编辑表单的五险一金字段变化
   const editEndowmentInsurance = Form.useWatch('endowmentInsurance', editForm);
@@ -193,6 +209,7 @@ const HealthSummerSolsticePage: React.FC = () => {
       year,
       month,
       company,
+      recordType: 'SALARY',
       standardDeduction,
       endowmentInsurance,
       medicalInsurance,
@@ -204,7 +221,7 @@ const HealthSummerSolsticePage: React.FC = () => {
 
   const showEditDrawer = (record: SalaryRecord) => {
     setEditingRecord(record);
-    editForm.setFieldsValue(record);
+    editForm.setFieldsValue({ ...record, recordType: getRecordType(record) });
     setIsEditing(false);
     setIsEditDrawerVisible(true);
   };
@@ -231,10 +248,14 @@ const HealthSummerSolsticePage: React.FC = () => {
   const navigateRecord = (direction: 'prev' | 'next') => {
     if (!editingRecord) return;
     const { year, month } = getAdjacentDate(editingRecord.year, editingRecord.month, direction);
-    const target = salaryRecords.find(r => r.year === year && r.month === month);
+    const target = salaryRecords.find(r =>
+      r.year === year &&
+      r.month === month &&
+      getRecordType(r) === getRecordType(editingRecord)
+    );
     if (target) {
       setEditingRecord(target);
-      editForm.setFieldsValue(target);
+      editForm.setFieldsValue({ ...target, recordType: getRecordType(target) });
       setIsEditing(false);
     }
   };
@@ -246,11 +267,13 @@ const HealthSummerSolsticePage: React.FC = () => {
       year,
       month,
       company: editingRecord.company,
+      recordType: getRecordType(editingRecord),
       standardDeduction: editingRecord.standardDeduction,
       endowmentInsurance: editingRecord.endowmentInsurance,
       medicalInsurance: editingRecord.medicalInsurance,
       unemploymentInsurance: editingRecord.unemploymentInsurance,
       housingFund: editingRecord.housingFund,
+      taxRate: editingRecord.taxRate,
     });
     setIsEditDrawerVisible(false);
     setIsAddDrawerVisible(true);
@@ -258,17 +281,30 @@ const HealthSummerSolsticePage: React.FC = () => {
 
   const prevDate = editingRecord ? getAdjacentDate(editingRecord.year, editingRecord.month, 'prev') : null;
   const nextDate = editingRecord ? getAdjacentDate(editingRecord.year, editingRecord.month, 'next') : null;
-  const hasPrevious = !!prevDate && salaryRecords.some(r => r.year === prevDate.year && r.month === prevDate.month);
-  const hasNext = !!nextDate && salaryRecords.some(r => r.year === nextDate.year && r.month === nextDate.month);
+  const hasPrevious = !!prevDate && !!editingRecord && salaryRecords.some(r =>
+    r.year === prevDate.year &&
+    r.month === prevDate.month &&
+    getRecordType(r) === getRecordType(editingRecord)
+  );
+  const hasNext = !!nextDate && !!editingRecord && salaryRecords.some(r =>
+    r.year === nextDate.year &&
+    r.month === nextDate.month &&
+    getRecordType(r) === getRecordType(editingRecord)
+  );
 
   const handleAdd = async (values: SalaryRecordFormValues) => {
-    const duplicate = salaryRecords.some(r => r.year === values.year && r.month === values.month);
+    const normalizedValues = normalizeFormValues(values);
+    const duplicate = salaryRecords.some(r =>
+      r.year === normalizedValues.year &&
+      r.month === normalizedValues.month &&
+      getRecordType(r) === normalizedValues.recordType
+    );
     if (duplicate) {
       message.error(text.duplicateRecord);
       return;
     }
     try {
-      await salaryRecordApi.save(values);
+      await salaryRecordApi.save(normalizedValues);
       message.success(text.addSuccess);
       setIsAddDrawerVisible(false);
       addForm.resetFields();
@@ -281,13 +317,19 @@ const HealthSummerSolsticePage: React.FC = () => {
 
   const handleEdit = async (values: SalaryRecordFormValues) => {
     if (!editingRecord) return;
-    const duplicate = salaryRecords.some(r => r.id !== editingRecord.id && r.year === values.year && r.month === values.month);
+    const normalizedValues = normalizeFormValues(values);
+    const duplicate = salaryRecords.some(r =>
+      r.id !== editingRecord.id &&
+      r.year === normalizedValues.year &&
+      r.month === normalizedValues.month &&
+      getRecordType(r) === normalizedValues.recordType
+    );
     if (duplicate) {
       message.error(text.duplicateRecord);
       return;
     }
     try {
-      await salaryRecordApi.update({ ...values, id: editingRecord.id });
+      await salaryRecordApi.update({ ...normalizedValues, id: editingRecord.id });
       message.success(text.updateSuccess);
       fetchSalaryRecords();
       fetchStatistics();
@@ -317,6 +359,24 @@ const HealthSummerSolsticePage: React.FC = () => {
     if (value === undefined || value === null) return '¥0.00';
     return `¥${value.toFixed(2)}`;
   };
+
+  function normalizeFormValues(values: SalaryRecordFormValues): SalaryRecordFormValues {
+    const recordType = values.recordType || 'SALARY';
+    if (recordType === 'BONUS') {
+      return {
+        ...values,
+        recordType,
+        otherIncome: values.otherIncome || 0,
+        standardDeduction: 0,
+        endowmentInsurance: 0,
+        medicalInsurance: 0,
+        unemploymentInsurance: 0,
+        housingFund: 0,
+        resetCumulative: false
+      };
+    }
+    return { ...values, recordType, taxRate: undefined };
+  }
 
   return (
     <div className="themed-route-page health-fitness-page" style={{
@@ -350,7 +410,7 @@ const HealthSummerSolsticePage: React.FC = () => {
 
         <RecordCardList
           records={filteredSalaryRecords}
-          getRecordKey={record => record.id || `${record.year}-${record.month}`}
+          getRecordKey={record => record.id || `${record.year}-${record.month}-${getRecordType(record)}`}
           onRecordClick={showEditDrawer}
           filters={(
             <>
@@ -381,6 +441,9 @@ const HealthSummerSolsticePage: React.FC = () => {
             <>
               <div style={{ color: '#FF9800', fontSize: 16, fontWeight: 'bold', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
                 {formatYearMonth(record)}
+                <span style={{ fontSize: 11, fontWeight: 'normal', color: getRecordType(record) === 'BONUS' ? '#faad14' : '#52c41a', background: getRecordType(record) === 'BONUS' ? 'rgba(250, 173, 20, 0.15)' : 'rgba(82, 196, 26, 0.15)', borderRadius: 4, padding: '1px 6px' }}>
+                  {getRecordType(record) === 'BONUS' ? text.bonusType : text.salaryType}
+                </span>
                 {record.company && (
                   <span style={{ fontSize: 11, fontWeight: 'normal', color: '#1890ff', background: 'rgba(24, 144, 255, 0.15)', borderRadius: 4, padding: '1px 6px', marginLeft: 'auto' }}>
                     {companyOptions.find(company => company.value === record.company)?.label || record.company}
@@ -402,8 +465,10 @@ const HealthSummerSolsticePage: React.FC = () => {
                   <div style={{ color: '#52c41a', fontSize: 14, fontWeight: 'bold' }}>{formatCurrency(record.actualIncome)}</div>
                 </div>
                 <div>
-                  <div style={{ color: '#999', fontSize: 12 }}>{text.specialDeduction}</div>
-                  <div style={{ color: '#faad14', fontSize: 14, fontWeight: 'bold' }}>{formatCurrency(record.specialDeduction)}</div>
+                  <div style={{ color: '#999', fontSize: 12 }}>{getRecordType(record) === 'BONUS' ? text.taxRate : text.specialDeduction}</div>
+                  <div style={{ color: '#faad14', fontSize: 14, fontWeight: 'bold' }}>
+                    {getRecordType(record) === 'BONUS' ? `${record.taxRate ?? 0}%` : formatCurrency(record.specialDeduction)}
+                  </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ color: '#999', fontSize: 12 }}>{text.currentTaxDeclaration}</div>
@@ -509,7 +574,7 @@ const HealthSummerSolsticePage: React.FC = () => {
               </Col>
             </Row>
             <Row gutter={16}>
-              <Col span={16}>
+              <Col span={12}>
                 <Form.Item
                   name="company"
                   label={text.company}
@@ -522,7 +587,22 @@ const HealthSummerSolsticePage: React.FC = () => {
                   />
                 </Form.Item>
               </Col>
-              <Col span={8}>
+              <Col span={12}>
+                <Form.Item
+                  name="recordType"
+                  label={text.recordType}
+                  rules={[{ required: true, message: text.selectRecordType }]}
+                >
+                  <Select
+                    placeholder={text.selectRecordType}
+                    options={recordTypeOptions}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+            {addRecordType === 'SALARY' && (
+              <Row>
+                <Col span={24}>
                 <Form.Item
                   name="resetCumulative"
                   label={text.resetCumulativeShort}
@@ -532,8 +612,9 @@ const HealthSummerSolsticePage: React.FC = () => {
                 >
                   <Switch />
                 </Form.Item>
-              </Col>
-            </Row>
+                </Col>
+              </Row>
+            )}
           </div>
 
 <div style={{
@@ -566,20 +647,20 @@ const HealthSummerSolsticePage: React.FC = () => {
                 </div>
               </div>
               <Row gutter={16}>
-              <Col span={12}>
+              <Col span={addRecordType === 'BONUS' ? 24 : 12}>
                 <Form.Item
                   name="monthlyIncome"
-                  label={text.monthlyIncome}
+                  label={addRecordType === 'BONUS' ? text.bonusAmount : text.monthlyIncome}
                   rules={[{ required: true, message: text.enterMonthlyIncome }]}
                 >
                   <InputNumber 
-                    placeholder={text.monthlyIncome}
+                    placeholder={addRecordType === 'BONUS' ? text.bonusAmount : text.monthlyIncome}
                     prefix="¥"
                     style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
                   />
                 </Form.Item>
               </Col>
-              <Col span={12}>
+              {addRecordType === 'SALARY' && <Col span={12}>
                 <Form.Item
                   name="otherIncome"
                   label={text.otherIncome}
@@ -590,10 +671,42 @@ const HealthSummerSolsticePage: React.FC = () => {
                     style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
                   />
                 </Form.Item>
-              </Col>
+              </Col>}
             </Row>
           </div>
 
+          {addRecordType === 'BONUS' && (
+            <div style={{
+              marginBottom: '20px',
+              padding: '16px',
+              backgroundColor: 'rgba(250, 173, 20, 0.08)',
+              borderRadius: '12px',
+              border: '1px solid rgba(250, 173, 20, 0.2)'
+            }}>
+              <div style={{ color: '#faad14', fontSize: '16px', fontWeight: 'bold', marginBottom: '12px' }}>
+                {text.taxRate}
+              </div>
+              <Form.Item
+                name="taxRate"
+                label={text.taxRate}
+                rules={[
+                  { required: true, message: text.enterTaxRate },
+                  { type: 'number', min: 0, max: 100, message: text.enterTaxRate }
+                ]}
+              >
+                <InputNumber
+                  min={0}
+                  max={100}
+                  precision={2}
+                  suffix="%"
+                  placeholder={text.enterTaxRate}
+                  style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+                />
+              </Form.Item>
+            </div>
+          )}
+
+          {addRecordType === 'SALARY' && <>
           <div style={{
             marginBottom: '20px',
             padding: '16px',
@@ -706,6 +819,7 @@ const HealthSummerSolsticePage: React.FC = () => {
               </Col>
             </Row>
           </div>
+          </>}
 
           <div style={{
             marginBottom: '20px',
@@ -751,7 +865,7 @@ const HealthSummerSolsticePage: React.FC = () => {
             width: '100%'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              {text.salaryDetails}
+              {editingRecord && getRecordType(editingRecord) === 'BONUS' ? text.bonusDetails : text.salaryDetails}
             </div>
           </div>
         }
@@ -886,7 +1000,7 @@ const HealthSummerSolsticePage: React.FC = () => {
               </Col>
             </Row>
 <Row gutter={16}>
-              <Col span={16}>
+              <Col span={12}>
                 <Form.Item
                   name="company"
                   label={text.company}
@@ -899,7 +1013,22 @@ const HealthSummerSolsticePage: React.FC = () => {
                   />
                 </Form.Item>
               </Col>
-              <Col span={8}>
+              <Col span={12}>
+                <Form.Item
+                  name="recordType"
+                  label={text.recordType}
+                  rules={[{ required: true, message: text.selectRecordType }]}
+                >
+                  <Select
+                    placeholder={text.selectRecordType}
+                    options={recordTypeOptions}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+            {editRecordType === 'SALARY' && (
+              <Row>
+                <Col span={24}>
                 <Form.Item
                   name="resetCumulative"
                   label={text.resetCumulativeShort}
@@ -909,8 +1038,9 @@ const HealthSummerSolsticePage: React.FC = () => {
                 >
                   <Switch />
                 </Form.Item>
-              </Col>
-            </Row>
+                </Col>
+              </Row>
+            )}
           </div>
 
 <div style={{
@@ -943,20 +1073,20 @@ const HealthSummerSolsticePage: React.FC = () => {
               </div>
             </div>
             <Row gutter={16}>
-              <Col span={12}>
+              <Col span={editRecordType === 'BONUS' ? 24 : 12}>
                 <Form.Item
                   name="monthlyIncome"
-                  label={text.monthlyIncome}
+                  label={editRecordType === 'BONUS' ? text.bonusAmount : text.monthlyIncome}
                   rules={[{ required: true, message: text.enterMonthlyIncome }]}
                 >
                   <InputNumber 
-                    placeholder={text.monthlyIncome}
+                    placeholder={editRecordType === 'BONUS' ? text.bonusAmount : text.monthlyIncome}
                     prefix="¥"
                     style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
                   />
                 </Form.Item>
               </Col>
-              <Col span={12}>
+              {editRecordType === 'SALARY' && <Col span={12}>
                 <Form.Item
                   name="otherIncome"
                   label={text.otherIncome}
@@ -967,10 +1097,11 @@ const HealthSummerSolsticePage: React.FC = () => {
                     style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
                   />
                 </Form.Item>
-              </Col>
+              </Col>}
             </Row>
           </div>
 
+          {editRecordType === 'SALARY' && <>
           <div style={{
             marginBottom: '20px',
             padding: '16px',
@@ -1083,6 +1214,38 @@ const HealthSummerSolsticePage: React.FC = () => {
                 </Col>
               </Row>
             </div>
+          </>}
+
+            {editRecordType === 'BONUS' && (
+              <div style={{
+                marginBottom: '20px',
+                padding: '16px',
+                backgroundColor: 'rgba(250, 173, 20, 0.08)',
+                borderRadius: '12px',
+                border: '1px solid rgba(250, 173, 20, 0.2)'
+              }}>
+                <div style={{ color: '#faad14', fontSize: '16px', fontWeight: 'bold', marginBottom: '12px' }}>
+                  {text.taxRate}
+                </div>
+                <Form.Item
+                  name="taxRate"
+                  label={text.taxRate}
+                  rules={[
+                    { required: true, message: text.enterTaxRate },
+                    { type: 'number', min: 0, max: 100, message: text.enterTaxRate }
+                  ]}
+                >
+                  <InputNumber
+                    min={0}
+                    max={100}
+                    precision={2}
+                    suffix="%"
+                    placeholder={text.enterTaxRate}
+                    style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+                  />
+                </Form.Item>
+              </div>
+            )}
 
             <div style={{
               marginBottom: '20px',
@@ -1146,6 +1309,12 @@ const HealthSummerSolsticePage: React.FC = () => {
                     {isEnglish ? monthOptions[editingRecord.month - 1]?.label || editingRecord.month : `${editingRecord.month}月`}
                   </div>
                 </div>
+                <div>
+                  <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>{text.recordType}</div>
+                  <div style={{ color: 'var(--app-text)', fontSize: '14px', fontWeight: 'bold' }}>
+                    {getRecordType(editingRecord) === 'BONUS' ? text.bonusType : text.salaryType}
+                  </div>
+                </div>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginTop: '12px' }}>
                 <div>
@@ -1154,7 +1323,7 @@ const HealthSummerSolsticePage: React.FC = () => {
                     {editingRecord.company ? (companyOptions.find(c => c.value === editingRecord.company)?.label || editingRecord.company) : '-'}
                   </div>
                 </div>
-                {editingRecord.resetCumulative && (
+                {getRecordType(editingRecord) === 'SALARY' && editingRecord.resetCumulative && (
                   <span style={{
                     color: '#FF9800',
                     fontSize: '12px',
@@ -1199,22 +1368,25 @@ const HealthSummerSolsticePage: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: getRecordType(editingRecord) === 'BONUS' ? '1fr' : '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>{text.monthlyIncome}</div>
+                  <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>
+                    {getRecordType(editingRecord) === 'BONUS' ? text.bonusAmount : text.monthlyIncome}
+                  </div>
                   <div style={{ color: 'var(--app-text)', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.monthlyIncome)}
                   </div>
                 </div>
-                <div>
+                {getRecordType(editingRecord) === 'SALARY' && <div>
                   <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>{text.otherIncome}</div>
                   <div style={{ color: 'var(--app-text)', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.otherIncome)}
                   </div>
-                </div>
+                </div>}
               </div>
             </div>
 
+            {getRecordType(editingRecord) === 'SALARY' && <>
             <div style={{
               marginBottom: '20px',
               padding: '16px',
@@ -1234,12 +1406,31 @@ const HealthSummerSolsticePage: React.FC = () => {
                 {text.standardDeduction}
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ color: 'var(--app-text)', fontSize: '18px', fontWeight: 'bold', color: '#faad14' }}>
+                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#faad14' }}>
                   {formatCurrency(editingRecord.standardDeduction)}
                 </div>
               </div>
             </div>
+            </>}
 
+            {getRecordType(editingRecord) === 'BONUS' && (
+              <div style={{
+                marginBottom: '20px',
+                padding: '16px',
+                backgroundColor: 'rgba(250, 173, 20, 0.08)',
+                borderRadius: '12px',
+                border: '1px solid rgba(250, 173, 20, 0.2)'
+              }}>
+                <div style={{ color: '#faad14', fontSize: '16px', fontWeight: 'bold', marginBottom: '12px' }}>
+                  {text.taxRate}
+                </div>
+                <div style={{ color: 'var(--app-text)', fontSize: '18px', fontWeight: 'bold' }}>
+                  {editingRecord.taxRate ?? 0}%
+                </div>
+              </div>
+            )}
+
+            {getRecordType(editingRecord) === 'SALARY' && (
             <div style={{
               marginBottom: '20px',
               padding: '16px',
@@ -1296,6 +1487,7 @@ const HealthSummerSolsticePage: React.FC = () => {
                 </div>
               </div>
             </div>
+            )}
 
             <div style={{
               marginBottom: '20px',
@@ -1322,30 +1514,30 @@ const HealthSummerSolsticePage: React.FC = () => {
                     {formatCurrency(editingRecord.monthlyTaxableIncome)}
                   </div>
                 </div>
-                <div>
+                {getRecordType(editingRecord) === 'SALARY' && <div>
                   <div style={{ color: 'var(--app-text-muted)', fontSize: '12px' }}>{text.cumulativeTaxableIncome}</div>
                   <div style={{ color: 'var(--app-text)', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.cumulativeTaxableIncome)}
                   </div>
-                </div>
-                <div>
+                </div>}
+                {getRecordType(editingRecord) === 'SALARY' && <div>
                   <div style={{ color: 'var(--app-text-muted)', fontSize: '12px' }}>{text.cumulativeTaxPayable}</div>
                   <div style={{ color: '#FF9800', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.cumulativeTaxPayable)}
                   </div>
-                </div>
+                </div>}
                 <div>
                   <div style={{ color: 'var(--app-text-muted)', fontSize: '12px' }}>{text.currentTaxDeclaration}</div>
                   <div style={{ color: '#FF9800', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.currentTaxDeclaration)}
                   </div>
                 </div>
-                <div>
+                {getRecordType(editingRecord) === 'SALARY' && <div>
                   <div style={{ color: 'var(--app-text-muted)', fontSize: '12px' }}>{text.cumulativeTaxPaid}</div>
                   <div style={{ color: '#9c27b0', fontSize: '14px', fontWeight: 'bold' }}>
                     {formatCurrency(editingRecord.cumulativeTaxPaid)}
                   </div>
-                </div>
+                </div>}
                 <div>
                   <div style={{ color: 'var(--app-text-muted)', fontSize: '12px' }}>{text.actualIncome}</div>
                   <div style={{ color: '#52c41a', fontSize: '14px', fontWeight: 'bold' }}>

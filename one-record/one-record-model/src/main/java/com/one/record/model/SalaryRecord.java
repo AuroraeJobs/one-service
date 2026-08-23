@@ -1,6 +1,7 @@
 package com.one.record.model;
 
 import com.one.record.enums.SalaryCompany;
+import com.one.record.enums.SalaryRecordType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,6 +20,8 @@ public class SalaryRecord {
     private String id;
     
     private SalaryCompany company;
+
+    private SalaryRecordType recordType;
     
     private Integer year;
     
@@ -39,6 +42,11 @@ public class SalaryRecord {
     private Double housingFund;
     
     private Double specialDeduction;
+
+    /**
+     * 奖金记录手动输入的税率，使用百分比数值（例如 10 表示 10%）
+     */
+    private Double taxRate;
     
     private Double monthlyTaxableIncome;
     

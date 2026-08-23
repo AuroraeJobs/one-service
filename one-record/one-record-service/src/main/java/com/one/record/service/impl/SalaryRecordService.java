@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.one.common.exception.DuplicateException;
 import com.one.record.config.TaxConfig;
+import com.one.record.enums.SalaryRecordType;
 import com.one.record.model.SalaryRecord;
 import com.one.record.repository.SalaryRecordRepository;
 import com.one.record.service.ISalaryRecordService;
@@ -22,15 +23,19 @@ public class SalaryRecordService implements ISalaryRecordService {
     
     @Override
     public SalaryRecord save(SalaryRecord record) {
-        // 检查年月是否已存在（同一年月只能有一条记录）
+        record.setRecordType(normalizeRecordType(record));
+
+        // 同一年月允许分别保存一条工资和奖金记录，同类型不可重复
         if (record.getYear() != null && record.getMonth() != null) {
-            Optional<SalaryRecord> existing = repository.findByYearAndMonth(record.getYear(), record.getMonth());
+            Optional<SalaryRecord> existing = repository.findByYearAndMonth(record.getYear(), record.getMonth()).stream()
+                    .filter(item -> normalizeRecordType(item) == record.getRecordType())
+                    .findFirst();
             if (existing.isPresent()) {
                 String existingId = existing.get().getId();
                 String currentId = record.getId();
-                // 新增时 id 为 null，编辑时 id 不为 null
                 if (currentId == null || !existingId.equals(currentId)) {
-                    throw new DuplicateException("该年月已存在工资记录，请修改年月或编辑现有记录");
+                    String typeName = record.getRecordType() == SalaryRecordType.BONUS ? "奖金" : "工资";
+                    throw new DuplicateException("该年月已存在" + typeName + "记录，请修改年月或编辑现有记录");
                 }
             }
         }
@@ -69,7 +74,7 @@ public class SalaryRecordService implements ISalaryRecordService {
     
     @Override
     public List<SalaryRecord> findAll() {
-        return repository.findAllByOrderByYearDescMonthDesc();
+        return repository.findAllByOrderByYearDescMonthDescCreatedAtDesc();
     }
     
     @Override
@@ -129,6 +134,25 @@ public class SalaryRecordService implements ISalaryRecordService {
     }
     
     private void calculateAndSetDerivedFields(SalaryRecord record) {
+        if (normalizeRecordType(record) == SalaryRecordType.BONUS) {
+            double taxRate = record.getTaxRate() != null ? record.getTaxRate() : -1.0;
+            if (taxRate < 0 || taxRate > 100) {
+                throw new IllegalArgumentException("奖金税率必须在 0 到 100 之间");
+            }
+
+            record.setStandardDeduction(0.0);
+            record.setEndowmentInsurance(0.0);
+            record.setMedicalInsurance(0.0);
+            record.setUnemploymentInsurance(0.0);
+            record.setHousingFund(0.0);
+            record.setSpecialDeduction(0.0);
+
+            double totalIncome = valueOrZero(record.getMonthlyIncome()) + valueOrZero(record.getOtherIncome());
+            record.setMonthlyTaxableIncome(Math.max(0, totalIncome));
+            return;
+        }
+
+        record.setTaxRate(null);
         if (record.getStandardDeduction() == null || record.getStandardDeduction() <= 0) {
             record.setStandardDeduction(taxConfig.getStandardDeductionPerMonth());
         }
@@ -154,13 +178,37 @@ public class SalaryRecordService implements ISalaryRecordService {
         
         List<SalaryRecord> records = repository.findByYearOrderByMonth(year);
         records = records.stream()
-                .sorted(Comparator.comparing(SalaryRecord::getMonth))
+                .sorted(Comparator.comparing(SalaryRecord::getMonth)
+                        .thenComparing(record -> normalizeRecordType(record) == SalaryRecordType.SALARY ? 0 : 1))
                 .collect(Collectors.toList());
         
         double cumulativeTaxableIncome = 0.0;
         double cumulativeTaxPaid = 0.0;
         
         for (SalaryRecord record : records) {
+            record.setRecordType(normalizeRecordType(record));
+
+            if (record.getRecordType() == SalaryRecordType.BONUS) {
+                double totalIncome = valueOrZero(record.getMonthlyIncome()) + valueOrZero(record.getOtherIncome());
+                double taxRate = record.getTaxRate() != null ? record.getTaxRate() : 0.0;
+                double currentTaxDeclaration = roundCurrency(totalIncome * taxRate / 100.0);
+
+                record.setStandardDeduction(0.0);
+                record.setEndowmentInsurance(0.0);
+                record.setMedicalInsurance(0.0);
+                record.setUnemploymentInsurance(0.0);
+                record.setHousingFund(0.0);
+                record.setSpecialDeduction(0.0);
+                record.setMonthlyTaxableIncome(Math.max(0, totalIncome));
+                record.setCumulativeTaxableIncome(0.0);
+                record.setCumulativeTaxPayable(currentTaxDeclaration);
+                record.setCurrentTaxDeclaration(currentTaxDeclaration);
+                record.setCumulativeTaxPaid(0.0);
+                record.setActualIncome(roundCurrency(totalIncome - currentTaxDeclaration));
+                repository.save(record);
+                continue;
+            }
+
             if (Boolean.TRUE.equals(record.getResetCumulative())) {
                 cumulativeTaxableIncome = 0.0;
                 cumulativeTaxPaid = 0.0;
@@ -187,5 +235,17 @@ public class SalaryRecordService implements ISalaryRecordService {
             
             cumulativeTaxPaid += record.getCurrentTaxDeclaration();
         }
+    }
+
+    private SalaryRecordType normalizeRecordType(SalaryRecord record) {
+        return record.getRecordType() != null ? record.getRecordType() : SalaryRecordType.SALARY;
+    }
+
+    private double valueOrZero(Double value) {
+        return value != null ? value : 0.0;
+    }
+
+    private double roundCurrency(double value) {
+        return Math.round(value * 100.0) / 100.0;
     }
 }

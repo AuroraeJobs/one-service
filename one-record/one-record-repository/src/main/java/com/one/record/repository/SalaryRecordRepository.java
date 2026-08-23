@@ -10,11 +10,11 @@ import java.util.Optional;
 @Repository
 public interface SalaryRecordRepository extends MongoRepository<SalaryRecord, String> {
     
-    List<SalaryRecord> findAllByOrderByYearDescMonthDesc();
+    List<SalaryRecord> findAllByOrderByYearDescMonthDescCreatedAtDesc();
     
     List<SalaryRecord> findByYearOrderByMonth(Integer year);
     
-    Optional<SalaryRecord> findByYearAndMonth(Integer year, Integer month);
+    List<SalaryRecord> findByYearAndMonth(Integer year, Integer month);
     
     Optional<SalaryRecord> findByMonth(String month);
     

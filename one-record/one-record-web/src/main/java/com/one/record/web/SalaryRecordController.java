@@ -20,14 +20,14 @@ public class SalaryRecordController {
     private final ISalaryRecordService service;
     
     @PostMapping
-    @Operation(summary = "添加工资记录", description = "添加一条新的工资记录")
+    @Operation(summary = "添加收入记录", description = "添加一条新的工资或奖金记录")
     public SalaryRecord save(@RequestBody SalaryRecord record) {
         log.info("Saving salary record: {}", record);
         return service.save(record);
     }
     
     @PutMapping
-    @Operation(summary = "更新工资记录", description = "更新一条工资记录")
+    @Operation(summary = "更新收入记录", description = "更新一条工资或奖金记录")
     public SalaryRecord update(@RequestBody SalaryRecord record) {
         log.info("Updating salary record: {}", record);
         return service.save(record);
@@ -48,13 +48,13 @@ public class SalaryRecordController {
     }
     
     @GetMapping("{id}")
-    @Operation(summary = "查询工资记录", description = "根据ID查询工资记录")
+    @Operation(summary = "查询收入记录", description = "根据ID查询工资或奖金记录")
     public SalaryRecord findById(@PathVariable("id") String id) {
         return service.findById(id);
     }
     
     @GetMapping
-    @Operation(summary = "查询所有工资记录", description = "查询所有工资记录，按月份倒序")
+    @Operation(summary = "查询所有收入记录", description = "查询所有工资和奖金记录，按月份倒序")
     public List<SalaryRecord> findAll() {
         return service.findAll();
     }
