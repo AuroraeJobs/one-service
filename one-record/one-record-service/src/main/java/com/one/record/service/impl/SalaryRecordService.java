@@ -139,6 +139,11 @@ public class SalaryRecordService implements ISalaryRecordService {
             if (taxRate < 0 || taxRate > 100) {
                 throw new IllegalArgumentException("奖金税率必须在 0 到 100 之间");
             }
+            double quickDeduction = record.getQuickDeduction() != null ? record.getQuickDeduction() : 0.0;
+            if (quickDeduction < 0) {
+                throw new IllegalArgumentException("奖金速算扣除数不能小于 0");
+            }
+            record.setQuickDeduction(quickDeduction);
 
             if (record.getStandardDeduction() == null) {
                 record.setStandardDeduction(0.0);
@@ -155,6 +160,7 @@ public class SalaryRecordService implements ISalaryRecordService {
         }
 
         record.setTaxRate(null);
+        record.setQuickDeduction(null);
         if (record.getStandardDeduction() == null || record.getStandardDeduction() <= 0) {
             record.setStandardDeduction(taxConfig.getStandardDeductionPerMonth());
         }
@@ -198,8 +204,11 @@ public class SalaryRecordService implements ISalaryRecordService {
                 double standardDeduction = valueOrZero(record.getStandardDeduction());
                 double monthlyTaxableIncome = Math.max(0, totalIncome - standardDeduction);
                 double taxRate = record.getTaxRate() != null ? record.getTaxRate() : 0.0;
-                double currentTaxDeclaration = roundCurrency(monthlyTaxableIncome * taxRate / 100.0);
+                double quickDeduction = Math.max(0, valueOrZero(record.getQuickDeduction()));
+                double currentTaxDeclaration = roundCurrency(Math.max(0,
+                        monthlyTaxableIncome * taxRate / 100.0 - quickDeduction));
 
+                record.setQuickDeduction(quickDeduction);
                 record.setEndowmentInsurance(0.0);
                 record.setMedicalInsurance(0.0);
                 record.setUnemploymentInsurance(0.0);

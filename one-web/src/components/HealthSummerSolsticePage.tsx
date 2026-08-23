@@ -54,6 +54,8 @@ const HealthSummerSolsticePage: React.FC = () => {
     specialDeduction: isEnglish ? 'Special Deduction' : '专项扣除',
     taxRate: isEnglish ? 'Tax Rate' : '税率',
     enterTaxRate: isEnglish ? 'Please enter a tax rate from 0 to 100' : '请输入 0 到 100 的税率',
+    quickDeduction: isEnglish ? 'Quick Deduction' : '速算扣除数',
+    enterQuickDeduction: isEnglish ? 'Please enter a non-negative quick deduction' : '请输入大于等于 0 的速算扣除数',
     resetCumulative: isEnglish ? 'Restart Cumulative Tax (first month at new job)' : '重新累计（跳槽后新公司首月）',
     resetCumulativeShort: isEnglish ? 'Restart' : '重新累计',
     resetCumulativeTip: isEnglish ? 'Turn on to restart cumulative taxable income from this month' : '开启后，累计应纳税所得额从本月重新开始计算',
@@ -215,13 +217,18 @@ const HealthSummerSolsticePage: React.FC = () => {
       medicalInsurance,
       unemploymentInsurance,
       housingFund,
+      quickDeduction: 0,
     });
     setIsAddDrawerVisible(true);
   };
 
   const showEditDrawer = (record: SalaryRecord) => {
     setEditingRecord(record);
-    editForm.setFieldsValue({ ...record, recordType: getRecordType(record) });
+    editForm.setFieldsValue({
+      ...record,
+      recordType: getRecordType(record),
+      quickDeduction: record.quickDeduction ?? 0
+    });
     setIsEditing(false);
     setIsEditDrawerVisible(true);
   };
@@ -274,6 +281,7 @@ const HealthSummerSolsticePage: React.FC = () => {
       unemploymentInsurance: editingRecord.unemploymentInsurance,
       housingFund: editingRecord.housingFund,
       taxRate: editingRecord.taxRate,
+      quickDeduction: editingRecord.quickDeduction ?? 0,
     });
     setIsEditDrawerVisible(false);
     setIsAddDrawerVisible(true);
@@ -374,7 +382,7 @@ const HealthSummerSolsticePage: React.FC = () => {
         resetCumulative: false
       };
     }
-    return { ...values, recordType, taxRate: undefined };
+    return { ...values, recordType, taxRate: undefined, quickDeduction: undefined };
   }
 
   return (
@@ -595,10 +603,10 @@ const HealthSummerSolsticePage: React.FC = () => {
                   <Select
                     placeholder={text.selectRecordType}
                     options={recordTypeOptions}
-                    onChange={(recordType) => addForm.setFieldValue(
-                      'standardDeduction',
-                      recordType === 'BONUS' ? 0 : 5000
-                    )}
+                    onChange={(recordType) => {
+                      addForm.setFieldValue('standardDeduction', recordType === 'BONUS' ? 0 : 5000);
+                      addForm.setFieldValue('quickDeduction', 0);
+                    }}
                   />
                 </Form.Item>
               </Col>
@@ -689,23 +697,42 @@ const HealthSummerSolsticePage: React.FC = () => {
               <div style={{ color: '#faad14', fontSize: '16px', fontWeight: 'bold', marginBottom: '12px' }}>
                 {text.taxRate}
               </div>
-              <Form.Item
-                name="taxRate"
-                label={text.taxRate}
-                rules={[
-                  { required: true, message: text.enterTaxRate },
-                  { type: 'number', min: 0, max: 100, message: text.enterTaxRate }
-                ]}
-              >
-                <InputNumber
-                  min={0}
-                  max={100}
-                  precision={2}
-                  suffix="%"
-                  placeholder={text.enterTaxRate}
-                  style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
-                />
-              </Form.Item>
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Form.Item
+                    name="taxRate"
+                    label={text.taxRate}
+                    rules={[
+                      { required: true, message: text.enterTaxRate },
+                      { type: 'number', min: 0, max: 100, message: text.enterTaxRate }
+                    ]}
+                  >
+                    <InputNumber
+                      min={0}
+                      max={100}
+                      precision={2}
+                      suffix="%"
+                      placeholder={text.enterTaxRate}
+                      style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    name="quickDeduction"
+                    label={text.quickDeduction}
+                    rules={[{ type: 'number', min: 0, message: text.enterQuickDeduction }]}
+                  >
+                    <InputNumber
+                      min={0}
+                      precision={2}
+                      prefix="¥"
+                      placeholder={text.quickDeduction}
+                      style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
             </div>
           )}
 
@@ -1025,10 +1052,10 @@ const HealthSummerSolsticePage: React.FC = () => {
                   <Select
                     placeholder={text.selectRecordType}
                     options={recordTypeOptions}
-                    onChange={(recordType) => editForm.setFieldValue(
-                      'standardDeduction',
-                      recordType === 'BONUS' ? 0 : 5000
-                    )}
+                    onChange={(recordType) => {
+                      editForm.setFieldValue('standardDeduction', recordType === 'BONUS' ? 0 : 5000);
+                      editForm.setFieldValue('quickDeduction', 0);
+                    }}
                   />
                 </Form.Item>
               </Col>
@@ -1234,23 +1261,42 @@ const HealthSummerSolsticePage: React.FC = () => {
                 <div style={{ color: '#faad14', fontSize: '16px', fontWeight: 'bold', marginBottom: '12px' }}>
                   {text.taxRate}
                 </div>
-                <Form.Item
-                  name="taxRate"
-                  label={text.taxRate}
-                  rules={[
-                    { required: true, message: text.enterTaxRate },
-                    { type: 'number', min: 0, max: 100, message: text.enterTaxRate }
-                  ]}
-                >
-                  <InputNumber
-                    min={0}
-                    max={100}
-                    precision={2}
-                    suffix="%"
-                    placeholder={text.enterTaxRate}
-                    style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
-                  />
-                </Form.Item>
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item
+                      name="taxRate"
+                      label={text.taxRate}
+                      rules={[
+                        { required: true, message: text.enterTaxRate },
+                        { type: 'number', min: 0, max: 100, message: text.enterTaxRate }
+                      ]}
+                    >
+                      <InputNumber
+                        min={0}
+                        max={100}
+                        precision={2}
+                        suffix="%"
+                        placeholder={text.enterTaxRate}
+                        style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item
+                      name="quickDeduction"
+                      label={text.quickDeduction}
+                      rules={[{ type: 'number', min: 0, message: text.enterQuickDeduction }]}
+                    >
+                      <InputNumber
+                        min={0}
+                        precision={2}
+                        prefix="¥"
+                        placeholder={text.quickDeduction}
+                        style={{ width: '100%', backgroundColor: '#1D1D1D', borderColor: '#444', color: '#fff' }}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
               </div>
             )}
 
@@ -1429,8 +1475,19 @@ const HealthSummerSolsticePage: React.FC = () => {
                 <div style={{ color: '#faad14', fontSize: '16px', fontWeight: 'bold', marginBottom: '12px' }}>
                   {text.taxRate}
                 </div>
-                <div style={{ color: 'var(--app-text)', fontSize: '18px', fontWeight: 'bold' }}>
-                  {editingRecord.taxRate ?? 0}%
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>{text.taxRate}</div>
+                    <div style={{ color: 'var(--app-text)', fontSize: '18px', fontWeight: 'bold' }}>
+                      {editingRecord.taxRate ?? 0}%
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ color: 'var(--app-text-muted)', fontSize: '12px', marginBottom: '4px' }}>{text.quickDeduction}</div>
+                    <div style={{ color: 'var(--app-text)', fontSize: '18px', fontWeight: 'bold' }}>
+                      {formatCurrency(editingRecord.quickDeduction)}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

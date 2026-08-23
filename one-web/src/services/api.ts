@@ -2485,6 +2485,7 @@ export interface SalaryRecord {
   housingFund: number;
   specialDeduction?: number;
   taxRate?: number;
+  quickDeduction?: number;
   monthlyTaxableIncome?: number;
   cumulativeTaxableIncome?: number;
   cumulativeTaxPayable?: number;

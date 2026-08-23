@@ -47,6 +47,11 @@ public class SalaryRecord {
      * 奖金记录手动输入的税率，使用百分比数值（例如 10 表示 10%）
      */
     private Double taxRate;
+
+    /**
+     * 奖金记录手动输入的速算扣除数
+     */
+    private Double quickDeduction;
     
     private Double monthlyTaxableIncome;
     

@@ -44,6 +44,7 @@ class SalaryRecordServiceTest {
                 .month(8)
                 .monthlyIncome(10000.0)
                 .taxRate(10.0)
+                .quickDeduction(100.0)
                 .standardDeduction(5000.0)
                 .endowmentInsurance(1000.0)
                 .build();
@@ -56,8 +57,9 @@ class SalaryRecordServiceTest {
         assertThat(saved.getStandardDeduction()).isEqualTo(5000.0);
         assertThat(saved.getEndowmentInsurance()).isZero();
         assertThat(saved.getMonthlyTaxableIncome()).isEqualTo(5000.0);
-        assertThat(saved.getCurrentTaxDeclaration()).isEqualTo(500.0);
-        assertThat(saved.getActualIncome()).isEqualTo(9500.0);
+        assertThat(saved.getQuickDeduction()).isEqualTo(100.0);
+        assertThat(saved.getCurrentTaxDeclaration()).isEqualTo(400.0);
+        assertThat(saved.getActualIncome()).isEqualTo(9600.0);
         assertThat(saved.getCumulativeTaxableIncome()).isZero();
     }
 
@@ -76,6 +78,7 @@ class SalaryRecordServiceTest {
         SalaryRecord saved = service.save(bonus);
 
         assertThat(saved.getStandardDeduction()).isZero();
+        assertThat(saved.getQuickDeduction()).isZero();
         assertThat(saved.getMonthlyTaxableIncome()).isEqualTo(10000.0);
         assertThat(saved.getCurrentTaxDeclaration()).isEqualTo(1000.0);
     }
@@ -155,6 +158,22 @@ class SalaryRecordServiceTest {
         assertThatThrownBy(() -> service.save(bonus))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("奖金税率必须在 0 到 100 之间");
+    }
+
+    @Test
+    void bonusQuickDeductionCannotBeNegative() {
+        SalaryRecord bonus = SalaryRecord.builder()
+                .recordType(SalaryRecordType.BONUS)
+                .year(2026)
+                .month(8)
+                .monthlyIncome(5000.0)
+                .taxRate(10.0)
+                .quickDeduction(-1.0)
+                .build();
+
+        assertThatThrownBy(() -> service.save(bonus))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("奖金速算扣除数不能小于 0");
     }
 
     private SalaryRecord salary(int month, double monthlyTaxableIncome) {
