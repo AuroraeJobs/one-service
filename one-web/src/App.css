@@ -1422,6 +1422,15 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
 }
 
+.finance-statistics-chart-card,
+.finance-statistics-table-card {
+  margin-bottom: 24px;
+}
+
+.finance-statistics-table-card .ant-table-cell {
+  white-space: nowrap;
+}
+
 .stock-market-toolbar {
   display: flex;
   align-items: flex-start;

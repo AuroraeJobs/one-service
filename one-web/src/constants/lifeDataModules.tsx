@@ -348,9 +348,7 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
   ],
   finance: [
     { id: 'finance-salary', moduleKey: 'finance', path: '/finance/salary', label: '工资', icon: <WalletOutlined />, accent: '#34c759' },
-    { id: 'finance-expense', moduleKey: 'finance', path: '/connections', label: '收支', icon: <DollarOutlined />, accent: '#0071e3' },
-    { id: 'finance-accounts', moduleKey: 'finance', path: '/connections', label: '账户', icon: <CreditCardOutlined />, accent: '#5856d6' },
-    { id: 'finance-tax', moduleKey: 'finance', path: '/connections', label: '税费', icon: <BankOutlined />, accent: '#ff9500' }
+    { id: 'finance-statistics', moduleKey: 'finance', path: '/finance/statistics', label: '统计', icon: <BarChartOutlined />, accent: '#5856d6' }
   ],
   lottery: [
     { id: 'lottery-overview', moduleKey: 'lottery', path: '/lottery', label: '概览', icon: <TrophyOutlined />, accent: '#ff3b30' },
@@ -479,9 +477,7 @@ const lifeSubNavEnglishLabels: Record<string, string> = {
   'vehicle-stations': 'Stations',
   'vehicle-fleet': 'Vehicles',
   'finance-salary': 'Salary',
-  'finance-expense': 'Expenses',
-  'finance-accounts': 'Accounts',
-  'finance-tax': 'Tax',
+  'finance-statistics': 'Statistics',
   'lottery-overview': 'Overview',
   'lottery-workbench': 'Workbench',
   'lottery-mobile': 'Mobile',
