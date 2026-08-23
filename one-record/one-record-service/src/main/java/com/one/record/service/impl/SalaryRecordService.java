@@ -25,15 +25,17 @@ public class SalaryRecordService implements ISalaryRecordService {
     public SalaryRecord save(SalaryRecord record) {
         record.setRecordType(normalizeRecordType(record));
 
-        // 同一年月只能保存一条收入记录，不区分工资或奖金类型
+        // 同一年月可分别保存一条工资和奖金记录，同类型不可重复
         if (record.getYear() != null && record.getMonth() != null) {
             Optional<SalaryRecord> existing = repository.findByYearAndMonth(record.getYear(), record.getMonth()).stream()
+                    .filter(item -> normalizeRecordType(item) == record.getRecordType())
                     .findFirst();
             if (existing.isPresent()) {
                 String existingId = existing.get().getId();
                 String currentId = record.getId();
                 if (currentId == null || !existingId.equals(currentId)) {
-                    throw new DuplicateException("该年月已存在收入记录，请修改年月或编辑现有记录");
+                    String typeName = record.getRecordType() == SalaryRecordType.BONUS ? "奖金" : "工资";
+                    throw new DuplicateException("该年月已存在" + typeName + "记录，请修改年月或编辑现有记录");
                 }
             }
         }

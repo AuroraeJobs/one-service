@@ -75,7 +75,7 @@ const HealthSummerSolsticePage: React.FC = () => {
     deleteConfirm: isEnglish ? 'Delete this salary record?' : '确定要删除这条工资记录吗？',
     ok: isEnglish ? 'OK' : '确定',
     cancel: isEnglish ? 'Cancel' : '取消',
-    duplicateRecord: isEnglish ? 'A record already exists for the selected month' : '该年月已存在收入记录',
+    duplicateRecord: isEnglish ? 'A record of this type already exists for the selected month' : '该年月已存在同类型记录',
     previousPeriod: isEnglish ? 'Previous' : '上个月',
     nextPeriod: isEnglish ? 'Next' : '下个月',
     addPrevious: isEnglish ? 'Add Previous' : '新增上个月',
@@ -248,7 +248,11 @@ const HealthSummerSolsticePage: React.FC = () => {
   const navigateRecord = (direction: 'prev' | 'next') => {
     if (!editingRecord) return;
     const { year, month } = getAdjacentDate(editingRecord.year, editingRecord.month, direction);
-    const target = salaryRecords.find(r => r.year === year && r.month === month);
+    const target = salaryRecords.find(r =>
+      r.year === year &&
+      r.month === month &&
+      getRecordType(r) === getRecordType(editingRecord)
+    );
     if (target) {
       setEditingRecord(target);
       editForm.setFieldsValue({ ...target, recordType: getRecordType(target) });
@@ -277,14 +281,23 @@ const HealthSummerSolsticePage: React.FC = () => {
 
   const prevDate = editingRecord ? getAdjacentDate(editingRecord.year, editingRecord.month, 'prev') : null;
   const nextDate = editingRecord ? getAdjacentDate(editingRecord.year, editingRecord.month, 'next') : null;
-  const hasPrevious = !!prevDate && salaryRecords.some(r => r.year === prevDate.year && r.month === prevDate.month);
-  const hasNext = !!nextDate && salaryRecords.some(r => r.year === nextDate.year && r.month === nextDate.month);
+  const hasPrevious = !!prevDate && !!editingRecord && salaryRecords.some(r =>
+    r.year === prevDate.year &&
+    r.month === prevDate.month &&
+    getRecordType(r) === getRecordType(editingRecord)
+  );
+  const hasNext = !!nextDate && !!editingRecord && salaryRecords.some(r =>
+    r.year === nextDate.year &&
+    r.month === nextDate.month &&
+    getRecordType(r) === getRecordType(editingRecord)
+  );
 
   const handleAdd = async (values: SalaryRecordFormValues) => {
     const normalizedValues = normalizeFormValues(values);
     const duplicate = salaryRecords.some(r =>
       r.year === normalizedValues.year &&
-      r.month === normalizedValues.month
+      r.month === normalizedValues.month &&
+      getRecordType(r) === normalizedValues.recordType
     );
     if (duplicate) {
       message.error(text.duplicateRecord);
@@ -308,7 +321,8 @@ const HealthSummerSolsticePage: React.FC = () => {
     const duplicate = salaryRecords.some(r =>
       r.id !== editingRecord.id &&
       r.year === normalizedValues.year &&
-      r.month === normalizedValues.month
+      r.month === normalizedValues.month &&
+      getRecordType(r) === normalizedValues.recordType
     );
     if (duplicate) {
       message.error(text.duplicateRecord);

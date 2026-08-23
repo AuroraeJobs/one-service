@@ -83,7 +83,7 @@ class SalaryRecordServiceTest {
     }
 
     @Test
-    void salaryAndBonusCannotShareTheSameMonth() {
+    void salaryAndBonusCanShareTheSameMonth() {
         SalaryRecord legacySalary = SalaryRecord.builder().id("salary-1").year(2026).month(8).build();
         SalaryRecord bonus = SalaryRecord.builder()
                 .recordType(SalaryRecordType.BONUS)
@@ -93,9 +93,34 @@ class SalaryRecordServiceTest {
                 .taxRate(3.0)
                 .build();
         when(repository.findByYearAndMonth(2026, 8)).thenReturn(List.of(legacySalary));
-        assertThatThrownBy(() -> service.save(bonus))
+        when(repository.findByYearOrderByMonth(2026)).thenReturn(List.of(legacySalary, bonus));
+        when(repository.findById("saved-record")).thenReturn(Optional.of(bonus));
+
+        SalaryRecord saved = service.save(bonus);
+
+        assertThat(saved.getRecordType()).isEqualTo(SalaryRecordType.BONUS);
+    }
+
+    @Test
+    void sameRecordTypeCannotRepeatInTheSameMonth() {
+        SalaryRecord existingBonus = SalaryRecord.builder()
+                .id("bonus-1")
+                .recordType(SalaryRecordType.BONUS)
+                .year(2026)
+                .month(8)
+                .build();
+        SalaryRecord duplicateBonus = SalaryRecord.builder()
+                .recordType(SalaryRecordType.BONUS)
+                .year(2026)
+                .month(8)
+                .monthlyIncome(5000.0)
+                .taxRate(3.0)
+                .build();
+        when(repository.findByYearAndMonth(2026, 8)).thenReturn(List.of(existingBonus));
+
+        assertThatThrownBy(() -> service.save(duplicateBonus))
                 .isInstanceOf(DuplicateException.class)
-                .hasMessage("该年月已存在收入记录，请修改年月或编辑现有记录");
+                .hasMessage("该年月已存在奖金记录，请修改年月或编辑现有记录");
     }
 
     @Test
