@@ -37,7 +37,7 @@ class SalaryRecordServiceTest {
     }
 
     @Test
-    void bonusUsesManualTaxRateWithoutDeductions() {
+    void bonusUsesManualTaxRateWithStandardDeductionOnly() {
         SalaryRecord bonus = SalaryRecord.builder()
                 .recordType(SalaryRecordType.BONUS)
                 .year(2026)
@@ -53,11 +53,11 @@ class SalaryRecordServiceTest {
         SalaryRecord saved = service.save(bonus);
 
         assertThat(saved.getSpecialDeduction()).isZero();
-        assertThat(saved.getStandardDeduction()).isZero();
+        assertThat(saved.getStandardDeduction()).isEqualTo(5000.0);
         assertThat(saved.getEndowmentInsurance()).isZero();
-        assertThat(saved.getMonthlyTaxableIncome()).isEqualTo(10000.0);
-        assertThat(saved.getCurrentTaxDeclaration()).isEqualTo(1000.0);
-        assertThat(saved.getActualIncome()).isEqualTo(9000.0);
+        assertThat(saved.getMonthlyTaxableIncome()).isEqualTo(5000.0);
+        assertThat(saved.getCurrentTaxDeclaration()).isEqualTo(500.0);
+        assertThat(saved.getActualIncome()).isEqualTo(9500.0);
         assertThat(saved.getCumulativeTaxableIncome()).isZero();
     }
 
@@ -79,7 +79,7 @@ class SalaryRecordServiceTest {
 
         assertThat(februarySalary.getCumulativeTaxableIncome()).isEqualTo(10000.0);
         assertThat(februarySalary.getCumulativeTaxPayable()).isEqualTo(300.0);
-        assertThat(bonus.getCurrentTaxDeclaration()).isEqualTo(1000.0);
+        assertThat(bonus.getCurrentTaxDeclaration()).isEqualTo(500.0);
     }
 
     @Test

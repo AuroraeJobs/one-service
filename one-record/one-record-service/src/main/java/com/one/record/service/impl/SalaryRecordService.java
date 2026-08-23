@@ -140,7 +140,9 @@ public class SalaryRecordService implements ISalaryRecordService {
                 throw new IllegalArgumentException("奖金税率必须在 0 到 100 之间");
             }
 
-            record.setStandardDeduction(0.0);
+            if (record.getStandardDeduction() == null || record.getStandardDeduction() <= 0) {
+                record.setStandardDeduction(taxConfig.getStandardDeductionPerMonth());
+            }
             record.setEndowmentInsurance(0.0);
             record.setMedicalInsurance(0.0);
             record.setUnemploymentInsurance(0.0);
@@ -148,7 +150,7 @@ public class SalaryRecordService implements ISalaryRecordService {
             record.setSpecialDeduction(0.0);
 
             double totalIncome = valueOrZero(record.getMonthlyIncome()) + valueOrZero(record.getOtherIncome());
-            record.setMonthlyTaxableIncome(Math.max(0, totalIncome));
+            record.setMonthlyTaxableIncome(Math.max(0, totalIncome - record.getStandardDeduction()));
             return;
         }
 
@@ -190,16 +192,20 @@ public class SalaryRecordService implements ISalaryRecordService {
 
             if (record.getRecordType() == SalaryRecordType.BONUS) {
                 double totalIncome = valueOrZero(record.getMonthlyIncome()) + valueOrZero(record.getOtherIncome());
+                if (record.getStandardDeduction() == null || record.getStandardDeduction() <= 0) {
+                    record.setStandardDeduction(taxConfig.getStandardDeductionPerMonth());
+                }
+                double standardDeduction = valueOrZero(record.getStandardDeduction());
+                double monthlyTaxableIncome = Math.max(0, totalIncome - standardDeduction);
                 double taxRate = record.getTaxRate() != null ? record.getTaxRate() : 0.0;
-                double currentTaxDeclaration = roundCurrency(totalIncome * taxRate / 100.0);
+                double currentTaxDeclaration = roundCurrency(monthlyTaxableIncome * taxRate / 100.0);
 
-                record.setStandardDeduction(0.0);
                 record.setEndowmentInsurance(0.0);
                 record.setMedicalInsurance(0.0);
                 record.setUnemploymentInsurance(0.0);
                 record.setHousingFund(0.0);
                 record.setSpecialDeduction(0.0);
-                record.setMonthlyTaxableIncome(Math.max(0, totalIncome));
+                record.setMonthlyTaxableIncome(monthlyTaxableIncome);
                 record.setCumulativeTaxableIncome(0.0);
                 record.setCumulativeTaxPayable(currentTaxDeclaration);
                 record.setCurrentTaxDeclaration(currentTaxDeclaration);

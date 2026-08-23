@@ -367,7 +367,6 @@ const HealthSummerSolsticePage: React.FC = () => {
         ...values,
         recordType,
         otherIncome: values.otherIncome || 0,
-        standardDeduction: 0,
         endowmentInsurance: 0,
         medicalInsurance: 0,
         unemploymentInsurance: 0,
@@ -706,7 +705,6 @@ const HealthSummerSolsticePage: React.FC = () => {
             </div>
           )}
 
-          {addRecordType === 'SALARY' && <>
           <div style={{
             marginBottom: '20px',
             padding: '16px',
@@ -738,6 +736,7 @@ const HealthSummerSolsticePage: React.FC = () => {
             </Form.Item>
           </div>
 
+          {addRecordType === 'SALARY' && <>
           <div style={{
             marginBottom: '20px',
             padding: '16px',
@@ -1101,7 +1100,6 @@ const HealthSummerSolsticePage: React.FC = () => {
             </Row>
           </div>
 
-          {editRecordType === 'SALARY' && <>
           <div style={{
             marginBottom: '20px',
             padding: '16px',
@@ -1133,6 +1131,7 @@ const HealthSummerSolsticePage: React.FC = () => {
             </Form.Item>
           </div>
 
+          {editRecordType === 'SALARY' && <>
             <div style={{
               marginBottom: '20px',
               padding: '16px',
@@ -1386,7 +1385,6 @@ const HealthSummerSolsticePage: React.FC = () => {
               </div>
             </div>
 
-            {getRecordType(editingRecord) === 'SALARY' && <>
             <div style={{
               marginBottom: '20px',
               padding: '16px',
@@ -1411,7 +1409,6 @@ const HealthSummerSolsticePage: React.FC = () => {
                 </div>
               </div>
             </div>
-            </>}
 
             {getRecordType(editingRecord) === 'BONUS' && (
               <div style={{
