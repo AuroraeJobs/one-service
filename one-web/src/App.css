@@ -2925,20 +2925,17 @@ body {
 .record-tile {
   --record-soft: #171b21;
   --record-soft-hover: #1c222a;
-  --record-border: rgba(24, 144, 255, 0.2);
-  --record-border-hover: rgba(24, 144, 255, 0.4);
   height: 180px;
   background: var(--record-soft) !important;
-  border: 1px solid var(--record-border) !important;
+  border: 0 !important;
   border-radius: var(--app-card-radius) !important;
   box-shadow: none !important;
   cursor: pointer;
-  transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  transition: transform 0.2s ease, background-color 0.2s ease;
 }
 
 .record-tile:hover {
   background: var(--record-soft-hover) !important;
-  border-color: var(--record-border-hover) !important;
   transform: translateY(-1px);
 }
 
@@ -2954,16 +2951,6 @@ body {
   box-shadow: none !important;
 }
 
-.charge-record-tile {
-  --record-border: rgba(24, 144, 255, 0.2);
-  --record-border-hover: rgba(24, 144, 255, 0.4);
-}
-
-.salary-record-tile {
-  --record-border: rgba(255, 152, 0, 0.2);
-  --record-border-hover: rgba(255, 152, 0, 0.4);
-}
-
 @media (max-width: 640px) {
   .record-tile {
     height: auto;
@@ -2973,7 +2960,6 @@ body {
 
 .app-theme-light .record-tile {
   background: var(--app-surface) !important;
-  border-color: var(--app-border) !important;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06) !important;
 }
 
@@ -3288,19 +3274,16 @@ body {
 .themed-route-page .record-tile,
 .themed-route-page .record-tile.ant-card {
   background: var(--record-soft) !important;
-  border-color: var(--record-border) !important;
 }
 
 .themed-route-page .record-tile:hover,
 .themed-route-page .record-tile.ant-card:hover {
   background: var(--record-soft-hover) !important;
-  border-color: var(--record-border-hover) !important;
 }
 
 .app-theme-light .themed-route-page .record-tile,
 .app-theme-light .themed-route-page .record-tile.ant-card {
   background: var(--app-surface) !important;
-  border-color: var(--app-border) !important;
 }
 
 .themed-route-page .record-tile.ant-card .ant-card-body {
