@@ -11,7 +11,8 @@ type SalaryRecordFormValues = Omit<SalaryRecord, 'id' | 'createdAt' | 'updatedAt
 const HealthSummerSolsticePage: React.FC = () => {
   const { isEnglish } = useAppPreferences();
   const text = {
-    totalRecords: isEnglish ? 'Records' : '记录总数',
+    salaryCount: isEnglish ? 'Salary Records' : '工资数',
+    bonusCount: isEnglish ? 'Bonus Records' : '奖金数',
     totalActualIncome: isEnglish ? 'Total Net Income' : '累计实发',
     totalMonthlyIncome: isEnglish ? 'Total Income' : '累计收入',
     avgActualIncome: isEnglish ? 'Average Salary' : '平均工资',
@@ -177,6 +178,8 @@ const HealthSummerSolsticePage: React.FC = () => {
     (!selectedYear || record.year === selectedYear) &&
     (!selectedCompany || record.company === selectedCompany)
   );
+  const salaryCount = salaryRecords.filter(record => getRecordType(record) === 'SALARY').length;
+  const bonusCount = salaryRecords.filter(record => getRecordType(record) === 'BONUS').length;
 
   const showAddDrawer = () => {
     let year = new Date().getFullYear();
@@ -407,7 +410,8 @@ const HealthSummerSolsticePage: React.FC = () => {
             gap: '16px',
             marginBottom: '24px'
           }}>
-            <MetricCard title={text.totalRecords} value={statistics.totalRecords} accent="#FF9800" minWidth={200} />
+            <MetricCard title={text.salaryCount} value={salaryCount} accent="#52c41a" minWidth={200} />
+            <MetricCard title={text.bonusCount} value={bonusCount} accent="#faad14" minWidth={200} />
             <MetricCard title={text.totalMonthlyIncome} value={statistics.totalMonthlyIncome} prefix="¥" accent="#faad14" minWidth={200} />
             <MetricCard title={text.totalActualIncome} value={statistics.totalActualIncome} prefix="¥" accent="#52c41a" minWidth={200} />
             <MetricCard title={text.avgActualIncome} value={statistics.avgActualIncome} prefix="¥" accent="#1890ff" minWidth={200} />
