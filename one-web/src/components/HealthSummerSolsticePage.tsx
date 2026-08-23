@@ -595,6 +595,10 @@ const HealthSummerSolsticePage: React.FC = () => {
                   <Select
                     placeholder={text.selectRecordType}
                     options={recordTypeOptions}
+                    onChange={(recordType) => addForm.setFieldValue(
+                      'standardDeduction',
+                      recordType === 'BONUS' ? 0 : 5000
+                    )}
                   />
                 </Form.Item>
               </Col>
@@ -1021,6 +1025,10 @@ const HealthSummerSolsticePage: React.FC = () => {
                   <Select
                     placeholder={text.selectRecordType}
                     options={recordTypeOptions}
+                    onChange={(recordType) => editForm.setFieldValue(
+                      'standardDeduction',
+                      recordType === 'BONUS' ? 0 : 5000
+                    )}
                   />
                 </Form.Item>
               </Col>

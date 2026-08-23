@@ -140,8 +140,8 @@ public class SalaryRecordService implements ISalaryRecordService {
                 throw new IllegalArgumentException("奖金税率必须在 0 到 100 之间");
             }
 
-            if (record.getStandardDeduction() == null || record.getStandardDeduction() <= 0) {
-                record.setStandardDeduction(taxConfig.getStandardDeductionPerMonth());
+            if (record.getStandardDeduction() == null) {
+                record.setStandardDeduction(0.0);
             }
             record.setEndowmentInsurance(0.0);
             record.setMedicalInsurance(0.0);
@@ -192,8 +192,8 @@ public class SalaryRecordService implements ISalaryRecordService {
 
             if (record.getRecordType() == SalaryRecordType.BONUS) {
                 double totalIncome = valueOrZero(record.getMonthlyIncome()) + valueOrZero(record.getOtherIncome());
-                if (record.getStandardDeduction() == null || record.getStandardDeduction() <= 0) {
-                    record.setStandardDeduction(taxConfig.getStandardDeductionPerMonth());
+                if (record.getStandardDeduction() == null) {
+                    record.setStandardDeduction(0.0);
                 }
                 double standardDeduction = valueOrZero(record.getStandardDeduction());
                 double monthlyTaxableIncome = Math.max(0, totalIncome - standardDeduction);

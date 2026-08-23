@@ -62,6 +62,25 @@ class SalaryRecordServiceTest {
     }
 
     @Test
+    void bonusDefaultsStandardDeductionToZero() {
+        SalaryRecord bonus = SalaryRecord.builder()
+                .recordType(SalaryRecordType.BONUS)
+                .year(2026)
+                .month(8)
+                .monthlyIncome(10000.0)
+                .taxRate(10.0)
+                .build();
+        when(repository.findByYearOrderByMonth(2026)).thenReturn(List.of(bonus));
+        when(repository.findById("saved-record")).thenReturn(Optional.of(bonus));
+
+        SalaryRecord saved = service.save(bonus);
+
+        assertThat(saved.getStandardDeduction()).isZero();
+        assertThat(saved.getMonthlyTaxableIncome()).isEqualTo(10000.0);
+        assertThat(saved.getCurrentTaxDeclaration()).isEqualTo(1000.0);
+    }
+
+    @Test
     void bonusDoesNotEnterSalaryCumulativeTaxCalculation() {
         SalaryRecord januarySalary = salary(1, 5000.0);
         SalaryRecord bonus = SalaryRecord.builder()
@@ -79,7 +98,7 @@ class SalaryRecordServiceTest {
 
         assertThat(februarySalary.getCumulativeTaxableIncome()).isEqualTo(10000.0);
         assertThat(februarySalary.getCumulativeTaxPayable()).isEqualTo(300.0);
-        assertThat(bonus.getCurrentTaxDeclaration()).isEqualTo(500.0);
+        assertThat(bonus.getCurrentTaxDeclaration()).isEqualTo(1000.0);
     }
 
     @Test
