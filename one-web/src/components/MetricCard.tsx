@@ -9,6 +9,9 @@ interface MetricCardProps {
   accent?: string;
   minWidth?: number;
   valueStyle?: CSSProperties;
+  secondaryTitle?: ReactNode;
+  secondaryValue?: string | number;
+  secondaryAccent?: string;
 }
 
 const MetricCard = ({
@@ -18,28 +21,48 @@ const MetricCard = ({
   suffix,
   accent = '#1890ff',
   minWidth = 150,
-  valueStyle
-}: MetricCardProps) => (
-  <Card
-    className="metric-card"
-    style={{
-      flex: '1 1 18%',
-      minWidth,
-      borderColor: `${accent}55`
-    }}
-  >
+  valueStyle,
+  secondaryTitle,
+  secondaryValue,
+  secondaryAccent = '#faad14'
+}: MetricCardProps) => {
+  const renderStatistic = (
+    statisticTitle: ReactNode,
+    statisticValue: string | number,
+    statisticAccent: string,
+    statisticPrefix?: ReactNode,
+    statisticSuffix?: ReactNode
+  ) => (
     <Statistic
-      title={<span className="metric-card-title">{title}</span>}
-      value={value}
-      prefix={prefix}
-      suffix={suffix}
+      title={<span className="metric-card-title">{statisticTitle}</span>}
+      value={statisticValue}
+      prefix={statisticPrefix}
+      suffix={statisticSuffix}
       valueStyle={{
-        color: accent,
+        color: statisticAccent,
         fontWeight: 700,
         ...valueStyle
       }}
     />
-  </Card>
-);
+  );
+
+  return (
+    <Card
+      className="metric-card"
+      style={{
+        flex: '1 1 18%',
+        minWidth,
+        borderColor: `${accent}55`
+      }}
+    >
+      {secondaryTitle !== undefined && secondaryValue !== undefined ? (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          {renderStatistic(title, value, accent)}
+          {renderStatistic(secondaryTitle, secondaryValue, secondaryAccent)}
+        </div>
+      ) : renderStatistic(title, value, accent, prefix, suffix)}
+    </Card>
+  );
+};
 
 export default MetricCard;

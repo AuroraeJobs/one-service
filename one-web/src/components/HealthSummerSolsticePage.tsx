@@ -410,8 +410,15 @@ const HealthSummerSolsticePage: React.FC = () => {
             gap: '16px',
             marginBottom: '24px'
           }}>
-            <MetricCard title={text.salaryCount} value={salaryCount} accent="#52c41a" minWidth={200} />
-            <MetricCard title={text.bonusCount} value={bonusCount} accent="#faad14" minWidth={200} />
+            <MetricCard
+              title={text.salaryCount}
+              value={salaryCount}
+              accent="#52c41a"
+              secondaryTitle={text.bonusCount}
+              secondaryValue={bonusCount}
+              secondaryAccent="#faad14"
+              minWidth={200}
+            />
             <MetricCard title={text.totalMonthlyIncome} value={statistics.totalMonthlyIncome} prefix="¥" accent="#faad14" minWidth={200} />
             <MetricCard title={text.totalActualIncome} value={statistics.totalActualIncome} prefix="¥" accent="#52c41a" minWidth={200} />
             <MetricCard title={text.avgActualIncome} value={statistics.avgActualIncome} prefix="¥" accent="#1890ff" minWidth={200} />
