@@ -1,5 +1,6 @@
 package com.one.record.service.impl;
 
+import com.one.common.exception.DuplicateException;
 import com.one.record.config.TaxConfig;
 import com.one.record.enums.SalaryRecordType;
 import com.one.record.model.SalaryRecord;
@@ -82,7 +83,7 @@ class SalaryRecordServiceTest {
     }
 
     @Test
-    void legacySalaryAndBonusCanShareTheSameMonth() {
+    void salaryAndBonusCannotShareTheSameMonth() {
         SalaryRecord legacySalary = SalaryRecord.builder().id("salary-1").year(2026).month(8).build();
         SalaryRecord bonus = SalaryRecord.builder()
                 .recordType(SalaryRecordType.BONUS)
@@ -92,12 +93,9 @@ class SalaryRecordServiceTest {
                 .taxRate(3.0)
                 .build();
         when(repository.findByYearAndMonth(2026, 8)).thenReturn(List.of(legacySalary));
-        when(repository.findByYearOrderByMonth(2026)).thenReturn(List.of(legacySalary, bonus));
-        when(repository.findById("saved-record")).thenReturn(Optional.of(bonus));
-
-        SalaryRecord saved = service.save(bonus);
-
-        assertThat(saved.getRecordType()).isEqualTo(SalaryRecordType.BONUS);
+        assertThatThrownBy(() -> service.save(bonus))
+                .isInstanceOf(DuplicateException.class)
+                .hasMessage("该年月已存在收入记录，请修改年月或编辑现有记录");
     }
 
     @Test
