@@ -451,14 +451,14 @@ const HealthSummerSolsticePage: React.FC = () => {
                 <span style={{ fontSize: 11, fontWeight: 'normal', color: getRecordType(record) === 'BONUS' ? '#faad14' : '#52c41a', background: getRecordType(record) === 'BONUS' ? 'rgba(250, 173, 20, 0.15)' : 'rgba(82, 196, 26, 0.15)', borderRadius: 4, padding: '1px 6px' }}>
                   {getRecordType(record) === 'BONUS' ? text.bonusType : text.salaryType}
                 </span>
-                {record.company && (
-                  <span style={{ fontSize: 11, fontWeight: 'normal', color: '#1890ff', background: 'rgba(24, 144, 255, 0.15)', borderRadius: 4, padding: '1px 6px', marginLeft: 'auto' }}>
-                    {companyOptions.find(company => company.value === record.company)?.label || record.company}
-                  </span>
-                )}
                 {record.resetCumulative && (
                   <span style={{ fontSize: 11, fontWeight: 'normal', color: '#fff', background: 'linear-gradient(135deg, #FF9800, #FF5722)', borderRadius: 4, padding: '1px 6px' }}>
                     {text.resetCumulativeShort}
+                  </span>
+                )}
+                {record.company && (
+                  <span style={{ fontSize: 11, fontWeight: 'normal', color: '#1890ff', background: 'rgba(24, 144, 255, 0.15)', borderRadius: 4, padding: '1px 6px', marginLeft: 'auto' }}>
+                    {companyOptions.find(company => company.value === record.company)?.label || record.company}
                   </span>
                 )}
               </div>
