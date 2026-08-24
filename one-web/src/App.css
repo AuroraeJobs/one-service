@@ -1632,9 +1632,14 @@ body {
 
 .month-range-grid button.is-start span,
 .month-range-grid button.is-end span {
+  width: 48px;
+  min-width: 48px;
+  height: 48px;
+  padding: 0;
   color: #fff;
   background: var(--month-range-blue);
-  box-shadow: 0 7px 16px rgba(47, 128, 237, 0.32);
+  border-radius: 50%;
+  box-shadow: none;
 }
 
 .month-range-presets {
