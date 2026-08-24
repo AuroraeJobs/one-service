@@ -1607,18 +1607,25 @@ body {
   background: var(--month-range-fill);
 }
 
-.month-range-grid button:nth-child(3n + 1).is-range,
-.month-range-grid button.is-start {
+.month-range-grid button:nth-child(3n + 1).is-range {
   border-radius: 24px 0 0 24px;
 }
 
-.month-range-grid button:nth-child(3n).is-range,
-.month-range-grid button.is-end {
+.month-range-grid button:nth-child(3n).is-range {
   border-radius: 0 24px 24px 0;
 }
 
+.month-range-grid button.is-start:not(.is-end) {
+  background: linear-gradient(to right, transparent 0 50%, var(--month-range-fill) 50% 100%);
+}
+
+.month-range-grid button.is-end:not(.is-start) {
+  background: linear-gradient(to right, var(--month-range-fill) 0 50%, transparent 50% 100%);
+}
+
 .month-range-grid button.is-start.is-end {
-  border-radius: 24px;
+  background: transparent;
+  border-radius: 0;
 }
 
 .month-range-grid button span {
