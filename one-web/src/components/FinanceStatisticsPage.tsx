@@ -7,6 +7,7 @@ import LifePageShell from './LifePageShell';
 import MetricCard from './MetricCard';
 import MetricGrid from './MetricGrid';
 import MonthRangePicker from './MonthRangePicker';
+import AnnualTaxSettlementCard from './AnnualTaxSettlementCard';
 import { enumerateMonthRange, monthToIndex, type MonthRangeValue } from '../utils/monthRange';
 import { salaryRecordApi, type SalaryRecord } from '../services/api';
 import { useAppPreferences } from '../contexts/AppPreferencesContext';
@@ -165,6 +166,8 @@ const FinanceStatisticsPage = () => {
         <MetricCard title={text.actualIncome} value={actualIncome} prefix="¥" accent="#52c41a" />
         <MetricCard title={text.taxPaid} value={taxPaid} prefix="¥" accent="#9c27b0" />
       </MetricGrid>
+
+      <AnnualTaxSettlementCard records={records} loading={loading} />
 
       <Card className="life-panel-card finance-statistics-chart-card" title={text.monthlyTrend} loading={loading}>
         <ReactECharts option={chartOption} style={{ width: '100%', height: 360 }} notMerge lazyUpdate />

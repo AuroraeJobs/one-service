@@ -3,6 +3,7 @@ package com.one.record.web;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.one.record.model.AnnualTaxSettlement;
 import com.one.record.model.SalaryRecord;
 import com.one.record.service.ISalaryRecordService;
 import org.springframework.web.bind.annotation.*;
@@ -71,6 +72,12 @@ public class SalaryRecordController {
             @RequestParam("startMonth") String startMonth,
             @RequestParam("endMonth") String endMonth) {
         return service.findByMonthRange(startMonth, endMonth);
+    }
+
+    @GetMapping("annual-settlement")
+    @Operation(summary = "计算年度综合汇算", description = "汇总指定年度工资与奖金，排除其它收入，并计算预计补税或退税")
+    public AnnualTaxSettlement calculateAnnualSettlement(@RequestParam("year") Integer year) {
+        return service.calculateAnnualSettlement(year);
     }
     
     @GetMapping("statistics")

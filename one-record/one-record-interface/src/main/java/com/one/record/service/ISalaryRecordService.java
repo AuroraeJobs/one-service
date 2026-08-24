@@ -1,5 +1,6 @@
 package com.one.record.service;
 
+import com.one.record.model.AnnualTaxSettlement;
 import com.one.record.model.SalaryRecord;
 
 import java.util.List;
@@ -23,6 +24,8 @@ public interface ISalaryRecordService {
     SalaryRecord findByMonth(String month);
     
     List<SalaryRecord> findByMonthRange(String startMonth, String endMonth);
+
+    AnnualTaxSettlement calculateAnnualSettlement(Integer year);
     
     Map<String, Object> getStatistics();
 }

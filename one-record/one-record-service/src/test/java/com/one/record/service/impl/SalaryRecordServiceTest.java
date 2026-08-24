@@ -3,6 +3,7 @@ package com.one.record.service.impl;
 import com.one.common.exception.DuplicateException;
 import com.one.record.config.TaxConfig;
 import com.one.record.enums.SalaryRecordType;
+import com.one.record.model.AnnualTaxSettlement;
 import com.one.record.model.SalaryRecord;
 import com.one.record.repository.SalaryRecordRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -174,6 +175,63 @@ class SalaryRecordServiceTest {
         assertThatThrownBy(() -> service.save(bonus))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("奖金速算扣除数不能小于 0");
+    }
+
+    @Test
+    void annualSettlementIncludesSalaryAndBonusButExcludesOtherIncome() {
+        SalaryRecord salary = SalaryRecord.builder()
+                .recordType(SalaryRecordType.SALARY)
+                .year(2026)
+                .monthlyIncome(100000.0)
+                .otherIncome(99999.0)
+                .standardDeduction(50000.0)
+                .specialDeduction(10000.0)
+                .currentTaxDeclaration(1000.0)
+                .build();
+        SalaryRecord bonus = SalaryRecord.builder()
+                .recordType(SalaryRecordType.BONUS)
+                .year(2026)
+                .monthlyIncome(20000.0)
+                .otherIncome(88888.0)
+                .standardDeduction(0.0)
+                .currentTaxDeclaration(500.0)
+                .build();
+        when(repository.findByYearOrderByMonth(2026)).thenReturn(List.of(salary, bonus));
+
+        AnnualTaxSettlement result = service.calculateAnnualSettlement(2026);
+
+        assertThat(result.getSalaryIncome()).isEqualTo(100000.0);
+        assertThat(result.getBonusIncome()).isEqualTo(20000.0);
+        assertThat(result.getIncludedIncome()).isEqualTo(120000.0);
+        assertThat(result.getExcludedOtherIncome()).isEqualTo(188887.0);
+        assertThat(result.getStandardDeduction()).isEqualTo(60000.0);
+        assertThat(result.getTotalDeduction()).isEqualTo(70000.0);
+        assertThat(result.getTaxableIncome()).isEqualTo(50000.0);
+        assertThat(result.getBracketLevel()).isEqualTo(2);
+        assertThat(result.getCalculatedTax()).isEqualTo(2480.0);
+        assertThat(result.getActualTaxPaid()).isEqualTo(1500.0);
+        assertThat(result.getTaxDue()).isEqualTo(980.0);
+        assertThat(result.getTaxRefund()).isZero();
+    }
+
+    @Test
+    void annualSettlementCalculatesRefundWhenPrepaidTaxIsHigher() {
+        SalaryRecord salary = SalaryRecord.builder()
+                .recordType(SalaryRecordType.SALARY)
+                .year(2026)
+                .monthlyIncome(96000.0)
+                .standardDeduction(0.0)
+                .specialDeduction(0.0)
+                .currentTaxDeclaration(2000.0)
+                .build();
+        when(repository.findByYearOrderByMonth(2026)).thenReturn(List.of(salary));
+
+        AnnualTaxSettlement result = service.calculateAnnualSettlement(2026);
+
+        assertThat(result.getCalculatedTax()).isEqualTo(1080.0);
+        assertThat(result.getDifference()).isEqualTo(-920.0);
+        assertThat(result.getTaxDue()).isZero();
+        assertThat(result.getTaxRefund()).isEqualTo(920.0);
     }
 
     private SalaryRecord salary(int month, double monthlyTaxableIncome) {

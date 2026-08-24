@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.one.common.exception.DuplicateException;
 import com.one.record.config.TaxConfig;
 import com.one.record.enums.SalaryRecordType;
+import com.one.record.model.AnnualTaxSettlement;
 import com.one.record.model.SalaryRecord;
 import com.one.record.repository.SalaryRecordRepository;
 import com.one.record.service.ISalaryRecordService;
@@ -85,6 +86,56 @@ public class SalaryRecordService implements ISalaryRecordService {
     @Override
     public List<SalaryRecord> findByMonthRange(String startMonth, String endMonth) {
         return repository.findByMonthBetweenOrderByMonthDesc(startMonth, endMonth);
+    }
+
+    @Override
+    public AnnualTaxSettlement calculateAnnualSettlement(Integer year) {
+        List<SalaryRecord> records = repository.findByYearOrderByMonth(year);
+
+        double salaryIncome = records.stream()
+                .filter(record -> normalizeRecordType(record) == SalaryRecordType.SALARY)
+                .mapToDouble(record -> valueOrZero(record.getMonthlyIncome()))
+                .sum();
+        double bonusIncome = records.stream()
+                .filter(record -> normalizeRecordType(record) == SalaryRecordType.BONUS)
+                .mapToDouble(record -> valueOrZero(record.getMonthlyIncome()))
+                .sum();
+        double includedIncome = salaryIncome + bonusIncome;
+        double excludedOtherIncome = records.stream()
+                .mapToDouble(record -> valueOrZero(record.getOtherIncome()))
+                .sum();
+        double standardDeduction = taxConfig.getStandardDeductionPerMonth() * 12;
+        double socialInsuranceDeduction = records.stream()
+                .mapToDouble(this::getSocialInsuranceDeduction)
+                .sum();
+        double totalDeduction = standardDeduction + socialInsuranceDeduction;
+        double taxableIncome = Math.max(0, includedIncome - totalDeduction);
+        TaxConfig.TaxBracket bracket = taxConfig.getApplicableBracket(taxableIncome);
+        double calculatedTax = roundCurrency(taxConfig.calculateTax(taxableIncome));
+        double actualTaxPaid = roundCurrency(records.stream()
+                .mapToDouble(record -> valueOrZero(record.getCurrentTaxDeclaration()))
+                .sum());
+        double difference = roundCurrency(calculatedTax - actualTaxPaid);
+
+        return AnnualTaxSettlement.builder()
+                .year(year)
+                .salaryIncome(roundCurrency(salaryIncome))
+                .bonusIncome(roundCurrency(bonusIncome))
+                .includedIncome(roundCurrency(includedIncome))
+                .excludedOtherIncome(roundCurrency(excludedOtherIncome))
+                .standardDeduction(roundCurrency(standardDeduction))
+                .socialInsuranceDeduction(roundCurrency(socialInsuranceDeduction))
+                .totalDeduction(roundCurrency(totalDeduction))
+                .taxableIncome(roundCurrency(taxableIncome))
+                .taxRate(bracket.getTaxRate())
+                .quickDeduction(bracket.getQuickDeduction())
+                .calculatedTax(calculatedTax)
+                .actualTaxPaid(actualTaxPaid)
+                .difference(difference)
+                .taxDue(difference > 0 ? difference : 0)
+                .taxRefund(difference < 0 ? roundCurrency(Math.abs(difference)) : 0)
+                .bracketLevel(bracket.getLevel())
+                .build();
     }
     
     @Override
@@ -254,6 +305,16 @@ public class SalaryRecordService implements ISalaryRecordService {
 
     private SalaryRecordType normalizeRecordType(SalaryRecord record) {
         return record.getRecordType() != null ? record.getRecordType() : SalaryRecordType.SALARY;
+    }
+
+    private double getSocialInsuranceDeduction(SalaryRecord record) {
+        if (record.getSpecialDeduction() != null) {
+            return record.getSpecialDeduction();
+        }
+        return valueOrZero(record.getEndowmentInsurance())
+                + valueOrZero(record.getMedicalInsurance())
+                + valueOrZero(record.getUnemploymentInsurance())
+                + valueOrZero(record.getHousingFund());
     }
 
     private double valueOrZero(Double value) {

@@ -2506,6 +2506,26 @@ export interface SalaryStatistics {
   avgActualIncome: number;
 }
 
+export interface AnnualTaxSettlement {
+  year: number;
+  salaryIncome: number;
+  bonusIncome: number;
+  includedIncome: number;
+  excludedOtherIncome: number;
+  standardDeduction: number;
+  socialInsuranceDeduction: number;
+  totalDeduction: number;
+  taxableIncome: number;
+  taxRate: number;
+  quickDeduction: number;
+  calculatedTax: number;
+  actualTaxPaid: number;
+  difference: number;
+  taxDue: number;
+  taxRefund: number;
+  bracketLevel: number;
+}
+
 export const salaryRecordApi = {
   save: (record: Omit<SalaryRecord, 'id' | 'createdAt' | 'updatedAt'>): Promise<SalaryRecord> => {
     return apiClient.post('/salary-record', record);
@@ -2545,6 +2565,12 @@ export const salaryRecordApi = {
 
   getStatistics: (): Promise<SalaryStatistics> => {
     return apiClient.get('/salary-record/statistics');
+  },
+
+  getAnnualSettlement: (year: number): Promise<AnnualTaxSettlement> => {
+    return apiClient.get('/salary-record/annual-settlement', {
+      params: { year }
+    });
   }
 };
 

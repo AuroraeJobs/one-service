@@ -1431,6 +1431,122 @@ body {
   white-space: nowrap;
 }
 
+.annual-tax-settlement-card {
+  margin-bottom: 24px;
+}
+
+.annual-tax-description,
+.annual-tax-disclaimer {
+  color: var(--app-text-muted);
+  line-height: 1.6;
+}
+
+.annual-tax-description {
+  margin: 0 0 18px;
+}
+
+.annual-tax-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 18px;
+  padding: 18px 20px;
+  background: color-mix(in srgb, var(--annual-tax-result-color) 12%, var(--app-surface-elevated));
+  border-radius: 16px;
+  --annual-tax-result-color: #1677ff;
+}
+
+.annual-tax-result.is-due {
+  --annual-tax-result-color: #ff4d4f;
+}
+
+.annual-tax-result.is-refund {
+  --annual-tax-result-color: #52c41a;
+}
+
+.annual-tax-result > div {
+  display: grid;
+  gap: 6px;
+}
+
+.annual-tax-result > div:last-child {
+  text-align: right;
+}
+
+.annual-tax-result span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.annual-tax-result strong {
+  color: var(--annual-tax-result-color);
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.annual-tax-result > div:last-child strong {
+  color: var(--app-text);
+  font-size: 18px;
+}
+
+.annual-tax-breakdown {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 24px;
+}
+
+.annual-tax-breakdown > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--app-border);
+}
+
+.annual-tax-breakdown span {
+  overflow: hidden;
+  color: var(--app-text-muted);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.annual-tax-breakdown strong {
+  color: var(--app-text);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.annual-tax-disclaimer {
+  margin: 14px 0 0;
+  font-size: 12px;
+}
+
+.annual-tax-empty {
+  padding: 24px 0;
+  color: var(--app-text-muted);
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .annual-tax-result {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .annual-tax-result > div:last-child {
+    text-align: left;
+  }
+
+  .annual-tax-breakdown {
+    grid-template-columns: 1fr;
+  }
+}
+
 .month-range-trigger.ant-btn {
   min-width: 250px;
   height: 42px;
