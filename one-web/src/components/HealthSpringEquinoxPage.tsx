@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import MetricCard from './MetricCard';
 import MetricGrid from './MetricGrid';
 import RecordCardList from './RecordCardList';
@@ -136,14 +136,14 @@ const HealthSpringEquinoxPage: React.FC = () => {
     duration: isEnglish ? 'Duration' : '充电时长',
     minutes: isEnglish ? 'minutes' : '分钟',
     chargingInfo: isEnglish ? 'Charging Info' : '充电信息',
-    chargerType: isEnglish ? 'Charging Type' : '充电方式',
+    chargerType: isEnglish ? 'Station Provider' : '站电提供商',
     location: isEnglish ? 'Charging Location' : '充电地点',
     chargeAmount: isEnglish ? 'Energy (kWh)' : '充电量(kWh)',
     batteryCapacity: isEnglish ? 'Battery Energy (kWh)' : '电池电量(kWh)',
     selectDate: isEnglish ? 'Please select a date' : '请选择日期',
     selectHour: isEnglish ? 'Select hour' : '请选择时',
     selectMinute: isEnglish ? 'Select minute' : '请选择分',
-    selectType: isEnglish ? 'Please select charging type' : '请选择充电方式',
+    selectType: isEnglish ? 'Please select station provider' : '请选择站电提供商',
     selectLocation: isEnglish ? 'Please select charging location' : '请选择充电地点',
     enterAmount: isEnglish ? 'Please enter energy' : '请输入充电量',
     actualEnergy: isEnglish ? 'Actual charged energy' : '实际充入电量',
@@ -176,18 +176,7 @@ const HealthSpringEquinoxPage: React.FC = () => {
     deleteRecordFailed: isEnglish ? 'Failed to delete charging record' : '删除充电记录失败',
     recordUpdated: isEnglish ? 'Charging record updated' : '充电记录更新成功！',
     recordAdded: isEnglish ? 'Charging record added' : '充电记录添加成功！',
-    recordDeleted: isEnglish ? 'Charging record deleted' : '充电记录删除成功！',
-    homeCharge: isEnglish ? 'Home' : '家充',
-    superCharge: isEnglish ? 'Supercharger' : '超充',
-    fastCharge: isEnglish ? 'Fast' : '快充',
-    slowCharge: isEnglish ? 'Slow' : '慢充'
-  };
-  const chargerTypeLabel = (value?: string) => {
-    if (value === '家充') return text.homeCharge;
-    if (value === '超充') return text.superCharge;
-    if (value === '快充') return text.fastCharge;
-    if (value === '慢充') return text.slowCharge;
-    return value;
+    recordDeleted: isEnglish ? 'Charging record deleted' : '充电记录删除成功！'
   };
   const [form] = Form.useForm();
 
@@ -199,6 +188,7 @@ const HealthSpringEquinoxPage: React.FC = () => {
   const watchElectricity = Form.useWatch('electricityCost', form);
   const watchService = Form.useWatch('serviceCost', form);
   const watchDiscount = Form.useWatch('discountAmount', form);
+  const watchProvider = Form.useWatch('provider', form);
 
   // 将时和分组合成 HH:mm 格式
   const combineTime = (hour: string, minute: string): string => {
@@ -272,6 +262,12 @@ const HealthSpringEquinoxPage: React.FC = () => {
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
   const [selectedYear, setSelectedYear] = useState<string | null>(null);
   const [expandedYears, setExpandedYears] = useState<Set<string>>(new Set());
+
+  // 根据提供商筛选充电地点
+  const filteredLocations = useMemo(() => {
+    if (!watchProvider) return locations;
+    return locations.filter(loc => loc.provider === watchProvider);
+  }, [locations, watchProvider]);
   const pageSize = 12;
 
   // 生成年份选项（从当前年份倒序到2023）
@@ -381,7 +377,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
         startTime: startTime,
         endTime: endTime,
         location: values.location,
-        chargerType: values.chargerType,
         chargeDuration: values.chargeDuration,
         chargeAmount: values.chargeAmount,
         batteryCapacity: values.batteryCapacity,
@@ -866,7 +861,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
                         startMinute: startMinute,
                         endHour: endHour,
                         endMinute: endMinute,
-                        chargerType: selectedRecord.chargerType,
                         location: selectedRecord.location,
                         chargeAmount: selectedRecord.chargeAmount,
                         batteryCapacity: selectedRecord.batteryCapacity,
@@ -977,7 +971,7 @@ const HealthSpringEquinoxPage: React.FC = () => {
                       backgroundColor: 'rgba(24, 144, 255, 0.2)',
                       borderRadius: '6px'
                     }}>
-                      {chargerTypeLabel(selectedRecord.chargerType)}
+                      {providers.find(p => p.value === selectedRecord.provider)?.label || selectedRecord.provider}
                     </div>
                   </div>
                   <div>
@@ -1162,7 +1156,7 @@ const HealthSpringEquinoxPage: React.FC = () => {
             layout="vertical"
             onFinish={handleAdd}
             initialValues={{
-              chargerType: '快充'
+              provider: ''
             }}
           >
             {/* 第一组：日期、时间 */}
@@ -1283,14 +1277,27 @@ const HealthSpringEquinoxPage: React.FC = () => {
                 <Col xs={24} sm={6}>
                   <Form.Item
                     label={<span style={{ color: '#aaa', fontSize: '12px' }}>{text.chargerType}</span>}
-                    name="chargerType"
+                    name="provider"
                     rules={[{ required: true, message: text.selectType }]}
                   >
-                    <Select placeholder={text.selectType}>
-                      <Select.Option value="家充">{text.homeCharge}</Select.Option>
-                      <Select.Option value="超充">{text.superCharge}</Select.Option>
-                      <Select.Option value="快充">{text.fastCharge}</Select.Option>
-                      <Select.Option value="慢充">{text.slowCharge}</Select.Option>
+                    <Select
+                      placeholder={text.selectType}
+                      onChange={(value) => {
+                        // 当提供商改变时，清空充电地点
+                        const currentLocation = form.getFieldValue('location');
+                        if (currentLocation) {
+                          const locationExists = locations.some(loc => loc.value === currentLocation && loc.provider === value);
+                          if (!locationExists) {
+                            form.setFieldsValues({ location: undefined });
+                          }
+                        }
+                      }}
+                    >
+                      {providers.map(p => (
+                        <Select.Option key={p.value} value={p.value}>
+                          {p.label}
+                        </Select.Option>
+                      ))}
                     </Select>
                   </Form.Item>
                 </Col>
@@ -1305,11 +1312,11 @@ const HealthSpringEquinoxPage: React.FC = () => {
                       onChange={(value) => {
                         const selectedLocation = locations.find(loc => loc.value === value);
                         if (selectedLocation?.provider) {
-                          form.setFieldsValue({ provider: selectedLocation.provider });
+                          form.setFieldsValues({ provider: selectedLocation.provider });
                         }
                       }}
                     >
-                      {locations.map(loc => (
+                      {filteredLocations.map(loc => (
                         <Select.Option key={loc.value} value={loc.value}>
                           {loc.label}
                         </Select.Option>
@@ -1337,9 +1344,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
                   </Form.Item>
                 </Col>
               </Row>
-              <Form.Item name="provider" style={{ display: 'none' }}>
-                <Input />
-              </Form.Item>
             </div>
 
             {/* 第二组：费用 */}

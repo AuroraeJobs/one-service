@@ -14,6 +14,9 @@ public enum ChargeProvider {
     STAR("星星充电"),
     DIDI("滴滴充电"),
     NATIONAL_GRID("国家电网"),
+    ZSH("石化易电"),
+    BYD("比亚迪"),
+    LZF("漯周阜"),
     ;
 
     private final String name;
