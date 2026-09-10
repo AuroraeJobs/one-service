@@ -23,11 +23,10 @@ const MonthRangePicker = ({ value, onChange, isEnglish = false }: MonthRangePick
     start: isEnglish ? 'START' : '开始',
     end: isEnglish ? 'END' : '结束',
     months: isEnglish ? 'months' : '个月',
-    allTime: isEnglish ? 'All time' : '全部时间',
+    allTime: isEnglish ? 'All' : '全部',
     currentYear: isEnglish ? 'This year' : '本年',
-    threeMonths: isEnglish ? '3 months' : '3个月',
-    sixMonths: isEnglish ? '6 months' : '6个月',
-    oneYear: isEnglish ? '1 year' : '1年',
+    sixMonths: isEnglish ? 'Half year' : '半年',
+    oneYear: isEnglish ? '1 year' : '一年',
     clear: isEnglish ? 'Clear' : '清除'
   };
   const monthNames = isEnglish ? MONTH_NAMES_EN : MONTH_NAMES_ZH;
@@ -133,11 +132,10 @@ const MonthRangePicker = ({ value, onChange, isEnglish = false }: MonthRangePick
       </div>
 
       <div className="month-range-presets">
-        <Button onClick={() => onChange([{ year: panelYear, month: 1 }, { year: panelYear, month: 12 }])}>{text.currentYear}</Button>
-        <Button onClick={() => applyRecentMonths(3)}>{text.threeMonths}</Button>
-        <Button onClick={() => applyRecentMonths(6)}>{text.sixMonths}</Button>
-        <Button onClick={() => applyRecentMonths(12)}>{text.oneYear}</Button>
-        <Button type="text" onClick={() => { onChange(undefined); setSelectionTarget('start'); }}>{text.clear}</Button>
+        <Button type="text" onClick={() => { onChange(undefined); setSelectionTarget('start'); }}>{text.allTime}</Button>
+        <Button type="text" onClick={() => onChange([{ year: panelYear, month: 1 }, { year: panelYear, month: 12 }])}>{text.currentYear}</Button>
+        <Button type="text" onClick={() => applyRecentMonths(6)}>{text.sixMonths}</Button>
+        <Button type="text" onClick={() => applyRecentMonths(12)}>{text.oneYear}</Button>
       </div>
     </div>
   );
