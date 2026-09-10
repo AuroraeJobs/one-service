@@ -1720,6 +1720,14 @@ body {
   background: var(--month-range-fill);
 }
 
+.month-range-grid button:nth-child(3n + 1) {
+  justify-content: flex-start;
+}
+
+.month-range-grid button:nth-child(3n) {
+  justify-content: flex-end;
+}
+
 .month-range-grid button.is-range {
   color: #1f5dc9;
   background: var(--month-range-fill);
@@ -1739,6 +1747,22 @@ body {
 
 .month-range-grid button.is-end:not(.is-start) {
   background: linear-gradient(to right, var(--month-range-fill) 0 50%, transparent 50% 100%);
+}
+
+.month-range-grid button.is-start:not(.is-end):nth-child(3n + 1) {
+  background: var(--month-range-fill);
+}
+
+.month-range-grid button.is-start:not(.is-end):nth-child(3n) {
+  background: transparent;
+}
+
+.month-range-grid button.is-end:not(.is-start):nth-child(3n + 1) {
+  background: transparent;
+}
+
+.month-range-grid button.is-end:not(.is-start):nth-child(3n) {
+  background: var(--month-range-fill);
 }
 
 .month-range-grid button.is-start.is-end {
