@@ -54,6 +54,11 @@ public class TaxConfig {
      * 每月减除费用（起征点）
      */
     private final double standardDeductionPerMonth = 5000.0;
+
+    /**
+     * 租房专项附加扣除（每月）
+     */
+    private final double housingRentalDeductionPerMonth = 1500.0;
     
     /**
      * 根据累计应纳税所得额计算应纳税额

@@ -2513,6 +2513,8 @@ export interface AnnualTaxSettlement {
   includedIncome: number;
   excludedOtherIncome: number;
   standardDeduction: number;
+  housingRentalDeduction: number;
+  bonusDeduction: number;
   socialInsuranceDeduction: number;
   totalDeduction: number;
   taxableIncome: number;

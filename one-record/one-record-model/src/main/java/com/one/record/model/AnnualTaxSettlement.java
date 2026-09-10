@@ -17,6 +17,8 @@ public class AnnualTaxSettlement {
     private Double includedIncome;
     private Double excludedOtherIncome;
     private Double standardDeduction;
+    private Double housingRentalDeduction;
+    private Double bonusDeduction;
     private Double socialInsuranceDeduction;
     private Double totalDeduction;
     private Double taxableIncome;

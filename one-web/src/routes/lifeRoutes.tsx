@@ -17,6 +17,7 @@ import HealthSummerSolsticePage from '../components/HealthSummerSolsticePage';
 import HealthThirdPage from '../components/HealthThirdPage';
 import HealthWinterSolsticePage from '../components/HealthWinterSolsticePage';
 import FinanceStatisticsPage from '../components/FinanceStatisticsPage';
+import AnnualTaxSettlementPage from '../components/AnnualTaxSettlementPage';
 import HexagramPage from '../components/HexagramPage';
 import LifeDataConnectionsPage from '../components/LifeDataConnectionsPage';
 import LifeInvestmentPage from '../components/LifeInvestmentPage';
@@ -123,6 +124,7 @@ export const createProtectedRoutes = (isTabVisible: boolean): ProtectedRouteConf
   { path: '/finance', element: <HealthSummerSolsticePage /> },
   { path: '/finance/salary', element: <HealthSummerSolsticePage /> },
   { path: '/finance/statistics', element: <FinanceStatisticsPage /> },
+  { path: '/finance/tax-settlement', element: <AnnualTaxSettlementPage /> },
   { path: '/lottery', element: <LotteryOverviewPage /> },
   { path: '/lottery/overview', element: <LotteryOverviewPage /> },
   { path: '/lottery/workbench', element: <LotteryWorkbenchPage /> },

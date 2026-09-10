@@ -105,10 +105,15 @@ public class SalaryRecordService implements ISalaryRecordService {
                 .mapToDouble(record -> valueOrZero(record.getOtherIncome()))
                 .sum();
         double standardDeduction = taxConfig.getStandardDeductionPerMonth() * 12;
+        double housingRentalDeduction = taxConfig.getHousingRentalDeductionPerMonth() * 12;
+        double bonusDeduction = records.stream()
+                .filter(record -> normalizeRecordType(record) == SalaryRecordType.BONUS)
+                .mapToDouble(record -> valueOrZero(record.getStandardDeduction()))
+                .sum();
         double socialInsuranceDeduction = records.stream()
                 .mapToDouble(this::getSocialInsuranceDeduction)
                 .sum();
-        double totalDeduction = standardDeduction + socialInsuranceDeduction;
+        double totalDeduction = standardDeduction + housingRentalDeduction + bonusDeduction + socialInsuranceDeduction;
         double taxableIncome = Math.max(0, includedIncome - totalDeduction);
         TaxConfig.TaxBracket bracket = taxConfig.getApplicableBracket(taxableIncome);
         double calculatedTax = roundCurrency(taxConfig.calculateTax(taxableIncome));
@@ -124,6 +129,8 @@ public class SalaryRecordService implements ISalaryRecordService {
                 .includedIncome(roundCurrency(includedIncome))
                 .excludedOtherIncome(roundCurrency(excludedOtherIncome))
                 .standardDeduction(roundCurrency(standardDeduction))
+                .housingRentalDeduction(roundCurrency(housingRentalDeduction))
+                .bonusDeduction(roundCurrency(bonusDeduction))
                 .socialInsuranceDeduction(roundCurrency(socialInsuranceDeduction))
                 .totalDeduction(roundCurrency(totalDeduction))
                 .taxableIncome(roundCurrency(taxableIncome))

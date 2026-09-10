@@ -53,11 +53,13 @@ const AnnualTaxSettlementCard = ({ records, loading = false }: AnnualTaxSettleme
     calculatedTax: isEnglish ? 'Calculated Annual Tax' : '年度应纳税额',
     actualTaxPaid: isEnglish ? 'Tax Already Paid' : '实际已纳税额',
     settlementResult: isEnglish ? 'Settlement Result' : '汇算结果',
-    taxDue: isEnglish ? 'Estimated tax due' : '预计补税',
-    taxRefund: isEnglish ? 'Estimated refund' : '预计退税',
+    taxDue: isEnglish ? 'Tax due' : '补税',
+    taxRefund: isEnglish ? 'Refund' : '退税',
     balanced: isEnglish ? 'No additional tax or refund' : '无需补税或退税',
     includedIncome: isEnglish ? 'Included income' : '计入汇算收入',
     standardDeduction: isEnglish ? 'Annual standard deduction' : '年度减除费用',
+    housingRentalDeduction: isEnglish ? 'Housing rental deduction' : '租房减除费用',
+    bonusDeduction: isEnglish ? 'Bonus deduction' : '奖金减除费用',
     socialInsurance: isEnglish ? 'Social insurance and housing fund' : '五险一金扣除',
     excludedOtherIncome: isEnglish ? 'Excluded other income' : '已排除其它收入',
     taxBracket: isEnglish ? 'Applied bracket' : '适用税档',
@@ -119,6 +121,8 @@ const AnnualTaxSettlementCard = ({ records, loading = false }: AnnualTaxSettleme
           <div className="annual-tax-breakdown">
             <div><span>{text.includedIncome}</span><strong>{formatCurrency(settlement.includedIncome)}</strong></div>
             <div><span>{text.standardDeduction}</span><strong>-{formatCurrency(settlement.standardDeduction)}</strong></div>
+            <div><span>{text.housingRentalDeduction}</span><strong>-{formatCurrency(settlement.housingRentalDeduction)}</strong></div>
+            <div><span>{text.bonusDeduction}</span><strong>-{formatCurrency(settlement.bonusDeduction)}</strong></div>
             <div><span>{text.socialInsurance}</span><strong>-{formatCurrency(settlement.socialInsuranceDeduction)}</strong></div>
             <div><span>{text.excludedOtherIncome}</span><strong>{formatCurrency(settlement.excludedOtherIncome)}</strong></div>
             <div><span>{text.taxBracket}</span><strong>{settlement.bracketLevel} / {(settlement.taxRate * 100).toFixed(0)}%</strong></div>

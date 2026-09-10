@@ -348,7 +348,8 @@ export const lifeSubNavItems: Record<LifeModuleKey, LifeSubNavItem[]> = {
   ],
   finance: [
     { id: 'finance-salary', moduleKey: 'finance', path: '/finance/salary', label: '工资', icon: <WalletOutlined />, accent: '#34c759' },
-    { id: 'finance-statistics', moduleKey: 'finance', path: '/finance/statistics', label: '统计', icon: <BarChartOutlined />, accent: '#5856d6' }
+    { id: 'finance-statistics', moduleKey: 'finance', path: '/finance/statistics', label: '统计', icon: <BarChartOutlined />, accent: '#5856d6' },
+    { id: 'finance-tax-settlement', moduleKey: 'finance', path: '/finance/tax-settlement', label: '汇算', icon: <FileTextOutlined />, accent: '#ff9500' }
   ],
   lottery: [
     { id: 'lottery-overview', moduleKey: 'lottery', path: '/lottery', label: '概览', icon: <TrophyOutlined />, accent: '#ff3b30' },
