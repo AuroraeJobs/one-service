@@ -18,6 +18,7 @@ interface MonthlyFinanceSummary {
   totalIncome: number;
   actualIncome: number;
   taxPaid: number;
+  hasRecords: boolean;
 }
 
 const roundMoney = (value: number) => Math.round(value * 100) / 100;
@@ -90,9 +91,10 @@ const FinanceStatisticsPage = () => {
       month: monthValue.month,
       totalIncome: roundMoney(monthRecords.reduce((sum, record) => sum + (record.monthlyIncome || 0) + (record.otherIncome || 0), 0)),
       actualIncome: roundMoney(monthRecords.reduce((sum, record) => sum + (record.actualIncome || 0), 0)),
-      taxPaid: roundMoney(monthRecords.reduce((sum, record) => sum + (record.currentTaxDeclaration || 0), 0))
+      taxPaid: roundMoney(monthRecords.reduce((sum, record) => sum + (record.currentTaxDeclaration || 0), 0)),
+      hasRecords: monthRecords.length > 0
     };
-  }), [effectiveRange, selectedRecords]);
+  }).filter(item => item.hasRecords), [effectiveRange, selectedRecords]);
 
   const salaryCount = selectedRecords.filter(record => (record.recordType || 'SALARY') === 'SALARY').length;
   const bonusCount = selectedRecords.filter(record => record.recordType === 'BONUS').length;
