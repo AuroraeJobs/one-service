@@ -17,25 +17,25 @@ import { buildLotteryStats, getRecentDraws, type LotteryDraw } from '../utils/lo
 import './LotteryOverviewPage.css';
 
 const YEARLY_PIE_COLORS = [
-  '#5f8ea0',
-  '#7aa8b7',
-  '#91b8c4',
-  '#abc9d1',
-  '#c2d8dd',
-  '#d9e7ea',
-  '#9fb4b8',
-  '#82999e'
+  '#1890ff',
+  '#ff4d4f',
+  '#40a9ff',
+  '#ff7875',
+  '#69c0ff',
+  '#ffa39e',
+  '#91d5ff',
+  '#ffccc7'
 ];
 
 const YEARLY_PIE_DARK_COLORS = [
-  '#2f6f88',
-  '#4f8fa8',
-  '#72a9bd',
-  '#95becd',
-  '#b8d3dc',
-  '#d3e3e8',
-  '#8aa3a9',
-  '#6f8f96'
+  '#177ddc',
+  '#d32029',
+  '#3a96e0',
+  '#d32029',
+  '#4eacde',
+  '#d32029',
+  '#65b7ed',
+  '#d32029'
 ];
 
 const getThemeValue = (name: string, fallback: string) => {
