@@ -1445,6 +1445,38 @@ body {
   margin: 0 0 18px;
 }
 
+/* Warm, airy summary-card treatment with color concentrated at the top and
+   a clean white fade through the lower half. */
+.app-theme-light .metric-card {
+  border: 0 !important;
+  background-color: #fff !important;
+  background-image:
+    radial-gradient(circle at 8% 0%, rgba(255, 211, 151, 0.95) 0, rgba(255, 211, 151, 0.55) 16%, transparent 36%),
+    radial-gradient(circle at 100% 0%, rgba(247, 184, 159, 0.88) 0, rgba(247, 184, 159, 0.48) 14%, transparent 34%),
+    linear-gradient(180deg, #fffaf6 0%, #fff 78%);
+  box-shadow: 0 16px 34px rgba(39, 47, 67, 0.1) !important;
+}
+
+.metric-card {
+  border: 0 !important;
+  background-color: #fff !important;
+  background-image:
+    radial-gradient(circle at 8% 0%, rgba(255, 211, 151, 0.95) 0, rgba(255, 211, 151, 0.55) 16%, transparent 36%),
+    radial-gradient(circle at 100% 0%, rgba(247, 184, 159, 0.88) 0, rgba(247, 184, 159, 0.48) 14%, transparent 34%),
+    linear-gradient(180deg, #fffaf6 0%, #fff 78%) !important;
+}
+
+/* The finance pages can also be rendered without the theme class while the
+   shell is initializing; keep the card treatment visible in that state too. */
+.metric-card {
+  border: 0 !important;
+  background-color: #fff !important;
+  background-image:
+    radial-gradient(circle at 8% 0%, rgba(255, 211, 151, 0.95) 0, rgba(255, 211, 151, 0.55) 16%, transparent 36%),
+    radial-gradient(circle at 100% 0%, rgba(247, 184, 159, 0.88) 0, rgba(247, 184, 159, 0.48) 14%, transparent 34%),
+    linear-gradient(180deg, #fffaf6 0%, #fff 78%) !important;
+}
+
 .annual-tax-result {
   display: flex;
   align-items: center;
@@ -3382,7 +3414,11 @@ body {
 }
 
 .app-theme-light .record-tile {
-  background: var(--app-surface) !important;
+  background-color: #fff !important;
+  background-image:
+    radial-gradient(circle at 8% 0%, rgba(255, 211, 151, 0.95) 0, rgba(255, 211, 151, 0.55) 16%, transparent 36%),
+    radial-gradient(circle at 100% 0%, rgba(247, 184, 159, 0.88) 0, rgba(247, 184, 159, 0.48) 14%, transparent 34%),
+    linear-gradient(180deg, #fffaf6 0%, #fff 78%) !important;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06) !important;
 }
 
@@ -3538,7 +3574,6 @@ body {
 .app-theme-light .themed-route-page .ant-card,
 .app-theme-light .themed-route-page .ant-card-bordered {
   background: var(--app-surface) !important;
-  background-image: none !important;
   border-color: var(--app-border) !important;
   color: var(--app-text) !important;
   box-shadow: var(--app-card-shadow) !important;
@@ -3706,7 +3741,24 @@ body {
 
 .app-theme-light .themed-route-page .record-tile,
 .app-theme-light .themed-route-page .record-tile.ant-card {
-  background: var(--app-surface) !important;
+  background-color: #fff !important;
+  background-image:
+    radial-gradient(circle at 8% 0%, rgba(255, 211, 151, 0.95) 0, rgba(255, 211, 151, 0.55) 16%, transparent 36%),
+    radial-gradient(circle at 100% 0%, rgba(247, 184, 159, 0.88) 0, rgba(247, 184, 159, 0.48) 14%, transparent 34%),
+    linear-gradient(180deg, #fffaf6 0%, #fff 78%) !important;
+}
+
+.app-theme-light .themed-route-page .metric-card {
+  background-color: #fff !important;
+  background-image:
+    radial-gradient(circle at 8% 0%, rgba(255, 211, 151, 0.95) 0, rgba(255, 211, 151, 0.55) 16%, transparent 36%),
+    radial-gradient(circle at 100% 0%, rgba(247, 184, 159, 0.88) 0, rgba(247, 184, 159, 0.48) 14%, transparent 34%),
+    linear-gradient(180deg, #fffaf6 0%, #fff 78%) !important;
+}
+
+.app-theme-dark .themed-route-page .record-tile,
+.app-theme-dark .themed-route-page .record-tile.ant-card {
+  background: var(--record-soft) !important;
 }
 
 .themed-route-page .record-tile.ant-card .ant-card-body {
@@ -3930,4 +3982,26 @@ body {
 .lottery-planet-calendar-card.ant-card > .ant-card-head,
 .lottery-planet-calendar-card.ant-card > .ant-card-body {
   padding-right: 32px !important;
+}
+
+/* Must follow the shared theme surface rule so its background-image reset
+   does not hide the finance summary gradient. */
+.app-theme-light .metric-card {
+  border: 0 !important;
+  background-color: #fff !important;
+  background-image:
+    radial-gradient(circle at 8% 0%, rgba(255, 211, 151, 0.95) 0, rgba(255, 211, 151, 0.55) 16%, transparent 36%),
+    radial-gradient(circle at 100% 0%, rgba(247, 184, 159, 0.88) 0, rgba(247, 184, 159, 0.48) 14%, transparent 34%),
+    linear-gradient(180deg, #fffaf6 0%, #fff 78%) !important;
+  box-shadow: 0 16px 34px rgba(39, 47, 67, 0.1) !important;
+}
+
+.app-theme-dark .metric-card {
+  border: 0 !important;
+  background-color: #222936 !important;
+  background-image:
+    radial-gradient(circle at 8% 0%, rgba(218, 148, 77, 0.42) 0, rgba(218, 148, 77, 0.16) 34%, transparent 68%),
+    radial-gradient(circle at 100% 0%, rgba(205, 113, 91, 0.38) 0, rgba(205, 113, 91, 0.14) 32%, transparent 68%),
+    linear-gradient(180deg, #252d3a 0%, #1d2430 82%) !important;
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24) !important;
 }
