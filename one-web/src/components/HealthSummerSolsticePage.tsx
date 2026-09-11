@@ -181,6 +181,26 @@ const HealthSummerSolsticePage: React.FC = () => {
   const salaryCount = salaryRecords.filter(record => getRecordType(record) === 'SALARY').length;
   const bonusCount = salaryRecords.filter(record => getRecordType(record) === 'BONUS').length;
 
+  const companyBreakdown = React.useMemo(() => {
+    const breakdown: Record<string, { totalIncome: number; totalActualIncome: number; count: number }> = {};
+    
+    filteredSalaryRecords.forEach(record => {
+      const company = record.company || 'UNKNOWN';
+      if (!breakdown[company]) {
+        breakdown[company] = { totalIncome: 0, totalActualIncome: 0, count: 0 };
+      }
+      breakdown[company].totalIncome += (record.monthlyIncome || 0) + (record.otherIncome || 0);
+      breakdown[company].totalActualIncome += record.actualIncome || 0;
+      breakdown[company].count += 1;
+    });
+    
+    return Object.entries(breakdown).map(([company, data]) => ({
+      company,
+      companyLabel: companyOptions.find(c => c.value === company)?.label || company,
+      ...data
+    }));
+  }, [filteredSalaryRecords, companyOptions]);
+
   const showAddDrawer = () => {
     let year = new Date().getFullYear();
     let month = new Date().getMonth() + 1;
@@ -423,6 +443,44 @@ const HealthSummerSolsticePage: React.FC = () => {
             <MetricCard title={text.totalActualIncome} value={statistics.totalActualIncome} prefix="¥" accent="#52c41a" minWidth={200} />
             <MetricCard title={text.avgActualIncome} value={statistics.avgActualIncome} prefix="¥" accent="#1890ff" minWidth={200} />
             <MetricCard title={text.totalTaxPaid} value={statistics.totalTaxPaid} prefix="¥" accent="#9c27b0" minWidth={200} />
+          </div>
+        )}
+
+        {companyBreakdown.length > 0 && (
+          <div style={{ marginBottom: '24px' }}>
+            <h3 style={{ marginBottom: '12px', color: isEnglish ? '#333' : '#333' }}>
+              {isEnglish ? 'Company Breakdown' : '公司收入明细'}
+            </h3>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: '16px'
+            }}>
+              {companyBreakdown.map(item => (
+                <div key={item.company} style={{
+                  background: 'var(--app-surface)',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
+                }}>
+                  <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
+                    {item.companyLabel}
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span style={{ color: '#666' }}>{isEnglish ? 'Total Income' : '累计收入'}</span>
+                    <span style={{ fontWeight: 'bold', color: '#faad14' }}>¥{item.totalIncome.toFixed(2)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span style={{ color: '#666' }}>{isEnglish ? 'Net Income' : '累计实发'}</span>
+                    <span style={{ fontWeight: 'bold', color: '#52c41a' }}>¥{item.totalActualIncome.toFixed(2)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#666' }}>{isEnglish ? 'Records' : '记录数'}</span>
+                    <span style={{ color: '#666' }}>{item.count}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
