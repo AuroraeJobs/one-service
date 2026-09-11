@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import MetricCard from './MetricCard';
 import RecordCardList from './RecordCardList';
-import { Button, Drawer, Form, Input, InputNumber, message, Row, Col, Select, Switch, Popconfirm } from 'antd';
+import { Button, Drawer, Form, Input, InputNumber, message, Row, Col, Select, Switch, Popconfirm, DatePicker } from 'antd';
 import { salaryRecordApi } from '../services/api';
 import type { SalaryRecord, SalaryStatistics } from '../services/api';
 import { useAppPreferences } from '../contexts/AppPreferencesContext';
+import dayjs from 'dayjs';
 
 type SalaryRecordFormValues = Omit<SalaryRecord, 'id' | 'createdAt' | 'updatedAt'>;
 
@@ -82,7 +83,10 @@ const HealthSummerSolsticePage: React.FC = () => {
     previousPeriod: isEnglish ? 'Previous' : '上个月',
     nextPeriod: isEnglish ? 'Next' : '下个月',
     addPrevious: isEnglish ? 'Add Previous' : '新增上个月',
-    addNext: isEnglish ? 'Add Next' : '新增下个月'
+    addNext: isEnglish ? 'Add Next' : '新增下个月',
+    startDate: isEnglish ? 'Start Date' : '开始日期',
+    endDate: isEnglish ? 'End Date' : '结束日期',
+    totalRecords: isEnglish ? 'Total' : '共'
   };
   const monthOptions = Array.from({ length: 12 }, (_, index) => {
     const month = index + 1;
@@ -115,6 +119,8 @@ const HealthSummerSolsticePage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedYear, setSelectedYear] = useState<number | null>(new Date().getFullYear());
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState<dayjs.Dayjs | null>(null);
+  const [endDate, setEndDate] = useState<dayjs.Dayjs | null>(null);
 
   const addRecordType = Form.useWatch('recordType', addForm) || 'SALARY';
   const editRecordType = Form.useWatch('recordType', editForm) || 'SALARY';
@@ -174,10 +180,15 @@ const HealthSummerSolsticePage: React.FC = () => {
     value: year
   }));
 
-  const filteredSalaryRecords = salaryRecords.filter(record =>
-    (!selectedYear || record.year === selectedYear) &&
-    (!selectedCompany || record.company === selectedCompany)
-  );
+  const filteredSalaryRecords = salaryRecords.filter(record => {
+    const recordDate = dayjs(`${record.year}-${String(record.month).padStart(2, '0')}-01`);
+    return (
+      (!selectedYear || record.year === selectedYear) &&
+      (!selectedCompany || record.company === selectedCompany) &&
+      (!startDate || recordDate.isSameOrAfter(startDate, 'month')) &&
+      (!endDate || recordDate.isSameOrBefore(endDate, 'month'))
+    );
+  });
   const salaryCount = salaryRecords.filter(record => getRecordType(record) === 'SALARY').length;
   const bonusCount = salaryRecords.filter(record => getRecordType(record) === 'BONUS').length;
 
@@ -464,8 +475,13 @@ const HealthSummerSolsticePage: React.FC = () => {
                 <div key={item.company} className="metric-card" style={{
                   padding: '16px'
                 }}>
-                  <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
-                    {item.companyLabel}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontWeight: 'bold', fontSize: '14px' }}>
+                      {item.companyLabel}
+                    </span>
+                    <span style={{ fontSize: '12px', color: '#666' }}>
+                      {text.totalRecords}{item.salaryCount + item.bonusCount}
+                    </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                     <span style={{ color: '#666' }}>{isEnglish ? 'Total Income' : '累计收入'}</span>
@@ -495,6 +511,22 @@ const HealthSummerSolsticePage: React.FC = () => {
           onRecordClick={showEditDrawer}
           filters={(
             <>
+              <DatePicker
+                placeholder={text.startDate}
+                allowClear
+                value={startDate}
+                onChange={(date) => setStartDate(date)}
+                picker="month"
+                style={{ width: 120 }}
+              />
+              <DatePicker
+                placeholder={text.endDate}
+                allowClear
+                value={endDate}
+                onChange={(date) => setEndDate(date)}
+                picker="month"
+                style={{ width: 120 }}
+              />
               <Select
                 placeholder={text.selectYear}
                 allowClear
