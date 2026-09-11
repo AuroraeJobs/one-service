@@ -461,11 +461,8 @@ const HealthSummerSolsticePage: React.FC = () => {
               gap: '16px'
             }}>
               {companyBreakdown.map(item => (
-                <div key={item.company} style={{
-                  background: 'var(--app-surface)',
-                  borderRadius: '12px',
-                  padding: '16px',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
+                <div key={item.company} className="metric-card" style={{
+                  padding: '16px'
                 }}>
                   <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>
                     {item.companyLabel}
