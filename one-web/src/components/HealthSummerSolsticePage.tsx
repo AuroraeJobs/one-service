@@ -115,6 +115,7 @@ const HealthSummerSolsticePage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedYear, setSelectedYear] = useState<number | null>(new Date().getFullYear());
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
+  const [selectedCompanyFromCard, setSelectedCompanyFromCard] = useState<string | null>(null);
 
   const addRecordType = Form.useWatch('recordType', addForm) || 'SALARY';
   const editRecordType = Form.useWatch('recordType', editForm) || 'SALARY';
@@ -176,7 +177,8 @@ const HealthSummerSolsticePage: React.FC = () => {
 
   const filteredSalaryRecords = salaryRecords.filter(record =>
     (!selectedYear || record.year === selectedYear) &&
-    (!selectedCompany || record.company === selectedCompany)
+    (!selectedCompany || record.company === selectedCompany) &&
+    (!selectedCompanyFromCard || record.company === selectedCompanyFromCard)
   );
   const salaryCount = salaryRecords.filter(record => getRecordType(record) === 'SALARY').length;
   const bonusCount = salaryRecords.filter(record => getRecordType(record) === 'BONUS').length;
@@ -184,7 +186,7 @@ const HealthSummerSolsticePage: React.FC = () => {
   const companyBreakdown = React.useMemo(() => {
     const breakdown: Record<string, { totalIncome: number; totalActualIncome: number; salaryCount: number; bonusCount: number; startDate: string; endDate: string }> = {};
     
-    filteredSalaryRecords.forEach(record => {
+    salaryRecords.forEach(record => {
       const company = record.company || 'UNKNOWN';
       if (!breakdown[company]) {
         breakdown[company] = { totalIncome: 0, totalActualIncome: 0, salaryCount: 0, bonusCount: 0, startDate: '', endDate: '' };
@@ -211,7 +213,7 @@ const HealthSummerSolsticePage: React.FC = () => {
       companyLabel: companyOptions.find(c => c.value === company)?.label || company,
       ...data
     }));
-  }, [filteredSalaryRecords, companyOptions]);
+  }, [salaryRecords, companyOptions]);
 
   const showAddDrawer = () => {
     let year = new Date().getFullYear();
@@ -469,9 +471,17 @@ const HealthSummerSolsticePage: React.FC = () => {
               gap: '16px'
             }}>
               {companyBreakdown.map(item => (
-                <div key={item.company} className="metric-card" style={{
-                  padding: '16px'
-                }}>
+                <div 
+                  key={item.company} 
+                  className="metric-card" 
+                  style={{
+                    padding: '16px',
+                    cursor: 'pointer',
+                    border: selectedCompanyFromCard === item.company ? '2px solid #1890ff' : '2px solid transparent',
+                    transition: 'all 0.2s'
+                  }}
+                  onClick={() => setSelectedCompanyFromCard(selectedCompanyFromCard === item.company ? null : item.company)}
+                >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                     <span style={{ fontWeight: 'bold', fontSize: '14px' }}>
                       {item.companyLabel}
