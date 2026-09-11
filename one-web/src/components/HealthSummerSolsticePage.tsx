@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import MetricCard from './MetricCard';
 import RecordCardList from './RecordCardList';
-import { Button, Drawer, Form, Input, InputNumber, message, Row, Col, Select, Switch, Popconfirm, DatePicker } from 'antd';
+import { Button, Drawer, Form, Input, InputNumber, message, Row, Col, Select, Switch, Popconfirm } from 'antd';
 import { salaryRecordApi } from '../services/api';
 import type { SalaryRecord, SalaryStatistics } from '../services/api';
 import { useAppPreferences } from '../contexts/AppPreferencesContext';
-import dayjs from 'dayjs';
 
 type SalaryRecordFormValues = Omit<SalaryRecord, 'id' | 'createdAt' | 'updatedAt'>;
 
@@ -83,10 +82,7 @@ const HealthSummerSolsticePage: React.FC = () => {
     previousPeriod: isEnglish ? 'Previous' : '上个月',
     nextPeriod: isEnglish ? 'Next' : '下个月',
     addPrevious: isEnglish ? 'Add Previous' : '新增上个月',
-    addNext: isEnglish ? 'Add Next' : '新增下个月',
-    startDate: isEnglish ? 'Start Date' : '开始日期',
-    endDate: isEnglish ? 'End Date' : '结束日期',
-    totalRecords: isEnglish ? 'Total' : '共'
+    addNext: isEnglish ? 'Add Next' : '新增下个月'
   };
   const monthOptions = Array.from({ length: 12 }, (_, index) => {
     const month = index + 1;
@@ -119,8 +115,6 @@ const HealthSummerSolsticePage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedYear, setSelectedYear] = useState<number | null>(new Date().getFullYear());
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
-  const [startDate, setStartDate] = useState<dayjs.Dayjs | null>(null);
-  const [endDate, setEndDate] = useState<dayjs.Dayjs | null>(null);
 
   const addRecordType = Form.useWatch('recordType', addForm) || 'SALARY';
   const editRecordType = Form.useWatch('recordType', editForm) || 'SALARY';
@@ -180,25 +174,20 @@ const HealthSummerSolsticePage: React.FC = () => {
     value: year
   }));
 
-  const filteredSalaryRecords = salaryRecords.filter(record => {
-    const recordDate = dayjs(`${record.year}-${String(record.month).padStart(2, '0')}-01`);
-    return (
-      (!selectedYear || record.year === selectedYear) &&
-      (!selectedCompany || record.company === selectedCompany) &&
-      (!startDate || recordDate.isSameOrAfter(startDate, 'month')) &&
-      (!endDate || recordDate.isSameOrBefore(endDate, 'month'))
-    );
-  });
+  const filteredSalaryRecords = salaryRecords.filter(record =>
+    (!selectedYear || record.year === selectedYear) &&
+    (!selectedCompany || record.company === selectedCompany)
+  );
   const salaryCount = salaryRecords.filter(record => getRecordType(record) === 'SALARY').length;
   const bonusCount = salaryRecords.filter(record => getRecordType(record) === 'BONUS').length;
 
   const companyBreakdown = React.useMemo(() => {
-    const breakdown: Record<string, { totalIncome: number; totalActualIncome: number; salaryCount: number; bonusCount: number }> = {};
+    const breakdown: Record<string, { totalIncome: number; totalActualIncome: number; salaryCount: number; bonusCount: number; startDate: string; endDate: string }> = {};
     
     filteredSalaryRecords.forEach(record => {
       const company = record.company || 'UNKNOWN';
       if (!breakdown[company]) {
-        breakdown[company] = { totalIncome: 0, totalActualIncome: 0, salaryCount: 0, bonusCount: 0 };
+        breakdown[company] = { totalIncome: 0, totalActualIncome: 0, salaryCount: 0, bonusCount: 0, startDate: '', endDate: '' };
       }
       breakdown[company].totalIncome += (record.monthlyIncome || 0) + (record.otherIncome || 0);
       breakdown[company].totalActualIncome += record.actualIncome || 0;
@@ -206,6 +195,14 @@ const HealthSummerSolsticePage: React.FC = () => {
         breakdown[company].bonusCount += 1;
       } else {
         breakdown[company].salaryCount += 1;
+      }
+      
+      const recordDate = `${record.year}-${String(record.month).padStart(2, '0')}`;
+      if (!breakdown[company].startDate || recordDate < breakdown[company].startDate) {
+        breakdown[company].startDate = recordDate;
+      }
+      if (!breakdown[company].endDate || recordDate > breakdown[company].endDate) {
+        breakdown[company].endDate = recordDate;
       }
     });
     
@@ -479,8 +476,8 @@ const HealthSummerSolsticePage: React.FC = () => {
                     <span style={{ fontWeight: 'bold', fontSize: '14px' }}>
                       {item.companyLabel}
                     </span>
-                    <span style={{ fontSize: '12px', color: '#666' }}>
-                      {text.totalRecords}{item.salaryCount + item.bonusCount}
+                    <span style={{ fontSize: '11px', color: '#999' }}>
+                      {item.startDate} ~ {item.endDate}
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
@@ -511,22 +508,6 @@ const HealthSummerSolsticePage: React.FC = () => {
           onRecordClick={showEditDrawer}
           filters={(
             <>
-              <DatePicker
-                placeholder={text.startDate}
-                allowClear
-                value={startDate}
-                onChange={(date) => setStartDate(date)}
-                picker="month"
-                style={{ width: 120 }}
-              />
-              <DatePicker
-                placeholder={text.endDate}
-                allowClear
-                value={endDate}
-                onChange={(date) => setEndDate(date)}
-                picker="month"
-                style={{ width: 120 }}
-              />
               <Select
                 placeholder={text.selectYear}
                 allowClear
