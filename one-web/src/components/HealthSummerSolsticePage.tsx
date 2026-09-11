@@ -212,7 +212,7 @@ const HealthSummerSolsticePage: React.FC = () => {
       company,
       companyLabel: companyOptions.find(c => c.value === company)?.label || company,
       ...data
-    }));
+    })).sort((a, b) => a.startDate.localeCompare(b.startDate));
   }, [salaryRecords, companyOptions]);
 
   const showAddDrawer = () => {
