@@ -182,16 +182,20 @@ const HealthSummerSolsticePage: React.FC = () => {
   const bonusCount = salaryRecords.filter(record => getRecordType(record) === 'BONUS').length;
 
   const companyBreakdown = React.useMemo(() => {
-    const breakdown: Record<string, { totalIncome: number; totalActualIncome: number; count: number }> = {};
+    const breakdown: Record<string, { totalIncome: number; totalActualIncome: number; salaryCount: number; bonusCount: number }> = {};
     
     filteredSalaryRecords.forEach(record => {
       const company = record.company || 'UNKNOWN';
       if (!breakdown[company]) {
-        breakdown[company] = { totalIncome: 0, totalActualIncome: 0, count: 0 };
+        breakdown[company] = { totalIncome: 0, totalActualIncome: 0, salaryCount: 0, bonusCount: 0 };
       }
       breakdown[company].totalIncome += (record.monthlyIncome || 0) + (record.otherIncome || 0);
       breakdown[company].totalActualIncome += record.actualIncome || 0;
-      breakdown[company].count += 1;
+      if (getRecordType(record) === 'BONUS') {
+        breakdown[company].bonusCount += 1;
+      } else {
+        breakdown[company].salaryCount += 1;
+      }
     });
     
     return Object.entries(breakdown).map(([company, data]) => ({
@@ -474,9 +478,13 @@ const HealthSummerSolsticePage: React.FC = () => {
                     <span style={{ color: '#666' }}>{isEnglish ? 'Net Income' : '累计实发'}</span>
                     <span style={{ fontWeight: 'bold', color: '#52c41a' }}>¥{item.totalActualIncome.toFixed(2)}</span>
                   </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span style={{ color: '#666' }}>{isEnglish ? 'Salary Records' : '工资记录'}</span>
+                    <span style={{ color: '#666' }}>{item.salaryCount}</span>
+                  </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#666' }}>{isEnglish ? 'Records' : '记录数'}</span>
-                    <span style={{ color: '#666' }}>{item.count}</span>
+                    <span style={{ color: '#666' }}>{isEnglish ? 'Bonus Records' : '奖金记录'}</span>
+                    <span style={{ color: '#666' }}>{item.bonusCount}</span>
                   </div>
                 </div>
               ))}
