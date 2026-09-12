@@ -3999,9 +3999,6 @@ body {
 .app-theme-dark .metric-card {
   border: 0 !important;
   background-color: #222936 !important;
-  background-image:
-    radial-gradient(circle at 8% 0%, rgba(218, 148, 77, 0.42) 0, rgba(218, 148, 77, 0.16) 34%, transparent 68%),
-    radial-gradient(circle at 100% 0%, rgba(205, 113, 91, 0.38) 0, rgba(205, 113, 91, 0.14) 32%, transparent 68%),
-    linear-gradient(180deg, #252d3a 0%, #1d2430 82%) !important;
+  background-image: none !important;
   box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24) !important;
 }
