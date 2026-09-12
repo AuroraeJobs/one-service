@@ -3758,13 +3758,13 @@ body {
 
 .app-theme-dark .themed-route-page .record-tile,
 .app-theme-dark .themed-route-page .record-tile.ant-card {
-  background: #222936 !important;
-  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24) !important;
+  background: var(--app-surface) !important;
+  box-shadow: var(--app-card-shadow) !important;
 }
 
 .app-theme-dark .themed-route-page .record-tile:hover,
 .app-theme-dark .themed-route-page .record-tile.ant-card:hover {
-  background: #2a3344 !important;
+  background: var(--app-surface-elevated) !important;
   transform: translateY(-1px);
 }
 
@@ -4005,7 +4005,7 @@ body {
 
 .app-theme-dark .metric-card {
   border: 0 !important;
-  background-color: #222936 !important;
+  background: var(--app-surface) !important;
   background-image: none !important;
-  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24) !important;
+  box-shadow: var(--app-card-shadow) !important;
 }
