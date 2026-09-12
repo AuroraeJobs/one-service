@@ -9,7 +9,7 @@ import { useAppPreferences } from '../contexts/AppPreferencesContext';
 type SalaryRecordFormValues = Omit<SalaryRecord, 'id' | 'createdAt' | 'updatedAt'>;
 
 const HealthSummerSolsticePage: React.FC = () => {
-  const { isEnglish } = useAppPreferences();
+  const { isEnglish, colorMode } = useAppPreferences();
   const text = {
     salaryCount: isEnglish ? 'Salary Records' : '工资数',
     bonusCount: isEnglish ? 'Bonus Records' : '奖金数',
@@ -214,6 +214,9 @@ const HealthSummerSolsticePage: React.FC = () => {
       ...data
     })).sort((a, b) => a.startDate.localeCompare(b.startDate));
   }, [salaryRecords, companyOptions]);
+
+  const textColor = colorMode === 'dark' ? 'rgba(255, 255, 255, 0.87)' : '#333';
+  const textMutedColor = colorMode === 'dark' ? 'rgba(255, 255, 255, 0.58)' : '#666';
 
   const showAddDrawer = () => {
     let year = new Date().getFullYear();
@@ -462,7 +465,7 @@ const HealthSummerSolsticePage: React.FC = () => {
 
         {companyBreakdown.length > 0 && (
           <div style={{ marginBottom: '24px' }}>
-            <h3 style={{ marginBottom: '12px', color: isEnglish ? '#333' : '#333' }}>
+            <h3 style={{ marginBottom: '12px', color: textColor }}>
               {isEnglish ? 'Company Breakdown' : '公司收入明细'}
             </h3>
             <div style={{
@@ -483,28 +486,28 @@ const HealthSummerSolsticePage: React.FC = () => {
                   onClick={() => setSelectedCompanyFromCard(selectedCompanyFromCard === item.company ? null : item.company)}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span style={{ fontWeight: 'bold', fontSize: '14px' }}>
+                    <span style={{ fontWeight: 'bold', fontSize: '14px', color: textColor }}>
                       {item.companyLabel}
                     </span>
-                    <span style={{ fontSize: '11px', color: '#999' }}>
+                    <span style={{ fontSize: '11px', color: textMutedColor }}>
                       {item.startDate} ~ {item.endDate}
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span style={{ color: '#666' }}>{isEnglish ? 'Total Income' : '累计收入'}</span>
+                    <span style={{ color: textMutedColor }}>{isEnglish ? 'Total Income' : '累计收入'}</span>
                     <span style={{ fontWeight: 'bold', color: '#faad14' }}>¥{item.totalIncome.toFixed(2)}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span style={{ color: '#666' }}>{isEnglish ? 'Net Income' : '累计实发'}</span>
+                    <span style={{ color: textMutedColor }}>{isEnglish ? 'Net Income' : '累计实发'}</span>
                     <span style={{ fontWeight: 'bold', color: '#52c41a' }}>¥{item.totalActualIncome.toFixed(2)}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span style={{ color: '#666' }}>{isEnglish ? 'Salary Records' : '工资记录'}</span>
-                    <span style={{ color: '#666' }}>{item.salaryCount}</span>
+                    <span style={{ color: textMutedColor }}>{isEnglish ? 'Salary Records' : '工资记录'}</span>
+                    <span style={{ color: textMutedColor }}>{item.salaryCount}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#666' }}>{isEnglish ? 'Bonus Records' : '奖金记录'}</span>
-                    <span style={{ color: '#666' }}>{item.bonusCount}</span>
+                    <span style={{ color: textMutedColor }}>{isEnglish ? 'Bonus Records' : '奖金记录'}</span>
+                    <span style={{ color: textMutedColor }}>{item.bonusCount}</span>
                   </div>
                 </div>
               ))}
