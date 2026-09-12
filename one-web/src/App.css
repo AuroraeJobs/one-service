@@ -3758,7 +3758,14 @@ body {
 
 .app-theme-dark .themed-route-page .record-tile,
 .app-theme-dark .themed-route-page .record-tile.ant-card {
-  background: var(--record-soft) !important;
+  background: #222936 !important;
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24) !important;
+}
+
+.app-theme-dark .themed-route-page .record-tile:hover,
+.app-theme-dark .themed-route-page .record-tile.ant-card:hover {
+  background: #2a3344 !important;
+  transform: translateY(-1px);
 }
 
 .themed-route-page .record-tile.ant-card .ant-card-body {
