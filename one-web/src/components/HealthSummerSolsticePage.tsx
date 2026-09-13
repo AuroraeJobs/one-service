@@ -473,73 +473,104 @@ const HealthSummerSolsticePage: React.FC = () => {
               gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
               gap: '16px'
             }}>
-              {companyBreakdown.map(item => (
-                <div 
-                  key={item.company} 
-                  className="metric-card" 
-                  style={{
-                    padding: '20px',
-                    cursor: 'pointer',
-                    border: selectedCompanyFromCard === item.company ? '2px solid #1890ff' : '2px solid transparent',
-                    transition: 'all 0.2s',
-                    position: 'relative',
-                    overflow: 'hidden'
-                  }}
-                  onClick={() => setSelectedCompanyFromCard(selectedCompanyFromCard === item.company ? null : item.company)}
-                >
-                  <div style={{ position: 'relative', zIndex: 1 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                      <span style={{ fontWeight: 600, fontSize: '14px', color: textColor }}>
-                        {item.companyLabel}
-                      </span>
-                      <span style={{ fontSize: '11px', color: textMutedColor }}>
-                        {item.startDate} ~ {item.endDate}
-                      </span>
-                    </div>
-                    
-                    <div style={{ marginBottom: '4px' }}>
-                      <span style={{ fontSize: '28px', fontWeight: 700, color: textColor }}>
-                        ¥{(item.totalIncome / 10000).toFixed(1)}万
-                      </span>
-                    </div>
-                    
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                      <span style={{ 
-                        fontSize: '12px', 
-                        color: '#52c41a',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '2px'
-                      }}>
-                        ¥{(item.totalActualIncome / 10000).toFixed(1)}万
-                      </span>
-                      <span style={{ fontSize: '11px', color: textMutedColor }}>
-                        {isEnglish ? 'After Tax' : '税后'}
-                      </span>
-                    </div>
-                    
-                    <div style={{ 
-                      borderTop: `1px solid ${colorMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'}`, 
-                      paddingTop: '12px',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
-                    }}>
-                      <div style={{ display: 'flex', gap: '12px' }}>
-                        <span style={{ fontSize: '11px', color: textMutedColor }}>
-                          {isEnglish ? 'Salary' : '工资'} {item.salaryCount}
+              {companyBreakdown.map(item => {
+                const isPositiveTrend = item.totalActualIncome > 0;
+                const curveColor = isPositiveTrend ? '#52c41a' : '#ff4d4f';
+                const curveOpacity = colorMode === 'dark' ? 0.3 : 0.15;
+                
+                return (
+                  <div 
+                    key={item.company} 
+                    className="metric-card" 
+                    style={{
+                      padding: '20px',
+                      cursor: 'pointer',
+                      border: selectedCompanyFromCard === item.company ? '2px solid #1890ff' : '2px solid transparent',
+                      transition: 'all 0.2s',
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}
+                    onClick={() => setSelectedCompanyFromCard(selectedCompanyFromCard === item.company ? null : item.company)}
+                  >
+                    <div style={{ position: 'relative', zIndex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                        <span style={{ fontWeight: 600, fontSize: '14px', color: textColor }}>
+                          {item.companyLabel}
                         </span>
                         <span style={{ fontSize: '11px', color: textMutedColor }}>
-                          {isEnglish ? 'Bonus' : '奖金'} {item.bonusCount}
+                          {item.startDate} ~ {item.endDate}
                         </span>
                       </div>
-                      <span style={{ fontSize: '11px', color: '#1890ff' }}>
-                        →
-                      </span>
+                      
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                        <div>
+                          <div style={{ marginBottom: '4px' }}>
+                            <span style={{ fontSize: '28px', fontWeight: 700, color: textColor }}>
+                              ¥{(item.totalIncome / 10000).toFixed(1)}万
+                            </span>
+                          </div>
+                          
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                            <span style={{ 
+                              fontSize: '12px', 
+                              color: '#52c41a',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '2px'
+                            }}>
+                              ¥{(item.totalActualIncome / 10000).toFixed(1)}万
+                            </span>
+                            <span style={{ fontSize: '11px', color: textMutedColor }}>
+                              {isEnglish ? 'After Tax' : '税后'}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <svg width="80" height="40" viewBox="0 0 80 40" style={{ marginBottom: '12px' }}>
+                          <defs>
+                            <linearGradient id={`gradient-${item.company}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                              <stop offset="0%" stopColor={curveColor} stopOpacity={curveOpacity * 2} />
+                              <stop offset="100%" stopColor={curveColor} stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <path
+                            d={`M0,35 Q10,30 20,25 T40,20 T60,15 T80,5`}
+                            fill="none"
+                            stroke={curveColor}
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                          />
+                          <path
+                            d={`M0,35 Q10,30 20,25 T40,20 T60,15 T80,5 L80,40 L0,40 Z`}
+                            fill={`url(#gradient-${item.company})`}
+                          />
+                          <circle cx="80" cy="5" r="3" fill={curveColor} />
+                        </svg>
+                      </div>
+                      
+                      <div style={{ 
+                        borderTop: `1px solid ${colorMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'}`, 
+                        paddingTop: '12px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                          <span style={{ fontSize: '11px', color: textMutedColor }}>
+                            {isEnglish ? 'Salary' : '工资'} {item.salaryCount}
+                          </span>
+                          <span style={{ fontSize: '11px', color: textMutedColor }}>
+                            {isEnglish ? 'Bonus' : '奖金'} {item.bonusCount}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '11px', color: '#1890ff' }}>
+                          →
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
