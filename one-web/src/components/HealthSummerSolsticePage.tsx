@@ -514,7 +514,7 @@ const HealthSummerSolsticePage: React.FC = () => {
                         ¥{(item.totalActualIncome / 10000).toFixed(1)}万
                       </span>
                       <span style={{ fontSize: '11px', color: textMutedColor }}>
-                        {isEnglish ? 'Net Income' : '实发'}
+                        {isEnglish ? 'After Tax' : '税后'}
                       </span>
                     </div>
                     
