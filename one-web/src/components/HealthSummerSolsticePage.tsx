@@ -184,12 +184,28 @@ const HealthSummerSolsticePage: React.FC = () => {
   const bonusCount = salaryRecords.filter(record => getRecordType(record) === 'BONUS').length;
 
   const companyBreakdown = React.useMemo(() => {
-    const breakdown: Record<string, { totalIncome: number; totalActualIncome: number; salaryCount: number; bonusCount: number; startDate: string; endDate: string }> = {};
+    const breakdown: Record<string, { 
+      totalIncome: number; 
+      totalActualIncome: number; 
+      salaryCount: number; 
+      bonusCount: number; 
+      startDate: string; 
+      endDate: string;
+      monthlyData: Array<{ month: string; income: number }>;
+    }> = {};
     
     salaryRecords.forEach(record => {
       const company = record.company || 'UNKNOWN';
       if (!breakdown[company]) {
-        breakdown[company] = { totalIncome: 0, totalActualIncome: 0, salaryCount: 0, bonusCount: 0, startDate: '', endDate: '' };
+        breakdown[company] = { 
+          totalIncome: 0, 
+          totalActualIncome: 0, 
+          salaryCount: 0, 
+          bonusCount: 0, 
+          startDate: '', 
+          endDate: '',
+          monthlyData: []
+        };
       }
       breakdown[company].totalIncome += (record.monthlyIncome || 0) + (record.otherIncome || 0);
       breakdown[company].totalActualIncome += record.actualIncome || 0;
@@ -206,17 +222,54 @@ const HealthSummerSolsticePage: React.FC = () => {
       if (!breakdown[company].endDate || recordDate > breakdown[company].endDate) {
         breakdown[company].endDate = recordDate;
       }
+      
+      const monthlyIncome = (record.monthlyIncome || 0) + (record.otherIncome || 0);
+      const existingMonth = breakdown[company].monthlyData.find(m => m.month === recordDate);
+      if (existingMonth) {
+        existingMonth.income += monthlyIncome;
+      } else {
+        breakdown[company].monthlyData.push({ month: recordDate, income: monthlyIncome });
+      }
     });
     
     return Object.entries(breakdown).map(([company, data]) => ({
       company,
       companyLabel: companyOptions.find(c => c.value === company)?.label || company,
-      ...data
+      ...data,
+      monthlyData: data.monthlyData.sort((a, b) => a.month.localeCompare(b.month))
     })).sort((a, b) => a.startDate.localeCompare(b.startDate));
   }, [salaryRecords, companyOptions]);
 
   const textColor = colorMode === 'dark' ? 'rgba(255, 255, 255, 0.87)' : '#333';
   const textMutedColor = colorMode === 'dark' ? 'rgba(255, 255, 255, 0.58)' : '#666';
+
+  const generateCurvePath = (monthlyData: Array<{ month: string; income: number }>, width: number = 80, height: number = 40) => {
+    if (monthlyData.length < 2) {
+      return { linePath: '', areaPath: '' };
+    }
+
+    const incomes = monthlyData.map(d => d.income);
+    const maxIncome = Math.max(...incomes);
+    const minIncome = Math.min(...incomes);
+    const range = maxIncome - minIncome || 1;
+
+    const points = monthlyData.map((d, i) => ({
+      x: (i / (monthlyData.length - 1)) * width,
+      y: height - ((d.income - minIncome) / range) * (height - 8) - 4
+    }));
+
+    let linePath = `M${points[0].x},${points[0].y}`;
+    for (let i = 1; i < points.length; i++) {
+      const prev = points[i - 1];
+      const curr = points[i];
+      const cpx = (prev.x + curr.x) / 2;
+      linePath += ` C${cpx},${prev.y} ${cpx},${curr.y} ${curr.x},${curr.y}`;
+    }
+
+    const areaPath = linePath + ` L${width},${height} L0,${height} Z`;
+
+    return { linePath, areaPath };
+  };
 
   const showAddDrawer = () => {
     let year = new Date().getFullYear();
@@ -477,6 +530,9 @@ const HealthSummerSolsticePage: React.FC = () => {
                 const isPositiveTrend = item.totalActualIncome > 0;
                 const curveColor = isPositiveTrend ? '#52c41a' : '#ff4d4f';
                 const curveOpacity = colorMode === 'dark' ? 0.3 : 0.15;
+                const { linePath, areaPath } = generateCurvePath(item.monthlyData);
+                const lastPoint = item.monthlyData.length > 0 ? item.monthlyData[item.monthlyData.length - 1] : null;
+                const lastY = item.monthlyData.length > 1 ? 5 : 20;
                 
                 return (
                   <div 
@@ -526,26 +582,28 @@ const HealthSummerSolsticePage: React.FC = () => {
                           </div>
                         </div>
                         
-                        <svg width="80" height="40" viewBox="0 0 80 40" style={{ marginBottom: '12px' }}>
-                          <defs>
-                            <linearGradient id={`gradient-${item.company}`} x1="0%" y1="0%" x2="0%" y2="100%">
-                              <stop offset="0%" stopColor={curveColor} stopOpacity={curveOpacity * 2} />
-                              <stop offset="100%" stopColor={curveColor} stopOpacity={0} />
-                            </linearGradient>
-                          </defs>
-                          <path
-                            d={`M0,35 Q10,30 20,25 T40,20 T60,15 T80,5`}
-                            fill="none"
-                            stroke={curveColor}
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                          />
-                          <path
-                            d={`M0,35 Q10,30 20,25 T40,20 T60,15 T80,5 L80,40 L0,40 Z`}
-                            fill={`url(#gradient-${item.company})`}
-                          />
-                          <circle cx="80" cy="5" r="3" fill={curveColor} />
-                        </svg>
+                        {item.monthlyData.length >= 2 && (
+                          <svg width="80" height="40" viewBox="0 0 80 40" style={{ marginBottom: '12px' }}>
+                            <defs>
+                              <linearGradient id={`gradient-${item.company}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stopColor={curveColor} stopOpacity={curveOpacity * 2} />
+                                <stop offset="100%" stopColor={curveColor} stopOpacity={0} />
+                              </linearGradient>
+                            </defs>
+                            <path
+                              d={areaPath}
+                              fill={`url(#gradient-${item.company})`}
+                            />
+                            <path
+                              d={linePath}
+                              fill="none"
+                              stroke={curveColor}
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                            />
+                            <circle cx="80" cy={lastY} r="3" fill={curveColor} />
+                          </svg>
+                        )}
                       </div>
                       
                       <div style={{ 
