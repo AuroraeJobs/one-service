@@ -566,13 +566,11 @@ const HealthSummerSolsticePage: React.FC = () => {
                             </span>
                           </div>
                           
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '12px' }}>
                             <span style={{ 
-                              fontSize: '12px', 
-                              color: '#52c41a',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '2px'
+                              fontSize: '16px', 
+                              fontWeight: 600,
+                              color: '#52c41a'
                             }}>
                               ¥{(item.totalActualIncome / 10000).toFixed(1)}万
                             </span>
