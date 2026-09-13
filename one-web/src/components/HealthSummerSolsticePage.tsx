@@ -486,28 +486,28 @@ const HealthSummerSolsticePage: React.FC = () => {
                   onClick={() => setSelectedCompanyFromCard(selectedCompanyFromCard === item.company ? null : item.company)}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span style={{ fontWeight: 'bold', fontSize: '14px', color: textColor }}>
+                    <span style={{ fontWeight: 'bold', fontSize: '13px', color: textColor }}>
                       {item.companyLabel}
                     </span>
-                    <span style={{ fontSize: '11px', color: textMutedColor }}>
+                    <span style={{ fontSize: '10px', color: textMutedColor }}>
                       {item.startDate} ~ {item.endDate}
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span style={{ color: textMutedColor }}>{isEnglish ? 'Total Income' : '累计收入'}</span>
-                    <span style={{ fontWeight: 'bold', color: '#faad14' }}>¥{item.totalIncome.toFixed(2)}</span>
+                    <span style={{ color: textMutedColor, fontSize: '12px' }}>{isEnglish ? 'Total Income' : '累计收入'}</span>
+                    <span style={{ fontWeight: 'bold', color: '#faad14', fontSize: '12px' }}>¥{item.totalIncome.toFixed(2)}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span style={{ color: textMutedColor }}>{isEnglish ? 'Net Income' : '累计实发'}</span>
-                    <span style={{ fontWeight: 'bold', color: '#52c41a' }}>¥{item.totalActualIncome.toFixed(2)}</span>
+                    <span style={{ color: textMutedColor, fontSize: '12px' }}>{isEnglish ? 'Net Income' : '累计实发'}</span>
+                    <span style={{ fontWeight: 'bold', color: '#52c41a', fontSize: '12px' }}>¥{item.totalActualIncome.toFixed(2)}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span style={{ color: textMutedColor }}>{isEnglish ? 'Salary Records' : '工资记录'}</span>
-                    <span style={{ color: textMutedColor }}>{item.salaryCount}</span>
+                    <span style={{ color: textMutedColor, fontSize: '12px' }}>{isEnglish ? 'Salary Records' : '工资记录'}</span>
+                    <span style={{ color: textMutedColor, fontSize: '12px' }}>{item.salaryCount}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: textMutedColor }}>{isEnglish ? 'Bonus Records' : '奖金记录'}</span>
-                    <span style={{ color: textMutedColor }}>{item.bonusCount}</span>
+                    <span style={{ color: textMutedColor, fontSize: '12px' }}>{isEnglish ? 'Bonus Records' : '奖金记录'}</span>
+                    <span style={{ color: textMutedColor, fontSize: '12px' }}>{item.bonusCount}</span>
                   </div>
                 </div>
               ))}
