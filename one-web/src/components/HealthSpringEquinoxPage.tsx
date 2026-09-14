@@ -9,7 +9,6 @@ import { chargeRecordApi, chargeStationApi, type ChargeLocationOption } from '..
 import ReactECharts from 'echarts-for-react';
 import { useAppPreferences } from '../contexts/AppPreferencesContext';
 
-// 隐藏滚动条的全局样式
 if (typeof document !== 'undefined') {
   const style = document.createElement('style');
   style.textContent = `
@@ -24,7 +23,6 @@ if (typeof document !== 'undefined') {
   document.head.appendChild(style);
 }
 
-// 充电记录类型定义（用于表格渲染）
 interface ChargeRecordDisplay {
   id: string;
   date: string;
@@ -32,14 +30,14 @@ interface ChargeRecordDisplay {
   endTime: string;
   location: string;
   chargerType: string;
-  chargeDuration: number; // 分钟
-  chargeAmount: number; // kWh
-  batteryCapacity?: number; // 电池电量(kWh)
-  electricityCost: number; // 电费
-  serviceCost: number; // 服务费
-  discountAmount: number; // 优惠金额
+  chargeDuration: number;
+  chargeAmount: number;
+  batteryCapacity?: number;
+  electricityCost: number;
+  serviceCost: number;
+  discountAmount: number;
   notes?: string;
-  provider?: string; // 充电提供方
+  provider?: string;
 }
 
 interface ChargeRecordStats {
@@ -94,13 +92,11 @@ interface CalendarTooltipParams {
   data: [string, number];
 }
 
-// 生成小时选项 (0-23 倒序)
 const hourOptions = Array.from({ length: 24 }, (_, i) => 23 - i).map(hour => ({
   label: String(hour).padStart(2, '0'),
   value: String(hour).padStart(2, '0')
 }));
 
-// 生成分钟选项 (0-59 正序)
 const minuteOptions = Array.from({ length: 60 }, (_, i) => ({
   label: String(i).padStart(2, '0'),
   value: String(i).padStart(2, '0')
@@ -180,7 +176,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
   };
   const [form] = Form.useForm();
 
-  // 监听表单字段变化，自动计算
   const watchStartHour = Form.useWatch('startHour', form);
   const watchStartMinute = Form.useWatch('startMinute', form);
   const watchEndHour = Form.useWatch('endHour', form);
@@ -190,13 +185,11 @@ const HealthSpringEquinoxPage: React.FC = () => {
   const watchDiscount = Form.useWatch('discountAmount', form);
   const watchProvider = Form.useWatch('provider', form);
 
-  // 将时和分组合成 HH:mm 格式
   const combineTime = (hour: string, minute: string): string => {
     if (!hour || !minute) return '';
     return `${hour}:${minute}`;
   };
 
-  // 计算充电时长
   const calculateDuration = (
     startHour: string, startMinute: string,
     endHour: string, endMinute: string
@@ -213,7 +206,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
     const startTotal = sHour * 60 + sMin;
     let endTotal = eHour * 60 + eMin;
 
-    // 如果结束时间小于开始时间，说明跨天了
     if (endTotal < startTotal) {
       endTotal += 24 * 60;
     }
@@ -221,13 +213,11 @@ const HealthSpringEquinoxPage: React.FC = () => {
     return endTotal - startTotal;
   };
 
-  // 计算当前充电时长
   const currentDuration = calculateDuration(
     watchStartHour || '', watchStartMinute || '',
     watchEndHour || '', watchEndMinute || ''
   );
 
-  // 自动设置充电时长字段
   useEffect(() => {
     if (currentDuration > 0) {
       form.setFieldValue('chargeDuration', currentDuration);
@@ -236,23 +226,17 @@ const HealthSpringEquinoxPage: React.FC = () => {
     }
   }, [currentDuration, form]);
 
-  // 计算总费用（电费+服务费）
   const subtotal = (watchElectricity || 0) + (watchService || 0);
-
-  // 计算最后金额（电费+服务费-优惠金额）
   const finalCost = Math.max(0, subtotal - (watchDiscount || 0));
 
-  // 获取地点显示名称
   const getLocationLabel = (locationValue: string): string => {
     const location = locations.find(loc => loc.value === locationValue);
     return location ? location.label : locationValue;
   };
 
-  // 充电记录状态
   const [records, setRecords] = useState<ChargeRecordDisplay[]>([]);
   const [locations, setLocations] = useState<ChargeLocationOption[]>([]);
   const [stats, setStats] = useState<ChargeRecordStats>({ totalCharges: 0, totalEnergy: 0, totalCost: 0, avgDuration: 0, totalDiscountAmount: 0 });
-  const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<ChargeRecordDisplay | null>(null);
   const [addDrawerVisible, setAddDrawerVisible] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -263,32 +247,27 @@ const HealthSpringEquinoxPage: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<string | null>(null);
   const [expandedYears, setExpandedYears] = useState<Set<string>>(new Set());
 
-  // 根据提供商筛选充电地点
   const filteredLocations = useMemo(() => {
     if (!watchProvider) return locations;
     return locations.filter(loc => loc.provider === watchProvider);
   }, [locations, watchProvider]);
   const pageSize = 12;
 
-  // 生成年份选项（从当前年份倒序到2023）
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: currentYear - 2022 }, (_, i) => ({
     label: isEnglish ? String(currentYear - i) : `${currentYear - i}年`,
     value: `${currentYear - i}`
   }));
 
-  // 加载充电地点列表（从MongoDB查询充电站）
   const loadLocations = async () => {
     try {
       const stations = await chargeStationApi.findAll();
-      // 将充电站转换为地点选项格式
       const locationOptions: ChargeLocationOption[] = (stations || []).map(station => ({
         label: station.stationName ? `${station.location} (${station.stationName})` : station.location,
         value: station.stationCode,
         provider: station.provider
       }));
       setLocations(locationOptions);
-      // 设置默认的充电地点为第一个，并自动设置对应的provider
       if (locationOptions.length > 0) {
         const firstLocation = locationOptions[0];
         form.setFieldsValue({
@@ -302,7 +281,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
     }
   };
 
-  // 加载统计数据
   const loadStatistics = async () => {
     try {
       const data = await chargeRecordApi.getStatistics();
@@ -312,7 +290,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
     }
   };
 
-  // 加载充电提供方列表
   const loadProviders = async () => {
     try {
       const data = await chargeRecordApi.getProviders();
@@ -322,7 +299,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
     }
   };
 
-  // 加载充电记录
   const loadRecords = async () => {
     try {
       const data = await chargeRecordApi.findAll();
@@ -342,7 +318,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
         notes: record.notes || '',
         provider: record.provider || ''
       }));
-      // 按日期倒序排列（最新的在前面），日期相同则按开始时间倒序
       formattedRecords.sort((a, b) => {
         const dateCompare = b.date.localeCompare(a.date);
         if (dateCompare !== 0) {
@@ -357,7 +332,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
     }
   };
 
-  // 从后端API加载数据
   useEffect(() => {
     loadRecords();
     loadLocations();
@@ -366,7 +340,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 添加充电记录
   const handleAdd = async (values: ChargeRecordFormValues) => {
     try {
       const startTime = combineTime(values.startHour, values.startMinute);
@@ -388,44 +361,93 @@ const HealthSpringEquinoxPage: React.FC = () => {
       };
 
       if (editingId) {
-        // 更新记录
         await chargeRecordApi.update({ ...newRecord, id: editingId });
         message.success(text.recordUpdated);
         setEditingId(null);
         setIsEditing(false);
       } else {
-        // 添加新记录
         await chargeRecordApi.save(newRecord);
         message.success(text.recordAdded);
       }
       setAddDrawerVisible(false);
       form.resetFields();
-      loadRecords(); // 重新加载数据
-      loadStatistics(); // 重新加载统计数据
-      loadLocations(); // 重新加载充电地点并设置默认值
+      loadRecords();
+      loadStatistics();
+      loadLocations();
     } catch (error) {
       console.error('保存充电记录失败:', error);
       message.error(text.saveRecordFailed);
     }
   };
 
-  // 删除充电记录
   const handleDelete = async (id: string) => {
     try {
       await chargeRecordApi.delete(id);
       message.success(text.recordDeleted);
-      loadRecords(); // 重新加载数据
-      loadStatistics(); // 重新加载统计数据
+      loadRecords();
+      loadStatistics();
+      setAddDrawerVisible(false);
+      setSelectedRecord(null);
     } catch (error) {
       console.error('删除充电记录失败:', error);
       message.error(text.deleteRecordFailed);
     }
   };
 
-  // 查看详情
   const handleViewDetail = (record: ChargeRecordDisplay) => {
     setSelectedRecord(record);
-    setDetailModalVisible(true);
+    setEditingId(null);
+    setIsEditing(false);
+    setAddDrawerVisible(true);
+  };
+
+  const handleEditFromDetail = () => {
+    if (selectedRecord) {
+      const [startHour, startMinute] = selectedRecord.startTime.split(':');
+      const [endHour, endMinute] = selectedRecord.endTime.split(':');
+
+      form.setFieldsValue({
+        date: dayjs(selectedRecord.date),
+        startHour: startHour,
+        startMinute: startMinute,
+        endHour: endHour,
+        endMinute: endMinute,
+        location: selectedRecord.location,
+        chargeAmount: selectedRecord.chargeAmount,
+        batteryCapacity: selectedRecord.batteryCapacity,
+        electricityCost: selectedRecord.electricityCost,
+        serviceCost: selectedRecord.serviceCost,
+        discountAmount: selectedRecord.discountAmount || 0,
+        notes: selectedRecord.notes,
+        provider: selectedRecord.provider
+      });
+      setEditingId(selectedRecord.id);
+      setIsEditing(true);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    if (selectedRecord) {
+      const [startHour, startMinute] = selectedRecord.startTime.split(':');
+      const [endHour, endMinute] = selectedRecord.endTime.split(':');
+
+      form.setFieldsValue({
+        date: dayjs(selectedRecord.date),
+        startHour: startHour,
+        startMinute: startMinute,
+        endHour: endHour,
+        endMinute: endMinute,
+        location: selectedRecord.location,
+        chargeAmount: selectedRecord.chargeAmount,
+        batteryCapacity: selectedRecord.batteryCapacity,
+        electricityCost: selectedRecord.electricityCost,
+        serviceCost: selectedRecord.serviceCost,
+        discountAmount: selectedRecord.discountAmount || 0,
+        notes: selectedRecord.notes,
+        provider: selectedRecord.provider
+      });
+    }
+    setIsEditing(false);
   };
 
   const filteredRecords = records.filter(record => {
@@ -434,12 +456,18 @@ const HealthSpringEquinoxPage: React.FC = () => {
     return providerMatch && yearMatch;
   });
 
+  const getDrawerTitle = () => {
+    if (isEditing) return text.editRecord;
+    if (selectedRecord) return text.detail;
+    return text.addRecord;
+  };
+
   return (
     <div className="themed-route-page health-fitness-page" style={{
       padding: '20px',
       backgroundColor: '#000',
       minHeight: '100vh',
-      paddingBottom: '100px' // 为页脚留出空间
+      paddingBottom: '100px'
     }}>
       <div style={{
         display: 'flex',
@@ -448,7 +476,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
         maxWidth: '1400px',
         margin: '0 auto'
       }}>
-        {/* 统计卡片 */}
         <MetricGrid gap={12} minColumnWidth={160}>
           <MetricCard title={text.totalSessions} value={stats.totalCharges} accent="#1890ff" />
           <MetricCard title={text.totalDiscount} value={stats.totalDiscountAmount ?? 0} suffix={text.yuan} accent="#722ed1" />
@@ -486,6 +513,10 @@ const HealthSpringEquinoxPage: React.FC = () => {
             </>
           )}
           onAdd={() => {
+            setSelectedRecord(null);
+            setEditingId(null);
+            setIsEditing(false);
+            form.resetFields();
             if (locations.length > 0) {
               const firstLocation = locations[0];
               form.setFieldsValue({
@@ -550,7 +581,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
           }}
         />
 
-        {/* 日历热力图 - 每日充电电量 */}
         <Card
           className="vehicle-charge-container-card"
           style={{
@@ -591,7 +621,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
               dayjs(a.date).valueOf() - dayjs(b.date).valueOf()
             );
 
-            // 按日期分组并求和
             const dailyDataMap = new Map<string, number>();
             sortedRecords.forEach(record => {
               const currentAmount = dailyDataMap.get(record.date) || 0;
@@ -605,12 +634,11 @@ const HealthSpringEquinoxPage: React.FC = () => {
 
             const maxCharge = Math.max(...dailyData.map(r => r.chargeAmount), 50);
 
-            // 按年份分组（包含天数、次数、度数、费用）
             interface YearStats {
               days: { date: string; chargeAmount: number }[];
-              count: number; // 充电次数
-              totalAmount: number; // 总度数
-              totalCost: number; // 总费用
+              count: number;
+              totalAmount: number;
+              totalCost: number;
             }
 
             const yearGroups = dailyData.reduce((acc, item) => {
@@ -622,7 +650,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
               return acc;
             }, {} as Record<string, YearStats>);
 
-            // 统计每年的充电次数、度数、费用
             filteredRecords.forEach(record => {
               const year = record.date.substring(0, 4);
               if (yearGroups[year]) {
@@ -634,7 +661,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
 
             const years = Object.keys(yearGroups).sort((a, b) => parseInt(b) - parseInt(a));
 
-            // 默认展开最新年份
             const defaultExpanded = expandedYears.size === 0 && years.length > 0 ? new Set([years[0]]) : expandedYears;
 
             const toggleYear = (year: string) => {
@@ -649,7 +675,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
 
             return (
               <div style={{ position: 'relative' }}>
-                {/* 时间线 */}
                 <div style={{
                   position: 'absolute',
                   left: '20px',
@@ -671,7 +696,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
 
                     return (
                       <div key={year} style={{ position: 'relative', paddingLeft: '40px' }}>
-                        {/* 时间线节点 */}
                         <div style={{
                           position: 'absolute',
                           left: '10px',
@@ -684,7 +708,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
                           zIndex: 2
                         }} />
 
-                        {/* 年份标题（可点击折叠/展开） */}
                         <div
                           style={{
                             display: 'flex',
@@ -725,7 +748,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
                           </span>
                         </div>
 
-                        {/* 日历内容（可折叠） */}
                         <div style={{
                           overflow: 'hidden',
                           transition: 'max-height 0.3s ease-out, opacity 0.3s ease-out',
@@ -803,93 +825,359 @@ const HealthSpringEquinoxPage: React.FC = () => {
           })()}
         </Card>
 
-        {/* 详情Drawer */}
         <Drawer
           title={
             <div style={{
+              color: '#fff',
+              fontSize: '18px',
+              fontWeight: 'bold',
               display: 'flex',
-              justifyContent: 'space-between',
               alignItems: 'center',
-              width: '100%'
+              gap: '10px'
             }}>
-              <div style={{
-                color: '#fff',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px'
-              }}>
-                {text.detail}
-              </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <Popconfirm
-                  title={text.deleteConfirm}
-                  onConfirm={() => {
-                    if (selectedRecord) {
-                      handleDelete(selectedRecord.id);
-                      setDetailModalVisible(false);
-                    }
-                  }}
-                  okText={text.ok}
-                  cancelText={text.cancel}
-                >
-                  <Button
-                    type="primary"
-                    danger
-                    className="detail-action-btn detail-action-btn-danger"
-                  >
-                    {text.delete}
-                  </Button>
-                </Popconfirm>
-                <Button
-                  type="primary"
-                  className="detail-action-btn"
-                  onClick={() => {
-                    if (selectedRecord) {
-                      // 将时间字符串拆分为小时和分钟
-                      const [startHour, startMinute] = selectedRecord.startTime.split(':');
-                      const [endHour, endMinute] = selectedRecord.endTime.split(':');
-
-                      form.setFieldsValue({
-                        date: dayjs(selectedRecord.date),
-                        startHour: startHour,
-                        startMinute: startMinute,
-                        endHour: endHour,
-                        endMinute: endMinute,
-                        location: selectedRecord.location,
-                        chargeAmount: selectedRecord.chargeAmount,
-                        batteryCapacity: selectedRecord.batteryCapacity,
-                        electricityCost: selectedRecord.electricityCost,
-                        serviceCost: selectedRecord.serviceCost,
-                        discountAmount: selectedRecord.discountAmount || 0,
-                        notes: selectedRecord.notes,
-                        provider: selectedRecord.provider
-                      });
-                      setEditingId(selectedRecord.id);
-                      setIsEditing(true);
-                      setDetailModalVisible(false);
-                      setAddDrawerVisible(true);
-                    }
-                  }}
-                >
-                  {text.edit}
-                </Button>
-              </div>
+              {getDrawerTitle()}
             </div>
           }
           placement="right"
-          open={detailModalVisible}
-          onClose={() => setDetailModalVisible(false)}
+          open={addDrawerVisible}
+          onClose={() => {
+            setAddDrawerVisible(false);
+            setSelectedRecord(null);
+            setEditingId(null);
+            setIsEditing(false);
+            form.resetFields();
+          }}
+          extra={
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {!isEditing && selectedRecord && (
+                <>
+                  <Popconfirm
+                    title={text.deleteConfirm}
+                    onConfirm={() => selectedRecord.id && handleDelete(selectedRecord.id)}
+                    okText={text.ok}
+                    cancelText={text.cancel}
+                  >
+                    <Button
+                      type="primary"
+                      danger
+                      className="detail-action-btn detail-action-btn-danger"
+                    >
+                      {text.delete}
+                    </Button>
+                  </Popconfirm>
+                  <Button
+                    type="primary"
+                    className="detail-action-btn"
+                    onClick={handleEditFromDetail}
+                  >
+                    {text.edit}
+                  </Button>
+                </>
+              )}
+              {isEditing && (
+                <>
+                  <Button
+                    onClick={handleCancelEdit}
+                    className="detail-action-btn-cancel"
+                  >
+                    {text.cancel}
+                  </Button>
+                  <Button
+                    type="primary"
+                    onClick={() => form.submit()}
+                    className="detail-action-btn-save"
+                  >
+                    {text.save}
+                  </Button>
+                </>
+              )}
+            </div>
+          }
           width={480}
           styles={{
             body: { backgroundColor: '#000', padding: '24px' },
             header: { backgroundColor: '#000', borderBottom: '1px solid rgba(24, 144, 255, 0.2)' }
           }}
         >
-          {selectedRecord && (
+          {isEditing ? (
+            <Form
+              form={form}
+              layout="vertical"
+              onFinish={handleAdd}
+              initialValues={{
+                provider: ''
+              }}
+            >
+              <div style={{
+                marginBottom: '20px',
+                backgroundColor: 'rgba(24, 144, 255, 0.08)',
+                borderRadius: '12px',
+                padding: '16px',
+                border: '1px solid rgba(24, 144, 255, 0.2)'
+              }}>
+                <div style={{
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  color: '#1890ff',
+                  marginBottom: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  {text.chargingTime}
+                </div>
+                <Row gutter={12}>
+                  <Col xs={24} sm={8}>
+                    <Form.Item
+                      label={<span style={{ color: '#aaa', fontSize: '12px' }}>{text.date}</span>}
+                      name="date"
+                      rules={[{ required: true, message: text.selectDate }]}
+                    >
+                      <DatePicker style={{ width: '100%' }} />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={8}>
+                    <div style={{ marginBottom: '8px', color: '#52c41a', fontSize: '12px' }}>{text.startTime}</div>
+                    <Row gutter={8}>
+                      <Col xs={12}>
+                        <Form.Item
+                          name="startHour"
+                          rules={[{ required: true, message: text.selectHour }]}
+                          noStyle
+                        >
+                          <Select placeholder={text.hour} options={hourOptions} />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={12}>
+                        <Form.Item
+                          name="startMinute"
+                          rules={[{ required: true, message: text.selectMinute }]}
+                          noStyle
+                        >
+                          <Select placeholder={text.minute} options={minuteOptions} />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </Col>
+                  <Col xs={24} sm={8}>
+                    <div style={{ marginBottom: '8px', color: '#faad14', fontSize: '12px' }}>{text.endTime}</div>
+                    <Row gutter={8}>
+                      <Col xs={12}>
+                        <Form.Item
+                          name="endHour"
+                          rules={[{ required: true, message: text.selectHour }]}
+                          noStyle
+                        >
+                          <Select placeholder={text.hour} options={hourOptions} />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={12}>
+                        <Form.Item
+                          name="endMinute"
+                          rules={[{ required: true, message: text.selectMinute }]}
+                          noStyle
+                        >
+                          <Select placeholder={text.minute} options={minuteOptions} />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </Col>
+                </Row>
+                <div style={{
+                  marginTop: '12px',
+                  padding: '12px',
+                  backgroundColor: 'rgba(24, 144, 255, 0.15)',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <span style={{ color: '#1890ff', fontSize: '13px' }}>{text.duration}</span>
+                  <span style={{ color: '#1890ff', fontSize: '18px', fontWeight: 'bold' }}>
+                    {currentDuration} {text.minutes}
+                  </span>
+                </div>
+                <Form.Item name="chargeDuration" style={{ display: 'none' }}>
+                  <Input />
+                </Form.Item>
+              </div>
+
+              <div style={{
+                marginBottom: '20px',
+                backgroundColor: 'rgba(114, 46, 209, 0.08)',
+                borderRadius: '12px',
+                padding: '16px',
+                border: '1px solid rgba(114, 46, 209, 0.2)'
+              }}>
+                <div style={{
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  color: '#722ed1',
+                  marginBottom: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  {text.chargingInfo}
+                </div>
+                <Row gutter={12}>
+                  <Col xs={24} sm={6}>
+                    <Form.Item
+                      label={<span style={{ color: '#aaa', fontSize: '12px' }}>{text.chargerType}</span>}
+                      name="provider"
+                      rules={[{ required: true, message: text.selectType }]}
+                    >
+                      <Select
+                        placeholder={text.selectType}
+                        onChange={(value) => {
+                          const currentLocation = form.getFieldValue('location');
+                          if (currentLocation) {
+                            const locationExists = locations.some(loc => loc.value === currentLocation && loc.provider === value);
+                            if (!locationExists) {
+                              form.setFieldsValues({ location: undefined });
+                            }
+                          }
+                        }}
+                      >
+                        {providers.map(p => (
+                          <Select.Option key={p.value} value={p.value}>
+                            {p.label}
+                          </Select.Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={18}>
+                    <Form.Item
+                      label={<span style={{ color: '#aaa', fontSize: '12px' }}>{text.location}</span>}
+                      name="location"
+                      rules={[{ required: true, message: text.selectLocation }]}
+                    >
+                      <Select
+                        placeholder={text.selectLocation}
+                        onChange={(value) => {
+                          const selectedLocation = locations.find(loc => loc.value === value);
+                          if (selectedLocation?.provider) {
+                            form.setFieldsValues({ provider: selectedLocation.provider });
+                          }
+                        }}
+                      >
+                        {filteredLocations.map(loc => (
+                          <Select.Option key={loc.value} value={loc.value}>
+                            {loc.label}
+                          </Select.Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                </Row>
+                <Row gutter={12} style={{ marginTop: '12px' }}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      label={<span style={{ color: '#aaa', fontSize: '12px' }}>{text.chargeAmount}</span>}
+                      name="chargeAmount"
+                      rules={[{ required: true, message: text.enterAmount }]}
+                    >
+                      <InputNumber style={{ width: '100%' }} min={0} step={0.1} />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      label={<span style={{ color: '#aaa', fontSize: '12px' }}>{text.batteryCapacity}</span>}
+                      name="batteryCapacity"
+                    >
+                      <InputNumber style={{ width: '100%' }} min={0} step={0.1} placeholder={text.actualEnergy} />
+                    </Form.Item>
+                  </Col>
+                </Row>
+              </div>
+
+              <div style={{
+                marginBottom: '20px',
+                backgroundColor: 'rgba(82, 196, 26, 0.08)',
+                borderRadius: '12px',
+                padding: '16px',
+                border: '1px solid rgba(82, 196, 26, 0.2)'
+              }}>
+                <div style={{
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  color: '#52c41a',
+                  marginBottom: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  {text.costDetails}
+                </div>
+                <Row gutter={12}>
+                  <Col xs={24} sm={8}>
+                    <Form.Item
+                      label={<span style={{ color: '#52c41a', fontSize: '12px' }}>{text.electricityCost}</span>}
+                      name="electricityCost"
+                      rules={[{ required: true, message: text.enterElectricityCost }]}
+                    >
+                      <InputNumber style={{ width: '100%', color: '#52c41a' }} min={0} step={0.01} />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={8}>
+                    <Form.Item
+                      label={<span style={{ color: '#faad14', fontSize: '12px' }}>{text.serviceCost}</span>}
+                      name="serviceCost"
+                      rules={[{ required: true, message: text.enterServiceCost }]}
+                    >
+                      <InputNumber style={{ width: '100%', color: '#faad14' }} min={0} step={0.01} />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={8}>
+                    <Form.Item
+                      label={<span style={{ color: '#722ed1', fontSize: '12px' }}>{text.discount}</span>}
+                      name="discountAmount"
+                      rules={[
+                        {
+                          validator: (_, value) => {
+                            if (value !== undefined && value !== null && value < 0) {
+                              return Promise.reject(text.discountNegative);
+                            }
+                            return Promise.resolve();
+                          }
+                        }
+                      ]}
+                    >
+                      <InputNumber style={{ width: '100%', color: '#722ed1' }} min={0} step={0.01} />
+                    </Form.Item>
+                  </Col>
+                </Row>
+                <div style={{
+                  marginTop: '12px',
+                  padding: '12px',
+                  backgroundColor: 'rgba(255, 77, 79, 0.1)',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <span style={{ color: '#fff', fontSize: '13px' }}>{text.paidAmount}</span>
+                  <span style={{ color: '#ff4d4f', fontSize: '20px', fontWeight: 'bold' }}>
+                    ¥{finalCost.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              <div style={{
+                marginBottom: '20px',
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                borderRadius: '12px',
+                padding: '16px',
+                border: '1px solid rgba(255, 255, 255, 0.1)'
+              }}>
+                <Form.Item label={<span style={{ color: '#aaa', fontSize: '12px' }}>{text.notes}</span>} name="notes">
+                  <Input.TextArea rows={2} placeholder={text.notesPlaceholder} />
+                </Form.Item>
+              </div>
+            </Form>
+          ) : selectedRecord ? (
             <div>
-              {/* 基本信息 */}
               <div style={{
                 marginBottom: '20px',
                 padding: '16px',
@@ -930,7 +1218,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* 充电信息 */}
               <div style={{
                 marginBottom: '20px',
                 padding: '16px',
@@ -981,7 +1268,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* 费用信息 */}
               <div style={{
                 marginBottom: '20px',
                 padding: '16px',
@@ -1041,7 +1327,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* 备注 */}
               {selectedRecord.notes && (
                 <div style={{
                   marginBottom: '20px',
@@ -1067,352 +1352,7 @@ const HealthSpringEquinoxPage: React.FC = () => {
                 </div>
               )}
             </div>
-          )}
-        </Drawer>
-
-        {/* 添加记录Drawer */}
-        <Drawer
-          title={
-            <div style={{
-              color: '#fff',
-              fontSize: '18px',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              width: '100%'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                {isEditing ? (
-                  <>
-                    {text.editRecord}
-                  </>
-                ) : (
-                  <>
-                    {text.addRecord}
-                  </>
-                )}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {isEditing && (
-                  <Button
-                    onClick={() => {
-                      setAddDrawerVisible(false);
-                      setEditingId(null);
-                      setIsEditing(false);
-                      form.resetFields();
-                      setDetailModalVisible(true);
-                    }}
-                    className="detail-action-btn-cancel"
-                  >
-                    {text.cancel}
-                  </Button>
-                )}
-                <Button
-                  type="primary"
-                  onClick={() => form.submit()}
-                  className="detail-action-btn-save"
-                >
-                  {text.save}
-                </Button>
-              </div>
-            </div>
-          }
-          placement="right"
-          open={addDrawerVisible}
-          onClose={() => {
-            setAddDrawerVisible(false);
-            setEditingId(null);
-            setIsEditing(false);
-            form.resetFields();
-          }}
-          width={520}
-          styles={{
-            body: { backgroundColor: '#000', padding: '24px' },
-            header: { backgroundColor: '#000', borderBottom: '1px solid rgba(24, 144, 255, 0.2)' }
-          }}
-        >
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={handleAdd}
-            initialValues={{
-              provider: ''
-            }}
-          >
-            {/* 第一组：日期、时间 */}
-            <div style={{
-              marginBottom: '20px',
-              backgroundColor: 'rgba(24, 144, 255, 0.08)',
-              borderRadius: '12px',
-              padding: '16px',
-              border: '1px solid rgba(24, 144, 255, 0.2)'
-            }}>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: 'bold',
-                color: '#1890ff',
-                marginBottom: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                {text.chargingTime}
-              </div>
-              <Row gutter={12}>
-                <Col xs={24} sm={8}>
-                  <Form.Item
-                    label={<span style={{ color: '#aaa', fontSize: '12px' }}>{text.date}</span>}
-                    name="date"
-                    rules={[{ required: true, message: text.selectDate }]}
-                  >
-                    <DatePicker style={{ width: '100%' }} />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} sm={8}>
-                  <div style={{ marginBottom: '8px', color: '#52c41a', fontSize: '12px' }}>{text.startTime}</div>
-                  <Row gutter={8}>
-                    <Col xs={12}>
-                      <Form.Item
-                        name="startHour"
-                        rules={[{ required: true, message: text.selectHour }]}
-                        noStyle
-                      >
-                        <Select placeholder={text.hour} options={hourOptions} />
-                      </Form.Item>
-                    </Col>
-                    <Col xs={12}>
-                      <Form.Item
-                        name="startMinute"
-                        rules={[{ required: true, message: text.selectMinute }]}
-                        noStyle
-                      >
-                        <Select placeholder={text.minute} options={minuteOptions} />
-                      </Form.Item>
-                    </Col>
-                  </Row>
-                </Col>
-                <Col xs={24} sm={8}>
-                  <div style={{ marginBottom: '8px', color: '#faad14', fontSize: '12px' }}>{text.endTime}</div>
-                  <Row gutter={8}>
-                    <Col xs={12}>
-                      <Form.Item
-                        name="endHour"
-                        rules={[{ required: true, message: text.selectHour }]}
-                        noStyle
-                      >
-                        <Select placeholder={text.hour} options={hourOptions} />
-                      </Form.Item>
-                    </Col>
-                    <Col xs={12}>
-                      <Form.Item
-                        name="endMinute"
-                        rules={[{ required: true, message: text.selectMinute }]}
-                        noStyle
-                      >
-                        <Select placeholder={text.minute} options={minuteOptions} />
-                      </Form.Item>
-                    </Col>
-                  </Row>
-                </Col>
-              </Row>
-              <div style={{
-                marginTop: '12px',
-                padding: '12px',
-                backgroundColor: 'rgba(24, 144, 255, 0.15)',
-                borderRadius: '8px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <span style={{ color: '#1890ff', fontSize: '13px' }}>{text.duration}</span>
-                <span style={{ color: '#1890ff', fontSize: '18px', fontWeight: 'bold' }}>
-                  {currentDuration} {text.minutes}
-                </span>
-              </div>
-              <Form.Item name="chargeDuration" style={{ display: 'none' }}>
-                <Input />
-              </Form.Item>
-            </div>
-
-            {/* 第三组：充电信息 */}
-            <div style={{
-              marginBottom: '20px',
-              backgroundColor: 'rgba(114, 46, 209, 0.08)',
-              borderRadius: '12px',
-              padding: '16px',
-              border: '1px solid rgba(114, 46, 209, 0.2)'
-            }}>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: 'bold',
-                color: '#722ed1',
-                marginBottom: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                {text.chargingInfo}
-              </div>
-              <Row gutter={12}>
-                <Col xs={24} sm={6}>
-                  <Form.Item
-                    label={<span style={{ color: '#aaa', fontSize: '12px' }}>{text.chargerType}</span>}
-                    name="provider"
-                    rules={[{ required: true, message: text.selectType }]}
-                  >
-                    <Select
-                      placeholder={text.selectType}
-                      onChange={(value) => {
-                        // 当提供商改变时，清空充电地点
-                        const currentLocation = form.getFieldValue('location');
-                        if (currentLocation) {
-                          const locationExists = locations.some(loc => loc.value === currentLocation && loc.provider === value);
-                          if (!locationExists) {
-                            form.setFieldsValues({ location: undefined });
-                          }
-                        }
-                      }}
-                    >
-                      {providers.map(p => (
-                        <Select.Option key={p.value} value={p.value}>
-                          {p.label}
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                </Col>
-                <Col xs={24} sm={18}>
-                  <Form.Item
-                    label={<span style={{ color: '#aaa', fontSize: '12px' }}>{text.location}</span>}
-                    name="location"
-                    rules={[{ required: true, message: text.selectLocation }]}
-                  >
-                    <Select
-                      placeholder={text.selectLocation}
-                      onChange={(value) => {
-                        const selectedLocation = locations.find(loc => loc.value === value);
-                        if (selectedLocation?.provider) {
-                          form.setFieldsValues({ provider: selectedLocation.provider });
-                        }
-                      }}
-                    >
-                      {filteredLocations.map(loc => (
-                        <Select.Option key={loc.value} value={loc.value}>
-                          {loc.label}
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                </Col>
-              </Row>
-              <Row gutter={12} style={{ marginTop: '12px' }}>
-                <Col xs={24} sm={12}>
-                  <Form.Item
-                    label={<span style={{ color: '#aaa', fontSize: '12px' }}>{text.chargeAmount}</span>}
-                    name="chargeAmount"
-                    rules={[{ required: true, message: text.enterAmount }]}
-                  >
-                    <InputNumber style={{ width: '100%' }} min={0} step={0.1} />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} sm={12}>
-                  <Form.Item
-                    label={<span style={{ color: '#aaa', fontSize: '12px' }}>{text.batteryCapacity}</span>}
-                    name="batteryCapacity"
-                  >
-                    <InputNumber style={{ width: '100%' }} min={0} step={0.1} placeholder={text.actualEnergy} />
-                  </Form.Item>
-                </Col>
-              </Row>
-            </div>
-
-            {/* 第二组：费用 */}
-            <div style={{
-              marginBottom: '20px',
-              backgroundColor: 'rgba(82, 196, 26, 0.08)',
-              borderRadius: '12px',
-              padding: '16px',
-              border: '1px solid rgba(82, 196, 26, 0.2)'
-            }}>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: 'bold',
-                color: '#52c41a',
-                marginBottom: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                {text.costDetails}
-              </div>
-              <Row gutter={12}>
-                <Col xs={24} sm={8}>
-                  <Form.Item
-                    label={<span style={{ color: '#52c41a', fontSize: '12px' }}>{text.electricityCost}</span>}
-                    name="electricityCost"
-                    rules={[{ required: true, message: text.enterElectricityCost }]}
-                  >
-                    <InputNumber style={{ width: '100%', color: '#52c41a' }} min={0} step={0.01} />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} sm={8}>
-                  <Form.Item
-                    label={<span style={{ color: '#faad14', fontSize: '12px' }}>{text.serviceCost}</span>}
-                    name="serviceCost"
-                    rules={[{ required: true, message: text.enterServiceCost }]}
-                  >
-                    <InputNumber style={{ width: '100%', color: '#faad14' }} min={0} step={0.01} />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} sm={8}>
-                  <Form.Item
-                    label={<span style={{ color: '#722ed1', fontSize: '12px' }}>{text.discount}</span>}
-                    name="discountAmount"
-                    rules={[
-                      {
-                        validator: (_, value) => {
-                          if (value !== undefined && value !== null && value < 0) {
-                            return Promise.reject(text.discountNegative);
-                          }
-                          return Promise.resolve();
-                        }
-                      }
-                    ]}
-                  >
-                    <InputNumber style={{ width: '100%', color: '#722ed1' }} min={0} step={0.01} />
-                  </Form.Item>
-                </Col>
-              </Row>
-              <div style={{
-                marginTop: '12px',
-                padding: '12px',
-                backgroundColor: 'rgba(255, 77, 79, 0.1)',
-                borderRadius: '8px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <span style={{ color: '#fff', fontSize: '13px' }}>{text.paidAmount}</span>
-                <span style={{ color: '#ff4d4f', fontSize: '20px', fontWeight: 'bold' }}>
-                  ¥{finalCost.toFixed(2)}
-                </span>
-              </div>
-            </div>
-
-            {/* 备注 */}
-            <div style={{
-              marginBottom: '20px',
-              backgroundColor: 'rgba(255, 255, 255, 0.05)',
-              borderRadius: '12px',
-              padding: '16px',
-              border: '1px solid rgba(255, 255, 255, 0.1)'
-            }}>
-              <Form.Item label={<span style={{ color: '#aaa', fontSize: '12px' }}>{text.notes}</span>} name="notes">
-                <Input.TextArea rows={2} placeholder={text.notesPlaceholder} />
-              </Form.Item>
-            </div>
-          </Form>
+          ) : null}
         </Drawer>
       </div>
     </div>

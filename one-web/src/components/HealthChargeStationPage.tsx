@@ -99,9 +99,8 @@ const HealthChargeStationPage: React.FC = () => {
   const [stations, setStations] = useState<ChargeStation[]>([]);
   const [providers, setProviders] = useState<ChargeProviderOption[]>([]);
   const [chargeRecords, setChargeRecords] = useState<ChargeRecord[]>([]);
-  const [isAddDrawerVisible, setIsAddDrawerVisible] = useState(false);
-  const [isEditDrawerVisible, setIsEditDrawerVisible] = useState(false);
-  const [isDetailDrawerVisible, setIsDetailDrawerVisible] = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [drawerMode, setDrawerMode] = useState<'detail' | 'add' | 'edit'>('detail');
   const [selectedStation, setSelectedStation] = useState<ChargeStation | null>(null);
   const [searchText, setSearchText] = useState('');
   const [searchProvider, setSearchProvider] = useState<string>('');
@@ -237,7 +236,7 @@ const HealthChargeStationPage: React.FC = () => {
     try {
       await chargeStationApi.save(values);
       message.success(text.addSuccess);
-      setIsAddDrawerVisible(false);
+      setDrawerVisible(false);
       addForm.resetFields();
       loadStations();
     } catch (error: unknown) {
@@ -252,7 +251,7 @@ const HealthChargeStationPage: React.FC = () => {
     try {
       await chargeStationApi.update({ ...values, id: selectedStation.id });
       message.success(text.updateSuccess);
-      setIsEditDrawerVisible(false);
+      setDrawerVisible(false);
       editForm.resetFields();
       setSelectedStation(null);
       loadStations();
@@ -276,7 +275,7 @@ const HealthChargeStationPage: React.FC = () => {
   const handleOpenEdit = (station: ChargeStation) => {
     setSelectedStation(station);
     editForm.setFieldsValue(station);
-    setIsEditDrawerVisible(true);
+    setDrawerMode('edit');
   };
 
   const filteredStations = stations.filter(station => {
@@ -374,7 +373,11 @@ const HealthChargeStationPage: React.FC = () => {
             <Button
               className="record-list-add-button"
               icon={<PlusOutlined />}
-              onClick={() => setIsAddDrawerVisible(true)}
+              onClick={() => {
+                addForm.setFieldsValue({ provider: 'STAR' });
+                setDrawerMode('add');
+                setDrawerVisible(true);
+              }}
               size="small"
             />
           </div>
@@ -401,7 +404,8 @@ const HealthChargeStationPage: React.FC = () => {
                 hoverable
                 onClick={() => {
                   setSelectedStation(station);
-                  setIsDetailDrawerVisible(true);
+                  setDrawerMode('detail');
+                  setDrawerVisible(true);
                 }}
                 style={{ cursor: 'pointer' }}
               >
@@ -436,181 +440,31 @@ const HealthChargeStationPage: React.FC = () => {
         )}
 
       <Drawer
-        title={text.addStation}
-        placement="right"
-        width={400}
-        open={isAddDrawerVisible}
-        onClose={() => {
-          setIsAddDrawerVisible(false);
-          addForm.resetFields();
-        }}
-        afterOpenChange={(open) => {
-          if (open) {
-            addForm.setFieldsValue({ provider: 'STAR' });
-          }
-        }}
-        styles={{
-          body: { backgroundColor: '#000' },
-          header: { backgroundColor: '#000', borderBottom: '1px solid rgba(24, 144, 255, 0.2)' },
-          mask: { backgroundColor: 'rgba(0, 0, 0, 0.7)' }
-        }}
-      >
-        <Form 
-          form={addForm} 
-          layout="vertical" 
-          onFinish={handleAdd} 
-          style={{ color: '#fff' }}
-        >
-          <Form.Item
-            name="provider"
-            label={text.provider}
-            rules={[{ required: true, message: text.providerRequired }]}
-          >
-            <Select placeholder={text.providerPlaceholder} options={providers} />
-          </Form.Item>
-          <Form.Item
-            name="location"
-            label={text.location}
-            rules={[{ required: true, message: text.locationRequired }]}
-          >
-            <Input placeholder={text.locationRequired} />
-          </Form.Item>
-          <Form.Item
-            name="stationCode"
-            label={text.stationCode}
-            rules={[
-              { required: true, message: text.codeRequired },
-              { validator: validateStationCode }
-            ]}
-          >
-            <Input placeholder={text.codeRequired} />
-          </Form.Item>
-          <Form.Item
-            name="stationName"
-            label={text.stationName}
-          >
-            <Input placeholder={text.stationNamePlaceholder} />
-          </Form.Item>
-          <Form.Item style={{ marginTop: '24px', textAlign: 'right' }}>
-            <Button
-              type="primary"
-              htmlType="submit"
-              style={{
-                background: 'linear-gradient(135deg, #1890ff, #096dd9)',
-                boxShadow: '0 2px 8px rgba(24, 144, 255, 0.4)'
-              }}
-            >
-              {text.save}
-            </Button>
-          </Form.Item>
-        </Form>
-      </Drawer>
-
-      <Drawer
         title={
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            width: '100%'
-          }}>
-            <div style={{
-              color: textColor,
-              fontSize: '18px',
-              fontWeight: 'bold'
-            }}>
-              {text.editStation}
-            </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <Button
-                onClick={() => {
-                  setIsEditDrawerVisible(false);
-                  editForm.resetFields();
-                  setSelectedStation(null);
-                }}
-                className="detail-action-btn-cancel"
-              >
-                {text.cancel}
-              </Button>
-              <Button
-                type="primary"
-                onClick={() => editForm.submit()}
-                className="detail-action-btn-save"
-              >
-                {text.save}
-              </Button>
-            </div>
+          <div style={{ color: textColor, fontSize: '18px', fontWeight: 'bold' }}>
+            {drawerMode === 'detail' && (isEnglish ? 'Station Details' : '站点详情')}
+            {drawerMode === 'add' && text.addStation}
+            {drawerMode === 'edit' && text.editStation}
           </div>
         }
         placement="right"
         width={400}
-        open={isEditDrawerVisible}
+        open={drawerVisible}
         onClose={() => {
-          setIsEditDrawerVisible(false);
-          editForm.resetFields();
+          setDrawerVisible(false);
           setSelectedStation(null);
+          addForm.resetFields();
+          editForm.resetFields();
         }}
-      >
-        <Form form={editForm} layout="vertical" onFinish={handleEdit} style={{ color: textColor }}>
-          <Form.Item
-            name="provider"
-            label={text.provider}
-            rules={[{ required: true, message: text.providerRequired }]}
-          >
-            <Select placeholder={text.providerPlaceholder} options={providers} />
-          </Form.Item>
-          <Form.Item
-            name="location"
-            label={text.location}
-            rules={[{ required: true, message: text.locationRequired }]}
-          >
-            <Input placeholder={text.locationRequired} />
-          </Form.Item>
-          <Form.Item
-            name="stationCode"
-            label={text.stationCode}
-            rules={[
-              { required: true, message: text.codeRequired },
-              { validator: validateStationCodeEdit }
-            ]}
-          >
-            <Input placeholder={text.codeRequired} />
-          </Form.Item>
-          <Form.Item
-            name="stationName"
-            label={text.stationName}
-          >
-            <Input placeholder={text.stationNamePlaceholder} />
-          </Form.Item>
-        </Form>
-      </Drawer>
-
-      {/* Detail Drawer */}
-      <Drawer
-        title={
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            width: '100%'
-          }}>
-            <div style={{
-              color: textColor,
-              fontSize: '18px',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px'
-            }}>
-              {isEnglish ? 'Station Details' : '站点详情'}
-            </div>
+        extra={
+          drawerMode === 'detail' && selectedStation ? (
             <div style={{ display: 'flex', gap: '8px' }}>
               <Popconfirm
                 title={text.deleteConfirm}
                 onConfirm={() => {
                   if (selectedStation) {
                     handleDelete(selectedStation.id);
-                    setIsDetailDrawerVisible(false);
+                    setDrawerVisible(false);
                   }
                 }}
                 okText={text.ok}
@@ -630,24 +484,43 @@ const HealthChargeStationPage: React.FC = () => {
                 onClick={() => {
                   if (selectedStation) {
                     handleOpenEdit(selectedStation);
-                    setIsDetailDrawerVisible(false);
                   }
                 }}
               >
                 {isEnglish ? 'Edit' : '编辑'}
               </Button>
             </div>
-          </div>
+          ) : drawerMode === 'add' ? (
+            <Button
+              type="primary"
+              onClick={() => addForm.submit()}
+              className="detail-action-btn-save"
+            >
+              {text.save}
+            </Button>
+          ) : drawerMode === 'edit' ? (
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <Button
+                onClick={() => {
+                  editForm.resetFields();
+                  setDrawerMode('detail');
+                }}
+                className="detail-action-btn-cancel"
+              >
+                {text.cancel}
+              </Button>
+              <Button
+                type="primary"
+                onClick={() => editForm.submit()}
+                className="detail-action-btn-save"
+              >
+                {text.save}
+              </Button>
+            </div>
+          ) : null
         }
-        placement="right"
-        width={400}
-        open={isDetailDrawerVisible}
-        onClose={() => {
-          setIsDetailDrawerVisible(false);
-          setSelectedStation(null);
-        }}
       >
-        {selectedStation && (
+        {drawerMode === 'detail' && selectedStation && (
           <div style={{ color: textColor }}>
             <div style={{ marginBottom: '24px' }}>
               <div style={{ color: textMuted, fontSize: '12px', marginBottom: '4px' }}>{text.provider}</div>
@@ -674,6 +547,79 @@ const HealthChargeStationPage: React.FC = () => {
               </div>
             </div>
           </div>
+        )}
+        {drawerMode === 'add' && (
+          <Form
+            form={addForm}
+            layout="vertical"
+            onFinish={handleAdd}
+            style={{ color: textColor }}
+          >
+            <Form.Item
+              name="provider"
+              label={text.provider}
+              rules={[{ required: true, message: text.providerRequired }]}
+            >
+              <Select placeholder={text.providerPlaceholder} options={providers} />
+            </Form.Item>
+            <Form.Item
+              name="location"
+              label={text.location}
+              rules={[{ required: true, message: text.locationRequired }]}
+            >
+              <Input placeholder={text.locationRequired} />
+            </Form.Item>
+            <Form.Item
+              name="stationCode"
+              label={text.stationCode}
+              rules={[
+                { required: true, message: text.codeRequired },
+                { validator: validateStationCode }
+              ]}
+            >
+              <Input placeholder={text.codeRequired} />
+            </Form.Item>
+            <Form.Item
+              name="stationName"
+              label={text.stationName}
+            >
+              <Input placeholder={text.stationNamePlaceholder} />
+            </Form.Item>
+          </Form>
+        )}
+        {drawerMode === 'edit' && (
+          <Form form={editForm} layout="vertical" onFinish={handleEdit} style={{ color: textColor }}>
+            <Form.Item
+              name="provider"
+              label={text.provider}
+              rules={[{ required: true, message: text.providerRequired }]}
+            >
+              <Select placeholder={text.providerPlaceholder} options={providers} />
+            </Form.Item>
+            <Form.Item
+              name="location"
+              label={text.location}
+              rules={[{ required: true, message: text.locationRequired }]}
+            >
+              <Input placeholder={text.locationRequired} />
+            </Form.Item>
+            <Form.Item
+              name="stationCode"
+              label={text.stationCode}
+              rules={[
+                { required: true, message: text.codeRequired },
+                { validator: validateStationCodeEdit }
+              ]}
+            >
+              <Input placeholder={text.codeRequired} />
+            </Form.Item>
+            <Form.Item
+              name="stationName"
+              label={text.stationName}
+            >
+              <Input placeholder={text.stationNamePlaceholder} />
+            </Form.Item>
+          </Form>
         )}
       </Drawer>
       </div>
