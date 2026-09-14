@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Form, Input, Button, Card, message, Typography } from 'antd';
-import { GithubOutlined, LockOutlined, UserOutlined, SunOutlined, MoonOutlined } from '@ant-design/icons';
+import { Form, Input, Button, Card, message, Typography, Popover } from 'antd';
+import { GithubOutlined, LockOutlined, UserOutlined, SunOutlined, MoonOutlined, GlobalOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
@@ -184,20 +184,40 @@ const Login = () => {
         </Button>
       </Card>
 
-      <LanguageSwitcher className="login-page-language-switcher" />
-      
-      <Button
-        type="text"
-        icon={colorMode === 'dark' ? <SunOutlined /> : <MoonOutlined />}
-        onClick={onToggleColorMode}
-        className="login-theme-toggle"
-        style={{
-          position: 'relative',
-          zIndex: 1,
-          color: colorMode === 'dark' ? 'rgba(255, 255, 255, 0.86)' : 'rgba(0, 0, 0, 0.65)',
-          marginTop: '12px'
-        }}
-      />
+      <div className="login-controls" style={{
+        position: 'relative',
+        zIndex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        marginTop: 'clamp(12px, 4vh, 32px)'
+      }}>
+        <Button
+          type="text"
+          icon={colorMode === 'dark' ? <SunOutlined /> : <MoonOutlined />}
+          onClick={onToggleColorMode}
+          className="login-theme-toggle"
+          style={{
+            color: colorMode === 'dark' ? 'rgba(255, 255, 255, 0.86)' : 'rgba(0, 0, 0, 0.65)'
+          }}
+        />
+        
+        <Popover
+          content={<LanguageSwitcher />}
+          trigger="click"
+          placement="top"
+          overlayClassName="login-language-popover"
+        >
+          <Button
+            type="text"
+            icon={<GlobalOutlined />}
+            className="login-language-toggle"
+            style={{
+              color: colorMode === 'dark' ? 'rgba(255, 255, 255, 0.86)' : 'rgba(0, 0, 0, 0.65)'
+            }}
+          />
+        </Popover>
+      </div>
     </div>
   );
 };

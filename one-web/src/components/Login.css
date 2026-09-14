@@ -380,3 +380,19 @@
 .login-theme-toggle:hover {
   transform: scale(1.1);
 }
+
+.login-language-toggle {
+  transition: all 0.3s ease;
+}
+
+.login-language-toggle:hover {
+  transform: scale(1.1);
+}
+
+.login-language-popover .ant-popover-inner {
+  padding: 8px;
+}
+
+.login-language-popover .ant-popover-arrow {
+  display: none;
+}
