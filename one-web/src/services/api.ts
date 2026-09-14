@@ -4354,6 +4354,11 @@ export const chargeStationApi = {
   // 根据站点编码查询
   findByStationCode: (stationCode: string): Promise<ChargeStation> => {
     return apiClient.get(`/charge-station/code/${stationCode}`);
+  },
+  
+  // 获取下一个站点编码
+  getNextStationCode: (provider: string): Promise<string> => {
+    return apiClient.get(`/charge-station/next-code/${provider}`);
   }
 };
 

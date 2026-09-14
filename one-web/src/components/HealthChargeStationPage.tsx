@@ -118,6 +118,24 @@ const HealthChargeStationPage: React.FC = () => {
     const provider = providers.find(p => p.value === providerValue);
     return provider?.code || '';
   };
+  
+  // 当提供商变化时，自动获取下一个站点编码
+  useEffect(() => {
+    if (watchAddProvider) {
+      const fetchNextCode = async () => {
+        try {
+          const nextCode = await chargeStationApi.getNextStationCode(watchAddProvider);
+          // 提取数字部分（去掉前缀）
+          const providerCode = getProviderCode(watchAddProvider);
+          const numberPart = nextCode.substring(providerCode.length);
+          addForm.setFieldsValue({ stationCode: numberPart });
+        } catch (error) {
+          console.error('获取下一个站点编码失败:', error);
+        }
+      };
+      fetchNextCode();
+    }
+  }, [watchAddProvider, addForm, providers]);
 
   const validateStationCode = async (_: unknown, value: string) => {
     if (!value) {
@@ -612,21 +630,12 @@ const HealthChargeStationPage: React.FC = () => {
             <Form.Item
               name="stationCode"
               label={text.stationCode}
-              rules={[
-                { required: true, message: text.codeRequired },
-                { validator: validateStationCode }
-              ]}
+              rules={[{ required: true, message: text.codeRequired }]}
             >
               <Input 
-                placeholder={isEnglish ? '3 digits (e.g., 001)' : '3位数字（如 001）'}
+                placeholder={isEnglish ? 'Auto-generated' : '自动生成'}
                 addonBefore={watchAddProvider ? getProviderCode(watchAddProvider) : undefined}
-                disabled={!watchAddProvider}
-                maxLength={3}
-                onInput={(e) => {
-                  // 只允许输入数字
-                  const target = e.target as HTMLInputElement;
-                  target.value = target.value.replace(/\D/g, '').slice(0, 3);
-                }}
+                disabled
               />
             </Form.Item>
             <Form.Item

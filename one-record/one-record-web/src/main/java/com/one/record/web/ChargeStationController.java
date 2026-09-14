@@ -76,4 +76,10 @@ public class ChargeStationController {
     public ChargeStation findByStationCode(@PathVariable("stationCode") String stationCode) {
         return service.findByStationCode(stationCode);
     }
+    
+    @GetMapping("next-code/{provider}")
+    @Operation(summary = "获取下一个站点编码", description = "根据提供商获取下一个可用的站点编码")
+    public String getNextStationCode(@PathVariable("provider") String provider) {
+        return service.getNextStationCode(provider);
+    }
 }

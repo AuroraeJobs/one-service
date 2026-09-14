@@ -1,5 +1,6 @@
 package com.one.record.service.impl;
 
+import com.one.record.enums.ChargeProvider;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.one.record.model.ChargeStation;
@@ -10,6 +11,8 @@ import com.one.common.exception.NotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -102,5 +105,44 @@ public class ChargeStationService implements IChargeStationService {
     @Override
     public List<ChargeStation> findByProviderAndLocation(String provider, String location) {
         return repository.findByProviderAndLocation(provider, location);
+    }
+    
+    @Override
+    public String getNextStationCode(String provider) {
+        // 获取提供商的编码前缀
+        ChargeProvider chargeProvider;
+        try {
+            chargeProvider = ChargeProvider.valueOf(provider);
+        } catch (IllegalArgumentException e) {
+            throw new NotFoundException("未知的提供商: " + provider);
+        }
+        
+        String prefix = chargeProvider.getCode();
+        
+        // 查询该提供商的所有充电站
+        List<ChargeStation> stations = repository.findByProvider(provider);
+        
+        // 找到最大的编号
+        int maxNum = 0;
+        Pattern pattern = Pattern.compile("^" + prefix + "(\\d{3})$");
+        
+        for (ChargeStation station : stations) {
+            String stationCode = station.getStationCode();
+            if (stationCode != null) {
+                Matcher matcher = pattern.matcher(stationCode);
+                if (matcher.matches()) {
+                    int num = Integer.parseInt(matcher.group(1));
+                    maxNum = Math.max(maxNum, num);
+                }
+            }
+        }
+        
+        // 生成下一个编码
+        int nextNum = maxNum + 1;
+        if (nextNum > 999) {
+            throw new RuntimeException("提供商 " + provider + " 的站点编码已用完");
+        }
+        
+        return prefix + String.format("%03d", nextNum);
     }
 }
