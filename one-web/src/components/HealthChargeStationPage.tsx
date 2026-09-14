@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Card, Form, Input, Select, Button, Popconfirm, message, Drawer } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import { chargeStationApi, chargeRecordApi } from '../services/api';
 import type { ChargeRecord } from '../services/api';
 import { useAppPreferences } from '../contexts/AppPreferencesContext';
@@ -58,7 +57,6 @@ const errorMessage = (error: unknown, fallback: string) => {
 };
 
 const HealthChargeStationPage: React.FC = () => {
-  const navigate = useNavigate();
   const { isEnglish } = useAppPreferences();
   const text = {
     stationUnit: isEnglish ? 'stations' : '个站点',
@@ -356,23 +354,6 @@ const HealthChargeStationPage: React.FC = () => {
         )}
 
         <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ position: 'absolute', left: '20px' }}>
-            <Button
-              type="text"
-              icon={<ArrowLeftOutlined />}
-              onClick={() => navigate('/vehicle/charging')}
-              size="small"
-              style={{
-                height: '32px',
-                width: '32px',
-                borderRadius: '50%',
-                padding: 0,
-                color: '#1890ff',
-                backgroundColor: 'rgba(24, 144, 255, 0.1)',
-                borderColor: 'rgba(24, 144, 255, 0.3)'
-              }}
-            />
-          </div>
           <Select
             placeholder={text.providerPlaceholder}
             style={{ width: 200 }}
