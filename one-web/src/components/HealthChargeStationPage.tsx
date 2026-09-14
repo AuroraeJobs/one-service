@@ -585,7 +585,7 @@ const HealthChargeStationPage: React.FC = () => {
               alignItems: 'center',
               gap: '10px'
             }}>
-              {text.stationCode}: {selectedStation?.stationCode}
+              {isEnglish ? 'Station Details' : '站点详情'}
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
               <Popconfirm
@@ -602,29 +602,19 @@ const HealthChargeStationPage: React.FC = () => {
                 <Button
                   type="primary"
                   danger
-                  style={{
-                    background: 'linear-gradient(135deg, #ff4d4f, #cf1322)',
-                    border: 'none',
-                    color: '#fff',
-                    borderRadius: '8px'
-                  }}
+                  className="detail-action-btn detail-action-btn-danger"
                 >
                   {isEnglish ? 'Delete' : '删除'}
                 </Button>
               </Popconfirm>
               <Button
                 type="primary"
+                className="detail-action-btn"
                 onClick={() => {
                   if (selectedStation) {
                     handleOpenEdit(selectedStation);
                     setIsDetailDrawerVisible(false);
                   }
-                }}
-                style={{
-                  background: 'linear-gradient(135deg, #1890ff, #096dd9)',
-                  border: 'none',
-                  color: '#fff',
-                  borderRadius: '8px'
                 }}
               >
                 {isEnglish ? 'Edit' : '编辑'}

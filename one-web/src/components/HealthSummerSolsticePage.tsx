@@ -1137,25 +1137,15 @@ const HealthSummerSolsticePage: React.FC = () => {
                   <Button
                     type="primary"
                     danger
-                    style={{
-                      color: '#fff',
-                      background: 'linear-gradient(135deg, #ff4d4f, #cf1322)',
-                      border: 'none',
-                      borderRadius: '8px'
-                    }}
+                    className="detail-action-btn detail-action-btn-danger"
                   >
                     {text.delete}
                   </Button>
                 </Popconfirm>
                 <Button
                   type="primary"
+                  className="detail-action-btn"
                   onClick={() => setIsEditing(true)}
-                  style={{
-                    color: '#fff',
-                    background: 'linear-gradient(135deg, #1890ff, #096dd9)',
-                    border: 'none',
-                    borderRadius: '8px'
-                  }}
                 >
                   {text.edit}
                 </Button>

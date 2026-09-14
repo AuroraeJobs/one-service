@@ -837,18 +837,14 @@ const HealthSpringEquinoxPage: React.FC = () => {
                   <Button
                     type="primary"
                     danger
-                    style={{
-                      background: 'linear-gradient(135deg, #ff4d4f, #cf1322)',
-                      border: 'none',
-                      color: '#fff',
-                      borderRadius: '8px'
-                    }}
+                    className="detail-action-btn detail-action-btn-danger"
                   >
                     {text.delete}
                   </Button>
                 </Popconfirm>
                 <Button
                   type="primary"
+                  className="detail-action-btn"
                   onClick={() => {
                     if (selectedRecord) {
                       // 将时间字符串拆分为小时和分钟
@@ -875,12 +871,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
                       setDetailModalVisible(false);
                       setAddDrawerVisible(true);
                     }
-                  }}
-                  style={{
-                    background: 'linear-gradient(135deg, #1890ff, #096dd9)',
-                    border: 'none',
-                    color: '#fff',
-                    borderRadius: '8px'
                   }}
                 >
                   {text.edit}

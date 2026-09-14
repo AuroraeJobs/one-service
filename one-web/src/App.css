@@ -4036,7 +4036,7 @@ body {
     radial-gradient(circle at 8% 0%, rgba(24, 144, 255, 0.12) 0, rgba(24, 144, 255, 0.06) 16%, transparent 36%),
     radial-gradient(circle at 100% 0%, rgba(82, 196, 26, 0.10) 0, rgba(82, 196, 26, 0.05) 14%, transparent 34%),
     linear-gradient(180deg, #f0f8ff 0%, #fff 78%) !important;
-  border: 1px solid rgba(24, 144, 255, 0.15) !important;
+  border: none !important;
   box-shadow: 0 8px 24px rgba(24, 144, 255, 0.08) !important;
   border-radius: 12px !important;
 }
@@ -4044,7 +4044,7 @@ body {
 .app-theme-dark .themed-route-page.charge-station-page .charge-station-card {
   background: var(--app-surface) !important;
   background-image: none !important;
-  border: 1px solid rgba(24, 144, 255, 0.2) !important;
+  border: none !important;
   box-shadow: var(--app-card-shadow) !important;
   border-radius: 12px !important;
 }
@@ -4055,7 +4055,7 @@ body {
   background-image:
     radial-gradient(circle at 0% 0%, rgba(24, 144, 255, 0.10) 0, rgba(24, 144, 255, 0.04) 16%, transparent 36%),
     linear-gradient(180deg, #f0f8ff 0%, #fff 78%) !important;
-  border: 1px solid rgba(24, 144, 255, 0.12) !important;
+  border: none !important;
   box-shadow: 0 6px 18px rgba(24, 144, 255, 0.06) !important;
   border-radius: 12px !important;
 }
@@ -4063,18 +4063,38 @@ body {
 .app-theme-dark .themed-route-page.charge-station-page .charge-station-stat-card {
   background: rgba(24, 144, 255, 0.08) !important;
   background-image: none !important;
-  border: 1px solid rgba(24, 144, 255, 0.2) !important;
+  border: none !important;
   box-shadow: var(--app-card-shadow) !important;
   border-radius: 12px !important;
 }
 
 /* Charge station page background */
 .app-theme-light .themed-route-page.charge-station-page {
-  background: linear-gradient(180deg, #f0f5ff 0%, #fff 100%) !important;
-  background-color: #fff !important;
+  background: var(--app-bg) !important;
+  background-image: none !important;
 }
 
 .app-theme-dark .themed-route-page.charge-station-page {
   background: #000 !important;
-  background-color: #000 !important;
+  background-image: none !important;
+}
+
+/* Detail drawer action buttons */
+.detail-action-btn {
+  background: linear-gradient(135deg, #1890ff, #096dd9) !important;
+  border: none !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+}
+
+.detail-action-btn-danger {
+  background: linear-gradient(135deg, #ff4d4f, #cf1322) !important;
+}
+
+.app-theme-light .detail-action-btn {
+  color: #000 !important;
+}
+
+.app-theme-light .detail-action-btn-danger {
+  color: #fff !important;
 }
