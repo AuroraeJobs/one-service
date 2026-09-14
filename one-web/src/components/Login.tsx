@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Form, Input, Button, Card, message, Typography } from 'antd';
-import { GithubOutlined, LockOutlined, UserOutlined } from '@ant-design/icons';
+import { GithubOutlined, LockOutlined, UserOutlined, SunOutlined, MoonOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
+import { useAppPreferences } from '../contexts/AppPreferencesContext';
 import LanguageSwitcher from './LanguageSwitcher';
 import './Login.css';
 
@@ -23,6 +24,7 @@ const Login = () => {
   const [form] = Form.useForm();
   const { login } = useAuth();
   const { t, translateText } = useI18n();
+  const { colorMode, onToggleColorMode } = useAppPreferences();
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -183,6 +185,19 @@ const Login = () => {
       </Card>
 
       <LanguageSwitcher className="login-page-language-switcher" />
+      
+      <Button
+        type="text"
+        icon={colorMode === 'dark' ? <SunOutlined /> : <MoonOutlined />}
+        onClick={onToggleColorMode}
+        className="login-theme-toggle"
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          color: colorMode === 'dark' ? 'rgba(255, 255, 255, 0.86)' : 'rgba(0, 0, 0, 0.65)',
+          marginTop: '12px'
+        }}
+      />
     </div>
   );
 };
