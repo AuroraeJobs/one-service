@@ -203,7 +203,7 @@ const Login = () => {
         />
         
         <Popover
-          content={<LanguageSwitcher />}
+          content={<LanguageSwitcher hideIcon hideArrow />}
           trigger="click"
           placement="top"
           overlayClassName="login-language-popover"
