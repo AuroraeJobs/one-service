@@ -4030,7 +4030,7 @@ body {
 }
 
 /* Charge station page cards */
-.app-theme-light .charge-station-card {
+.app-theme-light .themed-route-page.charge-station-page .charge-station-card {
   background-color: #fff !important;
   background-image:
     radial-gradient(circle at 8% 0%, rgba(24, 144, 255, 0.12) 0, rgba(24, 144, 255, 0.06) 16%, transparent 36%),
@@ -4041,7 +4041,7 @@ body {
   border-radius: 12px !important;
 }
 
-.app-theme-dark .charge-station-card {
+.app-theme-dark .themed-route-page.charge-station-page .charge-station-card {
   background: var(--app-surface) !important;
   background-image: none !important;
   border: 1px solid rgba(24, 144, 255, 0.2) !important;
@@ -4050,7 +4050,7 @@ body {
 }
 
 /* Charge station stat cards */
-.app-theme-light .charge-station-stat-card {
+.app-theme-light .themed-route-page.charge-station-page .charge-station-stat-card {
   background-color: #fff !important;
   background-image:
     radial-gradient(circle at 0% 0%, rgba(24, 144, 255, 0.10) 0, rgba(24, 144, 255, 0.04) 16%, transparent 36%),
@@ -4060,7 +4060,7 @@ body {
   border-radius: 12px !important;
 }
 
-.app-theme-dark .charge-station-stat-card {
+.app-theme-dark .themed-route-page.charge-station-page .charge-station-stat-card {
   background: rgba(24, 144, 255, 0.08) !important;
   background-image: none !important;
   border: 1px solid rgba(24, 144, 255, 0.2) !important;
@@ -4069,10 +4069,12 @@ body {
 }
 
 /* Charge station page background */
-.app-theme-light .charge-station-page {
-  background: linear-gradient(180deg, #f5f7fa 0%, #fff 100%) !important;
+.app-theme-light .themed-route-page.charge-station-page {
+  background: linear-gradient(180deg, #f0f5ff 0%, #fff 100%) !important;
+  background-color: #fff !important;
 }
 
-.app-theme-dark .charge-station-page {
+.app-theme-dark .themed-route-page.charge-station-page {
   background: #000 !important;
+  background-color: #000 !important;
 }
