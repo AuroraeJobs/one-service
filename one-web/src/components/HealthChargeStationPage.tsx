@@ -101,6 +101,7 @@ const HealthChargeStationPage: React.FC = () => {
   const [chargeRecords, setChargeRecords] = useState<ChargeRecord[]>([]);
   const [isAddDrawerVisible, setIsAddDrawerVisible] = useState(false);
   const [isEditDrawerVisible, setIsEditDrawerVisible] = useState(false);
+  const [isDetailDrawerVisible, setIsDetailDrawerVisible] = useState(false);
   const [selectedStation, setSelectedStation] = useState<ChargeStation | null>(null);
   const [searchText, setSearchText] = useState('');
   const [searchProvider, setSearchProvider] = useState<string>('');
@@ -398,26 +399,15 @@ const HealthChargeStationPage: React.FC = () => {
                 key={station.id}
                 className="charge-station-card"
                 hoverable
+                onClick={() => {
+                  setSelectedStation(station);
+                  setIsDetailDrawerVisible(true);
+                }}
+                style={{ cursor: 'pointer' }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                   <div style={{ color: '#1890ff', fontSize: '16px', fontWeight: 'bold' }}>
                     {getProviderLabel(station.provider)}
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <Button
-                      type="text"
-                      icon={<EditOutlined />}
-                      onClick={() => handleOpenEdit(station)}
-                      style={{ color: '#1890ff' }}
-                    />
-                    <Popconfirm
-                      title={text.deleteConfirm}
-                      onConfirm={() => station.id && handleDelete(station.id)}
-                      okText={text.ok}
-                      cancelText={text.cancel}
-                    >
-                      <Button type="text" danger icon={<DeleteOutlined />} />
-                    </Popconfirm>
                   </div>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
@@ -576,6 +566,108 @@ const HealthChargeStationPage: React.FC = () => {
             </Button>
           </Form.Item>
         </Form>
+      </Drawer>
+
+      {/* Detail Drawer */}
+      <Drawer
+        title={
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            width: '100%'
+          }}>
+            <div style={{
+              color: textColor,
+              fontSize: '18px',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              {text.stationCode}: {selectedStation?.stationCode}
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <Popconfirm
+                title={text.deleteConfirm}
+                onConfirm={() => {
+                  if (selectedStation) {
+                    handleDelete(selectedStation.id);
+                    setIsDetailDrawerVisible(false);
+                  }
+                }}
+                okText={text.ok}
+                cancelText={text.cancel}
+              >
+                <Button
+                  type="primary"
+                  danger
+                  style={{
+                    background: 'linear-gradient(135deg, #ff4d4f, #cf1322)',
+                    border: 'none',
+                    color: '#fff',
+                    borderRadius: '8px'
+                  }}
+                >
+                  {isEnglish ? 'Delete' : '删除'}
+                </Button>
+              </Popconfirm>
+              <Button
+                type="primary"
+                onClick={() => {
+                  if (selectedStation) {
+                    handleOpenEdit(selectedStation);
+                    setIsDetailDrawerVisible(false);
+                  }
+                }}
+                style={{
+                  background: 'linear-gradient(135deg, #1890ff, #096dd9)',
+                  border: 'none',
+                  color: '#fff',
+                  borderRadius: '8px'
+                }}
+              >
+                {isEnglish ? 'Edit' : '编辑'}
+              </Button>
+            </div>
+          </div>
+        }
+        placement="right"
+        width={400}
+        open={isDetailDrawerVisible}
+        onClose={() => {
+          setIsDetailDrawerVisible(false);
+          setSelectedStation(null);
+        }}
+      >
+        {selectedStation && (
+          <div style={{ color: textColor }}>
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ color: textMuted, fontSize: '12px', marginBottom: '4px' }}>{text.provider}</div>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#1890ff' }}>{getProviderLabel(selectedStation.provider)}</div>
+            </div>
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ color: textMuted, fontSize: '12px', marginBottom: '4px' }}>{text.stationCode}</div>
+              <div style={{ fontSize: '16px', fontWeight: 'bold' }}>{selectedStation.stationCode}</div>
+            </div>
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ color: textMuted, fontSize: '12px', marginBottom: '4px' }}>{text.location}</div>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#52c41a' }}>{selectedStation.location}</div>
+            </div>
+            {selectedStation.stationName && (
+              <div style={{ marginBottom: '24px' }}>
+                <div style={{ color: textMuted, fontSize: '12px', marginBottom: '4px' }}>{text.stationName}</div>
+                <div style={{ fontSize: '16px', fontWeight: 'bold' }}>{selectedStation.stationName}</div>
+              </div>
+            )}
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ color: textMuted, fontSize: '12px', marginBottom: '4px' }}>{text.lastChargeAt}</div>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#ffc53d' }}>
+                {selectedStation.lastChargeAt ? dayjs(selectedStation.lastChargeAt).format('YYYY-MM-DD HH:mm') : text.neverCharged}
+              </div>
+            </div>
+          </div>
+        )}
       </Drawer>
       </div>
     </div>
