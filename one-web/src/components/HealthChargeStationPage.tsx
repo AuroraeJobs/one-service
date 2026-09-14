@@ -124,8 +124,17 @@ const HealthChargeStationPage: React.FC = () => {
       return Promise.resolve();
     }
     
+    // 验证格式：3位数字
+    if (!/^\d{3}$/.test(value)) {
+      return Promise.reject(new Error(isEnglish ? 'Must be 3 digits' : '必须是3位数字'));
+    }
+    
+    // 验证是否已存在
+    const providerCode = getProviderCode(addForm.getFieldValue('provider'));
+    const fullStationCode = `${providerCode}-${value}`;
+    
     try {
-      await chargeStationApi.findByStationCode(value);
+      await chargeStationApi.findByStationCode(fullStationCode);
       return Promise.reject(new Error(text.codeExists));
     } catch {
       return Promise.resolve();
@@ -137,12 +146,22 @@ const HealthChargeStationPage: React.FC = () => {
       return Promise.resolve();
     }
     
-    if (value === selectedStation.stationCode) {
+    // 验证格式：3位数字
+    if (!/^\d{3}$/.test(value)) {
+      return Promise.reject(new Error(isEnglish ? 'Must be 3 digits' : '必须是3位数字'));
+    }
+    
+    // 如果编码没变，直接通过
+    const providerCode = getProviderCode(editForm.getFieldValue('provider'));
+    const fullStationCode = `${providerCode}-${value}`;
+    
+    if (fullStationCode === selectedStation.stationCode) {
       return Promise.resolve();
     }
     
+    // 验证是否已存在
     try {
-      await chargeStationApi.findByStationCode(value);
+      await chargeStationApi.findByStationCode(fullStationCode);
       return Promise.reject(new Error(text.codeExists));
     } catch {
       return Promise.resolve();
@@ -599,9 +618,15 @@ const HealthChargeStationPage: React.FC = () => {
               ]}
             >
               <Input 
-                placeholder={text.codeRequired}
+                placeholder={isEnglish ? '3 digits (e.g., 001)' : '3位数字（如 001）'}
                 addonBefore={watchAddProvider ? getProviderCode(watchAddProvider) + '-' : undefined}
                 disabled={!watchAddProvider}
+                maxLength={3}
+                onInput={(e) => {
+                  // 只允许输入数字
+                  const target = e.target as HTMLInputElement;
+                  target.value = target.value.replace(/\D/g, '').slice(0, 3);
+                }}
               />
             </Form.Item>
             <Form.Item
@@ -637,9 +662,10 @@ const HealthChargeStationPage: React.FC = () => {
               ]}
             >
               <Input 
-                placeholder={text.codeRequired}
+                placeholder={isEnglish ? '3 digits (e.g., 001)' : '3位数字（如 001）'}
                 addonBefore={watchEditProvider ? getProviderCode(watchEditProvider) + '-' : undefined}
                 disabled
+                maxLength={3}
               />
             </Form.Item>
             <Form.Item
