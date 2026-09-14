@@ -4141,20 +4141,59 @@ body {
 
 /* Right-side drawer floating effect */
 .ant-drawer-right .ant-drawer-content-wrapper {
-  margin: 16px 16px 16px 0 !important;
-  border-radius: 16px 0 0 16px !important;
+  margin: 16px !important;
+  border-radius: 16px !important;
   overflow: hidden !important;
-  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
 }
 
 .ant-drawer-right .ant-drawer-content {
-  border-radius: 16px 0 0 16px !important;
+  border-radius: 16px !important;
 }
 
 :root[data-theme='light'] .ant-drawer-right .ant-drawer-content-wrapper {
-  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
 }
 
 :root[data-theme='dark'] .ant-drawer-right .ant-drawer-content-wrapper {
-  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.4) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Drawer close button - circular background */
+.ant-drawer-close {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  transition: all 0.2s ease !important;
+}
+
+:root[data-theme='dark'] .ant-drawer-close {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+}
+
+:root[data-theme='light'] .ant-drawer-close {
+  background: rgba(0, 0, 0, 0.06) !important;
+  color: #333 !important;
+}
+
+.ant-drawer-close:hover {
+  transform: scale(1.1) !important;
+}
+
+:root[data-theme='dark'] .ant-drawer-close:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+:root[data-theme='light'] .ant-drawer-close:hover {
+  background: rgba(0, 0, 0, 0.1) !important;
+}
+
+.ant-drawer-close .anticon {
+  font-size: 14px !important;
 }
