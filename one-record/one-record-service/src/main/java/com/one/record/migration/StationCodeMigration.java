@@ -17,6 +17,7 @@ import java.util.Map;
 /**
  * 充电站编码迁移脚本
  * 为每个充电站的stationCode添加提供商前缀
+ * 格式：3字母前缀 + 3位数字（如 TSL001）
  */
 @Slf4j
 @Component
@@ -41,11 +42,17 @@ public class StationCodeMigration implements CommandLineRunner {
         List<ChargeStation> stations = stationRepository.findAll();
         log.info("找到 {} 个充电站", stations.size());
         
-        // 2. 创建旧编码到新编码的映射
-        Map<String, String> codeMapping = new HashMap<>();
+        // 2. 按提供商分组，生成新的编码
+        Map<String, Integer> providerCounters = new HashMap<>();
+        Map<String, String> codeMapping = new HashMap<>(); // 旧编码 -> 新编码
         
         int updatedStations = 0;
         int updatedRecords = 0;
+        
+        // 先为每个提供商初始化计数器
+        for (ChargeProvider provider : ChargeProvider.values()) {
+            providerCounters.put(provider.name(), 1);
+        }
         
         for (ChargeStation station : stations) {
             String oldCode = station.getStationCode();
@@ -58,17 +65,37 @@ public class StationCodeMigration implements CommandLineRunner {
             }
             
             // 获取提供商前缀
-            ChargeProvider chargeProvider = ChargeProvider.valueOf(provider);
-            String prefix = chargeProvider.getCode();
-            
-            // 检查是否已经包含前缀
-            if (oldCode.startsWith(prefix)) {
-                log.info("充电站编码已包含前缀，跳过: {}", oldCode);
+            ChargeProvider chargeProvider;
+            try {
+                chargeProvider = ChargeProvider.valueOf(provider);
+            } catch (IllegalArgumentException e) {
+                log.warn("未知的提供商: {}，跳过充电站: {}", provider, oldCode);
                 continue;
             }
             
-            // 生成新编码: 前缀+原始编码（无横杠）
-            String newCode = prefix + oldCode;
+            String prefix = chargeProvider.getCode();
+            
+            // 检查是否已经符合新格式（3字母+3数字）
+            if (oldCode.matches("^" + prefix + "\\d{3}$")) {
+                log.info("充电站编码已符合新格式，跳过: {}", oldCode);
+                // 但仍然需要更新计数器
+                String numStr = oldCode.substring(prefix.length());
+                try {
+                    int num = Integer.parseInt(numStr);
+                    Integer currentMax = providerCounters.get(provider);
+                    if (currentMax != null && num >= currentMax) {
+                        providerCounters.put(provider, num + 1);
+                    }
+                } catch (NumberFormatException e) {
+                    // 忽略
+                }
+                continue;
+            }
+            
+            // 生成新编码：前缀 + 3位数字
+            int counter = providerCounters.get(provider);
+            String newCode = prefix + String.format("%03d", counter);
+            providerCounters.put(provider, counter + 1);
             
             // 记录映射关系
             codeMapping.put(oldCode, newCode);
@@ -108,5 +135,11 @@ public class StationCodeMigration implements CommandLineRunner {
         }
         
         log.info("迁移完成！充电站: {} 个，充电记录: {} 条", updatedStations, updatedRecords);
+        
+        // 4. 打印迁移结果摘要
+        log.info("\n=== 迁移结果摘要 ===");
+        log.info("旧编码 -> 新编码 映射:");
+        codeMapping.forEach((oldCode, newCode) -> 
+            log.info("  {} -> {}", oldCode, newCode));
     }
 }
