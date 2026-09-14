@@ -1103,12 +1103,7 @@ const HealthSpringEquinoxPage: React.FC = () => {
                       form.resetFields();
                       setDetailModalVisible(true);
                     }}
-                    style={{
-                      color: '#fff',
-                      background: 'rgba(255, 255, 255, 0.1)',
-                      border: '1px solid #444',
-                      borderRadius: '8px'
-                    }}
+                    className="detail-action-btn-cancel"
                   >
                     {text.cancel}
                   </Button>
@@ -1116,11 +1111,7 @@ const HealthSpringEquinoxPage: React.FC = () => {
                 <Button
                   type="primary"
                   onClick={() => form.submit()}
-                  style={{
-                    background: 'linear-gradient(135deg, #52c41a, #389e0d)',
-                    border: 'none',
-                    borderRadius: '8px'
-                  }}
+                  className="detail-action-btn-save"
                 >
                   {text.save}
                 </Button>
