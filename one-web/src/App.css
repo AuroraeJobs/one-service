@@ -3252,6 +3252,32 @@ body {
   justify-self: end;
 }
 
+.record-list-add-button.ant-btn {
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: var(--record-list-accent-gradient) !important;
+  background-color: transparent !important;
+  box-shadow: var(--record-list-accent-shadow) !important;
+  color: #fff !important;
+}
+
+.record-list-add-button.ant-btn::before {
+  display: none !important;
+}
+
+.record-list-add-button.ant-btn:hover {
+  opacity: 0.85 !important;
+  color: #fff !important;
+}
+
+.charge-station-add-wrapper {
+  position: absolute;
+  right: 20px;
+}
+
 .record-list-empty {
   padding: 60px 20px;
   color: var(--app-text-muted);

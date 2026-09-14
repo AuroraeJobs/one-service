@@ -59,7 +59,7 @@ const RecordCardList = <T,>({
   return (
     <section
       className="record-list-panel"
-      style={{ '--record-list-accent': accent } as CSSProperties}
+      style={{ '--record-list-accent': accent, '--record-list-accent-gradient': addButtonBackground, '--record-list-accent-shadow': addButtonShadow } as CSSProperties}
     >
       <div className="record-list-toolbar">
         <div className="record-list-toolbar-spacer" />
@@ -71,16 +71,6 @@ const RecordCardList = <T,>({
           size="small"
           aria-label={addLabel}
           title={addLabel}
-          style={{
-            width: 32,
-            height: 32,
-            padding: 0,
-            border: 0,
-            borderRadius: '50%',
-            background: addButtonBackground,
-            boxShadow: addButtonShadow,
-            color: '#fff'
-          }}
         />
       </div>
 

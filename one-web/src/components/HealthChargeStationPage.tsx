@@ -388,21 +388,15 @@ const HealthChargeStationPage: React.FC = () => {
             onChange={(e) => setSearchText(e.target.value)}
             style={{ width: 300 }}
           />
-          <div style={{ position: 'absolute', right: '20px' }}>
+          <div
+            className="charge-station-add-wrapper"
+            style={{ '--record-list-accent-gradient': 'linear-gradient(135deg, #1890ff, #096dd9)', '--record-list-accent-shadow': '0 2px 8px rgba(24, 144, 255, 0.4)' } as React.CSSProperties}
+          >
             <Button
+              className="record-list-add-button"
               icon={<PlusOutlined />}
               onClick={() => setIsAddDrawerVisible(true)}
               size="small"
-              style={{
-                height: '32px',
-                width: '32px',
-                borderRadius: '50%',
-                padding: 0,
-                border: 0,
-                background: 'linear-gradient(135deg, #1890ff, #096dd9)',
-                boxShadow: '0 2px 8px rgba(24, 144, 255, 0.4)',
-                color: '#fff'
-              }}
             />
           </div>
         </div>
