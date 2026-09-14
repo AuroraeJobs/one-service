@@ -402,3 +402,11 @@
 .login-language-popover .ant-popover-arrow {
   display: none;
 }
+
+.app-theme-light .login-language-popover .ant-popover-inner {
+  background: #fff;
+}
+
+.app-theme-dark .login-language-popover .ant-popover-inner {
+  background: #1d1d1f;
+}

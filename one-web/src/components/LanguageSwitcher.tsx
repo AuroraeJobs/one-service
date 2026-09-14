@@ -1,4 +1,5 @@
 import { useI18n } from '../contexts/I18nContext';
+import { useAppPreferences } from '../contexts/AppPreferencesContext';
 
 interface LanguageSwitcherProps {
   className?: string;
@@ -8,6 +9,11 @@ interface LanguageSwitcherProps {
 
 const LanguageSwitcher = ({ className, hideIcon = false, hideArrow = false }: LanguageSwitcherProps) => {
   const { locale, setLanguage, supportedLocales, t } = useI18n();
+  const { colorMode } = useAppPreferences();
+  
+  const isDark = colorMode === 'dark';
+  const textColor = isDark ? 'rgba(255, 255, 255, 0.87)' : '#333';
+  const hoverBg = isDark ? 'rgba(255, 255, 255, 0.1)' : '#f5f5f5';
 
   if (hideIcon && hideArrow) {
     return (
@@ -21,14 +27,14 @@ const LanguageSwitcher = ({ className, hideIcon = false, hideArrow = false }: La
               cursor: 'pointer',
               borderRadius: '6px',
               backgroundColor: locale.code === option.code ? '#1890ff' : 'transparent',
-              color: locale.code === option.code ? '#fff' : '#333',
+              color: locale.code === option.code ? '#fff' : textColor,
               transition: 'all 0.2s',
               marginBottom: '4px',
               whiteSpace: 'nowrap'
             }}
             onMouseEnter={(e) => {
               if (locale.code !== option.code) {
-                e.currentTarget.style.backgroundColor = '#f5f5f5';
+                e.currentTarget.style.backgroundColor = hoverBg;
               }
             }}
             onMouseLeave={(e) => {
@@ -55,13 +61,13 @@ const LanguageSwitcher = ({ className, hideIcon = false, hideArrow = false }: La
             cursor: 'pointer',
             borderRadius: '6px',
             backgroundColor: locale.code === option.code ? '#1890ff' : 'transparent',
-            color: locale.code === option.code ? '#fff' : '#333',
+            color: locale.code === option.code ? '#fff' : textColor,
             transition: 'all 0.2s',
             marginBottom: '4px'
           }}
           onMouseEnter={(e) => {
             if (locale.code !== option.code) {
-              e.currentTarget.style.backgroundColor = '#f5f5f5';
+              e.currentTarget.style.backgroundColor = hoverBg;
             }
           }}
           onMouseLeave={(e) => {
