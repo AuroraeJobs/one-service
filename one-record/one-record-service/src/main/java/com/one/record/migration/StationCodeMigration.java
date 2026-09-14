@@ -62,13 +62,13 @@ public class StationCodeMigration implements CommandLineRunner {
             String prefix = chargeProvider.getCode();
             
             // 检查是否已经包含前缀
-            if (oldCode.startsWith(prefix + "-")) {
+            if (oldCode.startsWith(prefix)) {
                 log.info("充电站编码已包含前缀，跳过: {}", oldCode);
                 continue;
             }
             
-            // 生成新编码: 前缀-原始编码
-            String newCode = prefix + "-" + oldCode;
+            // 生成新编码: 前缀+原始编码（无横杠）
+            String newCode = prefix + oldCode;
             
             // 记录映射关系
             codeMapping.put(oldCode, newCode);

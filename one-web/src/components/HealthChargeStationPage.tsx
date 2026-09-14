@@ -131,7 +131,7 @@ const HealthChargeStationPage: React.FC = () => {
     
     // 验证是否已存在
     const providerCode = getProviderCode(addForm.getFieldValue('provider'));
-    const fullStationCode = `${providerCode}-${value}`;
+    const fullStationCode = `${providerCode}${value}`;
     
     try {
       await chargeStationApi.findByStationCode(fullStationCode);
@@ -153,7 +153,7 @@ const HealthChargeStationPage: React.FC = () => {
     
     // 如果编码没变，直接通过
     const providerCode = getProviderCode(editForm.getFieldValue('provider'));
-    const fullStationCode = `${providerCode}-${value}`;
+    const fullStationCode = `${providerCode}${value}`;
     
     if (fullStationCode === selectedStation.stationCode) {
       return Promise.resolve();
@@ -264,9 +264,9 @@ const HealthChargeStationPage: React.FC = () => {
 
   const handleAdd = async (values: ChargeStationFormValues) => {
     try {
-      // 自动生成完整的站点编码：前缀-用户输入
+      // 自动生成完整的站点编码：前缀+用户输入（无横杠）
       const providerCode = getProviderCode(values.provider);
-      const fullStationCode = providerCode ? `${providerCode}-${values.stationCode}` : values.stationCode;
+      const fullStationCode = providerCode ? `${providerCode}${values.stationCode}` : values.stationCode;
       
       await chargeStationApi.save({
         ...values,
@@ -619,7 +619,7 @@ const HealthChargeStationPage: React.FC = () => {
             >
               <Input 
                 placeholder={isEnglish ? '3 digits (e.g., 001)' : '3位数字（如 001）'}
-                addonBefore={watchAddProvider ? getProviderCode(watchAddProvider) + '-' : undefined}
+                addonBefore={watchAddProvider ? getProviderCode(watchAddProvider) : undefined}
                 disabled={!watchAddProvider}
                 maxLength={3}
                 onInput={(e) => {
@@ -663,7 +663,7 @@ const HealthChargeStationPage: React.FC = () => {
             >
               <Input 
                 placeholder={isEnglish ? '3 digits (e.g., 001)' : '3位数字（如 001）'}
-                addonBefore={watchEditProvider ? getProviderCode(watchEditProvider) + '-' : undefined}
+                addonBefore={watchEditProvider ? getProviderCode(watchEditProvider) : undefined}
                 disabled
                 maxLength={3}
               />
