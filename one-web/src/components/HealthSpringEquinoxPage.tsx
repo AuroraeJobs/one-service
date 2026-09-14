@@ -899,7 +899,7 @@ const HealthSpringEquinoxPage: React.FC = () => {
             header: { backgroundColor: '#000', borderBottom: '1px solid rgba(24, 144, 255, 0.2)' }
           }}
         >
-          {isEditing ? (
+          {(!isEditing && selectedRecord) ? (
             <Form
               form={form}
               layout="vertical"
@@ -1176,7 +1176,7 @@ const HealthSpringEquinoxPage: React.FC = () => {
                 </Form.Item>
               </div>
             </Form>
-          ) : selectedRecord ? (
+          ) : (
             <div>
               <div style={{
                 marginBottom: '20px',
@@ -1352,7 +1352,7 @@ const HealthSpringEquinoxPage: React.FC = () => {
                 </div>
               )}
             </div>
-          ) : null}
+          )}
         </Drawer>
       </div>
     </div>
