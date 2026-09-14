@@ -3253,10 +3253,10 @@ body {
 }
 
 .app-theme-light .record-list-add-button.ant-btn-primary {
-  background: color-mix(in srgb, var(--record-list-accent) 10%, white) !important;
-  border: 1px solid color-mix(in srgb, var(--record-list-accent) 28%, transparent) !important;
-  box-shadow: 0 8px 20px color-mix(in srgb, var(--record-list-accent) 14%, transparent) !important;
-  color: var(--record-list-accent) !important;
+  background: var(--record-list-accent-gradient, linear-gradient(135deg, #1890ff, #096dd9)) !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  color: #fff !important;
 }
 
 .record-list-empty {
