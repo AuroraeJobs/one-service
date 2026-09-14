@@ -308,8 +308,11 @@ const HealthChargeStationPage: React.FC = () => {
             {providerStats.map(stat => (
               <Card
                 key={stat.provider}
-                className="charge-station-stat-card"
+                className={`charge-station-stat-card ${searchProvider === stat.provider ? 'charge-station-stat-card-active' : ''}`}
                 bodyStyle={{ padding: '16px' }}
+                hoverable
+                onClick={() => setSearchProvider(searchProvider === stat.provider ? '' : stat.provider)}
+                style={{ cursor: 'pointer' }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                   <div style={{ color: '#1890ff', fontSize: '16px', fontWeight: 'bold' }}>

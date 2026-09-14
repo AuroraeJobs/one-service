@@ -4067,6 +4067,20 @@ body {
   border: none !important;
   box-shadow: var(--app-card-shadow) !important;
   border-radius: 12px !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Active stat card when filtering */
+.charge-station-stat-card-active {
+  transform: scale(0.98) !important;
+}
+
+:root[data-theme='light'] .charge-station-stat-card-active {
+  box-shadow: 0 0 0 2px #1890ff !important;
+}
+
+:root[data-theme='dark'] .charge-station-stat-card-active {
+  box-shadow: 0 0 0 2px #1890ff !important;
 }
 
 /* Charge station page background */
