@@ -4103,6 +4103,11 @@ body {
   color: #333 !important;
 }
 
+:root[data-theme='light'] .detail-action-btn-cancel {
+  background: #f0f0f0 !important;
+  color: #333 !important;
+}
+
 .detail-action-btn-save {
   background: linear-gradient(135deg, #52c41a, #389e0d) !important;
   border: none !important;
@@ -4114,10 +4119,22 @@ body {
   color: #000 !important;
 }
 
+:root[data-theme='light'] .detail-action-btn {
+  color: #000 !important;
+}
+
 .app-theme-light .detail-action-btn-danger {
   color: #fff !important;
 }
 
+:root[data-theme='light'] .detail-action-btn-danger {
+  color: #fff !important;
+}
+
 .app-theme-light .detail-action-btn-save {
+  color: #fff !important;
+}
+
+:root[data-theme='light'] .detail-action-btn-save {
   color: #fff !important;
 }
