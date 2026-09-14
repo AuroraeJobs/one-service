@@ -391,6 +391,12 @@
 
 .login-language-popover .ant-popover-inner {
   padding: 8px;
+  min-width: auto;
+}
+
+.login-language-popover .ant-popover-inner-content {
+  padding: 0;
+  min-width: auto;
 }
 
 .login-language-popover .ant-popover-arrow {

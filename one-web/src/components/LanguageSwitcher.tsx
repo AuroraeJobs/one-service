@@ -11,7 +11,7 @@ const LanguageSwitcher = ({ className, hideIcon = false, hideArrow = false }: La
 
   if (hideIcon && hideArrow) {
     return (
-      <div className={className} style={{ minWidth: 120 }}>
+      <div className={className} style={{ width: 'fit-content' }}>
         {supportedLocales.map(option => (
           <div
             key={option.code}
@@ -23,7 +23,8 @@ const LanguageSwitcher = ({ className, hideIcon = false, hideArrow = false }: La
               backgroundColor: locale.code === option.code ? '#1890ff' : 'transparent',
               color: locale.code === option.code ? '#fff' : '#333',
               transition: 'all 0.2s',
-              marginBottom: '4px'
+              marginBottom: '4px',
+              whiteSpace: 'nowrap'
             }}
             onMouseEnter={(e) => {
               if (locale.code !== option.code) {
