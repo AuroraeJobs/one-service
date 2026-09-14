@@ -3252,13 +3252,6 @@ body {
   justify-self: end;
 }
 
-.app-theme-light .record-list-add-button.ant-btn-primary {
-  background: var(--record-list-accent-gradient, linear-gradient(135deg, #1890ff, #096dd9)) !important;
-  border: none !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
-  color: #fff !important;
-}
-
 .record-list-empty {
   padding: 60px 20px;
   color: var(--app-text-muted);
