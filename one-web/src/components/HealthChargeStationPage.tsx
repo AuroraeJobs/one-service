@@ -630,12 +630,21 @@ const HealthChargeStationPage: React.FC = () => {
             <Form.Item
               name="stationCode"
               label={text.stationCode}
-              rules={[{ required: true, message: text.codeRequired }]}
+              rules={[
+                { required: true, message: text.codeRequired },
+                { validator: validateStationCode }
+              ]}
             >
               <Input 
                 placeholder={isEnglish ? 'Auto-generated' : '自动生成'}
                 addonBefore={watchAddProvider ? getProviderCode(watchAddProvider) : undefined}
-                disabled
+                disabled={!watchAddProvider}
+                maxLength={3}
+                onInput={(e) => {
+                  // 只允许输入数字
+                  const target = e.target as HTMLInputElement;
+                  target.value = target.value.replace(/\D/g, '').slice(0, 3);
+                }}
               />
             </Form.Item>
             <Form.Item
