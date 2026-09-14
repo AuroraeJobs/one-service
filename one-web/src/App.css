@@ -4116,11 +4116,11 @@ body {
 }
 
 .app-theme-light .detail-action-btn {
-  color: #000 !important;
+  color: #fff !important;
 }
 
 :root[data-theme='light'] .detail-action-btn {
-  color: #000 !important;
+  color: #fff !important;
 }
 
 .app-theme-light .detail-action-btn-danger {
