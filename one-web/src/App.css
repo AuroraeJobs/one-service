@@ -4138,3 +4138,23 @@ body {
 :root[data-theme='light'] .detail-action-btn-save {
   color: #fff !important;
 }
+
+/* Right-side drawer floating effect */
+.ant-drawer-right .ant-drawer-content-wrapper {
+  margin: 16px 16px 16px 0 !important;
+  border-radius: 16px 0 0 16px !important;
+  overflow: hidden !important;
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.15) !important;
+}
+
+.ant-drawer-right .ant-drawer-content {
+  border-radius: 16px 0 0 16px !important;
+}
+
+:root[data-theme='light'] .ant-drawer-right .ant-drawer-content-wrapper {
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.12) !important;
+}
+
+:root[data-theme='dark'] .ant-drawer-right .ant-drawer-content-wrapper {
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.4) !important;
+}
