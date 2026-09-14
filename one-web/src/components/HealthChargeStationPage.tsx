@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Form, Input, Select, Button, Popconfirm, message, Drawer } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { chargeStationApi, chargeRecordApi } from '../services/api';
 import type { ChargeRecord } from '../services/api';
 import { useAppPreferences } from '../contexts/AppPreferencesContext';
@@ -17,6 +17,7 @@ interface ChargeStation {
   location: string;
   stationCode: string;
   stationName?: string;
+  lastChargeAt?: number;
   createdAt?: number;
   updatedAt?: number;
 }
@@ -465,7 +466,7 @@ const HealthChargeStationPage: React.FC = () => {
               <Popconfirm
                 title={text.deleteConfirm}
                 onConfirm={() => {
-                  if (selectedStation) {
+                  if (selectedStation && selectedStation.id) {
                     handleDelete(selectedStation.id);
                     setDrawerVisible(false);
                   }

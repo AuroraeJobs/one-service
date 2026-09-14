@@ -350,6 +350,7 @@ const HealthSpringEquinoxPage: React.FC = () => {
         startTime: startTime,
         endTime: endTime,
         location: values.location,
+        chargerType: values.provider || '',
         chargeDuration: values.chargeDuration,
         chargeAmount: values.chargeAmount,
         batteryCapacity: values.batteryCapacity,
@@ -1034,7 +1035,7 @@ const HealthSpringEquinoxPage: React.FC = () => {
                           if (currentLocation) {
                             const locationExists = locations.some(loc => loc.value === currentLocation && loc.provider === value);
                             if (!locationExists) {
-                              form.setFieldsValues({ location: undefined });
+                              form.setFieldsValue({ location: undefined });
                             }
                           }
                         }}
@@ -1058,7 +1059,7 @@ const HealthSpringEquinoxPage: React.FC = () => {
                         onChange={(value) => {
                           const selectedLocation = locations.find(loc => loc.value === value);
                           if (selectedLocation?.provider) {
-                            form.setFieldsValues({ provider: selectedLocation.provider });
+                            form.setFieldsValue({ provider: selectedLocation.provider });
                           }
                         }}
                       >
@@ -1178,6 +1179,8 @@ const HealthSpringEquinoxPage: React.FC = () => {
             </Form>
           ) : (
             <div>
+              {selectedRecord && (
+              <div>
               <div style={{
                 marginBottom: '20px',
                 padding: '16px',
@@ -1350,6 +1353,8 @@ const HealthSpringEquinoxPage: React.FC = () => {
                     {selectedRecord.notes}
                   </div>
                 </div>
+              )}
+              </div>
               )}
             </div>
           )}
