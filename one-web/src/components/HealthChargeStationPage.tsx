@@ -57,7 +57,9 @@ const errorMessage = (error: unknown, fallback: string) => {
 };
 
 const HealthChargeStationPage: React.FC = () => {
-  const { isEnglish } = useAppPreferences();
+  const { isEnglish, colorMode } = useAppPreferences();
+  const textColor = colorMode === 'dark' ? '#fff' : '#1a1a2e';
+  const textMuted = colorMode === 'dark' ? '#999' : '#666';
   const text = {
     stationUnit: isEnglish ? 'stations' : '个站点',
     chargeCount: isEnglish ? 'Sessions' : '充电次数',
@@ -286,9 +288,8 @@ const HealthChargeStationPage: React.FC = () => {
   });
 
   return (
-    <div className="themed-route-page health-fitness-page" style={{
+    <div className="themed-route-page health-fitness-page charge-station-page" style={{
       padding: '84px 20px 100px 20px', 
-      backgroundColor: '#000', 
       minHeight: '100vh'
     }}>
       <div style={{
@@ -307,11 +308,7 @@ const HealthChargeStationPage: React.FC = () => {
             {providerStats.map(stat => (
               <Card
                 key={stat.provider}
-                style={{
-                  backgroundColor: 'rgba(24, 144, 255, 0.08)',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(24, 144, 255, 0.2)'
-                }}
+                className="charge-station-stat-card"
                 bodyStyle={{ padding: '16px' }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
@@ -332,19 +329,19 @@ const HealthChargeStationPage: React.FC = () => {
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#999', fontSize: '12px' }}>{text.chargeCount}</span>
-                    <span style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>{stat.chargeCount}{text.chargeCountUnit}</span>
+                    <span style={{ color: textMuted, fontSize: '12px' }}>{text.chargeCount}</span>
+                    <span style={{ color: textColor, fontSize: '14px', fontWeight: 'bold' }}>{stat.chargeCount}{text.chargeCountUnit}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#999', fontSize: '12px' }}>{text.energy}</span>
+                    <span style={{ color: textMuted, fontSize: '12px' }}>{text.energy}</span>
                     <span style={{ color: '#52c41a', fontSize: '14px', fontWeight: 'bold' }}>{stat.totalAmount.toFixed(2)}kWh</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#999', fontSize: '12px' }}>{text.totalCost}</span>
+                    <span style={{ color: textMuted, fontSize: '12px' }}>{text.totalCost}</span>
                     <span style={{ color: '#faad14', fontSize: '14px', fontWeight: 'bold' }}>¥{stat.totalCost.toFixed(2)}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#999', fontSize: '12px' }}>{text.avgPrice}</span>
+                    <span style={{ color: textMuted, fontSize: '12px' }}>{text.avgPrice}</span>
                     <span style={{ color: '#1890ff', fontSize: '14px', fontWeight: 'bold' }}>¥{stat.avgPrice.toFixed(2)}/kWh</span>
                   </div>
                 </div>
@@ -386,7 +383,7 @@ const HealthChargeStationPage: React.FC = () => {
           <div style={{
             textAlign: 'center', 
             padding: '60px 20px',
-            color: '#666'
+            color: textMuted
           }}>
             {text.noStations}
           </div>
@@ -399,12 +396,7 @@ const HealthChargeStationPage: React.FC = () => {
             {filteredStations.map((station) => (
               <Card
                 key={station.id}
-                style={{
-                  backgroundColor: 'rgba(24, 144, 255, 0.08)',
-                  borderRadius: '12px',
-                  borderBottom: '1px solid rgba(24, 144, 255, 0.2)',
-                  transition: 'all 0.3s ease'
-                }}
+                className="charge-station-card"
                 hoverable
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
@@ -430,19 +422,19 @@ const HealthChargeStationPage: React.FC = () => {
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
                   <div>
-                    <div style={{ color: '#999', fontSize: '12px' }}>{text.stationCode}</div>
-                    <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
+                    <div style={{ color: textMuted, fontSize: '12px' }}>{text.stationCode}</div>
+                    <div style={{ color: textColor, fontSize: '14px', fontWeight: 'bold' }}>
                       {station.stationCode}
                     </div>
                   </div>
                   <div>
-                    <div style={{ color: '#999', fontSize: '12px' }}>{text.location}</div>
+                    <div style={{ color: textMuted, fontSize: '12px' }}>{text.location}</div>
                     <div style={{ color: '#52c41a', fontSize: '14px', fontWeight: 'bold' }}>
                       {station.location}
                     </div>
                   </div>
                   <div>
-                    <div style={{ color: '#999', fontSize: '12px' }}>{text.lastChargeAt}</div>
+                    <div style={{ color: textMuted, fontSize: '12px' }}>{text.lastChargeAt}</div>
                     <div style={{ color: '#ffc53d', fontSize: '12px' }}>
                       {station.lastChargeAt ? dayjs(station.lastChargeAt).format('YYYY-MM-DD HH:mm') : text.neverCharged}
                     </div>
