@@ -507,7 +507,41 @@ const HealthChargeStationPage: React.FC = () => {
       </Drawer>
 
       <Drawer
-        title={text.editStation}
+        title={
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            width: '100%'
+          }}>
+            <div style={{
+              color: textColor,
+              fontSize: '18px',
+              fontWeight: 'bold'
+            }}>
+              {text.editStation}
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <Button
+                onClick={() => {
+                  setIsEditDrawerVisible(false);
+                  editForm.resetFields();
+                  setSelectedStation(null);
+                }}
+                className="detail-action-btn-cancel"
+              >
+                {text.cancel}
+              </Button>
+              <Button
+                type="primary"
+                onClick={() => editForm.submit()}
+                className="detail-action-btn-save"
+              >
+                {text.save}
+              </Button>
+            </div>
+          </div>
+        }
         placement="right"
         width={400}
         open={isEditDrawerVisible}
@@ -516,13 +550,8 @@ const HealthChargeStationPage: React.FC = () => {
           editForm.resetFields();
           setSelectedStation(null);
         }}
-        styles={{
-          body: { backgroundColor: '#000' },
-          header: { backgroundColor: '#000', borderBottom: '1px solid rgba(24, 144, 255, 0.2)' },
-          mask: { backgroundColor: 'rgba(0, 0, 0, 0.7)' }
-        }}
       >
-        <Form form={editForm} layout="vertical" onFinish={handleEdit} style={{ color: '#fff' }}>
+        <Form form={editForm} layout="vertical" onFinish={handleEdit} style={{ color: textColor }}>
           <Form.Item
             name="provider"
             label={text.provider}
@@ -552,18 +581,6 @@ const HealthChargeStationPage: React.FC = () => {
             label={text.stationName}
           >
             <Input placeholder={text.stationNamePlaceholder} />
-          </Form.Item>
-          <Form.Item style={{ marginTop: '24px', textAlign: 'right' }}>
-            <Button
-              type="primary"
-              htmlType="submit"
-              style={{
-                background: 'linear-gradient(135deg, #1890ff, #096dd9)',
-                boxShadow: '0 2px 8px rgba(24, 144, 255, 0.4)'
-              }}
-            >
-              {text.save}
-            </Button>
           </Form.Item>
         </Form>
       </Drawer>
