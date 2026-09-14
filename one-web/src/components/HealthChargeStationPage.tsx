@@ -108,6 +108,16 @@ const HealthChargeStationPage: React.FC = () => {
 
   const [addForm] = Form.useForm();
   const [editForm] = Form.useForm();
+  
+  // 监听提供商变化，自动生成站点编码前缀
+  const watchAddProvider = Form.useWatch('provider', addForm);
+  const watchEditProvider = Form.useWatch('provider', editForm);
+  
+  // 获取当前提供商的编码前缀
+  const getProviderCode = (providerValue: string) => {
+    const provider = providers.find(p => p.value === providerValue);
+    return provider?.code || '';
+  };
 
   const validateStationCode = async (_: unknown, value: string) => {
     if (!value) {
@@ -235,7 +245,14 @@ const HealthChargeStationPage: React.FC = () => {
 
   const handleAdd = async (values: ChargeStationFormValues) => {
     try {
-      await chargeStationApi.save(values);
+      // 自动生成完整的站点编码：前缀-用户输入
+      const providerCode = getProviderCode(values.provider);
+      const fullStationCode = providerCode ? `${providerCode}-${values.stationCode}` : values.stationCode;
+      
+      await chargeStationApi.save({
+        ...values,
+        stationCode: fullStationCode
+      });
       message.success(text.addSuccess);
       setDrawerVisible(false);
       addForm.resetFields();
@@ -581,7 +598,11 @@ const HealthChargeStationPage: React.FC = () => {
                 { validator: validateStationCode }
               ]}
             >
-              <Input placeholder={text.codeRequired} />
+              <Input 
+                placeholder={text.codeRequired}
+                addonBefore={watchAddProvider ? getProviderCode(watchAddProvider) + '-' : undefined}
+                disabled={!watchAddProvider}
+              />
             </Form.Item>
             <Form.Item
               name="stationName"
@@ -615,7 +636,11 @@ const HealthChargeStationPage: React.FC = () => {
                 { validator: validateStationCodeEdit }
               ]}
             >
-              <Input placeholder={text.codeRequired} />
+              <Input 
+                placeholder={text.codeRequired}
+                addonBefore={watchEditProvider ? getProviderCode(watchEditProvider) + '-' : undefined}
+                disabled
+              />
             </Form.Item>
             <Form.Item
               name="stationName"

@@ -13,4 +13,5 @@ public class ChargeProviderDTO {
     
     private String label;
     private String value;
+    private String code;
 }

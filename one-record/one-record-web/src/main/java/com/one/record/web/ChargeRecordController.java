@@ -89,6 +89,7 @@ public class ChargeRecordController {
                 .map(provider -> ChargeProviderDTO.builder()
                         .label(provider.getName())
                         .value(provider.name())
+                        .code(provider.getCode())
                         .build())
                 .collect(Collectors.toList());
     }

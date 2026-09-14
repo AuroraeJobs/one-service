@@ -2028,6 +2028,7 @@ export interface ChargeLocationOption {
 export interface ChargeProviderOption {
   label: string;
   value: string;
+  code: string;
 }
 
 export interface ChargeStation {
