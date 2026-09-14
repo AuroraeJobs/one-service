@@ -1164,7 +1164,6 @@ const HealthSummerSolsticePage: React.FC = () => {
                   onClick={() => editForm.submit()}
                   className="detail-action-btn-save"
                 >
-                >
                   {text.save}
                 </Button>
               </>
