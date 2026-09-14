@@ -901,6 +901,186 @@ const HealthSpringEquinoxPage: React.FC = () => {
           }}
         >
           {(!isEditing && selectedRecord) ? (
+            <div>
+              {selectedRecord && (
+              <div>
+              <div style={{
+                marginBottom: '20px',
+                padding: '16px',
+                backgroundColor: 'rgba(24, 144, 255, 0.1)',
+                borderRadius: '12px',
+                border: '1px solid rgba(24, 144, 255, 0.2)'
+              }}>
+                <div style={{
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  color: '#1890ff',
+                  marginBottom: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  {text.chargingTime}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.date}</div>
+                    <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>{selectedRecord.date}</div>
+                  </div>
+                  <div>
+                    <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.duration}</div>
+                    <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
+                      {Math.floor(selectedRecord.chargeDuration / 60)}h {selectedRecord.chargeDuration % 60}m
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.startTime}</div>
+                    <div style={{ color: '#52c41a', fontSize: '14px', fontWeight: 'bold' }}>{selectedRecord.startTime}</div>
+                  </div>
+                  <div>
+                    <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.endTime}</div>
+                    <div style={{ color: '#faad14', fontSize: '14px', fontWeight: 'bold' }}>{selectedRecord.endTime}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{
+                marginBottom: '20px',
+                padding: '16px',
+                backgroundColor: 'rgba(114, 46, 209, 0.1)',
+                borderRadius: '12px',
+                border: '1px solid rgba(114, 46, 209, 0.2)'
+              }}>
+                <div style={{
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  color: '#722ed1',
+                  marginBottom: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  {text.chargingInfo}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.chargerType}</div>
+                    <div style={{
+                      color: '#fff',
+                      fontSize: '14px',
+                      fontWeight: 'bold',
+                      display: 'inline-block',
+                      padding: '4px 12px',
+                      backgroundColor: 'rgba(24, 144, 255, 0.2)',
+                      borderRadius: '6px'
+                    }}>
+                      {providers.find(p => p.value === selectedRecord.provider)?.label || selectedRecord.provider}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.location}</div>
+                    <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>{getLocationLabel(selectedRecord.location)}</div>
+                  </div>
+                  <div>
+                    <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.energy}</div>
+                    <div style={{ color: '#52c41a', fontSize: '16px', fontWeight: 'bold' }}>{selectedRecord.chargeAmount} kWh</div>
+                  </div>
+                  {selectedRecord.batteryCapacity && (
+                    <div>
+                      <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.batteryCapacity}</div>
+                      <div style={{ color: '#faad14', fontSize: '16px', fontWeight: 'bold' }}>{selectedRecord.batteryCapacity} kWh</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div style={{
+                marginBottom: '20px',
+                padding: '16px',
+                backgroundColor: 'rgba(82, 196, 26, 0.1)',
+                borderRadius: '12px',
+                border: '1px solid rgba(82, 196, 26, 0.2)'
+              }}>
+                <div style={{
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  color: '#52c41a',
+                  marginBottom: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  {text.costDetails}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                  <div>
+                    <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.electricityCost}</div>
+                    <div style={{ color: '#52c41a', fontSize: '14px', fontWeight: 'bold' }}>¥{selectedRecord.electricityCost.toFixed(2)}</div>
+                  </div>
+                  <div>
+                    <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.serviceCost}</div>
+                    <div style={{ color: '#faad14', fontSize: '14px', fontWeight: 'bold' }}>¥{selectedRecord.serviceCost.toFixed(2)}</div>
+                  </div>
+                  <div>
+                    <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.discountAmount}</div>
+                    <div style={{ color: '#722ed1', fontSize: '14px', fontWeight: 'bold' }}>-¥{selectedRecord.discountAmount?.toFixed(2) || '0.00'}</div>
+                  </div>
+                  <div>
+                    <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.avgPrice}</div>
+                    <div style={{ color: '#722ed1', fontSize: '14px', fontWeight: 'bold' }}>
+                      ¥{selectedRecord.chargeAmount > 0 ? ((selectedRecord.electricityCost + selectedRecord.serviceCost - (selectedRecord.discountAmount || 0)) / selectedRecord.chargeAmount).toFixed(2) : '0.00'}/kWh
+                    </div>
+                  </div>
+                </div>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '12px 16px',
+                  backgroundColor: 'rgba(255, 77, 79, 0.1)',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255, 77, 79, 0.2)'
+                }}>
+                  <span style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>{text.paidAmount}</span>
+                  <span style={{
+                    color: '#ff4d4f',
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    textShadow: '0 0 15px rgba(255, 77, 79, 0.5)'
+                  }}>
+                    ¥{(selectedRecord.electricityCost + selectedRecord.serviceCost - (selectedRecord.discountAmount || 0)).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              {selectedRecord.notes && (
+                <div style={{
+                  marginBottom: '20px',
+                  padding: '16px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}>
+                  <div style={{
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    color: '#999',
+                    marginBottom: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    {text.notes}
+                  </div>
+                  <div style={{ color: '#fff', fontSize: '14px', lineHeight: '1.6' }}>
+                    {selectedRecord.notes}
+                  </div>
+                </div>
+              )}
+              </div>
+              )}
+            </div>
+          ) : (
             <Form
               form={form}
               layout="vertical"
@@ -1177,186 +1357,6 @@ const HealthSpringEquinoxPage: React.FC = () => {
                 </Form.Item>
               </div>
             </Form>
-          ) : (
-            <div>
-              {selectedRecord && (
-              <div>
-              <div style={{
-                marginBottom: '20px',
-                padding: '16px',
-                backgroundColor: 'rgba(24, 144, 255, 0.1)',
-                borderRadius: '12px',
-                border: '1px solid rgba(24, 144, 255, 0.2)'
-              }}>
-                <div style={{
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  color: '#1890ff',
-                  marginBottom: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}>
-                  {text.chargingTime}
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.date}</div>
-                    <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>{selectedRecord.date}</div>
-                  </div>
-                  <div>
-                    <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.duration}</div>
-                    <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>
-                      {Math.floor(selectedRecord.chargeDuration / 60)}h {selectedRecord.chargeDuration % 60}m
-                    </div>
-                  </div>
-                  <div>
-                    <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.startTime}</div>
-                    <div style={{ color: '#52c41a', fontSize: '14px', fontWeight: 'bold' }}>{selectedRecord.startTime}</div>
-                  </div>
-                  <div>
-                    <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.endTime}</div>
-                    <div style={{ color: '#faad14', fontSize: '14px', fontWeight: 'bold' }}>{selectedRecord.endTime}</div>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{
-                marginBottom: '20px',
-                padding: '16px',
-                backgroundColor: 'rgba(114, 46, 209, 0.1)',
-                borderRadius: '12px',
-                border: '1px solid rgba(114, 46, 209, 0.2)'
-              }}>
-                <div style={{
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  color: '#722ed1',
-                  marginBottom: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}>
-                  {text.chargingInfo}
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.chargerType}</div>
-                    <div style={{
-                      color: '#fff',
-                      fontSize: '14px',
-                      fontWeight: 'bold',
-                      display: 'inline-block',
-                      padding: '4px 12px',
-                      backgroundColor: 'rgba(24, 144, 255, 0.2)',
-                      borderRadius: '6px'
-                    }}>
-                      {providers.find(p => p.value === selectedRecord.provider)?.label || selectedRecord.provider}
-                    </div>
-                  </div>
-                  <div>
-                    <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.location}</div>
-                    <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>{getLocationLabel(selectedRecord.location)}</div>
-                  </div>
-                  <div>
-                    <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.energy}</div>
-                    <div style={{ color: '#52c41a', fontSize: '16px', fontWeight: 'bold' }}>{selectedRecord.chargeAmount} kWh</div>
-                  </div>
-                  {selectedRecord.batteryCapacity && (
-                    <div>
-                      <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.batteryCapacity}</div>
-                      <div style={{ color: '#faad14', fontSize: '16px', fontWeight: 'bold' }}>{selectedRecord.batteryCapacity} kWh</div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div style={{
-                marginBottom: '20px',
-                padding: '16px',
-                backgroundColor: 'rgba(82, 196, 26, 0.1)',
-                borderRadius: '12px',
-                border: '1px solid rgba(82, 196, 26, 0.2)'
-              }}>
-                <div style={{
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  color: '#52c41a',
-                  marginBottom: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}>
-                  {text.costDetails}
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-                  <div>
-                    <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.electricityCost}</div>
-                    <div style={{ color: '#52c41a', fontSize: '14px', fontWeight: 'bold' }}>¥{selectedRecord.electricityCost.toFixed(2)}</div>
-                  </div>
-                  <div>
-                    <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.serviceCost}</div>
-                    <div style={{ color: '#faad14', fontSize: '14px', fontWeight: 'bold' }}>¥{selectedRecord.serviceCost.toFixed(2)}</div>
-                  </div>
-                  <div>
-                    <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.discountAmount}</div>
-                    <div style={{ color: '#722ed1', fontSize: '14px', fontWeight: 'bold' }}>-¥{selectedRecord.discountAmount?.toFixed(2) || '0.00'}</div>
-                  </div>
-                  <div>
-                    <div style={{ color: '#999', fontSize: '12px', marginBottom: '4px' }}>{text.avgPrice}</div>
-                    <div style={{ color: '#722ed1', fontSize: '14px', fontWeight: 'bold' }}>
-                      ¥{selectedRecord.chargeAmount > 0 ? ((selectedRecord.electricityCost + selectedRecord.serviceCost - (selectedRecord.discountAmount || 0)) / selectedRecord.chargeAmount).toFixed(2) : '0.00'}/kWh
-                    </div>
-                  </div>
-                </div>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '12px 16px',
-                  backgroundColor: 'rgba(255, 77, 79, 0.1)',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(255, 77, 79, 0.2)'
-                }}>
-                  <span style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>{text.paidAmount}</span>
-                  <span style={{
-                    color: '#ff4d4f',
-                    fontSize: '24px',
-                    fontWeight: 'bold',
-                    textShadow: '0 0 15px rgba(255, 77, 79, 0.5)'
-                  }}>
-                    ¥{(selectedRecord.electricityCost + selectedRecord.serviceCost - (selectedRecord.discountAmount || 0)).toFixed(2)}
-                  </span>
-                </div>
-              </div>
-
-              {selectedRecord.notes && (
-                <div style={{
-                  marginBottom: '20px',
-                  padding: '16px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(255, 255, 255, 0.1)'
-                }}>
-                  <div style={{
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    color: '#999',
-                    marginBottom: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}>
-                    {text.notes}
-                  </div>
-                  <div style={{ color: '#fff', fontSize: '14px', lineHeight: '1.6' }}>
-                    {selectedRecord.notes}
-                  </div>
-                </div>
-              )}
-              </div>
-              )}
-            </div>
           )}
         </Drawer>
       </div>
