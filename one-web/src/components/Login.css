@@ -213,7 +213,7 @@
 }
 
 .app-theme-light .login-input {
-  background: rgba(0, 0, 0, 0.04);
+  background: #fff;
   border: 1px solid rgba(0, 0, 0, 0.12);
 }
 
@@ -222,10 +222,15 @@
   box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
 }
 
-.login-input:focus {
+.login-input:focus,
+.login-input-focused {
   border-color: #667eea;
   box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
-  background: rgba(255, 255, 255, 0.15);
+}
+
+.app-theme-light .login-input:focus,
+.app-theme-light .login-input-focused {
+  background: #fff;
 }
 
 .login-input .ant-input-prefix {
