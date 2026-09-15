@@ -18,7 +18,7 @@ if (typeof document !== 'undefined') {
       scrollbar-width: none;
     }
     .charge-stats-grid {
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     }
   `;
   document.head.appendChild(style);
