@@ -17,9 +17,6 @@ if (typeof document !== 'undefined') {
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
-    .charge-stats-grid {
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    }
   `;
   document.head.appendChild(style);
 }
@@ -481,17 +478,11 @@ const HealthSpringEquinoxPage: React.FC = () => {
         margin: '0 auto'
       }}>
         <div style={{ marginBottom: '24px' }}>
-          <div className="charge-stats-grid" style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: '16px'
-          }}>
+          <div className="record-grid">
             <div
-              className="metric-card"
+              className="record-tile"
               style={{
-                padding: '20px',
-                position: 'relative',
-                overflow: 'hidden'
+                cursor: 'pointer'
               }}
             >
               <div style={{ position: 'relative', zIndex: 1 }}>
@@ -544,11 +535,9 @@ const HealthSpringEquinoxPage: React.FC = () => {
             </div>
             
             <div
-              className="metric-card"
+              className="record-tile"
               style={{
-                padding: '20px',
-                position: 'relative',
-                overflow: 'hidden'
+                cursor: 'pointer'
               }}
             >
               <div style={{ position: 'relative', zIndex: 1 }}>
@@ -595,11 +584,9 @@ const HealthSpringEquinoxPage: React.FC = () => {
             </div>
             
             <div
-              className="metric-card"
+              className="record-tile"
               style={{
-                padding: '20px',
-                position: 'relative',
-                overflow: 'hidden'
+                cursor: 'pointer'
               }}
             >
               <div style={{ position: 'relative', zIndex: 1 }}>
@@ -646,11 +633,9 @@ const HealthSpringEquinoxPage: React.FC = () => {
             </div>
             
             <div
-              className="metric-card"
+              className="record-tile"
               style={{
-                padding: '20px',
-                position: 'relative',
-                overflow: 'hidden'
+                cursor: 'pointer'
               }}
             >
               <div style={{ position: 'relative', zIndex: 1 }}>
