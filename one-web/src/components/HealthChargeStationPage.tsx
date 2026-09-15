@@ -467,19 +467,19 @@ const HealthChargeStationPage: React.FC = () => {
                   <div style={{ color: '#1890ff', fontSize: '16px', fontWeight: 'bold' }}>
                     {getProviderLabel(station.provider)}
                   </div>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
-                  <div>
-                    <div style={{ color: textMuted, fontSize: '12px' }}>{text.stationCode}</div>
-                    <div style={{ color: textColor, fontSize: '14px', fontWeight: 'bold' }}>
-                      {station.stationCode}
-                    </div>
+                  <div style={{ color: textMuted, fontSize: '12px', fontFamily: 'monospace' }}>
+                    {station.stationCode}
                   </div>
-                  <div>
-                    <div style={{ color: textMuted, fontSize: '12px' }}>{text.lastChargeAt}</div>
-                    <div style={{ color: '#ffc53d', fontSize: '12px' }}>
-                      {station.lastChargeAt ? dayjs(station.lastChargeAt).format('YYYY-MM-DD HH:mm') : text.neverCharged}
-                    </div>
+                </div>
+                <div style={{ marginBottom: '12px' }}>
+                  <div style={{ color: textColor, fontSize: '16px', fontWeight: 'bold' }}>
+                    {station.stationName}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ color: textMuted, fontSize: '12px' }}>{text.lastChargeAt}</div>
+                  <div style={{ color: '#ffc53d', fontSize: '12px' }}>
+                    {station.lastChargeAt ? dayjs(station.lastChargeAt).format('YYYY-MM-DD HH:mm') : text.neverCharged}
                   </div>
                 </div>
               </Card>
