@@ -642,7 +642,7 @@ const HealthChargeStationPage: React.FC = () => {
               label={text.provider}
               rules={[{ required: true, message: text.providerRequired }]}
             >
-              <Select placeholder={text.providerPlaceholder} options={providers} />
+              <Select placeholder={text.providerPlaceholder} options={providers} disabled />
             </Form.Item>
             <Form.Item
               name="stationCode"
