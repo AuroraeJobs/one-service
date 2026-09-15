@@ -478,7 +478,11 @@ const HealthSpringEquinoxPage: React.FC = () => {
         margin: '0 auto'
       }}>
         <div style={{ marginBottom: '24px' }}>
-          <div className="record-grid">
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: '16px'
+          }}>
             <div
               className="record-tile"
               style={{
