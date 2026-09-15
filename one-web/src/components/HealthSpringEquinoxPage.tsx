@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import MetricCard from './MetricCard';
-import MetricGrid from './MetricGrid';
 import RecordCardList from './RecordCardList';
 import { Card, Form, Input, InputNumber, Select, Button, DatePicker, Row, Col, message, Drawer, Popconfirm } from 'antd';
 import { ThunderboltOutlined, CalendarOutlined } from '@ant-design/icons';
@@ -103,7 +101,9 @@ const minuteOptions = Array.from({ length: 60 }, (_, i) => ({
 }));
 
 const HealthSpringEquinoxPage: React.FC = () => {
-  const { isEnglish } = useAppPreferences();
+  const { isEnglish, colorMode } = useAppPreferences();
+  const textColor = colorMode === 'dark' ? '#fff' : '#1a1a2e';
+  const textMutedColor = colorMode === 'dark' ? '#999' : '#666';
   const text = {
     totalSessions: isEnglish ? 'Total Sessions' : '总充电次数',
     totalDiscount: isEnglish ? 'Total Discount' : '总优惠',
@@ -477,13 +477,121 @@ const HealthSpringEquinoxPage: React.FC = () => {
         maxWidth: '1400px',
         margin: '0 auto'
       }}>
-        <MetricGrid gap={12} minColumnWidth={160}>
-          <MetricCard title={text.totalSessions} value={stats.totalCharges} accent="#1890ff" />
-          <MetricCard title={text.totalDiscount} value={stats.totalDiscountAmount ?? 0} suffix={text.yuan} accent="#722ed1" />
-          <MetricCard title={text.totalSpend} value={stats.totalCost} suffix={text.yuan} accent="#ff4d4f" valueStyle={{ fontSize: '24px' }} />
-          <MetricCard title={text.totalEnergy} value={stats.totalEnergy} suffix="kWh" accent="#52c41a" />
-          <MetricCard title={text.avgPrice} value={stats.totalEnergy > 0 ? (stats.totalCost / stats.totalEnergy).toFixed(2) : '0.00'} suffix={text.yuanPerKwh} accent="#faad14" />
-        </MetricGrid>
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: '16px'
+          }}>
+            <div
+              className="metric-card"
+              style={{
+                padding: '20px',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+            >
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <span style={{ fontWeight: 600, fontSize: '14px', color: textColor }}>
+                    {isEnglish ? 'Charging Overview' : '充电概览'}
+                  </span>
+                </div>
+                
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                  <div>
+                    <div style={{ marginBottom: '4px' }}>
+                      <span style={{ fontSize: '28px', fontWeight: 700, color: textColor }}>
+                        ¥{stats.totalCost.toFixed(0)}
+                      </span>
+                    </div>
+                    
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '12px' }}>
+                      <span style={{ 
+                        fontSize: '16px', 
+                        fontWeight: 600,
+                        color: '#52c41a'
+                      }}>
+                        {stats.totalEnergy.toFixed(1)}kWh
+                      </span>
+                      <span style={{ fontSize: '11px', color: textMutedColor }}>
+                        {isEnglish ? 'Total Energy' : '总充电量'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div style={{ 
+                  borderTop: `1px solid ${colorMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'}`, 
+                  paddingTop: '12px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <span style={{ fontSize: '11px', color: textMutedColor }}>
+                      {isEnglish ? 'Sessions' : '充电'} {stats.totalCharges}{isEnglish ? '' : '次'}
+                    </span>
+                    <span style={{ fontSize: '11px', color: textMutedColor }}>
+                      {isEnglish ? 'Avg' : '均价'} ¥{stats.totalEnergy > 0 ? (stats.totalCost / stats.totalEnergy).toFixed(2) : '0.00'}/kWh
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div
+              className="metric-card"
+              style={{
+                padding: '20px',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+            >
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <span style={{ fontWeight: 600, fontSize: '14px', color: textColor }}>
+                    {isEnglish ? 'Discount Summary' : '优惠汇总'}
+                  </span>
+                </div>
+                
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                  <div>
+                    <div style={{ marginBottom: '4px' }}>
+                      <span style={{ fontSize: '28px', fontWeight: 700, color: '#722ed1' }}>
+                        ¥{(stats.totalDiscountAmount ?? 0).toFixed(0)}
+                      </span>
+                    </div>
+                    
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '12px' }}>
+                      <span style={{ 
+                        fontSize: '16px', 
+                        fontWeight: 600,
+                        color: '#722ed1'
+                      }}>
+                        {isEnglish ? 'Total Saved' : '已节省'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div style={{ 
+                  borderTop: `1px solid ${colorMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'}`, 
+                  paddingTop: '12px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <span style={{ fontSize: '11px', color: textMutedColor }}>
+                      {isEnglish ? 'Actual' : '实际'} ¥{stats.totalCost.toFixed(0)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <RecordCardList
           records={filteredRecords}
