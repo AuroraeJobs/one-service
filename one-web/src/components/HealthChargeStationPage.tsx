@@ -647,10 +647,6 @@ const HealthChargeStationPage: React.FC = () => {
             <Form.Item
               name="stationCode"
               label={text.stationCode}
-              rules={[
-                { required: true, message: text.codeRequired },
-                { validator: validateStationCodeEdit }
-              ]}
             >
               <Input 
                 placeholder={isEnglish ? '3 digits (e.g., 001)' : '3位数字（如 001）'}
