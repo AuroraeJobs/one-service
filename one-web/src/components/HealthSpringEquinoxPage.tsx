@@ -480,7 +480,7 @@ const HealthSpringEquinoxPage: React.FC = () => {
         <div style={{ marginBottom: '24px' }}>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
             gap: '16px'
           }}>
             <div
@@ -585,6 +585,108 @@ const HealthSpringEquinoxPage: React.FC = () => {
                   <div style={{ display: 'flex', gap: '12px' }}>
                     <span style={{ fontSize: '11px', color: textMutedColor }}>
                       {isEnglish ? 'Actual' : '实际'} ¥{stats.totalCost.toFixed(0)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div
+              className="metric-card"
+              style={{
+                padding: '20px',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+            >
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <span style={{ fontWeight: 600, fontSize: '14px', color: textColor }}>
+                    {isEnglish ? 'Charging Sessions' : '充电次数'}
+                  </span>
+                </div>
+                
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                  <div>
+                    <div style={{ marginBottom: '4px' }}>
+                      <span style={{ fontSize: '28px', fontWeight: 700, color: '#1890ff' }}>
+                        {stats.totalCharges}
+                      </span>
+                    </div>
+                    
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '12px' }}>
+                      <span style={{ 
+                        fontSize: '16px', 
+                        fontWeight: 600,
+                        color: '#1890ff'
+                      }}>
+                        {isEnglish ? 'Total Sessions' : '总次数'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div style={{ 
+                  borderTop: `1px solid ${colorMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'}`, 
+                  paddingTop: '12px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <span style={{ fontSize: '11px', color: textMutedColor }}>
+                      {isEnglish ? 'Avg' : '均'} ¥{stats.totalCharges > 0 ? (stats.totalCost / stats.totalCharges).toFixed(0) : '0'}/{isEnglish ? 'session' : '次'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div
+              className="metric-card"
+              style={{
+                padding: '20px',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+            >
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <span style={{ fontWeight: 600, fontSize: '14px', color: textColor }}>
+                    {isEnglish ? 'Average Price' : '平均单价'}
+                  </span>
+                </div>
+                
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                  <div>
+                    <div style={{ marginBottom: '4px' }}>
+                      <span style={{ fontSize: '28px', fontWeight: 700, color: '#faad14' }}>
+                        ¥{stats.totalEnergy > 0 ? (stats.totalCost / stats.totalEnergy).toFixed(2) : '0.00'}
+                      </span>
+                    </div>
+                    
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '12px' }}>
+                      <span style={{ 
+                        fontSize: '16px', 
+                        fontWeight: 600,
+                        color: '#faad14'
+                      }}>
+                        {isEnglish ? 'Per kWh' : '每度电'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div style={{ 
+                  borderTop: `1px solid ${colorMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'}`, 
+                  paddingTop: '12px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <span style={{ fontSize: '11px', color: textMutedColor }}>
+                      {isEnglish ? 'Energy' : '充电量'} {stats.totalEnergy.toFixed(1)}kWh
                     </span>
                   </div>
                 </div>
