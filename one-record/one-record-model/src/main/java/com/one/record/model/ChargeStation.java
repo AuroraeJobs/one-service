@@ -19,8 +19,6 @@ public class ChargeStation {
     
     private String provider;
     
-    private String location;
-    
     private String stationCode;
     
     private String stationName;

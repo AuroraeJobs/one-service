@@ -14,7 +14,6 @@ interface ChargeProviderOption {
 interface ChargeStation {
   id?: string;
   provider: string;
-  location: string;
   stationCode: string;
   stationName?: string;
   lastChargeAt?: number;
@@ -34,7 +33,6 @@ interface ProviderStats {
 
 interface ChargeStationFormValues {
   provider: string;
-  location: string;
   stationCode: string;
   stationName?: string;
 }
@@ -69,20 +67,18 @@ const HealthChargeStationPage: React.FC = () => {
     totalCost: isEnglish ? 'Total Cost' : '总费用',
     avgPrice: isEnglish ? 'Avg Price' : '平均单价',
     providerPlaceholder: isEnglish ? 'Select provider' : '选择充电提供方',
-    searchPlaceholder: isEnglish ? 'Search station code/name/location' : '搜索站点编码/名称/地点',
+    searchPlaceholder: isEnglish ? 'Search station code/name' : '搜索站点编码/名称',
     noStations: isEnglish ? 'No charging station data' : '暂无充电站数据',
     deleteConfirm: isEnglish ? 'Delete this charging station?' : '确定要删除这个充电站吗？',
     ok: isEnglish ? 'OK' : '确定',
     cancel: isEnglish ? 'Cancel' : '取消',
     stationCode: isEnglish ? 'Station Code' : '站点编码',
-    location: isEnglish ? 'Charging Location' : '充电地点',
     addStation: isEnglish ? 'Add Charging Station' : '添加充电站',
     editStation: isEnglish ? 'Edit Charging Station' : '编辑充电站',
     provider: isEnglish ? 'Provider' : '充电提供方',
     stationName: isEnglish ? 'Station Name' : '站点名称',
     save: isEnglish ? 'Save' : '保存',
     providerRequired: isEnglish ? 'Please select a provider' : '请选择充电提供方',
-    locationRequired: isEnglish ? 'Please enter a charging location' : '请输入充电地点',
     codeRequired: isEnglish ? 'Please enter a station code' : '请输入站点编码',
     codeExists: isEnglish ? 'Station code already exists' : '站点编码已存在',
     stationNamePlaceholder: isEnglish ? 'Enter station name (optional)' : '请输入站点名称（可选）',
@@ -336,8 +332,7 @@ const HealthChargeStationPage: React.FC = () => {
   const filteredStations = stations.filter(station => {
     const matchSearch = !searchText || 
       (station.stationCode && station.stationCode.toLowerCase().includes(searchText.toLowerCase())) ||
-      (station.stationName && station.stationName.toLowerCase().includes(searchText.toLowerCase())) ||
-      (station.location && station.location.toLowerCase().includes(searchText.toLowerCase()));
+      (station.stationName && station.stationName.toLowerCase().includes(searchText.toLowerCase()));
     const matchProvider = !searchProvider || station.provider === searchProvider;
     return matchSearch && matchProvider;
   });
@@ -480,12 +475,6 @@ const HealthChargeStationPage: React.FC = () => {
                     </div>
                   </div>
                   <div>
-                    <div style={{ color: textMuted, fontSize: '12px' }}>{text.location}</div>
-                    <div style={{ color: '#52c41a', fontSize: '14px', fontWeight: 'bold' }}>
-                      {station.location}
-                    </div>
-                  </div>
-                  <div>
                     <div style={{ color: textMuted, fontSize: '12px' }}>{text.lastChargeAt}</div>
                     <div style={{ color: '#ffc53d', fontSize: '12px' }}>
                       {station.lastChargeAt ? dayjs(station.lastChargeAt).format('YYYY-MM-DD HH:mm') : text.neverCharged}
@@ -588,10 +577,6 @@ const HealthChargeStationPage: React.FC = () => {
               <div style={{ color: textMuted, fontSize: '12px', marginBottom: '4px' }}>{text.stationCode}</div>
               <div style={{ fontSize: '16px', fontWeight: 'bold' }}>{selectedStation.stationCode}</div>
             </div>
-            <div style={{ marginBottom: '24px' }}>
-              <div style={{ color: textMuted, fontSize: '12px', marginBottom: '4px' }}>{text.location}</div>
-              <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#52c41a' }}>{selectedStation.location}</div>
-            </div>
             {selectedStation.stationName && (
               <div style={{ marginBottom: '24px' }}>
                 <div style={{ color: textMuted, fontSize: '12px', marginBottom: '4px' }}>{text.stationName}</div>
@@ -619,13 +604,6 @@ const HealthChargeStationPage: React.FC = () => {
               rules={[{ required: true, message: text.providerRequired }]}
             >
               <Select placeholder={text.providerPlaceholder} options={providers} />
-            </Form.Item>
-            <Form.Item
-              name="location"
-              label={text.location}
-              rules={[{ required: true, message: text.locationRequired }]}
-            >
-              <Input placeholder={text.locationRequired} />
             </Form.Item>
             <Form.Item
               name="stationCode"
@@ -663,13 +641,6 @@ const HealthChargeStationPage: React.FC = () => {
               rules={[{ required: true, message: text.providerRequired }]}
             >
               <Select placeholder={text.providerPlaceholder} options={providers} />
-            </Form.Item>
-            <Form.Item
-              name="location"
-              label={text.location}
-              rules={[{ required: true, message: text.locationRequired }]}
-            >
-              <Input placeholder={text.locationRequired} />
             </Form.Item>
             <Form.Item
               name="stationCode"

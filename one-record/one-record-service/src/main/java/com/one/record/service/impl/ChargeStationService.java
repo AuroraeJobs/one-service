@@ -56,7 +56,6 @@ public class ChargeStationService implements IChargeStationService {
         }
         
         existing.setProvider(station.getProvider());
-        existing.setLocation(station.getLocation());
         existing.setStationCode(station.getStationCode());
         existing.setStationName(station.getStationName());
         existing.setUpdatedAt(System.currentTimeMillis());
@@ -95,16 +94,6 @@ public class ChargeStationService implements IChargeStationService {
     @Override
     public List<ChargeStation> findByProvider(String provider) {
         return repository.findByProvider(provider);
-    }
-    
-    @Override
-    public List<ChargeStation> findByLocation(String location) {
-        return repository.findByLocation(location);
-    }
-    
-    @Override
-    public List<ChargeStation> findByProviderAndLocation(String provider, String location) {
-        return repository.findByProviderAndLocation(provider, location);
     }
     
     @Override
