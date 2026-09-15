@@ -480,7 +480,7 @@ const HealthSpringEquinoxPage: React.FC = () => {
         <div style={{ marginBottom: '24px' }}>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+            gridTemplateColumns: 'repeat(4, 1fr)',
             gap: '16px'
           }}>
             <div
