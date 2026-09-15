@@ -350,57 +350,90 @@ const HealthChargeStationPage: React.FC = () => {
     }}>
         {/* 统计卡片区域 */}
         {providerStats.length > 0 && (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-            gap: '16px',
-            marginBottom: '24px'
-          }}>
-            {providerStats.map(stat => (
-              <Card
-                key={stat.provider}
-                className={`charge-station-stat-card ${searchProvider === stat.provider ? 'charge-station-stat-card-active' : ''}`}
-                bodyStyle={{ padding: '16px' }}
-                hoverable
-                onClick={() => setSearchProvider(searchProvider === stat.provider ? '' : stat.provider)}
-                style={{ cursor: 'pointer' }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                  <div style={{ color: '#1890ff', fontSize: '16px', fontWeight: 'bold' }}>
-                    {stat.providerLabel}
-                  </div>
-                  <div style={{
-                    backgroundColor: 'rgba(82, 196, 26, 0.2)',
-                    color: '#52c41a',
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                    padding: '2px 8px',
-                    borderRadius: '10px',
-                    border: '1px solid rgba(82, 196, 26, 0.3)'
-                  }}>
-                    {stat.stationCount} {text.stationUnit}
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: '16px'
+            }}>
+              {providerStats.map(stat => (
+                <div
+                  key={stat.provider}
+                  className="metric-card"
+                  style={{
+                    padding: '20px',
+                    cursor: 'pointer',
+                    border: searchProvider === stat.provider ? '2px solid #1890ff' : '2px solid transparent',
+                    transition: 'all 0.2s',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                  onClick={() => setSearchProvider(searchProvider === stat.provider ? '' : stat.provider)}
+                >
+                  <div style={{ position: 'relative', zIndex: 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                      <span style={{ fontWeight: 600, fontSize: '14px', color: textColor }}>
+                        {stat.providerLabel}
+                      </span>
+                      <span style={{
+                        backgroundColor: 'rgba(82, 196, 26, 0.2)',
+                        color: '#52c41a',
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        padding: '2px 8px',
+                        borderRadius: '10px',
+                        border: '1px solid rgba(82, 196, 26, 0.3)'
+                      }}>
+                        {stat.stationCount} {text.stationUnit}
+                      </span>
+                    </div>
+                    
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                      <div>
+                        <div style={{ marginBottom: '4px' }}>
+                          <span style={{ fontSize: '28px', fontWeight: 700, color: textColor }}>
+                            ¥{stat.totalCost.toFixed(0)}
+                          </span>
+                        </div>
+                        
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '12px' }}>
+                          <span style={{ 
+                            fontSize: '16px', 
+                            fontWeight: 600,
+                            color: '#52c41a'
+                          }}>
+                            {stat.totalAmount.toFixed(1)}kWh
+                          </span>
+                          <span style={{ fontSize: '11px', color: textMutedColor }}>
+                            {isEnglish ? 'Total Energy' : '总充电度数'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div style={{ 
+                      borderTop: `1px solid ${colorMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'}`, 
+                      paddingTop: '12px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}>
+                      <div style={{ display: 'flex', gap: '12px' }}>
+                        <span style={{ fontSize: '11px', color: textMutedColor }}>
+                          {isEnglish ? 'Sessions' : '充电'} {stat.chargeCount}{text.chargeCountUnit}
+                        </span>
+                        <span style={{ fontSize: '11px', color: textMutedColor }}>
+                          {isEnglish ? 'Avg' : '均价'} ¥{stat.avgPrice.toFixed(2)}/kWh
+                        </span>
+                      </div>
+                      <span style={{ fontSize: '11px', color: '#1890ff' }}>
+                        →
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: textMuted, fontSize: '12px' }}>{text.chargeCount}</span>
-                    <span style={{ color: textColor, fontSize: '14px', fontWeight: 'bold' }}>{stat.chargeCount}{text.chargeCountUnit}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: textMuted, fontSize: '12px' }}>{text.energy}</span>
-                    <span style={{ color: '#52c41a', fontSize: '14px', fontWeight: 'bold' }}>{stat.totalAmount.toFixed(2)}kWh</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: textMuted, fontSize: '12px' }}>{text.totalCost}</span>
-                    <span style={{ color: '#faad14', fontSize: '14px', fontWeight: 'bold' }}>¥{stat.totalCost.toFixed(2)}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: textMuted, fontSize: '12px' }}>{text.avgPrice}</span>
-                    <span style={{ color: '#1890ff', fontSize: '14px', fontWeight: 'bold' }}>¥{stat.avgPrice.toFixed(2)}/kWh</span>
-                  </div>
-                </div>
-              </Card>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
