@@ -81,7 +81,8 @@ const HealthChargeStationPage: React.FC = () => {
     providerRequired: isEnglish ? 'Please select a provider' : '请选择充电提供方',
     codeRequired: isEnglish ? 'Please enter a station code' : '请输入站点编码',
     codeExists: isEnglish ? 'Station code already exists' : '站点编码已存在',
-    stationNamePlaceholder: isEnglish ? 'Enter station name (optional)' : '请输入站点名称（可选）',
+    stationNamePlaceholder: isEnglish ? 'Enter station name' : '请输入站点名称',
+    stationNameRequired: isEnglish ? 'Please enter a station name' : '请输入站点名称',
     lastChargeAt: isEnglish ? 'Last Charge Time' : '最近一次充电时间',
     neverCharged: isEnglish ? 'Never' : '从未充电',
     addSuccess: isEnglish ? 'Charging station added' : '添加充电站成功',
@@ -628,6 +629,7 @@ const HealthChargeStationPage: React.FC = () => {
             <Form.Item
               name="stationName"
               label={text.stationName}
+              rules={[{ required: true, message: text.stationNameRequired }]}
             >
               <Input placeholder={text.stationNamePlaceholder} />
             </Form.Item>
@@ -660,6 +662,7 @@ const HealthChargeStationPage: React.FC = () => {
             <Form.Item
               name="stationName"
               label={text.stationName}
+              rules={[{ required: true, message: text.stationNameRequired }]}
             >
               <Input placeholder={text.stationNamePlaceholder} />
             </Form.Item>
