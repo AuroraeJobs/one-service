@@ -263,7 +263,7 @@ const HealthSpringEquinoxPage: React.FC = () => {
     try {
       const stations = await chargeStationApi.findAll();
       const locationOptions: ChargeLocationOption[] = (stations || []).map(station => ({
-        label: station.stationName ? `${station.location} (${station.stationName})` : station.location,
+        label: station.stationName || station.stationCode,
         value: station.stationCode,
         provider: station.provider
       }));

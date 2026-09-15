@@ -2034,7 +2034,6 @@ export interface ChargeProviderOption {
 export interface ChargeStation {
   id?: string;
   provider: string;
-  location: string;
   stationCode: string;
   stationName?: string;
   lastChargeAt?: number;
@@ -4337,18 +4336,6 @@ export const chargeStationApi = {
   // 按充电提供方查询
   findByProvider: (provider: string): Promise<ChargeStation[]> => {
     return apiClient.get(`/charge-station/provider/${provider}`);
-  },
-
-  // 按地点查询
-  findByLocation: (location: string): Promise<ChargeStation[]> => {
-    return apiClient.get(`/charge-station/location/${location}`);
-  },
-
-  // 按提供方和地点查询
-  findByProviderAndLocation: (provider: string, location: string): Promise<ChargeStation[]> => {
-    return apiClient.get('/charge-station/search', {
-      params: { provider, location }
-    });
   },
 
   // 根据站点编码查询
