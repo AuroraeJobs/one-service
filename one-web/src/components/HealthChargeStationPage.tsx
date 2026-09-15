@@ -59,6 +59,7 @@ const HealthChargeStationPage: React.FC = () => {
   const { isEnglish, colorMode } = useAppPreferences();
   const textColor = colorMode === 'dark' ? '#fff' : '#1a1a2e';
   const textMuted = colorMode === 'dark' ? '#999' : '#666';
+  const textMutedColor = textMuted;
   const text = {
     stationUnit: isEnglish ? 'stations' : '个站点',
     chargeCount: isEnglish ? 'Sessions' : '充电次数',
