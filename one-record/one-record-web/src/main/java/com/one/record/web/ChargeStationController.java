@@ -57,6 +57,20 @@ public class ChargeStationController {
         return service.findByProvider(provider);
     }
     
+    @GetMapping("location/{location}")
+    @Operation(summary = "按地点查询", description = "查询指定地点的充电站")
+    public List<ChargeStation> findByLocation(@PathVariable("location") String location) {
+        return service.findByLocation(location);
+    }
+    
+    @GetMapping("search")
+    @Operation(summary = "按提供方和地点查询", description = "按充电提供方和地点查询充电站")
+    public List<ChargeStation> findByProviderAndLocation(
+            @RequestParam("provider") String provider,
+            @RequestParam("location") String location) {
+        return service.findByProviderAndLocation(provider, location);
+    }
+    
     @GetMapping("code/{stationCode}")
     @Operation(summary = "按站点编码查询", description = "根据站点编码查询充电站")
     public ChargeStation findByStationCode(@PathVariable("stationCode") String stationCode) {

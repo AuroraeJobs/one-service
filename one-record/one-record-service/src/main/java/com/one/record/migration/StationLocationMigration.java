@@ -11,7 +11,8 @@ import java.util.List;
 
 /**
  * 充电站数据迁移：将location合并到stationName
- * 执行后删除location字段
+ * 执行命令: java -jar one-record.jar migrate-station-location
+ * 执行完成后可删除此类并移除ChargeStation.location字段
  */
 @Slf4j
 @Component
@@ -39,21 +40,21 @@ public class StationLocationMigration implements CommandLineRunner {
             String location = station.getLocation();
             String stationName = station.getStationName();
             
-            // 如果有location且stationName不包含location，则合并
-            if (location != null && !location.isEmpty()) {
-                if (stationName == null || stationName.isEmpty()) {
-                    // stationName为空，直接用location
-                    station.setStationName(location);
-                } else if (!stationName.contains(location)) {
-                    // stationName不包含location，合并为 "location stationName"
-                    station.setStationName(location + " " + stationName);
-                }
-                // 如果stationName已经包含location，不需要处理
-                
-                updated++;
-                stationRepository.save(station);
-                log.info("更新充电站: {} -> stationName: {}", station.getStationCode(), station.getStationName());
+            if (location == null || location.isEmpty()) {
+                continue;
             }
+            
+            if (stationName == null || stationName.isEmpty()) {
+                station.setStationName(location);
+            } else if (!stationName.contains(location)) {
+                station.setStationName(location + " " + stationName);
+            } else {
+                continue;
+            }
+            
+            updated++;
+            stationRepository.save(station);
+            log.info("更新充电站: {} -> stationName: {}", station.getStationCode(), station.getStationName());
         }
         
         log.info("迁移完成！共更新 {} 个充电站", updated);

@@ -25,6 +25,10 @@ public interface IChargeStationService {
     
     List<ChargeStation> findByProvider(String provider);
     
+    List<ChargeStation> findByLocation(String location);
+    
+    List<ChargeStation> findByProviderAndLocation(String provider, String location);
+    
     /**
      * 获取指定提供商的下一个可用站点编码
      * 格式：3字母前缀 + 3位数字（如 TSL001）

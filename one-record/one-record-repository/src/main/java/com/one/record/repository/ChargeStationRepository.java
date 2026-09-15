@@ -14,6 +14,10 @@ public interface ChargeStationRepository extends MongoRepository<ChargeStation, 
     
     List<ChargeStation> findByProvider(String provider);
     
+    List<ChargeStation> findByLocation(String location);
+    
+    List<ChargeStation> findByProviderAndLocation(String provider, String location);
+    
     boolean existsByStationCode(String stationCode);
     
     List<ChargeStation> findAllByOrderByLastChargeAtDesc();
